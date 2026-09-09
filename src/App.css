@@ -30,7 +30,7 @@ html {
   text-rendering: optimizeSpeed;
 
   scrollbar-width: thin;
-  scrollbar-color: #00a2ff transparent;
+  scrollbar-color: rgba(0, 162, 255, 0.55) transparent;
 }
 
 body {
@@ -102,7 +102,7 @@ button {
 
 /* Оптимізований глобальний скролбар */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 3px;
   height: 10px;
 }
 ::-webkit-scrollbar-track {
@@ -125,15 +125,35 @@ html {
   background-color: rgba(0, 162, 255, 0.8);
 }
 
-/* Темна тема */
-.dark-mode {
-  scrollbar-color: rgba(255, 179, 108, 0.5) transparent;
+/* Темна тема: прозорий трек і теплий напівпрозорий повзунок */
+html.dark-mode,
+html[data-theme="dark"],
+body.dark-mode,
+body[data-theme="dark"] {
+  scrollbar-color: rgba(5, 5, 5, 0.65) transparent;
 }
-.dark-mode ::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.4);
+
+html.dark-mode::-webkit-scrollbar-track,
+html[data-theme="dark"]::-webkit-scrollbar-track,
+body.dark-mode::-webkit-scrollbar-track,
+body[data-theme="dark"]::-webkit-scrollbar-track {
+  background: transparent;
 }
-.dark-mode ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 179, 108, 0.7);
+
+html.dark-mode::-webkit-scrollbar-thumb,
+html[data-theme="dark"]::-webkit-scrollbar-thumb,
+body.dark-mode::-webkit-scrollbar-thumb,
+body[data-theme="dark"]::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 179, 108, 0.65);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+html.dark-mode::-webkit-scrollbar-thumb:hover,
+html[data-theme="dark"]::-webkit-scrollbar-thumb:hover,
+body.dark-mode::-webkit-scrollbar-thumb:hover,
+body[data-theme="dark"]::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 179, 108, 0.9);
 }
 /* Автоматично підлаштовує блоки та забороняє їм різко міняти геометрію з нуля */
 img,

@@ -677,6 +677,13 @@ const App = () => {
   const [sectionThemes, setSectionThemes] = useState({}); // { weather: false, aihelp: true, ... }
   const [user, setUser] = useState(null);
   const userRef = useRef(null);
+
+  useEffect(() => {
+    const theme = isDarkMode ? "dark" : "light";
+    document.documentElement.dataset.theme = theme;
+    document.body.dataset.theme = theme;
+  }, [isDarkMode]);
+
   useEffect(() => {
     userRef.current = user;
   }, [user]);
@@ -2518,6 +2525,7 @@ const App = () => {
           onAddCity={handleAddCityFromHero}
           startAnimation={!isLoading}
           user={user}
+          isDarkMode={isDarkMode}
           checkWeatherDanger={checkWeatherDanger}
           heroBg={heroBg}
           setHeroBg={setHeroBg}

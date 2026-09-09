@@ -3,7 +3,7 @@ import mountains from "../../photos/hero-header/hiils.webp";
 import art from "../../photos/hero-header/studi.webp";
 import penny from "../../photos/vip-modal/penny.webp";
 import hills from "../../photos/hero-header/fog.webp";
-import hillsVideo from "../../mp4/fog.mp4";
+const hillsVideo = "https://raw.githubusercontent.com/TheTurkeyProgramist/stuxia/main/fog.mp4";
 import dinofrozVideo from "../../mp4/nicerone.mp4";
 import soloveyko from "../../photos/vip-images/vip-soloveyko.webp";
 import harmony from "../../photos/vip-images/asium/asium.webp";

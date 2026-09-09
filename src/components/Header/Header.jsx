@@ -10,6 +10,7 @@ import { MdSettingsSuggest, MdMore, MdWallpaper } from "react-icons/md";
 import bell from "../../mp3/modals/bell.mp3";
 import paper from "../../mp3/modals/paper.mp3";
 import conimg from "../../mp3/modals/concierge.mp3";
+import userDefault from "../../photos/hero-header/user.webp";
 import { useVisualFilters } from "./useVisualFilters";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import {
@@ -138,7 +139,7 @@ const HeaderAvatar = styled.img`
   margin-right: 0;
   object-fit: cover;
   flex-shrink: 0;
-  border-radius: 50%;
+  border-radius: 5px;
   border: 1.5px solid transparent;
   box-sizing: border-box;
   background-image: ${(props) =>
@@ -397,6 +398,11 @@ const Header = ({
   const [showUltra, setShowUltra] = useState(false);
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const [showVisualSettings, setShowVisualSettings] = useState(false);
+  const avatarSource = user?.avatar || currentAvatar || userDefault;
+  const handleAvatarError = (event) => {
+    event.currentTarget.onerror = null;
+    event.currentTarget.src = userDefault;
+  };
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
@@ -659,7 +665,8 @@ const Header = ({
             aria-label="Профіль користувача"
           >
             <HeaderAvatar
-              src={currentAvatar}
+              src={avatarSource}
+              onError={handleAvatarError}
               $bColor={user.borderColor}
               style={{ width: "33px", height: "33px" }}
             />
@@ -672,7 +679,8 @@ const Header = ({
             >
               <ProfileModalBody>
                 <HeaderAvatar
-                  src={currentAvatar}
+                  src={avatarSource}
+                  onError={handleAvatarError}
                   $bColor={user.borderColor}
                   style={{ width: "42px", height: "42px" }}
                 />

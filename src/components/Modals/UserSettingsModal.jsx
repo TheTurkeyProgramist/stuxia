@@ -326,7 +326,7 @@ const AvatarOption = styled.div`
   width: 50px;
   height: 60px;
   min-width: 60px;
-  border-radius: 50%;
+  border-radius: 5px;
   padding: 3px;
   background: ${(props) =>
     props.$isSelected ? props.$borderColor : "transparent"};
@@ -345,7 +345,7 @@ const AvatarOption = styled.div`
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 50%;
+    border-radius: 5px;
   }
 `;
 const AvatarSlider = styled.div`
@@ -1008,7 +1008,14 @@ const UserSettingsModal = ({
                   setFormData({ ...formData, avatarIndex: -1 })
                 }
               >
-                <img src={user.avatar} alt="google-avatar" />
+                <img
+                  src={user.avatar}
+                  alt="google-avatar"
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = availableAvatars[0];
+                  }}
+                />
               </AvatarOption>
             )}
           </AvatarSlider>

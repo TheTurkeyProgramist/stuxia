@@ -828,19 +828,22 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
           </div>
         ) : (
           <>
-            {isLoading && (
+            {(!isMapActive || isLoading) && (
               <Loader>
-                <p>Завантаження...</p>
+                <p>{!isMapActive ? "Натисніть на карту для активації" : "Завантаження..."}</p>
               </Loader>
             )}
 
             <StyledIframe
               title="Weather Map"
-              src={embedUrl}
+              src={isMapActive ? embedUrl : undefined}
               $isLoading={isLoading}
               $isReady={isMapActive}
               onLoad={() => setIsLoading(false)}
               allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              referrerPolicy="strict-origin-when-cross-origin"
+              loading="lazy"
             />
           </>
         )}
@@ -855,6 +858,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
             $isReady={true}
             onLoad={() => setIsLoading(false)}
             allowFullScreen
+            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+            referrerPolicy="strict-origin-when-cross-origin"
+            loading="lazy"
             style={{ width: "100%", height: "100vh" }}
           />,
           pipWindow.document.body
@@ -909,6 +915,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               $isReady={true}
               onLoad={() => setIsLoading(false)}
               allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              referrerPolicy="strict-origin-when-cross-origin"
+              loading="lazy"
             />
             <ResizeHandle onMouseDown={handleMiniPlayerResizeStart} />
           </MiniPlayerBody>

@@ -11,16 +11,14 @@ import { createPortal } from "react-dom";
 import { TbWorldSearch } from "react-icons/tb";
 import { FaMountainCity } from "react-icons/fa6";
 import { FaMapLocationDot } from "react-icons/fa6";
-import slivki from "../../photos/programs/youtub/slivki.webp";
-import weather from "../../photos/programs/youtub/weather.webp";
 import planes from "../../photos/programs/youtub/planes.webp";
 import meridian from "../../photos/programs/meridian/meridian.webp"
+import castle from "../../photos/vip-modal/castle.webp"
 import { GiPalette } from "react-icons/gi";
 import { BsPinAngle } from "react-icons/bs";
 import styled, { keyframes, css } from "styled-components";
 import { useSelector, useDispatch } from "react-redux";
 import { MdSettingsSuggest, MdMore, MdWallpaper } from "react-icons/md";
-import youtube from "../../photos/programs/youtub/youtube.webp";
 import {
   addCustomDay,
   removeCustomDay,
@@ -161,9 +159,60 @@ const panAnimation = keyframes`
 `;
 
 const isVideoSource = (src) => {
+  if (!src) return false;
   if (src instanceof Blob) return src.type.startsWith("video/");
   if (typeof src !== "string") return false;
-  return src.includes(".mp4") || src.startsWith("data:video/");
+  return (
+    src.includes(".mp4") ||
+    src.includes(".webm") ||
+    src.includes(".ogg") ||
+    src.includes(".mov") ||
+    src.startsWith("data:video/") ||
+    src.startsWith("blob:")
+  );
+};
+
+const handleDownloadBg = async (bg) => {
+  if (!bg) return;
+  const src = typeof bg === "string" ? bg : bg.src;
+  const name = typeof bg === "string" ? "background" : bg.name || "background";
+  if (!src) return;
+  const isVid = isVideoSource(src);
+  const ext = isVid ? ".mp4" : ".webp";
+  const safeName = name.replace(/[/\\?%*:|"<>]/g, "-").trim() || "background";
+  const fileName = safeName.toLowerCase().endsWith(ext) ? safeName : `${safeName}${ext}`;
+
+  const toastId = toast.loading("Завантаження файлу...", { id: "bg-download" });
+
+  try {
+    const response = await fetch(src);
+    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+    toast.success(`Збережено: ${fileName}`, { id: toastId });
+  } catch (err) {
+    console.warn("Blob fetch download failed, using direct download:", err);
+    try {
+      const link = document.createElement("a");
+      link.href = src;
+      link.download = fileName;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success(`Відкрито для скачування: ${fileName}`, { id: toastId });
+    } catch (fallbackErr) {
+      toast.error("Не вдалося скачати файл", { id: toastId });
+    }
+  }
 };
 
 const shuffleArray = (array) => {
@@ -174,6 +223,63 @@ const shuffleArray = (array) => {
   }
   return arr;
 };
+
+// Extract author from snippet "Постачальник(и): ..." or use link.author field
+const extractAuthor = (link) => {
+  if (link.author) return link.author;
+  if (!link.snippet) return null;
+  const match = link.snippet.match(/Постачальник(?:и)?:\s*([^\n]+)/);
+  return match ? match[1].trim() : null;
+};
+
+const getLinkModalBgImage = (linkModal) => {
+  if (!linkModal) return null;
+  const firstImg = linkModal.images?.[0];
+  if (firstImg) {
+    return imageMap[firstImg] || firstImg;
+  }
+  return null;
+};
+
+// Detect platform type from URL
+const detectPlatform = (url = "") => {
+  if (url.includes("play.google.com")) return "playmarket";
+  if (url.includes("store.steampowered.com")) return "steam";
+  if (url.includes("apps.apple.com") || url.includes("itunes.apple.com")) return "appstore";
+  return null;
+};
+
+// Get platform badge label/icon
+const PLATFORM_CONFIG = {
+  playmarket: { label: "Play Market", emoji: "🤖", color: "#01875f" },
+  steam: { label: "Steam", emoji: "🎮", color: "#1b2838" },
+  appstore: { label: "App Store", emoji: "🍎", color: "#0071e3" },
+};
+
+const getLinkPlatforms = (link) => {
+  if (!link) return [];
+  const result = [];
+  if (link.platforms && Array.isArray(link.platforms)) {
+    return link.platforms;
+  }
+  const detected = detectPlatform(link.url);
+  if (detected) {
+    result.push({ type: detected, url: link.url });
+  }
+  if (link.snippet) {
+    if (link.snippet.includes("play.google.com") && !result.some((p) => p.type === "playmarket")) {
+      const match = link.snippet.match(/(https:\/\/play\.google\.com\/[^\s\n\)]+)/);
+      if (match) result.push({ type: "playmarket", url: match[1] });
+    }
+    if (link.snippet.includes("store.steampowered.com") && !result.some((p) => p.type === "steam")) {
+      const match = link.snippet.match(/(https:\/\/store\.steampowered\.com\/[^\s\n\)]+)/);
+      if (match) result.push({ type: "steam", url: match[1] });
+    }
+  }
+  return result;
+};
+
+
 
 export const mergeCitySuggestions = (
   existingSuggestions = [],
@@ -484,12 +590,14 @@ const ModeDropdown = styled.div`
   position: absolute;
   top: -59px;
   left: 30px;
-  background: rgba(3, 3, 3, 0.76);
+  background: ${(props) => (props.$isDarkMode ? "rgba(10, 10, 20, 0.95)" : "rgba(255, 255, 255, 0.95)")};
+  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.15)")};
   backdrop-filter: blur(12px);
   border-radius: 5px;
   overflow: hidden;
   z-index: 200;
   min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 `;
 
 const ModeDropdownItem = styled.button`
@@ -497,18 +605,35 @@ const ModeDropdownItem = styled.button`
   align-items: center;
   gap: 6px;
   width: 100%;
-  padding: 2px;
-  background: ${(props) => props.$active ? 'rgba(108,255,228,0.15)' : 'transparent'};
+  padding: 6px 10px;
+  background: ${(props) =>
+    props.$active
+      ? props.$isDarkMode
+        ? "rgba(108,255,228,0.15)"
+        : "rgba(0, 175, 206, 0.15)"
+      : "transparent"};
   border: none;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  color: ${(props) => props.$active ? '#6cffe4' : '#fff'};
+  border-bottom: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)")};
+  color: ${(props) =>
+    props.$active
+      ? props.$isDarkMode
+        ? "#6cffe4"
+        : "#007b99"
+      : props.$isDarkMode
+      ? "#fff"
+      : "#222"};
   font-size: 15px;
-  font-weight: ${(props) => props.$active ? '700' : '500'};
+  font-weight: ${(props) => (props.$active ? "700" : "500")};
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s;
-  &:last-child { border-bottom: none; }
-  &:hover { background: rgba(255,179,108,0.15); color: #ffb36c; }
+  transition: background 0.15s, color 0.15s;
+  &:last-child {
+    border-bottom: none;
+  }
+  &:hover {
+    background: ${(props) => (props.$isDarkMode ? "rgba(255,179,108,0.15)" : "rgba(255,179,108,0.25)")};
+    color: #ff8c2b;
+  }
 `;
 
 const ModeButton = styled.button`
@@ -647,9 +772,6 @@ const HeroInput = styled.input`
   border-right: 2px solid black;
   outline: none;
   box-sizing: border-box;
-  @media (min-width: 768px) {
-    font-size: 13px;
-  }
     &::placeholder {
     color: #000000;
   }
@@ -719,15 +841,14 @@ const HeroButton = styled.button`
 const SuggestionsList = styled.div`
   position: absolute;
   top: 100%;
-  justify-content: center;
   align-items: center;
-  background: rgba(255, 255, 255, 0.98);
+  background: ${(props) => (props.isDarkMode ? "#fefefeec" : "#000000da")};
   backdrop-filter: blur(10px);
   border-radius: 0 0 15px 15px;
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  height: 150px;
+  max-height: 350px;
   overflow-y: auto;
   border: 1px solid rgb(0, 0, 0);
   @media (min-width: 768px) {
@@ -753,17 +874,14 @@ const SuggestionItem = styled.button`
   width: 100%;
   text-align: left;
   padding: 2px;
-  background: white;
-  border: 1px solid #eee;
-  border-radius: 8px;
+  border-top: 1px solid #eee;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
-  color: #333;
+  color: ${(props) => (props.isDarkMode ? "#050505fb" : "#f4f2f2")};
   &:hover {
     background: skyblue;
     color: white;
-    transform: translateX(5px);
   }
 `;
 
@@ -863,59 +981,449 @@ const Tag = styled.span`
   font-size: 12px;
 `;
 
-const SliderContent = styled.div`
+/* ── Fullscreen Links Search Overlay ── */
+const LinksSearchOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: ${(p) => p.$isDarkMode
+    ? "rgba(10,10,20,0.97)"
+    : "rgba(245,247,255,0.97)"};
+  backdrop-filter: blur(18px);
   display: flex;
-  overflow-x: auto;
-  gap: 5px;
-  width: 100%;
-  scroll-behavior: smooth;
-  padding-bottom: 5px;
-  &::-webkit-scrollbar {
-    height: 8px;
-  }
-  &::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.1);
-    border-radius: 4px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #ffb36c;
-    border-radius: 4px;
-  }
-`;
-
-const SliderButton = styled.button`
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0,0,0,0.6);
-  color: white;
-  border: 1px solid #ffb36c;
-  border-radius: 50%;
-  width: 25px;
-  height: 25px;
-  display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  cursor: pointer;
-  z-index: 10;
-  &:hover { background: rgba(0,0,0,0.9); }
+  overflow: hidden;
+`;
 
-  @media (min-width: 1025px) {
-    display: none;
+const LinksSearchHeader = styled.div`
+  width: 100%;
+  max-width: 1200px;
+  padding: 18px 16px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#1a1a1a")};
+`;
+
+const LinksSearchBar = styled.div`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: ${(p) => p.$isDarkMode ? "#1a1a2e" : "#fff"};
+  border: 2px solid ${(p) => p.$isDarkMode ? "#3a3a5a" : "#ddd"};
+  border-radius: 50px;
+  padding: 8px 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  transition: border-color 0.2s;
+  &:focus-within {
+    border-color: #ffb36c;
+    box-shadow: 0 4px 28px rgba(255,179,108,0.25);
   }
 `;
 
-const ThumbnailImage = styled.img`
-  width: 290px;
-  height: 135px;
-  object-fit: cover;
-  border-radius: 5px;
+const LinksSearchInput = styled.input`
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 17px;
+  color: ${(p) => p.$isDarkMode ? "#f0f0f0" : "#111"};
+  &::placeholder { color: ${(p) => p.$isDarkMode ? "#666" : "#aaa"}; }
+`;
+
+const LinksSearchMeta = styled.div`
+  color: ${(p) => p.$isDarkMode ? "#888" : "#555"};
+  font-size: 12px;
+  text-align: center;
+`;
+
+const LinksResultsList = styled.div`
+  width: 100%;
+  max-width: 720px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: #ffb36c55; border-radius: 10px; }
+`;
+
+const LinksResultItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
   cursor: pointer;
-  border: 1px solid #ddd;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
+  transition: background 0.15s, transform 0.12s;
+  background: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)"};
+  border: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"};
   &:hover {
-    transform: scale(1.05);
+    background: ${(p) => p.$isDarkMode ? "rgba(255,179,108,0.1)" : "rgba(255,179,108,0.15)"};
+    border-color: #ffb36c55;
+    transform: translateY(-1px);
+  }
+`;
+
+const LinkFavicon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: ${(p) => p.$bg || "linear-gradient(135deg,#205d6e,#566fd2)"};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  font-weight: bold;
+  color: #fff;
+  overflow: hidden;
+`;
+
+const playStoreIconCache = new Map();
+const playStoreIconRequests = new Map();
+
+const getPlayStorePackageUrl = (link) => {
+  if (!link?.url?.includes("play.google.com/store/apps")) return null;
+  try {
+    const packageId = new URL(link.url).searchParams.get("id");
+    return packageId
+      ? `https://play.google.com/store/apps/details?id=${encodeURIComponent(packageId)}&hl=en`
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const loadPlayStoreIcon = async (pageUrl) => {
+  if (!pageUrl) return null;
+  if (playStoreIconCache.has(pageUrl)) return playStoreIconCache.get(pageUrl);
+  if (playStoreIconRequests.has(pageUrl)) {
+    return playStoreIconRequests.get(pageUrl);
+  }
+
+  const request = fetch(`https://r.jina.ai/http://${pageUrl.replace(/^https?:\/\//, "")}`)
+    .then((response) => (response.ok ? response.text() : ""))
+    .then((html) => {
+      const imageUrls = [
+        ...new Set(
+          [...html.matchAll(/https:\/\/play-lh\.googleusercontent\.com\/[^\s"')]+/g)]
+            .map(([url]) => url.replace(/\\u003d/g, "="))
+            .filter((url) => /=s(?:48|96)(?:-rw)?(?:\s|$)/.test(url)),
+        ),
+      ];
+      const iconUrl = imageUrls[0] || null;
+      if (iconUrl) playStoreIconCache.set(pageUrl, iconUrl);
+      return iconUrl;
+    })
+    .catch(() => null)
+    .finally(() => playStoreIconRequests.delete(pageUrl));
+
+  playStoreIconRequests.set(pageUrl, request);
+  return request;
+};
+
+const getLinkIconSources = (link, playStoreIcon) => {
+  const sources = [];
+  if (playStoreIcon) sources.push(playStoreIcon);
+  if (typeof link?.icon === "string" && link.icon.trim()) {
+    sources.push(link.icon.trim());
+  }
+
+  const imageSource = Array.isArray(link?.images)
+    ? link.images.find(
+        (image) => typeof image === "string" && /^https?:\/\//i.test(image),
+      )
+    : null;
+  const isPlayMarketLink = link?.url?.includes("play.google.com/store/apps");
+
+  if (isPlayMarketLink && imageSource) sources.push(imageSource);
+
+  if (!isPlayMarketLink) {
+    try {
+      const domain = new URL(link.url).hostname;
+      sources.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=64`);
+    } catch {
+      // The letter fallback is rendered when the URL is invalid.
+    }
+  }
+
+  return [...new Set(sources)];
+};
+
+const LinkFaviconImage = ({ link }) => {
+  const playStorePageUrl = getPlayStorePackageUrl(link);
+  const [playStoreIcon, setPlayStoreIcon] = useState(null);
+  const [sourceIndex, setSourceIndex] = useState(0);
+  useEffect(() => {
+    let isActive = true;
+    setPlayStoreIcon(null);
+    setSourceIndex(0);
+
+    if (playStorePageUrl) {
+      loadPlayStoreIcon(playStorePageUrl).then((iconUrl) => {
+        if (isActive) setPlayStoreIcon(iconUrl);
+      });
+    }
+
+    return () => {
+      isActive = false;
+    };
+  }, [link, playStorePageUrl]);
+
+  const iconSources = getLinkIconSources(link, playStoreIcon);
+
+  const fallbackLetter = link?.title?.charAt(0).toUpperCase() || "?";
+  const isPlayMarketLink = link?.url?.includes("play.google.com/store/apps");
+  const fallbackIcon = isPlayMarketLink ? "🎮" : fallbackLetter;
+  const iconSource = iconSources[sourceIndex];
+
+  if (!iconSource) return fallbackIcon;
+
+  return (
+    <img
+      src={iconSource}
+      alt=""
+      width="28"
+      height="28"
+      onError={() => {
+        if (sourceIndex < iconSources.length - 1) {
+          setSourceIndex((index) => index + 1);
+        } else {
+          setSourceIndex(iconSources.length);
+        }
+      }}
+      style={{ display: "block", objectFit: "contain" }}
+    />
+  );
+};
+
+const LinkMainInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const LinkTitle = styled.div`
+  font-size: 15px;
+  font-weight: 700;
+  color: ${(p) => p.$isDarkMode ? "#f0f0f0" : "#111"};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const LinkAuthor = styled.div`
+  font-size: 11px;
+  color: ${(p) => p.$isDarkMode ? "#fdfdfd" : "#050505"};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const LinkTagsRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 2px;
+`;
+
+const LinkTagBadge = styled.span`
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 20px;
+  background: ${(p) => p.$isDarkMode ? "rgba(255,183,108,0.15)" : "rgba(255,183,108,0.25)"};
+  color: ${(p) => p.$isDarkMode ? "#ffb36c" : "#a05000"};
+  font-weight: 600;
+`;
+
+const LinkPlatformBtns = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+`;
+
+const PlatformBtn = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: none;
+  background: ${(p) => p.$color || "#333"};
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s, transform 0.12s;
+  &:hover { opacity: 0.85; transform: scale(1.03); }
+`;
+
+const LinksPinnedLabel = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: ${(p) => p.$isDarkMode ? "#ffb36c99" : "#666"};
+  text-transform: uppercase;
+  padding: 4px 2px 2px;
+`;
+
+const LinksSectionDivider = styled.div`
+  height: 1px;
+  background: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.12)"};
+  margin: 6px 0;
+`;
+
+/* ── Link Detail Modal ── */
+const LinkDetailOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 10100;
+  background: rgba(0,0,0,0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+`;
+
+const LinkDetailCard = styled.div`
+  background-color: #0e15200a;
+  background-image: ${(p) => (p.$bgImage ? `url(${p.$bgImage})` : p.$bg || "none")};
+  background-size: cover;
+  background-position: center;
+  border: 2px solid #ffb36c77;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 1200px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.95);
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.69) 0%,
+      rgba(0, 0, 0, 0.73) 50%,
+      rgba(0, 0, 0, 0.68) 100%
+    );
+    z-index: 1;
+  }
+`;
+
+const LinkDetailHeader = styled.div`
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+`;
+
+const LinkDetailBody = styled.div`
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: #ffb36c66; border-radius: 10px; }
+`;
+
+const LinkDetailFooter = styled.div`
+  position: relative;
+  z-index: 2;
+  padding: 14px 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  flex-shrink: 0;
+`;
+
+const LinkDetailMedia = styled.div`
+  position: relative;
+  width: 100%;
+  min-height: 140px;
+  overflow: hidden;
+  background: #05080d00;
+  cursor: pointer;
+
+  img.main-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    opacity: 0;
+    transition: transform 0.25s ease;
+  }
+
+  &:hover img.main-image {
+    transform: scale(1.02);
+  }
+
+`;
+
+const TrailerCorner = styled.button`
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 220px;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid #ff3b30;
+  border-radius: 6px;
+  background: #000;
+  cursor: pointer;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.7);
+
+  img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    opacity: 0.82;
+  }
+
+  span {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 28px;
+    text-shadow: 0 1px 5px #000;
+  }
+
+  @media (max-width: 600px) {
+    right: 8px;
+    bottom: 8px;
+    width: 145px;
   }
 `;
 
@@ -927,111 +1435,34 @@ const getYoutubeId = (url) => {
 };
 
 const ImageSlider = ({ images = [], youtubeTrailer, setFullscreenImage, imageMap, setFullscreenVideo }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const scrollRef = useRef(null);
-
-  const scroll = (direction) => {
-    if (scrollRef.current) {
-      const scrollAmount = 310;
-      scrollRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
-    }
-  };
-
   const youtubeId = youtubeTrailer ? getYoutubeId(youtubeTrailer) : null;
   const youtubeThumbnail = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg` : null;
+  const mainImage = images
+    .map((image) => imageMap[image] || image)
+    .find(Boolean) || youtubeThumbnail;
 
   return (
-    <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column' }}>
-      <button 
-        onClick={(e) => { e.stopPropagation(); setIsCollapsed(!isCollapsed); }} 
-        style={{ 
-          alignSelf: 'flex-start', 
-          marginBottom: '3px',
-          marginTop: '3px', 
-          background: '#ecfd03', 
-          border: '1px solid #000', 
-          borderRadius: '3px', 
-          cursor: 'pointer',
-          padding: '5px',
-          fontSize: '11px',
-          fontWeight: 'bold',
-          color: '#000'
-        }}
-      >
-        {isCollapsed ? 'Розгорнути фото і відео' : 'Згорнути фото і відео'}
-      </button>
-      <div style={{ display: 'flex', alignItems: 'center', position: 'relative', width: '100%' }}>
-        <SliderButton style={{ left: 0 }} onClick={(e) => { e.stopPropagation(); scroll('left'); }}>{"<"}</SliderButton>
-        <SliderContent ref={scrollRef}>
-          {youtubeThumbnail && (
-            <div 
-              style={{ 
-                position: 'relative', 
-                cursor: 'pointer', 
-                flexShrink: 0,
-                width: '300px',
-                height: isCollapsed ? '10px' : '135px',
-                transition: 'all 0.3s ease',
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!isCollapsed) setFullscreenVideo(youtubeTrailer);
-              }}
-            >
-              <ThumbnailImage
-                src={youtubeThumbnail}
-                alt="YouTube Trailer"
-                style={{ 
-                  height: isCollapsed ? '10px' : '135px', 
-                  opacity: 0.8,
-                  border: '2px solid red',
-                  boxSizing: 'border-box'
-                }}
-              />
-              {!isCollapsed && (
-                <div 
-                  style={{ 
-                    position: 'absolute', 
-                    top: '50%', 
-                    left: '50%', 
-                    transform: 'translate(-50%, -50%)', 
-                    background: 'rgba(0,0,0,0.7)', 
-                    borderRadius: '50%', 
-                    width: '50px', 
-                    height: '50px', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    color: 'red',
-                    fontSize: '24px',
-                    pointerEvents: 'none'
-                  }}
-                >
-                  ▶
-                </div>
-              )}
-            </div>
-          )}
-
-          {images.map((img, i) => {
-            const imageSrc = imageMap[img] || img;
-            return (
-              <ThumbnailImage
-                key={i}
-                src={imageSrc}
-                alt=""
-                style={{ height: isCollapsed ? '10px' : '135px' }}
-                onClick={(e) => {
-                   e.stopPropagation();
-                   if (!isCollapsed) setFullscreenImage(imageSrc);
-                }}
-              />
-            );
-          })}
-        </SliderContent>
-        <SliderButton style={{ right: 0 }} onClick={(e) => { e.stopPropagation(); scroll('right'); }}>{">"}</SliderButton>
-      </div>
-    </div>
+    <LinkDetailMedia
+      onClick={(event) => {
+        event.stopPropagation();
+        if (mainImage) setFullscreenImage(mainImage);
+      }}
+    >
+      {mainImage && <img className="main-image" src={mainImage} alt="" />}
+      {youtubeThumbnail && youtubeTrailer && (
+        <TrailerCorner
+          type="button"
+          aria-label="Відкрити трейлер"
+          onClick={(event) => {
+            event.stopPropagation();
+            setFullscreenVideo(youtubeTrailer);
+          }}
+        >
+          <img src={youtubeThumbnail} alt="" />
+          <span>▶</span>
+        </TrailerCorner>
+      )}
+    </LinkDetailMedia>
   );
 };
 
@@ -1059,15 +1490,14 @@ const FullscreenImage = styled.img`
 const LoadMoreButton = styled.button`
   width: 100%;
   padding: 8px;
-  background: ${(props) => (props.disabled ? "#eee" : "gold")};
-  color: ${(props) => (props.disabled ? "#999" : "black")};
-  border: 2px solid ${(props) => (props.disabled ? "#ccc" : "#b8860b")};
-  border-radius: 8px;
+  background: ${(props) => (props.isDarkMode ? "black" : "white")};
+  transition: background-color 0.3s ease; 
+  color: ${(props) => (props.isDarkMode ? "white" : "black")};
   font-weight: bold;
   cursor: ${(props) => (props.disabled ? "default" : "pointer")};
   font-size: 13px;
   &:hover {
-    background: ${(props) => (props.disabled ? "#eee" : "#ffcc00")};
+    background: ${(props) => (props.isDarkMode ? "#220150" : "#ffcc00")};
   }
 `;
 
@@ -1514,13 +1944,11 @@ const TIMEZONES = [
 ];
 const imageMap = {
   planes: planes,
-  weather: weather,
-  slivki: slivki,
   village: village,
   herotext: herotext,
   meridian: meridian,
+  castle: castle,
   hills: hills,
-  youtube: youtube,
 };
 
 const Hero = ({
@@ -1640,10 +2068,14 @@ const Hero = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [descriptionModal, setDescriptionModal] = useState(null); // { name, text }
+  const [linkDetailModal, setLinkDetailModal] = useState(null); // link object for detail modal
+  const [showTimezoneMenu, setShowTimezoneMenu] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [searchMode, setSearchMode] = useState("city");
 
   // Блокування прокрутки при відкритій модалці
   useEffect(() => {
-    if (isModalOpen || descriptionModal || showTimezoneMenu) {
+    if (isModalOpen || descriptionModal || showTimezoneMenu || linkDetailModal || searchMode === "links") {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -1651,10 +2083,20 @@ const Hero = ({
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isModalOpen, descriptionModal]);
-  const [showTimezoneMenu, setShowTimezoneMenu] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [searchMode, setSearchMode] = useState("city");
+  }, [isModalOpen, descriptionModal, showTimezoneMenu, linkDetailModal, searchMode]);
+
+  // Закриття linksSearch/linkDetail по Escape
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        if (linkDetailModal) { setLinkDetailModal(null); return; }
+        if (searchMode === "links") { setSearchMode("city"); setSuggestions([]); setShowList(false); }
+      }
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [linkDetailModal, searchMode]);
+
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [fullscreenVideo, setFullscreenVideo] = useState(null);
@@ -2302,8 +2744,6 @@ const Hero = ({
     };
     onAddCity(cityObj);
     window.dispatchEvent(new CustomEvent('domino-next-step-auto'));
-    
-    // Встановлення перезарядки на 10 секунд
     setCooldown(10);
     localStorage.setItem("hero_cooldown_until", Date.now() + 10000);
     
@@ -2703,14 +3143,14 @@ const Hero = ({
                   </ModeIconBtn>
                   </Tooltip>
                   {showModeDropdown && (
-                    <ModeDropdown>
-                      <ModeDropdownItem $active={searchMode === "city"} onClick={() => { setSearchMode("city"); setShowModeDropdown(false); setLatitude(""); setLongitude(""); setSuggestions([]); setShowList(false); }}>
+                    <ModeDropdown $isDarkMode={isDarkMode}>
+                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "city"} onClick={() => { setSearchMode("city"); setShowModeDropdown(false); setLatitude(""); setLongitude(""); setSuggestions([]); setShowList(false); }}>
                       <FaMountainCity /> За назвою міста
                       </ModeDropdownItem>
-                      <ModeDropdownItem $active={searchMode === "coordinates"} onClick={() => { setSearchMode("coordinates"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); }}>
+                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "coordinates"} onClick={() => { setSearchMode("coordinates"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); }}>
                        <FaMapLocationDot /> Координати
                       </ModeDropdownItem>
-                      <ModeDropdownItem $active={searchMode === "links"} onClick={() => { setSearchMode("links"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); setExpandedLinkId(null); }}>
+                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "links"} onClick={() => { setSearchMode("links"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); setExpandedLinkId(null); }}>
                       <TbWorldSearch />  Посилання
                       </ModeDropdownItem>
                     </ModeDropdown>
@@ -2752,18 +3192,20 @@ const Hero = ({
                          {city.name}
                         {city.state ? `, ${city.state}` : ""} ({city.country})
                         <br />
-                        <span style={{ fontSize: "0.85em", color: "#666" }}>
-                          {city.lat.toFixed(2)}°, {city.lon.toFixed(2)}°
+                        <span style={{ fontSize: "0.85em", color: "#fffcfc" }}>
+                         Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°
                         </span>
                       </SuggestionItem>
                     ))}
 
                     {hasMore ? (
-                      <LoadMoreButton onClick={handleLoadMore}>
-                        ⬇ Завантажити ще варіанти
+                      <LoadMoreButton isDarkMode={isDarkMode} onClick={handleLoadMore}>
+                        Завантажити ще варіанти
                       </LoadMoreButton>
                     ) : (
-                      <LoadMoreButton disabled>Кінець списку</LoadMoreButton>
+                      <LoadMoreButton isDarkMode={isDarkMode} disabled>
+                        Кінець списку
+                      </LoadMoreButton>
                     )}
                   </SuggestionsList>
                 )}
@@ -2779,273 +3221,8 @@ const Hero = ({
               </SearchContainer>
             </HeroFormater>
           ) : searchMode === "links" ? (
-            <HeroFormater>
-              <SearchContainer>
-                <ModePicker>
-                <Tooltip content="Вибрати режим пошуку" isDarkMode={isDarkMode}>
-                  <ModeIconBtn
-                    onClick={() => setShowModeDropdown((v) => !v)}
-                    aria-label="Вибрати режим пошуку"
-                  >
-                    <TbWorldSearch />
-                  </ModeIconBtn>
-                  </Tooltip>
-                  {showModeDropdown && (
-                    <ModeDropdown>
-                      <ModeDropdownItem $active={searchMode === "city"} onClick={() => { setSearchMode("city"); setShowModeDropdown(false); setLatitude(""); setLongitude(""); setSuggestions([]); setShowList(false); }}>
-                        <FaMountainCity /> За назвою міста
-                      </ModeDropdownItem>
-                      <ModeDropdownItem $active={searchMode === "coordinates"} onClick={() => { setSearchMode("coordinates"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); }}>
-                         <FaMapLocationDot /> Координати
-                      </ModeDropdownItem>
-                      <ModeDropdownItem $active={searchMode === "links"} onClick={() => { setSearchMode("links"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); setExpandedLinkId(null); }}>
-                        <TbWorldSearch /> Посилання
-                      </ModeDropdownItem>
-                    </ModeDropdown>
-                  )}
-                </ModePicker>
-                <div style={{ position: 'relative', flex: 1 }}>
-                  <HeroInput
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Корисні сайти, ігри, статті Вікіпедії..."
-                    type="text"
-                    autoComplete="off"
-                  />
-                  {inputValue && (
-              <Tooltip content="Очищення пошуковика. Його зробив Доміно!" isDarkMode={isDarkMode}>
-                    <ClearButton
-                      onClick={() => setInputValue("")}
-                      aria-label="Очистити"
-                      type="button"
-                    >
-                      ×
-                    </ClearButton>
-                    </Tooltip>
-                  )}
-                </div>
-                <HeroButton
-                  onClick={() => {
-                    if (inputValue.trim()) {
-                      window.open(
-                        "https://www.google.com/search?q=" +
-                          encodeURIComponent(inputValue),
-                        "_blank",
-                      );
-                    }
-                  }}
-                >
-                  ⌕
-                </HeroButton>
-                {inputValue.trim() !== "" || pinnedLinks.length > 0 ? (
-                  <LinksDropdown ref={linksDropdownRef} $hasExpanded={expandedLinkId !== null}>
-                    {customLinksData
-                      .filter((link) => {
-                        if (inputValue.trim() === "") {
-                          return pinnedLinks.includes(link.id);
-                        }
-                        const lowerInput = inputValue.toLowerCase();
-                        const matchesText =
-                          link.title.toLowerCase().includes(lowerInput) ||
-                          link.snippet.toLowerCase().includes(lowerInput);
-                        const matchesTags =
-                          link.tags &&
-                          link.tags.some((tag) =>
-                            tag.toLowerCase().includes(lowerInput),
-                          );
-                        return matchesText || matchesTags;
-                      })
-                      .map((link) => (
-                        <AccordionItem key={link.id} data-id={link.id}>
-                          <AccordionHeader
-                            onClick={() =>
-                              setExpandedLinkId(
-                                expandedLinkId === link.id ? null : link.id,
-                              )
-                            }
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "2px",
-                                width: "100%",
-                              }}
-                            >
-                              <span style={{ flex: 1, fontSize: "13px" }}>{link.title}</span>
-                                <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.open(link.url, "_blank");
-                                }}
-                                style={{
-                                  padding: "3px 10px",
-                                  background: "#ffb36c",
-                                  border: "none",
-                                  borderRadius: "5px",
-                                  cursor: "pointer",
-                                  fontWeight: "bold",
-                                  color: "#000",
-                                  fontSize: "12px",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {link.buttonText || "Відкрити"}
-                              </button>
-                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  togglePin(link.id);
-                                }}
-                                title={
-                                  pinnedLinks.includes(link.id)
-                                    ? "Відкріпити"
-                                    : "Закріпити"
-                                }
-                                style={{
-                                  padding: "0",
-                                  background: "transparent",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  fontSize: "16px",
-                                }}
-                              >
-                                {pinnedLinks.includes(link.id) ? <BsPinAngleFill /> : <BsPinAngle />}
-                              </button>
-                              <span>
-                                {expandedLinkId === link.id ? "▲" : "▼"}
-                              </span>
-                            </div>
-                          </AccordionHeader>
-                          <AccordionContent
-                            $expanded={expandedLinkId === link.id}
-                          >
-                            {link.tags && (
-                              <TagsContainer>
-                                {link.tags.map((tag) => (
-                                  <Tag key={tag}>#{tag}</Tag>
-                                ))}
-                              </TagsContainer>
-                            )}
-                            {((link.images && link.images.length > 0) || link.youtubeTrailer) && (
-                              <ImageSlider 
-                                images={link.images || []} 
-                                youtubeTrailer={link.youtubeTrailer}
-                                setFullscreenImage={setFullscreenImage} 
-                                imageMap={imageMap} 
-                                setFullscreenVideo={setFullscreenVideo}
-                              />
-                            )}
-                            <div>{link.snippet}</div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-
-                    {wikipediaResults.map((result) => (
-                      <AccordionItem key={result.id} data-id={result.id}>
-                        <AccordionHeader
-                          onClick={() =>
-                            setExpandedLinkId(
-                              expandedLinkId === result.id ? null : result.id,
-                            )
-                          }
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "10px",
-                              width: "100%",
-                            }}
-                          >
-                            <span style={{ flex: 1 }}>{result.title}</span>
-                                                        <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(result.url, "_blank");
-                              }}
-                              style={{
-                                padding: "3px 10px",
-                                background: "#00bfff",
-                                border: "none",
-                                borderRadius: "5px",
-                                cursor: "pointer",
-                                fontWeight: "bold",
-                                color: "#000",
-                                fontSize: "12px",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              Вікіпедія
-                            </button>
-                            <span style={{ marginLeft: "10px" }}>
-                              {expandedLinkId === result.id ? "▲" : "▼"}
-                            </span>
-                          </div>
-                        </AccordionHeader>
-                        <AccordionContent
-                          $expanded={expandedLinkId === result.id}
-                        >
-                          <div>{result.snippet}</div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-
-                    {isWikipediaLoading && (
-                      <div style={{ padding: "10px", color: "#333" }}>
-                        Завантажую результати Вікіпедії...
-                      </div>
-                    )}
-                    {customLinksData.filter((link) => {
-                      const lowerInput = inputValue.toLowerCase();
-                      const matchesText =
-                        link.title.toLowerCase().includes(lowerInput) ||
-                        link.snippet.toLowerCase().includes(lowerInput);
-                      const matchesTags =
-                        link.tags &&
-                        link.tags.some((tag) =>
-                          tag.toLowerCase().includes(lowerInput),
-                        );
-                      return matchesText || matchesTags;
-                    }).length === 0 &&
-                      inputValue.trim() !== "" &&
-                      wikipediaResults.length === 0 &&
-                      !isWikipediaLoading && (
-                        <div
-                          style={{
-                            padding: "15px",
-                            textAlign: "center",
-                            color: "#333",
-                          }}
-                        >
-                          Нічого не знайдено в закладках та Вікіпедії. <br />
-                          <button
-                            onClick={() =>
-                              window.open(
-                                "https://www.google.com/search?q=" +
-                                  encodeURIComponent(inputValue),
-                                "_blank",
-                              )
-                            }
-                            style={{
-                              marginTop: "10px",
-                              padding: "5px 10px",
-                              background: "#ffb36c",
-                              border: "none",
-                              borderRadius: "5px",
-                              cursor: "pointer",
-                              fontWeight: "bold",
-                              color: "#000",
-                            }}
-                          >
-                            Шукати в Google
-                          </button>
-                        </div>
-                      )}
-                  </LinksDropdown>
-                ) : null}
-              </SearchContainer>
-            </HeroFormater>
+            /* ── Fullscreen links search mode: rendered via portal at end of HeroDiv ── */
+            null
           ) : (
             <div
               style={{
@@ -3069,14 +3246,14 @@ const Hero = ({
                   </ModeIconBtn>
                   </Tooltip>
                   {showModeDropdown && (
-                    <ModeDropdown>
-                      <ModeDropdownItem $active={searchMode === "city"} onClick={() => { setSearchMode("city"); setShowModeDropdown(false); setLatitude(""); setLongitude(""); setSuggestions([]); setShowList(false); }}>
+                    <ModeDropdown $isDarkMode={isDarkMode}>
+                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "city"} onClick={() => { setSearchMode("city"); setShowModeDropdown(false); setLatitude(""); setLongitude(""); setSuggestions([]); setShowList(false); }}>
                         <FaMountainCity />  За назвою міста
                       </ModeDropdownItem>
-                      <ModeDropdownItem $active={searchMode === "coordinates"} onClick={() => { setSearchMode("coordinates"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); }}>
+                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "coordinates"} onClick={() => { setSearchMode("coordinates"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); }}>
                         <FaMapLocationDot />  Координати
                       </ModeDropdownItem>
-                      <ModeDropdownItem $active={searchMode === "links"} onClick={() => { setSearchMode("links"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); setExpandedLinkId(null); }}>
+                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "links"} onClick={() => { setSearchMode("links"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); setExpandedLinkId(null); }}>
                        <TbWorldSearch />   Посилання
                       </ModeDropdownItem>
                     </ModeDropdown>
@@ -3565,35 +3742,58 @@ const Hero = ({
                         {rating === 2 ? "💛" : rating === 1 ? "❤️" : "🤍"}
                       </HeartIcon>
                       {bg.description && (
-                   <Tooltip content="Детальний опис картини" isDarkMode={isDarkMode}>
+                        <Tooltip content="Детальний опис картини" isDarkMode={isDarkMode}>
+                          <HeartIcon
+                            $color="#aef"
+                            aria-label="Детальний опис картини"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDescriptionModal({
+                                name: bg.name,
+                                text: bg.description,
+                                src: bg.src,
+                                author: bg.author,
+                                source: bg.source,
+                              });
+                            }}
+                            style={{
+                              fontSize: "18px",
+                              background: "rgb(7, 7, 7)",
+                              borderRadius: "50%",
+                              width: 20,
+                              height: 20,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            ?
+                          </HeartIcon>
+                        </Tooltip>
+                      )}
+                      <Tooltip content="Скачати файл фону" isDarkMode={isDarkMode}>
                         <HeartIcon
-                          $color="#aef"
-                          aria-label="Детальний опис картини"
+                          $color="#ffda79"
+                          aria-label="Скачати фон"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDescriptionModal({
-                              name: bg.name,
-                              text: bg.description,
-                              src: bg.src,
-                              author: bg.author,
-                              source: bg.source,
-                            });
+                            handleDownloadBg(bg);
                           }}
                           style={{
-                            fontSize: "18px",
-                            background: "rgb(7, 7, 7)",
+                            fontSize: "14px",
+                            background: "rgba(7, 7, 7, 0.8)",
                             borderRadius: "50%",
                             width: 20,
                             height: 20,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
+                            cursor: "pointer",
                           }}
                         >
-                          ?
+                          📥
                         </HeartIcon>
-                        </Tooltip>
-                      )}
+                      </Tooltip>
                     </RatingOverlay>
                     {isCustom(bg.src) && (
                       <>
@@ -3669,18 +3869,30 @@ const Hero = ({
                     </NameOverlay>
                     {isVideoSource(bg.src) ? (
                       <video
-                        src={bg.src}
+                        preload="none"
                         muted
+                        playsInline
                         style={{
                           width: "100%",
                           aspectRatio: "3/2",
                           objectFit: "cover",
                           cursor: "pointer",
+                          background: "#111",
                         }}
-                        onMouseEnter={(e) => e.target.play()}
+                        onMouseEnter={(e) => {
+                          if (!e.currentTarget.src) {
+                            e.currentTarget.src = bg.src;
+                          }
+                          e.currentTarget.play().catch(() => {});
+                        }}
                         onMouseLeave={(e) => {
-                          e.target.pause();
-                          e.target.currentTime = 0;
+                          e.currentTarget.pause();
+                          e.currentTarget.currentTime = 0;
+                          // Free network resources for cloud URLs
+                          if (typeof bg.src === "string" && bg.src.startsWith("http")) {
+                            e.currentTarget.removeAttribute("src");
+                            e.currentTarget.load();
+                          }
                         }}
                         onClick={() => handleSelectBg(bg.src)}
                       />
@@ -3824,6 +4036,7 @@ const Hero = ({
             {isVideoSource(descriptionModal.src) ? (
               <video
                 src={descriptionModal.src}
+                preload="none"
                 autoPlay
                 muted
                 loop
@@ -3924,26 +4137,12 @@ const Hero = ({
                   {descriptionModal.text}
                 </p>
               </div>
-     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                <div
-                  style={{
-                    background: "rgba(0, 0, 0, 0.75)",
-                    padding: "8px",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                    border: "1px solid rgba(255, 179, 108, 0.4)",
-                    color: "#ffb36c",
-                    fontWeight: "bold",
-                    textShadow: "0 1px 2px rgba(0,0,0,0.6)",
-                  }}
-                >
-                   Автор: {descriptionModal.author || "Невідомий"}
-                </div>
-                {descriptionModal.source && (
+     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "8px" }}>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                   <div
                     style={{
                       background: "rgba(0, 0, 0, 0.75)",
-                      padding: "8px",
+                      padding: "8px 12px",
                       borderRadius: "8px",
                       fontSize: "13px",
                       border: "1px solid rgba(255, 179, 108, 0.4)",
@@ -3952,9 +4151,47 @@ const Hero = ({
                       textShadow: "0 1px 2px rgba(0,0,0,0.6)",
                     }}
                   >
-                    Джерело: {descriptionModal.source}
+                     Автор: {descriptionModal.author || "Невідомий"}
                   </div>
-                )}
+                  {descriptionModal.source && (
+                    <div
+                      style={{
+                        background: "rgba(0, 0, 0, 0.75)",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
+                        fontSize: "13px",
+                        border: "1px solid rgba(255, 179, 108, 0.4)",
+                        color: "#ffb36c",
+                        fontWeight: "bold",
+                        textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+                      }}
+                    >
+                      Джерело: {descriptionModal.source}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleDownloadBg(descriptionModal)}
+                  style={{
+                    background: "linear-gradient(135deg, #ffb36c 0%, #ff8c2b 100%)",
+                    color: "#000",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "8px 16px",
+                    fontSize: "13px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(255, 179, 108, 0.4)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    transition: "transform 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                >
+                  📥 Скачати {isVideoSource(descriptionModal.src) ? "відео" : "картинку"}
+                </button>
               </div>
             </div>
           </div>
@@ -4022,6 +4259,412 @@ const Hero = ({
           </div>
         </FullscreenImageOverlay>
       )}
+      {/* ── FULLSCREEN LINKS SEARCH OVERLAY ── */}
+      {searchMode === "links" && (
+        <LinksSearchOverlay $isDarkMode={isDarkMode}>
+          <LinksSearchHeader $isDarkMode={isDarkMode}>
+            <LinksSearchBar $isDarkMode={isDarkMode}>
+              <ModePicker>
+                <Tooltip content="Вибрати режим пошуку" isDarkMode={isDarkMode}>
+                  <ModeIconBtn
+                    onClick={() => setShowModeDropdown((v) => !v)}
+                    aria-label="Вибрати режим пошуку"
+                    style={{ background: "#ffb36c", color: "#000", borderRadius: "50%", width: "34px", height: "34px" }}
+                  >
+                    <TbWorldSearch />
+                  </ModeIconBtn>
+                </Tooltip>
+                {showModeDropdown && (
+                  <ModeDropdown $isDarkMode={isDarkMode}>
+                    <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "city"} onClick={() => { setSearchMode("city"); setShowModeDropdown(false); setLatitude(""); setLongitude(""); setSuggestions([]); setShowList(false); }}>
+                      <FaMountainCity /> За назвою міста
+                    </ModeDropdownItem>
+                    <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "coordinates"} onClick={() => { setSearchMode("coordinates"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); }}>
+                      <FaMapLocationDot /> Координати
+                    </ModeDropdownItem>
+                    <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "links"} onClick={() => { setSearchMode("links"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); }}>
+                      <TbWorldSearch /> Посилання
+                    </ModeDropdownItem>
+                  </ModeDropdown>
+                )}
+              </ModePicker>
+              <LinksSearchInput
+                $isDarkMode={isDarkMode}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Пошук сайтів, ігор, статей, авторів..."
+                type="text"
+                autoFocus
+                autoComplete="off"
+              />
+              {inputValue && (
+                <ClearButton
+                  onClick={() => setInputValue("")}
+                  aria-label="Очистити"
+                  type="button"
+                  style={{ position: "static", transform: "none" }}
+                >
+                  ×
+                </ClearButton>
+              )}
+              <HeroButton
+                onClick={() => {
+                  if (inputValue.trim()) {
+                    window.open("https://www.google.com/search?q=" + encodeURIComponent(inputValue), "_blank");
+                  }
+                }}
+                style={{ width: "36px", height: "36px", borderRadius: "50%", fontSize: "16px" }}
+              >
+                ⌕
+              </HeroButton>
+            </LinksSearchBar>
+
+            <LinksSearchMeta $isDarkMode={isDarkMode}>
+              Натисніть на картку сайту, щоб відкрити повний опис та галерею • Esc для виходу
+            </LinksSearchMeta>
+          </LinksSearchHeader>
+
+          <LinksResultsList>
+            {/* Pinned Links Section when input is empty */}
+            {inputValue.trim() === "" && pinnedLinks.length > 0 && (
+              <>
+                <LinksPinnedLabel $isDarkMode={isDarkMode}>📌 Закріплені сайти</LinksPinnedLabel>
+                {customLinksData
+                  .filter((link) => pinnedLinks.includes(link.id))
+                  .map((link) => {
+                    const author = extractAuthor(link);
+                    const platforms = getLinkPlatforms(link);
+                    return (
+                      <LinksResultItem
+                        key={`pinned-${link.id}`}
+                        $isDarkMode={isDarkMode}
+                        onClick={() => setLinkDetailModal(link)}
+                      >
+                        <LinkFavicon $bg="linear-gradient(135deg, #ffb36c 0%, #ff8c2b 100%)">
+                          <LinkFaviconImage link={link} />
+                        </LinkFavicon>
+                        <LinkMainInfo>
+                          <LinkTitle $isDarkMode={isDarkMode}>{link.title}</LinkTitle>
+                          {author && <LinkAuthor $isDarkMode={isDarkMode}> {author}</LinkAuthor>}
+                          {link.tags && (
+                            <LinkTagsRow>
+                              {link.tags.map((t) => (
+                                <LinkTagBadge key={t} $isDarkMode={isDarkMode}>#{t}</LinkTagBadge>
+                              ))}
+                            </LinkTagsRow>
+                          )}
+                        </LinkMainInfo>
+                        <LinkPlatformBtns onClick={(e) => e.stopPropagation()}>
+                          {platforms.map((p) => {
+                            const cfg = PLATFORM_CONFIG[p.type];
+                            if (!cfg) return null;
+                            return (
+                              <PlatformBtn
+                                key={p.type}
+                                $color={cfg.color}
+                                onClick={() => window.open(p.url, "_blank")}
+                              >
+                                {cfg.emoji} {cfg.label}
+                              </PlatformBtn>
+                            );
+                          })}
+                          <button
+                            onClick={() => window.open(link.url, "_blank")}
+                            style={{
+                              padding: "4px 10px",
+                              background: "#ffb36c",
+                              border: "none",
+                              borderRadius: "20px",
+                              fontWeight: "bold",
+                              color: "#000",
+                              fontSize: "11px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {link.buttonText || "Відкрити"}
+                          </button>
+                        </LinkPlatformBtns>
+                      </LinksResultItem>
+                    );
+                  })}
+                <LinksSectionDivider $isDarkMode={isDarkMode} />
+                <LinksPinnedLabel $isDarkMode={isDarkMode}>🌐 Усі сайти та ресурси</LinksPinnedLabel>
+              </>
+            )}
+
+            {/* Filtered Custom Links */}
+            {customLinksData
+              .filter((link) => {
+                if (inputValue.trim() === "") return true;
+                const lowerInput = inputValue.toLowerCase();
+                const matchesText =
+                  link.title.toLowerCase().includes(lowerInput) ||
+                  (link.snippet && link.snippet.toLowerCase().includes(lowerInput));
+                const matchesAuthor =
+                  extractAuthor(link)?.toLowerCase().includes(lowerInput);
+                const matchesTags =
+                  link.tags && link.tags.some((tag) => tag.toLowerCase().includes(lowerInput));
+                return matchesText || matchesAuthor || matchesTags;
+              })
+              .map((link) => {
+                const author = extractAuthor(link);
+                const platforms = getLinkPlatforms(link);
+                const isPinned = pinnedLinks.includes(link.id);
+                return (
+                  <LinksResultItem
+                    key={link.id}
+                    $isDarkMode={isDarkMode}
+                    onClick={() => setLinkDetailModal(link)}
+                  >
+                    <LinkFavicon>
+                      <LinkFaviconImage link={link} />
+                    </LinkFavicon>
+                    <LinkMainInfo>
+                      <LinkTitle $isDarkMode={isDarkMode}>{link.title}</LinkTitle>
+                      {author && <LinkAuthor $isDarkMode={isDarkMode}>{author}</LinkAuthor>}
+                      {link.tags && (
+                        <LinkTagsRow>
+                          {link.tags.map((t) => (
+                            <LinkTagBadge key={t} $isDarkMode={isDarkMode}>#{t}</LinkTagBadge>
+                          ))}
+                        </LinkTagsRow>
+                      )}
+                    </LinkMainInfo>
+                    <LinkPlatformBtns onClick={(e) => e.stopPropagation()}>
+                      {platforms.map((p) => {
+                        const cfg = PLATFORM_CONFIG[p.type];
+                        if (!cfg) return null;
+                        return (
+                          <PlatformBtn
+                            key={p.type}
+                            $color={cfg.color}
+                            onClick={() => window.open(p.url, "_blank")}
+                          >
+                            {cfg.emoji} {cfg.label}
+                          </PlatformBtn>
+                        );
+                      })}
+                      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                        <button
+                          onClick={() => window.open(link.url, "_blank")}
+                          style={{
+                            padding: "4px 10px",
+                            background: "#ffb36c",
+                            border: "none",
+                            borderRadius: "20px",
+                            fontWeight: "bold",
+                            color: "#000",
+                            fontSize: "11px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {link.buttonText || "Відкрити"}
+                        </button>
+                        <button
+                          onClick={() => togglePin(link.id)}
+                          title={isPinned ? "Відкріпити" : "Закріпити"}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            fontSize: "16px",
+                            color: isPinned ? "#ffb36c" : (isDarkMode ? "#666" : "#aaa"),
+                          }}
+                        >
+                          {isPinned ? <BsPinAngleFill /> : <BsPinAngle />}
+                        </button>
+                      </div>
+                    </LinkPlatformBtns>
+                  </LinksResultItem>
+                );
+              })}
+
+            {/* Wikipedia Results */}
+            {wikipediaResults.map((result) => (
+              <LinksResultItem
+                key={result.id}
+                $isDarkMode={isDarkMode}
+                onClick={() => setLinkDetailModal({
+                  title: result.title,
+                  url: result.url,
+                  snippet: result.snippet,
+                  buttonText: "Читати у Вікіпедії",
+                  author: "Вікіпедія (Українська)",
+                  tags: ["вікіпедія", "енциклопедія"]
+                })}
+              >
+                <LinkFavicon $bg="linear-gradient(135deg, #00bfff, #0077ff)">
+                  W
+                </LinkFavicon>
+                <LinkMainInfo>
+                  <LinkTitle $isDarkMode={isDarkMode}>{result.title}</LinkTitle>
+                  <LinkAuthor $isDarkMode={isDarkMode}>🌐 Вікіпедія</LinkAuthor>
+                </LinkMainInfo>
+                <LinkPlatformBtns onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => window.open(result.url, "_blank")}
+                    style={{
+                      padding: "4px 10px",
+                      background: "#00bfff",
+                      border: "none",
+                      borderRadius: "20px",
+                      fontWeight: "bold",
+                      color: "#000",
+                      fontSize: "11px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Вікіпедія
+                  </button>
+                </LinkPlatformBtns>
+              </LinksResultItem>
+            ))}
+
+            {isWikipediaLoading && (
+              <div style={{ padding: "16px", textAlign: "center", color: isDarkMode ? "#aaa" : "#555" }}>
+                ⏳ Завантажую результати з Вікіпедії...
+              </div>
+            )}
+          </LinksResultsList>
+        </LinksSearchOverlay>
+      )}
+
+      {/* ── LINK DETAIL MODAL ── */}
+      {linkDetailModal && (() => {
+        const bgImage = getLinkModalBgImage(linkDetailModal);
+        const author = extractAuthor(linkDetailModal);
+        return (
+          <LinkDetailOverlay onClick={() => setLinkDetailModal(null)}>
+            <LinkDetailCard
+              $bgImage={bgImage}
+              $bg={linkDetailModal.bg}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <LinkDetailHeader>
+                <div>
+                  <h2
+                    style={{
+                      color: "#ffb36c",
+                      margin: 0,
+                      fontSize: "22px",
+                      fontWeight: "bold",
+                      textShadow: "0 2px 6px rgba(0,0,0,0.9)",
+                    }}
+                  >
+                    {linkDetailModal.title}
+                  </h2>
+                  {author && (
+                    <div style={{ color: "#f9f6f6", fontSize: "13px", marginTop: "4px" }}>
+                      Автор / Постачальник: <b>{author}</b>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => setLinkDetailModal(null)}
+                  style={{
+                    background: "rgba(0,0,0,0.6)",
+                    border: "1px solid rgba(255,255,255,0.3)",
+                    borderRadius: "50%",
+                    width: "32px",
+                    height: "32px",
+                    color: "#fff",
+                    fontSize: "20px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  ×
+                </button>
+              </LinkDetailHeader>
+
+              <LinkDetailBody>
+                {linkDetailModal.tags && (
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                    {linkDetailModal.tags.map((t) => (
+                      <span
+                        key={t}
+                        style={{
+                          background: "rgba(255, 179, 108, 0.2)",
+                          color: "#ffb36c",
+                          border: "1px solid rgba(255, 179, 108, 0.35)",
+                          padding: "2px 8px",
+                          borderRadius: "12px",
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        #{t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {((linkDetailModal.images && linkDetailModal.images.length > 0) || linkDetailModal.youtubeTrailer) && (
+                  <ImageSlider
+                    images={linkDetailModal.images || []}
+                    youtubeTrailer={linkDetailModal.youtubeTrailer}
+                    setFullscreenImage={setFullscreenImage}
+                    imageMap={imageMap}
+                    setFullscreenVideo={setFullscreenVideo}
+                  />
+                )}
+
+                <div
+                  style={{
+                    lineHeight: "1.8",
+                    whiteSpace: "pre-wrap",
+                    color: "#f0f0f0",
+                    fontSize: "14px",
+                    textShadow: "0 1px 4px rgba(0,0,0,0.9)",
+                    background: "rgba(0, 0, 0, 0.35)",
+                    padding: "14px",
+                    borderRadius: "12px",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                  }}
+                >
+                  {linkDetailModal.snippet}
+                </div>
+              </LinkDetailBody>
+
+              <LinkDetailFooter>
+                {getLinkPlatforms(linkDetailModal).map((p) => {
+                  const cfg = PLATFORM_CONFIG[p.type];
+                  if (!cfg) return null;
+                  return (
+                    <PlatformBtn
+                      key={p.type}
+                      $color={cfg.color}
+                      onClick={() => window.open(p.url, "_blank")}
+                      style={{ padding: "8px 14px", fontSize: "13px" }}
+                    >
+                      {cfg.emoji} Відкрити в {cfg.label}
+                    </PlatformBtn>
+                  );
+                })}
+
+                <button
+                  onClick={() => window.open(linkDetailModal.url, "_blank")}
+                  style={{
+                    background: "linear-gradient(135deg, #ffb36c 0%, #ff8c2b 100%)",
+                    color: "#000",
+                    border: "none",
+                    borderRadius: "20px",
+                    padding: "8px 20px",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  marginLeft: "auto",
+                }}
+              >
+                {linkDetailModal.buttonText || "Перейти на сайт"}
+              </button>
+            </LinkDetailFooter>
+          </LinkDetailCard>
+        </LinkDetailOverlay>
+        );
+      })()}
     </HeroDiv>
   );
 };
