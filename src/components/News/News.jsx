@@ -161,6 +161,18 @@ const CarouselSlide = styled.div`
   flex-direction: column;
   justify-content: flex-start;
   gap: 12px;
+  opacity: ${(props) => {
+    if (props.$distanceFromCenter === 0) return 1;
+    if (props.$distanceFromCenter === 1) return 0.9;
+    return 0.62;
+  }};
+  transform: scale(${(props) => {
+    if (props.$distanceFromCenter === 0) return 1;
+    if (props.$distanceFromCenter === 1) return 0.94;
+    return 0.86;
+  }});
+  transform-origin: center center;
+  transition: transform 0.25s ease, opacity 0.25s ease;
 
   @media (max-width: 479px) {flex: 0 0 calc(100vw - 48px);
     width: calc(100vw - 48px);
@@ -175,9 +187,9 @@ const CarouselSlide = styled.div`
   }
 
   @media (min-width: 900px) {
-    flex: 0 0 calc(33.333% - 7px);
-    width: calc(33.333% - 7px);
-    min-width: calc(33.333% - 7px);
+    flex: 0 0 calc(28% - 4px);
+    width: calc(28% - 4px);
+    min-width: calc(28% - 4px);
   }
 `;
 
@@ -553,7 +565,7 @@ const NewsCard = ({
         {(showTitle || showDescription) && (
           <CardContent $isDarkMode={$isDarkMode} $overlay={showImage}>
             {showTitle && (
-              <h4
+              <h2
                 style={{
                   margin: "0 0 8px 0",
                   fontSize: "16px",
@@ -566,7 +578,7 @@ const NewsCard = ({
                 }}
               >
                 {item.title}
-              </h4>
+              </h2>
             )}
             {showDescription && (
               <p
@@ -1524,8 +1536,29 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       ? [...displayedItems, ...displayedItems, ...displayedItems]
       : [];
   const carouselRef = useRef(null);
+  const [centeredSlideIndex, setCenteredSlideIndex] = useState(null);
   const isProgrammaticScrollRef = useRef(false);
   const scrollTimeoutRef = useRef(null);
+
+  const updateCenteredSlide = useCallback(() => {
+    const container = carouselRef.current;
+    if (!container) return;
+
+    const containerCenter = container.getBoundingClientRect().left + container.clientWidth / 2;
+    let closestIndex = null;
+    let closestDistance = Infinity;
+
+    [...container.querySelectorAll("[data-news-slide]")].forEach((slide, index) => {
+      const rect = slide.getBoundingClientRect();
+      const distance = Math.abs(rect.left + rect.width / 2 - containerCenter);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    setCenteredSlideIndex(closestIndex);
+  }, []);
 
   const scrollCarousel = (direction) => {
     if (!carouselRef.current) return;
@@ -1549,6 +1582,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 
   const handleScroll = () => {
     if (!carouselRef.current || displayedItems.length === 0) return;
+    updateCenteredSlide();
     if (isProgrammaticScrollRef.current) return;
 
     if (scrollTimeoutRef.current) {
@@ -1588,8 +1622,9 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     if (carouselRef.current && displayedItems.length > 0) {
       const oneSetWidth = carouselRef.current.scrollWidth / 3;
       carouselRef.current.scrollLeft = oneSetWidth;
+      requestAnimationFrame(updateCenteredSlide);
     }
-  }, [displayedItems.length, filterSources]);
+  }, [displayedItems.length, filterSources, updateCenteredSlide]);
   useEffect(() => {
     const init = async () => {
       try {
@@ -2027,7 +2062,15 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
              <CarouselWrapper>
   <MobileCarousel ref={carouselRef} onScroll={handleScroll}>
     {infiniteItems.map((item, index) => (
-      <CarouselSlide data-news-slide key={`${item.link}-${index}`}>
+      <CarouselSlide
+        data-news-slide
+        key={`${item.link}-${index}`}
+        $distanceFromCenter={
+          centeredSlideIndex === null
+            ? 2
+            : Math.min(Math.abs(centeredSlideIndex - index), 2)
+        }
+      >
         <NewsCard
           item={item}
           $isDarkMode={$isDarkMode}
