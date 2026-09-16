@@ -585,22 +585,22 @@ const Header = ({
           </Tooltip>
 
           {/* Допомога (?) */}
-          <Tooltip content="Допомога" isDarkMode={isDarkMode}>
+          <Tooltip content="Допомога з сайтом" isDarkMode={isDarkMode}>
             <IconButton 
               onClick={handleHelpClick} 
               $isDarkMode={isDarkMode}
-              aria-label="Допомога"
+              aria-label="Допомога з сайтом"
             >
               <EmojiWrapper style={{ fontWeight: 900 }}>?</EmojiWrapper>
             </IconButton>
           </Tooltip>
 
           {/* Магазин */}
-          <Tooltip content="Спонсорство" isDarkMode={isDarkMode}>
+          <Tooltip content="Станьте нашим спосором, та підтримайте інші екологічні компанії!" isDarkMode={isDarkMode}>
             <IconButton
               onClick={handleShopClick}
               $isDarkMode={isDarkMode}
-              aria-label="Спонсорство"
+              aria-label="Станьте нашим спосором, та підтримайте інші екологічні компанії!"
             >
               <GiShop />
             </IconButton>
@@ -743,6 +743,17 @@ const Header = ({
             <EmojiWrapper style={{ fontWeight: 900 }}>?</EmojiWrapper>
           </IconButton>
         </Tooltip>
+        
+          {/* Магазин */}
+          <Tooltip content="Станьте нашим спосором, та підтримайте інші екологічні компанії!" isDarkMode={isDarkMode}>
+            <IconButton
+              onClick={handleShopClick}
+              $isDarkMode={isDarkMode}
+              aria-label="Станьте нашим спосором, та підтримайте інші екологічні компанії!"
+            >
+              <GiShop />
+            </IconButton>
+          </Tooltip>
 
         <Tooltip content="Інші опції" isDarkMode={isDarkMode}>
           <IconButton
@@ -755,7 +766,16 @@ const Header = ({
             </EmojiWrapper>
           </IconButton>
         </Tooltip>
-
+         
+          <Tooltip content="Відкрити меню" isDarkMode={isDarkMode}>
+            <IconButton
+              onClick={handleBurgerOpen}
+              $isDarkMode={isDarkMode}
+              aria-label="Відкрити меню"
+            >
+              <EmojiWrapper>☰</EmojiWrapper>
+            </IconButton>
+          </Tooltip>
         <button
           onClick={handleLoginClick}
           style={{

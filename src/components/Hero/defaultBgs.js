@@ -5,7 +5,6 @@ import penny from "../../photos/vip-modal/penny.webp";
 import hills from "../../photos/hero-header/fog.webp";
 const hillsVideo = "https://raw.githubusercontent.com/TheTurkeyProgramist/stuxia/main/fog.mp4";
 import dinofrozVideo from "../../mp4/nicerone.mp4";
-import soloveyko from "../../photos/vip-images/vip-soloveyko.webp";
 import harmony from "../../photos/vip-images/asium/asium.webp";
 import horse from "../../photos/vip-images/horse/horse.webp";
 import theorytwo from "../../photos/fan-art/theorytwo.webp";
@@ -16,7 +15,6 @@ import electrodynamix from "../../photos/vip-images/electrodynamix.webp";
 import sirenhead from "../../photos/vip-images/sirenhead/sirenhead.webp"
 import backrooms from "../../photos/vip-modal/backrooms.webp"
 // Desert
-import desert from "../../photos/vip-images/desert/vip-desert.webp";
 import deserttwo from "../../photos/vip-images/desert/deserttwo.webp";
 import desertthree from "../../photos/vip-images/desert/desertthree.webp";
 import desertfour from "../../photos/vip-images/desert/desertfour.webp";
@@ -25,8 +23,6 @@ import mecha from "../../photos/vip-images/mechannic.webp";
 import clubstep from "../../photos/fan-art/clubstep.webp";
 import turkeys from "../../photos/vip-images/turkeys/ultra-vip-turkeys.webp";
 // Horses
-import horsethree from "../../photos/vip-images/horse/horsethree.webp";
-import horsetwo from "../../photos/vip-images/horse/horsetwo.webp";
 import chess from "../../photos/vip-images/horse/chess.webp";
 // Turkeys
 import aurorahills from "../../photos/vip-images/aurorahills.webp";
@@ -38,7 +34,6 @@ import turkeysix from "../../photos/vip-images/turkeys/turkeyssix.webp";
 import turkeysone from "../../photos/vip-images/turkeys/turkeysone.webp";
 import turkeyseven from "../../photos/vip-images/turkeys/turkeysseven.webp";
 // Asium
-import asiumnine from "../../photos/vip-images/asium/vip-forest.webp";
 import asiumone from "../../photos/vip-images/asium/asiumone.webp";
 import asiumtwo from "../../photos/vip-images/asium/asiuntwo.webp";
 import asiumthree from "../../photos/vip-images/asium/asiumthree.webp";
@@ -51,8 +46,6 @@ import asiumseven from "../../photos/vip-images/asium/asiumseven.webp";
 // Swamp
 import swamptwo from "../../photos/vip-images/swamp/swamptwo.webp";
 import swampthree from "../../photos/vip-images/swamp/swampthree.webp";
-import swampfour from "../../photos/vip-images/swamp/swampfour.webp";
-import swampfive from "../../photos/vip-images/swamp/swampfive.webp";
 import swampsix from "../../photos/vip-images/swamp/swampsix.webp";
 import swampseven from "../../photos/vip-images/swamp/seampseven.webp";
 import swampeight from "../../photos/vip-images/swamp/swampeight.webp";
@@ -63,10 +56,8 @@ import deadlocked from "../../photos/vip-images/swamp/deadlocked.webp";
 import horrortwo from "../../photos/vip-images/horror/horrortwo.webp";
 import horrorthree from "../../photos/vip-images/horror/horrorthree.webp";
 import horrorfour from "../../photos/vip-images/horror/horrorfour.webp";
-import horrorfive from "../../photos/vip-images/horror/horrorfive.webp";
 import horror from "../../photos/vip-images/horror/horror.webp";
 import horrorsix from "../../photos/vip-images/horror/horrorsix.webp";
-import horrorseven from "../../photos/vip-images/horror/horrorseven.webp";
 import horroreight from "../../photos/vip-images/horror/horroreight.webp";
 // Дракони
 import dinofrozone from "../../photos/vip-images/dinofroz/vip-dinofroz.webp";
@@ -116,10 +107,10 @@ export const DEFAULT_BGS = [
   {
     src: sirenhead,
     name: "Щось не так...",
-    category: "Хоррор", // Або "Лімінальні простори"
-    author: "TheTurkeyStudio",
+    category: "Хоррор", 
+    author: "Тревор Хендерсон",
     description:
-      "Навіть ті хто не знають його, починають розуміти ця вишка з сиренами, на така вже вже й не рухома...",
+      "Навіть ті хто не знають його, починають розуміти ця вишка з сиренами, не така вже вже й не рухома...",
   },
   {
     src: secret,
@@ -237,6 +228,14 @@ export const DEFAULT_BGS = [
     author: "NovaSoft Interactive",
     description:
       "Цей фон взятий з Hidden Object Adventure гри 'Aurora Hills'. Сюжет гри: Ви рейнджер парку у скромному містечку, але люди починають зникати безвісти. Посилання на гру: https://play.google.com/store/apps/details?id=com.novasoftinteractive.ahch1&hl=uk",
+  },
+    {
+    src: swampseven,
+    name: "Туман, що дивиться",
+    category: "Стихія",
+    author: "TheTurkeyStudio",
+    description:
+      "Цей фон створює атмосферу таємничості та невизначеності. Люди, які обирають його, часто мають схильність до дослідження невідомого та цікавляться містичними явищами. Вони можуть бути інтроспективними та люблять розгадувати загадки, що відображає їхню цікавість до світу навколо та бажання зрозуміти його глибше.",
   },
   {
     src: DominosShopVideo,
@@ -393,7 +392,7 @@ description:
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
-  // Повнометражне відео Динофроз (уривок 0-30 секунд, решту сам відредагуєш)
+  //
   // {
   //   src: dinofrozFullVideo,
   //   name: "Динофроз (повне відео)",
@@ -407,12 +406,6 @@ description:
   {
     src: horse,
     name: "Кінь",
-    category: "Стихія",
-    author: "Генерація ШІ(Gemini)",
-  },
-  {
-    src: horsethree,
-    name: "Лицар",
     category: "Стихія",
     author: "Генерація ШІ(Gemini)",
   },
@@ -464,21 +457,7 @@ description:
     category: "Стихія",
     author: "TheTurkeyStudio",
   },
-  {
-    src: soloveyko,
-    name: "Соловейко",
-    category: "Стихія",
-    author: "TheTurkeyStudio",
-  },
   // Природа та Локації (Пустеля, Болото, Азіум)
-  {
-    src: desert,
-    name: "Загадки пустелі",
-    category: "Локації",
-    author: "Генерація ШІ (Gemini)",
-    description:
-      "Атмосфера безкрайніх просторів та вічних таємниць. Цей фон обирають люди, схильні до самоспостереження, які вміють бачити красу в мінімалізмі й шукають відповіді на глибокі життєві питання в тиші.",
-  },
   {
     src: backrooms, 
     name: "Нескінченний коридор",
@@ -552,22 +531,6 @@ description:
       "Джерело безперервного руху, відновлення та природної енергії. Фон пасує тим, хто шукає натхнення у динаміці життя, цінує відчуття свіжості та прагне гармонійного розвитку.",
   },
   // Містичні та Казкові місця
-  {
-    src: asiumnine,
-    name: "Казковий ліс",
-    category: "Фентезі",
-    author: "TheTurkeyStudio",
-    description:
-      "Магічний простір, сповнений чарів та таємниць. Цей фон обирають мрійливі натури з багатою уявою, які вірять у дива, цінують казки та шукають натхнення у фентезійних світах.",
-  },
-  {
-    src: asiumone,
-    name: "Під водою",
-    category: "Фентезі",
-    author: "TheTurkeyStudio",
-    description:
-      "Глибока, заспокійлива та таємнича атмосфера підводного царства. Пасує людям, які цінують тишу, плавність життя та прагнуть досліджувати приховані глибини власного внутрішнього світу.",
-  },
   {
     src: asiumtwo,
     name: "Поле і сакури",
@@ -659,12 +622,6 @@ description:
     author: "Генерація ШІ(Gemini)",
   },
   {
-    src: horrorfive,
-    name: "Зіграймо!",
-    category: "Хоррор",
-    author: "Генерація ШІ(Gemini)",
-  },
-  {
     src: horrorsix,
     name: "Втеча",
     category: "Хоррор",
@@ -682,34 +639,10 @@ description:
     end: 300,
   },
   {
-    src: horrorseven,
-    name: "Далі невідомо...",
-    category: "Хоррор",
-    author: "Генерація ШІ(Gemini)",
-  },
-  {
     src: horroreight,
     name: "Втеча (фінал)",
     category: "Хоррор",
     author: "Генерація ШІ(Gemini)",
-  },
-  {
-    src: swampfour,
-    name: "Матка павуків",
-    category: "Хоррор",
-    author: "TheTurkeyStudio",
-  },
-  {
-    src: swampfive,
-    name: "Злі духи",
-    category: "Хоррор",
-    author: "TheTurkeyStudio",
-  },
-  {
-    src: swampseven,
-    name: "Туман, що дивиться",
-    category: "Хоррор",
-    author: "TheTurkeyStudio",
   },
   {
     src: swampeight,

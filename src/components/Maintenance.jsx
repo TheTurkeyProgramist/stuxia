@@ -33,17 +33,13 @@ const Overlay = styled(motion.div)`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 6px;
   text-align: center;
   overflow: hidden;
   font-family: var(--font-family, "Inter", sans-serif);
-
-  /* фон: зображення + чорний градієнт */
   background:
     url(${sirenhead}) center / cover no-repeat,
     linear-gradient(135deg, #000 0%, #0a0a0a 100%);
-
-  /* скан-лінії поверх */
   &::after {
     content: "";
     position: absolute;
@@ -61,9 +57,9 @@ const Overlay = styled(motion.div)`
 `;
 
 const GlowTitle = styled(motion.h1)`
-  font-size: clamp(2rem, 6vw, 5rem);
   font-weight: 900;
-  margin: 0 0 16px;
+  margin: 6px;
+  font-size: 20px;
   line-height: 1.15;
   background: linear-gradient(90deg, #ffb36c, #94fffa, #ffb36c);
   background-size: 200% auto;
@@ -73,39 +69,13 @@ const GlowTitle = styled(motion.h1)`
   animation: ${flicker} 6s infinite;
 `;
 
-const Badge = styled(motion.div)`
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 22px;
-  margin-bottom: 28px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 179, 108, 0.45);
-  background: rgba(255, 179, 108, 0.1);
-  color: #ffb36c;
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  backdrop-filter: blur(8px);
-
-  span.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #ffb36c;
-    animation: ${pulse} 1.2s ease-in-out infinite;
-    flex-shrink: 0;
-  }
-`;
-
 const Card = styled(motion.div)`
   position: relative;
   background: rgba(0, 0, 0, 0.62);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 36px 40px;
+  border-radius: 10px;
+  padding: 4px;
   max-width: 640px;
   width: 100%;
   box-shadow:
@@ -118,32 +88,22 @@ const TimeRow = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
 `;
 
 const TimeLabel = styled.p`
   margin: 0;
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.45);
-  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 900;
+  color: rgba(0, 253, 248, 1);
   letter-spacing: 0.12em;
 `;
 
-const TimeValue = styled.p`
-  margin: 0;
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: #94fffa;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-  text-shadow: 0 0 20px rgba(148, 255, 250, 0.5);
-`;
-
 const Desc = styled.p`
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  color: rgb(255, 255, 255);
   line-height: 1.65;
-  margin: 0 0 28px;
+  margin: 3px;
 `;
 
 const StatusBar = styled.div`
@@ -151,11 +111,10 @@ const StatusBar = styled.div`
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 12px 20px;
+  padding: 7px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  margin-bottom: 10px;
 `;
 
 const StatusDot = styled.span`
@@ -169,8 +128,8 @@ const StatusDot = styled.span`
 `;
 
 const StatusText = styled.span`
-  font-size: 0.88rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  color: rgb(255, 255, 255);
 `;
 
 const FloatingImg = styled.div`
@@ -196,28 +155,36 @@ const FloatingImg = styled.div`
 const Maintenance = ({ isDarkMode = true, endTime = null, message = null }) => {
   const [countdown, setCountdown] = useState(null);
   const [isComplete, setIsComplete] = useState(false);
-
-  /* таймер зворотного відліку */
   useEffect(() => {
     if (!endTime) return;
+ let targetMs = null;
+    if (typeof endTime.toMillis === "function") {
+      targetMs = endTime.toMillis();
+    } else if (endTime.seconds) {
+      targetMs = endTime.seconds * 1000;
+    } else {
+      targetMs = new Date(endTime).getTime();
+    }
+
+    if (isNaN(targetMs)) return;
 
     const tick = () => {
-      const diff = new Date(endTime) - Date.now();
+      const diff = targetMs - Date.now();
       if (diff <= 0) {
         setCountdown(null);
         setIsComplete(true);
-        // Автоматичне перезавантаження через 1 хвилину після завершення
         setTimeout(() => window.location.reload(), 60_000);
         return;
       }
 
-      const h = Math.floor(diff / 3_600_000);
-      const m = Math.floor((diff % 3_600_000) / 60_000);
-      const s = Math.floor((diff % 60_000) / 1_000);
-
-      setCountdown(
-        `${h > 0 ? `${h}год ` : ""}${String(m).padStart(2, "0")}хв ${String(s).padStart(2, "0")}с`,
-      );
+      const hours = Math.floor(diff / 3_600_000);
+      const minutes = Math.floor((diff % 3_600_000) / 60_000);
+      const seconds = Math.floor((diff % 60_000) / 1_000);
+      const parts = [];
+      if (hours > 0) parts.push(`${hours}год`);
+      parts.push(`${String(minutes).padStart(2, "0")}хв`);
+      parts.push(`${String(seconds).padStart(2, "0")}с`);
+      setCountdown(parts.join(" "));
     };
 
     tick();
@@ -234,23 +201,6 @@ const Maintenance = ({ isDarkMode = true, endTime = null, message = null }) => {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Badge
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1, duration: 0.5 }}
-        >
-          <span className="dot" />
-          Технічні роботи
-        </Badge>
-
-        <GlowTitle
-          initial={{ scale: 0.85, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
-          {isComplete ? "⚡ Завершено!" : "⚙️ Увага!\nЗараз техроботи"}
-        </GlowTitle>
-
         <Card
           initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -264,32 +214,23 @@ const Maintenance = ({ isDarkMode = true, endTime = null, message = null }) => {
           <FloatingImg>
             <img src={sirenhead} alt="" />
           </FloatingImg>
-
-          {/* Час ─ показуємо лише якщо endTime заданий */}
+          <GlowTitle
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            {isComplete ? "Ми завершили оновлення!" : "Технічне обслуговування"}
+          </GlowTitle>
           {endTime && (
             <TimeRow>
               <TimeLabel>
-                {isComplete ? "Перезавантаження через" : "Залишилось часу"}
+                {isComplete ? "Перезавантаження через" : "Залишилось часу"}: {isComplete ? "~1 хв" : (countdown ?? "Підраховуємо…")}
               </TimeLabel>
-              <TimeValue>
-                {isComplete ? "~1 хв" : (countdown ?? "Підраховуємо…")}
-              </TimeValue>
             </TimeRow>
           )}
-
           <Desc>
-            {message ??
-              "Ми проводимо технічне обслуговування сайту. " +
-                "Якщо роботи завершаться раніше — ви отримаєте сповіщення " +
-                "і сторінка перезавантажиться автоматично. " +
-                "Якщо ні — очікуйте, час буде вказано вище."}
+            Причина робіт: {message ?? "Планове оновлення системи."}
           </Desc>
-
-          <StatusBar>
-            <StatusDot $ok={false} />
-            <StatusText>Сайт тимчасово недоступний</StatusText>
-          </StatusBar>
-
           {isComplete && (
             <StatusBar>
               <StatusDot $ok={true} />
@@ -301,5 +242,4 @@ const Maintenance = ({ isDarkMode = true, endTime = null, message = null }) => {
     </AnimatePresence>
   );
 };
-
 export default Maintenance;

@@ -1530,15 +1530,6 @@ const Menu = ({
                   </ActionButton>
                 </li>
                 <li>
-                  <ActionButton
-                    $isDarkMode={isDarkMode}
-                    onClick={() => {
-                      onLogout();
-                      onClose();
-                    }}
-                  >
-                    Вихід
-                  </ActionButton>
                 </li>
               </LogoActionsRow>
             </LegendList>

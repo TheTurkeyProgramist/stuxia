@@ -1,7 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import songAiKnowledge from "../MusicPhoto/songAiKnowledge.json";
-import turkeysAudio from "../../mp3/turkeys.mp3";
 import { assetMap } from "../MusicPhoto/MusicPhoto.assets";
 import { TbMusicStar } from "react-icons/tb";
 import {
