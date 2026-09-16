@@ -1,5 +1,5 @@
 // Міста для тесту: Дубай (>30°C), Якутськ (<-30°C), Кейптаун (вітер >10 м/с). Графік have погодинну перевірку вітру та деталізовані причини небезпеки в підказках.
-import {
+import React, {
   useState,
   useEffect,
   useCallback,
@@ -44,7 +44,6 @@ import flame from "./photos/vip-images/flame.webp";
 // Ресурси для фонового завантаження кат-сцени
 import dinofrozVideo from "./mp3/dinofroz.mp4";
 import startImage from "./photos/hero-header/fogtwo.webp";
-import turkeysAudio from "./mp3/turkeys.mp3";
 import {
   assetMap,
   songAiKnowledge,
@@ -191,7 +190,6 @@ const LoginModal = lazy(() => import("./components/Modals/LoginModal.jsx"));
 const UserSettingsModal = lazy(
   () => import("./components/Modals/UserSettingsModal.jsx"),
 );
-const VipModal = lazy(() => import("./components/Modals/VipModal.jsx"));
 const WeatherDetailsModal = lazy(
   () => import("./components/Modals/WeatherDetailsModal.jsx"),
 );
@@ -215,7 +213,24 @@ const GlobalFilterLock = createGlobalStyle`
       }
     `}
 `;
-
+const levitate = keyframes`
+  0%, 100% {
+    transform: translateY(-50%);
+  }
+  50% {
+    transform: translateY(calc(-50% - 6px));
+  }
+`;
+const pulseText = keyframes`
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 4px rgba(0, 255, 229, 0.4);
+  }
+  50% {
+    opacity: 0.6;
+    text-shadow: 0 0 12px rgba(0, 255, 229, 0.9);
+  }
+`;
 const StyledSectionContainer = styled.div`
   background-color: ${(props) =>
     props.$isStickyBgMode
@@ -317,54 +332,134 @@ const WeatherCardsContainer = styled.div`
   gap: 15px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding-bottom: 10px;
+  padding: 0 42px 10px;
   justify-content: flex-start;
   width: 100%;
   scroll-behavior: smooth;
-
-  @media (min-width: 769px) {
-    flex-wrap: wrap;
-    justify-content: center;
-    overflow-x: visible;
-    scroll-snap-type: none;
-  }
+  scrollbar-width: none;
 
   &::-webkit-scrollbar {
-    height: 8px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #ffb36c;
-    border-radius: 10px;
+    display: none;
   }
 
   > * {
     scroll-snap-align: center;
     flex: 0 0 100%;
-
-    @media (min-width: 769px) {
-      flex: 0 1 auto;
-    }
+    width: 100%;
+    min-width: 0;
   }
 `;
 
 const CarouselNav = styled.div`
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 6px;
   flex-wrap: wrap;
-  @media (min-width: 769px) {
-    display: none;
+  z-index: 500;
+  margin-top: 12px;
+`;
+const CarouselSideButton = styled.button`
+  position: absolute;
+  top: 50%;
+  ${(props) => (props.$direction === "previous" ? "left: 16px;" : "right: 16px;")}
+  
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 501;
+  
+  border: 2px solid #00ffe5;
+  border-radius: 6px;
+  background: #000;
+  color: #00ffe5;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 255, 229, 0.3);
+  transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+  /* Підключення анімації левітації */
+  animation: ${levitate} 3s ease-in-out infinite;
+
+  /* Пульсація для іконки/тексту всередині кнопки */
+  & > * {
+    display: inline-block;
+    animation: ${pulseText} 2.5s ease-in-out infinite;
+  }
+
+  /* 1. Задня грань */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 44px;
+    height: 40px;
+    border-top: 1.5px solid rgba(0, 255, 229, 0.6);
+    border-left: 1.5px solid rgba(0, 255, 229, 0.6);
+    border-right: none;
+    border-bottom: none;
+    border-top-left-radius: 6px;
+    z-index: -2;
+    pointer-events: none;
+    transition: all 0.2s ease;
+  }
+
+  /* 2. З'єднувальні лінії */
+  &::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 54px;
+    height: 54px;
+    z-index: -1;
+    pointer-events: none;
+    
+    background: 
+      linear-gradient(45deg, transparent 42%, rgba(0, 255, 229, 0.7) 42%, rgba(0, 255, 229, 0.7) 58%, transparent 58%) 0 0 / 14px 14px no-repeat,
+      linear-gradient(45deg, transparent 42%, rgba(0, 255, 229, 0.7) 42%, rgba(0, 255, 229, 0.7) 58%, transparent 58%) 100% 0 / 14px 14px no-repeat,
+      linear-gradient(45deg, transparent 42%, rgba(0, 255, 229, 0.7) 42%, rgba(0, 255, 229, 0.7) 58%, transparent 58%) 0 100% / 14px 14px no-repeat;
+    transition: all 0.2s ease;
+  }
+
+  &:hover {
+    background: #000;
+    /* Призупиняємо левітацію при наведенні для стабільного кліку */
+    animation-play-state: paused;
+    box-shadow: 0 0 18px rgba(0, 255, 229, 0.6);
+    
+    &::before {
+      border-color: rgba(0, 255, 229, 0.9);
+      top: -12px;
+      left: -12px;
+    }
+
+    &::after {
+      top: -12px;
+      left: -12px;
+      width: 56px;
+      height: 56px;
+      background-size: 16px 16px;
+    }
+
+    & > * { animation-duration: 1.2s;
+    }
+  }
+
+  &:active {
+    transform: translateY(calc(-50% + 2px)) scale(0.96);
   }
 `;
-
 const CarouselPageButton = styled.button`
-  width: 34px;
-  height: 34px;
-  background: ${(props) => (props.$active ? "#ffb36c" : "#333")};
-  color: ${(props) => (props.$active ? "#000" : "#fff")};
+  width: 30px;
+  height: 30px;
+  background: ${(props) => (props.$active ? "#fc7a00" : "#00ffe5")};
+  color: #000;
   border: none;
-  border-radius: 50%;
+  border-radius: 5px;
   cursor: pointer;
   font-weight: bold;
   display: inline-flex;
@@ -372,15 +467,20 @@ const CarouselPageButton = styled.button`
   justify-content: center;
   transition: background 0.2s ease;
   &:hover {
-    background: ${(props) => (props.$active ? "#ffd36a" : "#555")};
+    background: ${(props) => (props.$active ? "#fdd9b6" : "#3095b7")};
   }
+`;
+
+const WeatherCarouselWrapper = styled.div`
+  position: relative;
 `;
 
 const WeatherCarousel = ({ children }) => {
   const scrollRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const childCount = Array.isArray(children) ? children.length : 1;
+  const childrenArray = React.Children.toArray(children);
+  const childCount = childrenArray.length;
 
   const scrollToIndex = useCallback((index) => {
     const container = scrollRef.current;
@@ -391,29 +491,85 @@ const WeatherCarousel = ({ children }) => {
     }
   }, []);
 
-  useEffect(() => {
-    if (activeIndex >= childCount) {
-      setActiveIndex(Math.max(0, childCount - 1));
-    } else {
-      scrollToIndex(activeIndex);
-    }
+  const changeSlide = useCallback((direction) => {
+    if (childCount < 2) return;
+    const nextIndex = (activeIndex + direction + childCount) % childCount;
+    setActiveIndex(nextIndex);
+    scrollToIndex(nextIndex);
   }, [activeIndex, childCount, scrollToIndex]);
 
+  useEffect(() => {
+    if (activeIndex >= childCount && childCount > 0) {
+      setActiveIndex(childCount - 1);
+    }
+  }, [childCount, activeIndex]);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return undefined;
+
+    let timeoutId;
+    const updateActiveIndex = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const cards = Array.from(container.children);
+        if (cards.length === 0) return;
+        const nearestIndex = cards.reduce((bestIndex, card, index) => {
+          const bestDistance = Math.abs(cards[bestIndex].offsetLeft - container.scrollLeft);
+          const distance = Math.abs(card.offsetLeft - container.scrollLeft);
+          return distance < bestDistance ? index : bestIndex;
+        }, 0);
+        setActiveIndex(nearestIndex);
+      }, 50);
+    };
+
+    container.addEventListener("scroll", updateActiveIndex, { passive: true });
+    return () => {
+      clearTimeout(timeoutId);
+      container.removeEventListener("scroll", updateActiveIndex);
+    };
+  }, [childCount]);
+
   return (
-    <>
-      <CarouselNav>
-        {Array.from({ length: childCount }, (_, i) => (
-          <CarouselPageButton
-            key={`carousel-page-${i}`}
-            $active={i === activeIndex}
-            onClick={() => setActiveIndex(i)}
-          >
-            {i + 1}
-          </CarouselPageButton>
-        ))}
-      </CarouselNav>
+    <WeatherCarouselWrapper>
       <WeatherCardsContainer ref={scrollRef}>{children}</WeatherCardsContainer>
-    </>
+      {childCount > 1 && (
+        <CarouselNav>
+          {Array.from({ length: childCount }, (_, i) => (
+            <CarouselPageButton
+              key={`carousel-page-${i}`}
+              $active={i === activeIndex}
+              onClick={() => {
+                setActiveIndex(i);
+                scrollToIndex(i);
+              }}
+            >
+              {i + 1}
+            </CarouselPageButton>
+          ))}
+        </CarouselNav>
+      )}
+      {childCount > 1 && (
+        <>
+          <CarouselSideButton
+            type="button"
+            $direction="previous"
+            aria-label="Попередня картка"
+            onClick={() => changeSlide(-1)}
+          >
+            ◀
+          </CarouselSideButton>
+          <CarouselSideButton
+            type="button"
+            $direction="next"
+            aria-label="Наступна картка"
+            onClick={() => changeSlide(1)}
+          >
+            ▶
+          </CarouselSideButton>
+        </>
+      )}
+    </WeatherCarouselWrapper>
   );
 };
 
@@ -734,7 +890,7 @@ const App = () => {
   const [isOtherOptionsOpen, setIsOtherOptionsOpen] = useState(false);
   const [bgMusicEnabled, setBgMusicEnabled] = useState(false);
   const [autoMuteBgMusic, setAutoMuteBgMusic] = useState(true);
-  const [bgMusicSource, setBgMusicSource] = useState(turkeysAudio);
+  const [bgMusicSource, setBgMusicSource] = useState(dinofrozVideo);
   const [bgMusicMode, setBgMusicMode] = useState("loop"); // 'loop' або 'order'
   const [bgMusicShuffle, setBgMusicShuffle] = useState(false);
   const [activeBgTrackId, setActiveBgTrackId] = useState(23); // ID для індиків за замовчуванням
@@ -1025,7 +1181,6 @@ const App = () => {
     import("./components/Modals/Modal.jsx");
     import("./components/Modals/LoginModal.jsx");
     import("./components/Modals/UserSettingsModal.jsx");
-    import("./components/Modals/VipModal.jsx");
     import("./components/Modals/WeatherDetailsModal.jsx");
     import("./components/Modals/UserSearchModal.jsx");
     import("./components/Header/OtherOptionsModal.jsx");
@@ -1142,7 +1297,6 @@ const App = () => {
         startImage,
         fogBackground,
         turkeys,
-        turkeysAudio,
       ];
       try {
         await Promise.all(assets.map((url) => fetch(url)));
@@ -1694,6 +1848,14 @@ const App = () => {
           !isMain && !weatherCardsRef.current.find((c) => c.id === id);
 
         if (isNewCard) {
+          const customCardsCount = weatherCardsRef.current.filter(
+            (card) => !card.isMain,
+          ).length;
+          if (customCardsCount >= 4) {
+            alert("Можна мати не більше 4 власних карток погоди плюс поточну GPS-картку.");
+            return;
+          }
+
           if (!userRef.current) {
             const savedLimitData = await localforage.getItem("anonCardLimit");
             let limitData = savedLimitData || {};
@@ -1818,7 +1980,7 @@ const App = () => {
               feelsLike !== temp ? `, відчувається ${feelsLike}°C` : ""
             }, ${weatherText}, вітер ${wind} м/с, вологість ${humidity}%.`;
 
-            new Notification(`🌤️ Погода: ${displayName}`, {
+            new Notification(`Погода: ${displayName}`, {
               body,
               icon: "/favicon.ico",
             });
@@ -2270,8 +2432,11 @@ const App = () => {
   }, []);
   const handleAddCityFromHero = useCallback(
     (cityObj) => {
-      if (weatherCardsRef.current.length >= 8) {
-        alert("Можна мати не більше 8 карток одночасно!");
+      const customCardsCount = weatherCardsRef.current.filter(
+        (card) => !card.isMain,
+      ).length;
+      if (customCardsCount >= 4) {
+        alert("Можна мати не більше 4 власних карток погоди плюс поточну GPS-картку.");
         return;
       }
       fetchWeather(cityObj, false);
@@ -2481,6 +2646,7 @@ const App = () => {
         />
       </div>
       <StyledSectionContainer
+        className="weather-section"
         $isDarkMode={sectionThemes["weather"] ?? isDarkMode}
         $isStickyBgMode={isStickyBgMode}
         $isHidden={hiddenSections.includes("weather")}

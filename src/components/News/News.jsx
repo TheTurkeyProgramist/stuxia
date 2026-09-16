@@ -7,8 +7,15 @@ import NewsAiModal from "./NewsAiModal";
 import InfoModal from "../Modals/UserSearchModal.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { MdReport } from "react-icons/md"; //Поскаржитися
+import { FaYoutube } from "react-icons/fa6";
+import { GiTreeBeehive } from "react-icons/gi";
+import { PiNewspaperClippingFill } from "react-icons/pi";
+import { FaFacebookSquare } from "react-icons/fa";
 import { MdOutlineReportOff } from "react-icons/md"; //Заглушити
 import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
+import { FiPlus } from "react-icons/fi";
+import { BiCog } from "react-icons/bi";
+import toast from "react-hot-toast";
 import { hasBannedContent } from "../../utils/contentFilter";
 import { auth, db, signInAnonymously } from "../../firebase";
 import {
@@ -21,6 +28,116 @@ import {
   getDocs,
 } from "firebase/firestore";
 
+import {
+  useFloating,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  arrow,                 
+  useHover,
+  useFocus,
+  useDismiss,
+  useRole,
+  useInteractions,
+  useTransitionStyles,  
+  FloatingPortal,
+  FloatingArrow,         
+} from "@floating-ui/react";
+const TooltipBox = styled.div`
+  background-color: ${(props) => (props.$isDarkMode ? "#0c0c0ceb" : "#fdff98e7")};
+  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
+  border: 2px solid #00afce;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, ${(props) => (props.$isDarkMode ? "0.5" : "0.15")});
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 9px;
+  z-index: 10000;
+  pointer-events: none;
+`;
+export const Tooltip = ({
+  content,
+  children,
+  placement = "bottom",
+  isDarkMode = true,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const arrowRef = useRef(null);
+const { refs, floatingStyles, context } = useFloating({
+    open: isOpen,
+    onOpenChange: setIsOpen,
+    placement,
+    strategy: "fixed",
+    transform: false, 
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(8),
+      flip(),
+      shift({ padding: 5 }),
+      arrow({ element: arrowRef }),
+    ],
+  });
+  const { isMounted, styles: transitionStyles } = useTransitionStyles(context, {
+    duration: 150,
+    initial: {
+      opacity: 0,
+      transform: "scale(0.9)",
+    },
+    open: {
+      opacity: 1,
+      transform: "scale(1)",
+    },
+  });
+
+  const hover = useHover(context, { move: false });
+  const focus = useFocus(context);
+  const dismiss = useDismiss(context);
+  const role = useRole(context, { role: "tooltip" });
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([
+    hover,
+    focus,
+    dismiss,
+    role,
+  ]);
+
+  if (!content) return children;
+
+  const bgTheme = isDarkMode ? "#111111" : "#ffffff";
+  const borderTheme = "#00acb9";
+
+  return (
+    <>
+      <span
+        ref={refs.setReference}
+        {...getReferenceProps()}
+        style={{ display: "inline-flex" }}
+      >
+        {children}
+      </span>
+      {isMounted && (
+        <FloatingPortal>
+          <TooltipBox
+            ref={refs.setFloating}
+            $isDarkMode={isDarkMode}
+            style={{ ...floatingStyles, ...transitionStyles }}
+            {...getFloatingProps()}
+          >
+            {content}
+            <FloatingArrow
+              ref={arrowRef}
+              context={context}
+              fill={bgTheme}
+              stroke={borderTheme}
+              strokeWidth={1}
+            />
+          </TooltipBox>
+        </FloatingPortal>
+      )}
+    </>
+  );
+};
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -39,7 +156,6 @@ const SOURCES = [
   {
     url: "https://phys.org/rss-feed/biology-news/animals-news/",
     name: "Phys.org",
-    flag: "🇬🇧",
     home: "https://phys.org",
   },
 ];
@@ -74,7 +190,7 @@ const CarouselWrapper = styled.div`
 const MobileCarousel = styled.div`
   display: flex;
   flex-wrap: nowrap;
-  gap: 5px;
+  gap: 2px;
   overflow-x: auto;
   min-width: 0; 
   scroll-snap-type: x mandatory;
@@ -87,7 +203,6 @@ const MobileCarousel = styled.div`
   }
 
   @media (max-width: 479px) {
-    padding: 10px 18px 10px;
     justify-content: flex-start; 
   }
 `;
@@ -227,9 +342,12 @@ const SourceFlag = styled.span`
   left: 4px;
   background: rgba(0, 0, 0, 0.6);
   color: white;
-  padding: 3px;
+  display: flex;
+  justify-content: center;
+  padding: 10px 10px;
+  width: 110px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: 14px;
   z-index: 5;
   cursor: pointer;
   text-decoration: none;
@@ -242,15 +360,15 @@ const SourceFlag = styled.span`
 
 const NewBadge = styled.span`
   position: absolute;
-  top: 4px;
+  top: 83%;
   right: 4px;
   background: #ddff00;
   color: #000;
-  padding: 3px;
+  width: 38px;
+  height: 20px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 900;
-  text-transform: uppercase;
   z-index: 6;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   animation: ${fadeIn} 0.5s ease;
@@ -259,7 +377,7 @@ const NewBadge = styled.span`
 const CardActions = styled.div`
   position: absolute;
   top: 3px;
-  right: 42px;
+  left: 83%;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -316,24 +434,62 @@ const CardAction = styled.button`
   }
 `;
 
-const AiSummaryBtn = styled(CardAction)`
+const NewsSettingsBtn = styled(CardAction)`
+  background: rgb(8, 8, 8);
+  color: #ffffff;
+  width: 50px;
+  height: 40px;
   &:hover,
   &:focus-visible {
-    background: #ffb36c;
+    background: rgb(27, 27, 27);
+      width: 50px;
+  height: 40px;
   }
 `;
 
-const ReportBtn = styled(CardAction)`
-  &:hover,
-  &:focus-visible {
-    background: #ff4d4d;
-  }
+const NewsSettingsMenu = styled.div`
+  position: absolute;
+  top: 39px;
+  left: -210px;
+  background: rgba(30, 30, 30, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  min-width: 310px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 `;
 
-const MuteBtn = styled(CardAction)`
-  &:hover,
-  &:focus-visible {
-    background: #666;
+const NewsSettingsItem = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 7px;
+  background: transparent;
+  color: ${(props) => props.$color || "#fff"};
+  font-size: 13px;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.09);
+  }
+
+  &[disabled] {
+    opacity: 0.45;
+    cursor: default;
+    &:hover {
+      background: transparent;
+    }
   }
 `;
 
@@ -401,6 +557,19 @@ const NewsCard = ({
 }) => {
   const cardRef = useRef(null);
   const [isVisible, setIsVisible] = useState(item.isNew);
+  const [hasGeminiKey, setHasGeminiKey] = useState(false);
+  const [isNewsSettingsOpen, setIsNewsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    const checkKey = async () => {
+      const k = await localforage.getItem("gemini_api_key");
+      setHasGeminiKey(!!k);
+    };
+    checkKey();
+    const handleKeyChange = (e) => setHasGeminiKey(!!e.detail);
+    window.addEventListener("geminiKeyChanged", handleKeyChange);
+    return () => window.removeEventListener("geminiKeyChanged", handleKeyChange);
+  }, []);
 
   useEffect(() => {
     if (!item.isNew) return;
@@ -511,46 +680,91 @@ const NewsCard = ({
           }}
           aria-label={`Перейти на головну сторінку ${item.sourceName}`}
         >
-          {item.sourceFlag} {item.sourceName}
+          {item.sourceName}
         </SourceFlag>
         <CardActions aria-label="Дії з новиною">
-          <AiSummaryBtn
-            aria-label="Отримати ШІ виклад новини"
-            $background="rgba(0, 248, 252, 0.9)"
-            $color="black"
+          <NewsSettingsBtn
+            aria-label="Налаштування картки новини"
+            title="Налаштування"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              if (onAiSummaryClick) onAiSummaryClick(item);
+              setIsNewsSettingsOpen((v) => !v);
             }}
           >
-            <TbStarsFilled aria-hidden="true" />
-            <span>ШІ Виклад</span>
-          </AiSummaryBtn>
-          {item.sourceName !== "Phys.org" && (
-            <ReportBtn
-              aria-label="Поскаржитися на цю новину"
-              $background="rgba(255, 77, 77, 0.9)"
+            <BiCog aria-hidden="true" style={{ fontSize: "29px" }} />
+          </NewsSettingsBtn>
+          {isNewsSettingsOpen && (
+            <NewsSettingsMenu
               onClick={(e) => {
-                if (onReportClick) onReportClick(item, e);
+                e.preventDefault();
+                e.stopPropagation();
               }}
             >
-              <MdReport aria-hidden="true" />
-              <span>Поскаржитися</span>
-            </ReportBtn>
+              <NewsSettingsItem
+                $color={hasGeminiKey ? "#ff69b4" : "#888"}
+                disabled={!hasGeminiKey}
+                title={hasGeminiKey ? "Прикріпити до ШІ-чату" : "Додайте Gemini API-ключ"}
+                onClick={() => {
+                  if (!hasGeminiKey) return;
+                  const cleanText = (item.description || item.title).replace(/<[^>]*>?/gm, "").trim();
+                  window.dispatchEvent(
+                    new CustomEvent("attachCardToAiHelp", {
+                      detail: {
+                        id: `news-${item.link}`,
+                        type: "news",
+                        title: item.title,
+                        details: `Джерело: ${item.sourceName}. Заголовок: "${item.title}". Зміст: "${cleanText}". Посилання: ${item.link}`,
+                      },
+                    })
+                  );
+                  setIsNewsSettingsOpen(false);
+                }}
+              >
+                <FiPlus size={14} /> Прикріпити до ШІ
+              </NewsSettingsItem>
+              <NewsSettingsItem
+                onClick={() => {
+                  if (onAiSummaryClick) onAiSummaryClick(item);
+                  setIsNewsSettingsOpen(false);
+                }}
+              >
+                <TbStarsFilled size={14} /> ШІ Виклад
+              </NewsSettingsItem>
+              <NewsSettingsItem
+                onClick={() => {
+                  navigator.clipboard.writeText(item.link).then(() => {
+                    toast.success("Посилання скопійовано!");
+                  });
+                  setIsNewsSettingsOpen(false);
+                }}
+              >
+                📋 Копіювати шлях
+              </NewsSettingsItem>
+              {item.sourceName !== "Phys.org" && (
+                <NewsSettingsItem
+                  $color="#ff6b6b"
+                  onClick={(e) => {
+                    if (onReportClick) onReportClick(item, e);
+                    setIsNewsSettingsOpen(false);
+                  }}
+                >
+                  <MdReport size={14} /> Поскаржитися
+                </NewsSettingsItem>
+              )}
+              <NewsSettingsItem
+                $color="#aaa"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (onMuteClick) onMuteClick(item, e);
+                  setIsNewsSettingsOpen(false);
+                }}
+              >
+                <MdOutlineReportOff size={14} /> Заглушити
+              </NewsSettingsItem>
+            </NewsSettingsMenu>
           )}
-          <MuteBtn
-            aria-label="Заглушити новину"
-            $background="rgba(128, 128, 128, 0.9)"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (onMuteClick) onMuteClick(item, e);
-            }}
-          >
-            <MdOutlineReportOff aria-hidden="true" />
-            <span>Заглушити</span>
-          </MuteBtn>
         </CardActions>
         {showImage && (
           <NewsImg
@@ -1665,7 +1879,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     try {
       let resolvedUrl = inputUrl;
       let name = "";
-      let flag = "🌐";
+      let flag = <PiNewspaperClippingFill/>;
       let home = "";
       
       if (resolvedUrl.startsWith("@")) {
@@ -1693,7 +1907,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         if (channelId) {
           resolvedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
           name = `YouTube: ${domain}`;
-          flag = "🔴";
+          flag = <FaYoutube/>;
         } else {
           alert("Не вдалося знайти ID YouTube каналу. Стрічка не буде додана.");
           return;
@@ -1706,24 +1920,24 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         home = resolvedUrl;
       } else if (type === "telegraph") {
         name = `Telegraph`;
-        flag = "📝";
+        flag = <PiNewspaperClippingFill/>;
         home = "https://telegra.ph";
       } else if (type === "facebook") {
         const parts = resolvedUrl.split("/");
         const pageName = parts[parts.length - 1] || parts[parts.length - 2];
         resolvedUrl = `https://www.facebook.com/${pageName}`;
         name = `Facebook: ${pageName}`;
-        flag = "📘";
+        flag = <FaFacebookSquare/>;
         home = resolvedUrl;
       } else if (type === "hive") {
         const match = resolvedUrl.match(/withhive\.com\/([a-zA-Z0-9_-]+)/);
         const game = match ? match[1] : "Hive";
         name = `Hive: ${game}`;
-        flag = "🐝";
+        flag = <GiTreeBeehive/>;
         home = `https://community.withhive.com/${game}`;
       } else {
         name = domain;
-        flag = "🌐";
+        flag = <PiNewspaperClippingFill/>;
       }
       
       const newSource = {
@@ -1997,7 +2211,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                           borderRadius: "5px",
                           border: `1px solid ${$isDarkMode ? "rgba(0, 0, 0, 0.98)" : "rgb(255, 255, 255)"}`,
                           background: "transparent",
-                          color: $isDarkMode ? "#000" : "#fff",
+                          color: "#fff",
                           outline: "none",
                           minWidth: "248px",
                           fontFamily: "var(--font-family)",
@@ -2010,7 +2224,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                         onClick={handleAddSource}
                         style={{ background: "#ffb36c", color: "#000" }}
                       >
-                        Зберегти
+                        Додати
                       </FilterBtn>
                     </div>
                   </motion.div>

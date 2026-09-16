@@ -201,15 +201,6 @@
     "audio": "clubstepAudio"
   },
   {
-    "id": 15,
-    "image": "fingerdash",
-    "audio": "fingerbang",
-    "text": "MDK: Fingerbang(Fingerdash - Full)",
-    "author": "Geometry Dash",
-    "duration": 140,
-    "images": ["fingerdash"]
-  },
-  {
     "id": 16,
     "image": "theorytwo",
     "audio": "theorytwoAudio",
@@ -374,34 +365,6 @@
         "time": 175,
         "text": "Я продовжуватиму боротьбу, бо я їх здолаю"
       }
-    ]
-  },
-  {
-    "id": 22,
-    "image": "horror",
-    "audio": "domino",
-    "text": "Болотна крамниця",
-    "author": "Моя робота :)",
-    "duration": 140,
-    "images": ["horror", "horrortwo", "horrorthree"],
-    "Які треки, я використав": "В аудіоряд Болотної крамниці просочилися голоси-фантоми з інших світів :)"
-  },
-  {
-    "id": 25,
-    "image": "turkeys",
-    "audio": "turkeyAudio",
-    "text": "Звуки індиків",
-    "duration": 60,
-    "author": "Моя робота :)",
-    "images": [
-      "turkeysone",
-      "turkeytwo",
-      "turkeythree",
-      "turkeyfour",
-      "turkeyfive",
-      "turkeysix",
-      "turkeyseven",
-      "turkeys"
     ]
   }
 ]

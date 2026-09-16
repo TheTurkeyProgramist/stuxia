@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
+import daynight from "../../photos/cursors/sunnight.webp";
+import daysthunders from "../../photos/cursors/daysthunders.webp";
 import { Line } from "react-chartjs-2";
 import html2canvas from "html2canvas";
 import localforage from "localforage";
@@ -18,6 +20,7 @@ import {
   BiDownload,
   BiPrinter,
 } from "react-icons/bi";
+import { FiPlus } from "react-icons/fi";
 import {
   removeCustomDay,
   addCustomDay,
@@ -25,6 +28,7 @@ import {
 import { getHourlyForecastDayGroups } from "../../utils/hourlyForecast";
 import { DEFAULT_BGS } from "../Hero/defaultBgs";
 import { getWindDirectionText } from "../../utils/windUtils";
+import { FaCalendarPlus } from "react-icons/fa6";
 import CustomDatesModal from "../Modals/CustomDatesModal";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { PiThermometerFill } from "react-icons/pi"; //Нормальна температура
@@ -234,14 +238,14 @@ const menuSlideUp = keyframes`
 `;
 
 export const AihelpTitle = styled.div`
-  font-size: 22px;
+  font-size: 20px;
   text-align: center;
-  z-index: 100;
-  width: 240px;
+  z-index: 400;
+  width: 100px;
   margin-left: auto;
-  margin-right: auto;
-  padding: 10px 24px;
+  padding: 5px 14px;
   position: relative;
+    margin-bottom: -44px;
   border-radius: 10px;
   font-family: var(--font-family);
   font-weight: 600;
@@ -251,38 +255,9 @@ export const AihelpTitle = styled.div`
     backdrop-filter 0.5s ease,
     border-color 0.5s ease,
     box-shadow 0.5s ease;
-  ${(props) =>
-    props.$isStickyBgMode
-      ? css`
-          background: ${
-            props.$isDarkMode
-              ? "rgba(15, 15, 25, 0.75)"
-              : "rgba(255, 255, 255, 0.75)"
-          };
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1px solid
-            ${
-              props.$isDarkMode
-                ? "rgba(255, 255, 255, 0.15)"
-                : "rgba(0, 0, 0, 0.15)"
-            };
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        `
-      : css`
-          background: ${
-            props.$isDarkMode
-              ? "rgba(255, 255, 255, 0.05)"
-              : "rgba(0, 0, 0, 0.05)"
-          };
-          border: 1px solid
-            ${
-              props.$isDarkMode
-                ? "rgba(255, 255, 255, 0.1)"
-                : "rgba(0, 0, 0, 0.1)"
-            };
-        `}
-`;
+    background: ${(props) => (props.$isDarkMode ? " rgba(0, 0, 0, 0.93)" : "rgb(255, 255, 255)")};
+     border: ${(props) => (props.$isDarkMode ? "2px solid rgba(0, 255, 229, 0.6)" : "2px solid rgba(0, 0, 0, 0.2)")};
+    `;
 
 const WeatherCard = styled.div`
   background: ${(props) => (props.$isDarkMode ? "#0000009e" : "#f5f5f5aa")};
@@ -291,12 +266,18 @@ const WeatherCard = styled.div`
   border-radius: 5px;
   padding: 3px;
   width: 100%;
+  min-width: 0;
   z-index: 100;
-  max-width: 310px;
+  max-width: 100%;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   border: ${(props) =>
     props.$isMain ? "1.5px solid #004cff" : "1.5px solid #00fbff"};
   transition: all 0.3s ease;
+  @media (min-width: 768px) {
+    border-radius: 8px;
+    padding: 0;
+    overflow: hidden;
+  }
 `;
 //
 const CardHeader = styled.div`
@@ -328,33 +309,204 @@ const ActionButtons = styled.div`
     }
   }
 `;
-
-const ImagePlaceholder = styled.div`
-  width: ${(props) => props.size || "150px"};
-  height: ${(props) => props.size || "20px"};
-  border-radius: 10px;
-  font-size: ${(props) => props.fontSize || "13px"};
-  color: #fff;
-  display: inline-flex;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
 const CurrentWeatherBanner = styled.div`
   gap: 4px;
   padding: 1px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  @media (min-width: 768px) {
+    height: 600px;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+`;
+const DesktopLayoutWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  @media (min-width: 768px) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 14px;
+    padding: 12px;
+    height: 570px;
+    box-sizing: border-box;
+    background: ${(props) => (props.$isDarkMode ? "rgba(10, 10, 18, 0.6)" : "rgba(240, 244, 248, 0.8)")};
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 16px;
+    padding: 14px;
+    height: 595px;
+  }
+`;
+
+const MainBannerArea = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  padding: 8px;
+  box-sizing: border-box;
   background: ${(props) =>
     props.$image
       ? `linear-gradient(rgba(10, 10, 10, 0.55), rgba(10, 10, 10, 0.55)), url(${props.$image}) center/cover no-repeat`
       : "transparent"};
+  @media (min-width: 768px) {
+    height: 542px;
+    padding: 0;
+    overflow: hidden;
+  }
+`;
+
+const SideCardsColumn = styled.div`
+  display: none;
+  @media (min-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: space-between;
+    height: 542px;
+  }
+`;
+const NameCardItem = styled.div`
+font-size: 17px;
+font-weight: 700;
+color: ${(props) => (props.$active ? "#00eeff" : "#fff")};
+`;
+const SubNameCardItem = styled.div`
+font-size: 15px;
+color: ${(props) => (props.$active ? "#00eeff" : "#fff")};
+`;
+const SideCardItem = styled.div`
+  position: relative;
+  height: 70px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: ${(props) => (props.$active ? "2px solid #00eeff" : "1px solid rgba(255, 255, 255, 0.15)")};
+  box-shadow: ${(props) => (props.$active ? "0 0 12px rgba(0, 238, 255, 0.5)" : "0 2px 6px rgba(0, 0, 0, 0.3)")};
+  background: ${(props) =>
+    props.$bgImg
+      ? `linear-gradient(rgba(0, 0, 0, 0.69), rgba(0,0,0,0.7)), url(${props.$bgImg}) center/cover no-repeat`
+      : props.$active
+        ? "linear-gradient(135deg, rgba(0, 238, 255, 0.25), rgba(15, 25, 45, 0.9))"
+        : "rgba(20, 20, 30, 0.7)"};
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+
+  @media (min-width: 768px) {
+    height: 124px;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: ${(props) => (props.$active ? "#00eeff" : "rgba(0, 238, 255, 0.6)")};
+  }
+`;
+
+const DesktopTwoRowIndicators = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  height: 86%;
+  padding: 4px;
+  box-sizing: border-box;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 10px;
+  }
+`;
+const IndicatorCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: ${props => props.$pad || "2px"};
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+`;
+
+const IconBox = styled.div`
+  font-size: ${props => props.$size || "24px"};
+  line-height: ${props => props.$lh || "normal"};
+  color: ${props => props.$color || "inherit"};
+  opacity: ${props => props.$opacity ?? 1};
+  transform: ${props => props.$rotate ? `rotate(${props.$rotate}deg)` : "none"};
+  display: ${props => props.$rotate ? "inline-block" : "block"};
+  @media (min-width: 1200px) {
+    font-size: 44px;
+  }
+       @media (min-width: 768px) {
+    font-size: 34px;
+  }
+`;
+
+const TextContent = styled.div`
+  margin-top: ${props => props.$mt || "5px"};
+  font-size: ${props => props.$size || "12px"};
+  font-weight: ${props => props.$weight || "bold"};
+  text-align: center;
+  line-height: ${props => props.$lh || "normal"};
+    @media (min-width: 1200px) {
+    font-size: 16px;
+  }
+       @media (min-width: 768px) {
+    font-size: 14px;
+  }
+`;
+
+const SubText = styled.div`
+  font-size: ${props => props.$size || "10px"};
+  font-weight: ${props => props.$weight || "normal"};
+  opacity: ${props => props.$opacity || 0.8};
+   @media (min-width: 1200px) {
+    font-size: 14px;
+  }
+     @media (min-width: 768px) {
+    font-size: 12px;
+  }
+`;
+const MobileTabBar = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid rgb(0, 238, 255);
+  width: 100%;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
 `;
 
 const CurrentWeatherBanne = styled.div`
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: stretch;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  align-self: stretch;
 `;
 
 const BgModalOverlay = styled.div`
@@ -485,26 +637,36 @@ const chartActionButtonStyle = {
 };
 
 const AiSummaryBox = styled(motion.div)`
-  background: rgba(39, 27, 50, 0.74);
-  border: 1px solid rgba(138, 43, 226, 0.3);
-  padding: 8px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: ${(props) => (props.$isDarkMode ? "#efefff" : "#4a4a4a")};
-  width: 300px;
-  height: 290px;
+  background: ${(props) => (props.$isDarkMode ? "rgba(30, 20, 42, 0.88)" : "rgba(255, 255, 255, 0.92)")};
+  border: 1px solid rgba(138, 43, 226, 0.35);
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: ${(props) => (props.$isDarkMode ? "#efefff" : "#2a2a2a")};
+  width: 100%;
+  min-height: 180px;
+  max-height: 480px;
   overflow-y: auto;
   box-sizing: border-box;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+
+  @media (max-width: 767px) {
+    padding: 10px;
+    font-size: 12px;
+    max-height: 320px;
+  }
 `;
 
 const AiPlaceholderBox = styled.div`
-  background: rgba(39, 27, 50, 0.74);
-  border: 1px solid rgba(138, 43, 226, 0.3);
-  padding: 8px;
-  font-size: 12px;
+  background: ${(props) => (props.$isDarkMode ? "rgba(30, 20, 42, 0.88)" : "rgba(255, 255, 255, 0.92)")};
+  border: 1px solid rgba(138, 43, 226, 0.35);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 13px;
   color: ${(props) => (props.$isDarkMode ? "#efefff" : "#4a4a4a")};
-  width: 300px;
-  height: 290px;
+  width: 100%;
+  min-height: 160px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -518,7 +680,8 @@ const SummaryText = styled.div`
   -webkit-line-clamp: ${(props) => (props.$isExpanded ? "none" : "5")};
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1.5;
   white-space: pre-line;
 `;
 
@@ -526,29 +689,85 @@ const ShowMoreBtn = styled.button`
   background: none;
   border: none;
   color: #8a2be2;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  padding: 4px 0 0 0;
+  padding: 6px 0 0 0;
   text-decoration: underline;
 `;
 
 const PromptEditor = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 10px;
+  margin-top: 6px;
+  background: ${(props) => (props.$isDarkMode ? "rgba(20, 15, 30, 0.75)" : "rgba(245, 240, 255, 0.85)")};
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(138, 43, 226, 0.3);
+
+  @media (max-width: 767px) {
+    padding: 10px;
+    gap: 8px;
+  }
 `;
 
 const PromptTextarea = styled.textarea`
   width: 100%;
-  height: 60px;
-  padding: 5px;
-  border-radius: 4px;
-  border: 1px solid #8a2be2;
-  font-size: 11px;
-  background: ${(props) => (props.$isDarkMode ? "#1a1a1a" : "#fff")};
-  color: ${(props) => (props.$isDarkMode ? "#fff" : "#000")};
+  height: 90px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #8a2be2;
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.4;
+  background: ${(props) => (props.$isDarkMode ? "#151520" : "#ffffff")};
+  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
   resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
+  }
+
+  @media (max-width: 767px) {
+    height: 70px;
+    font-size: 12px;
+    padding: 8px;
+  }
+`;
+
+const ViewToggleGroup = styled.div`
+  display: inline-flex;
+  align-items: center;
+  background: ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)")};
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.12)")};
+`;
+
+const ViewToggleButton = styled.button`
+  background: ${(props) => (props.$active ? (props.$isDarkMode ? "#8a2be2" : "#7000df") : "transparent")};
+  color: ${(props) => (props.$active ? "#ffffff" : props.$isDarkMode ? "#cccccc" : "#444444")};
+  border: none;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+  box-shadow: ${(props) => (props.$active ? "0 2px 8px rgba(138, 43, 226, 0.4)" : "none")};
+
+  &:hover {
+    color: ${(props) => (props.$active ? "#ffffff" : props.$isDarkMode ? "#ffffff" : "#000000")};
+  }
 `;
 
 const DailyDetailOverlay = styled.div`
@@ -646,14 +865,28 @@ const WeatherCardComponent = ({
   const [responseLength, setResponseLength] = useState("concise");
   const [aiStyle, setAiStyle] = useState("friendly");
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
+  const [savedCustomAiPrompt, setSavedCustomAiPrompt] = useState("");
+  const [aiPromptChangedAt, setAiPromptChangedAt] = useState(0);
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [selectedHourlyDay, setSelectedHourlyDay] = useState(0);
+  const [hourlyViewMode, setHourlyViewMode] = useState("charts");
+  const [dailyViewMode, setDailyViewMode] = useState("charts");
+  const defaultChartHeight = typeof window !== "undefined" && window.innerWidth < 768 ? "250px" : "380px";
   const [cityImage, setCityImage] = useState(card.cityImage || "");
   const [bgMode, setBgMode] = useState("wiki");
   const [isBgModalOpen, setIsBgModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDropdownClosing, setIsDropdownClosing] = useState(false);
+  const [hasGeminiKey, setHasGeminiKey] = useState(false);
+
+  useEffect(() => {
+    localforage.getItem("gemini_api_key").then((val) => setHasGeminiKey(!!val));
+    const onKeyChange = (e) => setHasGeminiKey(!!e.detail);
+    window.addEventListener("geminiKeyChanged", onKeyChange);
+    return () => window.removeEventListener("geminiKeyChanged", onKeyChange);
+  }, []);
+
 
   const handleCloseDropdown = () => {
     setIsDropdownClosing(true);
@@ -1163,7 +1396,14 @@ const WeatherCardComponent = ({
       const savedPrompt = await localforage.getItem(
         `ai_custom_prompt_${card.id}`,
       );
-      if (savedPrompt) setCustomAiPrompt(savedPrompt);
+      if (savedPrompt) {
+        setCustomAiPrompt(savedPrompt);
+        setSavedCustomAiPrompt(savedPrompt);
+      }
+      const savedPromptChangedAt = await localforage.getItem(
+        `ai_custom_prompt_changed_at_${card.id}`,
+      );
+      if (savedPromptChangedAt) setAiPromptChangedAt(savedPromptChangedAt);
       const savedLength = await localforage.getItem(
         `ai_response_length_${card.id}`,
       );
@@ -1184,10 +1424,8 @@ const WeatherCardComponent = ({
 
     setIsAiLoading(true);
     try {
-      const genAI = new GoogleGenerativeAI(key);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-3.5-flash-lite",
-      });
+      const cleanedKey = (key || "").trim().replace(/^["']|["']$/g, "");
+      const genAI = new GoogleGenerativeAI(cleanedKey);
 
       const current = card.current;
       const daily = card.daily16 || [];
@@ -1219,7 +1457,23 @@ const WeatherCardComponent = ({
 
       const promptText = `${systemInstructions}\n\nМісто: ${card.locationName}. Поточний час на сайті: ${currentTimeString}.\n\nПоточні показники: ${current.temp}, ${current.description}, вологість ${current.humidity}, вітер ${current.wind_speed}.\nНайближчі години: ${shortTermForecast}.\nПрогноз на дні: завтра ${daily[1]?.temp_day || "н/д"}, післязавтра ${daily[2]?.temp_day || "н/д"}.\nТенденція на 2 тижні: 1-й тиждень ~${daily[7]?.temp_day || "н/д"}, 2-й тиждень ~${daily[14]?.temp_day || "н/д"}.`;
 
-      const result = await model.generateContent(promptText);
+      const candidateModels = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.0-flash"];
+      let result = null;
+      let lastErr = null;
+
+      for (const modelName of candidateModels) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          result = await model.generateContent(promptText);
+          if (result) break;
+        } catch (mErr) {
+          lastErr = mErr;
+          console.warn(`Weather summary model ${modelName} failed, trying next...`, mErr);
+        }
+      }
+
+      if (!result) throw lastErr || new Error("Не вдалося отримати прогноз від Gemini");
+
       const response = await result.response;
       const text = response.text().trim();
 
@@ -1261,43 +1515,24 @@ const WeatherCardComponent = ({
     const newVal = !isAiEnabled;
     setIsAiEnabled(newVal);
     await localforage.setItem(`ai_enabled_${card.id}`, newVal);
-    if (newVal && !aiSummary) {
-      checkAndUpdate();
-    }
   };
 
-  useEffect(() => {
-    if (card.current && card.daily16) {
-      checkAndUpdate();
-    }
-  }, [card, checkAndUpdate]);
+  const handleAiTabClick = () => {
+    setActiveTab("ai");
+    if (!isAiEnabled) return;
+    checkAndUpdate();
+  };
 
   useEffect(() => {
     const handleKeyChange = (e) => {
       const newKey = e.detail;
       if (!newKey) {
         setAiSummary("Потрібен ключ ШІ (Gemini API) для роботи цієї функції.");
-      } else if (!aiSummary || aiSummary.includes("Потрібен ключ")) {
-        generateWeatherSummary();
       }
     };
     window.addEventListener("geminiKeyChanged", handleKeyChange);
     return () => window.removeEventListener("geminiKeyChanged", handleKeyChange);
-  }, [aiSummary, generateWeatherSummary]);
-
-  useEffect(() => {
-    if (activeTab === "ai") {
-      localforage.getItem("gemini_api_key").then((key) => {
-        if (key) {
-          if (!aiSummary || aiSummary.includes("Потрібен ключ")) {
-            generateWeatherSummary();
-          }
-        } else {
-          setAiSummary("Потрібен ключ ШІ (Gemini API) для роботи цієї функції.");
-        }
-      });
-    }
-  }, [activeTab, aiSummary, generateWeatherSummary]);
+  }, []);
 
 
   const [isEditingReason, setIsEditingReason] = useState(false);
@@ -1355,24 +1590,18 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
   canvas.height = canvasSize;
 
   const ctx = canvas.getContext("2d");
-  const center = canvasSize / 2; // Центр тепер відносно нового розміру Canvas
-
+  const center = canvasSize / 2; 
   const normalizedDegrees = ((Number(degrees) || 0) % 360 + 360) % 360;
   const snappedDegrees = Math.round(normalizedDegrees / 45) * 45;
   const angle = (snappedDegrees * Math.PI) / 180;
 
   ctx.translate(center, center);
   ctx.rotate(angle);
-
-  // 2. Малюємо затемнення більшого радіуса
   ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
   ctx.globalAlpha = opacity;
   ctx.beginPath();
-  // Можна регулювати радіус затемнення тут (наприклад, size * 0.75 або canvasSize * 0.45)
-  ctx.arc(0, 0, canvasSize * 0.45, 0, Math.PI * 2);
+    ctx.arc(0, 0, canvasSize * 0.45, 0, Math.PI * 2);
   ctx.fill();
-
-  // 3. Малюємо стрілку — її розміри та координати залишаються НЕТОРКНУТИМИ
   ctx.globalAlpha = opacity;
   ctx.fillStyle = "#0099ff";
   ctx.strokeStyle = "#ffffff";
@@ -1406,7 +1635,7 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
 
   const hourlyDayGroups = getHourlyForecastDayGroups(card.hourly || []);
   const visibleHourly = hourlyDayGroups[selectedHourlyDay]?.items || [];
-  const hourlyChartWidth = Math.max(500, (visibleHourly?.length || 24) * 35);
+  const hourlyChartWidth = Math.max(873, (visibleHourly?.length || 24) * 35);
   const hourlyChartData = {
     labels: visibleHourly?.map((h) => h.time) || [],
     datasets: [
@@ -1490,18 +1719,16 @@ const HOLIDAYS_2027 = {
   "01.05": "День праці. Жінки — спечіть щось смачненьке, а чоловіки для дам теж хай щось змайструють!",
   "02.05": "З Великоднем 2027! Бажаю всім всього найкращого. Скиньте рецепт пасочки на пошту :)",
   "06.05": "День святого Юрія / Георгія (старий стиль)",
-  "08.05": "День пам'яті та перемоги. В цей день наші прадіди перемогли фашизм.",
+  "08.05": "День пам'яті та перемоги. В цей день наші прадіди перемогли фашизм. Один не багатьох випадків коли я кажу про політику добре...",
   "09.05": "День матері. Подякуйте їм за те, що вони підтримували вас у тяжкі дні, а радісні робили ще кращими.",
-  "10.05": "Вознесіння Господнє (новий стиль)",
   "27.05": "Випуск Dragon Village 3. Скачаєш? :)",
   "29.05": "Особисте свято у цей день... Пробач, я теж маю секрети :)",
 
   // Червень
-  "10.06": "Вознесіння Господнє (старий стиль)",
-  "20.06": "Трійця / П'ятдесятниця (новий стиль)",
+  "10.06": "Вознесіння Господнє",
+  "20.06": "Трійця / П'ятдесятниця",
   "21.06": "Просто літнє сонцестояння. Купив собі ескімо? :)",
   "24.06": "Різдво Івана Хрестителя / Купала (новий стиль)",
-  "27.06": "Трійця / П'ятдесятниця (старий стиль)",
   "28.06": "День Конституції України",
   "29.06": "Святих апостолів Петра і Павла (новий стиль)",
 
@@ -1980,11 +2207,273 @@ const HOLIDAYS_2027 = {
     tooltipEl.style.left = `${left}px`;
     tooltipEl.style.top = `${top}px`;
   }
+
+  const [isBannerHovered, setIsBannerHovered] = useState(false);
+
+  useEffect(() => {
+    if (isBannerHovered) return;
+    const interval = setInterval(() => {
+      if (window.innerWidth >= 768) {
+        setActiveTab((prev) => {
+          const order = ["current", "hourly", "daily", "ai"];
+          const nextIndex = (order.indexOf(prev) + 1) % order.length;
+          const next = order[nextIndex];
+          if (next === "ai" && !aiSummary && isAiEnabled) {
+            checkAndUpdate();
+          }
+          return next;
+        });
+      }
+    }, 6500);
+    return () => clearInterval(interval);
+  }, [isBannerHovered, aiSummary, isAiEnabled, checkAndUpdate]);
+
+  const renderHourlyTable = () => {
+    if (!visibleHourly || visibleHourly.length === 0) {
+      return (
+        <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
+          Немає даних годинного прогнозу.
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ marginTop: "12px", width: "100%", overflowX: "auto" }}>
+        <div style={{ display: "flex", gap: "3px", paddingBottom: "10px", minWidth: "min-content" }}>
+          {visibleHourly.map((item, idx) => {
+            const windDeg = item.wind_direction_10m || 0;
+            const windText = getWindDirectionText(windDeg);
+            const tempVal = parseInt(item.temp);
+            const tempColor = tempVal > 25 ? "#ff4d4d" : tempVal < 5 ? "#4da6ff" : "#ffb36c";
+            return (
+              <div
+                key={idx}
+                style={{
+                  flex: "0 0 120px",
+                  background: isDarkMode ? "rgba(25, 25, 35, 0.88)" : "rgba(255, 255, 255, 0.95)",
+                  backdropFilter: "blur(8px)",
+                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.1)",
+                  borderRadius: "7px",
+                  padding: "4px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  textAlign: "center",
+                  color: isDarkMode ? "#fff" : "#1a1a1a",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
+                }}
+              >
+                <div style={{ fontSize: "12px", fontWeight: "bold", opacity: 0.85 }}>
+                  {item.time || item.label || `${idx}:00`}
+                </div>
+
+                <div style={{ fontSize: "24px", margin: "2px 0" }}>
+                  {item.iconSymbol || item.iconPlaceholder || "🌤️"}
+                      <TextContent $size="11px" $lh="1.2">
+      {(card.current.iconPlaceholder || "").replace(card.current.iconSymbol || "", "").trim() || "Мінлива хмарність"}
+    </TextContent>
+                </div>
+
+                <div style={{ fontSize: "16px", fontWeight: "800", color: tempColor }}>
+                  {item.temp}
+                </div>
+
+                {item.feels_like && (
+                  <div style={{ fontSize: "10px", opacity: 0.75 }}>
+                    Відчувається: {item.feels_like}
+                  </div>
+                )}
+                <div style={{ width: "80%", height: "1px", background: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)", margin: "4px 0" }} />
+
+                <div style={{ fontSize: "10px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: "700", color: "#0099ff" }}>
+                   Сила вітру: <span>{item.wind_speed || item.windSpeed || "0"} м/с</span>
+                  </div>
+                  <div style={{ fontSize: "9px", opacity: 0.8 }}>
+                    Напрямок: <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "12px" }}>⬇</span>
+                  </div>
+                   <div style={{ fontSize: "9px", opacity: 0.8 }}> {windText} ({Math.round(windDeg)}°)</div>
+                  {(item.wind_gusts_10m || item.wind_gusts) && parseFloat(item.wind_gusts_10m || item.wind_gusts) > 0 && (
+                    <div style={{ fontSize: "9px", color: "#ff9900", fontWeight: "600" }}>
+                      Пориви: {item.wind_gusts_10m || item.wind_gusts}м/с
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderDailyTable = () => {
+    const list = card.daily16 || card.daily || [];
+    if (!list || list.length === 0) {
+      return (
+        <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
+          Немає даних 16-денного прогнозу.
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ marginTop: "12px", width: "100%", overflowX: "auto" }}>
+        <div style={{ display: "flex", gap: "10px", paddingBottom: "12px", minWidth: "min-content" }}>
+          {list.map((d, idx) => {
+            const isPast = idx < 2 || d.isPast;
+            const dateType = getDateType(d.date, d.day, d.fullDate);
+            const isWeekend = d.day === "Сб" || d.day === "Нд" || dateType.type === "weekend";
+            const windDeg = d.wind_direction_10m || 0;
+            const windText = getWindDirectionText(windDeg);
+            const dayTemp = parseInt(d.temp_day || d.temp);
+            const nightTemp = parseInt(d.temp_night || d.nightTemp);
+
+            let headerColor = isDarkMode ? "#fff" : "#333";
+            let borderColor = isDarkMode ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.1)";
+            let badge = null;
+
+            if (isPast) {
+              headerColor = "#888";
+              borderColor = "rgba(140, 140, 140, 0.35)";
+              badge = (
+                <span style={{ fontSize: "9px", background: "rgba(120,120,120,0.3)", color: "#bbb", padding: "1px 6px", borderRadius: "4px" }}>
+                  ⌛ Минулий
+                </span>
+              );
+            } else if (dateType.type === "holiday") {
+              headerColor = "#ff4d4d"; // Червоний — свято
+              borderColor = "rgba(255, 77, 77, 0.7)";
+              badge = (
+                <span style={{ fontSize: "9px", background: "rgba(255, 77, 77, 0.25)", color: "#ff4d4d", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
+                  🚩 Свято
+                </span>
+              );
+            } else if (dateType.type === "custom") {
+              headerColor = "#00bfff"; // Синій — власна дата
+              borderColor = "rgba(0, 191, 255, 0.7)";
+              badge = (
+                <span style={{ fontSize: "9px", background: "rgba(0, 191, 255, 0.25)", color: "#00bfff", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
+                  💙 Подія
+                </span>
+              );
+            } else if (dateType.type === "birthday") {
+              headerColor = "#e066ff"; // Фіолетовий — ДН
+              borderColor = "rgba(224, 102, 255, 0.7)";
+              badge = (
+                <span style={{ fontSize: "9px", background: "rgba(224, 102, 255, 0.25)", color: "#e066ff", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
+                  🎂 ДН
+                </span>
+              );
+            } else if (isWeekend) {
+              headerColor = "#ffb36c"; // Жовтий / помаранчевий — вихідний
+              borderColor = "rgba(255, 179, 108, 0.7)";
+              badge = (
+                <span style={{ fontSize: "9px", background: "rgba(255, 179, 108, 0.25)", color: "#ffb36c", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
+                  🌅 Вихідний
+                </span>
+              );
+            }
+
+            return (
+              <div
+                key={idx}
+                style={{
+                  flex: "0 0 125px",
+                  background: isPast
+                    ? (isDarkMode ? "rgba(20, 20, 26, 0.85)" : "rgba(230, 230, 235, 0.85)")
+                    : (isDarkMode ? "rgba(25, 25, 35, 0.88)" : "rgba(255, 255, 255, 0.95)"),
+                  backdropFilter: "blur(8px)",
+                  border: isPast ? "1px dashed rgba(140, 140, 140, 0.4)" : `2px solid ${borderColor}`,
+                  borderRadius: "14px",
+                  padding: "12px 10px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "6px",
+                  textAlign: "center",
+                  color: isDarkMode ? "#fff" : "#1a1a1a",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.12)",
+                  filter: isPast ? "grayscale(85%)" : "none",
+                  opacity: isPast ? 0.75 : 1,
+                  transition: "all 0.2s ease",
+                }}
+              >
+                {badge}
+
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <span style={{ fontSize: "12px", fontWeight: "bold", color: headerColor }}>
+                    {d.day}
+                  </span>
+                  <span style={{ fontSize: "11px", opacity: 0.75 }}>
+                    {d.date}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: "28px", margin: "2px 0" }}>
+                  {d.iconSymbol || d.iconPlaceholder || "🌤️"}
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "100%" }}>
+                  <div style={{
+                    background: "rgba(255, 179, 108, 0.15)",
+                    borderRadius: "6px",
+                    padding: "2px 4px",
+                    fontSize: "14px",
+                    fontWeight: "800",
+                    color: "#ff9d3b",
+                  }}>
+                    {dayTemp > 0 ? `+${dayTemp}` : dayTemp}°
+                  </div>
+                  <div style={{
+                    background: "rgba(255, 20, 147, 0.12)",
+                    borderRadius: "6px",
+                    padding: "2px 4px",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    color: "#ff3399",
+                  }}>
+                    {nightTemp > 0 ? `+${nightTemp}` : nightTemp}°
+                  </div>
+                </div>
+
+                <div style={{ width: "85%", height: "1px", background: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)", margin: "4px 0" }} />
+
+                <div style={{ fontSize: "11px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: "700", color: "#0099ff" }}>
+                    <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "13px" }}>⬇</span>
+                    <span>{d.wind_speed || "0"} м/с</span>
+                  </div>
+                  <div style={{ fontSize: "10px", opacity: 0.75 }}>
+                    {windText} ({Math.round(windDeg)}°)
+                  </div>
+                  {(d.wind_gusts_10m || d.wind_gusts) && parseFloat(d.wind_gusts_10m || d.wind_gusts) > 0 && (
+                    <div style={{ fontSize: "9px", color: "#ff9900", fontWeight: "600", marginTop: "1px" }}>
+                      Пориви: {d.wind_gusts_10m || d.wind_gusts}м/с
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
+
     <div
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
     >
       <WeatherCard $isMain={card.isMain} $isDarkMode={isDarkMode}>
+        <DesktopLayoutWrapper
+          $isDarkMode={isDarkMode}
+          onMouseEnter={() => setIsBannerHovered(true)}
+          onMouseLeave={() => setIsBannerHovered(false)}
+        >
+          <MainBannerArea $image={cityImage || card.cityImage}>
+
         <CardHeader
           $isMain={card.isMain}
           style={{
@@ -2188,7 +2677,7 @@ const HOLIDAYS_2027 = {
                     gap: "6px",
                   }}
                 >
-                  📅 Встановити дати
+                  <FaCalendarPlus /> Встановити дати
                 </button>
                 <button
                   onClick={() => {
@@ -2295,18 +2784,44 @@ const HOLIDAYS_2027 = {
                     <BiTrash size={14} /> Видалити
                   </button>
                 )}
+                <button
+                  onClick={() => {
+                    handleCloseDropdown();
+                    if (!hasGeminiKey) return;
+                    window.dispatchEvent(
+                      new CustomEvent("attachCardToAiHelp", {
+                        detail: {
+                          id: `weather-${card.id}`,
+                          type: "weather",
+                          title: card.locationName,
+                          details: `Місто: ${card.locationName}. Координати: ${card.lat?.toFixed(2)}, ${card.lon?.toFixed(2)}. Температура: ${card.current?.temp}°C, відчувається: ${card.current?.feels_like}°C. Вітер: ${card.current?.wind_speed} м/с. Вологість: ${card.current?.humidity}%. Тиск: ${card.current?.pressure} гПа.`,
+                        },
+                      })
+                    );
+                  }}
+                  style={{
+                    textAlign: "left",
+                    padding: "10px",
+                    background: hasGeminiKey
+                      ? "linear-gradient(135deg, #5c1d3c, #62123d)"
+                      : "rgba(120,120,120,0.3)",
+                    color: "#fff",
+                    borderBottom: "1px solid #444",
+                    fontSize: "13px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    cursor: hasGeminiKey ? "pointer" : "default",
+                  }}
+                >
+                  <FiPlus size={16} /> Прикріпити до ШІ
+                </button>
               </SettingsDropdownMenu>
             )}
           </ActionButtons>
         </CardHeader>
         <CustomTimersDisplay customDays={customDays} cardId={card.id} />
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr 1fr",
-            borderBottom: "1px solid rgb(0,238,255)",
-          }}
-        >
+        <MobileTabBar>
           {[
             { key: "current", label: "Зараз" },
             { key: "hourly",  label: "Годинна" },
@@ -2315,7 +2830,9 @@ const HOLIDAYS_2027 = {
           ].map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() =>
+                tab.key === "ai" ? handleAiTabClick() : setActiveTab(tab.key)
+              }
               style={{
                 padding: "4px 2px",
                 border: "none",
@@ -2331,149 +2848,100 @@ const HOLIDAYS_2027 = {
               {tab.label}
             </button>
           ))}
-        </div>
+        </MobileTabBar>
 
         <div style={{ display: "flex", flexDirection: "column" }}>
 
           {activeTab === "current" && (
             <CurrentWeatherBanner
-              $image={cityImage || card.cityImage}
-              style={{ height: "auto", minHeight: "270px", borderRadius: 0 }}
+              style={{ borderRadius: 0 }}
             >
               <CurrentWeatherBanne
                 style={{
                   position: "relative",
                   borderRadius: 0,
                   padding: "2px",
-                  background: "rgba(0,0,0,0.6)",
+                  background: "rgba(0, 0, 0, 0.43)",
                 }}
               >
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: "4px",
-                    fontSize: "13px",
-                    width: "100%",
-                    padding: "3px",
-                    boxSizing: "border-box"
-                  }}
-                >
-                  <div
-                    aria-label={card.current.iconPlaceholder}
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2px", background: "rgba(255,255,255,0.1)", borderRadius: "8px", cursor: "help" }}
-                  >
-                    <div style={{ fontSize: "32px", lineHeight: "1" }}>
-                      {card.current.iconSymbol || "🌤️"}
-                    </div>
-                    <div style={{ marginTop: "5px", fontSize: "11px", fontWeight: "bold", textAlign: "center", lineHeight: "1.2" }}>
-                      {(card.current.iconPlaceholder || "").replace(card.current.iconSymbol || "", "").trim() || "Мінлива хмарність"}
-                    </div>
-                  </div>
-                  <div
-                    aria-label="Температура / Відчувається як"
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2px", background: "rgba(255,255,255,0.1)", borderRadius: "8px", cursor: "help" }}
-                  >
-                    <div style={{ fontSize: "24px", color: parseFloat(card.current.temp) < 5 ? "#4da6ff" : parseFloat(card.current.temp) > 25 ? "#ff4d4d" : "inherit" }}>
-                      {parseFloat(card.current.temp) < 5 ? <BsThermometerSnow /> : parseFloat(card.current.temp) > 25 ? <BsThermometerSun /> : <PiThermometerFill />}
-                    </div>
-                    <div style={{ fontWeight: "bold", textAlign: "center" }}>
-                      {card.current.temp}
-                      <div style={{ fontSize: "9px", fontWeight: "normal", opacity: 0.8 }}>Відчувається: {card.current.feels_like}</div>
-                    </div>
-                  </div>
-                  <div
-                    aria-label="Відносна вологість"
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2px", background: "rgba(255,255,255,0.1)", borderRadius: "8px", cursor: "help" }}
-                  >
-                    <div style={{ fontSize: "24px", color: parseFloat(card.current.humidity) > 70 ? "#4da6ff" : "inherit" }}>
-                      {parseFloat(card.current.humidity) > 70 ? <FaGlassWater /> : <FaGlassWaterDroplet />}
-                    </div>
-                    <div style={{ marginTop: "10px", fontSize: "12px", fontWeight: "bold", textAlign: "center" }}>
-                     Вологість: {card.current.humidity ?? "—"}
-                    </div>
-                  </div>
+                <DesktopTwoRowIndicators>
+  <IndicatorCard aria-label={card.current.iconPlaceholder}>
+    <IconBox $size="32px" $lh="1">{card.current.iconSymbol || "🌤️"}</IconBox>
+    <TextContent $size="11px" $lh="1.2">
+      {(card.current.iconPlaceholder || "").replace(card.current.iconSymbol || "", "").trim() || "Мінлива хмарність"}
+    </TextContent>
+  </IndicatorCard>
 
-                  <div
-                    aria-label={`Вітер: ${card.current.wind_speed}, Напрямок: ${card.current.wind_direction_10m}° (${getWindDirectionText(card.current.wind_direction_10m)}), Пориви: ${card.current.wind_gusts_10m} м/с`}
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2px", background: "rgba(255,255,255,0.1)", borderRadius: "8px", cursor: "help" }}
-                  >
-                    <div style={{ fontSize: "28px" }}>
-                      <span style={{ display: "inline-block", transform: `rotate(${Math.round((card.current.wind_direction_10m || 0) / 45) * 45 % 360}deg)` }}>
-                        ⬇
-                      </span>
-                    </div>
-                    <div style={{ fontWeight: "bold", textAlign: "center", marginTop: "-15px", fontSize: "12px" }}>
-                     Швидкість вітру: {card.current.wind_speed}
-                      <div style={{ fontSize: "10px", fontWeight: "normal", opacity: 0.8 }}>{card.current.wind_direction_10m}° {getWindDirectionText(card.current.wind_direction_10m)}</div>
-                      <div style={{ fontSize: "10px", fontWeight: "bold", opacity: 0.9, color: isExtremeWind ? "#ff4d4d" : "inherit" }}>
-                        Пориви: {card.current.wind_gusts_10m}м/с
-                      </div>
-                    </div>
-                  </div>
-                  <Tooltip content="Точка роси (температура, при якій утворюється роса)" isDarkMode={isDarkMode}>
-                  <div
-                    aria-label="Точка роси (температура, при якій утворюється роса)"
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2px", background: "rgba(255,255,255,0.1)", borderRadius: "8px", cursor: "help" }}
-                  >
-                    <div style={{ fontSize: "24px" }}>
-                      <GiGrassMushroom />
-                    </div>
-                    <div style={{ marginTop: "5px", fontWeight: "bold", textAlign: "center" }}>
-                     Точка роси: {card.current.dew_point_2m}°C
-                    </div>
-                  </div>
-                  </Tooltip>
-                  <div
-                    aria-label="Атмосферний тиск"
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "10px", background: "rgba(255,255,255,0.1)", borderRadius: "8px", cursor: "help" }}
-                  >
-                    <div style={{ fontSize: "24px", color: parseFloat(card.current.pressure) < 1000 ? "#4da6ff" : parseFloat(card.current.pressure) > 1020 ? "#ff4d4d" : "inherit" }}>
-                      <MdOutlineSpeed />
-                    </div>
-                    <div style={{ marginTop: "5px", fontWeight: "bold", textAlign: "center", fontSize: "12px" }}>
-                     Атмосферний тиск: {card.current.pressure}
-                    </div>
-                  </div>
-                  <div
-                    aria-label="Хмарність"
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2px", background: "rgba(255,255,255,0.1)", borderRadius: "8px", cursor: "help" }}
-                  >
-                    <div style={{ fontSize: "24px" }}>
-                      {parseFloat(card.current.cloud_cover) < 50 ? <FaCloudDownloadAlt /> : <FaCloudUploadAlt />}
-                    </div>
-                    <div style={{ marginTop: "5px", fontWeight: "bold", textAlign: "center", fontSize: "11px" }}>
-                     Хмарність: {card.current.cloud_cover}%
-                    </div>
-                  </div>
+  <IndicatorCard aria-label="Температура / Відчувається як">
+    <IconBox $color={parseFloat(card.current.temp) < 5 ? "#4da6ff" : parseFloat(card.current.temp) > 25 ? "#ff4d4d" : "inherit"}>
+      {parseFloat(card.current.temp) < 5 ? <BsThermometerSnow /> : parseFloat(card.current.temp) > 25 ? <BsThermometerSun /> : <PiThermometerFill />}
+    </IconBox>
+    <TextContent $mt="0px">
+      {card.current.temp}
+      <SubText $size="9px">Відчувається: {card.current.feels_like}</SubText>
+    </TextContent>
+  </IndicatorCard>
 
-                  <div
-                    aria-label="Видимість"
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0px", background: "rgba(255,255,255,0.1)", borderRadius: "8px", cursor: "help" }}
-                  >
-                    <div style={{ fontSize: "24px", opacity: Math.min(1, Math.max(0.3, (card.current.visibility || 10000) / 10000)), color: (card.current.visibility || 10000) < 2000 ? "#ff4d4d" : "inherit" }}>
-                      <FaSmog />
-                    </div>
-                    <div style={{ marginTop: "5px", fontWeight: "bold", textAlign: "center", fontSize: "10px" }}>
-                     Видимість:{card.current.visibility !== undefined ? (card.current.visibility / 1000).toFixed(1) : "—"}км
-                    </div>
-                  </div>
+  <IndicatorCard aria-label="Відносна вологість">
+    <IconBox $color={parseFloat(card.current.humidity) > 70 ? "#4da6ff" : "inherit"}>
+      {parseFloat(card.current.humidity) > 70 ? <FaGlassWater /> : <FaGlassWaterDroplet />}
+    </IconBox>
+    <TextContent $mt="10px">Вологість: {card.current.humidity ?? "—"}</TextContent>
+  </IndicatorCard>
 
-                  <div
-                    aria-label="УФ-індекс / Сонячна радіація"
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "10px", background: "rgba(255,255,255,0.1)", borderRadius: "8px", cursor: "help" }}
-                  >
-                    <div style={{ fontSize: "24px", color: (card.current.uv_index || 0) > 5 ? "#ff4d4d" : (card.current.uv_index || 0) > 2 ? "#ffd700" : "inherit" }}>
-                      <GiSunRadiations />
-                    </div>
-                    <div style={{ marginTop: "5px", fontWeight: "bold", textAlign: "center", fontSize: "10px" }}>
-                     УФ-індекс: {card.current.uv_index ?? 0}
-                    </div>
-                  </div>
-                </div>
+  <IndicatorCard aria-label={`Вітер: ${card.current.wind_speed}, Напрямок: ${card.current.wind_direction_10m}° (${getWindDirectionText(card.current.wind_direction_10m)}), Пориви: ${card.current.wind_gusts_10m} м/с`}>
+    <IconBox $size="28px" $rotate={Math.round((card.current.wind_direction_10m || 0) / 45) * 45 % 360}>⬇</IconBox>
+    <TextContent $mt="-5px">
+      Швидкість вітру: {card.current.wind_speed}
+      <SubText>{card.current.wind_direction_10m}° {getWindDirectionText(card.current.wind_direction_10m)}</SubText>
+      <SubText $weight="bold" $opacity={0.9} style={{ color: isExtremeWind ? "#ff4d4d" : "inherit" }}>
+        Пориви: {card.current.wind_gusts_10m}м/с
+      </SubText>
+    </TextContent>
+  </IndicatorCard>
+
+  <Tooltip content="Точка роси (температура, при якій утворюється роса)" isDarkMode={isDarkMode}>
+    <IndicatorCard aria-label="Точка роси (температура, при якій утворюється роса)">
+      <IconBox><GiGrassMushroom /></IconBox>
+      <TextContent>Точка роси: {card.current.dew_point_2m}°C</TextContent>
+    </IndicatorCard>
+  </Tooltip>
+
+  <IndicatorCard aria-label="Атмосферний тиск" $pad="10px">
+    <IconBox $color={parseFloat(card.current.pressure) < 1000 ? "#4da6ff" : parseFloat(card.current.pressure) > 1020 ? "#ff4d4d" : "inherit"}>
+      <MdOutlineSpeed />
+    </IconBox>
+    <TextContent>Атмосферний тиск: {card.current.pressure}</TextContent>
+  </IndicatorCard>
+
+  <IndicatorCard aria-label="Хмарність">
+    <IconBox>
+      {parseFloat(card.current.cloud_cover) < 50 ? <FaCloudDownloadAlt /> : <FaCloudUploadAlt />}
+    </IconBox>
+    <TextContent $size="11px">Хмарність: {card.current.cloud_cover}%</TextContent>
+  </IndicatorCard>
+
+  <IndicatorCard aria-label="Видимість" $pad="0px">
+    <IconBox 
+      $opacity={Math.min(1, Math.max(0.3, (card.current.visibility || 10000) / 10000))}
+      $color={(card.current.visibility || 10000) < 2000 ? "#ff4d4d" : "inherit"}
+    >
+      <FaSmog />
+    </IconBox>
+    <TextContent $size="10px">Видимість:{card.current.visibility !== undefined ? (card.current.visibility / 1000).toFixed(1) : "—"}км</TextContent>
+  </IndicatorCard>
+
+  <IndicatorCard aria-label="УФ-індекс / Сонячна радіація" $pad="10px">
+    <IconBox $color={(card.current.uv_index || 0) > 5 ? "#ff4d4d" : (card.current.uv_index || 0) > 2 ? "#ffd700" : "inherit"}>
+      <GiSunRadiations />
+    </IconBox>
+    <TextContent $size="10px">УФ-індекс: {card.current.uv_index ?? 0}</TextContent>
+  </IndicatorCard>
+</DesktopTwoRowIndicators>
               </CurrentWeatherBanne>
             </CurrentWeatherBanner>
           )}
+
 
           {/* Годинний прогноз */}
           {activeTab === "hourly" && (
@@ -2484,10 +2952,29 @@ const HOLIDAYS_2027 = {
                   justifyContent: "space-between",
                   alignItems: "center",
                   flexWrap: "wrap",
+                  gap: "10px",
+                  marginBottom: "8px",
                 }}
               >
-                <h4 style={{ margin: 0 }}>Годинний прогноз</h4>
+                <h4 style={{ margin: 0, fontSize: "14px" }}>Годинний прогноз</h4>
+                <ViewToggleGroup $isDarkMode={isDarkMode}>
+                  <ViewToggleButton
+                    $active={hourlyViewMode === "charts"}
+                    $isDarkMode={isDarkMode}
+                    onClick={() => setHourlyViewMode("charts")}
+                  >
+                    <BiLineChart size={14} /> Графіки
+                  </ViewToggleButton>
+                  <ViewToggleButton
+                    $active={hourlyViewMode === "table"}
+                    $isDarkMode={isDarkMode}
+                    onClick={() => setHourlyViewMode("table")}
+                  >
+                    📋 Таблиця
+                  </ViewToggleButton>
+                </ViewToggleGroup>
               </div>
+
               {hourlyDayGroups.length > 1 && (
                 <div style={{ marginTop: "8px", marginBottom: "8px" }}>
                   <select
@@ -2514,199 +3001,230 @@ const HOLIDAYS_2027 = {
                   </select>
                 </div>
               )}
-              {visibleHourly && visibleHourly.length > 0 && (
-                <div
-                  ref={hourlyChartPanelRef}
-                  style={{
-                    position: "relative",
-                    width: "100%",
-                    minHeight: fullscreenChart === "hourly" ? (isCapturing ? `${window.innerHeight}px` : "100vh") : undefined,
-                    padding: fullscreenChart === "hourly" ? "16px" : undefined,
-                    boxSizing: "border-box",
-                    background: fullscreenChart === "hourly"
-                      ? isDarkMode ? "#000" : "#f5f5f5"
-                      : "transparent",
-                  }}
-                >
-                  {renderChartHeader("hourly", hourlyChartPanelRef, [
-                    { key: "day", label: "Температура", color: "#ffb36c" },
-                    { key: "wind", label: "Вітер", color: "#0099ff" },
-                  ])}
-                  <div style={{ position: "relative", width: "100%" }}>
-                    <ChartScrollWrapper>
-                      <ChartInnerContainer
-                        $width={fullscreenChart === "hourly" ? `max(100%, ${hourlyChartWidth}px)` : hourlyChartWidth}
-                        $height={fullscreenChart === "hourly" ? (isCapturing ? `${window.innerHeight - 90}px` : "calc(100vh - 90px)") : "150px"}
+
+              {hourlyViewMode === "charts" ? (
+                visibleHourly && visibleHourly.length > 0 && (
+                  <div
+                    ref={hourlyChartPanelRef}
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      minHeight: fullscreenChart === "hourly" ? (isCapturing ? `${window.innerHeight}px` : "100vh") : undefined,
+                      padding: fullscreenChart === "hourly" ? "16px" : undefined,
+                      boxSizing: "border-box",
+                      background: fullscreenChart === "hourly"
+                        ? isDarkMode ? "#000" : "#f5f5f5"
+                        : "transparent",
+                    }}
+                  >
+                    {renderChartHeader("hourly", hourlyChartPanelRef, [
+                      { key: "day", label: "Температура", color: "#ffb36c" },
+                      { key: "wind", label: "Вітер", color: "#0099ff" },
+                    ])}
+                    <div style={{ position: "relative", width: "100%" }}>
+                      <ChartScrollWrapper>
+                        <ChartInnerContainer
+                          $width={fullscreenChart === "hourly" ? `max(100%, ${hourlyChartWidth}px)` : hourlyChartWidth}
+                          $height={fullscreenChart === "hourly" ? (isCapturing ? `${window.innerHeight - 90}px` : "calc(100vh - 90px)") : defaultChartHeight}
+                        >
+                          <Line
+                            key={`hourly-${fullscreenChart || "normal"}`}
+                            ref={hourlyChartInstanceRef}
+                            options={chartOptions}
+                            data={hourlyChartData}
+                          />
+                        </ChartInnerContainer>
+                      </ChartScrollWrapper>
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "50px",
+                          height: "calc(100% - 29px)",
+                          background: isDarkMode ? "#000" : "#f5f5f5",
+                          overflow: "hidden",
+                          pointerEvents: "none",
+                          display: fullscreenChart === "hourly" ? "none" : "block",
+                        }}
                       >
-                        <Line
-                          key={`hourly-${fullscreenChart || "normal"}`}
-                          ref={hourlyChartInstanceRef}
-                          options={chartOptions}
-                          data={hourlyChartData}
-                        />
-                      </ChartInnerContainer>
-                    </ChartScrollWrapper>
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "50px",
-                        height: "calc(100% - 29px)",
-                        background: isDarkMode ? "#000" : "#f5f5f5",
-                        overflow: "hidden",
-                        pointerEvents: "none",
-                        display: fullscreenChart === "hourly" ? "none" : "block",
-                      }}
-                    >
-                      <ChartInnerContainer $width={hourlyChartWidth} $height="150px">
-                        <Line
-                          options={{ ...chartOptions, plugins: { ...chartOptions.plugins, tooltip: { enabled: false } } }}
-                          data={hourlyChartData}
-                        />
-                      </ChartInnerContainer>
-                    </div>
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        right: 0,
-                        width: "50px",
-                        height: "calc(100% - 29px)",
-                        background: isDarkMode ? "#000" : "#f5f5f5",
-                        overflow: "hidden",
-                        pointerEvents: "none",
-                        display: fullscreenChart === "hourly" ? "none" : "block",
-                      }}
-                    >
-                      <div style={{ position: "absolute", top: 0, right: 0, width: `${hourlyChartWidth}px`, height: "150px" }}>
-                        <ChartInnerContainer $width={hourlyChartWidth} $height="150px">
+                        <ChartInnerContainer $width={hourlyChartWidth} $height={defaultChartHeight}>
                           <Line
                             options={{ ...chartOptions, plugins: { ...chartOptions.plugins, tooltip: { enabled: false } } }}
                             data={hourlyChartData}
                           />
                         </ChartInnerContainer>
                       </div>
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          right: 0,
+                          width: "50px",
+                          height: "calc(100% - 29px)",
+                          background: isDarkMode ? "#000" : "#f5f5f5",
+                          overflow: "hidden",
+                          pointerEvents: "none",
+                          display: fullscreenChart === "hourly" ? "none" : "block",
+                        }}
+                      >
+                        <div style={{ position: "absolute", top: 0, right: 0, width: `${hourlyChartWidth}px`, height: defaultChartHeight }}>
+                          <ChartInnerContainer $width={hourlyChartWidth} $height={defaultChartHeight}>
+                            <Line
+                              options={{ ...chartOptions, plugins: { ...chartOptions.plugins, tooltip: { enabled: false } } }}
+                              data={hourlyChartData}
+                            />
+                          </ChartInnerContainer>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )
+              ) : (
+                renderHourlyTable()
               )}
             </div>
           )}
+
+          {/* Прогноз на 16 днів */}
           {activeTab === "daily" && (
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "8px" }}>
                 <h4 style={{ margin: 0, fontSize: "14px" }}>
                   Прогноз на 16 днів (включаючи 2 минулі дні)
                 </h4>
-              </div>
-              <div style={{
-                position: "sticky",
-                top: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "8px",
-                padding: "6px 8px",
-                background: isDarkMode ? "rgba(0, 0, 0, 0.7)" : "rgba(255, 255, 255, 0.7)",
-                backdropFilter: "blur(4px)",
-                borderBottom: "1px solid #ffb36c",
-                zIndex: 100,
-              }}>
-                {renderChartLegend([
-                  { key: "day", label: "День", color: "#ffb36c" },
-                  { key: "night", label: "Ніч", color: "#ff1493" },
-                  { key: "wind", label: "Вітер", color: "#0099ff" },
-                ])}
-                {renderChartActions("daily", dailyChartPanelRef)}
-              </div>
-              <div
-                ref={dailyChartPanelRef}
-                style={{
-                  position: "relative",
-                  width: "100%",
-                  minHeight: fullscreenChart === "daily" ? (isCapturing ? `${window.innerHeight}px` : "100vh") : undefined,
-                  padding: fullscreenChart === "daily" ? "16px" : undefined,
-                  boxSizing: "border-box",
-                  background: fullscreenChart === "daily"
-                    ? isDarkMode ? "#000" : "#f5f5f5"
-                    : "transparent",
-                }}
-              >
-                {fullscreenChart === "daily" && renderChartHeader("daily", dailyChartPanelRef, [
-                  { key: "day", label: "День", color: "#ffb36c" },
-                  { key: "night", label: "Ніч", color: "#ff1493" },
-                  { key: "wind", label: "Вітер", color: "#0099ff" },
-                ])}
-                <div style={{ position: "relative", width: "100%" }}>
-                  <ChartScrollWrapper ref={dailyChartRef}>
-                    <ChartInnerContainer
-                      $width={fullscreenChart === "daily" ? "max(100%, 900px)" : 900}
-                      $height={fullscreenChart === "daily" ? (isCapturing ? `${window.innerHeight - 120}px` : "calc(100vh - 120px)") : "190px"}
-                    >
-                      <Line
-                        key={`daily-${fullscreenChart || "normal"}`}
-                        ref={dailyChartInstanceRef}
-                        options={dailyChartOptions}
-                        data={dailyChartData}
-                      />
-                    </ChartInnerContainer>
-                  </ChartScrollWrapper>
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "50px",
-                      height: "calc(100% - 29px)",
-                      background: isDarkMode ? "#000" : "#f5f5f5",
-                      overflow: "hidden",
-                      pointerEvents: "none",
-                      display: fullscreenChart === "daily" ? "none" : "block",
-                    }}
+                <ViewToggleGroup $isDarkMode={isDarkMode}>
+                  <ViewToggleButton
+                    $active={dailyViewMode === "charts"}
+                    $isDarkMode={isDarkMode}
+                    onClick={() => setDailyViewMode("charts")}
                   >
-                    <ChartInnerContainer $width={1300} $height="150px">
-                      <Line
-                        options={{ ...dailyChartOptions, plugins: { ...dailyChartOptions.plugins, tooltip: { enabled: false } } }}
-                        data={dailyChartData}
-                      />
-                    </ChartInnerContainer>
+                    <BiLineChart size={14} /> Графіки
+                  </ViewToggleButton>
+                  <ViewToggleButton
+                    $active={dailyViewMode === "table"}
+                    $isDarkMode={isDarkMode}
+                    onClick={() => setDailyViewMode("table")}
+                  >
+                    📋 Таблиця
+                  </ViewToggleButton>
+                </ViewToggleGroup>
+              </div>
+
+              {dailyViewMode === "charts" ? (
+                <>
+                  <div style={{
+                    position: "sticky",
+                    top: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "8px",
+                    padding: "6px 8px",
+                    background: isDarkMode ? "rgba(0, 0, 0, 0.7)" : "rgba(255, 255, 255, 0.7)",
+                    backdropFilter: "blur(4px)",
+                    borderBottom: "1px solid #ffb36c",
+                    zIndex: 100,
+                  }}>
+                    {renderChartLegend([
+                      { key: "day", label: "День", color: "#ffb36c" },
+                      { key: "night", label: "Ніч", color: "#ff1493" },
+                      { key: "wind", label: "Вітер", color: "#0099ff" },
+                    ])}
+                    {renderChartActions("daily", dailyChartPanelRef)}
                   </div>
                   <div
+                    ref={dailyChartPanelRef}
                     style={{
-                      position: "absolute",
-                      top: 0,
-                      right: 0,
-                      width: "50px",
-                      height: "calc(100% - 29px)",
-                      background: isDarkMode ? "#000" : "#f5f5f5",
-                      overflow: "hidden",
-                      pointerEvents: "none",
-                      display: fullscreenChart === "daily" ? "none" : "block",
+                      position: "relative",
+                      width: "100%",
+                      minHeight: fullscreenChart === "daily" ? (isCapturing ? `${window.innerHeight}px` : "100vh") : undefined,
+                      padding: fullscreenChart === "daily" ? "16px" : undefined,
+                      boxSizing: "border-box",
+                      background: fullscreenChart === "daily"
+                        ? isDarkMode ? "#000" : "#f5f5f5"
+                        : "transparent",
                     }}
                   >
-                    <div style={{ position: "absolute", top: 0, right: 0, width: "1300px", height: "150px" }}>
-                      <ChartInnerContainer $width={1300} $height="150px">
-                        <Line
-                          options={{ ...dailyChartOptions, plugins: { ...dailyChartOptions.plugins, tooltip: { enabled: false } } }}
-                          data={dailyChartData}
-                        />
-                      </ChartInnerContainer>
+                    {fullscreenChart === "daily" && renderChartHeader("daily", dailyChartPanelRef, [
+                      { key: "day", label: "День", color: "#ffb36c" },
+                      { key: "night", label: "Ніч", color: "#ff1493" },
+                      { key: "wind", label: "Вітер", color: "#0099ff" },
+                    ])}
+                    <div style={{ position: "relative", width: "100%" }}>
+                      <ChartScrollWrapper ref={dailyChartRef}>
+                        <ChartInnerContainer
+                          $width={fullscreenChart === "daily" ? "max(100%, 900px)" : 900}
+                          $height={fullscreenChart === "daily" ? (isCapturing ? `${window.innerHeight - 120}px` : "calc(100vh - 120px)") : defaultChartHeight}
+                        >
+                          <Line
+                            key={`daily-${fullscreenChart || "normal"}`}
+                            ref={dailyChartInstanceRef}
+                            options={dailyChartOptions}
+                            data={dailyChartData}
+                          />
+                        </ChartInnerContainer>
+                      </ChartScrollWrapper>
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "50px",
+                          height: "calc(100% - 29px)",
+                          background: isDarkMode ? "#000" : "#f5f5f5",
+                          overflow: "hidden",
+                          pointerEvents: "none",
+                          display: fullscreenChart === "daily" ? "none" : "block",
+                        }}
+                      >
+                        <ChartInnerContainer $width={1300} $height={defaultChartHeight}>
+                          <Line
+                            options={{ ...dailyChartOptions, plugins: { ...dailyChartOptions.plugins, tooltip: { enabled: false } } }}
+                            data={dailyChartData}
+                          />
+                        </ChartInnerContainer>
+                      </div>
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          right: 0,
+                          width: "50px",
+                          height: "calc(100% - 29px)",
+                          background: isDarkMode ? "#000" : "#f5f5f5",
+                          overflow: "hidden",
+                          pointerEvents: "none",
+                          display: fullscreenChart === "daily" ? "none" : "block",
+                        }}
+                      >
+                        <div style={{ position: "absolute", top: 0, right: 0, width: "1300px", height: defaultChartHeight }}>
+                          <ChartInnerContainer $width={1300} $height={defaultChartHeight}>
+                            <Line
+                              options={{ ...dailyChartOptions, plugins: { ...dailyChartOptions.plugins, tooltip: { enabled: false } } }}
+                              data={dailyChartData}
+                            />
+                          </ChartInnerContainer>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                </>
+              ) : (
+                renderDailyTable()
+              )}
             </div>
           )}
 
           {/* Аналіз ШІ */}
-          {activeTab === "ai" && aiSummary && (
+          {activeTab === "ai" && (
             <AiSummaryBox $isDarkMode={isDarkMode} layout>
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "flex-start",
+                  alignItems: "center",
+                  marginBottom: "8px",
                 }}
               >
                 <span
@@ -2714,32 +3232,34 @@ const HOLIDAYS_2027 = {
                   style={{
                     fontWeight: 800,
                     color: "#faf7fd",
-                    fontSize: "11px",
+                    fontSize: "12px",
                     letterSpacing: "1px",
                   }}
                 >
-                  Прогноз ШІ
+                  Прогноз ШІ (Gemini)
                 </span>
                 <button
                   className="ai-edit-btn"
                   onClick={() => setIsEditingPrompt(!isEditingPrompt)}
                   style={{
-                    background: "none",
-                    border: "none",
+                    background: "rgba(138, 43, 226, 0.2)",
+                    border: "1px solid rgba(138, 43, 226, 0.6)",
+                    borderRadius: "6px",
                     cursor: "pointer",
                     fontWeight: 600,
-                    fontSize: "12px",
+                    fontSize: "11px",
                     color: "#ffffff",
-                    padding: 0,
+                    padding: "4px 8px",
+                    transition: "all 0.2s",
                   }}
                 >
-                  {isEditingPrompt ? "Готово" : "Редагувати умову промпту"}
+                  {isEditingPrompt ? "✕ Сховати" : "✏️ Редагувати умову промпту"}
                 </button>
               </div>
               {isEditingPrompt ? (
                 <PromptEditor $isDarkMode={isDarkMode}>
-                  <label style={{ fontSize: "10px", fontWeight: "bold" }}>
-                    Своя інструкція:
+                  <label style={{ fontSize: "11px", fontWeight: "bold" }}>
+                    Своя інструкція до прогнозу:
                   </label>
                   <PromptTextarea
                     $isDarkMode={isDarkMode}
@@ -2750,63 +3270,110 @@ const HOLIDAYS_2027 = {
                   <div
                     style={{
                       display: "flex",
+                      flexWrap: "wrap",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      gap: "10px",
+                      marginTop: "6px",
                     }}
                   >
-                    <select
-                      value={responseLength}
-                      onChange={(e) => setResponseLength(e.target.value)}
-                      style={{
-                        fontSize: "10px",
-                        padding: "2px",
-                        borderRadius: "4px",
-                        background: isDarkMode ? "#333" : "#fff",
-                        color: isDarkMode ? "#fff" : "#000",
-                      }}
-                    >
-                      <option value="concise">Стисло</option>
-                      <option value="extensive">Обширно</option>
-                    </select>
-                    <select
-                      value={aiStyle}
-                      onChange={(e) => setAiStyle(e.target.value)}
-                      style={{
-                        fontSize: "10px",
-                        padding: "2px",
-                        borderRadius: "4px",
-                        background: isDarkMode ? "#333" : "#fff",
-                        color: isDarkMode ? "#fff" : "#000",
-                      }}
-                    >
-                      <option value="friendly">Дружній</option>
-                      <option value="scientific">Науковий</option>
-                      <option value="sarcastic">Саркастичний</option>
-                    </select>
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                        <span style={{ fontSize: "10px", opacity: 0.8, fontWeight: "600" }}>Обсяг:</span>
+                        <select
+                          value={responseLength}
+                          onChange={(e) => setResponseLength(e.target.value)}
+                          style={{
+                            fontSize: "12px",
+                            padding: "6px 10px",
+                            borderRadius: "6px",
+                            background: isDarkMode ? "#252535" : "#fff",
+                            color: isDarkMode ? "#fff" : "#000",
+                            border: "1px solid rgba(138, 43, 226, 0.5)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <option value="concise">Стисло</option>
+                          <option value="extensive">Обширно</option>
+                        </select>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                        <span style={{ fontSize: "10px", opacity: 0.8, fontWeight: "600" }}>Стиль:</span>
+                        <select
+                          value={aiStyle}
+                          onChange={(e) => setAiStyle(e.target.value)}
+                          style={{
+                            fontSize: "12px",
+                            padding: "6px 10px",
+                            borderRadius: "6px",
+                            background: isDarkMode ? "#252535" : "#fff",
+                            color: isDarkMode ? "#fff" : "#000",
+                            border: "1px solid rgba(138, 43, 226, 0.5)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <option value="friendly">Дружній</option>
+                          <option value="scientific">Науковий</option>
+                          <option value="sarcastic">Саркастичний</option>
+                        </select>
+                      </div>
+                    </div>
                     <button
                       onClick={async () => {
+                        const nextPrompt = customAiPrompt.trim();
+                        const previousPrompt = savedCustomAiPrompt.trim();
+                        const promptWasChanged = nextPrompt !== previousPrompt;
+                        const now = Date.now();
+                        const DAY_MS = 24 * 60 * 60 * 1000;
+
+                        if (
+                          promptWasChanged &&
+                          aiPromptChangedAt &&
+                          now - aiPromptChangedAt < DAY_MS
+                        ) {
+                          const hoursLeft = Math.ceil(
+                            (DAY_MS - (now - aiPromptChangedAt)) / (60 * 60 * 1000),
+                          );
+                          alert(`Промпт можна змінити знову через ${hoursLeft} год.`);
+                          return;
+                        }
+
                         await localforage.setItem(`ai_custom_prompt_${card.id}`, customAiPrompt);
                         await localforage.setItem(`ai_response_length_${card.id}`, responseLength);
                         await localforage.setItem(`ai_style_${card.id}`, aiStyle);
+                        if (promptWasChanged) {
+                          await localforage.setItem(
+                            `ai_custom_prompt_changed_at_${card.id}`,
+                            now,
+                          );
+                          setSavedCustomAiPrompt(customAiPrompt);
+                          setAiPromptChangedAt(now);
+                        }
                         setIsEditingPrompt(false);
                         generateWeatherSummary();
                       }}
                       style={{
-                        background: "#8a2be2",
+                        background: "linear-gradient(135deg, #8a2be2, #a855f7)",
                         color: "white",
                         border: "none",
-                        borderRadius: "4px",
-                        padding: "4px 8px",
-                        fontSize: "10px",
+                        borderRadius: "8px",
+                        padding: "8px 16px",
+                        fontSize: "12px",
                         cursor: "pointer",
                         fontWeight: "bold",
+                        boxShadow: "0 3px 10px rgba(138, 43, 226, 0.35)",
+                        marginTop: "auto",
                       }}
                     >
-                      Зберегти та оновити
+                      💾 Зберегти та оновити
                     </button>
                   </div>
                 </PromptEditor>
-              ) : (
+              ) : isAiLoading ? (
+                <div style={{ color: "#b362ff", padding: "10px 0", fontSize: "12px" }}>
+                  ⏳ Генерація прогнозу ШІ...
+                </div>
+              ) : aiSummary ? (
                 <>
                   <motion.div layout transition={{ duration: 0.3 }}>
                     <SummaryText ref={summaryRef} $isExpanded={false}>
@@ -2819,26 +3386,76 @@ const HOLIDAYS_2027 = {
                     </ShowMoreBtn>
                   )}
                 </>
+              ) : (
+                <div style={{ color: isDarkMode ? "#aaa" : "#555", padding: "8px 0", fontSize: "12px" }}>
+                  ШІ-аналіз недоступний. Ви можете відредагувати умову промпту вище та натиснути "Зберегти та оновити".
+                </div>
               )}
             </AiSummaryBox>
           )}
-          {activeTab === "ai" && isAiLoading && (
-            <AiPlaceholderBox $isDarkMode={isDarkMode}>
-              <div style={{ color: "#b362ff" }}>
-                ⏳ Генерація прогнозу ШІ...
-              </div>
-            </AiPlaceholderBox>
-          )}
-          {activeTab === "ai" && !aiSummary && !isAiLoading && (
-            <AiPlaceholderBox $isDarkMode={isDarkMode}>
-              <div style={{ color: isDarkMode ? "#aaa" : "#555" }}>
-                ШІ-аналіз недоступний. Перевірте ключ Gemini API.
-              </div>
-            </AiPlaceholderBox>
-          )}
 
         </div>
+          </MainBannerArea>
+
+          <SideCardsColumn>
+            <SideCardItem
+              $active={activeTab === "current"}
+              $bgImg={cityImage || card.cityImage}
+              onClick={() => setActiveTab("current")}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
+                <div style={{ fontSize: "36px" }}>{card.current?.iconSymbol || "🌤️"}</div>
+                <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
+                  <NameCardItem $active={activeTab === "current"}>Зараз: {card.current?.temp}</NameCardItem>
+                  <SubNameCardItem $active={activeTab === "current"}>Відчувається: {card.current.feels_like}</SubNameCardItem>
+                </div>
+              </div>
+            </SideCardItem>
+            <SideCardItem
+              $active={activeTab === "hourly"}
+               $bgImg={daynight}
+              onClick={() => setActiveTab("hourly")}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
+                <div style={{ fontSize: "36px", color: "#ffb36c" }}><BiLineChart /></div>
+                <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
+                  <NameCardItem $active={activeTab === "hourly"}>Годинна(24г)</NameCardItem>
+                  <SubNameCardItem $active={activeTab === "hourly"}>Погодинна на 7 днів</SubNameCardItem>
+                </div>
+              </div>
+            </SideCardItem>
+
+            <SideCardItem
+              $active={activeTab === "daily"}
+              onClick={() => setActiveTab("daily")}
+              $bgImg={daysthunders}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
+                <div style={{ fontSize: "36px", color: "#ff1493" }}><FaCalendarPlus /></div>
+                <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
+                  <NameCardItem $active={activeTab === "daily"}>Прогноз на 16 днів</NameCardItem>
+                  <SubNameCardItem $active={activeTab === "daily"}>Бундючий графік</SubNameCardItem>
+                </div>
+              </div>
+            </SideCardItem>
+
+            <SideCardItem
+              $active={activeTab === "ai"}
+              $bgImg="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300&auto=format&fit=crop"
+              onClick={() => handleAiTabClick()}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
+                <div style={{ fontSize: "36px", color: "#a855f7" }}><BiBrain /></div>
+                <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
+                  <NameCardItem $active={activeTab === "ai"}>ШІ Прогноз</NameCardItem>
+                  <SubNameCardItem $active={activeTab === "ai"}>Gemini AI</SubNameCardItem>
+                </div>
+              </div>
+            </SideCardItem>
+          </SideCardsColumn>
+        </DesktopLayoutWrapper>
       </WeatherCard>
+
 
       {/* Модалка повного тексту ШІ */}
       {isAiModalOpen && (

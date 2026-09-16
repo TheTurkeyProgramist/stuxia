@@ -1304,7 +1304,10 @@ const SongAiModal = ({ track, onClose, isDarkMode }) => {
       try {
         setStatus("З'єднання з Gemini...");
         const genAI = new GoogleGenerativeAI(personalApiKey);
-        const model = genAI.getGenerativeModel({ model: geminiModel });
+        const model = genAI.getGenerativeModel({
+          model: geminiModel,
+          tools: [{ googleSearch: {} }],
+        });
 
         const allSongs = songAiKnowledge.map((s) => s.author).join(", ");
         const durationText = track.duration

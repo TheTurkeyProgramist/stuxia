@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import JSZip from "jszip";
-import monody from "../../photos/vip-images/asium/vip-forest.webp";
+import monody from "../../photos/vip-images/asium/asium.webp";
 import { DEFAULT_BGS } from "../Hero/defaultBgs";
 import { ImFolderDownload } from "react-icons/im";
 const isVideoSource = (src) => {
@@ -37,20 +37,19 @@ const isVideoSource = (src) => {
 const FanArtDiv = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
 `;
 
 const FanArtTitle = styled.div`
-  font-size: 22px;
+  font-size: 20px;
   position: relative;
-  z-index: 100;
+  z-index: 400;
   border-radius: 10px;
-  padding: 10px 24px;
-  text-align: center;
+  padding: 5px 14px;
+  width: 130px;
   font-family: var(--font-family);
   font-weight: 600;
   color: ${(props) => (props.$isDarkMode ? "white" : "black")};
-  margin-bottom: 15px;
+  margin-bottom: -45px;
   ${(props) =>
     props.$isStickyBgMode
       ? css`

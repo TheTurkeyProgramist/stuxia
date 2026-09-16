@@ -588,7 +588,7 @@ const ModeIconBtn = styled.button`
 
 const ModeDropdown = styled.div`
   position: absolute;
-  top: -59px;
+  top: 19px;
   left: 30px;
   background: ${(props) => (props.$isDarkMode ? "rgba(10, 10, 20, 0.95)" : "rgba(255, 255, 255, 0.95)")};
   border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.15)")};
@@ -753,7 +753,7 @@ const HeroFormater = styled.div`
 const SearchContainer = styled.div`
   position: relative;
   display: flex;
-  width: 97%;
+  width: 99.7%;
   justify-content: center;
 `;
 
@@ -851,22 +851,8 @@ const SuggestionsList = styled.div`
   max-height: 350px;
   overflow-y: auto;
   border: 1px solid rgb(0, 0, 0);
-  @media (min-width: 768px) {
-  width: 108.4%;
-  }
   @media (min-width: 1200px) {
-      width: 102.4%;
-  }
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: skyblue;
-    border-radius: 10px;
+      width: 99.7%;
   }
 `;
 
@@ -998,7 +984,6 @@ const LinksSearchOverlay = styled.div`
 
 const LinksSearchHeader = styled.div`
   width: 100%;
-  max-width: 1200px;
   padding: 18px 16px 10px;
   display: flex;
   flex-direction: column;
@@ -1016,6 +1001,7 @@ const LinksSearchBar = styled.div`
   background: ${(p) => p.$isDarkMode ? "#1a1a2e" : "#fff"};
   border: 2px solid ${(p) => p.$isDarkMode ? "#3a3a5a" : "#ddd"};
   border-radius: 50px;
+  margin-top: 20px;
   padding: 8px 14px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.18);
   transition: border-color 0.2s;
@@ -1036,30 +1022,26 @@ const LinksSearchInput = styled.input`
 `;
 
 const LinksSearchMeta = styled.div`
-  color: ${(p) => p.$isDarkMode ? "#888" : "#555"};
+  color: ${(p) => p.$isDarkMode ? "#ffffff" : "#080808"};
   font-size: 12px;
   text-align: center;
 `;
 
 const LinksResultsList = styled.div`
   width: 100%;
-  max-width: 720px;
+  max-width: 1200px;
   flex: 1;
   overflow-y: auto;
-  padding: 0 16px 24px;
+  padding: 0 1px 2px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb { background: #ffb36c55; border-radius: 10px; }
-`;
+  gap: 6px;`;
 
 const LinksResultItem = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 5px 8px;
   border-radius: 14px;
   cursor: pointer;
   transition: background 0.15s, transform 0.12s;
@@ -1559,7 +1541,7 @@ const ModalContent = styled.div`
     cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
   }
   &::-webkit-scrollbar-thumb {
     background: #ffb36c;
@@ -4302,7 +4284,7 @@ const Hero = ({
                   onClick={() => setInputValue("")}
                   aria-label="Очистити"
                   type="button"
-                  style={{ position: "static", transform: "none" }}
+                  style={{ position: "static", transform: "none", borderRadius: "50%" }}
                 >
                   ×
                 </ClearButton>
@@ -4325,7 +4307,6 @@ const Hero = ({
           </LinksSearchHeader>
 
           <LinksResultsList>
-            {/* Pinned Links Section when input is empty */}
             {inputValue.trim() === "" && pinnedLinks.length > 0 && (
               <>
                 <LinksPinnedLabel $isDarkMode={isDarkMode}>📌 Закріплені сайти</LinksPinnedLabel>

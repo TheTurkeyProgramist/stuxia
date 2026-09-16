@@ -1,14 +1,12 @@
 import songAiKnowledge from "./songAiKnowledge.json";
 import faded from "../../photos/fan-art/faded.webp";
 import dinofrozVideo from "../../mp3/dinofroz.mp4";
-import soloveyko from "../../photos/vip-images/vip-soloveyko.webp";
 import harmony from "../../photos/vip-images/asium/asium.webp";
 import horse from "../../photos/vip-images/horse/horse.webp";
 import theorytwo from "../../photos/fan-art/theorytwo.webp";
 import fingerdash from "../../photos/vip-images/dinofroz/fingerdash.webp";
 import humorVideo from "../../mp3/humor.mp4";
 import electrodynamix from "../../photos/vip-images/electrodynamix.webp";
-import desert from "../../photos/vip-images/desert/vip-desert.webp";
 import deserttwo from "../../photos/vip-images/desert/deserttwo.webp";
 import desertthree from "../../photos/vip-images/desert/desertthree.webp";
 import desertfour from "../../photos/vip-images/desert/desertfour.webp";
@@ -18,8 +16,6 @@ import mecha from "../../photos/vip-images/mechannic.webp";
 import monody from "../../photos/fan-art/monody.webp";
 import clubstep from "../../photos/fan-art/clubstep.webp";
 import turkeys from "../../photos/vip-images/turkeys/ultra-vip-turkeys.webp";
-import horsethree from "../../photos/vip-images/horse/horsethree.webp";
-import horsetwo from "../../photos/vip-images/horse/horsetwo.webp";
 import chess from "../../photos/vip-images/horse/chess.webp";
 import turkeytwo from "../../photos/vip-images/turkeys/turkeytwo.webp";
 import turkeythree from "../../photos/vip-images/turkeys/turkeysthree.webp";
@@ -28,7 +24,6 @@ import turkeyfive from "../../photos/vip-images/turkeys/turkeysfive.webp";
 import turkeysix from "../../photos/vip-images/turkeys/turkeyssix.webp";
 import turkeysone from "../../photos/vip-images/turkeys/turkeysone.webp";
 import turkeyseven from "../../photos/vip-images/turkeys/turkeysseven.webp";
-import asiumnine from "../../photos/vip-images/asium/vip-forest.webp";
 import asiumone from "../../photos/vip-images/asium/asiumone.webp";
 import asiumtwo from "../../photos/vip-images/asium/asiuntwo.webp";
 import asiumthree from "../../photos/vip-images/asium/asiumthree.webp";
@@ -40,8 +35,6 @@ import asiumeleven from "../../photos/vip-images/asium/asiumtwelve.webp";
 import asiumseven from "../../photos/vip-images/asium/asiumseven.webp";
 import swamptwo from "../../photos/vip-images/swamp/swamptwo.webp";
 import swampthree from "../../photos/vip-images/swamp/swampthree.webp";
-import swampfour from "../../photos/vip-images/swamp/swampfour.webp";
-import swampfive from "../../photos/vip-images/swamp/swampfive.webp";
 import swampsix from "../../photos/vip-images/swamp/swampsix.webp";
 import swampseven from "../../photos/vip-images/swamp/seampseven.webp";
 import swampeight from "../../photos/vip-images/swamp/swampeight.webp";
@@ -51,10 +44,8 @@ import deadlocked from "../../photos/vip-images/swamp/deadlocked.webp";
 import horrortwo from "../../photos/vip-images/horror/horrortwo.webp";
 import horrorthree from "../../photos/vip-images/horror/horrorthree.webp";
 import horrorfour from "../../photos/vip-images/horror/horrorfour.webp";
-import horrorfive from "../../photos/vip-images/horror/horrorfive.webp";
 import horror from "../../photos/vip-images/horror/horror.webp";
 import horrorsix from "../../photos/vip-images/horror/horrorsix.webp";
-import horrorseven from "../../photos/vip-images/horror/horrorseven.webp";
 import horroreight from "../../photos/vip-images/horror/horroreight.webp";
 import dinofrozone from "../../photos/vip-images/dinofroz/vip-dinofroz.webp";
 import dinofrozthree from "../../photos/vip-images/dinofroz/dinofrozthree.webp";
@@ -65,20 +56,16 @@ import dinofrozseven from "../../photos/vip-images/dinofroz/dinofrozseven.webp";
 import dinofrozeight from "../../photos/vip-images/dinofroz/dinofrozeight.webp";
 import dinofroztwo from "../../photos/vip-images/dinofroz/vip-dragons.webp";
 import dinofroznine from "../../photos/vip-images/dinofroz/dinofroznine.webp";
-import domino from "../../mp3/dominos-shop.mp3";
 import hunger from "../../photos/hero-header/hunger.webp";
 import mia from "../../photos/vip-images/mia/miaandme.webp";
 import dinofrozAudio from "../../mp3/dinofroz.mp3";
-import turkeyAudio from "../../mp3/turkeys.mp3";
 import monodyAudio from "../../mp3/thefatrat-monody.mp3";
 import unityAudio from "../../mp3/unity.mp3";
 import hungerAudio from "../../mp3/thefatrat-hunger.mp3";
 import dragonoraAudio from "../../mp3/dragon.mp3";
-import soloveykoAudio from "../../mp3/soloveyko.mp3";
 import harmonyAudio from "../../mp3/harmonic-japan.mp3";
 import electrodynamixAudio from "../../mp3/electrodynamix.mp3";
 import clubstepAudio from "../../mp3/clubstep.mp3";
-import fingerbang from "../../mp3/mdk-fingerbang-full.mp3";
 import theorytwoAudio from "../../mp3/theoty-of-everything-ll.mp3";
 import theoryAudio from "../../mp3/theory-of-everyting.mp3";
 import deadlockedAudio from "../../mp3/deadlocked.mp3";
@@ -88,14 +75,12 @@ import nononoAudio from "../../mp3/thefatrat-no-no-no.mp3";
 export const assetMap = {
   faded,
   dinofrozVideo,
-  soloveyko,
   harmony,
   horse,
   theorytwo,
   fingerdash,
   humorVideo,
   electrodynamix,
-  desert,
   deserttwo,
   desertthree,
   desertfour,
@@ -105,8 +90,6 @@ export const assetMap = {
   monody,
   clubstep,
   turkeys,
-  horsethree,
-  horsetwo,
   chess,
   turkeytwo,
   turkeythree,
@@ -115,7 +98,6 @@ export const assetMap = {
   turkeysix,
   turkeysone,
   turkeyseven,
-  asiumnine,
   asiumone,
   asiumtwo,
   asiumthree,
@@ -127,8 +109,6 @@ export const assetMap = {
   asiumseven,
   swamptwo,
   swampthree,
-  swampfour,
-  swampfive,
   swampsix,
   swampseven,
   swampeight,
@@ -138,10 +118,8 @@ export const assetMap = {
   horrortwo,
   horrorthree,
   horrorfour,
-  horrorfive,
   horror,
   horrorsix,
-  horrorseven,
   horroreight,
   dinofrozone,
   dinofrozthree,
@@ -152,20 +130,16 @@ export const assetMap = {
   dinofrozeight,
   dinofroztwo,
   dinofroznine,
-  domino,
   hunger,
   mia,
   dinofrozAudio,
-  turkeyAudio,
   monodyAudio,
   unityAudio,
   hungerAudio,
   dragonoraAudio,
-  soloveykoAudio,
   harmonyAudio,
   electrodynamixAudio,
   clubstepAudio,
-  fingerbang,
   theorytwoAudio,
   theoryAudio,
   deadlockedAudio,

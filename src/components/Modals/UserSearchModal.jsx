@@ -812,7 +812,10 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
 
     try {
       const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        tools: [{ googleSearch: {} }],
+      });
 
       // Формуємо контекст з FAQ та бази пісень
       const faqContext = faqData.map((f) => `Q: ${f.q} A: ${f.a}`).join("\n");
