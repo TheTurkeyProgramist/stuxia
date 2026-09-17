@@ -19,6 +19,8 @@ import {
   BiFullscreen,
   BiDownload,
   BiPrinter,
+  BiCheck,
+  BiX,
 } from "react-icons/bi";
 import { FiPlus } from "react-icons/fi";
 import {
@@ -41,8 +43,8 @@ import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
 import { MdOutlineSpeed } from "react-icons/md"; //Тиск
 import { FaCloudDownloadAlt } from "react-icons/fa";//Низька хмарність
 import { FaCloudUploadAlt } from "react-icons/fa";//Підвищена хмарність
-import { FaSmog } from "react-icons/fa";//Туманність
-import { GiSunRadiations } from "react-icons/gi";//Сонячна радіація
+import { FaSmog, FaSnowflake } from "react-icons/fa";//Туманність
+import { GiSunRadiations, GiSnowing, GiWaterRecycling, GiIceCube } from "react-icons/gi";//Сонячна радіація
 import {
   useFloating,
   autoUpdate,
@@ -417,19 +419,19 @@ const SideCardItem = styled.div`
 
 const DesktopTwoRowIndicators = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  gap: 2px;
   width: 100%;
-  height: 86%;
-  padding: 4px;
+  height: 84%;
+  padding: 1px;
   box-sizing: border-box;
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    padding: 10px;
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+    gap: 3px;
+    padding: 4px;
   }
 `;
 const IndicatorCard = styled.div`
@@ -658,22 +660,6 @@ const AiSummaryBox = styled(motion.div)`
   }
 `;
 
-const AiPlaceholderBox = styled.div`
-  background: ${(props) => (props.$isDarkMode ? "rgba(30, 20, 42, 0.88)" : "rgba(255, 255, 255, 0.92)")};
-  border: 1px solid rgba(138, 43, 226, 0.35);
-  border-radius: 12px;
-  padding: 16px;
-  font-size: 13px;
-  color: ${(props) => (props.$isDarkMode ? "#efefff" : "#4a4a4a")};
-  width: 100%;
-  min-height: 160px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  text-align: center;
-`;
 
 const SummaryText = styled.div`
   display: -webkit-box;
@@ -744,7 +730,7 @@ const ViewToggleGroup = styled.div`
   display: inline-flex;
   align-items: center;
   background: ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)")};
-  border-radius: 20px;
+  border-radius:8px;
   padding: 3px;
   gap: 2px;
   border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.12)")};
@@ -754,8 +740,8 @@ const ViewToggleButton = styled.button`
   background: ${(props) => (props.$active ? (props.$isDarkMode ? "#8a2be2" : "#7000df") : "transparent")};
   color: ${(props) => (props.$active ? "#ffffff" : props.$isDarkMode ? "#cccccc" : "#444444")};
   border: none;
-  border-radius: 16px;
-  padding: 4px 10px;
+  border-radius: 6px;
+  padding: 8px 30px;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
@@ -1697,7 +1683,7 @@ const HOLIDAYS_2027 = {
   "01.01": "Вітаю з Новим роком! З новим щастям! Василя / Обрізання Господнє (новий стиль)",
   "06.01": "Богоявлення / Водохреще (новий стиль)",
   "07.01": "Різдво Христове (старий стиль)",
-  "12.01": "1 серія 'Реальної містики'. Та вже, ціла епоха розкриття містифікацій у 12 сезонів!",
+  "12.01": "1 серія 'Реальної містики'. Ціла епоха розкриття містифікацій у 12 сезонів!",
   "14.01": "Василя / Обрізання Господнє (старий стиль)",
   "19.01": "Богоявлення / Водохреще (старий стиль)",
 
@@ -1708,6 +1694,7 @@ const HOLIDAYS_2027 = {
 
   // Березень
   "08.03": "Жінки, всіх вас вітаю з вашим днем! Доміно шукає щось смачненьке для Кейт :)",
+  "20.03": "Весняне рівнодення. Сонце встало на сході, а індики вже на заході :)",
   "25.03": "Благовіщення Пресвятої Богородиці (новий стиль)",
 
   // Квітень
@@ -1745,16 +1732,19 @@ const HOLIDAYS_2027 = {
   "28.08": "Успіння Пресвятої Богородиці (старий стиль)",
 
   // Вересень
-  "01.09": "День знань. Цей день усі ненавидять, бо термін відпустки закінчився.",
+  "01.09": "День знань. Цей день усі ненавидять, бо термін відпустки закінчився :(",
   "08.09": "Різдво Пресвятої Богородиці (новий стиль)",
   "11.09": "Випуск 1-ї серії м/с 'Динофроз'. Легенда...",
   "14.09": "Воздвиження Хреста Господнього (новий стиль)",
+  "20.09": "Всесвітній день прибирання!",
   "21.09": "Різдво Пресвятої Богородиці (старий стиль)",
+  "23.09": "Осіннє рівнодення. Древніус = Даркніс :)",
   "27.09": "Воздвиження Хреста Господнього (старий стиль)",
 
   // Жовтень
   "01.10": "Покрова Пресвятої Богородиці та День козацтва (новий стиль)",
   "14.10": "Покрова Пресвятої Богородиці та День козацтва (старий стиль)",
+  "24.10": "Почався ретроградний Меркурій. Якщо синоптики помилилися з дощем — винні зірки, а не ми! :)",
   "27.10": "День української писемності та мови. Напиши по максимуму каліграфічний лист.",
 
   // Листопад
@@ -1767,6 +1757,7 @@ const HOLIDAYS_2027 = {
   "06.12": "День святого Миколая (новий стиль). Цукерку отримав? :) А Доміно — вуглинку, бо вони люблять камені, а індики не їдять солодке :)",
   "13.12": "День святого Андрія Первозванного (старий стиль)",
   "19.12": "День святого Миколая (старий стиль). Цукерку отримав? :) А Доміно — вуглинку, бо вони люблять камені, а індики не їдять солодке :)",
+  "22.12": "Зимове сонцестояння. Найтемніший день. Як очі Марти...",
   "25.12": "Різдво Христове (новий стиль)",
 };
   const isWeekend = (dayName) => {
@@ -1913,9 +1904,8 @@ const HOLIDAYS_2027 = {
         display: false, // Вимкнути вбудовану легенду - створимо свою липку
       },
       tooltip: {
-        enabled: false,
+        enabled: true,
         mode: "index",
-
         intersect: false,
         external: externalTooltipHandler,
         callbacks: {
@@ -1998,6 +1988,7 @@ const HOLIDAYS_2027 = {
       },
       tooltip: {
         ...chartOptions.plugins.tooltip,
+        enabled: true,
         external: externalTooltipHandler,
         callbacks: {
           title: (items) => {
@@ -2030,8 +2021,22 @@ const HOLIDAYS_2027 = {
           },
           afterLabel: (context) => {
             const daily = card.daily16?.[context.dataIndex];
-            if (!daily || context.datasetIndex !== 0) return "";
-            return `\nОписання: ${daily.description || "—"}`;
+            if (!daily) return "";
+            const dateType = getDateType(daily.date, daily.day, daily.fullDate);
+            const holidayMsg = getHolidayMessage(daily.date, daily.day, daily.fullDate);
+            const parts = [];
+
+            if (holidayMsg) {
+              parts.push(`🎉 ${holidayMsg}`);
+            } else if (dateType.label) {
+              parts.push(`📌 ${dateType.label}`);
+            }
+
+            if (context.datasetIndex === 0) {
+              parts.push(`Описання: ${daily.description || "—"}`);
+            }
+
+            return parts.length ? `\n${parts.join("\n")}` : "";
           },
         },
       },
@@ -2267,11 +2272,15 @@ const HOLIDAYS_2027 = {
                   {item.time || item.label || `${idx}:00`}
                 </div>
 
-                <div style={{ fontSize: "24px", margin: "2px 0" }}>
-                  {item.iconSymbol || item.iconPlaceholder || "🌤️"}
-                      <TextContent $size="11px" $lh="1.2">
-      {(card.current.iconPlaceholder || "").replace(card.current.iconSymbol || "", "").trim() || "Мінлива хмарність"}
-    </TextContent>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", margin: "2px 0" }}>
+                  <div style={{ fontSize: "24px" }}>
+                    {item.iconSymbol || item.iconPlaceholder || "🌤️"}
+                  </div>
+                  <TextContent $size="11px" $lh="1.2">
+                    {item.description ||
+                      (item.iconPlaceholder || "").replace(item.iconSymbol || "", "").trim() ||
+                      "Мінлива хмарність"}
+                  </TextContent>
                 </div>
 
                 <div style={{ fontSize: "16px", fontWeight: "800", color: tempColor }}>
@@ -2316,10 +2325,9 @@ const HOLIDAYS_2027 = {
         </div>
       );
     }
-
     return (
       <div style={{ marginTop: "12px", width: "100%", overflowX: "auto" }}>
-        <div style={{ display: "flex", gap: "10px", paddingBottom: "12px", minWidth: "min-content" }}>
+        <div style={{ display: "flex", gap: "5px", minWidth: "min-content" }}>
           {list.map((d, idx) => {
             const isPast = idx < 2 || d.isPast;
             const dateType = getDateType(d.date, d.day, d.fullDate);
@@ -2338,7 +2346,7 @@ const HOLIDAYS_2027 = {
               borderColor = "rgba(140, 140, 140, 0.35)";
               badge = (
                 <span style={{ fontSize: "9px", background: "rgba(120,120,120,0.3)", color: "#bbb", padding: "1px 6px", borderRadius: "4px" }}>
-                  ⌛ Минулий
+                Минулі дні
                 </span>
               );
             } else if (dateType.type === "holiday") {
@@ -2346,7 +2354,7 @@ const HOLIDAYS_2027 = {
               borderColor = "rgba(255, 77, 77, 0.7)";
               badge = (
                 <span style={{ fontSize: "9px", background: "rgba(255, 77, 77, 0.25)", color: "#ff4d4d", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
-                  🚩 Свято
+                 Вітаю зі святом!
                 </span>
               );
             } else if (dateType.type === "custom") {
@@ -2354,7 +2362,7 @@ const HOLIDAYS_2027 = {
               borderColor = "rgba(0, 191, 255, 0.7)";
               badge = (
                 <span style={{ fontSize: "9px", background: "rgba(0, 191, 255, 0.25)", color: "#00bfff", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
-                  💙 Подія
+                  Ваша подія
                 </span>
               );
             } else if (dateType.type === "birthday") {
@@ -2362,7 +2370,7 @@ const HOLIDAYS_2027 = {
               borderColor = "rgba(224, 102, 255, 0.7)";
               badge = (
                 <span style={{ fontSize: "9px", background: "rgba(224, 102, 255, 0.25)", color: "#e066ff", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
-                  🎂 ДН
+                  Вітаємо з днем народження!
                 </span>
               );
             } else if (isWeekend) {
@@ -2370,7 +2378,7 @@ const HOLIDAYS_2027 = {
               borderColor = "rgba(255, 179, 108, 0.7)";
               badge = (
                 <span style={{ fontSize: "9px", background: "rgba(255, 179, 108, 0.25)", color: "#ffb36c", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
-                  🌅 Вихідний
+                  Вихідний день
                 </span>
               );
             }
@@ -2403,15 +2411,17 @@ const HOLIDAYS_2027 = {
 
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                   <span style={{ fontSize: "12px", fontWeight: "bold", color: headerColor }}>
-                    {d.day}
-                  </span>
-                  <span style={{ fontSize: "11px", opacity: 0.75 }}>
-                    {d.date}
-                  </span>
+                    {d.date} {d.day}
+                  </span> 
                 </div>
 
-                <div style={{ fontSize: "28px", margin: "2px 0" }}>
-                  {d.iconSymbol || d.iconPlaceholder || "🌤️"}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                  <div style={{ fontSize: "28px" }}>
+                    {d.iconSymbol || d.iconPlaceholder || "🌤️"}
+                  </div>
+                  <div style={{ fontSize: "10px", lineHeight: 1.3, opacity: 0.8, color: headerColor, fontWeight: 600 }}>
+                    {d.description || getWeatherDescription(d.weather_code ?? 0) || "Погода"}
+                  </div>
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "100%" }}>
@@ -2423,7 +2433,7 @@ const HOLIDAYS_2027 = {
                     fontWeight: "800",
                     color: "#ff9d3b",
                   }}>
-                    {dayTemp > 0 ? `+${dayTemp}` : dayTemp}°
+                    День: {dayTemp > 0 ? `+${dayTemp}` : dayTemp}°
                   </div>
                   <div style={{
                     background: "rgba(255, 20, 147, 0.12)",
@@ -2433,7 +2443,7 @@ const HOLIDAYS_2027 = {
                     fontWeight: "700",
                     color: "#ff3399",
                   }}>
-                    {nightTemp > 0 ? `+${nightTemp}` : nightTemp}°
+                    Ніч: {nightTemp > 0 ? `+${nightTemp}` : nightTemp}°
                   </div>
                 </div>
 
@@ -2441,17 +2451,12 @@ const HOLIDAYS_2027 = {
 
                 <div style={{ fontSize: "11px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: "700", color: "#0099ff" }}>
-                    <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "13px" }}>⬇</span>
-                    <span>{d.wind_speed || "0"} м/с</span>
+                    Нарямок: <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "13px" }}>⬇</span>
                   </div>
-                  <div style={{ fontSize: "10px", opacity: 0.75 }}>
+                  <div style={{ fontSize: "10px" }}><span>Сила вітру: {d.wind_speed || "0"}</span></div>
+                  <div style={{ fontSize: "10px" }}>
                     {windText} ({Math.round(windDeg)}°)
                   </div>
-                  {(d.wind_gusts_10m || d.wind_gusts) && parseFloat(d.wind_gusts_10m || d.wind_gusts) > 0 && (
-                    <div style={{ fontSize: "9px", color: "#ff9900", fontWeight: "600", marginTop: "1px" }}>
-                      Пориви: {d.wind_gusts_10m || d.wind_gusts}м/с
-                    </div>
-                  )}
                 </div>
               </div>
             );
@@ -2485,64 +2490,101 @@ const HOLIDAYS_2027 = {
         >
           <div>
             {isEditing ? (
-              <div style={{ gap: "2px" }}>
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              >
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleRenameSubmit();
+                    } else if (e.key === "Escape") {
+                      setIsEditing(false);
+                    }
+                  }}
                   autoFocus
                   style={{
-                    padding: "2px 5px",
-                    fontSize: "14px",
-                    borderRadius: "4px",
-                    border: "1px solid #ff6a00",
-                    background: isDarkMode ? "#333" : "#fff",
-                    color: isDarkMode ? "#fff" : "#000",
+                    padding: "4px 10px",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    borderRadius: "8px",
+                    border: "1.5px solid #00eeff",
+                    background: isDarkMode ? "rgba(10, 15, 25, 0.9)" : "#ffffff",
+                    color: isDarkMode ? "#ffffff" : "#1a1a1a",
+                    outline: "none",
+                    boxShadow: "0 0 12px rgba(0, 238, 255, 0.4)",
                   }}
                 />
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={handleRenameSubmit}
+                  title="Зберегти (Enter)"
+                  aria-label="Зберегти"
                   style={{
-                    background: "green",
-                    color: "white",
+                    background: "linear-gradient(135deg, #00eeff 0%, #008cff 100%)",
+                    color: "#000000",
                     border: "none",
-                    borderRadius: "4px",
+                    borderRadius: "8px",
                     cursor: "pointer",
-                    fontSize: "12px",
-                    padding: "2px 8px",
+                    fontSize: "14px",
+                    padding: "5px 8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 2px 8px rgba(0, 238, 255, 0.4)",
                   }}
                 >
-                  ✓
-                </button>
-                <button
+                  <BiCheck size={18} />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setIsEditing(false)}
+                  title="Скасувати (Esc)"
+                  aria-label="Скасувати"
                   style={{
-                    background: "red",
-                    color: "white",
+                    background: "linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)",
+                    color: "#ffffff",
                     border: "none",
-                    borderRadius: "4px",
+                    borderRadius: "8px",
                     cursor: "pointer",
-                    fontSize: "12px",
-                    padding: "2px 4px",
+                    fontSize: "14px",
+                    padding: "5px 8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 2px 8px rgba(255, 65, 108, 0.4)",
                   }}
                 >
-                  ✕
-                </button>
-              </div>
+                  <BiX size={18} />
+                </motion.button>
+              </motion.div>
             ) : (
-              <h3
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  margin: 0,
-                }}
-              >
-                <span style={{ color: "#ffb36c", fontWeight: 700 }}>
-                  #{index}
-                </span>
-                <span>{card.locationName}</span>
-              </h3>
+              <Tooltip content="Двічі клацніть, щоб змінити назву" isDarkMode={isDarkMode}>
+                <h3
+                  onDoubleClick={() => setIsEditing(true)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    margin: 0,
+                    cursor: "pointer",
+                    userSelect: "none",
+                  }}
+                >
+                  <span style={{ color: "#ffb36c", fontWeight: 700 }}>
+                    #{index}
+                  </span>
+                  <span>{card.locationName}</span>
+                </h3>
+              </Tooltip>
             )}
             <p style={{ fontSize: "10px", color: "#fcfcfc" }}>
               Широта: {card.lat?.toFixed(2)}, Довгота: {card.lon?.toFixed(2)}
@@ -2937,6 +2979,40 @@ const HOLIDAYS_2027 = {
     </IconBox>
     <TextContent $size="10px">УФ-індекс: {card.current.uv_index ?? 0}</TextContent>
   </IndicatorCard>
+
+  <Tooltip content="Товщина снігового покриву (см)" isDarkMode={isDarkMode}>
+    <IndicatorCard aria-label="Сніговий покрив">
+      <IconBox $color={card.current.snow_depth > 0 ? "#00eeff" : "inherit"}>
+        <FaSnowflake />
+      </IconBox>
+      <TextContent $size="10px">
+        Сніг: {card.current.snow_depth ? `${(card.current.snow_depth * 100).toFixed(1)} см` : "0 см"}
+      </TextContent>
+    </IndicatorCard>
+  </Tooltip>
+
+  <Tooltip content="Температура ґрунту (0 см) та рівень 0°C ізотерми (висота замерзання)" isDarkMode={isDarkMode}>
+    <IndicatorCard aria-label="Замерзання та температура ґрунту">
+      <IconBox $color={card.current.soil_temperature_0cm <= 0 ? "#4da6ff" : "inherit"}>
+        <GiIceCube />
+      </IconBox>
+      <TextContent $size="10px">
+        Ґрунт: {card.current.soil_temperature_0cm !== undefined ? `${card.current.soil_temperature_0cm}°C` : "—"}
+        <SubText $size="9px">Рівень 0°C: {card.current.freezing_level_height ?? "—"}м</SubText>
+      </TextContent>
+    </IndicatorCard>
+  </Tooltip>
+
+  <Tooltip content="Випаровування (ET0, мм). Показує швидкість втрати вологи з ґрунту та рослин. Важливо для поливу саду/городу, оцінки висихання білизни та комфорту." isDarkMode={isDarkMode}>
+    <IndicatorCard aria-label="Випаровування">
+      <IconBox $color={card.current.evapotranspiration > 3 ? "#ff9900" : "#00eeff"}>
+        <GiWaterRecycling />
+      </IconBox>
+      <TextContent $size="10px">
+        Випаровування: {card.current.evapotranspiration !== undefined ? `${card.current.evapotranspiration.toFixed(2)} мм` : "0 мм"}
+      </TextContent>
+    </IndicatorCard>
+  </Tooltip>
 </DesktopTwoRowIndicators>
               </CurrentWeatherBanne>
             </CurrentWeatherBanner>
@@ -2962,15 +3038,14 @@ const HOLIDAYS_2027 = {
                     $active={hourlyViewMode === "charts"}
                     $isDarkMode={isDarkMode}
                     onClick={() => setHourlyViewMode("charts")}
-                  >
-                    <BiLineChart size={14} /> Графіки
+                  >Графіки
                   </ViewToggleButton>
                   <ViewToggleButton
                     $active={hourlyViewMode === "table"}
                     $isDarkMode={isDarkMode}
                     onClick={() => setHourlyViewMode("table")}
                   >
-                    📋 Таблиця
+                    Таблиця
                   </ViewToggleButton>
                 </ViewToggleGroup>
               </div>
@@ -3050,7 +3125,7 @@ const HOLIDAYS_2027 = {
                       >
                         <ChartInnerContainer $width={hourlyChartWidth} $height={defaultChartHeight}>
                           <Line
-                            options={{ ...chartOptions, plugins: { ...chartOptions.plugins, tooltip: { enabled: false } } }}
+                            options={{ ...chartOptions, plugins: { ...chartOptions.plugins, tooltip: { ...chartOptions.plugins.tooltip, enabled: true } } }}
                             data={hourlyChartData}
                           />
                         </ChartInnerContainer>
@@ -3071,7 +3146,7 @@ const HOLIDAYS_2027 = {
                         <div style={{ position: "absolute", top: 0, right: 0, width: `${hourlyChartWidth}px`, height: defaultChartHeight }}>
                           <ChartInnerContainer $width={hourlyChartWidth} $height={defaultChartHeight}>
                             <Line
-                              options={{ ...chartOptions, plugins: { ...chartOptions.plugins, tooltip: { enabled: false } } }}
+                              options={{ ...chartOptions, plugins: { ...chartOptions.plugins, tooltip: { ...chartOptions.plugins.tooltip, enabled: true } } }}
                               data={hourlyChartData}
                             />
                           </ChartInnerContainer>
@@ -3099,14 +3174,14 @@ const HOLIDAYS_2027 = {
                     $isDarkMode={isDarkMode}
                     onClick={() => setDailyViewMode("charts")}
                   >
-                    <BiLineChart size={14} /> Графіки
+                  Графіки
                   </ViewToggleButton>
                   <ViewToggleButton
                     $active={dailyViewMode === "table"}
                     $isDarkMode={isDarkMode}
                     onClick={() => setDailyViewMode("table")}
                   >
-                    📋 Таблиця
+                    Таблиця
                   </ViewToggleButton>
                 </ViewToggleGroup>
               </div>
@@ -3180,7 +3255,7 @@ const HOLIDAYS_2027 = {
                       >
                         <ChartInnerContainer $width={1300} $height={defaultChartHeight}>
                           <Line
-                            options={{ ...dailyChartOptions, plugins: { ...dailyChartOptions.plugins, tooltip: { enabled: false } } }}
+                            options={{ ...dailyChartOptions, plugins: { ...dailyChartOptions.plugins, tooltip: { ...dailyChartOptions.plugins.tooltip, enabled: true } } }}
                             data={dailyChartData}
                           />
                         </ChartInnerContainer>
@@ -3201,7 +3276,7 @@ const HOLIDAYS_2027 = {
                         <div style={{ position: "absolute", top: 0, right: 0, width: "1300px", height: defaultChartHeight }}>
                           <ChartInnerContainer $width={1300} $height={defaultChartHeight}>
                             <Line
-                              options={{ ...dailyChartOptions, plugins: { ...dailyChartOptions.plugins, tooltip: { enabled: false } } }}
+                              options={{ ...dailyChartOptions, plugins: { ...dailyChartOptions.plugins, tooltip: { ...dailyChartOptions.plugins.tooltip, enabled: true } } }}
                               data={dailyChartData}
                             />
                           </ChartInnerContainer>
@@ -3456,8 +3531,6 @@ const HOLIDAYS_2027 = {
         </DesktopLayoutWrapper>
       </WeatherCard>
 
-
-      {/* Модалка повного тексту ШІ */}
       {isAiModalOpen && (
         <div
           style={{
