@@ -17,7 +17,6 @@ import { TbWorldStar } from "react-icons/tb";
 import { IoIosCloudyNight } from "react-icons/io";
 import { PiNewspaperClippingFill } from "react-icons/pi";
 import { FaClapperboard } from "react-icons/fa6";
-
 /* ── Animations ── */
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(6px); }

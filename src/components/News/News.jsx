@@ -160,6 +160,24 @@ const SOURCES = [
   },
 ];
 
+const levitate = keyframes`
+  0%, 100% {
+    transform: translateY(-50%);
+  }
+  50% {
+    transform: translateY(calc(-50% - 6px));
+  }
+`;
+const pulseText = keyframes`
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 4px rgba(0, 255, 229, 0.4);
+  }
+  50% {
+    opacity: 0.6;
+    text-shadow: 0 0 12px rgba(0, 255, 229, 0.9);
+  }
+`;
 const NewsDiv = styled.div`
   position: relative;
   z-index: 100;
@@ -215,7 +233,7 @@ const CarouselHint = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  pointer-events: none;
+  pointer-events: auto;
   opacity: 1 !important;
   visibility: visible !important;
   transform: translateY(-50%);
@@ -239,33 +257,98 @@ const CarouselHint = styled.div`
   }
 `;
 const CarouselHintItem = styled.button`
-  width: 40px;
-  height: 40px;
-  display: flex !important;
+  position: absolute;
+  top: 50%;
+  ${(props) => (props.$direction === "previous" ? "left: 16px;" : "right: 16px;")}
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.75);
-      font-size: 43px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 179, 108, 0.85);
-  color: #ffb36c;
-  cursor: pointer;
+  z-index: 501;
   pointer-events: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  transition: background 0.3s, transform 0.2s ease;
-  z-index: 1001;
-  opacity: 1 !important;
-  padding-bottom: 5px;
-  padding-left: 4px;
-  visibility: visible !important;
+  
+  border: 2px solid #ffaa00;
+  border-radius: 6px;
+  background: #000;
+  color: #ffaa00;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(255, 170, 0, 0.35);
+  transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+  /* Підключення анімації левітації */
+  animation: ${levitate} 3s ease-in-out infinite;
+
+  /* Пульсація для іконки/тексту всередині кнопки */
+  & > * {
+    display: inline-block;
+    animation: ${pulseText} 2.5s ease-in-out infinite;
+  }
+
+  /* 1. Задня грань */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 44px;
+    height: 40px;
+    border-top: 1.5px solid rgba(255, 170, 0, 0.6);
+    border-left: 1.5px solid rgba(255, 170, 0, 0.6);
+    border-right: none;
+    border-bottom: none;
+    border-top-left-radius: 6px;
+    z-index: -2;
+    pointer-events: none;
+    transition: all 0.2s ease;
+  }
+
+  /* 2. З'єднувальні лінії */
+  &::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 54px;
+    height: 54px;
+    z-index: -1;
+    pointer-events: none;
+    
+    background: 
+      linear-gradient(45deg, transparent 42%, rgba(255, 170, 0, 0.7) 42%, rgba(255, 170, 0, 0.7) 58%, transparent 58%) 0 0 / 14px 14px no-repeat,
+      linear-gradient(45deg, transparent 42%, rgba(255, 170, 0, 0.7) 42%, rgba(255, 170, 0, 0.7) 58%, transparent 58%) 100% 0 / 14px 14px no-repeat,
+      linear-gradient(45deg, transparent 42%, rgba(255, 170, 0, 0.7) 42%, rgba(255, 170, 0, 0.7) 58%, transparent 58%) 0 100% / 14px 14px no-repeat;
+    transition: all 0.2s ease;
+  }
 
   &:hover {
-    background: rgba(0, 0, 0, 0.9);
-    transform: scale(1.08);
+    background: #000;
+    animation-play-state: paused;
+    box-shadow: 0 0 18px rgba(255, 170, 0, 0.7);
+    
+    &::before {
+      border-color: rgba(255, 170, 0, 0.95);
+      top: -12px;
+      left: -12px;
+    }
+
+    &::after {
+      top: -12px;
+      left: -12px;
+      width: 56px;
+      height: 56px;
+      background-size: 16px 16px;
+    }
+
+    & > * { 
+      animation-duration: 1.2s;
+    }
   }
 
   &:active {
-    transform: scale(0.92);
+    transform: translateY(calc(-50% + 2px)) scale(0.96);
   }
 `;
 const CarouselSlide = styled.div`
@@ -2303,11 +2386,14 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     ))}
   </MobileCarousel>
   <CarouselHint $visible={showCarouselHint}>
-    <CarouselHintItem style={{ paddingRight: "10px" }} onClick={() => scrollCarousel("left")}>
-      ◂
+    <CarouselHintItem
+      $direction="previous"
+      onClick={() => scrollCarousel("left")}
+    >
+      ◀
     </CarouselHintItem>
-    <CarouselHintItem onClick={() => scrollCarousel("right")}>
-      ▸
+    <CarouselHintItem $direction="next" onClick={() => scrollCarousel("right")}>
+      ▶
     </CarouselHintItem>
   </CarouselHint>
 </CarouselWrapper>

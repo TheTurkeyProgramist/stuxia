@@ -281,19 +281,19 @@ const getWeatherIcon = (code, isDay = 1) => {
 };
 
 const getWeatherSummaryText = (code, isDay = 1) => {
-  if (code === 0) return isDay ? "ясно" : "ясно вночі";
-  if (code >= 1 && code <= 3) return isDay ? "мінлива хмарність" : "хмарно вночі";
-  if (code >= 45 && code <= 48) return "туман";
-  if (code >= 51 && code <= 55) return "мряка";
-  if (code >= 56 && code <= 57) return "мряка зі снігом";
-  if (code >= 61 && code <= 65) return "дощ";
-  if (code >= 66 && code <= 67) return "дощ зі снігом";
-  if (code >= 71 && code <= 75) return "сніг";
-  if (code === 77) return "сніжна крупа";
-  if (code >= 80 && code <= 82) return "зливовий дощ";
-  if (code >= 85 && code <= 86) return "зливовий сніг";
-  if (code >= 95 && code <= 99) return "гроза";
-  return "хмарно";
+  if (code === 0) return isDay ? "Сонячно" : "Місячно";
+  if (code >= 1 && code <= 3) return isDay ? "Мінлива хмарність" : "Нічна мінлива хмарність";
+  if (code >= 45 && code <= 48) return "Туманно";
+  if (code >= 51 && code <= 55) return "Мряка";
+  if (code >= 56 && code <= 57) return "Мряка з снігом";
+  if (code >= 61 && code <= 65) return "Дощ";
+  if (code >= 66 && code <= 67) return "Дощ з снігом";
+  if (code >= 71 && code <= 75) return "Сніг";
+  if (code === 77) return "Сніжна крупа";
+  if (code >= 80 && code <= 82) return "Зливовий дощ";
+  if (code >= 85 && code <= 86) return "Зливовий сніг";
+  if (code >= 95 && code <= 99) return "Гроза";
+  return "Хмарно";
 };
 
 const getWeatherIconSymbol = (code, isDay = 1) => {
@@ -329,7 +329,7 @@ const ThemeWrapper = styled.div`
 
 const WeatherCardsContainer = styled.div`
   display: flex;
-  gap: 15px;
+  gap: 5px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   padding: 0 42px 10px;
@@ -362,7 +362,6 @@ const CarouselSideButton = styled.button`
   position: absolute;
   top: 50%;
   ${(props) => (props.$direction === "previous" ? "left: 16px;" : "right: 16px;")}
-  
   width: 44px;
   height: 44px;
   display: inline-flex;
@@ -427,7 +426,6 @@ const CarouselSideButton = styled.button`
 
   &:hover {
     background: #000;
-    /* Призупиняємо левітацію при наведенні для стабільного кліку */
     animation-play-state: paused;
     box-shadow: 0 0 18px rgba(0, 255, 229, 0.6);
     
@@ -1908,7 +1906,7 @@ const App = () => {
           }
         }
 
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day&hourly=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,sunrise,sunset&timezone=auto&past_days=1&forecast_days=16`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&hourly=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset&timezone=auto&past_days=1&forecast_days=16`;
         console.log("Fetching weather from URL:", url);
         const res = await axios.get(url);
         const d = res.data;
@@ -2041,6 +2039,10 @@ const App = () => {
               visibility: d.current.visibility ?? 0,
               dew_point_2m: d.current.dew_point_2m ?? 0,
               temperature_80m: d.current.temperature_80m ?? 0,
+              snow_depth: d.current.snow_depth ?? 0,
+              evapotranspiration: d.current.et0_fao_evapotranspiration ?? 0,
+              freezing_level_height: d.current.freezing_level_height ?? 0,
+              soil_temperature_0cm: d.current.soil_temperature_0cm ?? 0,
               description: "За кодом: " + d.current.weather_code,
               iconPlaceholder: getWeatherIcon(d.current.weather_code, d.current.is_day),
               iconSymbol: getWeatherIconSymbol(d.current.weather_code, d.current.is_day),
@@ -2081,6 +2083,10 @@ const App = () => {
                   pressure_msl: d.hourly?.pressure_msl?.[dataIdx] ?? null,
                   cloud_cover: d.hourly?.cloud_cover?.[dataIdx] ?? null,
                   visibility: d.hourly?.visibility?.[dataIdx] ?? 0,
+                  snow_depth: d.hourly?.snow_depth?.[dataIdx] ?? 0,
+                  evapotranspiration: d.hourly?.et0_fao_evapotranspiration?.[dataIdx] ?? 0,
+                  freezing_level_height: d.hourly?.freezing_level_height?.[dataIdx] ?? 0,
+                  soil_temperature_0cm: d.hourly?.soil_temperature_0cm?.[dataIdx] ?? 0,
                   iconPlaceholder: getWeatherIcon(
                     d.hourly?.weather_code?.[dataIdx] ?? 0,
                     hourIsDay
@@ -2088,6 +2094,10 @@ const App = () => {
                   iconSymbol: getWeatherIconSymbol(
                     d.hourly?.weather_code?.[dataIdx] ?? 0,
                     hourIsDay
+                  ),
+                  description: getWeatherSummaryText(
+                    d.hourly?.weather_code?.[dataIdx] ?? 0,
+                    hourIsDay,
                   ),
                 };
               }),
@@ -2108,11 +2118,12 @@ const App = () => {
                 d.daily.precipitation_probability_max?.[i] ?? 0,
               rain_sum: d.daily.rain_sum?.[i] ?? 0,
               precipitation_sum: d.daily.precipitation_sum?.[i] ?? 0,
+              evapotranspiration: d.daily.et0_fao_evapotranspiration?.[i] ?? 0,
               sunrise: d.daily.sunrise?.[i] ?? null,
               sunset: d.daily.sunset?.[i] ?? null,
               iconPlaceholder: getWeatherIcon(d.daily.weather_code[i] ?? 0, 1),
               iconSymbol: getWeatherIconSymbol(d.daily.weather_code[i] ?? 0, 1),
-              description: getWeatherIcon(d.daily.weather_code[i] ?? 0, 1),
+              description: getWeatherSummaryText(d.daily.weather_code[i] ?? 0, 1),
             })),
           };
 
