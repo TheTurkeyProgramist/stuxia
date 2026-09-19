@@ -4,8 +4,16 @@ import styled, { keyframes, css } from "styled-components";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import pixelturkey from "../../photos/cursors/pixelturkey.webp"
 import twoturkey from "../../photos/cursors/twoturkey.webp"
+import { FaLocationCrosshairs } from "react-icons/fa6";
 import climate from "../../photos/cursors/climate.webp"
 import localforage from "localforage";
+import { BsFillPinAngleFill } from "react-icons/bs";
+import { FaKeyboard } from "react-icons/fa";
+import { FaMapLocationDot } from "react-icons/fa6";
+import { LuFullscreen } from "react-icons/lu";
+import { CgMiniPlayer } from "react-icons/cg";
+import { GiLockedChest } from "react-icons/gi";
+import { MdFilterFrames } from "react-icons/md";
 // Ctrl + Shift + M: Активувати/деактивувати мапу
 // Ctrl + Shift + F: Відкрити на весь екран
 // Ctrl + Shift + P: Відкрити/закрити міні-плеєр
@@ -17,7 +25,7 @@ const spin = keyframes`
 `;
 
 const AihelpTitle = styled.div`
-  font-size: 20px;
+  font-size: 15px;
   text-align: center;
   font-family: var(--font-family);
   font-weight: 700;
@@ -25,8 +33,8 @@ const AihelpTitle = styled.div`
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#111111")};
   display: inline-flex;
     margin-bottom: -41px;
-    width: 200px;
-  padding:3px 7px;
+    width: 150px;
+  padding:6px 7px;
   transition: all 0.3s ease;
   border-right: 1px solid rgb(255, 179, 108);
     border-left: 1px solid rgb(255, 179, 108);
@@ -96,12 +104,18 @@ const Controls = styled.div`
   display: none;
 `;
 
+const KeyboardShortcut = styled.kbd`
+  display: ${(props) => (props.$visible ? "inline-block" : "none")};
+  position: absolute;
+  right: 10px;
+`;
+
 const MobileSettingsButton = styled.button`
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: end;
   align-self: stretch;
-  padding: 10px 4px;
+  padding: 10px;
   border: 1px solid rgb(255, 179, 108);
   border-radius: 7px;
   background: rgba(18, 18, 28, 0.88);
@@ -159,9 +173,12 @@ const MobileSettingsHeading = styled.div`
     font-size: 12px;
   }
 `;
+const Dov = styled.div`
+display: grid;
 
+`
 const MobileSetting = styled.button`
-  display: grid;
+  display: flex;
   grid-template-columns: 1fr auto;
   width: 100%;
   margin-top: 6px;
@@ -171,8 +188,11 @@ const MobileSetting = styled.button`
   background: rgba(255, 255, 255, 0.07);
   color: white;
   cursor: pointer;
+  gap:9px;
   text-align: left;
-
+ svg {
+ font-size: 26px;
+ }
   &:hover {
     border-color: rgba(255, 179, 108, 0.65);
     background: rgba(255, 179, 108, 0.14);
@@ -180,6 +200,7 @@ const MobileSetting = styled.button`
 
   strong {
     font-size: 13px;
+    width: 170px;
   }
 
   span {
@@ -358,103 +379,38 @@ const ResizeHandle = styled.div`
 
 const DEFAULT_PRESET_FRAMES = [
   {
-    id: "alerts-ua",
-    title: "Карта повітряних тривог України",
-    url: "https://alerts.in.ua/",
-    height: 500,
-    isActive: false,
-    isPreset: true,
-  },
+  id: "flightradar",
+  title: "Моніторинг польотів (Flightradar24)",
+  url: "https://www.flightradar24.com/",
+  height: 500,
+  isActive: false,
+  isPreset: true,
+},
+{
+  id: "saveecobot",
+  title: "Якість повітря (SaveEcoBot)",
+  url: "https://www.saveecobot.com/maps",
+  height: 500,
+  isActive: false,
+  isPreset: true,
+},
+{
+  id: "excalidraw",
+  title: "Онлайн-дошка (Excalidraw)",
+  url: "https://excalidraw.com/",
+  height: 600,
+  isActive: false,
+  isPreset: true,
+}, 
+{
+  id: "radio-garden",
+  title: "Світове радіо (Radio Garden)",
+  url: "https://radio.garden/",
+  height: 500,
+  isActive: false,
+  isPreset: true,
+}
 ];
-
-const FramesSection = styled.div`
-  width: 100%;
-  max-width: 1200px;
-  margin: 24px auto 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
-
-const FramesHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 4px;
-`;
-
-const FramesTitle = styled.h3`
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#111111")};
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const FramesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 18px;
-  width: 100%;
-`;
-
-const FrameCard = styled.div`
-  position: relative;
-  width: 100%;
-  border-radius: 16px;
-  overflow: hidden;
-  background: rgba(18, 24, 38, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  display: flex;
-  flex-direction: column;
-`;
-
-const FrameCardHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-`;
-
-const FrameCardTitle = styled.div`
-  font-size: 14px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-`;
-
-const FrameCardActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const FrameIconButton = styled.button`
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-
-  &:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.15);
-  }
-`;
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -465,18 +421,17 @@ const ModalOverlay = styled.div`
   justify-content: center;
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
-  padding: 16px;
 `;
 
 const ModalContainer = styled.div`
   width: 100%;
-  max-width: 600px;
-  max-height: 85vh;
+  max-height: 95vh;
   overflow-y: auto;
   background: #121826;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 20px;
-  padding: 22px;
+  border-radius: 10px;
+
+  padding: 8px;
   color: #ffffff;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
 `;
@@ -510,25 +465,12 @@ const FrameItemRow = styled.div`
   border-radius: 10px;
   margin-bottom: 8px;
 `;
-
-const ToggleSwitch = styled.button`
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: none;
-  font-weight: 700;
-  font-size: 12px;
-  cursor: pointer;
-  background: ${(props) => (props.$active ? "#4caf50" : "rgba(255,255,255,0.2)")};
-  color: #ffffff;
-  transition: background 0.2s;
-`;
-
 const AddFrameForm = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
-  padding-top: 16px;
+  gap: 3px;
+  margin-top: 5px;
+  padding-top: 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 `;
 
@@ -623,6 +565,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [overlay, setOverlay] = useState("wind");
   const [isMapActive, setIsMapActive] = useState(false);
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator === "undefined" ? true : navigator.onLine,
+  );
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMiniPlayerOpen, setIsMiniPlayerOpen] = useState(false);
   const [pipWindow, setPipWindow] = useState(null);
@@ -630,6 +575,22 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
   const turkeyFrames = [pixelturkey, twoturkey];
   const [currentTurkeyFrame, setCurrentTurkeyFrame] = useState(0);
+  const [keyboardShortcutMode, setKeyboardShortcutMode] = useState("auto");
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+  const showKeyboardShortcuts =
+    keyboardShortcutMode === "always" ||
+    (keyboardShortcutMode === "auto" && !isCoarsePointer);
+
+  useEffect(() => {
+    const pointerQuery = window.matchMedia("(pointer: coarse)");
+    const updatePointerType = () => setIsCoarsePointer(pointerQuery.matches);
+
+    updatePointerType();
+    pointerQuery.addEventListener("change", updatePointerType);
+
+    return () =>
+      pointerQuery.removeEventListener("change", updatePointerType);
+  }, []);
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTurkeyFrame((prev) => (prev + 1) % turkeyFrames.length);
@@ -670,6 +631,19 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
   const handleSetProvider = async (newProvider) => {
     setProvider(newProvider);
     try {
@@ -696,6 +670,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
         const savedProvider = await localforage.getItem("selected_climate_provider");
         if (savedProvider) setProvider(savedProvider);
+
+        const savedKeyboardShortcutMode = await localforage.getItem(
+          "climate_keyboard_shortcut_mode",
+        );
+        if (["none", "auto", "always"].includes(savedKeyboardShortcutMode)) {
+          setKeyboardShortcutMode(savedKeyboardShortcutMode);
+        }
 
         const pinnedLoc = await localforage.getItem("pinned_map_location");
         if (pinnedLoc) {
@@ -735,6 +716,16 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       await localforage.setItem("climate_custom_frames", newFrames);
     } catch (err) {
       console.error("Error saving custom frames:", err);
+    }
+  };
+
+  const handleKeyboardShortcutModeChange = async (event) => {
+    const mode = event.target.value;
+    setKeyboardShortcutMode(mode);
+    try {
+      await localforage.setItem("climate_keyboard_shortcut_mode", mode);
+    } catch (error) {
+      console.error("Error saving keyboard shortcut mode:", error);
     }
   };
 
@@ -1045,8 +1036,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   }, [provider, lat, lon, zoom, overlay, customFrames]);
 
   useEffect(() => {
-    setIsLoading(true);
-  }, [provider, lat, lon, zoom, overlay]);
+    setIsLoading(isOnline);
+  }, [provider, lat, lon, zoom, overlay, isOnline]);
   return (
     <OuterContainer>
       <AihelpTitle $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
@@ -1103,7 +1094,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
             value={provider}
             onChange={(e) => handleSetProvider(e.target.value)}
             onClick={(e) => e.stopPropagation()}
-            title="Оберіть джерело мапи"
+            aria-label="Оберіть джерело мапи"
           >
             <option value="ventusky">Джерело: Ventusky</option>
             <option value="windy">Джерело: Windy</option>
@@ -1180,6 +1171,21 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 </MobileSettingsClose>
               </MobileSettingsHeading>
 
+              <MobileSetting>
+                <FaKeyboard />
+                <Dov>
+                  <strong>Комбінації клавіш</strong>
+                   <span>Показувати комбінації клавіш?</span>
+                   </Dov>
+                  <MobileSourceSelect
+                    value={keyboardShortcutMode}
+                    onChange={handleKeyboardShortcutModeChange}
+                  >
+                    <option value="none">Без</option>
+                    <option value="auto">Авто</option>
+                    <option value="always">Так</option>
+                  </MobileSourceSelect>
+              </MobileSetting>
               {isAiSearchOpen && (
                 <SearchContainer onSubmit={handleAiSearch}>
                   <SearchInput
@@ -1195,20 +1201,29 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               )}
 
               <MobileSetting type="button" onClick={() => setIsAiSearchOpen(!isAiSearchOpen)}>
-                <strong>ШІ-пошук локації</strong>
-                <kbd>Ctrl + Shift + S</kbd>
-                <span>Знайти місто або місце за допомогою ШІ та перемістити карту.</span>
+                <FaLocationCrosshairs />
+                <Dov>
+                  <strong>ШІ-пошук локації</strong>
+                  <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Shift + S</KeyboardShortcut>
+                  <span>Знайти місто або місце за допомогою ШІ та перемістити карту.</span>
+                </Dov>
               </MobileSetting>
               <MobileSetting type="button" onClick={handlePinLocation}>
-                <strong>Закріпити локацію</strong>
-                <kbd>Ctrl + Shift + L</kbd>
-                <span>Зберегти поточні координати, масштаб і шар для наступного входу.</span>
+                <BsFillPinAngleFill />
+                <Dov>
+                  <strong>Закріпити локацію</strong>
+                  <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Shift + L</KeyboardShortcut>
+                  <span>Зберегти поточні координати, масштаб і шар для наступного входу.</span>
+                </Dov>
               </MobileSetting>
               <MobileSettingSelectGroup style={{ marginTop: "5px" }} onClick={(e) => e.stopPropagation()}>
                 <MobileSetting style={{ background: "none", padding: "0", border: "none" }} type="button" onClick={handlePinLocation}>
+                 <FaMapLocationDot />
+                 <Dov>
                   <strong>Джерело карти</strong>
-                  <span>Зручне перемикання між: Windy\Ventusky\Картою тривог Украіїни!</span>
-                  <kbd style={{ fontSize: "11px", fontWeight: 400 }}>Ctrl + Shift + W</kbd>
+                  <span>Зручне перемикання між: Windy\Ventusky\Картою тривог України!</span>
+                  <KeyboardShortcut $visible={showKeyboardShortcuts} style={{ fontSize: "11px", fontWeight: 400 }}>Ctrl + Shift + W</KeyboardShortcut>
+                  </Dov>
                 </MobileSetting>
                 <MobileSourceSelect
                   value={provider}
@@ -1227,19 +1242,28 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 if (!isMapActive) handleActivateMap();
                 else setIsMapActive(false);
               }}>
-                <strong>{isMapActive ? "Деактивувати карту" : "Активувати карту"}</strong>
-                <kbd>Ctrl + Shift + M</kbd>
-                <span>Увімкнути або вимкнути взаємодію з картою та її iframe.</span>
+                <GiLockedChest />
+                <Dov>
+                  <strong>{isMapActive ? "Деактивувати карту" : "Активувати карту"}</strong>
+                  <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Shift + M</KeyboardShortcut>
+                  <span>Увімкнути або вимкнути взаємодію з картою та її iframe.</span>
+                </Dov>
               </MobileSetting>
               <MobileSetting type="button" onClick={() => toggleFullscreen()}>
-                <strong>{isFullscreen ? "Згорнути карту" : "Відкрити на весь екран"}</strong>
-                <kbd>Ctrl + Shift + F</kbd>
-                <span>Розгорнути карту на весь екран пристрою або повернути звичайний вигляд.</span>
+                <LuFullscreen />
+                <Dov>
+                  <strong>{isFullscreen ? "Згорнути карту" : "Відкрити на весь екран"}</strong>
+                  <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Shift + F</KeyboardShortcut>
+                  <span>Розгорнути карту на весь екран пристрою або повернути звичайний вигляд.</span>
+                </Dov>
               </MobileSetting>
               <MobileSetting type="button" onClick={handleOpenMiniPlayer}>
-                <strong>Міні-плеєр карти</strong>
-                <kbd>Ctrl + Shift + P</kbd>
-                <span>Винести карту в окреме плаваюче вікно для паралельної роботи.</span>
+                <CgMiniPlayer />
+                <Dov>
+                  <strong>Міні-плеєр карти</strong>
+                  <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Shift + P</KeyboardShortcut>
+                  <span>Винести карту в окреме плаваюче вікно для паралельної роботи.</span>
+                </Dov>
               </MobileSetting>
               <MobileSetting
                 type="button"
@@ -1248,9 +1272,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   setIsFramesModalOpen(true);
                 }}
               >
-                <strong>Кастомні віджети / Фрейми</strong>
-                <kbd>Ctrl + Shift + K</kbd>
-                <span>Вмикати карти повітряних тривог, вебкамери, радари та інші iframe віджети.</span>
+                <MdFilterFrames />
+                <Dov>
+                  <strong>Кастомні віджети / Фрейми</strong>
+                  <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Shift + K</KeyboardShortcut>
+                  <span>Вмикати карти повітряних тривог, вебкамери, радари та інші iframe віджети.</span>
+                </Dov>
               </MobileSetting>
             </MobileSettingsPanel>
           </MobileSettingsOverlay>
@@ -1262,22 +1289,27 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
           </div>
         ) : (
           <>
-            {(!isMapActive || isLoading) && (
+            {(!isMapActive || isLoading || !isOnline) && (
               <Loader>
                 <img
                   src={turkeyFrames[currentTurkeyFrame]}
                   alt="Це Доміно :)"
                   style={{ width: '340px', height: '210px', imageRendering: 'pixelated', marginBottom: '-50px' }}
                 />
-                <p style={{ fontSize: "17px" }}>{!isMapActive ? "Натисніть на карту для активації" : "Завантаження..."}</p>
+                <p style={{ fontSize: "17px", color: "black" }}>
+                  {!isOnline
+                    ? "Перевірте інтернет-з'єднання для користування картою"
+                    : !isMapActive
+                      ? "Натисніть на карту для активації"
+                      : "Завантаження..."}
+                </p>
                 <p style={{ fontSize: "11px" }}>Інтерактивні карти надано сервісами Windy, Ventusky та Карта тривог України (містять файли cookie)</p>
                 <p style={{ fontSize: "11px" }}>Кнопка «Налаштування стихії» відкриває безкоштовний доступ до перемикання мап, повноекранний режим, міні-плеєр та інші функції!</p>
               </Loader>
             )}
-
             <StyledIframe
-              title="Weather Map"
-              src={isMapActive ? embedUrl : undefined}
+              aria-label="Weather Map"
+              src={isMapActive && isOnline ? embedUrl : undefined}
               $isLoading={isLoading}
               $isReady={isMapActive}
               onLoad={() => setIsLoading(false)}
@@ -1293,7 +1325,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       {pipWindow ? (
         createPortal(
           <StyledIframe
-            title="Weather Map (PiP)"
+            aria-label="Weather Map (PiP)"
             src={embedUrl}
             $isLoading={isLoading}
             $isReady={true}
@@ -1347,9 +1379,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 <p>Завантаження...</p>
               </Loader>
             )}
-
             <StyledIframe
-              title="Weather Map Mini"
+              aria-label="Weather Map Mini"
               src={embedUrl}
               $isLoading={isLoading}
               $isReady={true}
@@ -1421,7 +1452,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
             <AddFrameForm onSubmit={handleAddFrame}>
               <h4 style={{ margin: 0, fontSize: "14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>➕ Додати свій фрейм / віджет</span>
+                <span>Додати свій фрейм / віджет</span>
                 <span style={{ fontSize: "11px", fontWeight: 400, color: "#aaa" }}>
                   ({customFrames.filter(f => !f.isPreset).length} / 2 власних)
                 </span>

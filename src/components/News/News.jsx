@@ -27,7 +27,6 @@ import {
   collection,
   getDocs,
 } from "firebase/firestore";
-
 import {
   useFloating,
   autoUpdate,
@@ -295,8 +294,8 @@ const CarouselHintItem = styled.button`
     left: -10px;
     width: 44px;
     height: 40px;
-    border-top: 1.5px solid rgba(255, 170, 0, 0.6);
-    border-left: 1.5px solid rgba(255, 170, 0, 0.6);
+    border-top: 2px solid rgb(255, 170, 0);
+    border-left: 2px solid rgb(255, 170, 0);
     border-right: none;
     border-bottom: none;
     border-top-left-radius: 6px;
@@ -317,16 +316,16 @@ const CarouselHintItem = styled.button`
     pointer-events: none;
     
     background: 
-      linear-gradient(45deg, transparent 42%, rgba(255, 170, 0, 0.7) 42%, rgba(255, 170, 0, 0.7) 58%, transparent 58%) 0 0 / 14px 14px no-repeat,
-      linear-gradient(45deg, transparent 42%, rgba(255, 170, 0, 0.7) 42%, rgba(255, 170, 0, 0.7) 58%, transparent 58%) 100% 0 / 14px 14px no-repeat,
-      linear-gradient(45deg, transparent 42%, rgba(255, 170, 0, 0.7) 42%, rgba(255, 170, 0, 0.7) 58%, transparent 58%) 0 100% / 14px 14px no-repeat;
+      linear-gradient(45deg, transparent 42%, rgb(255, 170, 0) 42%, rgb(255, 170, 0) 58%, transparent 58%) 0 0 / 14px 14px no-repeat,
+      linear-gradient(45deg, transparent 42%, rgb(255, 170, 0) 42%, rgb(255, 170, 0) 58%, transparent 58%) 100% 0 / 14px 14px no-repeat,
+      linear-gradient(45deg, transparent 42%, rgb(255, 170, 0) 42%, rgb(255, 170, 0) 58%, transparent 58%) 0 100% / 14px 14px no-repeat;
     transition: all 0.2s ease;
   }
 
   &:hover {
     background: #000;
     animation-play-state: paused;
-    box-shadow: 0 0 18px rgba(255, 170, 0, 0.7);
+    box-shadow: 0 0 18px rgba(255, 170, 0, 0.99);
     
     &::before {
       border-color: rgba(255, 170, 0, 0.95);

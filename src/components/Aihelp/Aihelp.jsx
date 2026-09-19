@@ -17,6 +17,117 @@ import { TbWorldStar } from "react-icons/tb";
 import { IoIosCloudyNight } from "react-icons/io";
 import { PiNewspaperClippingFill } from "react-icons/pi";
 import { FaClapperboard } from "react-icons/fa6";
+import {
+  useFloating,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  arrow,
+  useHover,
+  useFocus,
+  useDismiss,
+  useRole,
+  useInteractions,
+  useTransitionStyles,
+  FloatingPortal,
+  FloatingArrow,
+} from "@floating-ui/react";
+const TooltipBox = styled.div`
+  background-color: ${(props) => (props.$isDarkMode ? "#0c0c0ceb" : "#fdff98e7")};
+  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
+  border: 2px solid #00afce;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, ${(props) => (props.$isDarkMode ? "0.5" : "0.15")});
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 9px;
+  z-index: 10000;
+  pointer-events: none;
+`;
+export const Tooltip = ({
+  content,
+  children,
+  placement = "bottom",
+  isDarkMode = true,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const arrowRef = useRef(null);
+  const { refs, floatingStyles, context } = useFloating({
+    open: isOpen,
+    onOpenChange: setIsOpen,
+    placement,
+    strategy: "fixed",
+    transform: false,
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(8),
+      flip(),
+      shift({ padding: 5 }),
+      arrow({ element: arrowRef }),
+    ],
+  });
+  const { isMounted, styles: transitionStyles } = useTransitionStyles(context, {
+    duration: 150,
+    initial: {
+      opacity: 0,
+      transform: "scale(0.9)",
+    },
+    open: {
+      opacity: 1,
+      transform: "scale(1)",
+    },
+  });
+
+  const hover = useHover(context, { move: false });
+  const focus = useFocus(context);
+  const dismiss = useDismiss(context);
+  const role = useRole(context, { role: "tooltip" });
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([
+    hover,
+    focus,
+    dismiss,
+    role,
+  ]);
+
+  if (!content) return children;
+
+  const bgTheme = isDarkMode ? "#111111" : "#ffffff";
+  const borderTheme = "#00acb9";
+
+  return (
+    <>
+      <span
+        ref={refs.setReference}
+        {...getReferenceProps()}
+        style={{ display: "inline-flex" }}
+      >
+        {children}
+      </span>
+      {isMounted && (
+        <FloatingPortal>
+          <TooltipBox
+            ref={refs.setFloating}
+            $isDarkMode={isDarkMode}
+            style={{ ...floatingStyles, ...transitionStyles }}
+            {...getFloatingProps()}
+          >
+            {content}
+            <FloatingArrow
+              ref={arrowRef}
+              context={context}
+              fill={bgTheme}
+              stroke={borderTheme}
+              strokeWidth={1}
+            />
+          </TooltipBox>
+        </FloatingPortal>
+      )}
+    </>
+  );
+};
+//<Tooltip content="Змінити тему" isDarkMode={isDarkMode}>
 /* ── Animations ── */
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(6px); }
@@ -34,6 +145,7 @@ const shimmer = keyframes`
 `;
 
 const MAX_MESSAGE_LENGTH = 300;
+const GLOBAL_COOLDOWN_KEY = "gemini_global_cooldown_until";
 
 /* ── Styled components ── */
 const AihelpDiv = styled.div`
@@ -91,27 +203,27 @@ const AihelpTitle = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 22px;
+  padding: 4px 7px;
   transition: all 0.3s ease;
   z-index: 100;
   ${(props) =>
     props.$isStickyBgMode
       ? css`
           background: ${props.$isDarkMode
-            ? "rgba(15, 15, 25, 0.75)"
-            : "rgba(255, 255, 255, 0.75)"};
+          ? "rgba(15, 15, 25, 0.75)"
+          : "rgba(255, 255, 255, 0.75)"};
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           border: 1px solid
             ${props.$isDarkMode
-              ? "rgba(255, 165, 0, 0.25)"
-              : "rgba(255, 140, 0, 0.2)"};
+          ? "rgba(255, 165, 0, 0.25)"
+          : "rgba(255, 140, 0, 0.2)"};
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
         `
       : css`
           background: ${props.$isDarkMode
-            ? "rgba(255, 255, 255, 0.04)"
-            : "rgba(0, 0, 0, 0.04)"};
+          ? "rgba(255, 255, 255, 0.04)"
+          : "rgba(0, 0, 0, 0.04)"};
           border: 1px solid
             ${props.$isDarkMode ? "rgba(255,165,0,0.2)" : "rgba(255,140,0,0.15)"};
         `}
@@ -230,7 +342,7 @@ const ProviderRow = styled.div`
     align-items: center;
     cursor: pointer;
     font-size: 13px;
-    min-width: 160px;
+    min-width: 100px;
   }
   input[type="radio"] {
     margin-right: 8px;
@@ -243,7 +355,7 @@ const ProviderRow = styled.div`
     border-radius: 8px;
     border: 1px solid ${(p) => (p.$hasError ? "#ff4d4d" : "rgba(255,160,0,0.4)")};
     background: ${(p) =>
-      p.$isDarkMode ? "rgba(30,30,40,0.7)" : "rgba(255,255,255,0.85)"};
+    p.$isDarkMode ? "rgba(30,30,40,0.7)" : "rgba(255,255,255,0.85)"};
     color: ${(p) => (p.$isDarkMode ? "white" : "black")};
     font-size: 13px;
     outline: none;
@@ -297,11 +409,11 @@ const Message = styled.div`
   color: ${(p) => (p.$isBot ? (p.$isDarkMode ? "#f0f0f0" : "#111") : "#fff")};
   border: 1px solid
     ${(p) =>
-      p.$isBot
-        ? p.$isDarkMode
-          ? "rgba(255,255,255,0.1)"
-          : "rgba(0,0,0,0.1)"
-        : "rgba(255,149,0,0.3)"};
+    p.$isBot
+      ? p.$isDarkMode
+        ? "rgba(255,255,255,0.1)"
+        : "rgba(0,0,0,0.1)"
+      : "rgba(255,149,0,0.3)"};
   padding: 8px 12px;
   border-radius: ${(p) => (p.$isBot ? "4px 14px 14px 14px" : "14px 4px 14px 14px")};
   position: relative;
@@ -417,17 +529,22 @@ const InputQuickSettings = styled.div`
     p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"};
 `;
 
-const QuickGroup = styled.div`
+const SuggestedQuestionsSetting = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
 `;
 
+const QuickGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1px;
+`;
+
 const QuickLabel = styled.span`
   font-weight: 700;
-  font-size: 10px;
+  font-size: 13px;
   color: #ff9500;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-right: 2px;
 `;
@@ -438,8 +555,8 @@ const QuickSelect = styled.select`
     p.$isDarkMode ? "rgba(255,165,0,0.12)" : "rgba(255,140,0,0.08)"};
   border: 1px solid
     ${(p) => (p.$isDarkMode ? "rgba(255,165,0,0.35)" : "rgba(255,140,0,0.3)")};
-  border-radius: 999px;
-  padding: 3px 22px 3px 10px;
+  border-radius: 9px;
+  padding: 3px 22px 3px 7px;
   font-size: 11px;
   font-weight: 600;
   color: ${(p) => (p.$isDarkMode ? "#ffcf9e" : "#d96500")};
@@ -479,7 +596,7 @@ const TextArea = styled.textarea`
   line-height: 1.5;
   &::placeholder {
     color: ${(p) =>
-      p.$isDarkMode ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.35)"};
+    p.$isDarkMode ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.35)"};
     font-size: 13px;
   }
 `;
@@ -523,7 +640,7 @@ const IconBtn = styled.button`
   &:disabled { opacity: 0.35; cursor: not-allowed; }
   &:hover:not(:disabled) {
     background: ${(p) =>
-      p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)"};
+    p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)"};
     color: ${(p) => (p.$isDarkMode ? "#fff" : "#000")};
     transform: scale(1.08);
   }
@@ -839,24 +956,27 @@ const AttachedCardsContainer = styled.div`
   padding: 4px 2px;
   flex-shrink: 0;
 `;
-
 const AttachedChip = styled.div`
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
   background: ${(p) => (p.$isDarkMode ? "rgba(255, 105, 180, 0.18)" : "rgba(255, 105, 180, 0.12)")};
   border: 1px solid rgba(255, 105, 180, 0.45);
   color: ${(p) => (p.$isDarkMode ? "#ffb6c1" : "#d81b60")};
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 11px;
+  border-radius: 7px;
+  padding: 0 4px;
+  font-size: 12px;
   font-weight: 600;
-  max-width: 280px;
-
-  span {
+  max-width: 295px;
+  > svg {
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+  > span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;
   }
 
   button {
@@ -869,10 +989,13 @@ const AttachedChip = styled.div`
     line-height: 1;
     display: flex;
     align-items: center;
-    &:hover { color: #ff4d4d; }
+    flex-shrink: 0;
+
+    &:hover {
+      color: #ff4d4d;
+    }
   }
 `;
-
 const LimitsButton = styled.button`
   background: rgba(255, 160, 0, 0.12);
   border: 1px solid rgba(255, 160, 0, 0.35);
@@ -913,11 +1036,11 @@ const ModalContainer = styled.div`
   color: ${(p) => (p.$isDarkMode ? "#f0f0f0" : "#111111")};
   border: 1px solid rgba(255, 160, 0, 0.4);
   border-radius: 16px;
-  padding: 20px 24px;
+  padding: 14px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 4px;
   position: relative;
 `;
 
@@ -925,17 +1048,15 @@ const ModalHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 160, 0, 0.2);
-  padding-bottom: 10px;
+  border-bottom: 2px solid rgba(255, 160, 0, 0.2);
 
   h3 {
     margin: 0;
     font-size: 16px;
-    font-weight: 800;
+    font-weight: 700;
     color: #ff9500;
     display: flex;
     align-items: center;
-    gap: 8px;
   }
 `;
 
@@ -943,10 +1064,11 @@ const ModalCloseBtn = styled.button`
   background: transparent;
   border: none;
   color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)")};
-  font-size: 20px;
+  font-size: 22px;
   cursor: pointer;
   padding: 2px 8px;
   border-radius: 6px;
+  font-weight: 900;
   &:hover {
     color: #ff4d4d;
     background: rgba(255, 77, 77, 0.1);
@@ -1023,11 +1145,11 @@ const ChatItemCard = styled.div`
         : "rgba(0, 0, 0, 0.04)"};
   border: 1px solid
     ${(p) =>
-      p.$active
-        ? "#ff9500"
-        : p.$isDarkMode
-          ? "rgba(255, 255, 255, 0.08)"
-          : "rgba(0, 0, 0, 0.08)"};
+    p.$active
+      ? "#ff9500"
+      : p.$isDarkMode
+        ? "rgba(255, 255, 255, 0.08)"
+        : "rgba(0, 0, 0, 0.08)"};
   cursor: pointer;
   transition: all 0.2s ease;
   &:hover {
@@ -1075,7 +1197,7 @@ const DeleteChatBtn = styled.button`
   background: transparent;
   border: none;
   color: rgba(255, 80, 80, 0.75);
-  font-size: 16px;
+  font-size: 26px;
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 6px;
@@ -1121,8 +1243,8 @@ const EmptyChatWelcome = styled.div`
 `;
 
 const WelcomeTitle = styled.div`
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 700;
   color: #ff9500;
 `;
 
@@ -1145,9 +1267,9 @@ const StarterQuestionCard = styled.button`
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
+  padding: 4px 8px;
   border-radius: 10px;
-  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.3)" : "rgba(255, 140, 0, 0.25)")};
+  border: 2px solid ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.3)" : "rgba(255, 140, 0, 0.25)")};
   background: ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.08)" : "rgba(255, 140, 0, 0.06)")};
   color: ${(p) => (p.$isDarkMode ? "#f0f0f0" : "#222")};
   font-size: 13px;
@@ -1162,6 +1284,9 @@ const StarterQuestionCard = styled.button`
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(255, 149, 0, 0.2);
   }
+  svg {
+    font-size: 26px;
+    }
 `;
 
 const SuggestedQuestionsContainer = styled.div`
@@ -1179,6 +1304,27 @@ const SuggestedTitle = styled.div`
   font-weight: 700;
   color: #ff9500;
   letter-spacing: 0.5px;
+`;
+
+const MessageMeta = styled.div`
+  margin-top: 6px;
+  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)")};
+  font-size: 10px;
+`;
+
+const EditQuestionButton = styled.button`
+  margin-top: 6px;
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 149, 0, 0.4);
+  border-radius: 6px;
+  background: transparent;
+  color: ${(p) => (p.$isDarkMode ? "#ffcf9e" : "#d96500")};
+  font-size: 10px;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 149, 0, 0.12);
+  }
 `;
 
 const SuggestedPillsRow = styled.div`
@@ -1240,18 +1386,22 @@ export const parseSuggestedQuestions = (text) => {
   const regex = /\[РЕКОМЕНДОВАНІ_ПИТАННЯ\]([\s\S]*?)\[\/РЕКОМЕНДОВАНІ_ПИТАННЯ\]/;
   const match = text.match(regex);
   if (!match) return { cleanText: text, questions: [] };
-
   const cleanText = text.replace(regex, "").trim();
   const rawQuestions = match[1]
     .split("\n")
     .map((q) => q.replace(/^[•\-\*\d\.\s]+/, "").trim())
     .filter((q) => q.length > 0)
     .slice(0, 3);
-
   return { cleanText, questions: rawQuestions };
 };
 
-const STYHIYA_SYSTEM_PROMPT = `Ти — ШІ-асистент вбудований у веб-платформу «Стихія».
+const getSystemPrompt = (suggestedQuestionsCount) => {
+  const suggestionsInstruction =
+    suggestedQuestionsCount === 0
+      ? "7. Не додавай рекомендованих питань або блок [РЕКОМЕНДОВАНІ_ПИТАННЯ]."
+      : `7. Наприкінці кожної відповіді додавай рівно ${suggestedQuestionsCount} коротких релевантних питань для продовження діалогу у форматі [РЕКОМЕНДОВАНІ_ПИТАННЯ].`;
+
+  return `Ти — ШІ-асистент вбудований у веб-платформу «Стихія».
 КОНЦЕПЦІЯ ПЛАТФОРМИ:
 «Стихія» — це безкоштовна веб-платформа (без реклами) яка поєднує:
 • Погода — якщо надано актуальні дані погодного API або віджета, обов'язково давай конкретну відповідь із цифрами (температура, опади, вітер, стан неба).
@@ -1272,11 +1422,12 @@ const STYHIYA_SYSTEM_PROMPT = `Ти — ШІ-асистент вбудовани
 4. Не генеруй шкідливий контент, код-зловмисник, пропаганду ненависті або матеріали 18+.
 5. Відповідай українською мовою, якщо запит не на іншій мові.
 6. Будь дружнім, чітким і корисним — відповідно до обраного стилю користувача.
-7. Наприкінці кожної відповіді додавай 2 короткі релевантні запитання для продовження діалогу у такому форматі:
-[РЕКОМЕНДОВАНІ_ПИТАННЯ]
-• Перше запитання?
-• Друге запитання?
-[/РЕКОМЕНДОВАНІ_ПИТАННЯ]`;
+${suggestionsInstruction}
+${suggestedQuestionsCount === 0 ? "" : `[РЕКОМЕНДОВАНІ_ПИТАННЯ]
+• Запитання${suggestedQuestionsCount > 1 ? " 1" : ""}?
+${suggestedQuestionsCount > 1 ? "• Запитання 2?" : ""}
+[/РЕКОМЕНДОВАНІ_ПИТАННЯ]`}`;
+};
 
 const createDefaultChatObject = (index = 1, initialMessages = []) => ({
   id: `chat_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -1295,6 +1446,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
   const [geminiModel, setGeminiModel] = useState("gemini-3.5-flash-lite");
   const [responseLength, setResponseLength] = useState("normal");
   const [responseStyle, setResponseStyle] = useState("friendly");
+  const [suggestedQuestionsCount, setSuggestedQuestionsCount] = useState("2");
   const [isLimitsModalOpen, setIsLimitsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [attachedCards, setAttachedCards] = useState([]);
@@ -1606,7 +1758,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
       );
     };
     recognition.onerror = () => { setIsListening(false); setStatus(""); recognitionRef.current = null; };
-    recognition.onend   = () => { setIsListening(false); setStatus(""); recognitionRef.current = null; };
+    recognition.onend = () => { setIsListening(false); setStatus(""); recognitionRef.current = null; };
     recognition.start();
   };
 
@@ -1615,12 +1767,18 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
       const gK = await localforage.getItem("gemini_api_key");
       const gM = await localforage.getItem("gemini_model");
       const savedGoogleSearch = await localforage.getItem("gemini_google_search_enabled");
+      const savedSuggestedQuestionsCount = await localforage.getItem(
+        "gemini_suggested_questions_count",
+      );
       if (gK) {
         const cleaned = typeof gK === "string" ? gK.trim().replace(/^["']|["']$/g, "") : gK;
         setPersonalApiKey(cleaned);
       }
       if (gM) setGeminiModel(gM);
       if (savedGoogleSearch !== null) setGoogleSearchEnabled(savedGoogleSearch);
+      if (["0", "1", "2"].includes(savedSuggestedQuestionsCount)) {
+        setSuggestedQuestionsCount(savedSuggestedQuestionsCount);
+      }
 
       const savedChats = await localforage.getItem("ai_help_chats_v2");
       const savedActiveId = await localforage.getItem("ai_help_active_chat_id");
@@ -1657,7 +1815,6 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
       objectURLs.current = [];
     };
   }, []);
-
   const fileToGenerativePart = async (file) => {
     const base64 = await new Promise((resolve) => {
       const reader = new FileReader();
@@ -1728,7 +1885,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
       await localforage.setItem("hero_background", url);
       try {
         window.dispatchEvent(new CustomEvent("heroBackgroundChanged", { detail: { src: url } }));
-      } catch {}
+      } catch { }
       toast.success("Картину встановлено як фон!");
     } catch (err) {
       console.error(err);
@@ -1778,6 +1935,21 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
     );
   };
 
+  const restoreQuestion = (messageIndex) => {
+    const question = messages[messageIndex];
+    if (!question || question.isBot) return;
+
+    setPrompt(question.text);
+    updateChatMessages(activeChatId, (previousMessages) =>
+      previousMessages.slice(0, messageIndex),
+    );
+    clearFiles();
+    cooldownUntilRef.current = 0;
+    setCooldownUntil(0);
+    setCooldownSeconds(0);
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -1793,7 +1965,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
       loading ||
       requestInFlightRef.current
     ) return;
-    
+
     const targetChatId = activeChatId;
 
     if (!personalApiKey) {
@@ -1812,8 +1984,15 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
     }
 
     const now = Date.now();
-    if (cooldownUntilRef.current > now) {
-      const remainingSec = Math.ceil((cooldownUntilRef.current - now) / 1000);
+    const sharedCooldownUntil = await localforage.getItem(GLOBAL_COOLDOWN_KEY);
+    const activeCooldownUntil = Math.max(
+      cooldownUntilRef.current,
+      Number(sharedCooldownUntil) || 0,
+    );
+    if (activeCooldownUntil > now) {
+      const remainingSec = Math.ceil((activeCooldownUntil - now) / 1000);
+      cooldownUntilRef.current = activeCooldownUntil;
+      setCooldownUntil(activeCooldownUntil);
       toast.error(`Зачекайте ще ${remainingSec} с перед наступним запитом.`);
       return;
     }
@@ -1823,11 +2002,11 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
     setError(null);
     setLoading(true);
     setStreamingText("");
-    
+
     updateChatMessages(targetChatId, (prev) => [...prev, { text: originalPrompt, isBot: false }]);
     setPrompt("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
-    
+
     try {
       let webContext = "";
       const isWeatherOrSearchQuery = googleSearchEnabled || /погод|температур|градус|дощ|опад|сонц|соняч|хмарно|вітер|київ|львів|одес|харків|дніпр|завтра|сьогодні|прогноз|weather|forecast/i.test(originalPrompt);
@@ -1845,7 +2024,8 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
       const genAI = new GoogleGenerativeAI(cleanedKey);
 
       const { instruction: lengthInstr } = getResponseLengthInstruction(responseLength);
-      const { instruction: styleInstr }  = getResponseStyleInstruction(responseStyle);
+      const { instruction: styleInstr } = getResponseStyleInstruction(responseStyle);
+      const suggestionCount = Number(suggestedQuestionsCount);
       let cardContext = "";
       if (attachedCards.length > 0) {
         cardContext =
@@ -1858,7 +2038,10 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
             .join("\n\n") +
           "\n-------------------------------------------\n";
       }
-      const fullPrompt = `${lengthInstr} ${styleInstr}${cardContext}${webContext}\n${originalPrompt || "Проаналізуй прикріплений контент."}`;
+      const webInstruction = webContext
+        ? "Використай актуальний інтернет-контекст нижче. Не кажи, що не маєш доступу до новин; відокремлюй факти від прогнозів і додавай посилання на джерела, якщо вони надані."
+        : "Якщо для відповіді потрібні актуальні новини, поясни, що свіжі результати не були отримані.";
+      const fullPrompt = `${lengthInstr} ${styleInstr}\n${webInstruction}${cardContext}${webContext}\n${originalPrompt || "Проаналізуй прикріплений контент."}`;
       const parts = [{ text: fullPrompt }];
       for (const fileObj of selectedFiles) {
         parts.push(await fileToGenerativePart(fileObj.file));
@@ -1872,7 +2055,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
         try {
           const standardModel = genAI.getGenerativeModel({
             model: modelName,
-            systemInstruction: STYHIYA_SYSTEM_PROMPT,
+            systemInstruction: getSystemPrompt(suggestionCount),
           });
           result = await standardModel.generateContentStream(parts);
           if (result) break;
@@ -1890,17 +2073,34 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
         setStreamingText(accumulatedText);
       }
 
+      const completedResponse = await result.response;
+      const usageMetadata = completedResponse?.usageMetadata;
+
       const finalBotMessage = {
         text: accumulatedText,
         isBot: true,
+        usage: usageMetadata
+          ? {
+            promptTokens: usageMetadata.promptTokenCount || 0,
+            responseTokens: usageMetadata.candidatesTokenCount || 0,
+            totalTokens: usageMetadata.totalTokenCount || 0,
+          }
+          : null,
       };
       updateChatMessages(targetChatId, (prev) => [...prev, finalBotMessage]);
       setStreamingText("");
       clearFiles();
 
-      const nextCooldown = Date.now() + 2000;
+      const cooldownSecondsBySuggestionCount = {
+        0: 5,
+        1: 10,
+        2: 15,
+      };
+      const nextCooldown =
+        Date.now() + cooldownSecondsBySuggestionCount[suggestionCount] * 1000;
       cooldownUntilRef.current = nextCooldown;
       setCooldownUntil(nextCooldown);
+      await localforage.setItem(GLOBAL_COOLDOWN_KEY, nextCooldown);
     } catch (err) {
       setStreamingText("");
       const errorMessage = err?.message || "Невідома помилка Gemini.";
@@ -1914,6 +2114,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
       const nextCooldown = Date.now() + 5000;
       cooldownUntilRef.current = nextCooldown;
       setCooldownUntil(nextCooldown);
+      await localforage.setItem(GLOBAL_COOLDOWN_KEY, nextCooldown);
     } finally {
       requestInFlightRef.current = false;
       setLoading(false);
@@ -1943,31 +2144,37 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
           <TitleBadge>Gemini</TitleBadge>
         </AihelpTitle>
         <ChatControlsGroup>
-          <ChatHeaderBtn
-            type="button"
-            $isDarkMode={isDarkMode}
-            onClick={() => setIsChatsModalOpen(true)}
-            title="Переглянути список чатів"
-          >
-            Чати ({chats.length}/10)
-          </ChatHeaderBtn>
-          <LimitsButton
-            type="button"
-            $isDarkMode={isDarkMode}
-            onClick={() => setIsLimitsModalOpen(true)}
-            title="Переглянути приблизні ліміти"
-          >
-            Ліміти
-          </LimitsButton>
-          <NewChatHeaderBtn
-            type="button"
-            $isDarkMode={isDarkMode}
-            onClick={handleCreateNewChat}
-            disabled={chats.length >= 10}
-            title="Створити новий паралельний чат"
-          >
-            Новий чат
-          </NewChatHeaderBtn>
+          <Tooltip content="Переглянути список чатів" isDarkMode={isDarkMode}>
+            <ChatHeaderBtn
+              type="button"
+              $isDarkMode={isDarkMode}
+              onClick={() => setIsChatsModalOpen(true)}
+              aria-label="Переглянути список чатів"
+            >
+              Чати ({chats.length}/10)
+            </ChatHeaderBtn>
+          </Tooltip>
+          <Tooltip content="Переглянути приблизні ліміти" isDarkMode={isDarkMode}>
+            <LimitsButton
+              type="button"
+              $isDarkMode={isDarkMode}
+              onClick={() => setIsLimitsModalOpen(true)}
+              aria-label="Переглянути приблизні ліміти"
+            >
+              Ліміти
+            </LimitsButton>
+          </Tooltip>
+          <Tooltip content="Створити новий паралельний чат" isDarkMode={isDarkMode}>
+            <NewChatHeaderBtn
+              type="button"
+              $isDarkMode={isDarkMode}
+              onClick={handleCreateNewChat}
+              disabled={chats.length >= 10}
+              aria-label="Створити новий паралельний чат"
+            >
+              Новий чат
+            </NewChatHeaderBtn>
+          </Tooltip>
         </ChatControlsGroup>
       </HeaderBar>
 
@@ -1976,30 +2183,31 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
           <label style={{ minWidth: "unset", fontWeight: 700, fontSize: 13 }}>
             Gemini API Key
           </label>
-          
-          <label
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 12,
-              fontWeight: 600,
-              whiteSpace: "nowrap",
-              cursor: "pointer",
-            }}
-            title="Безкоштовний онлайн-пошук фактів та інформації без використання квоти Gemini"
-          >
-            <input
-              type="checkbox"
-              checked={googleSearchEnabled}
-              onChange={async (event) => {
-                const enabled = event.target.checked;
-                setGoogleSearchEnabled(enabled);
-                await localforage.setItem("gemini_google_search_enabled", enabled);
+          <Tooltip content="Безкоштовний онлайн-пошук фактів та інформації без використання квоти Gemini" isDarkMode={isDarkMode}>
+            <label
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 12,
+                fontWeight: 600,
+                whiteSpace: "nowrap",
+                cursor: "pointer",
               }}
-            />
-             Пошук в інтернеті
-          </label>
+              aria-label="Безкоштовний онлайн-пошук фактів та інформації без використання квоти Gemini"
+            >
+              <input
+                type="checkbox"
+                checked={googleSearchEnabled}
+                onChange={async (event) => {
+                  const enabled = event.target.checked;
+                  setGoogleSearchEnabled(enabled);
+                  await localforage.setItem("gemini_google_search_enabled", enabled);
+                }}
+              />
+              Інтернет-пошук
+            </label>
+          </Tooltip>
           <input
             type="password"
             placeholder="Вставте ваш Gemini API Key..."
@@ -2024,8 +2232,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
       <ChatHistory ref={chatContainerRef}>
         {messages.length === 0 && (
           <EmptyChatWelcome $isDarkMode={isDarkMode}>
-            <WelcomeTitle>Вітаю у «Допомозі ШІ»!</WelcomeTitle>
-            <WelcomeSubtitle>Запитайте будь-що або оберіть одне з популярних питань:</WelcomeSubtitle>
+            <WelcomeTitle>Запитайте будь-що або оберіть одне з популярних питань:</WelcomeTitle>
             <StarterQuestionsGrid>
               <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Які новини про погоду у світі?")}>
                 <span><TbWorldStar /></span> Які новини про погоду у світі?
@@ -2033,8 +2240,8 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
               <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Яка погода в Україні?")}>
                 <span><FaCloudMoon /></span> Яка погода в Україні?
               </StarterQuestionCard>
-              <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Порадити щось подивитися?")}>
-                <span><FaClapperboard/></span> Порадити щось подивитися?
+              <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Порадити гру, кіно і т.д.?")}>
+                <span><FaClapperboard /></span> Порадити гру, кіно і т.д.?
               </StarterQuestionCard>
             </StarterQuestionsGrid>
           </EmptyChatWelcome>
@@ -2043,11 +2250,21 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
         {messages.map((m, i) => {
           if (m.isBot) {
             const { cleanText, questions } = parseSuggestedQuestions(m.text);
+            const hint = i % 2 === 0
+              ? "Підказка: Ви можете зменшити кількість пропонованих питань після запиту для економії кредитів і зменшення перезарядки. Натисніть «Пропозиції»."
+              : "Підказка: Для швидших відповідей зменште обсяг відповіді з «Нормально» на «Менше».";
             return (
               <React.Fragment key={i}>
                 <Message $isBot={true} $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
                   <CopyButton onClick={() => copyToClipboard(cleanText)}>🖺</CopyButton>
                   <ReactMarkdown>{cleanText}</ReactMarkdown>
+                  {m.usage?.totalTokens > 0 && (
+                    <MessageMeta $isDarkMode={isDarkMode}>
+                      Витрачено токенів: {m.usage.totalTokens}
+                      {m.usage.promptTokens > 0 &&
+                        ` (запит: ${m.usage.promptTokens}, відповідь: ${m.usage.responseTokens})`}
+                    </MessageMeta>
+                  )}
                 </Message>
                 {questions.length > 0 && (
                   <SuggestedQuestionsContainer>
@@ -2064,6 +2281,9 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
                         </SuggestedPillBtn>
                       ))}
                     </SuggestedPillsRow>
+                    <SuggestedTitle style={{ fontSize: "12px" }}>
+                      {hint}
+                    </SuggestedTitle>
                   </SuggestedQuestionsContainer>
                 )}
               </React.Fragment>
@@ -2072,6 +2292,13 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
           return (
             <Message key={i} $isBot={false} $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
               <ReactMarkdown>{m.text}</ReactMarkdown>
+              <EditQuestionButton
+                type="button"
+                $isDarkMode={isDarkMode}
+                onClick={() => restoreQuestion(i)}
+              >
+                Редагувати це питання
+              </EditQuestionButton>
             </Message>
           );
         })}
@@ -2128,20 +2355,29 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
 
       {attachedCards.length > 0 && (
         <AttachedCardsContainer>
-          {attachedCards.map((card, i) => (
-            <AttachedChip key={i} $isDarkMode={isDarkMode}>
-              <span>{card.type === "weather" ? <IoIosCloudyNight/> : <PiNewspaperClippingFill />} {card.title}</span>
-              <button
-                type="button"
-                onClick={() =>
-                  setAttachedCards((prev) => prev.filter((_, idx) => idx !== i))
-                }
-                title="Видалити картку"
-              >
-                ✕
-              </button>
-            </AttachedChip>
-          ))}
+          {attachedCards.map((card, i) => {
+            const cardLabel = card.type === "weather" ? "картку погоди" : "новину";
+            const actionText = `Видалити прикріплену ${cardLabel}`;
+
+            return (
+              <AttachedChip key={i} $isDarkMode={isDarkMode}>
+                {card.type === "weather" ? <IoIosCloudyNight /> : <PiNewspaperClippingFill />}
+                <span>{card.title}</span>
+                <Tooltip content={actionText} isDarkMode={isDarkMode}>
+                  <button
+                    type="button"
+                    style={{ marginRight: 12}}
+                    onClick={() =>
+                      setAttachedCards((prev) => prev.filter((_, idx) => idx !== i))
+                    }
+                    aria-label={actionText}
+                  >
+                    ✕
+                  </button>
+                </Tooltip>
+              </AttachedChip>
+            );
+          })}
         </AttachedCardsContainer>
       )}
 
@@ -2176,6 +2412,28 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
               <option value="scientific">Науково</option>
             </QuickSelect>
           </QuickGroup>
+          {messages.length > 0 && (
+            <SuggestedQuestionsSetting>
+              <QuickLabel>Пропозиції:</QuickLabel>
+              <QuickSelect
+                $isDarkMode={isDarkMode}
+                value={suggestedQuestionsCount}
+                onChange={async (event) => {
+                  const count = event.target.value;
+                  setSuggestedQuestionsCount(count);
+                  await localforage.setItem(
+                    "gemini_suggested_questions_count",
+                    count,
+                  );
+                }}
+                aria-label="Кількість рекомендованих питань"
+              >
+                <option value="0">0 (5 с)</option>
+                <option value="1">1 (10 с)</option>
+                <option value="2">2 (15 с)</option>
+              </QuickSelect>
+            </SuggestedQuestionsSetting>
+          )}
         </InputQuickSettings>
 
         <TextArea
@@ -2197,9 +2455,11 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
             {prompt.length}/{MAX_MESSAGE_LENGTH}
           </MessageCounter>
           <label style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
-            <IconBtn as="span" $isDarkMode={isDarkMode} $size="20px" title="Додати фото, відео, аудіо">
+            <Tooltip content="Додати фото, відео, аудіо" isDarkMode={isDarkMode}>
+            <IconBtn as="span" $isDarkMode={isDarkMode} $size="20px" aria-label="Додати фото, відео, аудіо">
               <MdAddPhotoAlternate />
             </IconBtn>
+            </Tooltip>
             <input
               type="file"
               accept="image/*, video/*, audio/*"
@@ -2208,22 +2468,31 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
               onChange={(e) => handleFileSelect(e.target.files)}
             />
           </label>
-
-          <IconBtn $isDarkMode={isDarkMode} onClick={captureScreen} title="Зробити скріншот" disabled={loading || isCapturing}>
-            {isCapturing ? <GiTimeTrap/> : <IoCamera />}
+           <Tooltip content="Зробити скріншот" isDarkMode={isDarkMode}>
+          <IconBtn $isDarkMode={isDarkMode} onClick={captureScreen} aria-label="Зробити скріншот" disabled={loading || isCapturing}>
+            {isCapturing ? <GiTimeTrap /> : <IoCamera />}
           </IconBtn>
-
-          <IconBtn $isDarkMode={isDarkMode} onClick={handleVoiceInput} title={isListening ? "Зупинити запис" : "Голосовий ввід"} $listening={isListening}>
+          </Tooltip>
+          <Tooltip content={isListening ? "Зупинити запис" : "Голосовий ввід"} isDarkMode={isDarkMode}>
+          <IconBtn $isDarkMode={isDarkMode} onClick={handleVoiceInput} aria-label={isListening ? "Зупинити запис" : "Голосовий ввід"} $listening={isListening}>
             {isListening ? "◼" : <FaMicrophoneAlt />}
           </IconBtn>
-
-          <IconBtn $isDarkMode={isDarkMode} $danger onClick={clearCurrentHistory} title="Очистити поточний чат" $size="20px">
+          </Tooltip>
+          <Tooltip content="Зробити скріншот" isDarkMode={isDarkMode}>
+          <IconBtn $isDarkMode={isDarkMode} onClick={captureScreen} aria-label="Зробити скріншот" disabled={loading || isCapturing}>
+            {isCapturing ? <GiTimeTrap /> : <IoCamera />}
+          </IconBtn>
+          </Tooltip>
+          <Tooltip content="Очистити поточний чат" isDarkMode={isDarkMode}>
+          <IconBtn $isDarkMode={isDarkMode} $danger onClick={clearCurrentHistory} aria-label="Очистити поточний чат" $size="20px">
             <RiDeleteBack2Fill />
           </IconBtn>
-
-          <SendButton disabled={!canSend} $isDarkMode={isDarkMode} onClick={() => handleAsk()} title="Надіслати">
-            {loading ? <GiTimeTrap/> : cooldownSeconds > 0 ? `${cooldownSeconds}с` : "Надіслати ➤"}
-          </SendButton>
+          </Tooltip>
+          <Tooltip content="Надіслати" isDarkMode={isDarkMode}>
+            <SendButton disabled={!canSend} $isDarkMode={isDarkMode} onClick={() => handleAsk()} aria-label="Надіслати">
+              {loading ? <GiTimeTrap /> : cooldownSeconds > 0 ? `${cooldownSeconds}с` : "➤"}
+            </SendButton>
+          </Tooltip>
         </ActionButtons>
       </InputContainer>
 
@@ -2305,7 +2574,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
         <ModalOverlay onClick={() => setIsChatsModalOpen(false)}>
           <ModalContainer $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
             <ModalHeader $isDarkMode={isDarkMode}>
-              <h3>💬 Список чатів ({chats.length}/10)</h3>
+              <h3>Список чатів ({chats.length}/10)</h3>
               <ModalCloseBtn $isDarkMode={isDarkMode} onClick={() => setIsChatsModalOpen(false)}>
                 ✕
               </ModalCloseBtn>
@@ -2331,13 +2600,15 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
                         {msgCount > 0 ? `${msgCount} повідомл.` : "Порожній чат"}
                       </ChatItemMeta>
                     </ChatItemInfo>
+                      <Tooltip content="Видалити чат" isDarkMode={isDarkMode}>
                     <DeleteChatBtn
                       type="button"
                       onClick={(e) => handleDeleteChat(chat.id, e)}
-                      title="Видалити чат"
+                      aria-label="Видалити чат"
                     >
                       <RiDeleteBack2Fill />
                     </DeleteChatBtn>
+                      </Tooltip>
                   </ChatItemCard>
                 );
               })}
@@ -2345,7 +2616,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
 
             {chats.length < 10 && (
               <NewChatModalBtn type="button" onClick={handleCreateNewChat}>
-                ➕ Створити новий чат ({chats.length}/10)
+                 Створити новий чат ({chats.length}/10)
               </NewChatModalBtn>
             )}
           </ModalContainer>

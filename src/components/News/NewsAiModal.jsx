@@ -4,16 +4,61 @@ import styled, { keyframes } from "styled-components";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import localforage from "localforage";
 import ReactMarkdown from "react-markdown";
+import { RiDeleteBack2Fill } from "react-icons/ri";
+import { FaMicrophoneAlt } from "react-icons/fa";
+import { FaLightbulb } from "react-icons/fa";
+import { FiSend } from "react-icons/fi";
+import { fetchFreeWebSearch } from "../../utils/freeWebSearch";
+import reader from "../../photos/cursors/reader.webp";
+import { GiSpikedDragonHead } from "react-icons/gi";
+import readerfour from "../../photos/cursors/readerfour.webp";
+import readertwo from "../../photos/cursors/readertwo.webp";
+import readerthree from "../../photos/cursors/readerthree.webp";
+import { GiTimeBomb } from "react-icons/gi";
 
+const frames = [
+  reader,
+  readerfour,
+  reader,
+  readertwo,
+  readerthree,
+  readertwo,
+  readerthree,
+  readertwo,
+  readerthree,
+  readertwo
+];
+
+export const AnimatedCursor = ({ interval = 250, className = "" }) => {
+  const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentFrameIndex((prevIndex) => (prevIndex + 1) % frames.length);
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [interval]);
+
+  return (
+    <img
+      src={frames[currentFrameIndex]}
+      alt="Анімований помічник"
+      className={className}
+      style={{
+        width: "442px",
+        height: "442px",
+        marginTop: "-180px",
+        objectFit: "contain",
+        pointerEvents: "none",
+      }}
+    />
+  );
+};
 // --- Animations ---
 const fadeIn = keyframes`
   from { opacity: 0; transform: scale(0.96) translateY(10px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
-`;
-
-const dropdownSlide = keyframes`
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
 `;
 
 // --- Styled Components ---
@@ -90,125 +135,120 @@ const CloseBtn = styled.button`
 `;
 
 const ControlsBar = styled.div`
-  padding: 12px 20px;
+  padding: 6px;
   border-bottom: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)")};
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 3px;
   position: relative;
   z-index: 10;
 `;
 
-const DropdownWrapper = styled.div`
+const QuickSettings = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+`;
+
+const QuickGroup = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+`;
+
+const QuickSelect = styled.select`
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 179, 108, 0.45);
+  border-radius: 8px;
+  background: ${(p) => (p.$isDarkMode ? "#1c1d22" : "#fff")};
+  color: inherit;
+  font-size: 11px;
+`;
+
+const InputShell = styled.div`
   position: relative;
   flex: 1;
+  min-width: 0;
 `;
 
-const DropdownTrigger = styled.button`
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)")};
-  background: ${(props) => (props.$isDarkMode ? "#1c1d22" : "#f8f9fa")};
-  color: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: #ffb36c;
-  }
-`;
-
-const DropdownMenu = styled.div`
+const InputMeta = styled.div`
   position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  background: ${(props) => (props.$isDarkMode ? "#1e2025" : "#ffffff")};
-  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)")};
-  border-radius: 14px;
-  padding: 8px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  animation: ${dropdownSlide} 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 20;
-`;
-
-const CheckboxItem = styled.label`
+  left: 12px;
+  bottom: 6px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.15s;
-
-  &:hover {
-    background: ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)")};
-  }
-
-  input {
-    display: none;
-  }
+  gap: 8px;
+  flex-wrap: wrap;
+  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.5)")};
+  font-size: 10px;
 `;
 
-const CustomCheckbox = styled.div`
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  border: 1.5px solid ${(props) => (props.$checked ? "#ffb36c" : props.$isDarkMode ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)")};
-  background: ${(props) => (props.$checked ? "#ffb36c" : "transparent")};
+const InputActions = styled.div`
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  display: flex;
+  gap: 4px;
+`;
+
+const InputIconButton = styled.button`
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  border: 1px solid rgba(255, 179, 108, 0.35);
+  border-radius: 7px;
+  background: ${(p) => (p.$primary ? "linear-gradient(135deg, #ffb36c, #ff8a3d)" : "transparent")};
+  color: ${(p) => (p.$primary ? "#111" : "inherit")};
+  cursor: pointer;
+  font-size: 14px;
 
-  &::after {
-    content: "✓";
-    font-size: 12px;
-    font-weight: bold;
-    color: #000;
-    display: ${(props) => (props.$checked ? "block" : "none")};
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 `;
 
-const GenerateActionBtn = styled.button`
-  background: linear-gradient(135deg, #ffb36c 0%, #ff8a3d 100%);
-  color: #111;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
+const MessageMeta = styled.div`
+  margin-top: 6px;
+  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)")};
+  font-size: 10px;
+`;
+
+const SuggestedQuestions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+`;
+
+const SuggestedQuestion = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  border: 2px solid rgba(255, 179, 108, 0.45);
+  border-radius: 9px;
+  background: transparent;
+  width: 310px;
+  font-weight:700;
+  color: white;
   cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(255, 179, 108, 0.25);
-
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(255, 179, 108, 0.35);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    box-shadow: none;
+  font-size: 14px;
+   svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
   }
 `;
 
 const Body = styled.div`
-  padding: 20px;
+  padding: 5px;
   overflow-y: auto;
   flex: 1;
   display: flex;
@@ -277,7 +317,7 @@ const Message = styled.div`
 `;
 
 const InputArea = styled.div`
-  padding: 16px 20px;
+  padding: 5px;
   border-top: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)")};
   display: flex;
   gap: 10px;
@@ -285,8 +325,9 @@ const InputArea = styled.div`
 `;
 
 const Input = styled.input`
-  flex: 1;
-  padding: 12px 18px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 118px 34px 18px;
   border-radius: 14px;
   border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)")};
   background: ${(props) => (props.$isDarkMode ? "#22242a" : "#fff")};
@@ -304,49 +345,63 @@ const Input = styled.input`
   }
 `;
 
-const SendBtn = styled.button`
-  background: linear-gradient(135deg, #ffb36c 0%, #ff8a3d 100%);
-  color: #000;
-  border: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 16px;
-  transition: all 0.2s;
+const MAX_MESSAGE_LENGTH = 300;
+const GLOBAL_COOLDOWN_KEY = "gemini_global_cooldown_until";
 
-  &:hover:not(:disabled) {
-    transform: scale(1.05);
-  }
+const getResponseLengthInstruction = (value) => {
+  if (value === "detailed") return "Відповідай докладно, але структуровано.";
+  if (value === "concise") return "Відповідай стисло, лише головна суть.";
+  return "Відповідай нормально, збалансовано за обсягом.";
+};
 
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-`;
+const getResponseStyleInstruction = (value) => {
+  if (value === "scientific") return "Використовуй науковий, точний стиль.";
+  if (value === "standard") return "Використовуй нейтральний стандартний стиль.";
+  return "Використовуй дружній, простий стиль.";
+};
 
-const MODES_OPTIONS = [
-  { id: "коротко", label: "Коротко" },
-  { id: "докладно", label: "Докладно" },
-  { id: "науково", label: "Науково" },
-  { id: "дружньо", label: "Дружньо" },
-  { id: "саркастично", label: "Саркастично" },
+const parseSuggestedQuestions = (text) => {
+  const regex = /\[РЕКОМЕНДОВАНІ_ПИТАННЯ\]([\s\S]*?)\[\/РЕКОМЕНДОВАНІ_ПИТАННЯ\]/;
+  const match = text.match(regex);
+  if (!match) return { cleanText: text, questions: [] };
+  const questions = match[1]
+    .split("\n")
+    .map((item) => item.replace(/^[•\-*\d.\s]+/, "").trim())
+    .filter(Boolean)
+    .slice(0, 2);
+  return { cleanText: text.replace(regex, "").trim(), questions };
+};
+
+const starterQuestions = [
+  {
+    icon: <FaLightbulb aria-hidden="true" />,
+    text: "Поясни головну думку новини.",
+  },
+  {
+    icon: <GiSpikedDragonHead aria-hidden="true" />,
+    text: "Які факти є найцікавішими?",
+  },
+  {
+    icon: <GiTimeBomb aria-hidden="true" />,
+    text: "Які можуть бути наслідки?",
+  },
 ];
 
 export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
-  const [selectedModes, setSelectedModes] = useState(["докладно"]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [responseLength, setResponseLength] = useState("normal");
+  const [responseStyle, setResponseStyle] = useState("friendly");
+  const [suggestedQuestionsCount, setSuggestedQuestionsCount] = useState("0");
+  const [googleSearchEnabled, setGoogleSearchEnabled] = useState(true);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [apiKey, setApiKey] = useState("");
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [isListening, setIsListening] = useState(false);
 
   const chatEndRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const cooldownRef = useRef(0);
 
   // Блокування скролу фонової сторінки при відкритті
   useEffect(() => {
@@ -361,28 +416,31 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
     };
   }, [isOpen]);
 
-  // Закриття випадаючого списку при кліку за його межами
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   useEffect(() => {
     if (!isOpen) return;
-    localforage.getItem("gemini_api_key").then((key) => setApiKey(key));
+    Promise.all([
+      localforage.getItem("gemini_api_key"),
+      localforage.getItem("gemini_google_search_enabled"),
+      localforage.getItem("gemini_suggested_questions_count"),
+      localforage.getItem(GLOBAL_COOLDOWN_KEY),
+    ]).then(([key, searchEnabled, suggestions, cooldownUntil]) => {
+      setApiKey(key || "");
+      if (searchEnabled !== null) setGoogleSearchEnabled(searchEnabled);
+      if (["0", "1", "2"].includes(suggestions)) setSuggestedQuestionsCount(suggestions);
+      if (cooldownUntil && cooldownUntil > Date.now()) {
+        cooldownRef.current = cooldownUntil;
+        setCooldownSeconds(Math.ceil((cooldownUntil - Date.now()) / 1000));
+      }
+    });
 
     const historyKey = `news_ai_chat_${newsItem?.link || "general"}`;
     localforage.getItem(historyKey).then((data) => {
       if (data) {
         if (Date.now() - data.timestamp > 24 * 60 * 60 * 1000) {
           setMessages([]);
+          localforage.removeItem(historyKey);
         } else {
-          setMessages(data.messages || []);
+          setMessages((data.messages || []).slice(-10));
         }
       } else {
         setMessages([]);
@@ -391,21 +449,27 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
   }, [isOpen, newsItem]);
 
   useEffect(() => {
+    const timer = setInterval(() => {
+      localforage.getItem(GLOBAL_COOLDOWN_KEY).then((sharedCooldownUntil) => {
+        const until = Math.max(cooldownRef.current, Number(sharedCooldownUntil) || 0);
+        const remaining = Math.max(0, until - Date.now());
+        cooldownRef.current = until;
+        setCooldownSeconds(Math.ceil(remaining / 1000));
+        if (!remaining && until) {
+          cooldownRef.current = 0;
+          localforage.removeItem(GLOBAL_COOLDOWN_KEY);
+        }
+      });
+    }, 250);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const toggleMode = (modeId) => {
-    setSelectedModes((prev) => {
-      if (prev.includes(modeId)) {
-        return prev.length > 1 ? prev.filter((m) => m !== modeId) : prev;
-      } else {
-        return [...prev, modeId];
-      }
-    });
-  };
-
   const saveHistory = (msgs) => {
-    const toSave = msgs.slice(-20);
+    const toSave = msgs.slice(-10);
     const historyKey = `news_ai_chat_${newsItem?.link || "general"}`;
     localforage.setItem(historyKey, {
       timestamp: Date.now(),
@@ -414,21 +478,50 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
     setMessages(toSave);
   };
 
+  const setCooldown = (seconds) => {
+    const until = Date.now() + seconds * 1000;
+    cooldownRef.current = until;
+    setCooldownSeconds(seconds);
+    localforage.setItem(GLOBAL_COOLDOWN_KEY, until);
+  };
+
+  const handleClearChat = async () => {
+    setMessages([]);
+    await localforage.removeItem(`news_ai_chat_${newsItem?.link || "general"}`);
+  };
+
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.lang = "uk-UA";
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event) => {
+      setInput((previous) => `${previous ? `${previous} ` : ""}${event.results[0][0].transcript}`.slice(0, MAX_MESSAGE_LENGTH));
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+    recognition.start();
+  };
+
   const handleSend = async (customPrompt = null) => {
     const textToSend = customPrompt || input;
-    if (!textToSend.trim() || loading) return;
+    if (!textToSend.trim() || loading || cooldownRef.current > Date.now()) return;
 
     if (!apiKey) {
       alert("Не знайдено Gemini API ключ! Додайте його в меню 'Допомога ШІ' внизу сторінки.");
       return;
     }
 
-    const modeLabels = selectedModes
-      .map((m) => MODES_OPTIONS.find((opt) => opt.id === m)?.label)
-      .join(", ");
-
     const userMsg = {
-      text: customPrompt ? `[Режими: ${modeLabels}] Зроби виклад цієї новини.` : textToSend,
+      text: textToSend,
       isBot: false,
     };
 
@@ -441,25 +534,38 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash",
-        tools: [{ googleSearch: {} }],
+        ...(googleSearchEnabled ? { tools: [{ googleSearch: {} }] } : {}),
       });
 
-      let systemInstructions = `Ти - ШІ-помічник. Твоє завдання зробити виклад новини та відповідати на питання щодо неї.\n`;
-      systemInstructions += `Скомбінуй у відповіді такі стилі: ${selectedModes.join(", ")}.\n`;
-
-      if (selectedModes.includes("коротко")) systemInstructions += "- Відповідай стисло, головна суть у 1-3 реченнях.\n";
-      if (selectedModes.includes("докладно")) systemInstructions += "- Надай розгорнуту інформацію з деталями та структурою.\n";
-      if (selectedModes.includes("науково")) systemInstructions += "- Використовуй академічний тон, аналітичний підхід та відповідну термінологію.\n";
-      if (selectedModes.includes("дружньо")) systemInstructions += "- Пиши приязно, неформально, додавай емодзі.\n";
-      if (selectedModes.includes("саркастично")) systemInstructions += "- Додай витончену іронію та сарказм (цензурно, без образ).\n";
-
-      const promptText = `${systemInstructions}\nНовина:\nЗаголовок: ${newsItem?.title || ""}\nОпис: ${newsItem?.description || ""}\nПосилання: ${newsItem?.link || ""}\n\nЗапит користувача: ${textToSend}`;
+      let webContext = "";
+      if (googleSearchEnabled) {
+        webContext = await fetchFreeWebSearch(`${newsItem?.title || ""} ${textToSend}`);
+      }
+      const suggestionCount = Number(suggestedQuestionsCount);
+      const suggestionsInstruction = suggestionCount
+        ? `Додай рівно ${suggestionCount} коротке(их) питання(нь) у блоці [РЕКОМЕНДОВАНІ_ПИТАННЯ].`
+        : "Не додавай блок рекомендованих питань.";
+      const systemInstructions = `Ти - ШІ-помічник для аналізу новини.\n${getResponseLengthInstruction(responseLength)}\n${getResponseStyleInstruction(responseStyle)}\n${suggestionsInstruction}`;
+      const promptText = `${systemInstructions}\nНовина:\nЗаголовок: ${newsItem?.title || ""}\nОпис: ${newsItem?.description || ""}\nПосилання: ${newsItem?.link || ""}\n${webContext}\nЗапит користувача: ${textToSend}`;
 
       const result = await model.generateContent(promptText);
-      const botResponse = result.response.text();
+      const response = await result.response;
+      const botResponse = response.text();
+      const usage = response.usageMetadata;
 
-      const botMsg = { text: botResponse, isBot: true };
+      const botMsg = {
+        text: botResponse,
+        isBot: true,
+        usage: usage
+          ? {
+              promptTokens: usage.promptTokenCount || 0,
+              responseTokens: usage.candidatesTokenCount || 0,
+              totalTokens: usage.totalTokenCount || 0,
+            }
+          : null,
+      };
       saveHistory([...newMsgs, botMsg]);
+      setCooldown(Number(suggestedQuestionsCount) === 0 ? 5 : Number(suggestedQuestionsCount) === 1 ? 10 : 15);
     } catch (error) {
       console.error(error);
       const botMsg = {
@@ -472,19 +578,7 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
     }
   };
 
-  const triggerSummary = () => {
-    setIsDropdownOpen(false);
-    handleSend("Будь ласка, зроби виклад цієї новини відповідно до обраних режимів.");
-  };
-
   if (!isOpen) return null;
-
-  const currentSelectionText =
-    selectedModes.length === 0
-      ? "Оберіть режим..."
-      : selectedModes
-          .map((m) => MODES_OPTIONS.find((opt) => opt.id === m)?.label)
-          .join(", ");
 
   // Рендеримо модальне вікно безпосередньо в document.body
   return createPortal(
@@ -492,8 +586,7 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
       <ModalContent $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
         <Header $isDarkMode={isDarkMode}>
           <TitleGroup>
-            <span>✨</span>
-            <h3>ШІ Виклад Новини</h3>
+            <h3>ШІ Виклад новини</h3>
           </TitleGroup>
           <CloseBtn $isDarkMode={isDarkMode} onClick={onClose} title="Закрити">
             ✕
@@ -501,58 +594,95 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
         </Header>
 
         <ControlsBar $isDarkMode={isDarkMode}>
-          <DropdownWrapper ref={dropdownRef}>
-            <DropdownTrigger
-              $isDarkMode={isDarkMode}
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            >
-              <span>{currentSelectionText}</span>
-              <span style={{ fontSize: "10px", opacity: 0.6 }}>
-                {isDropdownOpen ? "▲" : "▼"}
-              </span>
-            </DropdownTrigger>
-
-            {isDropdownOpen && (
-              <DropdownMenu $isDarkMode={isDarkMode}>
-                {MODES_OPTIONS.map((opt) => {
-                  const isChecked = selectedModes.includes(opt.id);
-                  return (
-                    <CheckboxItem key={opt.id} $isDarkMode={isDarkMode}>
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleMode(opt.id)}
-                      />
-                      <CustomCheckbox $checked={isChecked} $isDarkMode={isDarkMode} />
-                      {opt.label}
-                    </CheckboxItem>
-                  );
-                })}
-              </DropdownMenu>
-            )}
-          </DropdownWrapper>
-
-          <GenerateActionBtn onClick={triggerSummary} disabled={loading}>
-            Згенерувати виклад
-          </GenerateActionBtn>
+          <QuickSettings>
+            <QuickGroup>
+              Обсяг:
+              <QuickSelect $isDarkMode={isDarkMode} value={responseLength} onChange={(e) => setResponseLength(e.target.value)}>
+                <option value="concise">Менше</option>
+                <option value="normal">Нормально</option>
+                <option value="detailed">Більше</option>
+              </QuickSelect>
+            </QuickGroup>
+            <QuickGroup>
+              Стиль:
+              <QuickSelect $isDarkMode={isDarkMode} value={responseStyle} onChange={(e) => setResponseStyle(e.target.value)}>
+                <option value="friendly">Дружньо</option>
+                <option value="standard">Стандартно</option>
+                <option value="scientific">Науково</option>
+              </QuickSelect>
+            </QuickGroup>
+            <QuickGroup>
+              Пропозиції:
+              <QuickSelect
+                $isDarkMode={isDarkMode}
+                value={suggestedQuestionsCount}
+                onChange={async (e) => {
+                  setSuggestedQuestionsCount(e.target.value);
+                  await localforage.setItem("gemini_suggested_questions_count", e.target.value);
+                }}
+              >
+                <option value="0">0 (5 с)</option>
+                <option value="1">1 (10 с)</option>
+                <option value="2">2 (15 с)</option>
+              </QuickSelect>
+            </QuickGroup>
+            <QuickGroup>
+              <input
+                type="checkbox"
+                checked={googleSearchEnabled}
+                onChange={async (e) => {
+                  setGoogleSearchEnabled(e.target.checked);
+                  await localforage.setItem("gemini_google_search_enabled", e.target.checked);
+                }}
+              />
+              Інтернет-пошук
+            </QuickGroup>
+          </QuickSettings>
         </ControlsBar>
 
         <Body $isDarkMode={isDarkMode}>
           {messages.length === 0 && !loading ? (
             <EmptyState $isDarkMode={isDarkMode}>
-              <span>🤖</span>
-              Оберіть бажані стилі у випадаючому списку вище та натисніть <b>"Згенерувати виклад"</b>, або поставте власне питання нижче!
+              <AnimatedCursor interval={250} />
+              <div style={{ marginTop: "-160px", color: isDarkMode ? "#ffffff" : "#080808",}}>
+                Задайте питання про новину або оберіть питання:
+              </div>
+              <SuggestedQuestions>
+                {starterQuestions.map(({ icon, text }) => (
+                    <SuggestedQuestion key={text} onClick={() => handleSend(text)}>
+                      {icon}
+                      {text}
+                    </SuggestedQuestion>
+                ))}
+              </SuggestedQuestions>
             </EmptyState>
           ) : (
             <ChatHistory>
-              {messages.map((m, i) => (
-                <Message key={i} $isBot={m.isBot} $isDarkMode={isDarkMode}>
-                  <ReactMarkdown>{m.text}</ReactMarkdown>
-                </Message>
-              ))}
+              {messages.map((m, i) => {
+                const parsed = m.isBot ? parseSuggestedQuestions(m.text) : { cleanText: m.text, questions: [] };
+                return (
+                  <Message key={i} $isBot={m.isBot} $isDarkMode={isDarkMode}>
+                    <ReactMarkdown>{parsed.cleanText}</ReactMarkdown>
+                    {m.usage?.totalTokens > 0 && (
+                      <MessageMeta $isDarkMode={isDarkMode}>
+                        Витрачено токенів: {m.usage.totalTokens}
+                      </MessageMeta>
+                    )}
+                    {parsed.questions.length > 0 && (
+                      <SuggestedQuestions>
+                        {parsed.questions.map((question) => (
+                          <SuggestedQuestion key={question} onClick={() => handleSend(question)}>
+                            {question}
+                          </SuggestedQuestion>
+                        ))}
+                      </SuggestedQuestions>
+                    )}
+                  </Message>
+                );
+              })}
               {loading && (
                 <Message $isBot={true} $isDarkMode={isDarkMode}>
-                  Аналізую та генерую відповідь... 🧠
+                  Аналізую та генерую відповідь...
                 </Message>
               )}
               <div ref={chatEndRef} />
@@ -561,17 +691,46 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
         </Body>
 
         <InputArea $isDarkMode={isDarkMode}>
-          <Input
-            $isDarkMode={isDarkMode}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Задайте питання щодо цієї новини..."
-            disabled={loading}
-          />
-          <SendBtn onClick={() => handleSend()} disabled={loading || !input.trim()}>
-            ➔
-          </SendBtn>
+          <InputShell>
+            <Input
+              $isDarkMode={isDarkMode}
+              value={input}
+              maxLength={MAX_MESSAGE_LENGTH}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder="Задавайте питання..."
+              disabled={loading || cooldownSeconds > 0}
+            />
+            <InputMeta $isDarkMode={isDarkMode}>
+              {input.length}/{MAX_MESSAGE_LENGTH}
+              {cooldownSeconds > 0 && ` Перезарядка: ${cooldownSeconds} с`}
+            </InputMeta>
+            <InputActions>
+              <InputIconButton
+                type="button"
+                onClick={handleVoiceInput}
+                title={isListening ? "Зупинити голосовий ввід" : "Голосовий ввід"}
+              >
+                {isListening ? <span aria-hidden="true">■</span> : <FaMicrophoneAlt />}
+              </InputIconButton>
+              <InputIconButton
+                type="button"
+                onClick={handleClearChat}
+                title="Очистити чат"
+              >
+                <RiDeleteBack2Fill />
+              </InputIconButton>
+              <InputIconButton
+                type="button"
+                $primary
+                onClick={() => handleSend()}
+                disabled={loading || cooldownSeconds > 0 || !input.trim()}
+                title={cooldownSeconds > 0 ? `Перезарядка: ${cooldownSeconds} с` : "Надіслати"}
+              >
+                <FiSend />
+              </InputIconButton>
+            </InputActions>
+          </InputShell>
         </InputArea>
       </ModalContent>
     </ModalOverlay>,

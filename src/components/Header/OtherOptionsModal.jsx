@@ -3,6 +3,11 @@ import styled, { keyframes } from "styled-components";
 import songAiKnowledge from "../MusicPhoto/songAiKnowledge.json";
 import { assetMap } from "../MusicPhoto/MusicPhoto.assets";
 import { TbMusicStar } from "react-icons/tb";
+import { TbAutomation } from "react-icons/tb";
+import { TbMenuOrder } from "react-icons/tb";
+import { IoTimer } from "react-icons/io5";
+import { AiFillSound } from "react-icons/ai";
+import { BsMenuButtonWideFill } from "react-icons/bs";
 import {
   BASE_BG_TRACKS,
   BG_CACHE_NAME,
@@ -53,7 +58,7 @@ const ModalContent = styled.div`
   border-radius: 12px;
   width: 95%;
   max-width: 1200px;
-  max-height: 90vh;
+  height: 90vh;
   overflow-y: auto;
   backdrop-filter: blur(16px);
   border: 2px solid #ffb36c;
@@ -134,17 +139,16 @@ const SectionContainer = styled.div`
   flex-direction: column;
 `;
 
-const SectionLabel = styled.label`
-  font-size: 12px;
-  color: #ffb36c;
-  font-weight: bold;
-  display: block;
-`;
-
+const Dov = styled.div`
+  gap: 8px;
+  display: flex;
+  align-items: center;
+  `;
 const OptionRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 86px;
   padding: 5px;
   background: ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)")};
   border-radius: 7px;
@@ -152,6 +156,8 @@ const OptionRow = styled.div`
     font-size: 13px;
     color: ${(props) => (props.$isDarkMode ? "rgb(255, 255, 255)" : "rgb(0, 0, 0)")};
   }
+    svg {
+    font-size: 28px;}
 `;
 
 const ScrollSection = styled.div`
@@ -1161,7 +1167,10 @@ const OtherOptionsModal = ({
 
           <Column>
             <OptionRow $isDarkMode={isDarkMode}>
+              <Dov>
+                <TbMusicStar />
               <label>Фонова музика сайту</label>
+              </Dov>
               <Switch
                 $active={bgMusicEnabled}
                 onClick={() => setBgMusicEnabled(!bgMusicEnabled)}
@@ -1169,7 +1178,10 @@ const OtherOptionsModal = ({
             </OptionRow>
 
             <OptionRow $isDarkMode={isDarkMode}>
-              <label>Режим відтворення</label>
+              <Dov>
+                <TbAutomation />
+                <label>Режим відтворення</label>
+              </Dov>
               <div style={{ display: "flex", gap: "5px" }}>
                 <ActionButton
                   $active={bgMusicMode === "loop"}
@@ -1185,7 +1197,10 @@ const OtherOptionsModal = ({
             </OptionRow>
 
             <OptionRow $isDarkMode={isDarkMode}>
-              <label>Випадковий порядок (Shuffle)</label>
+              <Dov>
+                <TbMenuOrder />
+                <label>Випадковий порядок (Shuffle)</label>
+              </Dov>
               <Switch
                 $active={bgMusicShuffle}
                 onClick={() => setBgMusicShuffle(!bgMusicShuffle)}
@@ -1193,7 +1208,10 @@ const OtherOptionsModal = ({
             </OptionRow>
 
             <OptionRow $isDarkMode={isDarkMode}>
-              <label>Гучність музики: {Math.round(bgMusicVolume * 100)}%</label>
+              <Dov>
+                <AiFillSound />
+                <label>Гучність музики: {Math.round(bgMusicVolume * 100)}%</label>
+              </Dov>
               <input
                 type="range"
                 min="0"
@@ -1210,7 +1228,10 @@ const OtherOptionsModal = ({
             </OptionRow>
 
             <OptionRow $isDarkMode={isDarkMode}>
-              <label>Гучність звуків кнопок: {Math.round(sfxVolume * 100)}%</label>
+              <Dov>
+                <BsMenuButtonWideFill />
+                <label>Гучність звуків кнопок: {Math.round(sfxVolume * 100)}%</label>
+              </Dov>
               <input
                 type="range"
                 min="0"
@@ -1240,7 +1261,10 @@ const OtherOptionsModal = ({
                   alignItems: "center",
                 }}
               >
-                <label>Позиція музики</label>
+                <Dov>
+                  <IoTimer />
+                  <label>Позиція музики</label>
+                </Dov>
                 <div
                   style={{
                     fontSize: "12px",
@@ -1277,7 +1301,8 @@ const OtherOptionsModal = ({
                   ⏮ Спочатку
                 </ActionButton>
               </div>
-            </OptionRow>
+           </OptionRow>
+            {/* 
             <OptionRow $isDarkMode={isDarkMode}>
               <label>Вимкнути фонову музику в плеєрі(додамо скоро)</label>
               <Switch
@@ -1291,7 +1316,7 @@ const OtherOptionsModal = ({
                 $active={lockFiltersInFs}
                 onClick={() => setLockFiltersInFs(!lockFiltersInFs)}
               />
-            </OptionRow>
+            </OptionRow> */}
           </Column>
         </ModalBody>
       </ModalContent>

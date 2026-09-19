@@ -108,6 +108,36 @@ export const fetchOpenMeteoWeather = async (query) => {
   }
 };
 
+const fetchNewsSearch = async (query) => {
+  const newsQuery = `${query} latest news`;
+  const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(newsQuery)}&hl=uk&gl=UA&ceid=UA:uk`;
+  const response = await fetch(
+    `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`,
+  );
+
+  if (!response.ok) return "";
+
+  const data = await response.json();
+  const items = (data.items || []).slice(0, 6);
+  if (items.length === 0) return "";
+
+  const newsLines = items.map((item, index) => {
+    const publishedAt = item.pubDate
+      ? new Date(item.pubDate).toLocaleString("uk-UA")
+      : "дата невідома";
+    const description = (item.description || "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 240);
+
+    return `${index + 1}. ${item.title}\nДата: ${publishedAt}\nОпис: ${description || "немає"}\nПосилання: ${item.link}`;
+  });
+
+  return `[Джерело: Google News RSS — актуальні результати пошуку]
+${newsLines.join("\n\n")}`;
+};
+
 /**
  * Безкоштовний веб-пошук без використання кредитів Gemini та без помилок 429.
  * Використовує Open-Meteo API, DuckDuckGo Instant Answers та Wikipedia API.
@@ -116,18 +146,31 @@ export const fetchFreeWebSearch = async (query) => {
   if (!query || !query.trim()) return "";
 
   const results = [];
+  const isNewsQuery = /новин|новини|news|поді[їй]|сві[тт]|world|останн|актуальн/i.test(query);
 
   // 1. Погода (Open-Meteo) — пріоритет для погодних запитів
-  try {
-    const weatherData = await fetchOpenMeteoWeather(query);
-    if (weatherData) {
-      results.push(weatherData);
+  if (!isNewsQuery || /київ|києві|львів|одес|харків|дніпр|запоріж|міст[оі]|city/i.test(query)) {
+    try {
+      const weatherData = await fetchOpenMeteoWeather(query);
+      if (weatherData) {
+        results.push(weatherData);
+      }
+    } catch (err) {
+      console.warn("Weather search error:", err);
     }
-  } catch (err) {
-    console.warn("Weather search error:", err);
   }
 
-  // 2. DuckDuckGo Instant Answer
+  // 2. Google News RSS — актуальні заголовки та посилання без Gemini-квоти
+  if (isNewsQuery) {
+    try {
+      const newsData = await fetchNewsSearch(query);
+      if (newsData) results.push(newsData);
+    } catch (err) {
+      console.warn("News search error:", err);
+    }
+  }
+
+  // 3. DuckDuckGo Instant Answer
   try {
     const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
     const ddgRes = await fetch(ddgUrl);
@@ -148,7 +191,7 @@ export const fetchFreeWebSearch = async (query) => {
     console.warn("DuckDuckGo search error:", err);
   }
 
-  // 3. Wikipedia Search (Українська Вікіпедія)
+  // 4. Wikipedia Search (Українська Вікіпедія)
   try {
     const wikiUrl = buildWikipediaSearchUrl(query);
     const wikiRes = await fetch(wikiUrl);
