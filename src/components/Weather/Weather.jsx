@@ -1135,11 +1135,10 @@ const WeatherCardComponent = ({
         flexShrink: 0,
       }}
     >
-      <Tooltip content="Точка роси (температура, при якій утворюється роса)" isDarkMode={isDarkMode}>
+      <Tooltip content={fullscreenChart === chartKey ? "Вийти з повного екрана" : "На весь екран"} isDarkMode={isDarkMode}>
       <button
         type="button"
         onClick={() => toggleChartFullscreen(chartKey, panelRef)}
-        title={fullscreenChart === chartKey ? "Вийти з повного екрана" : "На весь екран"}
         aria-label={fullscreenChart === chartKey ? "Вийти з повного екрана" : "На весь екран"}
         style={chartActionButtonStyle}
       >
@@ -1156,7 +1155,7 @@ const WeatherCardComponent = ({
         <BiDownload size={16} />
       </button>
       </Tooltip>
-      <Tooltip content="Завантажити скріншот повноекранного графіка" isDarkMode={isDarkMode}>
+      <Tooltip content="Друкувати скріншот повноекранного графіка" isDarkMode={isDarkMode}>
       <button
         type="button"
         onClick={() => printChart(chartKey, panelRef)}
@@ -1180,12 +1179,12 @@ const WeatherCardComponent = ({
       }}
     >
       {items.map((item) => (
-       <Tooltip content={`Натисніть, щоб ${datasetOpacity[item.key] === 1 ? "сховати" : "показати"} ${item.label.toLowerCase()}`} isDarkMode={isDarkMode}>
+       <Tooltip content={`Натисніть, щоб ${datasetOpacity[item.key] === 1 ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`} isDarkMode={isDarkMode}>
         <button
           key={item.key}
           type="button"
           onClick={() => toggleDatasetVisibility(item.key)}
-          aria-label={`Натисніть, щоб ${datasetOpacity[item.key] === 1 ? "сховати" : "показати"}`}
+          aria-label={`Натисніть, щоб ${datasetOpacity[item.key] === 1 ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`}
           style={{
             display: "inline-flex",
             alignItems: "center",

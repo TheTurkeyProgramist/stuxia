@@ -90,13 +90,6 @@
     ]
   },
   {
-    "id": 3,
-    "image": "nonono",
-    "audio": "nononoAudio",
-    "author": "TheFatRat",
-    "text": "No No No"
-  },
-  {
     "id": 4,
     "image": "monody",
     "audio": "monodyAudio",
@@ -173,34 +166,6 @@
     "image": "dinofroztwo"
   },
   {
-    "id": 9,
-    "text": "Asium",
-    "author": "SayGames - MyLittleUniverse(Estoty)",
-    "audio": "harmonyAudio",
-    "image": "harmony"
-  },
-  {
-    "id": 10,
-    "text": "Factorium",
-    "author": "SayGames - MyLittleUniverse(Estoty)",
-    "audio": "mechaAudio",
-    "image": "mecha"
-  },
-  {
-    "id": 12,
-    "text": "Electrodynamix",
-    "author": "DJ-Nate",
-    "image": "electrodynamix",
-    "audio": "electrodynamixAudio"
-    },
-  {
-    "id": 14,
-    "author": "DJ-Nate",
-    "image": "clubstep",
-    "text": "Clubstep",
-    "audio": "clubstepAudio"
-  },
-  {
     "id": 16,
     "image": "theorytwo",
     "audio": "theorytwoAudio",
@@ -208,34 +173,6 @@
     "duration": 140,
     "text": "Theory of everything II",
     "images": ["theorytwo"]
-  },
-  {
-    "id": 17,
-    "image": "deadlocked",
-    "audio": "deadlockedAudio",
-    "text": "Deadlocked(F77)",
-    "author": "Geometry Dash",
-    "duration": 140,
-    "images": [
-      "deadlocked",
-      "swamptwo",
-      "swampthree",
-      "swampfour",
-      "swampfive",
-      "swampsix",
-      "swampseven",
-      "swampeight",
-      "swampnine",
-      "horror",
-      "horrortwo",
-      "horrorthree",
-      "horrorfour",
-      "horrorfive",
-      "horrorsix",
-      "horrorseven",
-      "horroreight"
-    ],
-    "Чому ми в пісню вставили розмову персонажів?": "Найближчим часом, у Стихії з'явиться сюжет."
   },
   {
     "id": 18,

@@ -396,8 +396,8 @@ const CarouselSideButton = styled.button`
     left: -10px;
     width: 44px;
     height: 40px;
-    border-top: 1.5px solid rgba(0, 255, 229, 0.6);
-    border-left: 1.5px solid rgba(0, 255, 229, 0.6);
+    border-top: 2px solid rgb(0, 255, 229);
+    border-left: 2px solid rgb(0, 255, 229);
     border-right: none;
     border-bottom: none;
     border-top-left-radius: 6px;

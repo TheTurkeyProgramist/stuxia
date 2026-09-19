@@ -1,12 +1,5 @@
 
-import dinofrozAudio from "../mp3/dinofroz.mp3";
-import monodyAudio from "../mp3/thefatrat-monody.mp3";
-import unityAudio from "../mp3/unity.mp3";
-
 export const BASE_BG_TRACKS = [
-  { id: 1, name: "Динофроз", file: dinofrozAudio, type: "base" },
-  { id: 126, name: "Monody", file: monodyAudio, type: "base" },
-  { id: 285, name: "Unity", file: unityAudio, type: "base" },
 ];
 
 export const BASE_BG_TRACK_FILE_SET = new Set(

@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSelector } from "react-redux";
-import localforage from "localforage";
 import styled, { keyframes, css } from "styled-components";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import songAiKnowledge from "../MusicPhoto/songAiKnowledge.json";
 import rawFaqData from "./faqData.json";
 import hills from "../../photos/hero-header/fog.webp";
 import texts from "../../photos/vip-modal/texts.webp";
@@ -16,7 +13,6 @@ import one from "../../photos/hero-header/my/myone.webp";
 import two from "../../photos/hero-header/my/mytwo.webp";
 import soon from "../../photos/hero-header/my/soon.webp";
 import might from "../../photos/hero-header/my/myone.webp";
-import { RiDeleteBack2Fill } from "react-icons/ri";
 import three from "../../photos/hero-header/my/mythree.webp";
 import {
   useFloating,
@@ -263,25 +259,6 @@ const ArrowContainer = styled.div`
   gap: 7px;
 `;
 
-const Arrow = styled.span`
-  font-size: 12px;
-  transition: transform 0.3s ease;
-  transform: ${(props) => (props.$isOpen ? "rotate(180deg)" : "rotate(90deg)")};
-`;
-
-const Answer = styled.div`
-  max-height: ${(props) => (props.$isOpen ? "6000px" : "0")};
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  padding-bottom: ${(props) => (props.$isOpen ? "5px" : "0")};
-  font-size: 14px;
-  line-height: 1.6;
-  font-weight: 600;
-  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#060606")};
-  opacity: ${(props) => (props.$isOpen ? "1" : "0")};
-  white-space: pre-line;
-`;
-
 const AnswerImage = styled.img`
   max-width: 100%;
   width: 100%;
@@ -327,19 +304,6 @@ const ActionButton = styled.button`
   }
 `;
 
-const ImageActionsContainer = styled.div`
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 10;
-  display: flex;
-  gap: 8px;
-  transition: all 0.3s ease-in-out;
-  opacity: ${(props) => (props.$isHovered || props.$isPinned ? 1 : 0)};
-  pointer-events: ${(props) =>
-    props.$isHovered || props.$isPinned ? "auto" : "none"};
-`;
-
 const AnswerActionButton = styled.button`
   background: #8a2be2;
   color: white;
@@ -352,6 +316,54 @@ const AnswerActionButton = styled.button`
   &:hover {
     background: #a25be2;
   }
+`;
+
+const FaqAnswerOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 9400;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.72);
+`;
+
+const FaqAnswerModal = styled.div`
+  position: relative;
+  width: min(900px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 14px;
+  color: #fff;
+  background-color: #17252b;
+  background-image: ${({ $backgroundImage }) =>
+    $backgroundImage
+      ? `linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.78)), url("${$backgroundImage}")`
+      : "linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.6))"};
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+`;
+
+const FaqAnswerTitle = styled.h2`
+  margin: 0 42px 18px 0;
+  font-size: 22px;
+`;
+
+const FaqAnswerText = styled.div`
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: pre-line;
+`;
+
+const FaqAnswerActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
 `;
 
 const ImagePreviewOverlay = styled.div`
@@ -374,30 +386,6 @@ const PreviewImage = styled.img`
   cursor: zoom-out;
 `;
 
-const AnswerContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  position: relative;
-`;
-
-const AcceptBtn = styled.button`
-  padding: 3px;
-  color: white;
-  border: none;
-  background: rgb(11, 113, 138);
-  color: #fbfbfb;
-  border: none;
-  width: 35px;
-  border: 2px solid rgba(1, 248, 38, 0.7);
-  height: 34px;
-  border-bottom-right-radius: 25px;
-  cursor: pointer;
-  font-weight: 600;
-  box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
-  transition: transform 0.2s;
-  ${animatedStyle}
-`;
-
 const SearchInput = styled.input`
   width: 100%;
   padding: 5px 10px;
@@ -415,90 +403,6 @@ const SearchInput = styled.input`
   }
 `;
 
-const ChatWrapper = styled.div`
-  margin-bottom: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 450px;
-  overflow-y: auto;
-  padding: 5px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 15px;
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-`;
-
-const Message = styled.div`
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 13px;
-  max-width: 85%;
-  position: relative;
-  ${(props) =>
-    props.$isUser
-      ? css`
-          background: #8a2be2;
-          color: white;
-          align-self: flex-end;
-        `
-      : css`
-          background: white;
-          color: #333;
-          align-self: flex-start;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        `}
-`;
-
-const EditBtn = styled.button`
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 10px;
-  cursor: pointer;
-  margin-top: 4px;
-  text-decoration: underline;
-`;
-
-const InputRow = styled.div`
-  display: flex;
-`;
-
-const StopBtn = styled.button`
-  background: #6d1a1a;
-  color: white;
-  border: none;
-  width: 35px;
-  height: 35px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  color: white;
-    border: 2px solid rgba(1, 248, 38, 0.7);
-  height: 34px;
-  border-bottom-right-radius: 25px;
-  align-items: center;
-  justify-content: center;
-`;
-
-const ClearBtn = styled.button`
-  background: rgb(134, 60, 60);
-  color: #fbfbfb;
-  border: none;
-  width: 35px;
-  border: 2px solid rgba(1, 248, 38, 0.7);
-  height: 34.5px;
-  cursor: pointer;
-  font-size: 19px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-  &:hover {
-    background: rgba(0, 0, 0, 0.2);
-  }
-`;
 export const Tooltip = ({
   content,
   children,
@@ -584,94 +488,23 @@ const { refs, floatingStyles, context } = useFloating({
 const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
   const [isClosing, setIsClosing] = useState(false);
   const customDays = useSelector((state) => state.calendar?.customDays || []);
-  const [activeIndexes, setActiveIndexes] = useState([]);
+  const [selectedFaq, setSelectedFaq] = useState(null);
   const [ratings, setRatings] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("faq");
   const LIKE = 1;
   const DISLIKE = -1;
 
-  // Load pinned state
-  useEffect(() => {
-    const loadPinnedState = async () => {
-      try {
-        const saved = await localforage.getItem("training_actions_pinned");
-        if (saved !== null) setIsActionsPinned(saved);
-      } catch (e) {
-        console.error("Error loading pinned state:", e);
-      }
-    };
-    loadPinnedState();
-  }, []);
-
-  // AI Logic
-  const [chatHistory, setChatHistory] = useState([]);
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [geminiKey, setGeminiKey] = useState("");
-  const abortControllerRef = useRef(null);
-  const scrollRef = useRef(null);
-
-  useEffect(() => {
-    const initAi = async () => {
-      const savedKey = await localforage.getItem("gemini_api_key");
-      const savedHistory = await localforage.getItem("user_help_session");
-      if (savedKey) setGeminiKey(savedKey);
-      if (savedHistory) setChatHistory(savedHistory);
-      else
-        setChatHistory([
-          {
-            text: "Привіт! Я твій асистент 'Стихії'. Запитай мене про погоду, пісні або правила сайту.",
-            isBot: true,
-          },
-        ]);
-    };
-    initAi();
-  }, []);
-
-  useEffect(() => {
-    if (scrollRef.current)
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [chatHistory, isAiLoading]);
-
-  const saveSession = async (history) => {
-    await localforage.setItem("user_help_session", history.slice(-15));
-  };
-
-  const [hoveredImage, setHoveredImage] = useState(null);
-  const [isActionsPinned, setIsActionsPinned] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
 
-  const handleStopGeneration = () => {
-    if (abortControllerRef.current) abortControllerRef.current.abort();
-    setIsAiLoading(false);
-  };
-
-  const handleClearHistory = async () => {
-    if (window.confirm("Очистити історію чату з асистентом?")) {
-      const resetMsg = [
-        {
-          text: "Привіт! Я твій асистент 'Стихії'. Запитай мене про погоду, пісні або правила сайту.",
-          isBot: true,
-        },
-      ];
-      setChatHistory(resetMsg);
-      await localforage.removeItem("user_help_session");
-    }
-  };
-
-  // Save pinned state
-  const togglePin = async (e) => {
-    e.stopPropagation();
-    const newState = !isActionsPinned;
-    setIsActionsPinned(newState);
-    await localforage.setItem("training_actions_pinned", newState);
-  };
-
   const handleClose = useCallback(() => {
-    // Modified to handle previewImage first
     if (previewImage) {
       setPreviewImage(null);
-      return; // Don't close the main modal if only preview was closed
+      return;
+    }
+    if (selectedFaq) {
+      setSelectedFaq(null);
+      return;
     }
     setPreviewImage(null);
     setIsClosing(true);
@@ -679,7 +512,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
       setIsClosing(false);
       onClose();
     }, 400);
-  }, [onClose, previewImage]);
+  }, [onClose, previewImage, selectedFaq]);
 
   const handleDownloadImage = (imgSrc) => {
     const a = document.createElement("a");
@@ -712,12 +545,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
     const currentRating = ratings[index] || 0;
     const newRating = currentRating === points ? 0 : points;
     setRatings({ ...ratings, [index]: newRating });
-  };
-
-  const toggleAccordion = (index) => {
-    setActiveIndexes((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index],
-    );
   };
 
   const pastEvents = React.useMemo(() => {
@@ -761,153 +588,26 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
   }, [pastEvents]);
   useEffect(() => {
     if (!isOpen) {
-      setActiveIndexes([]);
+      setSelectedFaq(null);
       return;
     }
 
-    const newActiveIndexes = [];
+    let faqToOpen = null;
 
     if (initialFaqQuestion) {
       const matchingIndex = faqData.findIndex(
         (item) => item.q === initialFaqQuestion,
       );
       if (matchingIndex >= 0) {
-        newActiveIndexes.push(matchingIndex);
+        faqToOpen = faqData[matchingIndex];
         setActiveTab("faq");
       }
     }
 
-    const latestUpdateIndex = faqData.findIndex(
-      (item) => item.q === "Останнє оновлення",
-    );
-
-    if (
-      latestUpdateIndex >= 0 &&
-      !newActiveIndexes.includes(latestUpdateIndex)
-    ) {
-      newActiveIndexes.push(latestUpdateIndex);
-      setActiveTab("faq");
-    }
-
-    setActiveIndexes(newActiveIndexes);
+    setSelectedFaq(faqToOpen);
   }, [faqData, initialFaqQuestion, isOpen]);
 
   if (!isOpen && !isClosing) return null;
-
-  const handleAskAi = async () => {
-    if (!searchQuery.trim() || isAiLoading) return;
-
-    if (!geminiKey) {
-      alert(
-        "Будь ласка, встановіть API-ключ Gemini у налаштуваннях ШІ для використання цієї функції.",
-      );
-      return;
-    }
-
-    const userText = searchQuery;
-    setSearchQuery("");
-    const newHistory = [...chatHistory, { text: userText, isBot: false }];
-    setChatHistory(newHistory);
-    setIsAiLoading(true);
-
-    try {
-      const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        tools: [{ googleSearch: {} }],
-      });
-
-      // Формуємо контекст з FAQ та бази пісень
-      const faqContext = faqData.map((f) => `Q: ${f.q} A: ${f.a}`).join("\n");
-      const songsContext = songAiKnowledge
-        .map((s) => {
-          const dur = s.duration
-            ? `${Math.floor(s.duration / 60)}:${(s.duration % 60).toString().padStart(2, "0")}`
-            : "невідомо";
-          const lyricsSum =
-            s.lyrics && Array.isArray(s.lyrics)
-              ? s.lyrics
-                  .map((l) => `${l.time}s:${l.text}`)
-                  .join("|")
-                  .substring(0, 100)
-              : "no";
-          const filtersSum =
-            s.filters && Array.isArray(s.filters)
-              ? s.filters.map((f) => `${f.start}-${f.end}s:${f.type}`).join("|")
-              : "no";
-
-          let base = `Song: ${s.author}, Category: ${s.category}, Duration: ${dur}, Lyrics: ${lyricsSum}..., Filters: ${filtersSum}, Info: ${s.text}`;
-
-          if (s.schedule) {
-            const sched = s.schedule
-              .map((e) => `S${e.season}E${e.ep}: ${e.title} (${e.date})`)
-              .join("; ");
-            base += `. Schedule: ${sched}`;
-          }
-          return base;
-        })
-        .join("\n");
-
-      const prompt = `Ти асистент проекту "Стихія". Тобі доступні дві бази даних:
-      1. База FAQ: містить правила сайту та інструкції щодо розділу Погода. 
-      2. База пісень: містить повний список треків (${songAiKnowledge.length} шт), авторів, тексти пісень.
-
-      ІНСТРУКЦІЯ:
-      - Якщо запит стосується температури, вітру, УФ-індексу або роботи розділу погоди — шукай у базі FAQ.
-      - Якщо запит стосується конкретної пісні, її тривалості, тексту — шукай у Базі пісень.
-      - Відповідай коротко, професійно та виключно українською мовою.
-
-      КОНТЕКСТ FAQ: ${faqContext.substring(0, 2000)}
-      КОНТЕКСТ ПІСЕНЬ: ${songsContext.substring(0, 15000)}
-
-      ЗАПИТ КОРИСТУВАЧА: ${userText}`;
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const botText = response.text();
-
-      const finalHistory = [...newHistory, { text: botText, isBot: true }];
-      setChatHistory(finalHistory);
-      await saveSession(finalHistory);
-    } catch (e) {
-      if (e.name !== "AbortError") {
-        const errHistory = [
-          ...newHistory,
-          {
-            text: "Помилка зв'язку з інтелектом. Перевірте ключ.",
-            isBot: true,
-          },
-        ];
-        setChatHistory(errHistory);
-      }
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
-  const handleEditMessage = (index) => {
-    setSearchQuery(chatHistory[index].text);
-  };
-
-  const renderTextWithLinks = (text) => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.split(urlRegex).map((part, index) => {
-      if (part.match(urlRegex)) {
-        return (
-          <a
-            key={index}
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: "inherit", textDecoration: "underline" }}
-          >
-            {part}
-          </a>
-        );
-      }
-      return part;
-    });
-  };
 
   const renderAnswerBlocks = (item) => {
     if (
@@ -923,45 +623,13 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
           return (
             <div
               key={`image-${index}`}
-              style={{ position: "relative", marginBottom: "10px" }}
+              style={{ marginBottom: "10px" }}
             >
               <AnswerImage
                 src={imgSrc}
                 alt={altText}
-                $isHovered={hoveredImage === imgSrc}
-                $isPinned={isActionsPinned}
                 onClick={() => setPreviewImage(imgSrc)}
-                onMouseEnter={() => setHoveredImage(imgSrc)}
-                onMouseLeave={() => setHoveredImage(null)}
               />
-              <ImageActionsContainer
-                $isHovered={hoveredImage === imgSrc}
-                $isPinned={isActionsPinned}
-                onMouseEnter={() => setHoveredImage(imgSrc)}
-                onMouseLeave={() => setHoveredImage(null)}
-              >
-                <AnswerActionButton
-                  onClick={togglePin}
-                >
-                  {isActionsPinned ? "Відкріпити зображення" : "Закріпити зображення"}
-                </AnswerActionButton>
-                <AnswerActionButton
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownloadImage(imgSrc);
-                  }}
-                >
-                   Скачати
-                </AnswerActionButton>
-                <AnswerActionButton
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePrintImage(imgSrc);
-                  }}
-                >
-                   Друкувати
-                </AnswerActionButton>
-              </ImageActionsContainer>
             </div>
           );
         }
@@ -983,45 +651,11 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
     }
 
     return (
-      <>
-        {item.image && (
-          <>
-            <ImageActionsContainer
-              $isHovered={hoveredImage === item.image}
-              $isPinned={isActionsPinned}
-              onMouseEnter={() => setHoveredImage(item.image)}
-              onMouseLeave={() => setHoveredImage(null)}
-            >
-              <AnswerActionButton
-                onClick={togglePin}
-              >
-                {isActionsPinned ? "Відкріпити зображення" : "Прикріпити зображення"}
-              </AnswerActionButton>
-              <AnswerActionButton
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownloadImage(item.image);
-                }}
-              >
-                Скачати
-              </AnswerActionButton>
-              <AnswerActionButton
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePrintImage(item.image);
-                }}
-              >
-                Друкувати
-              </AnswerActionButton>
-            </ImageActionsContainer>
-          </>
-        )}
-        <div
-          dangerouslySetInnerHTML={{
-            __html: (item.a || "").replace(/\n/g, "<br/>"),
-          }}
-        />
-      </>
+      <div
+        dangerouslySetInnerHTML={{
+          __html: (item.a || "").replace(/\n/g, "<br/>"),
+        }}
+      />
     );
   };
 
@@ -1080,7 +714,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
             </TabButton>
             <TabButton
               $active={activeTab === "ai"}
-              onClick={() => setActiveTab("ai")}
               style={{
                 borderBottomRightRadius: "20px",
                 borderTopRightRadius: "20px",
@@ -1091,50 +724,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
           </TabsContainer>
         </Conten>
         <ScrollArea>
-          {activeTab === "ai" && (
-            <div>
-              <ChatWrapper ref={scrollRef}>
-                {chatHistory.map((m, i) => (
-                  <Message key={i} $isUser={!m.isBot}>
-                    {renderTextWithLinks(m.text)}
-                    {!m.isBot &&
-                      i === chatHistory.length - 1 &&
-                      !isAiLoading && (
-                        <EditBtn onClick={() => handleEditMessage(i)}>
-                          редагувати
-                        </EditBtn>
-                      )}
-                  </Message>
-                ))}
-                {isAiLoading && <Message $isUser={false}>Думаю...</Message>}
-              </ChatWrapper>
-              <InputRow>
-                <SearchInput
-                  type="text"
-                  placeholder="Запитай ШІ або шукай у FAQ..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAskAi()}
-                />
-            <Tooltip content="Очистити чат" isDarkMode={isDarkMode}>
-                <ClearBtn onClick={handleClearHistory} aria-label="Очистити чат">
-                  <RiDeleteBack2Fill />
-                </ClearBtn>
-                </Tooltip>
-                {isAiLoading ? (
-                    <Tooltip content="Зупинити запит" isDarkMode={isDarkMode}>
-                  <StopBtn onClick={handleStopGeneration} aria-label="Зупинити запит">
-                    ◼
-                  </StopBtn>
-                  </Tooltip>
-                ) : (
-                    <Tooltip content="Відправити" isDarkMode={isDarkMode}>
-                  <AcceptBtn aria-label="Відправити" onClick={handleAskAi}>➤</AcceptBtn>
-                  </Tooltip>
-                )}
-              </InputRow>
-            </div>
-          )}
           {activeTab === "faq" && (
             <>
               <SearchInput
@@ -1157,7 +746,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                   <AccordionItem key={originalIndex} $index={displayIndex + 1}>
                     <Question $isDarkMode={isDarkMode}
                       $rating={rating}
-                      onClick={() => toggleAccordion(originalIndex)}
+                      onClick={() => setSelectedFaq(item)}
                     >
                       <QuestionContent>
                         <QuestionText>{item.q}</QuestionText>
@@ -1188,60 +777,9 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                             )}
                           </LikeButton>
                           </Tooltip>
-                          <Arrow
-                            $isOpen={activeIndexes.includes(originalIndex)}
-                          >
-                            ▼
-                          </Arrow>
                         </ArrowContainer>
                       </QuestionContent>
                     </Question>
-                    <Answer  $isDarkMode={isDarkMode} $isOpen={activeIndexes.includes(originalIndex)}>
-                      <AnswerContent>
-                        {item.image && (
-                          <>
-                            <AnswerImage
-                              src={item.image}
-                              alt={item.q}
-                              $isHovered={hoveredImage === item.image}
-                              $isPinned={isActionsPinned}
-                              onClick={() => setPreviewImage(item.image)}
-                              onMouseEnter={() => setHoveredImage(item.image)}
-                              onMouseLeave={() => setHoveredImage(null)}
-                            />
-                            <ImageActionsContainer
-                              $isHovered={hoveredImage === item.image}
-                              $isPinned={isActionsPinned}
-                              onMouseEnter={() => setHoveredImage(item.image)}
-                              onMouseLeave={() => setHoveredImage(null)}
-                            >
-                              <AnswerActionButton
-                                onClick={togglePin}
-                              >
-                                {isActionsPinned ? "Відкрипити зображення" : "Закріпити зображення"}
-                              </AnswerActionButton>
-                              <AnswerActionButton
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDownloadImage(item.image);
-                                }}
-                              >
-                                Скачати
-                              </AnswerActionButton>
-                              <AnswerActionButton
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePrintImage(item.image);
-                                }}
-                              >
-                                Друкувати
-                              </AnswerActionButton>
-                            </ImageActionsContainer>
-                          </>
-                        )}
-                        {renderAnswerBlocks(item)}
-                      </AnswerContent>
-                    </Answer>
                   </AccordionItem>
                 );
                 })}
@@ -1250,6 +788,34 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
           )}
         </ScrollArea>
       </Content>
+      {selectedFaq && (
+        <FaqAnswerOverlay onClick={() => setSelectedFaq(null)}>
+          <FaqAnswerModal
+            $backgroundImage={selectedFaq.image}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <PreviewCloseBtn onClick={() => setSelectedFaq(null)}>
+              &times;
+            </PreviewCloseBtn>
+            <FaqAnswerTitle>{selectedFaq.q}</FaqAnswerTitle>
+            <FaqAnswerText>{renderAnswerBlocks(selectedFaq)}</FaqAnswerText>
+            {selectedFaq.image && (
+              <FaqAnswerActions>
+                <AnswerActionButton
+                  onClick={() => handleDownloadImage(selectedFaq.image)}
+                >
+                  Скачати
+                </AnswerActionButton>
+                <AnswerActionButton
+                  onClick={() => handlePrintImage(selectedFaq.image)}
+                >
+                  Друкувати
+                </AnswerActionButton>
+              </FaqAnswerActions>
+            )}
+          </FaqAnswerModal>
+        </FaqAnswerOverlay>
+      )}
       {previewImage && (
         <ImagePreviewOverlay onClick={() => setPreviewImage(null)}>
           <PreviewCloseBtn onClick={() => setPreviewImage(null)}>
