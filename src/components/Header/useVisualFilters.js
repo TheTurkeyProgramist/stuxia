@@ -6,7 +6,7 @@ export const FILTERS = [
   { id: "grayscale", label: "Дальтонізм" },
   { id: "sepia", label: "Сепія" },
   { id: "invert", label: "Негатив" },
-  { id: "matrix", label: "Матриця" },
+  { id: "matrix", label: "Пікселізація" },
   { id: "uv", label: "УФ-Лампа" },
   { id: "contrast", label: "Контраст" },
   { id: "saturate", label: "Насиченість" },
@@ -62,6 +62,51 @@ if (typeof document !== "undefined") {
   `;
   if (!document.getElementById(style.id)) {
     document.head.appendChild(style);
+  }
+
+  const pixelFilterSvg = document.getElementById("visual-filters-pixelate");
+  if (!pixelFilterSvg) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("width", "0");
+    svg.setAttribute("height", "0");
+    svg.style.position = "absolute";
+    svg.style.width = "0";
+    svg.style.height = "0";
+    svg.style.overflow = "hidden";
+    svg.style.pointerEvents = "none";
+
+    const filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+    filter.setAttribute("id", "visual-filters-pixelate");
+    filter.setAttribute("x", "0");
+    filter.setAttribute("y", "0");
+    filter.setAttribute("width", "100%");
+    filter.setAttribute("height", "100%");
+
+    const flood = document.createElementNS("http://www.w3.org/2000/svg", "feFlood");
+    flood.setAttribute("x", "0");
+    flood.setAttribute("y", "0");
+    flood.setAttribute("height", "1");
+    flood.setAttribute("width", "1");
+
+    const composite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
+    composite.setAttribute("width", "2");
+    composite.setAttribute("height", "2");
+
+    const tile = document.createElementNS("http://www.w3.org/2000/svg", "feTile");
+    tile.setAttribute("result", "tiles");
+
+    const sourceComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
+    sourceComposite.setAttribute("in", "SourceGraphic");
+    sourceComposite.setAttribute("in2", "tiles");
+    sourceComposite.setAttribute("operator", "in");
+
+    filter.appendChild(flood);
+    filter.appendChild(composite);
+    filter.appendChild(tile);
+    filter.appendChild(sourceComposite);
+    svg.appendChild(filter);
+    document.body.appendChild(svg);
   }
 }
 
@@ -121,7 +166,20 @@ export const applyFilterEffect = (config) => {
       filters += ` contrast(${boost * 100}%) saturate(${boost * 100}%)`;
     }
   } else if (filterType === "matrix") {
-    filters += ` hue-rotate(180deg) grayscale(${filterIntensity}%)`;
+    const pixelSize = Math.max(2, Math.round(10 - filterIntensity / 12));
+    const filterSvg = document.getElementById("visual-filters-pixelate");
+    if (filterSvg) {
+      const svgFilter = filterSvg.querySelector("filter");
+      if (svgFilter) {
+        const block = svgFilter.querySelector("feComposite");
+        if (block) {
+          block.setAttribute("width", String(pixelSize));
+          block.setAttribute("height", String(pixelSize));
+        }
+      }
+    }
+
+    filters += ` brightness(${brightness}%) url(#visual-filters-pixelate) contrast(${110 + filterIntensity * 0.7}%) saturate(${100 + filterIntensity * 0.8}%)`;
   } else if (filterType === "uv") {
     filters += ` hue-rotate(280deg) saturate(${100 + filterIntensity}%)`;
   } else if (filterType === "contrast") {

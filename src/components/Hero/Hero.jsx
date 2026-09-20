@@ -1513,81 +1513,96 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgb(0, 0, 0);
+  background: rgba(4, 6, 14, 0.85);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(12px);
   animation: ${(props) => (props.$isClosing ? fadeOut : fadeIn)} 0.3s ease-out
     forwards;
 `;
 
 const ModalContent = styled.div`
-  background: #000;
-  padding: 3px;
-  border-radius: 5px;
+  background: linear-gradient(145deg, rgba(16, 20, 32, 0.97) 0%, rgba(8, 10, 18, 0.98) 100%);
+  padding: 20px;
+  border-radius: 18px;
   width: 95%;
-  max-width: 1200px;
-  position: reletive;
-  max-height: 90vh;
+  max-width: 1240px;
+  max-height: 88vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  border: 1px solid #ffb36c;
+  gap: 12px;
+  border: 1px solid rgba(255, 179, 108, 0.35);
   color: white;
   position: relative;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 35px rgba(255, 179, 108, 0.12);
   animation: ${(props) => (props.$isClosing ? slideOut : slideIn)} 0.4s
     cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 
   &::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
   }
   &::-webkit-scrollbar-thumb {
-    background: #ffb36c;
+    background: linear-gradient(180deg, #ffb36c 0%, #ff8c2b 100%);
     border-radius: 10px;
   }
 `;
 
 const DeleteBtn = styled.button`
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background: rgba(255, 0, 0, 0.7);
+  top: 6px;
+  right: 6px;
+  background: rgba(220, 38, 38, 0.85);
+  backdrop-filter: blur(4px);
   color: white;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
+  font-weight: bold;
   z-index: 10;
+  transition: all 0.2s ease;
   &:hover {
-    background: red;
+    background: #ef4444;
+    transform: scale(1.15);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
   }
 `;
 
 const EditBtn = styled.button`
   position: absolute;
-  top: 5px;
-  right: 35px;
-  background: rgba(255, 179, 108, 0.8);
+  top: 6px;
+  right: 36px;
+  background: rgba(255, 179, 108, 0.9);
+  backdrop-filter: blur(4px);
   color: black;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: bold;
   z-index: 10;
+  transition: all 0.2s ease;
   &:hover {
-    background: #ffb36c;
+    background: #ffa852;
+    transform: scale(1.15);
+    box-shadow: 0 0 10px rgba(255, 179, 108, 0.5);
   }
 `;
 
@@ -1596,54 +1611,79 @@ const TopOverlay = styled.div`
   top: 0;
   left: 0;
   right: 0;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+  color: #ffb36c;
   text-align: center;
-  padding: 1px;
-  font-size: 10px;
+  padding: 4px 6px;
+  font-size: 11px;
+  font-weight: 600;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.25s ease;
   display: flex;
   flex-direction: column;
+  pointer-events: none;
+  z-index: 4;
 `;
 
 const NameOverlay = styled.div`
   position: absolute;
-  bottom: ${(props) => (props.$hasSlots ? "13px" : "0")};
+  bottom: ${(props) => (props.$hasSlots ? "20px" : "0")};
   left: 0;
   right: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 70%, transparent 100%);
   color: white;
-  font-size: 10px;
-  padding: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 8px;
   text-align: center;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.25s ease;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  z-index: 8;
+  z-index: 5;
 `;
+
 const ConfigRow = styled.div`
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 5px;
-  border-radius: 6px;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 179, 108, 0.15);
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 179, 108, 0.35);
+  }
+
   label {
-    font-size: 12px;
-    font-weight: bold;
-    color: #ffb36c;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffc996;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  input[type="range"] {
+    accent-color: #ffb36c;
+    cursor: pointer;
   }
 `;
 
 const ModalConfigGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: 3px;
-  align-items: end;
-  @media (min-width: 768px) {
+  gap: 8px;
+  align-items: stretch;
+  @media (min-width: 600px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 900px) {
     grid-template-columns: repeat(4, 1fr);
   }
   @media (min-width: 1200px) {
@@ -1662,21 +1702,27 @@ const FocusButtonsGrid = styled.div`
 
 const BgGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0px;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  padding: 2px;
   @media (min-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr))
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 `;
 
 const BgItem = styled.div`
   position: relative;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 2px solid ${(props) => (props.$active ? "#ffb36c" : "transparent")};
-  transition: transform 0.2s;
+  border: 2px solid ${(props) => (props.$active ? "#ffb36c" : "rgba(255, 255, 255, 0.1)")};
+  box-shadow: ${(props) => (props.$active ? "0 0 16px rgba(255, 179, 108, 0.5), inset 0 0 0 1px #ffb36c" : "0 4px 12px rgba(0, 0, 0, 0.35)")};
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background: #0d0f19;
+
   &:hover {
-    transform: scale(1.05);
+    transform: translateY(-4px) scale(1.02);
+    border-color: ${(props) => (props.$active ? "#ffb36c" : "rgba(255, 179, 108, 0.6)")};
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 179, 108, 0.25);
     ${NameOverlay}, ${TopOverlay} {
       opacity: 1;
     }
@@ -1688,26 +1734,48 @@ const BgSquare = styled.img`
   aspect-ratio: 3/2;
   object-fit: cover;
   cursor: pointer;
+  display: block;
 `;
 
 const RatingOverlay = styled.div`
   position: absolute;
-  top: 0px;
-  left: 0px;
+  top: 6px;
+  left: 6px;
+  right: 6px;
   display: flex;
-  gap: 98px;
-  z-index: 5;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 6;
+  pointer-events: none;
+
+  & > * {
+    pointer-events: auto;
+  }
 `;
 
 const HeartIcon = styled.button`
-  background: none;
-  border: none;
+  background: rgba(10, 12, 22, 0.75);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   padding: 0;
-  font-size: 16px;
-  color: "#000dff";
+  font-size: 13px;
+  color: ${(props) => props.$color || "#fff"};
   font-weight: 900;
-  text-shadow: 0 0 3px black;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: scale(1.15);
+    background: rgba(18, 22, 38, 0.95);
+    border-color: #ffb36c;
+    box-shadow: 0 0 10px rgba(255, 179, 108, 0.3);
+  }
 `;
 
 const SlotButtons = styled.div`
@@ -1716,78 +1784,118 @@ const SlotButtons = styled.div`
   left: 0;
   width: 100%;
   display: flex;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(8, 10, 18, 0.85);
+  backdrop-filter: blur(4px);
+  border-top: 1px solid rgba(255, 179, 108, 0.2);
+  z-index: 7;
 `;
 
 const SlotBtn = styled.button`
   flex: 1;
-  background: ${(props) => (props.$active ? "#ffb36c" : "transparent")};
-  color: ${(props) => (props.$active ? "black" : "white")};
+  background: ${(props) => (props.$active ? "linear-gradient(135deg, #ffb36c 0%, #ff8c2b 100%)" : "transparent")};
+  color: ${(props) => (props.$active ? "#000" : "#ccc")};
   border: none;
-  padding: 1px;
+  padding: 3px 2px;
   cursor: pointer;
   font-size: 10px;
   font-weight: bold;
+  transition: all 0.2s;
+  &:hover {
+    color: ${(props) => (props.$active ? "#000" : "#fff")};
+    background: ${(props) => (props.$active ? "linear-gradient(135deg, #ffc48c 0%, #ffa047 100%)" : "rgba(255, 179, 108, 0.2)")};
+  }
 `;
 
 const DropZone = styled.div`
-  position: sticky;
-  top: 0;
-  border: 2px dashed #ffb36c;
-  padding: 10px;
+  position: relative;
+  border: 2px dashed rgba(255, 179, 108, 0.4);
+  padding: 16px 20px;
   text-align: center;
-  border-radius: 15px;
+  border-radius: 14px;
   cursor: pointer;
-  color: #ccc;
+  color: #ddd;
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 
-  background: rgba(255, 255, 255, 0.05);
-  transition: all 0.3s;
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 179, 108, 0.06);
+    border-color: #ffb36c;
     color: #fff;
+    box-shadow: 0 0 15px rgba(255, 179, 108, 0.15);
   }
 `;
 
 const CloseBtn = styled.button`
-  color: #ff7b00;
-  border: none;
-  padding: 10px;
-  border-radius: 10px;
+  background: rgba(255, 179, 108, 0.1);
+  color: ${(props) => (props.$danger ? "#ff6b6b" : "#ffb36c")};
+  border: 1px solid ${(props) => (props.$danger ? "rgba(255, 107, 107, 0.3)" : "rgba(255, 179, 108, 0.3)")};
+  border-radius: 8px;
+  padding: 5px 12px;
   cursor: pointer;
-  font-weight: bold;
-  align-self: center;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &:hover {
+    background: ${(props) => (props.$danger ? "rgba(255, 107, 107, 0.25)" : "rgba(255, 179, 108, 0.25)")};
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px ${(props) => (props.$danger ? "rgba(255, 107, 107, 0.2)" : "rgba(255, 179, 108, 0.2)")};
+  }
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 const ModalSearchInput = styled.input`
-  padding: 4px;
-  border-radius: 5px;
-  border: 1px solid #ffb36c;
-  background: rgba(255, 255, 255, 0.01);
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 179, 108, 0.3);
+  background: rgba(255, 255, 255, 0.04);
   color: white;
   width: 100%;
-  max-width: 300px;
+  max-width: 320px;
   font-size: 12px;
   outline: none;
+  transition: all 0.2s ease;
+
   &::placeholder {
-    color: #aaa;
+    color: #8a8d9b;
   }
   &:focus {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: white;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #ffb36c;
+    box-shadow: 0 0 12px rgba(255, 179, 108, 0.25);
   }
 `;
 
 const ModalDivider = styled.hr`
   border: 0;
-  border-top: 1px solid rgba(255, 179, 108, 0.3);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 179, 108, 0.35), transparent);
+  margin: 8px 0;
   width: 100%;
 `;
 
 const ModalSectionTitle = styled.h3`
-  font-weight: bold;
+  font-weight: 700;
   color: #ffb36c;
-  margin: 5px;
-  font-size: 14px;
+  margin: 4px 0;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.3px;
 `;
 export const Tooltip = ({
   content,
@@ -3378,38 +3486,56 @@ const Hero = ({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "1px",
+                paddingBottom: "10px",
+                borderBottom: "1px solid rgba(255, 179, 108, 0.2)",
               }}
             >
-              <h2 style={{ color: "#fff", margin: 0, fontSize: "14px", color: "orange"}}>
-                Налаштування фону, вигляду
-              </h2>
-              <div style={{ display: "flex", gap: "1px" }}>
-                <CloseBtn
-                  onClick={resetBgSettings}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div
                   style={{
-                    padding: "4px 8px",
-                    fontSize: "12px",
-                    height: "auto",
+                    background: "linear-gradient(135deg, rgba(255, 179, 108, 0.25), rgba(255, 140, 43, 0.1))",
+                    border: "1px solid rgba(255, 179, 108, 0.4)",
+                    borderRadius: "10px",
+                    padding: "6px 10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "18px",
                   }}
                 >
-                  Скинути
+                  ✨
+                </div>
+                <div>
+                  <h2
+                    style={{
+                      margin: 0,
+                      fontSize: "16px",
+                      fontWeight: "700",
+                      background: "linear-gradient(90deg, #ffb36c 0%, #ffe3b8 100%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      letterSpacing: "0.4px",
+                    }}
+                  >
+                    Налаштування фону та вигляду
+                  </h2>
+                  <span style={{ fontSize: "11px", color: "#8a8d9b" }}>
+                    Персоналізуйте теми, слайд-шоу та візуальні ефекти
+                  </span>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <CloseBtn onClick={resetBgSettings}>
+                  🔄 Скинути
                 </CloseBtn>
-                <CloseBtn
-                  onClick={handleCloseModal}
-                  style={{
-                    padding: "4px 8px",
-                    fontSize: "16px",
-                    height: "auto",
-                  }}
-                >
-                  ✖
+                <CloseBtn $danger onClick={handleCloseModal}>
+                  ✖ Закрити
                 </CloseBtn>
               </div>
             </div>
             <ModalConfigGrid>
               <ConfigRow>
-                <label>🎞️ Режим зміни фону:</label>
+                <label>🎞️ Режим фону:</label>
                 <div style={{ display: "flex", gap: "5px", width: "100%" }}>
                   <select
                     value={heroBgMode}
@@ -3426,13 +3552,15 @@ const Hero = ({
                       setActiveLayer(1);
                     }}
                     style={{                
-                      background: "#000",
+                      background: "rgba(10, 14, 26, 0.95)",
                       color: "#fff",
-                      fontSize: "11px",
-                      border: "1px solid #555",
-                      borderRadius: "2px",
-                      padding: "1px",
+                      fontSize: "12px",
+                      fontWeight: "500",
+                      border: "1px solid rgba(255, 179, 108, 0.3)",
+                      borderRadius: "6px",
+                      padding: "4px 6px",
                       flex: 1,
+                      outline: "none",
                     }}
                   >
                     <option value="static">Статичний (1 фото)</option>
@@ -3442,39 +3570,39 @@ const Hero = ({
                     <option value="random">Випадковий (усі фото)</option>
                   </select>
                   {heroBgMode === "random" && (
-                <Tooltip content="Перемішати та скинути чергу" isDarkMode={isDarkMode}>
-                    <button
-                      onClick={() => {
-                        const shuffled = shuffleArray(allBgs);
-                        setRandomBgsList(shuffled);
-                        setRandomCurrentIndex(0);
-                        if (shuffled[0]) {
-                          handleSelectBg(shuffled[0].src);
-                          setActiveLayer(1);
-                        }
-                      }}
-                      aria-label="Перемішати та скинути чергу"
-                      style={{
-                        background: "#ffb36c",
-                        border: "none",
-                        borderRadius: "2px",
-                        color: "#000",
-                        padding: "1px 8px",
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                        fontSize: "11px",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                    Скинути
-                    </button>
+                    <Tooltip content="Перемішати та скинути чергу" isDarkMode={isDarkMode}>
+                      <button
+                        onClick={() => {
+                          const shuffled = shuffleArray(allBgs);
+                          setRandomBgsList(shuffled);
+                          setRandomCurrentIndex(0);
+                          if (shuffled[0]) {
+                            handleSelectBg(shuffled[0].src);
+                            setActiveLayer(1);
+                          }
+                        }}
+                        aria-label="Перемішати та скинути чергу"
+                        style={{
+                          background: "linear-gradient(135deg, #ffb36c 0%, #ff8c2b 100%)",
+                          border: "none",
+                          borderRadius: "6px",
+                          color: "#000",
+                          padding: "2px 8px",
+                          cursor: "pointer",
+                          fontWeight: "bold",
+                          fontSize: "11px",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        🔀
+                      </button>
                     </Tooltip>
                   )}
                 </div>
               </ConfigRow>
               <ConfigRow>
                 <label>
-                  Затемнення: {(heroOverlayOpacity * 100).toFixed(0)}%
+                  🌘 Затемнення: {(heroOverlayOpacity * 100).toFixed(0)}%
                 </label>
                 <input
                   type="range"
@@ -3488,7 +3616,7 @@ const Hero = ({
                 />
               </ConfigRow>
               <ConfigRow>
-                <label>Наближення: {heroBgZoom.toFixed(2)}x</label>
+                <label>🔍 Наближення: {heroBgZoom.toFixed(2)}x</label>
                 <input
                   type="range"
                   min="1"
@@ -3500,21 +3628,21 @@ const Hero = ({
               </ConfigRow>
               <ConfigRow>
                 <label>🎭 Ефект фокусу:</label>
-                <div style={{ display: "flex", gap: "3px" }}>
+                <div style={{ display: "flex", gap: "4px" }}>
                   <ModeButton
                     $active={heroBgBlurType === "smooth"}
                     onClick={() => {
                       setHeroBgBlurType("smooth");
                       setHeroBgPixelation(0);
                     }}
-                    style={{ flex: 1, fontSize: "10px", padding: "2px" }}
+                    style={{ flex: 1, fontSize: "10px", padding: "3px", borderRadius: "6px" }}
                   >
                     Плавне
                   </ModeButton>
                   <ModeButton
                     $active={heroBgBlurType === "pixelated"}
                     onClick={() => setHeroBgBlurType("pixelated")}
-                    style={{ flex: 1, fontSize: "10px", padding: "2px" }}
+                    style={{ flex: 1, fontSize: "10px", padding: "3px", borderRadius: "6px" }}
                   >
                     Піксельне
                   </ModeButton>
@@ -3532,7 +3660,7 @@ const Hero = ({
                 />
               </ConfigRow>
               <ConfigRow>
-                <label>Розмиття: {heroBgBlur.toFixed(1)}px</label>
+                <label>🌫️ Розмиття: {heroBgBlur.toFixed(1)}px</label>
                 <input
                   type="range"
                   min="0"
@@ -3545,7 +3673,7 @@ const Hero = ({
               <ConfigRow
                 style={{ opacity: heroBgBlurType === "pixelated" ? 1 : 0.4 }}
               >
-                <label>Пікселізація: {heroBgPixelation.toFixed(1)}</label>
+                <label>👾 Пікселізація: {heroBgPixelation.toFixed(1)}</label>
                 <input
                   type="range"
                   min="0"
@@ -3576,12 +3704,12 @@ const Hero = ({
                   style={{
                     display: "grid",
                     gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: "3px",
+                    gap: "8px",
                   }}
                 >
                   <ConfigRow>
                     <label>
-                      Інтервал:{" "}
+                      ⏱️ Інтервал:{" "}
                       {slideshowInterval >= 60
                         ? `${Math.floor(slideshowInterval / 60)}хв ${slideshowInterval % 60 > 0 ? (slideshowInterval % 60) + "с" : ""}`
                         : `${slideshowInterval}с`}
@@ -3598,7 +3726,7 @@ const Hero = ({
                     />
                   </ConfigRow>
                   <ConfigRow>
-                    <label>Перехід: {slideshowTransition}с</label>
+                    <label>✨ Перехід: {slideshowTransition}с</label>
                     <input
                       type="range"
                       min="0.5"
@@ -3611,7 +3739,7 @@ const Hero = ({
                     />
                   </ConfigRow>
                   <ConfigRow>
-                    <label>Швидкість відео: {videoPlaybackSpeed}x</label>
+                    <label>⚡ Швидкість відео: {videoPlaybackSpeed}x</label>
                     <input
                       type="range"
                       min="0.25"
@@ -3628,18 +3756,20 @@ const Hero = ({
             )}
 
             <ModalDivider />
-            <ModalSectionTitle>Бібліотека зображень</ModalSectionTitle>
+            <ModalSectionTitle>
+              🎨 Бібліотека зображень
+            </ModalSectionTitle>
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 flexWrap: "wrap",
-                gap: "5px",
+                gap: "8px",
               }}
             >
               <ModalSearchInput
-                placeholder="Пошук картин за назвою..."
+                placeholder="🔍 Пошук картин за назвою..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -3649,57 +3779,61 @@ const Hero = ({
               <div
                 style={{
                   display: "flex",
-                  gap: "10px",
+                  gap: "12px",
                   alignItems: "center",
                   flexWrap: "wrap",
                 }}
               >
                 <div
-                  style={{ display: "flex", gap: "5px", alignItems: "center" }}
+                  style={{ display: "flex", gap: "6px", alignItems: "center" }}
                 >
-                  <label style={{ fontSize: "12px" }}>Категорія:</label>
+                  <label style={{ fontSize: "12px", color: "#ffc996", fontWeight: "600" }}>Категорія:</label>
                   <select
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
                     style={{
-                      background: "#000",
-                      fontSize: "11px",
+                      background: "rgba(10, 14, 26, 0.95)",
+                      fontSize: "12px",
                       color: "#fff",
-                      border: "1px solid #555",
-                      borderRadius: "2px",
-                      padding: "1px",
+                      border: "1px solid rgba(255, 179, 108, 0.3)",
+                      borderRadius: "6px",
+                      padding: "4px 8px",
+                      outline: "none",
+                      cursor: "pointer",
                     }}
                   >
                     <option value="all">Усі</option>
-                    <option value="Дракони">Дракони</option>
-                    <option value="Стихія">Стихія та тварини</option>
-                    <option value="Локації">Локації і предмети</option>
-                    <option value="Фентезі">Фентезі</option>
-                    <option value="Хоррор">Хоррор</option>
-                    <option value="Майбутне">Песимізм</option>
-                    <option value="Скріншоти">Скріншоти</option>
-                    <option value="custom">Ваші завантажені</option>
+                    <option value="Дракони">🐉 Дракони</option>
+                    <option value="Стихія">🐾 Стихія та тварини</option>
+                    <option value="Локації">🏰 Локації і предмети</option>
+                    <option value="Фентезі">✨ Фентезі</option>
+                    <option value="Хоррор">💀 Хоррор</option>
+                    <option value="Майбутне">🔮 Песимізм</option>
+                    <option value="Скріншоти">📸 Скріншоти</option>
+                    <option value="custom">📁 Ваші завантажені</option>
                   </select>
                 </div>
                 <div
-                  style={{ display: "flex", gap: "5px", alignItems: "center" }}
+                  style={{ display: "flex", gap: "6px", alignItems: "center" }}
                 >
-                  <label style={{ fontSize: "12px" }}>Сортувати:</label>
+                  <label style={{ fontSize: "12px", color: "#ffc996", fontWeight: "600" }}>Сортувати:</label>
                   <select
                     value={sortType}
                     onChange={(e) => setSortType(e.target.value)}
                     style={{
-                     background: "#000",
+                      background: "rgba(10, 14, 26, 0.95)",
                       color: "#fff",
-                      border: "1px solid #555",
-                      borderRadius: "2px",
-                      fontSize: "11px",
-                      padding: "1px",
+                      border: "1px solid rgba(255, 179, 108, 0.3)",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      padding: "4px 8px",
+                      outline: "none",
+                      cursor: "pointer",
                     }}
                   >
-                    <option value="rating">За рейтингом</option>
-                    <option value="az">Назва А-Я</option>
-                    <option value="za">Назва Я-А</option>
+                    <option value="rating">⭐ За рейтингом</option>
+                    <option value="az">🔤 Назва А-Я</option>
+                    <option value="za">🔤 Назва Я-А</option>
                   </select>
                 </div>
               </div>
@@ -3717,65 +3851,46 @@ const Hero = ({
                     <RatingOverlay>
                       <HeartIcon
                         $color={
-                          rating === 2 ? "gold" : rating === 1 ? "red" : "white"
+                          rating === 2 ? "gold" : rating === 1 ? "#ff4d4d" : "white"
                         }
                         onClick={() => handleRate(bg.src)}
                       >
                         {rating === 2 ? "💛" : rating === 1 ? "❤️" : "🤍"}
                       </HeartIcon>
-                      {bg.description && (
-                        <Tooltip content="Детальний опис картини" isDarkMode={isDarkMode}>
+                      <div style={{ display: "flex", gap: "4px" }}>
+                        {bg.description && (
+                          <Tooltip content="Детальний опис картини" isDarkMode={isDarkMode}>
+                            <HeartIcon
+                              $color="#aef"
+                              aria-label="Детальний опис картини"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDescriptionModal({
+                                  name: bg.name,
+                                  text: bg.description,
+                                  src: bg.src,
+                                  author: bg.author,
+                                  source: bg.source,
+                                });
+                              }}
+                            >
+                              ❓
+                            </HeartIcon>
+                          </Tooltip>
+                        )}
+                        <Tooltip content="Скачати файл фону" isDarkMode={isDarkMode}>
                           <HeartIcon
-                            $color="#aef"
-                            aria-label="Детальний опис картини"
+                            $color="#ffda79"
+                            aria-label="Скачати фон"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setDescriptionModal({
-                                name: bg.name,
-                                text: bg.description,
-                                src: bg.src,
-                                author: bg.author,
-                                source: bg.source,
-                              });
-                            }}
-                            style={{
-                              fontSize: "18px",
-                              background: "rgb(7, 7, 7)",
-                              borderRadius: "50%",
-                              width: 20,
-                              height: 20,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
+                              handleDownloadBg(bg);
                             }}
                           >
-                            ?
+                            📥
                           </HeartIcon>
                         </Tooltip>
-                      )}
-                      <Tooltip content="Скачати файл фону" isDarkMode={isDarkMode}>
-                        <HeartIcon
-                          $color="#ffda79"
-                          aria-label="Скачати фон"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownloadBg(bg);
-                          }}
-                          style={{
-                            fontSize: "14px",
-                            background: "rgba(7, 7, 7, 0.8)",
-                            borderRadius: "50%",
-                            width: 20,
-                            height: 20,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer",
-                          }}
-                        >
-                          📥
-                        </HeartIcon>
-                      </Tooltip>
+                      </div>
                     </RatingOverlay>
                     {isCustom(bg.src) && (
                       <>
@@ -3971,7 +4086,11 @@ const Hero = ({
               onDrop={handleDrop}
               onClick={() => fileInputRef.current.click()}
             >
-              Перетягніть сюди картинку(відео) або натисніть
+              <div style={{ fontSize: "24px" }}>📤</div>
+              <div>
+                <span style={{ color: "#ffb36c", fontWeight: "bold" }}>Перетягніть сюди</span> картинку або відео
+              </div>
+              <span style={{ fontSize: "11px", color: "#8a8d9b" }}>або натисніть для вибору файлу з вашого пристрою</span>
               <input
                 type="file"
                 ref={fileInputRef}

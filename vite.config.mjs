@@ -1,26 +1,34 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
+import viteCompression from 'vite-plugin-compression'; // <--- 1. Імпортуємо плагін
 
 export default defineConfig({
   plugins: [
     react(),
     ViteImageOptimizer({
-      // Автоматичне стиснення зображень при білді
-      webp: {
-        quality: 80,
-      },
-      png: {
-        quality: 80,
-      },
-      jpeg: {
-        quality: 80,
-      },
+      webp: { quality: 80 },
+      png: { quality: 80 },
+      jpeg: { quality: 80 },
+    }),
+    viteCompression({
+      algorithm: 'gzip',
+      ext: '.gz',
+    }),
+    viteCompression({
+      algorithm: 'brotliCompress',
+      ext: '.br',
     }),
   ],
   base: '/',
   define: {
     'process.env': {},
+  },
+  server: {
+    headers: {
+      "Cross-Origin-Opener-Policy": "unsafe-none",
+      "Cross-Origin-Embedder-Policy": "unsafe-none",
+    }
   },
   build: {
     sourcemap: true,
