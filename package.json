@@ -53,12 +53,13 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "bun x vite build",
+    "convert-avif": "node convert-to-avif.js",
+    "build": "bun run convert-avif && bun x vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "backup": "powershell -Command \"$date = Get-Date -Format 'yyyy-MM-dd_HH-mm'; Get-ChildItem -Path './*' -Exclude 'node_modules', 'server', '.next', '.git', 'out', 'dist', '.env*' | Compress-Archive -DestinationPath ('../stykhiya-backup-' + $date + '.zip')\"",
-    "predeploy": "node generate-deploy-id.js && bun run build",
-    "deploy": "bun x gh-pages -d dist -f --cname stuxia.com",
+    "predeploy": "node generate-deploy-id.js",
+    "deploy": "bun run predeploy && bun run build && bun x gh-pages -d dist -f --cname stuxia.com",
     "deploy:cpanel": "bun run build && node deploy.js",
     "test": "react-scripts test",
     "star": "node server/index.js"
@@ -94,7 +95,8 @@
     "sharp": "^0.35.4",
     "svgo": "^4.1.0",
     "vite-plugin-compression": "^0.5.1",
-    "vite-plugin-image-optimizer": "^2.0.3"
+    "vite-plugin-image-optimizer": "^2.0.3",
+    "vite-plugin-image-presets": "^0.3.5"
   },
   "description": "",
   "main": "index.js",

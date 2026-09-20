@@ -329,7 +329,59 @@ const BgLayerStyled = styled.div`
       : "none"};
 `;
 
-const BgLayer = (props) => {
+const VideoThumbnail = React.memo(({ bg, onClick }) => {
+  const videoRef = useRef(null);
+  const [blobUrl, setBlobUrl] = useState(null);
+
+  useEffect(() => {
+    if (bg?.src instanceof Blob) {
+      const url = URL.createObjectURL(bg.src);
+      setBlobUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setBlobUrl(null);
+    }
+  }, [bg?.src]);
+
+  const srcUrl =
+    bg?.src instanceof Blob
+      ? blobUrl
+      : typeof bg?.src === "string"
+      ? bg.src
+      : undefined;
+
+  return (
+    <video
+      ref={videoRef}
+      src={srcUrl}
+      preload="metadata"
+      muted
+      playsInline
+      style={{
+        width: "100%",
+        aspectRatio: "3/2",
+        objectFit: "cover",
+        cursor: "pointer",
+        background: "#111",
+      }}
+      onMouseEnter={() => {
+        if (videoRef.current) {
+          const p = videoRef.current.play();
+          if (p !== undefined) p.catch(() => {});
+        }
+      }}
+      onMouseLeave={() => {
+        if (videoRef.current) {
+          videoRef.current.pause();
+          videoRef.current.currentTime = 0;
+        }
+      }}
+      onClick={onClick}
+    />
+  );
+});
+
+const BgLayer = React.memo((props) => {
   const {
     $image,
     $active,
@@ -339,31 +391,32 @@ const BgLayer = (props) => {
     $videoEnd,
     $videoPlaybackSpeed,
   } = props;
-  const [url, setUrl] = useState(typeof $image === "string" ? $image : "");
+  const [blobUrl, setBlobUrl] = useState(null);
   const videoRef = useRef(null);
   const isPixelated = props.$blurType === "pixelated";
+
   useEffect(() => {
-    let objectUrl = null;
     if ($image instanceof Blob) {
-      objectUrl = URL.createObjectURL($image);
-      setUrl(objectUrl);
+      const objectUrl = URL.createObjectURL($image);
+      setBlobUrl(objectUrl);
+      return () => URL.revokeObjectURL(objectUrl);
     } else {
-      setUrl($image);
+      setBlobUrl(null);
     }
-    return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
   }, [$image]);
+
+  const url =
+    $image instanceof Blob ? blobUrl : typeof $image === "string" ? $image : "";
 
   useEffect(() => {
     if (videoRef.current) {
       if ($active) {
-        // Seek to start position when activating
         if ($videoStart != null && videoRef.current.currentTime < $videoStart) {
           videoRef.current.currentTime = $videoStart;
         }
         videoRef.current.playbackRate = $videoPlaybackSpeed || 1;
-        videoRef.current.play().catch(() => {});
+        const p = videoRef.current.play();
+        if (p !== undefined) p.catch(() => {});
       } else {
         videoRef.current.pause();
       }
@@ -380,9 +433,16 @@ const BgLayer = (props) => {
         <video
           ref={videoRef}
           src={url}
+          autoPlay
           muted
           loop
           playsInline
+          onCanPlay={(e) => {
+            if ($active) {
+              const p = e.target.play();
+              if (p !== undefined) p.catch(() => {});
+            }
+          }}
           onTimeUpdate={(e) => {
             const t = e.target.currentTime;
             if (videoEnd !== null && t >= videoEnd) {
@@ -412,7 +472,7 @@ const BgLayer = (props) => {
       )}
     </BgLayerStyled>
   );
-};
+});
 
 const Overlay = styled.div`
   position: ${(props) => (props.$isStickyBgMode ? "fixed" : "absolute")} !important;
@@ -3965,32 +4025,8 @@ const Hero = ({
                       {bg.name}
                     </NameOverlay>
                     {isVideoSource(bg.src) ? (
-                      <video
-                        preload="none"
-                        muted
-                        playsInline
-                        style={{
-                          width: "100%",
-                          aspectRatio: "3/2",
-                          objectFit: "cover",
-                          cursor: "pointer",
-                          background: "#111",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!e.currentTarget.src) {
-                            e.currentTarget.src = bg.src;
-                          }
-                          e.currentTarget.play().catch(() => {});
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.pause();
-                          e.currentTarget.currentTime = 0;
-                          // Free network resources for cloud URLs
-                          if (typeof bg.src === "string" && bg.src.startsWith("http")) {
-                            e.currentTarget.removeAttribute("src");
-                            e.currentTarget.load();
-                          }
-                        }}
+                      <VideoThumbnail
+                        bg={bg}
                         onClick={() => handleSelectBg(bg.src)}
                       />
                     ) : (
@@ -4137,7 +4173,7 @@ const Hero = ({
             {isVideoSource(descriptionModal.src) ? (
               <video
                 src={descriptionModal.src}
-                preload="none"
+                preload="metadata"
                 autoPlay
                 muted
                 loop

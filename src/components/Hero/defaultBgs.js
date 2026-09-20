@@ -3,8 +3,8 @@ import mountains from "../../photos/hero-header/hiils.webp";
 import art from "../../photos/hero-header/studi.webp";
 import penny from "../../photos/vip-modal/penny.webp";
 import hills from "../../photos/hero-header/fog.webp";
-const hillsVideo = "https://raw.githubusercontent.com/TheTurkeyProgramist/stuxia/main/fog.mp4";
-import dinofrozVideo from "../../mp4/nicerone.mp4";
+import hillsVideo from "../../mp4/fog.webm";
+import dinofrozVideo from "../../mp4/nicerone.webm";
 import harmony from "../../photos/vip-images/asium/asium.webp";
 import horse from "../../photos/vip-images/horse/horse.webp";
 import theorytwo from "../../photos/fan-art/theorytwo.webp";
@@ -79,7 +79,7 @@ import faded from "../../photos/fan-art/faded.webp";
 import fadedVideo from "../../mp4/faded.mp4";
 import mia from "../../photos/vip-images/mia/miaandme.webp";
 import volcano from "../../photos/vip-images/fire.webp";
-import clubstepVideo from "../../mp4/clubstep.mp4";
+import clubstepVideo from "../../mp4/clubstep.webm";
 // Pesimistic future
 import titanic from "../../photos/cursors/titanic.webp";
 import smit from "../../photos/cursors/smit.webp";
@@ -88,7 +88,7 @@ import volcanoVideo from "../../mp4/volcano.mp4";
 import whitesound from "../../mp4/whiteloud.mp4";
 import loft from "../../photos/fan-art/wall.webp";
 import secret from "../../photos/vip-modal/texts.webp";
-import slivkishow from "../../mp4/slivkishow.mp4";
+import slivkishow from "../../mp4/slivkishow.webm";
 import iceage from "../../mp4/days.mp4";
 // Dinofroz full video (excerpt only — start/end)
 import dinofrozFullVideo from "../../mp3/dinofroz.mp4";
