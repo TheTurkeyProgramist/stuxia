@@ -354,7 +354,7 @@ const VideoThumbnail = React.memo(({ bg, onClick }) => {
     <video
       ref={videoRef}
       src={srcUrl}
-      preload="metadata"
+      preload="none"
       muted
       playsInline
       style={{
@@ -366,6 +366,9 @@ const VideoThumbnail = React.memo(({ bg, onClick }) => {
       }}
       onMouseEnter={() => {
         if (videoRef.current) {
+          if (videoRef.current.preload !== "auto") {
+            videoRef.current.preload = "auto";
+          }
           const p = videoRef.current.play();
           if (p !== undefined) p.catch(() => {});
         }
@@ -394,36 +397,65 @@ const BgLayer = React.memo((props) => {
   const [blobUrl, setBlobUrl] = useState(null);
   const videoRef = useRef(null);
   const isPixelated = props.$blurType === "pixelated";
+  const isVideo = isVideoSource($image);
 
   useEffect(() => {
+    if (!isVideo) {
+      setBlobUrl(null);
+      return;
+    }
     if ($image instanceof Blob) {
       const objectUrl = URL.createObjectURL($image);
       setBlobUrl(objectUrl);
       return () => URL.revokeObjectURL(objectUrl);
-    } else {
-      setBlobUrl(null);
+    } else if (typeof $image === "string" && $image) {
+      let active = true;
+      fetch($image)
+        .then((res) => res.blob())
+        .then((blob) => {
+          if (active) {
+            const objectUrl = URL.createObjectURL(blob);
+            setBlobUrl(objectUrl);
+          }
+        })
+        .catch(() => {
+          if (active) setBlobUrl(null);
+        });
+      return () => {
+        active = false;
+      };
     }
-  }, [$image]);
+  }, [$image, isVideo]);
 
   const url =
-    $image instanceof Blob ? blobUrl : typeof $image === "string" ? $image : "";
+    $image instanceof Blob
+      ? blobUrl
+      : typeof $image === "string"
+      ? blobUrl || $image
+      : "";
 
   useEffect(() => {
-    if (videoRef.current) {
-      if ($active) {
-        if ($videoStart != null && videoRef.current.currentTime < $videoStart) {
-          videoRef.current.currentTime = $videoStart;
-        }
-        videoRef.current.playbackRate = $videoPlaybackSpeed || 1;
-        const p = videoRef.current.play();
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    if ($active) {
+      if ($videoPlaybackSpeed && vid.playbackRate !== $videoPlaybackSpeed) {
+        vid.playbackRate = $videoPlaybackSpeed;
+      }
+      if ($videoStart != null && vid.currentTime < $videoStart && vid.paused) {
+        vid.currentTime = $videoStart;
+      }
+      if (vid.paused) {
+        const p = vid.play();
         if (p !== undefined) p.catch(() => {});
-      } else {
-        videoRef.current.pause();
+      }
+    } else {
+      if (!vid.paused) {
+        vid.pause();
       }
     }
-  }, [$active, $videoStart, $videoPlaybackSpeed]);
+  }, [$active, $videoStart, $videoPlaybackSpeed, url]);
 
-  const isVideo = isVideoSource($image);
   const videoStart = $videoStart ?? 0;
   const videoEnd = $videoEnd ?? null; // null = play to natural end
 
@@ -433,19 +465,27 @@ const BgLayer = React.memo((props) => {
         <video
           ref={videoRef}
           src={url}
-          autoPlay
+          preload={$active ? "auto" : "none"}
           muted
           loop
           playsInline
           onCanPlay={(e) => {
             if ($active) {
-              const p = e.target.play();
-              if (p !== undefined) p.catch(() => {});
+              const vid = e.target;
+              if ($videoPlaybackSpeed && vid.playbackRate !== $videoPlaybackSpeed) {
+                vid.playbackRate = $videoPlaybackSpeed;
+              }
+              if (vid.paused) {
+                const p = vid.play();
+                if (p !== undefined) p.catch(() => {});
+              }
             }
           }}
           onTimeUpdate={(e) => {
+            if (!videoEnd) return;
             const t = e.target.currentTime;
-            if (videoEnd !== null && t >= videoEnd) {
+            const dur = e.target.duration;
+            if (videoEnd > 0 && t >= videoEnd && dur && videoEnd < dur - 0.5) {
               e.target.currentTime = videoStart;
             }
           }}
@@ -3062,6 +3102,7 @@ const Hero = ({
         $panSpeed={heroBgPanSpeed}
         $videoStart={allBgs.find((b) => b.src === heroBg2)?.start}
         $videoEnd={allBgs.find((b) => b.src === heroBg2)?.end}
+        $videoPlaybackSpeed={videoPlaybackSpeed}
       />
       <BgLayer
         $isStickyBgMode={isStickyBgMode}
@@ -3083,6 +3124,7 @@ const Hero = ({
         $panSpeed={heroBgPanSpeed}
         $videoStart={allBgs.find((b) => b.src === heroBg3)?.start}
         $videoEnd={allBgs.find((b) => b.src === heroBg3)?.end}
+        $videoPlaybackSpeed={videoPlaybackSpeed}
       />
       <BgLayer
         $isStickyBgMode={isStickyBgMode}
@@ -3101,6 +3143,7 @@ const Hero = ({
         $panSpeed={heroBgPanSpeed}
         $videoStart={allBgs.find((b) => b.src === heroBg4)?.start}
         $videoEnd={allBgs.find((b) => b.src === heroBg4)?.end}
+        $videoPlaybackSpeed={videoPlaybackSpeed}
       />
       <Overlay $opacity={heroOverlayOpacity} $isStickyBgMode={isStickyBgMode} />
       <ChangeBgButton ref={(el) => registerRef('changeBgButton', el)} onClick={() => setIsModalOpen(true)}>
