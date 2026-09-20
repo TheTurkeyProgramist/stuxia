@@ -79,7 +79,7 @@ import faded from "../../photos/fan-art/faded.webp";
 import fadedVideo from "../../mp4/faded.mp4";
 import mia from "../../photos/vip-images/mia/miaandme.webp";
 import volcano from "../../photos/vip-images/fire.webp";
-import clubstepVideo from "../../mp4/clubstep.webm";
+import clubstepVideo from "../../mp4/clubstep.mp4";
 // Pesimistic future
 import titanic from "../../photos/cursors/titanic.webp";
 import smit from "../../photos/cursors/smit.webp";
