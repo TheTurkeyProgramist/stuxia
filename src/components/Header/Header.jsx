@@ -7,6 +7,7 @@ import { GiShop, GiExitDoor } from "react-icons/gi";
 import relax from "../../mp3/modals/relax.mp3";
 import { FaSun } from "react-icons/fa";
 import { MdSettingsSuggest, MdMore, MdWallpaper } from "react-icons/md";
+import { FaBookOpen } from "react-icons/fa6";
 import bell from "../../mp3/modals/bell.mp3";
 import paper from "../../mp3/modals/paper.mp3";
 import conimg from "../../mp3/modals/concierge.mp3";
@@ -370,6 +371,7 @@ const Header = ({
   onOpenHelp,
   onOpenOtherOptions,
   onOpenInfo,
+  onOpenAuthorsDirectory,
   isInfoOpen,
   isDarkMode,
   toggleTheme,
@@ -570,20 +572,6 @@ const Header = ({
               </EmojiWrapper>
             </IconButton>
           </Tooltip>
-
-          {/* Налаштування вигляду */}
-          <Tooltip content="Налаштування вигляду" isDarkMode={isDarkMode}>
-            <IconButton
-              onClick={handleEyeToggle}
-              $isDarkMode={isDarkMode}
-              aria-label="Налаштування вигляду"
-            >
-              <EmojiWrapper style={{ marginTop: "2px", fontSize: "24px" }}>
-                <IoIosEye />
-              </EmojiWrapper>
-            </IconButton>
-          </Tooltip>
-
           {/* Допомога (?) */}
           <Tooltip content="Допомога з сайтом" isDarkMode={isDarkMode}>
             <IconButton 
@@ -606,16 +594,14 @@ const Header = ({
             </IconButton>
           </Tooltip>
 
-          {/* Інші опції */}
-          <Tooltip content="Інші опції та фонова музика" isDarkMode={isDarkMode}>
+          {/* Автори / джерела */}
+          <Tooltip content="Автори та джерела" isDarkMode={isDarkMode}>
             <IconButton
-              onClick={handleOtherOptionsClick}
+              onClick={() => onOpenAuthorsDirectory?.()}
               $isDarkMode={isDarkMode}
-              aria-label="Інші опції та фонова музика"
+              aria-label="Автори та джерела"
             >
-              <EmojiWrapper style={{ fontSize: "19px", marginTop: "2px" }}>
-                <MdMore />
-              </EmojiWrapper>
+              <EmojiWrapper style={{ fontSize: "18px" }}><FaBookOpen/></EmojiWrapper>
             </IconButton>
           </Tooltip>
 
@@ -645,7 +631,7 @@ const Header = ({
             </IconButton>
           </Tooltip>
 
-          {/* Бургер */}
+          {/* Бургер
           <Tooltip content="Відкрити меню" isDarkMode={isDarkMode}>
             <IconButton
               onClick={handleBurgerOpen}
@@ -654,7 +640,7 @@ const Header = ({
             >
               <EmojiWrapper>☰</EmojiWrapper>
             </IconButton>
-          </Tooltip>
+          </Tooltip> */}
         </ButtonsGroup>
         <ProfileButtonWrap>
           <Tooltip content="Ваш профіль" isDarkMode={isDarkMode}>
@@ -721,19 +707,6 @@ const Header = ({
             </EmojiWrapper>
           </IconButton>
         </Tooltip>
-
-        <Tooltip content="Налаштування вигляду" isDarkMode={isDarkMode}>
-          <IconButton
-            onClick={handleEyeToggle}
-            $isDarkMode={isDarkMode}
-            aria-label="Налаштування вигляду"
-          >
-            <EmojiWrapper>
-              <IoIosEye />
-            </EmojiWrapper>
-          </IconButton>
-        </Tooltip>
-
         <Tooltip content="Навчання" isDarkMode={isDarkMode}>
           <IconButton
             onClick={handleHelpClick}
@@ -755,18 +728,17 @@ const Header = ({
             </IconButton>
           </Tooltip>
 
-        <Tooltip content="Інші опції" isDarkMode={isDarkMode}>
-          <IconButton
-            onClick={handleOtherOptionsClick}
-            $isDarkMode={isDarkMode}
-            aria-label="Інші опції"
-          >
-            <EmojiWrapper>
-              <MdMore />
-            </EmojiWrapper>
-          </IconButton>
-        </Tooltip>
-         
+          <Tooltip content="Автори та джерела" isDarkMode={isDarkMode}>
+            <IconButton
+              onClick={() => onOpenAuthorsDirectory?.()}
+              $isDarkMode={isDarkMode}
+              aria-label="Автори та джерела"
+            >
+              <EmojiWrapper style={{ fontSize: "18px" }}><FaBookOpen/></EmojiWrapper>
+            </IconButton>
+          </Tooltip>
+
+          {/* 
           <Tooltip content="Відкрити меню" isDarkMode={isDarkMode}>
             <IconButton
               onClick={handleBurgerOpen}
@@ -775,7 +747,7 @@ const Header = ({
             >
               <EmojiWrapper>☰</EmojiWrapper>
             </IconButton>
-          </Tooltip>
+          </Tooltip> */}
         <button
           onClick={handleLoginClick}
           style={{

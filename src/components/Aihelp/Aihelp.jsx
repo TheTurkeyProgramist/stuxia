@@ -2388,29 +2388,31 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
         onDrop={(e) => { e.preventDefault(); handleFileSelect(e.dataTransfer.files); }}
       >
         <InputQuickSettings $isDarkMode={isDarkMode}>
-          <QuickGroup>
-            <QuickLabel>Обсяг:</QuickLabel>
-            <QuickSelect
-              $isDarkMode={isDarkMode}
-              value={responseLength}
-              onChange={(e) => setResponseLength(e.target.value)}
-            >
-              <option value="concise">Менше</option>
-              <option value="normal">Нормально</option>
-              <option value="detailed">Більше</option>
-            </QuickSelect>
-          </QuickGroup>
-          <QuickGroup>
-            <QuickLabel>Стиль:</QuickLabel>
-            <QuickSelect
-              $isDarkMode={isDarkMode}
-              value={responseStyle}
-              onChange={(e) => setResponseStyle(e.target.value)}
-            >
-              <option value="friendly">Дружньо</option>
-              <option value="standard">Стандартно</option>
-              <option value="scientific">Науково</option>
-            </QuickSelect>
+        <QuickGroup>
+  <QuickLabel htmlFor="response-length" $isDarkMode={isDarkMode}>Обсяг:</QuickLabel>
+  <QuickSelect
+    id="response-length"
+    $isDarkMode={isDarkMode}
+    value={responseLength}
+    onChange={(e) => setResponseLength(e.target.value)}
+  >
+    <option value="concise">Менше</option>
+    <option value="normal">Нормально</option>
+    <option value="detailed">Більше</option>
+  </QuickSelect>
+</QuickGroup>
+<QuickGroup>
+  <QuickLabel htmlFor="response-style" $isDarkMode={isDarkMode}>Стиль:</QuickLabel>
+  <QuickSelect
+    id="response-style"
+    $isDarkMode={isDarkMode}
+    value={responseStyle}
+    onChange={(e) => setResponseStyle(e.target.value)}
+  >
+    <option value="friendly">Дружньо</option>
+    <option value="standard">Стандартно</option>
+    <option value="scientific">Науково</option>
+  </QuickSelect>
           </QuickGroup>
           {messages.length > 0 && (
             <SuggestedQuestionsSetting>
@@ -2456,7 +2458,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
           </MessageCounter>
           <label style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
             <Tooltip content="Додати фото, відео, аудіо" isDarkMode={isDarkMode}>
-            <IconBtn as="span" $isDarkMode={isDarkMode} $size="20px" aria-label="Додати фото, відео, аудіо">
+            <IconBtn $isDarkMode={isDarkMode} $size="20px" aria-label="Додати фото, відео, аудіо">
               <MdAddPhotoAlternate />
             </IconBtn>
             </Tooltip>

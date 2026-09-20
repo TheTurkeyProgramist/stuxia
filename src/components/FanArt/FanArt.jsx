@@ -9,9 +9,121 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import JSZip from "jszip";
+import { ImVideoCamera } from "react-icons/im";
 import monody from "../../photos/vip-images/asium/asium.webp";
 import { DEFAULT_BGS } from "../Hero/defaultBgs";
 import { ImFolderDownload } from "react-icons/im";
+
+import {
+  useFloating,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  arrow,
+  useHover,
+  useFocus,
+  useDismiss,
+  useRole,
+  useInteractions,
+  useTransitionStyles,
+  FloatingPortal,
+  FloatingArrow,
+} from "@floating-ui/react";
+const TooltipBox = styled.div`
+  background-color: ${(props) => (props.$isDarkMode ? "#0c0c0ceb" : "#fdff98e7")};
+  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
+  border: 2px solid #00afce;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, ${(props) => (props.$isDarkMode ? "0.5" : "0.15")});
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 9px;
+  z-index: 10000;
+  pointer-events: none;
+`;
+export const Tooltip = ({
+  content,
+  children,
+  placement = "bottom",
+  isDarkMode = true,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const arrowRef = useRef(null);
+  const { refs, floatingStyles, context } = useFloating({
+    open: isOpen,
+    onOpenChange: setIsOpen,
+    placement,
+    strategy: "fixed",
+    transform: false,
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(8),
+      flip(),
+      shift({ padding: 5 }),
+      arrow({ element: arrowRef }),
+    ],
+  });
+  const { isMounted, styles: transitionStyles } = useTransitionStyles(context, {
+    duration: 150,
+    initial: {
+      opacity: 0,
+      transform: "scale(0.9)",
+    },
+    open: {
+      opacity: 1,
+      transform: "scale(1)",
+    },
+  });
+
+  const hover = useHover(context, { move: false });
+  const focus = useFocus(context);
+  const dismiss = useDismiss(context);
+  const role = useRole(context, { role: "tooltip" });
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([
+    hover,
+    focus,
+    dismiss,
+    role,
+  ]);
+
+  if (!content) return children;
+
+  const bgTheme = isDarkMode ? "#111111" : "#ffffff";
+  const borderTheme = "#00acb9";
+
+  return (
+    <>
+      <span
+        ref={refs.setReference}
+        {...getReferenceProps()}
+        style={{ display: "inline-flex" }}
+      >
+        {children}
+      </span>
+      {isMounted && (
+        <FloatingPortal>
+          <TooltipBox
+            ref={refs.setFloating}
+            $isDarkMode={isDarkMode}
+            style={{ ...floatingStyles, ...transitionStyles }}
+            {...getFloatingProps()}
+          >
+            {content}
+            <FloatingArrow
+              ref={arrowRef}
+              context={context}
+              fill={bgTheme}
+              stroke={borderTheme}
+              strokeWidth={1}
+            />
+          </TooltipBox>
+        </FloatingPortal>
+      )}
+    </>
+  );
+};
 const isVideoSource = (src) => {
   if (src instanceof Blob) return true;
 
@@ -49,34 +161,8 @@ const FanArtTitle = styled.div`
   font-family: var(--font-family);
   font-weight: 600;
   color: ${(props) => (props.$isDarkMode ? "white" : "black")};
-  margin-bottom: -45px;
-  ${(props) =>
-    props.$isStickyBgMode
-      ? css`
-           background: ${props.$isDarkMode
-          ? "rgba(15, 15, 25, 0.75)"
-          : "rgba(255, 255, 255, 0.75)"
-        };
-           backdrop-filter: blur(12px);
-           -webkit-backdrop-filter: blur(12px);
-           border: 1px solid
-             ${props.$isDarkMode
-          ? "rgba(255, 255, 255, 0.15)"
-          : "rgba(0, 0, 0, 0.15)"
-        };
-           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-         `
-      : css`
-           background: ${props.$isDarkMode
-          ? "rgba(255, 255, 255, 0.05)"
-          : "rgba(0, 0, 0, 0.05)"
-        };
-           border: 1px solid
-             ${props.$isDarkMode
-          ? "rgba(255, 255, 255, 0.1)"
-          : "rgba(0, 0, 0, 0.1)"
-        };
-         `}
+  margin-bottom: -35px;
+  background: ${(props) => (props.$isDarkMode ? "rgba(0, 0, 0, 0.94)" : "rgb(255, 255, 255)")};
 `;
 
 const PlaylistContainer = styled.div`
@@ -900,10 +986,11 @@ const FabricEditor = ({
         <ToolbarRow>
           {/* Картка 1: Параметри пензля */}
           <EditorCard $isDarkMode={isDarkMode}>
-            <span style={{ fontSize: "12px", color: isDarkMode ? "#ccc" : "#444", fontWeight: 600 }}>
-              🎨 Колір:
+            <span style={{ fontSize: "15px", color: isDarkMode ? "#ccc" : "#444", fontWeight: 600 }}>
+              Колір:
             </span>
-            <ColorPickerWrapper title="Натисніть для вибору кольору">
+             <Tooltip content="Натисніть для вибору кольору" isDarkMode={isDarkMode}>
+            <ColorPickerWrapper aria-label="Натисніть для вибору кольору">
               <ColorSwatch $color={brushColor} />
               <input
                 type="color"
@@ -911,7 +998,7 @@ const FabricEditor = ({
                 onChange={(e) => setBrushColor(e.target.value)}
               />
             </ColorPickerWrapper>
-
+           </Tooltip>
             <span style={{ fontSize: "12px", color: isDarkMode ? "#ccc" : "#444", fontWeight: 600, marginLeft: "6px" }}>
               📏 {brushWidth}px
             </span>
@@ -928,7 +1015,7 @@ const FabricEditor = ({
           {/* Картка 2: Фото та Текст */}
           <EditorCard $isDarkMode={isDarkMode}>
             <CustomFileInputLabel $isDarkMode={isDarkMode}>
-              📁 Завантажити фото
+              Завантажити фото
               <input
                 type="file"
                 accept="image/*"
@@ -959,7 +1046,7 @@ const FabricEditor = ({
               onClick={addText}
               style={{ padding: "6px 14px", fontSize: "12px" }}
             >
-              ➕ Текст
+              Текст
             </ActionButton>
           </EditorCard>
 
@@ -990,9 +1077,8 @@ const FabricEditor = ({
             </FilterGroup>
           </EditorCard>
         </ToolbarRow>
-
-        {/* Рядок 2: Кнопки дій полотна */}
         <ToolbarRow>
+          <Tooltip content="Видалити виділений елемент" isDarkMode={isDarkMode}>
           <ActionButton
             onClick={deleteActiveObject}
             style={{
@@ -1002,10 +1088,11 @@ const FabricEditor = ({
               borderColor: "#e53935",
               color: "#fff",
             }}
-            title="Видалити виділений елемент"
+            aria-label="Видалити виділений елемент"
           >
-            ❌ Видалити
+            Видалити
           </ActionButton>
+          </Tooltip>
           <ActionButton
             onClick={handleCrop}
             style={{
@@ -1016,7 +1103,7 @@ const FabricEditor = ({
               color: "#fff",
             }}
           >
-            ✂️ Обрізати
+            Обрізати
           </ActionButton>
           <ActionButton
             onClick={() =>
@@ -1938,14 +2025,14 @@ const colorsXML = uniqueColors
                       $active={creationMode === "search"}
                       onClick={() => setCreationMode("search")}
                     >
-                      🔍 Пошук
+                      Пошук
                     </SourceButton>
                     <SourceButton
                       $isDarkMode={isDarkMode}
                       $active={creationMode === "editor"}
                       onClick={() => setCreationMode("editor")}
                     >
-                      🎨 Редактор та Файли
+                     Редактор та Файли
                     </SourceButton>
                   </SourceSelector>
 
@@ -1957,14 +2044,14 @@ const colorsXML = uniqueColors
                           $active={searchSource === "pixabay"}
                           onClick={() => setSearchSource("pixabay")}
                         >
-                          🖼 Pixabay
+                           Pixabay
                         </SourceButton>
                         <SourceButton
                           $isDarkMode={isDarkMode}
                           $active={searchSource === "tvmaze"}
                           onClick={() => setSearchSource("tvmaze")}
                         >
-                          🎬 TVMaze (Кіно)
+                          TVMaze (Кіно)
                         </SourceButton>
                       </SourceSelector>
                       <SourceSelector>
@@ -2091,11 +2178,10 @@ const colorsXML = uniqueColors
                         exit={{ opacity: 0, scale: 0.5, y: 50 }}
                         transition={{ duration: 0.3 }}
                       >
-                        <FanArtImageContainer>
+                        <FanArtImageContainer>                 
                           <BenefitImage
                             src={isVideoSource(imgData.src) ? `` : imgData.src}
                             alt={`Fan art - ${imgData.category}`}
-                            title={imgData.name || imgData.title || "Фанарт"}
                             onClick={() => setFullscreenIndex(idx)}
                             style={{
                               cursor: "zoom-in",
@@ -2131,7 +2217,7 @@ const colorsXML = uniqueColors
                                 }}
                                 title="Дістати кадри"
                               >
-                                🎥
+                                <ImVideoCamera />
                               </ActionButton>
                             )}
                             {imgData.description && (
@@ -2195,15 +2281,16 @@ const colorsXML = uniqueColors
                               <LuWallpaper />
                             </ActionButton>
                             {selectedPlaylist === "ваші картинки" && (
+                               <Tooltip content="Видалити зображення" isDarkMode={isDarkMode}>                      
                               <ActionButton
                                 onClick={() =>
                                   handleRemoveCustomImage(imgData.id)
                                 }
-                                title="Видалити"
+                                aria-label="Видалити зображення"
                                 style={{ background: "#ff6961" }}
                               >
-                                🗑️
                               </ActionButton>
+                              </Tooltip>
                             )}
                           </ActionButtonsContainer>
                         </FanArtImageContainer>
@@ -2343,7 +2430,7 @@ const colorsXML = uniqueColors
                   cursor: "pointer",
                 }}
               >
-                ⬇️ Завантажити 3MF (з кольорами)
+                Завантажити 3MF (з кольорами)
               </button>
               <button
                 onClick={() => setPreview3D(null)}
@@ -2648,8 +2735,6 @@ const colorsXML = uniqueColors
                 zIndex: 2,
               }}
             />
-
-            {/* Content Layer */}
             <div
               style={{
                 position: "relative",
@@ -2662,10 +2747,9 @@ const colorsXML = uniqueColors
                 justifyContent: "space-between",
               }}
             >
-              {/* Header: Title and Close button */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%" }}>
                 <h3 style={{ color: "#ffb36c", margin: 0, fontSize: "24px", fontWeight: "bold", textShadow: "0 2px 4px rgba(0,0,0,0.9)" }}>
-                  🖼️ {descriptionModal.name}
+                   {descriptionModal.name}
                 </h3>
                 <button
                   onClick={() => setDescriptionModal(null)}

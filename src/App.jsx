@@ -52,6 +52,7 @@ import { DEFAULT_SITE_SECTIONS } from "./components/Header/Menu.jsx";
 import axios from "axios";
 import "./App.css";
 import Header from "./components/Header/Header.jsx";
+import AuthorsDirectoryModal from "./components/Header/AuthorsDirectoryModal.jsx";
 import Hero from "./components/Hero/Hero.jsx";
 import { DecoratorProvider } from "./components/Decorator/DecoratorContext.jsx";
 import { sanitizeWeatherCards } from "./utils/weatherPersistence.js";
@@ -355,13 +356,13 @@ const CarouselNav = styled.div`
   justify-content: center;
   gap: 6px;
   flex-wrap: wrap;
-  z-index: 500;
-  margin-top: 12px;
+  z-index: 7000;
+  margin-top: -32px;
 `;
 const CarouselSideButton = styled.button`
   position: absolute;
   top: 50%;
-  ${(props) => (props.$direction === "previous" ? "left: 16px;" : "right: 16px;")}
+  ${(props) => (props.$direction === "previous" ? "left: 42px;" : "right: 42px;")}
   width: 44px;
   height: 44px;
   display: inline-flex;
@@ -376,6 +377,7 @@ const CarouselSideButton = styled.button`
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
+  transform: translateY(-50%);
   box-shadow: 0 0 12px rgba(0, 255, 229, 0.3);
   transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 
@@ -471,6 +473,8 @@ const CarouselPageButton = styled.button`
 
 const WeatherCarouselWrapper = styled.div`
   position: relative;
+  z-index: 1000;
+  isolation: isolate;
 `;
 
 const WeatherCarousel = ({ children }) => {
@@ -802,6 +806,8 @@ const SectionContent = memo(
             isAnyModalOpen={isAnyModalOpen}
             onUpdateUser={onUpdateUser}
             isDarkMode={isDarkMode}
+            isAuthorsDirectoryOpen={isAuthorsDirectoryOpen}
+            onCloseAuthorsDirectory={() => setIsAuthorsDirectoryOpen(false)}
           />
         )}
         {section.key === "fanart" && (
@@ -884,6 +890,7 @@ const App = () => {
   const [isAchivmentsOpen, setIsAchivmentsOpen] = useState(false);
   const [isUserSearchOpen, setIsUserSearchOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isAuthorsDirectoryOpen, setIsAuthorsDirectoryOpen] = useState(false);
   const [showUpdateTimer, setShowUpdateTimer] = useState(true); // New state for update timer visibility
   const [isOtherOptionsOpen, setIsOtherOptionsOpen] = useState(false);
   const [bgMusicEnabled, setBgMusicEnabled] = useState(false);
@@ -1528,8 +1535,11 @@ const App = () => {
         activeAudio.volume = 0;
         activeAudio.playbackRate = bgMusicSpeed;
         activeAudio.play().catch(() => {});
-      } else if (activeAudio.paused) {
-        activeAudio.play().catch(() => {});
+      } else {
+        activeAudio.playbackRate = bgMusicSpeed;
+        if (activeAudio.paused) {
+          activeAudio.play().catch(() => {});
+        }
       }
     } else if (!shouldPlay) {
       if (!a1.paused) a1.pause();
@@ -1567,6 +1577,12 @@ const App = () => {
     bgMusicSpeed,
     initialBgPosition,
   ]);
+
+  // Негайне оновлення швидкості відтворення фонової музики
+  useEffect(() => {
+    if (bgAudioRef.current) bgAudioRef.current.playbackRate = bgMusicSpeed;
+    if (bgAudioRef2.current) bgAudioRef2.current.playbackRate = bgMusicSpeed;
+  }, [bgMusicSpeed]);
 
   // Збереження позиції фонової музики
   useEffect(() => {
@@ -2850,7 +2866,8 @@ const App = () => {
               onOpenAchievements={() => setIsAchivmentsOpen(true)}
               onOpenHelp={() => setIsUserSearchOpen(true)}
               onOpenInfo={() => setIsInfoOpen(true)}
-              onOpenOtherOptions={() => setIsOtherOptionsOpen(true)}
+              onOpenAuthorsDirectory={() => setIsAuthorsDirectoryOpen(true)}
+              onOpenOtherOptions={() => setIsSettingsModalOpen(true)}
               onCloseInfo={() => setIsInfoOpen(false)}
               isInfoOpen={isInfoOpen}
               user={user}
@@ -3025,9 +3042,12 @@ const App = () => {
                 }}
               />
             )}
-            {isSettingsModalOpen && user && (
+            {(isSettingsModalOpen || isOtherOptionsOpen) && (
               <UserSettingsModal
-                onClose={() => setIsSettingsModalOpen(false)}
+                onClose={() => {
+                  setIsSettingsModalOpen(false);
+                  setIsOtherOptionsOpen(false);
+                }}
                 user={user}
                 availableAvatars={AVAILABLE_AVATARS}
                 onUpdate={setUser}
@@ -3036,55 +3056,10 @@ const App = () => {
                 showUpdateTimer={showUpdateTimer}
                 setShowUpdateTimer={setShowUpdateTimer}
                 isDarkMode={isDarkMode}
-              />
-            )}
-            {isVipModalOpen && (
-              <VipModal onClose={() => setIsVipModalOpen(false)} />
-            )}
-            {isShopOpen && (
-              <ShopModal onClose={() => setIsShopOpen(false)} hasVip={!!user} />
-            )}
-            {isAchivmentsOpen && (
-              <AchivmentsModal
-                onClose={() => setIsAchivmentsOpen(false)}
-                isDarkMode={isDarkMode}
-              />
-            )}
-            {isUserSearchOpen && (
-              <TermsModal
-              isDarkMode={isDarkMode}
-                isOpen={isUserSearchOpen}
-                onClose={() => setIsUserSearchOpen(false)}
-              />
-            )}
-            {isFirstTimeHelpOpen && (
-              <TermsModal
-                isOpen={isFirstTimeHelpOpen}
-                onClose={() => setIsFirstTimeHelpOpen(false)}
-              />
-            )}
-            {isInfoOpen && <TermsModal onClose={() => setIsInfoOpen(false)} />}
-
-            <WeatherDetailsModal
-              isOpen={isWeatherDetailsOpen}
-              onClose={() => setIsWeatherDetailsOpen(false)}
-              card={selectedWeatherCard}
-              isDarkMode={isDarkMode}
-            />
-
-            {isOtherOptionsOpen && (
-              <OtherOptionsModal
-                sfxVolume={sfxVolume}
-                setSfxVolume={setSfxVolume}
-                bgAudioRef={bgAudioRef}
-                bgAudioRef2={bgAudioRef2}
-                onClose={() => setIsOtherOptionsOpen(false)}
                 bgMusicEnabled={bgMusicEnabled}
                 setBgMusicEnabled={setBgMusicEnabled}
                 autoMuteBgMusic={autoMuteBgMusic}
                 setAutoMuteBgMusic={setAutoMuteBgMusic}
-                lockFiltersInFs={lockFiltersInFs}
-                setLockFiltersInFs={setLockFiltersInFs}
                 bgMusicSource={bgMusicSource}
                 setBgMusicSource={setBgMusicSource}
                 customBgTracks={customBgTracks}
@@ -3102,9 +3077,66 @@ const App = () => {
                 activeBgTrackId={activeBgTrackId}
                 setActiveBgTrackId={setActiveBgTrackId}
                 onResetBgPosition={handleResetBgPosition}
+                sfxVolume={sfxVolume}
+                setSfxVolume={setSfxVolume}
+                bgAudioRef={bgAudioRef}
+                bgAudioRef2={bgAudioRef2}
+                onToggleTheme={toggleTheme}
+                siteSections={siteSections}
+                moveSiteSection={moveSiteSection}
+                resetSiteSections={() =>
+                  setSiteSections([...DEFAULT_SITE_SECTIONS])
+                }
+                sectionThemes={sectionThemes}
+                hiddenSections={hiddenSections}
+                onToggleSectionVisibility={toggleSectionVisibility}
+                onToggleSectionTheme={toggleSectionTheme}
+                onResetSectionThemes={resetSectionThemes}
+                isRoutingMode={isRoutingMode}
+                setIsRoutingMode={setIsRoutingMode}
+                loadingStrategy={loadingStrategy}
+                onSetLoadingStrategy={setLoadingStrategy}
+                isStickyBgMode={isStickyBgMode}
+                onToggleStickyBg={() => setIsStickyBgMode(!isStickyBgMode)}
+              />
+            )}
+            {isVipModalOpen && (
+              <VipModal onClose={() => setIsVipModalOpen(false)} />
+            )}
+            {isShopOpen && (
+              <ShopModal onClose={() => setIsShopOpen(false)} hasVip={!!user} />
+            )}
+            {isAchivmentsOpen && (
+              <AchivmentsModal
+                onClose={() => setIsAchivmentsOpen(false)}
                 isDarkMode={isDarkMode}
               />
             )}
+            {isUserSearchOpen && (
+              <TermsModal
+                isDarkMode={isDarkMode}
+                isOpen={isUserSearchOpen}
+                onClose={() => setIsUserSearchOpen(false)}
+              />
+            )}
+            {isFirstTimeHelpOpen && (
+              <TermsModal
+                isOpen={isFirstTimeHelpOpen}
+                onClose={() => setIsFirstTimeHelpOpen(false)}
+              />
+            )}
+            {isInfoOpen && <TermsModal onClose={() => setIsInfoOpen(false)} />}
+            <AuthorsDirectoryModal
+              isOpen={isAuthorsDirectoryOpen}
+              onClose={() => setIsAuthorsDirectoryOpen(false)}
+            />
+
+            <WeatherDetailsModal
+              isOpen={isWeatherDetailsOpen}
+              onClose={() => setIsWeatherDetailsOpen(false)}
+              card={selectedWeatherCard}
+              isDarkMode={isDarkMode}
+            />
           </Suspense>
           {showUpdateTimer && (
             <TooltipS content="Налаштування вигляду" isDarkMode={isDarkMode}>

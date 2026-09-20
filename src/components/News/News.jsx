@@ -7,6 +7,7 @@ import NewsAiModal from "./NewsAiModal";
 import InfoModal from "../Modals/UserSearchModal.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { MdReport } from "react-icons/md"; //Поскаржитися
+import { FaClapperboard } from "react-icons/fa6";
 import { FaYoutube } from "react-icons/fa6";
 import { GiTreeBeehive } from "react-icons/gi";
 import { PiNewspaperClippingFill } from "react-icons/pi";
@@ -532,14 +533,15 @@ const NewsSettingsBtn = styled(CardAction)`
 const NewsSettingsMenu = styled.div`
   position: absolute;
   top: 39px;
-  left: -210px;
+  left: -260px;
   background: rgba(30, 30, 30, 0.97);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   min-width: 310px;
+  height: 145px;
   z-index: 20;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 `;
@@ -547,11 +549,11 @@ const NewsSettingsMenu = styled.div`
 const NewsSettingsItem = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 3px 7px;
+  gap: 13px;
+  padding: 3px;
   background: transparent;
   color: ${(props) => props.$color || "#fff"};
-  font-size: 13px;
+  font-size: 15px;
   text-align: left;
   border: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
@@ -803,7 +805,7 @@ const NewsCard = ({
                   setIsNewsSettingsOpen(false);
                 }}
               >
-                <FiPlus size={14} /> Прикріпити до ШІ
+                <FiPlus size={49} /> Прикріпити до ШІ
               </NewsSettingsItem>
               <NewsSettingsItem
                 onClick={() => {
@@ -811,7 +813,7 @@ const NewsCard = ({
                   setIsNewsSettingsOpen(false);
                 }}
               >
-                <TbStarsFilled size={14} /> ШІ Виклад
+                <TbStarsFilled size={34} /> ШІ Виклад
               </NewsSettingsItem>
               <NewsSettingsItem
                 onClick={() => {
@@ -821,7 +823,7 @@ const NewsCard = ({
                   setIsNewsSettingsOpen(false);
                 }}
               >
-                📋 Копіювати шлях
+                 <FaClapperboard size={34} /> Копіювати шлях
               </NewsSettingsItem>
               {item.sourceName !== "Phys.org" && (
                 <NewsSettingsItem
@@ -831,7 +833,7 @@ const NewsCard = ({
                     setIsNewsSettingsOpen(false);
                   }}
                 >
-                  <MdReport size={14} /> Поскаржитися
+                  <MdReport size={34} /> Поскаржитися
                 </NewsSettingsItem>
               )}
               <NewsSettingsItem
@@ -843,7 +845,7 @@ const NewsCard = ({
                   setIsNewsSettingsOpen(false);
                 }}
               >
-                <MdOutlineReportOff size={14} /> Заглушити
+                <MdOutlineReportOff size={34} /> Заглушити
               </NewsSettingsItem>
             </NewsSettingsMenu>
           )}

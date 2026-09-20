@@ -34,7 +34,6 @@ import turkeysix from "../../photos/vip-images/turkeys/turkeyssix.webp";
 import turkeysone from "../../photos/vip-images/turkeys/turkeysone.webp";
 import turkeyseven from "../../photos/vip-images/turkeys/turkeysseven.webp";
 // Asium
-import asiumone from "../../photos/vip-images/asium/asiumone.webp";
 import asiumtwo from "../../photos/vip-images/asium/asiuntwo.webp";
 import asiumthree from "../../photos/vip-images/asium/asiumthree.webp";
 import asiumfour from "../../photos/vip-images/asium/asiumfour.webp";
