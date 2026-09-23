@@ -106,7 +106,7 @@ export const DEFAULT_BGS = [
   {
     src: sirenhead,
     name: "Щось не так...",
-    category: "Хоррор", 
+    category: "Темрява та Містика",
     author: "Тревор Хендерсон",
     description:
       "Навіть ті хто не знають його, починають розуміти ця вишка з сиренами, не така вже вже й не рухома...",
@@ -114,7 +114,7 @@ export const DEFAULT_BGS = [
   {
     src: secret,
     name: "Єгипетські ієрогліфи",
-    category: "Локації",
+    category: "Фентезі та Легенди",
     author: "TheTurkeyStudio",
     description:
       "Ця картина має глибоку, містичну та інтроспективну атмосферу. Вона ідеально резонує з певним психологічним профілем і складом особистості:\nГлибока інтроверсія та рефлексія: Цей образ обирають люди, які відновлюють енергію в тиші та самотності. Вони схильні до глибокого аналізу власних думок і почуттів, вважаючи за краще спостерігати за світом збоку, аніж бути в центрі уваги.\nФілософський склад розуму: Символіка ієрогліфів символізує складність буття. Людина з таким характером не лякається невідомості — її приваблюють таємниці, пошук прихованих сенсів та роздуми над глобальними питаннями.",
@@ -122,7 +122,7 @@ export const DEFAULT_BGS = [
   {
     src: iceage,
     name: "Крижана катастрофа",
-    category: "Песимізм",
+    category: "Природа та Стихії",
     author: "20th Century Fox",
     source: "Фільм 'Післязавтра'",
     start: 0,
@@ -133,7 +133,7 @@ export const DEFAULT_BGS = [
   {
     src: hills,
     name: "Туманний ліс",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
     description:
       "Це стартовий фон для всіх користувачів :) Цей фон створює атмосферу таємничості та невизначеності. Люди, які обирають його, часто мають схильність до дослідження невідомого та цікавляться містичними явищами. Вони можуть бути інтроспективними та люблять розгадувати загадки, що відображає їхню цікавість до світу навколо та бажання зрозуміти його глибше.",
@@ -141,7 +141,7 @@ export const DEFAULT_BGS = [
   {
     src: hillsVideo,
     name: "Туманний ліс (Відео)",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
     start: 0,
     end: 300,
@@ -151,7 +151,7 @@ export const DEFAULT_BGS = [
   {
     src: faded,
     name: "Курорт",
-    category: "Фентезі",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Ви на пляжі! Цей фон створює атмосферу відпочинку та свободи. Люди, які обирають його, часто мають схильність до спокійного життя та цікавляться природою. Вони можуть бути відкритими та любити подорожувати.\nВикористав на сайті як обкладинку до пісні 'Faded' від Alan Walker.",
@@ -159,7 +159,7 @@ export const DEFAULT_BGS = [
   {
     src: fadedVideo,
     name: "Курорт (Відео)",
-    category: "Фентезі",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     start: 0,
     end: 300,
@@ -169,7 +169,7 @@ export const DEFAULT_BGS = [
   {
     src: slivkishow,
     name: "Політ Кукі у стратосферу",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "SlivkiShow",
     start: 0,
     end: 78,
@@ -179,7 +179,7 @@ export const DEFAULT_BGS = [
   {
     src: art,
     name: "Художня студія",
-    category: "Локації",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Цей фон створює атмосферу творчості та натхнення. Люди, які обирають його, часто мають схильність до мистецтва та креативного самовираження. Вони можуть бути відкритими до нових ідей та люблять експериментувати з різними формами мистецтва, що відображає їхню творчу натуру.",
@@ -187,7 +187,7 @@ export const DEFAULT_BGS = [
   {
     src: electrodynamixVideo,
     name: "Гроза (Відео)",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     start: 0,
     end: 7,
@@ -197,7 +197,7 @@ export const DEFAULT_BGS = [
   {
     src: mountains,
     name: "Гори",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "По секрету, я планував зробити його фоном сайту у старих версіях, до 'Туманного лісу'. \nЦей фон створює атмосферу величі та спокою. Люди, які обирають його, часто мають схильність до природи та люблять відчувати себе частиною великого світу. Вони можуть бути інтроспективними та цінувати моменти тиші та роздумів, що відображає їхню глибоку натуру.",
@@ -205,7 +205,7 @@ export const DEFAULT_BGS = [
   {
     src: volcano,
     name: "Вулкан",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Цей фон створює атмосферу сили та енергії. Люди, які обирають його, часто мають схильність до пригод та цікавляться природними явищами. Вони можуть бути відкритими до нових викликів та люблять відчувати адреналін, що відображає їхню енергійну натуру.",
@@ -213,7 +213,7 @@ export const DEFAULT_BGS = [
   {
     src: volcanoVideo,
     name: "Вулкан (Відео)",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     start: 0,
     end: 300,
@@ -223,15 +223,15 @@ export const DEFAULT_BGS = [
   {
     src: aurorahills,
     name: "Аврора Гіллс",
-    category: "Стихія",
+    category: "Темрява та Містика",
     author: "NovaSoft Interactive",
     description:
       "Цей фон взятий з Hidden Object Adventure гри 'Aurora Hills'. Сюжет гри: Ви рейнджер парку у скромному містечку, але люди починають зникати безвісти. Посилання на гру: https://play.google.com/store/apps/details?id=com.novasoftinteractive.ahch1&hl=uk",
   },
-    {
+  {
     src: swampseven,
     name: "Туман, що дивиться",
-    category: "Стихія",
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
     description:
       "Цей фон створює атмосферу таємничості та невизначеності. Люди, які обирають його, часто мають схильність до дослідження невідомого та цікавляться містичними явищами. Вони можуть бути інтроспективними та люблять розгадувати загадки, що відображає їхню цікавість до світу навколо та бажання зрозуміти його глибше.",
@@ -239,7 +239,7 @@ export const DEFAULT_BGS = [
   {
     src: DominosShopVideo,
     name: "Магазин Доміно (Відео)",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     start: 0,
     end: 300,
@@ -249,7 +249,7 @@ export const DEFAULT_BGS = [
   {
     src: prisonVideo,
     name: "Кришталева в'язниця",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
     start: 0,
     end: 300,
@@ -259,7 +259,7 @@ export const DEFAULT_BGS = [
   {
     src: DominosShop,
     name: "Риболов",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Символ терпіння, витримки та спокійної спостережливості. Цей фон обирають люди, які цінують усамітнення на природі, вміють вичікувати правильний момент та шукають відпочинку від щоденної метушні.",
@@ -267,7 +267,7 @@ export const DEFAULT_BGS = [
   {
     src: loft,
     name: "Стиль лофт",
-    category: "Локації",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Сучасний, лаконічний і стильний інтер'єр із духом свободи. Цей фон відображає прагнення до простору, практичності та естетики урбанізму, приваблюючи людей із витонченим смаком.\n Хоча це просто купа цегли :)",
@@ -275,7 +275,7 @@ export const DEFAULT_BGS = [
   {
     src: whitesound,
     name: "Білий шум",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     start: 0,
     end: 300,
@@ -286,181 +286,171 @@ export const DEFAULT_BGS = [
   {
     src: dinofrozVideo,
     name: "Імператор Ніцерон (Відео)",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
     start: 0,
     end: 300,
-description:
+    description:
       "Цей фон символізує, жагу до небезпек та пригод, і цей дракон вас не зупинить! \nЧерез нього, мені прийшла в голову ідея, з сайтом погоди у якому купа відсилок ;) Це секретик :) ",
   },
   {
     src: vladOneVideo,
     name: "Генерал Влад (Відео, сезон 1)",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
     start: 0,
     end: 300,
-description:
-      "Головні герої в пастці…. Цей фон символізує жагу до свободи, і командної роботи(герої шукають план втечі…, а дракони, хочуть не допустити цього…)",
+    description:
+      "Головні герои в пастці…. Цей фон символізує жагу до свободи, і командної роботи(герої шукають план втечі…, а дракони, хочуть не допустити цього…)",
   },
   {
     src: village,
     name: "Древніус і Даркніс",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "highbrow",
     source: "Dragon Village 3",
-description:
+    description:
       "Картина, прекрасна. Ідеальна для тих хто любить шукати плюси і мінуси. \nЛінк на гру:",
   },
   {
     src: dinofrozone,
     name: "Імператор Ніцерон",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
   {
     src: dinofroztwo,
     name: "Генерал Влад (2 сезон)",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
   {
     src: dinofrozthree,
     name: "Прев'ю мультфільму",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
   {
     src: dinofrozfour,
     name: "Драгемон (2 сезон)",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
   {
     src: dinofrozfive,
     name: "Мелтстон",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
   {
     src: dinofrozsix,
-    name: "Дракони (Епізод)",
-    category: "Дракони",
+    name: "Переміщення у часі",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
   {
     src: dinofrozseven,
     name: "Генерал Влад (1 сезон)",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
   {
     src: dinofrozeight,
     name: "Генерал Трік (1 сезон)",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
   {
     src: dinofroznine,
     name: "Погляд у Рокфроз",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
   {
     src: fingerdash,
     name: "Замок Ніцерона",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
   {
     src: nicerone,
     name: "Іще варіант",
-    category: "Дракони",
+    category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
   },
-  //
-  // {
-  //   src: dinofrozFullVideo,
-  //   name: "Динофроз (повне відео)",
-  //   category: "Дракони",
-  //   author: "Mondo TV",
-  //   source: "м/с Динофроз",
-  //   start: 0,
-  //   end: 30,
-  // },
   // Тварини та Істоти (Індики, Коні)
   {
     src: horse,
     name: "Кінь",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "Генерація ШІ(Gemini)",
   },
   {
     src: turkeys,
     name: "Індичка Кейт",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
   },
   {
     src: turkeysone,
     name: "Мале бундюче стадо",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
   },
   {
     src: turkeytwo,
     name: "Малий, але впевнений",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
   },
   {
     src: turkeythree,
     name: "Дивись мені в очі!",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
   },
   {
     src: turkeyfour,
     name: "І знову про індиків",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
   },
   {
     src: turkeyfive,
     name: "2 Індики",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
   },
   {
     src: turkeysix,
     name: "Ми вже виросли!",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
   },
   {
     src: turkeyseven,
     name: "Шукаю друга",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
   },
   // Природа та Локації (Пустеля, Болото, Азіум)
   {
-    src: backrooms, 
+    src: backrooms,
     name: "Нескінченний коридор",
-    category: "Хоррор", 
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
     description:
       "Знайомий, але глибоко тривожний образ 'місця-порогу'. Цей фон викликає ефект 'ценонопсії' — відчуття моторошної порожнечі в місці, яке зазвичай повне людей. Симетрія заспокоює, але ледь помітний силует у темряві змушує постійно перевіряти, чи ви дійсно тут одні. Ідеально для тих, хто любить гострі відчуття та психологічні загадки. Викликає вряжання, ніби це бекрумс... Навіть мені і спокійно і тривожно дивитись на це...",
@@ -468,7 +458,7 @@ description:
   {
     src: desertone,
     name: "Кораблі у пустелі",
-    category: "Локації",
+    category: "Фентезі та Легенди",
     author: "Генерація ШІ (Gemini)",
     description:
       "Сюрреалістичний та заворожуючий образ піщаних морів. Він відображає відчуття плину часу, замисленість та схильність шукати неординарні сенси там, де інші бачать лише пустку.",
@@ -476,7 +466,7 @@ description:
   {
     src: deserttwo,
     name: "Пустельні міражі",
-    category: "Локації",
+    category: "Фентезі та Легенди",
     author: "Генерація ШІ (Gemini)",
     description:
       "Образ ілюзій, мрій та вислизаючої краси. Цей фон пасує мрійливим натурам із багатою уявою, які прагнуть вийти за межі повсякденної реальності та відшукати власну істину.",
@@ -484,7 +474,7 @@ description:
   {
     src: desertthree,
     name: "Кактуси",
-    category: "Локації",
+    category: "Природа та Стихії",
     author: "Генерація ШІ (Gemini)",
     description:
       "Символ витривалості, непохитності та життєвої сили. Цей фон обирають люди з міцним внутрішнім стержнем, які вміють зберігати оптимізм і квітнути навіть у найсуворіших обставинах.",
@@ -492,7 +482,7 @@ description:
   {
     src: desertfour,
     name: "Піраміда",
-    category: "Локації",
+    category: "Фентезі та Легенди",
     author: "Генерація ШІ (Gemini)",
     description:
       "Символ монументальності, стабільності та стародавньої мудрості. Цей образ підходить тим, хто цінує структуру, прагне до високих цілей та надихається величчю історії.",
@@ -500,7 +490,7 @@ description:
   {
     src: swampnine,
     name: "Озеро волі",
-    category: "Локації",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Тиха та освіжаюча локація, що випромінює спокій та гармонію. Цей фон підійде тим, хто прагне емоційного перезавантаження, цінує внутрішню свободу та відчуття чистоти.",
@@ -508,7 +498,7 @@ description:
   {
     src: swamptwo,
     name: "Записка",
-    category: "Локації",
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
     description:
       "Атмосферний та інтимний сюжет, оповитий таємницею. Шанувальники цього фону зазвичай уважні до деталей, схильні до ностальгії та цінують глибокі особисті історії.",
@@ -516,7 +506,7 @@ description:
   {
     src: asiumten,
     name: "Зимовий ліс",
-    category: "Локації",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Атмосфера кришталевої тиші, свіжості та спокою. Цей фон обирають люди, які відновлюють сили у мовчазній споглядальності, цінують чистоту думок та затишок засніженої природи.",
@@ -524,7 +514,7 @@ description:
   {
     src: asiumeleven,
     name: "Водоспад",
-    category: "Локації",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Джерело безперервного руху, відновлення та природної енергії. Фон пасує тим, хто шукає натхнення у динаміці життя, цінує відчуття свіжості та прагне гармонійного розвитку.",
@@ -533,7 +523,7 @@ description:
   {
     src: asiumtwo,
     name: "Поле і сакури",
-    category: "Фентезі",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Ніжний та естетичний пейзаж, що випромінює гармонію, цвітіння та весняне оновлення. Його обирають романтичні натури, які цінують витончену красу моменту й естетику східної культури.",
@@ -541,7 +531,7 @@ description:
   {
     src: asiumthree,
     name: "Печера",
-    category: "Фентезі",
+    category: "Фентезі та Легенди",
     author: "TheTurkeyStudio",
     description:
       "Потаємне та захищене місце, сповнене прадавніх загадок. Підходить для допитливих інтровертів, які цінують відчуття затишку, безпеки та люблять відкривати приховані таємниці.",
@@ -549,7 +539,7 @@ description:
   {
     src: asiumfour,
     name: "Річка з лави",
-    category: "Фентезі",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Палка, експресивна та стихійна локація. Відображає внутрішній вогонь, сильну енергетику, рішучість та сміливість долати будь-які перешкоди на своєму шляху.",
@@ -557,7 +547,7 @@ description:
   {
     src: asiumfive,
     name: "Спуск з гори",
-    category: "Фентезі",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Захоплюючий краєвид та відчуття руху вперед. Цей фон приваблює цілеспрямованих людей, цінителів пригод та тих, хто любить долати нові вершини й насолоджуватися результатом.",
@@ -565,7 +555,7 @@ description:
   {
     src: asiumsix,
     name: "Скарбниця + Відсилки",
-    category: "Фентезі",
+    category: "Фентезі та Легенди",
     author: "TheTurkeyStudio",
     description:
       "Атмосфера багатства, секретів та численних великодок. Ідеально підходить для допитливих та уважних глядачів, які люблять помічати дрібні деталі та розгадувати підтексти.",
@@ -573,7 +563,7 @@ description:
   {
     src: asiumseven,
     name: "Японський балкон",
-    category: "Фентезі",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     description:
       "Затишне та заспокійливе місце з гарним краєвидом. Створює відчуття мовчазного спокою, вечірньої рефлексії та приємної гармонії з навколишнім світом.",
@@ -581,7 +571,7 @@ description:
   {
     src: harmony,
     name: "Японський храм",
-    category: "Фентезі",
+    category: "Фентезі та Легенди",
     author: "TheTurkeyStudio",
     description:
       "Оселя східної мудрості, медитативності та духовної рівноваги. Цей фон обирають люди, які прагнуть знайти внутрішній баланс, цінують традиції та спокійне споглядання.",
@@ -589,7 +579,7 @@ description:
   {
     src: mia,
     name: "Міа та я",
-    category: "Фентезі",
+    category: "Фентезі та Легенди",
     author: "Studio 100 Media, Lucky Punch, March Ent.",
     source: "м/с Mia and Me",
     description:
@@ -599,37 +589,37 @@ description:
   {
     src: horror,
     name: "Бійцівська собака",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "Генерація ШІ(Gemini)",
   },
   {
     src: horrortwo,
     name: "Будинок з пастками",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "Генерація ШІ(Gemini)",
   },
   {
     src: horrorthree,
     name: "Підвал",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "Генерація ШІ(Gemini)",
   },
   {
     src: horrorfour,
     name: "Город зла",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "Генерація ШІ(Gemini)",
   },
   {
     src: horrorsix,
     name: "Втеча",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "Генерація ШІ(Gemini)",
   },
   {
     src: daysVideo,
     name: "Касета, що вбиває",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "Dreamworks",
     source: "Фільм 'Дзвінок'",
     start: 0,
@@ -640,33 +630,33 @@ description:
   {
     src: horroreight,
     name: "Втеча (фінал)",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "Генерація ШІ(Gemini)",
   },
   {
     src: swampeight,
     name: "Болотний дракон",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
   },
-  { src: penny, name: "Пеннівайз", category: "Хоррор", author: "" },
+  { src: penny, name: "Пеннівайз", category: "Темрява та Містика", author: "" },
   {
     src: deadlocked,
     name: "Болото мук",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
   },
   // Ігри та Техно
   {
     src: theorytwo,
     name: "Чорна діра",
-    category: "Локації",
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
   },
   {
     src: theorytwoVideo,
     name: "Чорна діра(Відео)",
-    category: "Локації",
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
     start: 0,
     end: 300,
@@ -674,19 +664,19 @@ description:
   {
     src: electrodynamix,
     name: "Гроза",
-    category: "Стихія",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
   },
   {
     src: mecha,
     name: "Шестерні",
-    category: "Локації",
+    category: "Фентезі та Легенди",
     author: "TheTurkeyStudio",
   },
   {
     src: clubstepVideo,
     name: "Невідоме місце(Відео)",
-    category: "Локації",
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
     start: 0,
     end: 300,
@@ -694,59 +684,58 @@ description:
   {
     src: clubstep,
     name: "Невідоме місце",
-    category: "Локації",
-        description:
-      "",
+    category: "Темрява та Містика",
+    description: "",
     author: "TheTurkeyStudio",
   },
   {
     src: theory,
     name: "Вогнище",
-    category: "Локації",
-        description:
+    category: "Природа та Стихії",
+    description:
       "Цей фон створює атмосферу тепла та безпеки, символізуючи спільність та затишок. Люди, які обирають його, часто мають схильність до соціальної взаємодії, цінують дружбу та сімейні зв'язки. Вони можуть відчувати потребу у підтримці та взаєморозумінні, прагнуть створювати комфортне середовище для себе та оточуючих.",
     author: "TheTurkeyStudio",
   },
   {
     src: theoryVideo,
     name: "Вогнище(Відео)",
-    category: "Локації",
+    category: "Природа та Стихії",
     author: "TheTurkeyStudio",
     start: 0,
     end: 300,
-        description:
+    description:
       "Цей фон створює атмосферу тепла та безпеки, символізуючи спільність та затишок. Люди, які обирають його, часто мають схильність до соціальної взаємодії, цінують дружбу та сімейні зв'язки. Вони можуть відчувати потребу у підтримці та взаєморозумінні, прагнуть створювати комфортне середовище для себе та оточуючих.",
   },
-  { src: chess, name: "Шахи", category: "Локації", author: "TheTurkeyStudio" },
+  { src: chess, name: "Шахи", category: "Природа та Стихії", author: "TheTurkeyStudio" },
   {
     src: swampthree,
     name: "Підказка свічки",
-    category: "Хоррор",
+    category: "Темрява та Містика",
     author: "TheTurkeyStudio",
   },
   {
     src: swampsix,
     name: "Печера кристалів",
-    category: "Хоррор",
+    category: "Фентезі та Легенди",
     author: "TheTurkeyStudio",
   },
-  // Pesimism
+  // Трагедія та Драматичні сюжети
   {
     src: titanic,
     name: "Титанік",
-    category: "Майбутне",
+    category: "Темрява та Містика",
     author: "Paramount Pictures & 20th Century",
     source: "Фільм Titanic (1997)",
-        description:
+    description:
       "Цей фон відображає трагедію та величність історії, символізуючи людську амбіцію, крихкість життя та силу природи. Люди, які обирають цей фон, часто мають схильність до роздумів про минуле, цінують історичні події та шукають глибокі сенси у житті. Вони можуть відчувати емпатію до людських переживань та прагнуть зрозуміти уроки минулого для формування кращого майбутнього.",
   },
   {
     src: smit,
     name: "Агент Сміт",
-    category: "Майбутне",
+    category: "Темрява та Містика",
     author: "WarnerBrothers",
     source: "Фільм 'Матриця'",
-        description:
+    description:
       "Цей фон відображає складність та багатогранність сучасного світу, символізуючи боротьбу між реальністю та ілюзією. Люди, які обирають цей фон, часто мають схильність до критичного мислення, цікавляться технологіями та філософськими питаннями. Вони можуть відчувати потребу у глибокому аналізі навколишнього світу та прагнуть зрозуміти сутність людської природи.",
   },
 ];
