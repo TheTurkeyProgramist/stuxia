@@ -206,8 +206,8 @@ const PlaylistItem = styled.div`
 const PlaylistImageWrapper = styled.div`
   position: relative;
   z-index: 100;
-  width: 191px;
-  height: 130px;
+  width: 291px;
+  height: 190px;
   border-radius: 15px;
   overflow: hidden;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
@@ -235,11 +235,17 @@ const PlaylistTextOverlay = styled.div`
   font-size: 10px;
   padding: 5px 0;
   font-weight: 600;
-  text-transform: capitalize;
   z-index: 2;
   @media (min-width: 768px) {
     font-size: 12px;
   }
+    .sentence-case {
+  text-transform: lowercase;
+}
+
+.sentence-case::first-letter {
+  text-transform: uppercase; 
+}
 `;
 
 const ModalOverlay = styled.div`
@@ -334,7 +340,13 @@ const ModalTitle = styled.h2`
   font-size: 22px;
   margin: 0;
   font-weight: 700;
-  text-transform: capitalize;
+  .sentence-case {
+  text-transform: lowercase; 
+}
+
+.sentence-case::first-letter {
+  text-transform: uppercase; 
+}
 `;
 
 const FanBlock = styled.div`
@@ -1213,14 +1225,10 @@ const FanArt = ({
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
 
   const playlists = [
-    "Дракони",
-    "Тварини",
-    "Локації",
-    "Фентезі",
-    "Хоррор",
-    "Аркада",
-    "Майбутне",
-    "ваші картинки",
+    "Фентезі та Легенди",
+    "Природа та Стихії",
+    "Темрява та Містика",
+    "Ваші зображення",
   ];
 
   useEffect(() => {
@@ -1847,7 +1855,7 @@ const colorsXML = uniqueColors
       id: hit.id,
       src: hit.previewURL,
       largeSrc: hit.largeImageURL || hit.previewURL,
-      category: "ваші картинки",
+      category: "Ваші зображення",
       summary: hit.summary,
       cast: hit.cast,
       title: hit.name,
@@ -1895,7 +1903,7 @@ const colorsXML = uniqueColors
               id: `frame-${Date.now()}-${i}`,
               src: dataUrl,
               largeSrc: dataUrl,
-              category: videoFramesModal.category || "ваші картинки",
+              category: videoFramesModal.category || "Ваші зображення",
               name: `${videoFramesModal.name} — ${t.toFixed(1)}с`,
               author: videoFramesModal.author || "",
               source: videoFramesModal.source || "",
@@ -1952,12 +1960,12 @@ const colorsXML = uniqueColors
           const catImages = combinedImages.filter(
             (img) => img.category === category,
           );
-          if (catImages.length === 0 && category !== "ваші картинки")
+          if (catImages.length === 0 && category !== "Ваші зображення")
             return null;
           const displayImages =
             catImages.length > 0
               ? catImages
-              : [{ src: monody, category: "ваші картинки" }];
+              : [{ src: monody, category: "Ваші зображення" }];
 
           const thumbnailImages = displayImages.filter(
             (img) => !isVideoSource(img.src),
@@ -2006,7 +2014,7 @@ const colorsXML = uniqueColors
             </ModalHeader>
 
             <ModalBody>
-              {selectedPlaylist === "ваші картинки" && (
+              {selectedPlaylist === "Ваші зображення" && (
                 <SearchContainer>
                   <p
                     style={{
@@ -2280,7 +2288,7 @@ const colorsXML = uniqueColors
                             >
                               <LuWallpaper />
                             </ActionButton>
-                            {selectedPlaylist === "ваші картинки" && (
+                            {selectedPlaylist === "Ваші зображення" && (
                                <Tooltip content="Видалити зображення" isDarkMode={isDarkMode}>                      
                               <ActionButton
                                 onClick={() =>

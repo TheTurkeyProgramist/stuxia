@@ -3001,7 +3001,7 @@ const Hero = ({
         return {
           active: true,
           color: "#ff5252",
-          label: "З ДНЕМ НАРОДЖЕННЯ! 🎂",
+          label: "З ДНЕМ НАРОДЖЕННЯ!",
         };
       }
     }
@@ -3261,8 +3261,8 @@ const Hero = ({
         placeholder="Наприклад: Europe/Warsaw"
         style={{
           width: "100%",
-          padding: "10px 110px 10px 10px", // Додано правий padding, щоб текст не налізав на кнопку
-          borderRadius: "5px",
+          padding: "10px 110px 10px 10px", 
+         borderRadius: "5px",
           border: "1px solid #ffb36c",
           background: "#111",
           color: "#fff",
@@ -3905,14 +3905,11 @@ const Hero = ({
                       cursor: "pointer",
                     }}
                   >
-                    <option value="all">Усі</option>
-                    <option value="Дракони">🐉 Дракони</option>
-                    <option value="Стихія">🐾 Стихія та тварини</option>
-                    <option value="Локації">🏰 Локації і предмети</option>
-                    <option value="Фентезі">✨ Фентезі</option>
-                    <option value="Хоррор">💀 Хоррор</option>
-                    <option value="Майбутне">🔮 Песимізм</option>
-                    <option value="Скріншоти">📸 Скріншоти</option>
+                    <option value="all">Усі зображення</option>
+                    <option value="Природа та Стихії">Природа та Стихії</option>
+                    <option value="Фентезі та Легенди">Фентезі та Легенди</option>
+                    <option value="Темрява та Містика">Темрява та Містика</option>
+                    {/* <option value="Скріншоти">📸 Скріншоти</option> */}
                     <option value="custom">📁 Ваші завантажені</option>
                   </select>
                 </div>
