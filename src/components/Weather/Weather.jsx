@@ -756,48 +756,6 @@ const ViewToggleButton = styled.button`
   }
 `;
 
-const DailyDetailOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: ${(props) =>
-    props.$isDarkMode ? "rgba(30, 30, 30, 0.98)" : "rgba(255, 255, 255, 0.98)"};
-  color: ${(props) => (props.$isDarkMode ? "#fff" : "#333")};
-  z-index: 999;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  animation: ${expandDown} 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
-  overflow: hidden;
-  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.25);
-
-  h3 {
-    font-size: 1.2rem;
-    color: #ffb36c;
-  }
-  p {
-    font-size: 14px;
-    margin: 5px 0;
-  }
-`;
-
-const ScrollableContent = styled.div`
-  flex: 1;
-  width: 100%;
-  padding: 0 20px 20px 20px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #ffb36c;
-    border-radius: 10px;
-  }
-`;
-
 const SettingsDropdownMenu = styled.div`
   position: absolute;
   top: -10px;
@@ -1043,7 +1001,6 @@ const WeatherCardComponent = ({
     const targetHeight = Math.max(el.scrollHeight, window.innerHeight, 600);
     
     if (!wasChartFullscreen) {
-      // Ховаємо справжній великий графік за межі екрану
       el.style.cssText += `
         position: fixed !important;
         top: -9999px !important;
@@ -3539,7 +3496,7 @@ const HOLIDAYS_2027 = {
             width: "100%",
             height: "100%",
             background: "rgba(0,0,0,0.75)",
-            zIndex: 4000,
+            zIndex: 1300,
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -3597,7 +3554,7 @@ const HOLIDAYS_2027 = {
             width: "100%",
             height: "100%",
             background: "rgba(0,0,0,0.6)",
-            zIndex: 3000,
+            zIndex: 1300,
             display: "flex",
             justifyContent: "center",
             alignItems: "center",

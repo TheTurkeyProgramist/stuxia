@@ -185,7 +185,6 @@ const AchivmentsModal = lazy(
 );
 //const Puzzles = lazy(() => import("./components/Puzzles/Puzzles.jsx"));
 const ClimateMap = lazy(() => import("./components/ClimateMap/ClimateMap.jsx"));
-const MusicPhoto = lazy(() => import("./components/MusicPhoto/MusicPhoto.jsx"));
 const Modal = lazy(() => import("./components/Modals/Modal.jsx"));
 const LoginModal = lazy(() => import("./components/Modals/LoginModal.jsx"));
 const UserSettingsModal = lazy(
@@ -368,7 +367,7 @@ const CarouselSideButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  z-index: 501;
+  z-index: 1801;
   
   border: 2px solid #00ffe5;
   border-radius: 6px;
@@ -473,7 +472,7 @@ const CarouselPageButton = styled.button`
 
 const WeatherCarouselWrapper = styled.div`
   position: relative;
-  z-index: 1000;
+  z-index: 1800;
   isolation: isolate;
 `;
 
@@ -661,7 +660,7 @@ const UpdateTimerBadge = styled.div`
   border-radius: 7px;
   font-size: 12px;
   font-weight: 900;
-  z-index: 499;
+  z-index: 1998;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
@@ -796,19 +795,6 @@ const SectionContent = memo(
         )}
         {section.key === "aihelp" && (
           <Aihelp isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
-        )}
-
-        {section.key === "music" && (
-          <MusicPhoto
-            isStickyBgMode={isStickyBgMode}
-            user={user}
-            onFsToggle={setIsFsActive}
-            isAnyModalOpen={isAnyModalOpen}
-            onUpdateUser={onUpdateUser}
-            isDarkMode={isDarkMode}
-            isAuthorsDirectoryOpen={isAuthorsDirectoryOpen}
-            onCloseAuthorsDirectory={() => setIsAuthorsDirectoryOpen(false)}
-          />
         )}
         {section.key === "fanart" && (
           <FanArt
@@ -1182,7 +1168,6 @@ const App = () => {
     import("./components/Modals/AchivmentsModal.jsx");
     // import("./components/Puzzles/Puzzles.jsx");
     import("./components/ClimateMap/ClimateMap.jsx");
-    import("./components/MusicPhoto/MusicPhoto.jsx");
     import("./components/Modals/Modal.jsx");
     import("./components/Modals/LoginModal.jsx");
     import("./components/Modals/UserSettingsModal.jsx");
