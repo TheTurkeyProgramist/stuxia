@@ -67,7 +67,7 @@ const HeaderDiv = styled.div`
   color: ${(props) => (props.$isDarkMode ? "white" : "#000000")};
   top: 0;
   left: 0;
-  z-index: 1000;
+  z-index: 1900;
   transition:
     background-color 0.4s ease,
     backdrop-filter 0.4s ease;
