@@ -947,13 +947,11 @@ const SuggestionsList = styled.div`
   border-radius: 0 0 15px 15px;
   z-index: 9999;
   display: flex;
+   width: 99.7%;
   flex-direction: column;
   max-height: 350px;
   overflow-y: auto;
   border: 1px solid rgb(0, 0, 0);
-  @media (min-width: 1200px) {
-      width: 99.7%;
-  }
 `;
 
 const SuggestionItem = styled.button`

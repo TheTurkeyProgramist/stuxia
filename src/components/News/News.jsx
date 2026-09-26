@@ -1,8 +1,10 @@
-﻿import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import styled, { keyframes, css } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import localforage from "localforage";
 import rainbow from "../../photos/vip-images/stars.webp";
+import { DEFAULT_BGS } from "../Hero/defaultBgs.js";
 import NewsAiModal from "./NewsAiModal";
 import InfoModal from "../Modals/UserSearchModal.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
@@ -157,6 +159,16 @@ const SOURCES = [
     url: "https://phys.org/rss-feed/biology-news/animals-news/",
     name: "Phys.org",
     home: "https://phys.org",
+  },
+  {
+    url: "https://www.sciencedaily.com/rss/top/environment.xml",
+    name: "ScienceDaily",
+    home: "https://www.sciencedaily.com",
+  },
+  {
+    url: "https://www.nature.com/nature.rss",
+    name: "Nature",
+    home: "https://www.nature.com",
   },
 ];
 
@@ -533,13 +545,13 @@ const NewsSettingsBtn = styled(CardAction)`
 const NewsSettingsMenu = styled.div`
   position: absolute;
   top: 39px;
-  left: -260px;
+  left: -439%;
   background: rgba(30, 30, 30, 0.97);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  min-width: 310px;
+  width: 450%;
   height: 145px;
   z-index: 20;
   overflow: hidden;
@@ -553,7 +565,7 @@ const NewsSettingsItem = styled.button`
   padding: 3px;
   background: transparent;
   color: ${(props) => props.$color || "#fff"};
-  font-size: 15px;
+  font-size: 13px;
   text-align: left;
   border: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
@@ -617,6 +629,74 @@ const ModalContent = styled.div`
   position: relative;
 `;
 
+const FullscreenModalOverlay = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  flex-direction: column;
+  z-index: 100000;
+  padding: 5px;
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+`;
+
+const FullscreenModalContent = styled.div`
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  color: #ffffff;
+  overflow-y: auto;
+  padding-right: 8px;
+`;
+
+const SourceRowSection = styled.div`
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const SourceRowHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffaa00;
+  border-bottom: 1px solid rgba(255, 170, 0, 0.3);
+  padding-bottom: 6px;
+`;
+
+const HorizontalRowScroll = styled.div`
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 10px 4px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: #ffaa00 #1a1a1a;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #ffaa00;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+
+  & > div {
+    flex: 0 0 280px;
+    width: 280px;
+  }
+`;
+
 const CloseButton = styled.button`
   background: #ffb36c;
   color: #000;
@@ -627,6 +707,9 @@ const CloseButton = styled.button`
   float: right;
   font-weight: 600;
 `;
+
+// Набір вже вбудованих джерел (для яких не показуємо кнопку скарги)
+const BUILTIN_SOURCE_NAMES = new Set(SOURCES.map((s) => s.name));
 
 const NewsCard = ({
   item,
@@ -643,6 +726,8 @@ const NewsCard = ({
   const [isVisible, setIsVisible] = useState(item.isNew);
   const [hasGeminiKey, setHasGeminiKey] = useState(false);
   const [isNewsSettingsOpen, setIsNewsSettingsOpen] = useState(false);
+  // Lazy-load: показуємо реальне зображення лише коли картка входить у viewport
+  const [imgSrc, setImgSrc] = useState(null);
 
   useEffect(() => {
     const checkKey = async () => {
@@ -654,6 +739,31 @@ const NewsCard = ({
     window.addEventListener("geminiKeyChanged", handleKeyChange);
     return () => window.removeEventListener("geminiKeyChanged", handleKeyChange);
   }, []);
+
+
+  // IntersectionObserver: вантажимо зображення лише коли картка входить у viewport.
+  // Якщо реального зображення немає — беремо детерміноване фото з DEFAULT_BGS.
+  useEffect(() => {
+    if (!showImage) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          observer.disconnect();
+          if (item.displayImage && item.displayImage !== rainbow) {
+            setImgSrc(item.displayImage);
+          } else {
+            // Немає обкладинки — підбираємо стабільне фото з бібліотеки сайту
+            setImgSrc(getNewsFallbackImage(item.link || item.title || ""));
+          }
+        }
+      },
+      { rootMargin: "300px", threshold: 0 },
+    );
+
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [item.displayImage, item.link, showImage]);
 
   useEffect(() => {
     if (!item.isNew) return;
@@ -805,7 +915,7 @@ const NewsCard = ({
                   setIsNewsSettingsOpen(false);
                 }}
               >
-                <FiPlus size={49} /> Прикріпити до ШІ
+                <FiPlus style={{fontSize: "57px"}} /> Прикріпити до ШІ
               </NewsSettingsItem>
               <NewsSettingsItem
                 onClick={() => {
@@ -825,7 +935,7 @@ const NewsCard = ({
               >
                  <FaClapperboard size={34} /> Копіювати шлях
               </NewsSettingsItem>
-              {item.sourceName !== "Phys.org" && (
+              {!BUILTIN_SOURCE_NAMES.has(item.sourceName) && (
                 <NewsSettingsItem
                   $color="#ff6b6b"
                   onClick={(e) => {
@@ -833,7 +943,7 @@ const NewsCard = ({
                     setIsNewsSettingsOpen(false);
                   }}
                 >
-                  <MdReport size={34} /> Поскаржитися
+                  <MdReport size={34} /> Подати скаргу
                 </NewsSettingsItem>
               )}
               <NewsSettingsItem
@@ -852,8 +962,10 @@ const NewsCard = ({
         </CardActions>
         {showImage && (
           <NewsImg
-            src={item.displayImage}
+            src={imgSrc || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
             alt=""
+            loading="lazy"
+            decoding="async"
             onError={(e) => {
               e.target.onerror = null;
               e.target.src = rainbow;
@@ -942,10 +1054,11 @@ const FilterBtn = styled.button`
   background: ${(props) => (props.$active ? "#5a3f27" : "rgb(26, 49, 56)")};
   color: #ffffff;
   border-radius: 5px;
-  padding: 1px 5px;
+  padding: 5px 15px;
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
+  text-align: start;
   font-weight: 600;
   &:hover {
     background: rgba(255, 179, 108, 0.3);
@@ -1014,6 +1127,49 @@ const getYoutubeThumbnail = (videoUrl) => {
     return `https://i.ytimg.com/vi/${match[2]}/hqdefault.jpg`;
   }
   return null;
+};
+
+/**
+ * Витягує перше зображення з HTML-вмісту RSS-статті.
+ * Потрібно для джерел (ScienceDaily, Nature тощо), які не містять
+ * окремого поля thumbnail/enclosure, але мають <img> у content/description.
+ */
+const extractImageFromContent = (item) => {
+  // 1. Спробуємо enclosure (стандартне поле RSS)
+  if (item.enclosure?.link && item.enclosure.link.match(/\.(jpe?g|png|webp|gif)/i)) {
+    return item.enclosure.link;
+  }
+  // 2. Спробуємо thumbnail (rss2json)
+  if (item.thumbnail && item.thumbnail.startsWith("http")) {
+    return item.thumbnail;
+  }
+  // 3. Шукаємо <img src="..."> у полях content і description
+  const html = item.content || item.description || "";
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (match && match[1] && match[1].startsWith("http")) {
+    return match[1];
+  }
+  return null;
+};
+
+/**
+ * Масив лише зображень (без відео) з DEFAULT_BGS — для запасних обкладинок новин.
+ */
+const NEWS_FALLBACK_IMAGES = DEFAULT_BGS
+  .filter((bg) => /\.(webp|jpe?g|png|gif)(\?.*)?$/i.test(bg.src || ""))
+  .map((bg) => bg.src);
+
+/**
+ * Повертає стабільне (детерміноване за URL статті) запасне зображення.
+ * Один і той самий URL → завжди одне й те ж фото, без мигання при рендері.
+ */
+const getNewsFallbackImage = (link) => {
+  if (!NEWS_FALLBACK_IMAGES.length) return rainbow;
+  let hash = 0;
+  for (let i = 0; i < link.length; i++) {
+    hash = (hash * 31 + link.charCodeAt(i)) & 0xffffffff;
+  }
+  return NEWS_FALLBACK_IMAGES[Math.abs(hash) % NEWS_FALLBACK_IMAGES.length];
 };
 
 const fetchWithProxyFallback = async (url) => {
@@ -1632,10 +1788,11 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             if (data.status === "ok" && data.items.length > 0) {
               const itemsWithSource = data.items.map((item) => {
                 const ytThumb = getYoutubeThumbnail(item.link);
+                const extractedImg = extractImageFromContent(item);
                 return {
                   ...item,
-                  thumbnail: ytThumb || item.thumbnail || "",
-                  displayImage: ytThumb || item.thumbnail || rainbow,
+                  thumbnail: ytThumb || extractedImg || "",
+                  displayImage: ytThumb || extractedImg || rainbow,
                   sourceName: source.name,
                   sourceFlag: source.flag,
                   sourceHome: source.home,
@@ -1683,8 +1840,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       });
       if (isMounted.current) setFilteredNewsCount(uniqueLinks.length);
 
-      // Збільшуємо кількість новин до 15
-      const limited = clean.slice(0, 15);
+      // Збільшуємо кількість новин до 45
+      const limited = clean.slice(0, 45);
       const results = new Array(limited.length);
       const toTranslateIndices = [];
       const stringsToTranslate = [];
@@ -1701,6 +1858,11 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         if (cached) {
           results[i] = {
             ...cached,
+            // Якщо старий кеш містить лише запасне фото — беремо свіже зображення зі статті
+            displayImage:
+              cached.displayImage && cached.displayImage !== rainbow
+                ? cached.displayImage
+                : item.displayImage || rainbow,
             sourceName: item.sourceName,
             sourceFlag: item.sourceFlag,
             sourceHome: item.sourceHome,
@@ -1761,8 +1923,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             const idx = batch.indices[j];
             const item = limited[idx];
             const bestImg =
-              (item.enclosure && item.enclosure.link) ||
-              item.thumbnail ||
+              extractImageFromContent(item) ||
               rainbow;
 
             const translatedItem = {
@@ -1790,10 +1951,17 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       if (showLoader && isMounted.current) setLoadProgress(100);
       const allKeys = await localforage.keys();
       const newsCacheKeys = allKeys.filter((k) => k.startsWith("news_trans_"));
-      const currentActiveKeys = limited.map((i) => `news_trans_${i.link}`);
+      const ogCacheKeys = allKeys.filter((k) => k.startsWith("og_img_"));
+      const currentActiveNewsKeys = limited.map((i) => `news_trans_${i.link}`);
+      const currentActiveOgKeys = limited.map((i) => `og_img_${i.link}`);
 
       for (const key of newsCacheKeys) {
-        if (!currentActiveKeys.includes(key)) {
+        if (!currentActiveNewsKeys.includes(key)) {
+          await localforage.removeItem(key);
+        }
+      }
+      for (const key of ogCacheKeys) {
+        if (!currentActiveOgKeys.includes(key)) {
           await localforage.removeItem(key);
         }
       }
@@ -1827,7 +1995,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   });
 
   const displayedItems = filteredItems
-    .slice(0, 15)
+    .slice(0, 45)
     .map((item) => ({ ...item, isMuted: mutedNewsUrls.includes(item.link) }));
   const infiniteItems =
     displayedItems.length > 0
@@ -2180,6 +2348,15 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   const showTitle = isVisible("title");
   const showDescription = isVisible("description");
 
+  const [isFullscreenNewsOpen, setIsFullscreenNewsOpen] = useState(false);
+
+  const groupedBySource = displayedItems.reduce((acc, item) => {
+    const source = item.sourceName || "Джерело";
+    if (!acc[source]) acc[source] = [];
+    acc[source].push(item);
+    return acc;
+  }, {});
+
   return (
     <NewsDiv ref={newsSectionRef}>
       <Decoder $isStickyBgMode={isStickyBgMode} $isDarkMode={$isDarkMode}>
@@ -2187,7 +2364,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           <FilterBtn
             ref={(el) => registerRef('newsHeader', el)}
             $isDarkMode={$isDarkMode}
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+            onClick={() => setIsFullscreenNewsOpen(true)}
             style={{ marginLeft: "5px", padding: "2px", fontSize: "15px", fontWeight: "600", background: "none"}}
           >
             Натисніть для додавання стрічки новин
@@ -2463,6 +2640,209 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             )}
           </ModalContent>
         </ModalOverlay>
+      )}
+
+      {createPortal(
+        <AnimatePresence>
+          {isFullscreenNewsOpen && (
+            <FullscreenModalOverlay
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.25 }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  width: "100%",
+                  zIndex: "3000",
+                  margin: "0 auto 16px auto",
+                  paddingBottom: "3px",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
+                }}
+              >
+                <h2 style={{ margin: 0, color: "#ffaa00", fontSize: "15px" }}>
+                  Повноекранні новини та керування стрічками
+                </h2>
+                <CloseButton
+                  onClick={() => setIsFullscreenNewsOpen(false)}
+                  style={{ fontSize: "16px", padding: "6px 16px" }}
+                >
+                  Закрити
+                </CloseButton>
+              </div>
+
+              <FullscreenModalContent>
+                {/* Панель керування стрічками новин */}
+                <div
+                  style={{
+                    background: "rgba(20, 20, 20, 0.8)",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    marginBottom: "20px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                  }}
+                >
+                  <div style={{ marginBottom: "10px", fontWeight: "600", fontSize: "14px" }}>
+                    Налаштування та вибір авторів / джерел:
+                  </div>
+                  <FilterContainer style={{ justifyContent: "flex", width: "100%", flexDirection: "column" }}>
+                    <FilterBtn
+                      $isDarkMode={$isDarkMode}
+                      onClick={() => setIsHelpModalOpen(true)}
+                    >
+                      Інструкція
+                    </FilterBtn>
+                    <FilterBtn
+                      $isDarkMode={$isDarkMode}
+                      $active={filterSources.includes("all")}
+                      onClick={() => handleToggleFilter("all")}
+                    >
+                      {filterSources.includes("all") ? "☑" : "☐"} Усі
+                    </FilterBtn>
+                    {SOURCES.map((s) => (
+                      <FilterBtn
+                        key={s.name}
+                        $isDarkMode={$isDarkMode}
+                        $active={filterSources.includes(s.name)}
+                        onClick={() => handleToggleFilter(s.name)}
+                      >
+                        {filterSources.includes(s.name) ? "☑" : "☐"} {s.name}
+                      </FilterBtn>
+                    ))}
+                    {customSources.map((s) => (
+                      <FilterBtn
+                        key={s.url}
+                        $isDarkMode={$isDarkMode}
+                        $active={filterSources.includes(s.name)}
+                        onClick={() => handleToggleFilter(s.name)}
+                      >
+                        {filterSources.includes(s.name) ? "☑" : "☐"} {s.name}
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveSource(s.url);
+                          }}
+                          style={{
+                            marginLeft: "6px",
+                            color: "#ff4d4d",
+                            fontWeight: "bold",
+                          }}
+                          aria-label="Видалити джерело"
+                        >
+                          ×
+                        </span>
+                      </FilterBtn>
+                    ))}
+                    {customSources.length < 5 && (
+                      <FilterBtn
+                        $isDarkMode={$isDarkMode}
+                        onClick={() => setIsAddingSource(!isAddingSource)}
+                        style={{ borderStyle: "dashed" }}
+                      >
+                        {isAddingSource ? "Скасувати" : "Додати стрічку"}
+                      </FilterBtn>
+                    )}
+                    <FilterBtn
+                      $isDarkMode={$isDarkMode}
+                      onClick={() => setShowBlacklist(true)}
+                      style={{
+                        background: "rgba(255, 77, 77, 0.2)",
+                        borderColor: "#ff4d4d",
+                        color: "#ff4d4d",
+                      }}
+                    >
+                      Чорний список ({blockedSources.length})
+                    </FilterBtn>
+                  </FilterContainer>
+
+                  <AnimatePresence>
+                    {isAddingSource && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        style={{ overflow: "hidden", marginTop: "10px" }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "flex-start",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <input
+                            type="text"
+                            value={newUrl}
+                            onChange={(e) => setNewUrl(e.target.value)}
+                            placeholder="Введіть URL RSS (Н-д: https://rss.com/day)"
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: "5px",
+                              border: "1px solid rgba(255, 255, 255, 0.3)",
+                              background: "#111",
+                              color: "#fff",
+                              outline: "none",
+                              minWidth: "280px",
+                              fontSize: "13px",
+                            }}
+                          />
+                          <FilterBtn
+                            $isDarkMode={$isDarkMode}
+                            onClick={handleAddSource}
+                            style={{ background: "#ffb36c", color: "#000", padding: "6px 14px" }}
+                          >
+                            Додати
+                          </FilterBtn>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                {Object.keys(groupedBySource).length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "40px", color: "#aaa" }}>
+                    Немає новин для відображення.
+                  </div>
+                ) : (
+                  Object.entries(groupedBySource).map(([sourceName, sourceItems]) => (
+                    <SourceRowSection key={sourceName}>
+                      <SourceRowHeader>
+                        <span>Автор/Джерело: {sourceName}</span>
+                        <span style={{ fontSize: "12px", fontWeight: 800 }}>
+                          ({sourceItems.length} новин)
+                        </span>
+                      </SourceRowHeader>
+                      <HorizontalRowScroll>
+                        {sourceItems.map((item, idx) => (
+                          <div key={`${item.link}-${idx}`}>
+                            <NewsCard
+                              item={item}
+                              $isDarkMode={$isDarkMode}
+                              showImage={showImage}
+                              showTitle={showTitle}
+                              showDescription={showDescription}
+                              onAiSummaryClick={(news) => {
+                                setSelectedNews(news);
+                                setIsAiModalOpen(true);
+                              }}
+                              onReportClick={handleReport}
+                              onMuteClick={handleMute}
+                              onUnmuteClick={handleUnmute}
+                            />
+                          </div>
+                        ))}
+                      </HorizontalRowScroll>
+                    </SourceRowSection>
+                  ))
+                )}
+              </FullscreenModalContent>
+            </FullscreenModalOverlay>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </NewsDiv>
   );

@@ -346,17 +346,19 @@ const WeatherCardsContainer = styled.div`
     scroll-snap-align: center;
     flex: 0 0 100%;
     width: 100%;
-    min-width: 0;
+    min-width: 100%;
+    box-sizing: border-box;
   }
 `;
 
 const CarouselNav = styled.div`
+  position: relative;
   display: flex;
   justify-content: center;
   gap: 6px;
   flex-wrap: wrap;
-  z-index: 7000;
-  margin-top: -32px;
+  z-index: 9000;
+  margin-top: -45px;
 `;
 const CarouselSideButton = styled.button`
   position: absolute;
@@ -367,7 +369,7 @@ const CarouselSideButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  z-index: 1801;
+  z-index: 9000;
   
   border: 2px solid #00ffe5;
   border-radius: 6px;
@@ -622,9 +624,15 @@ const LOADING_PHRASES = [
   "Чорний айсберг, потопив ......? ",  
     "Доміно тривожить Єллоустон",  
         "Я знаю що її звати ......",  
-        "",  
+  "Цей сайт це реальна містика :)",
+  "Доміно бажає гарної погоди :)",
+  "Кейт бажає творчого натхнення",
+  "Сутінок - не найкраще, що можете побачити...",
+    "Драконяче видання...",
+    "Марта - і картини...",
+    "Відлуння порожнечі",
         "Вам приснилися сни про погоду? Бо ви тут! :)",  
-   "Вам приснився жах що ...... і ...... програли і....",  
+   "Вам приснився жах що ...... і ...... програли і...",  
   "Ти ж знаєш, що відсилки - це не просто картинки і відео, а ще й загадки та сюжети :)",
   "Ліків у нас немає, їх украв доктор Хаус. Але погода лікує від усього :)",
 ];
@@ -1855,27 +1863,8 @@ const App = () => {
             return;
           }
 
-          if (!userRef.current) {
-            const savedLimitData = await localforage.getItem("anonCardLimit");
-            let limitData = savedLimitData || {};
-            const now = Date.now();
-
-            if (
-              !limitData.startDate ||
-              now - limitData.startDate > 7 * 24 * 60 * 60 * 1000
-            ) {
-              limitData = { startDate: now, count: 0 };
-            }
-
-            if (limitData.count >= 3) {
-              alert(
-                "Незареєстровані користувачі можуть додавати лише 3 картки на тиждень. Увійдіть в акаунт, щоб збільшити ліміт!",
-              );
-              return;
-            }
-            limitData.count += 1;
-            await localforage.setItem("anonCardLimit", limitData);
-          } else {
+          // Незареєстровані користувачі не мають ліміту на 3 картки/тиждень
+          if (userRef.current) {
             try {
               const userDocRef = doc(db, "config", userRef.current.uid);
               const userDoc = await getDoc(userDocRef);
