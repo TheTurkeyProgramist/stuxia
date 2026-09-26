@@ -1,28 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import loadtwo from "../../photos/hero-header/fogtwo.webp";
-
-const PHASE_1_INTERVAL_MS = 300;
-const PHASE_1_PHRASES = [
-  "Цей сайт це реальна містика :)",
-  "Хочеш відсилку? :)",
-  "Індики схожі?",
-  "Доміно знає Д??????са?",
-  "Точно ні, він чорний, а Доміно чорно-білий :)",
-];
-
-const PHASE_2_PHRASES = [
-  "Доміно бажає гарної погоди :)",
-  "Кейт бажає творчого натхнення",
-  "Сутінок - не найкраще, що можете побачити...",
-    "Драконяче видання...",
-    "Марта - і картини...",
-    "Відлуння порожнечі",
-    "Де він? Хто він?",
-    "Це не те, що хотів .......",
-  "??? - Я знаю його",
-  "Він скоро повернеться",
-];
 
 const DOTS_CONFIG = [
   { r: 1, c: 1, delay: "0s" },
@@ -122,27 +100,6 @@ const InfoText = styled.div`
   width: 100%;
 `;
 
-const TopLeftInfo = styled.div`
-  position: absolute;
-  top: -9px;
-  left: -7px;
-  z-index: 3;
-  color: #fff;
-  text-align: left;
-`;
-
-const VersionText = styled.p`
-  font-size: 12px;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 15px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  border-radius: 10px;
-  opacity: 0.9;
-  margin: 0;
-  font-family: "Inter", sans-serif;
-`;
-
 const PhraseText = styled.div`
   font-size: 13px;
   color: #00c6ff;
@@ -209,51 +166,21 @@ const Dot = styled.div`
 `;
 
 export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
-  const [statusText, setStatusText] = useState("Готую новини");
-
-  // Прелоад другого зображення
+  // Прелоад зображення
   useEffect(() => {
     const img = new Image();
     img.src = loadtwo;
   }, []);
 
-  useEffect(() => {
-    if (isLoading) {
-      let currentStep = 0;
-      const interval = setInterval(() => {
-        if (currentStep < PHASE_1_PHRASES.length - 1) {
-          currentStep++;
-          setStatusText(PHASE_1_PHRASES[currentStep]);
-        }
-      }, PHASE_1_INTERVAL_MS);
-
-      const randomFinalPhrase =
-        PHASE_2_PHRASES[Math.floor(Math.random() * PHASE_2_PHRASES.length)];
-
-      const finalTimeout = setTimeout(() => {
-        clearInterval(interval);
-        setStatusText(randomFinalPhrase);
-      }, 2000);
-
-      return () => {
-        clearInterval(interval);
-        clearTimeout(finalTimeout);
-      };
-    }
-  }, [isLoading]);
-
   if (!isLoading) return null;
 
   return (
     <LoaderWrapper $isFadingOut={isFadingOut}>
-      <TopLeftInfo>
-        <VersionText>v.1.0.0 | Я в Конотопі :)</VersionText>
-      </TopLeftInfo>
       <TopRightContainer>
-        <StatusText>{statusText}</StatusText>
+        <StatusText>v.1.0.0 | Я в Конотопі :)</StatusText>
         <DotGrid>
           {DOTS_CONFIG.map((dot, idx) => (
-            <Dot key={idx} $r={dot.r} $c={dot.c} $delay={dot.delay} />
+            <Dot key={idx} $r={dot.r} $c={dot.c}$delay={dot.delay} />
           ))}
         </DotGrid>
       </TopRightContainer>
@@ -263,7 +190,7 @@ export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
         </ImageContainer>
         <UIOverlay>
           <InfoText>
-            <PhraseText>{randomPhrase}</PhraseText>
+            {randomPhrase && <PhraseText>{randomPhrase}</PhraseText>}
             <CopyrightText>
               2026 Stuxia™. Всі права захищені. Автор: TheTurkeyProgramist
             </CopyrightText>
