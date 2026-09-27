@@ -1,5 +1,16 @@
 import React, { useEffect } from "react";
 import styled, { keyframes } from "styled-components";
+// Імпортуємо кольорові Simple Icons із бібліотеки react-icons/si
+import { 
+  SiVite, 
+  SiBun, 
+  SiGithub, 
+  SiCloudflare, 
+  SiFirebase, 
+  SiVisualstudiocode, 
+  SiVercel, 
+  SiHostinger // Для HostIQ часто використовують універсальні/серверні іконки або подібні брендові
+} from "react-icons/si";
 import loadtwo from "../../photos/hero-header/fogtwo.webp";
 
 const DOTS_CONFIG = [
@@ -100,6 +111,49 @@ const InfoText = styled.div`
   width: 100%;
 `;
 
+/* ===== НОВІ СТИЛІ ДЛЯ "POWERED BY" ТА ІКОНОК ===== */
+
+const PoweredByWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 8px 16px;
+  border-radius: 14px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+`;
+
+const PoweredByText = styled.span`
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 700;
+`;
+
+const IconsGrid = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  svg {
+    font-size: 18px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.15);
+    }
+  }
+`;
+
+/* ================================================ */
+
 const PhraseText = styled.div`
   font-size: 13px;
   color: #00c6ff;
@@ -166,7 +220,6 @@ const Dot = styled.div`
 `;
 
 export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
-  // Прелоад зображення
   useEffect(() => {
     const img = new Image();
     img.src = loadtwo;
@@ -190,6 +243,21 @@ export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
         </ImageContainer>
         <UIOverlay>
           <InfoText>
+            {/* Секція Powered By */}
+            <PoweredByWrapper>
+              <PoweredByText>powered by:</PoweredByText>
+              <IconsGrid>
+                <SiVite style={{ color: "#646CFF" }} title="Vite" />
+                <SiBun style={{ color: "#FBF0DF" }} title="Bun" />
+                <SiGithub style={{ color: "#FFFFFF" }} title="GitHub" />
+                <SiCloudflare style={{ color: "#F38020" }} title="Cloudflare" />
+                <SiFirebase style={{ color: "#FFCA28" }} title="Firebase" />
+                <SiVisualstudiocode style={{ color: "#007ACC" }} title="VS Code" />
+                <SiVercel style={{ color: "#FFFFFF" }} title="Vercel" />
+                <SiHostinger style={{ color: "#673DE6" }} title="HostIQ / Hosting" />
+              </IconsGrid>
+            </PoweredByWrapper>
+
             {randomPhrase && <PhraseText>{randomPhrase}</PhraseText>}
             <CopyrightText>
               2026 Stuxia™. Всі права захищені. Автор: TheTurkeyProgramist
