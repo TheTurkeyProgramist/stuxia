@@ -6,7 +6,7 @@ import {
   signInAnonymously,
   signOut,
 } from "firebase/auth";
-import { getFirestore, doc, onSnapshot } from "firebase/firestore";
+import { initializeFirestore, doc, onSnapshot } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCeoo6qt8hLP23X648LVOnqP46WzDscqvk",
@@ -19,7 +19,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {
+  experimentalAutoDetectLongPolling: true,
+});
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export { signInWithPopup, signInAnonymously, signOut };

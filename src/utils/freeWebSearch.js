@@ -47,7 +47,10 @@ export const fetchOpenMeteoWeather = async (query) => {
 
     // 1. Geocoding
     const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=uk`;
-    const geoRes = await fetch(geoUrl);
+    const geoController = new AbortController();
+    const geoTimeout = setTimeout(() => geoController.abort(), 6000);
+    const geoRes = await fetch(geoUrl, { signal: geoController.signal });
+    clearTimeout(geoTimeout);
     if (!geoRes.ok) return "";
     const geoData = await geoRes.json();
     if (!geoData.results || geoData.results.length === 0) return "";
@@ -57,7 +60,10 @@ export const fetchOpenMeteoWeather = async (query) => {
 
     // 2. Weather forecast
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,rain_sum,showers_sum,snowfall_sum,sunrise,sunset&timezone=auto&forecast_days=7`;
-    const wRes = await fetch(weatherUrl);
+    const wController = new AbortController();
+    const wTimeout = setTimeout(() => wController.abort(), 6000);
+    const wRes = await fetch(weatherUrl, { signal: wController.signal });
+    clearTimeout(wTimeout);
     if (!wRes.ok) return "";
     const wData = await wRes.json();
 

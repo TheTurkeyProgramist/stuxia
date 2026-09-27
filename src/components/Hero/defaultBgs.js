@@ -91,7 +91,7 @@ import secret from "../../photos/vip-modal/texts.webp";
 import slivkishow from "../../mp4/slivkishow.webm";
 import iceage from "../../mp4/days.mp4";
 // Dinofroz full video (excerpt only — start/end)
-import dinofrozFullVideo from "../../mp3/dinofroz.mp4";
+import dinofrozFullVideo from "../../mp3/dinofroz.webm";
 
 /**
  * DEFAULT_BGS — масив усіх вбудованих фонів.

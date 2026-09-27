@@ -374,12 +374,12 @@ const CarouselSlide = styled.div`
   opacity: ${(props) => {
     if (props.$distanceFromCenter === 0) return 1;
     if (props.$distanceFromCenter === 1) return 0.9;
-    return 0.62;
+    return 0.82;
   }};
   transform: scale(${(props) => {
     if (props.$distanceFromCenter === 0) return 1;
     if (props.$distanceFromCenter === 1) return 0.94;
-    return 0.86;
+    return 0.9;
   }});
   transform-origin: center center;
   transition: transform 0.25s ease, opacity 0.25s ease;
@@ -459,10 +459,11 @@ const NewBadge = styled.span`
   right: 4px;
   background: #ddff00;
   color: #000;
-  width: 38px;
-  height: 20px;
+  width: 80px;
+  height: 69px;
   border-radius: 4px;
-  font-size: 13px;
+  padding-left: 10px;
+  font-size: 23px;
   font-weight: 900;
   z-index: 6;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);

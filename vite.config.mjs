@@ -7,7 +7,6 @@ export default defineConfig({
   plugins: [
     react(),
 
-    // Оптимізація та стиснення підсумкових медіафайлів
     ViteImageOptimizer({
       jpg: { quality: 80 },
       jpeg: { quality: 80 },
@@ -19,13 +18,11 @@ export default defineConfig({
       },
     }),
 
-    // Стиснення gzip
     viteCompression({
       algorithm: 'gzip',
       ext: '.gz',
     }),
 
-    // Стиснення brotli
     viteCompression({
       algorithm: 'brotliCompress',
       ext: '.br',
@@ -46,16 +43,30 @@ export default defineConfig({
   },
 
   build: {
-    sourcemap: true,
+    sourcemap: false,
     chunkSizeWarningLimit: 10000,
     minify: 'esbuild', 
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('scheduler')) {
+            // Розбиваємо важкі бібліотеки на окремі файли
+            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
               return 'vendor-react';
             }
+            if (id.includes('three')) {
+              return 'vendor-three';
+            }
+            if (id.includes('@ffmpeg')) {
+              return 'vendor-ffmpeg';
+            }
+            if (id.includes('firebase')) {
+              return 'vendor-firebase';
+            }
+            if (id.includes('chart.js') || id.includes('wavesurfer') || id.includes('fabric')) {
+              return 'vendor-graphics';
+            }
+            // Усі інші сторонні бібліотеки підуть сюди
             return 'vendor';
           }
         },

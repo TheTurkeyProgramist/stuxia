@@ -498,15 +498,19 @@ const BgLayer = React.memo((props) => {
           }}
         />
       ) : (
-        <div
+        <img
+          src={url || hills}
+          alt="Геройський фон"
+          fetchPriority={$active ? "high" : "low"}
+          loading={$active ? "eager" : "lazy"}
+          decoding="async"
           style={{
             width: "100%",
             height: "100%",
-            backgroundImage: `url(${url || hills})`,
-            backgroundSize: "cover",
-            backgroundPosition: `${$focalX}% ${$focalY}%`,
-            backgroundRepeat: "no-repeat",
+            objectFit: "cover",
+            objectPosition: `${$focalX}% ${$focalY}%`,
             imageRendering: isPixelated ? "pixelated" : "auto",
+            display: "block",
           }}
         />
       )}

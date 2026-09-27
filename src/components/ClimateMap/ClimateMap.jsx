@@ -12,6 +12,7 @@ import { FaMapLocationDot } from "react-icons/fa6";
 import { LuFullscreen } from "react-icons/lu";
 import { CgMiniPlayer } from "react-icons/cg";
 import { GiLockedChest } from "react-icons/gi";
+import turkey from "../../photos/cursors/turkey.webm";
 import toast, { Toaster } from "react-hot-toast";
 // Ctrl + Shift + M: Активувати/деактивувати мапу
 // Ctrl + Shift + F: Відкрити на весь екран
@@ -387,10 +388,21 @@ const Loader = styled.div`
   display: flex;
   gap: 17px;
   flex-direction: column;
-  width: 280px;
+  width: 310px;
   text-align: center;
   z-index: 1;
   pointer-events: none;
+    p {
+    margin: 0;
+    margin-top: 1px;
+   font-size: 11px;
+    letter-spacing: 0.02em;
+    color: black;
+    background-color: #ffffffe1;
+     font-weight: 700;
+     border-radius: 7px;
+     padding: 3px;
+  }
 `;
 
 const ActionButton = styled.button`
@@ -739,6 +751,18 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [newFrameTitle, setNewFrameTitle] = useState("");
   const [newFrameUrl, setNewFrameUrl] = useState("");
 
+  const [isSlowConnection, setIsSlowConnection] = useState(() => {
+    if (typeof navigator === "undefined" || !navigator.onLine) return true;
+    if (navigator.connection) {
+      const conn = navigator.connection;
+      if (conn.saveData || ["slow-2g", "2g", "3g"].includes(conn.effectiveType)) {
+        return true;
+      }
+    }
+    return false;
+  });
+  const [videoError, setVideoError] = useState(false);
+
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -751,15 +775,36 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   }, []);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOffline(false);
+    const updateConnection = () => {
+      const online = typeof navigator !== "undefined" ? navigator.onLine : true;
+      setIsOnline(online);
+      if (!online) {
+        setIsSlowConnection(true);
+        return;
+      }
+      if (typeof navigator !== "undefined" && navigator.connection) {
+        const conn = navigator.connection;
+        setIsSlowConnection(
+          !!conn.saveData || ["slow-2g", "2g", "3g"].includes(conn.effectiveType)
+        );
+      } else {
+        setIsSlowConnection(false);
+      }
+    };
 
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    updateConnection();
+    window.addEventListener("online", updateConnection);
+    window.addEventListener("offline", updateConnection);
+    if (typeof navigator !== "undefined" && navigator.connection) {
+      navigator.connection.addEventListener("change", updateConnection);
+    }
 
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", updateConnection);
+      window.removeEventListener("offline", updateConnection);
+      if (typeof navigator !== "undefined" && navigator.connection) {
+        navigator.connection.removeEventListener("change", updateConnection);
+      }
     };
   }, []);
 
@@ -1540,20 +1585,32 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
           <>
             {(!isMapActive || isLoading || !isOnline) && (
               <Loader>
-                <img
-                  src={turkeyFrames[currentTurkeyFrame]}
-                  alt="Це Доміно :)"
-                  style={{ width: '340px', height: '210px', imageRendering: 'pixelated', marginBottom: '-50px' }}
-                />
-                <p style={{ fontSize: "17px", color: "black" }}>
+                {!isOnline || isSlowConnection || videoError ? (
+                  <img
+                    src={turkeyFrames[currentTurkeyFrame]}
+                    alt="Це Доміно :)"
+                    style={{ width: '340px', height: '210px', imageRendering: 'pixelated', marginBottom: '-50px' }}
+                  />
+                ) : (
+                  <video
+                    src={turkey}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    onError={() => setVideoError(true)}
+                    style={{ width: '340px', height: '210px', marginBottom: '-50px', objectFit: 'contain' }}
+                  />
+                )}
+                <p style={{ fontSize: "16px" }}>
                   {!isOnline
                     ? "Перевірте інтернет-з'єднання для користування картою"
                     : !isMapActive
                       ? "Натисніть на карту для активації"
                       : "Завантаження..."}
                 </p>
-                <p style={{ fontSize: "11px" }}>Інтерактивні карти надано сервісами Windy, Ventusky та Карта тривог України (містять файли cookie)</p>
-                <p style={{ fontSize: "11px" }}>Кнопка «Налаштування стихії» відкриває безкоштовний доступ до перемикання мап, повноекранний режим, міні-плеєр та інші функції!</p>
+                <p>Інтерактивні карти надано сервісами Windy, Ventusky, Карта тривог України і т.д. (містять файли cookie)</p>
+                <p>Кнопка «Налаштування стихії» відкриває безкоштовний доступ до перемикання мап, повноекранний режим, міні-плеєр та інші функції!</p>
               </Loader>
             )}
             <StyledIframe
