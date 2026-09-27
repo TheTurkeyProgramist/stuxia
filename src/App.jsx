@@ -42,7 +42,7 @@ import horrordog from "./photos/vip-images/horror/horror.webp";
 import nicerone from "./photos/vip-images/dinofroz/vip-dinofroz.webp";
 import flame from "./photos/vip-images/flame.webp";
 // Ресурси для фонового завантаження кат-сцени
-import dinofrozVideo from "./mp3/dinofroz.mp4";
+import dinofrozVideo from "./mp3/dinofroz.webm";
 import startImage from "./photos/hero-header/fogtwo.webp";
 import {
   assetMap,
@@ -175,15 +175,9 @@ const { refs, floatingStyles, context } = useFloating({
     </>
   );
 };
-const Prison = lazy(() => import("./components/Prison/Prison.jsx"));
 const Aihelp = lazy(() => import("./components/Aihelp/Aihelp.jsx"));
 const FanArt = lazy(() => import("./components/FanArt/FanArt.jsx"));
 const ShopModal = lazy(() => import("./components/Modals/ShopModal.jsx"));
-
-const AchivmentsModal = lazy(
-  () => import("./components/Modals/AchivmentsModal.jsx"),
-);
-//const Puzzles = lazy(() => import("./components/Puzzles/Puzzles.jsx"));
 const ClimateMap = lazy(() => import("./components/ClimateMap/ClimateMap.jsx"));
 const Modal = lazy(() => import("./components/Modals/Modal.jsx"));
 const LoginModal = lazy(() => import("./components/Modals/LoginModal.jsx"));
@@ -1168,13 +1162,10 @@ const App = () => {
 
   const preloadComponents = useCallback(() => {
     // Ручний виклик динамічного імпорту для кешування
-    import("./components/Prison/Prison.jsx");
     import("./components/Aihelp/Aihelp.jsx");
     import("./components/FanArt/FanArt.jsx");
     import("./components/Modals/ShopModal.jsx");
     import("./components/News/News.jsx");
-    import("./components/Modals/AchivmentsModal.jsx");
-    // import("./components/Puzzles/Puzzles.jsx");
     import("./components/ClimateMap/ClimateMap.jsx");
     import("./components/Modals/Modal.jsx");
     import("./components/Modals/LoginModal.jsx");
@@ -1837,6 +1828,7 @@ const App = () => {
           } else {
             const geo = await axios.get(
               `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityData)}&count=1&language=uk`,
+              { timeout: 8000 }
             );
             if (geo.data.results && geo.data.results[0]) {
               targetLat = geo.data.results[0].latitude;
@@ -1898,7 +1890,7 @@ const App = () => {
 
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&hourly=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset&timezone=auto&past_days=1&forecast_days=16`;
         console.log("Fetching weather from URL:", url);
-        const res = await axios.get(url);
+        const res = await axios.get(url, { timeout: 8000 });
         const d = res.data;
 
         // СИРИЙ лог для перевірки що повертає API
@@ -2153,7 +2145,7 @@ const App = () => {
           endDate.setDate(endDate.getDate() + 210);
           const fmt = (d) => d.toISOString().split("T")[0];
           const seasonalUrl = `https://seasonal-api.open-meteo.com/v1/seasonal?latitude=${targetLat}&longitude=${targetLon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&start_date=${fmt(today)}&end_date=${fmt(endDate)}`;
-          const seasonalRes = await axios.get(seasonalUrl);
+          const seasonalRes = await axios.get(seasonalUrl, { timeout: 8000 });
           const sd = seasonalRes.data;
           if (sd?.daily?.time?.length) {
             const seasonalData = sd.daily.time.map((t, i) => ({
@@ -2205,6 +2197,7 @@ const App = () => {
     try {
       const res = await axios.get(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max&timezone=auto&forecast_days=3`,
+        { timeout: 8000 }
       );
       const { current, daily } = res.data || {};
       if (!current || !daily) {

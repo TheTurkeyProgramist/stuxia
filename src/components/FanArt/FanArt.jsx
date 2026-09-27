@@ -184,6 +184,9 @@ const PlaylistContainer = styled.div`
   z-index: 100;
   scroll-padding-left: 12px;
   scroll-padding-right: 12px;
+
+  content-visibility: auto;
+  contain-intrinsic-size: auto 220px;
   &::-webkit-scrollbar {
     display: none;
     width: 0;
@@ -1160,6 +1163,47 @@ const FabricEditor = ({
   );
 };
 
+const PlaylistItemCard = React.memo(({ category, displayImages, onClick }) => {
+  const thumbnailImages = displayImages.filter(
+    (img) => !isVideoSource(img.src)
+  );
+  // Оптимізація: показуємо зациклено лише 2 зображення для плейлиста
+  const finalThumbnails = (
+    thumbnailImages.length > 0 ? thumbnailImages : displayImages
+  ).slice(0, 2);
+
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (finalThumbnails.length <= 1) return;
+    const interval = setInterval(() => {
+      setTick((prev) => (prev + 1) % finalThumbnails.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [finalThumbnails.length]);
+
+  return (
+    <PlaylistItem onClick={onClick}>
+      <PlaylistImageWrapper>
+        {finalThumbnails.map((img, index) => {
+          const isActive = index === tick;
+          return (
+            <PlaylistImage
+              key={img.src || index}
+              src={img.src}
+              loading="lazy"
+              decoding="async"
+              alt={category}
+              $isActive={isActive}
+            />
+          );
+        })}
+        <PlaylistTextOverlay>{category}</PlaylistTextOverlay>
+      </PlaylistImageWrapper>
+    </PlaylistItem>
+  );
+});
+
 const FanArt = ({
   isDarkMode,
   isStickyBgMode,
@@ -1221,7 +1265,6 @@ const FanArt = ({
     }
   }, [customImages, isHydrated]);
 
-  const [playlistTick, setPlaylistTick] = useState(0);
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
 
   const playlists = [
@@ -1230,13 +1273,6 @@ const FanArt = ({
     "Темрява та Містика",
     "Ваші зображення",
   ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaylistTick((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   const imagesForPlaylist = selectedPlaylist
     ? getRenderableImages(
@@ -1967,33 +2003,13 @@ const colorsXML = uniqueColors
               ? catImages
               : [{ src: monody, category: "Ваші зображення" }];
 
-          const thumbnailImages = displayImages.filter(
-            (img) => !isVideoSource(img.src),
-          );
-          const finalThumbnails =
-            thumbnailImages.length > 0 ? thumbnailImages : displayImages;
-
           return (
-            <PlaylistItem
+            <PlaylistItemCard
               key={category}
+              category={category}
+              displayImages={displayImages}
               onClick={() => openPlaylistModal(category)}
-            >
-              <PlaylistImageWrapper>
-                {finalThumbnails.map((img, index) => {
-                  const isActive =
-                    index === playlistTick % finalThumbnails.length;
-                  return (
-                    <PlaylistImage
-                      key={index}
-                      src={img.src}
-                      alt={category}
-                      $isActive={isActive}
-                    />
-                  );
-                })}
-                <PlaylistTextOverlay>{category}</PlaylistTextOverlay>
-              </PlaylistImageWrapper>
-            </PlaylistItem>
+            />
           );
         })}
       </PlaylistContainer>

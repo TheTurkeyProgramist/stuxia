@@ -10,11 +10,11 @@ import { FaLightbulb } from "react-icons/fa";
 import { FiSend } from "react-icons/fi";
 import { fetchFreeWebSearch } from "../../utils/freeWebSearch";
 import reader from "../../photos/cursors/reader.webp";
-import { GiSpikedDragonHead } from "react-icons/gi";
+import { GiSpikedDragonHead, GiTimeBomb } from "react-icons/gi";
 import readerfour from "../../photos/cursors/readerfour.webp";
 import readertwo from "../../photos/cursors/readertwo.webp";
 import readerthree from "../../photos/cursors/readerthree.webp";
-import { GiTimeBomb } from "react-icons/gi";
+import readerVideo from "../../photos/cursors/reader.webm";
 
 const frames = [
   reader,
@@ -31,14 +31,80 @@ const frames = [
 
 export const AnimatedCursor = ({ interval = 250, className = "" }) => {
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
+  const [isSlowConnection, setIsSlowConnection] = useState(() => {
+    if (typeof navigator === "undefined" || !navigator.onLine) return true;
+    if (navigator.connection) {
+      const conn = navigator.connection;
+      if (conn.saveData || ["slow-2g", "2g", "3g"].includes(conn.effectiveType)) {
+        return true;
+      }
+    }
+    return false;
+  });
+  const [videoError, setVideoError] = useState(false);
 
   useEffect(() => {
+    const updateConnection = () => {
+      const online = typeof navigator !== "undefined" ? navigator.onLine : true;
+      if (!online) {
+        setIsSlowConnection(true);
+        return;
+      }
+      if (typeof navigator !== "undefined" && navigator.connection) {
+        const conn = navigator.connection;
+        setIsSlowConnection(
+          !!conn.saveData || ["slow-2g", "2g", "3g"].includes(conn.effectiveType)
+        );
+      } else {
+        setIsSlowConnection(false);
+      }
+    };
+
+    updateConnection();
+    window.addEventListener("online", updateConnection);
+    window.addEventListener("offline", updateConnection);
+    if (typeof navigator !== "undefined" && navigator.connection) {
+      navigator.connection.addEventListener("change", updateConnection);
+    }
+
+    return () => {
+      window.removeEventListener("online", updateConnection);
+      window.removeEventListener("offline", updateConnection);
+      if (typeof navigator !== "undefined" && navigator.connection) {
+        navigator.connection.removeEventListener("change", updateConnection);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isSlowConnection && !videoError) return;
     const timer = setInterval(() => {
       setCurrentFrameIndex((prevIndex) => (prevIndex + 1) % frames.length);
     }, interval);
 
     return () => clearInterval(timer);
-  }, [interval]);
+  }, [interval, isSlowConnection, videoError]);
+
+  if (!isSlowConnection && !videoError) {
+    return (
+      <video
+        src={readerVideo}
+        autoPlay
+        loop
+        muted
+        playsInline
+        onError={() => setVideoError(true)}
+        className={className}
+        style={{
+          width: "442px",
+          height: "442px",
+          marginTop: "-180px",
+          objectFit: "contain",
+          pointerEvents: "none",
+        }}
+      />
+    );
+  }
 
   return (
     <img

@@ -1,6 +1,6 @@
 import songAiKnowledge from "./songAiKnowledge.json";
 import faded from "../../photos/fan-art/faded.webp";
-import dinofrozVideo from "../../mp3/dinofroz.mp4";
+import dinofrozVideo from "../../mp3/dinofroz.webm";
 import harmony from "../../photos/vip-images/asium/asium.webp";
 import horse from "../../photos/vip-images/horse/horse.webp";
 import theorytwo from "../../photos/fan-art/theorytwo.webp";

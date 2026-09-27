@@ -541,12 +541,16 @@ const QuickGroup = styled.div`
   gap: 1px;
 `;
 
-const QuickLabel = styled.span`
+const QuickLabel = styled.label`
   font-weight: 700;
   font-size: 13px;
   color: #ff9500;
   letter-spacing: 0.5px;
   margin-right: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
 `;
 
 const QuickSelect = styled.select`
@@ -2388,36 +2392,46 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
         onDrop={(e) => { e.preventDefault(); handleFileSelect(e.dataTransfer.files); }}
       >
         <InputQuickSettings $isDarkMode={isDarkMode}>
-        <QuickGroup>
-  <QuickLabel htmlFor="response-length" $isDarkMode={isDarkMode}>Обсяг:</QuickLabel>
-  <QuickSelect
-    id="response-length"
-    $isDarkMode={isDarkMode}
-    value={responseLength}
-    onChange={(e) => setResponseLength(e.target.value)}
-  >
-    <option value="concise">Менше</option>
-    <option value="normal">Нормально</option>
-    <option value="detailed">Більше</option>
-  </QuickSelect>
-</QuickGroup>
-<QuickGroup>
-  <QuickLabel htmlFor="response-style" $isDarkMode={isDarkMode}>Стиль:</QuickLabel>
-  <QuickSelect
-    id="response-style"
-    $isDarkMode={isDarkMode}
-    value={responseStyle}
-    onChange={(e) => setResponseStyle(e.target.value)}
-  >
-    <option value="friendly">Дружньо</option>
-    <option value="standard">Стандартно</option>
-    <option value="scientific">Науково</option>
-  </QuickSelect>
+          <QuickGroup>
+            <QuickLabel htmlFor="response-length" $isDarkMode={isDarkMode}>
+              Обсяг:
+            </QuickLabel>
+            <QuickSelect
+              id="response-length"
+              aria-label="Обсяг відповіді"
+              $isDarkMode={isDarkMode}
+              value={responseLength}
+              onChange={(e) => setResponseLength(e.target.value)}
+            >
+              <option value="concise">Менше</option>
+              <option value="normal">Нормально</option>
+              <option value="detailed">Більше</option>
+            </QuickSelect>
+          </QuickGroup>
+
+          <QuickGroup>
+            <QuickLabel htmlFor="response-style" $isDarkMode={isDarkMode}>
+              Стиль:
+            </QuickLabel>
+            <QuickSelect
+              id="response-style"
+              aria-label="Стиль відповіді"
+              $isDarkMode={isDarkMode}
+              value={responseStyle}
+              onChange={(e) => setResponseStyle(e.target.value)}
+            >
+              <option value="friendly">Дружньо</option>
+              <option value="standard">Стандартно</option>
+              <option value="scientific">Науково</option>
+            </QuickSelect>
           </QuickGroup>
           {messages.length > 0 && (
             <SuggestedQuestionsSetting>
-              <QuickLabel>Пропозиції:</QuickLabel>
+              <QuickLabel htmlFor="suggested-questions-count" $isDarkMode={isDarkMode}>
+                Пропозиції:
+              </QuickLabel>
               <QuickSelect
+                id="suggested-questions-count"
                 $isDarkMode={isDarkMode}
                 value={suggestedQuestionsCount}
                 onChange={async (event) => {
