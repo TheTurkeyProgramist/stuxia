@@ -2668,9 +2668,8 @@ const Hero = ({
     const handleClickOutside = (event) => {
       if (event.type === "mousedown" && event.button !== 0) return;
       if (
-        event.type === "mousedown" &&
-        (event.target === document.body ||
-          event.target === document.documentElement)
+        event.target === document.body ||
+        event.target === document.documentElement
       )
         return;
       if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -2678,7 +2677,9 @@ const Hero = ({
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const fetchSuggestions = async (currentLimit, value, append = false) => {
@@ -3382,13 +3383,21 @@ const Hero = ({
                     {suggestions.map((city, index) => (
                       <SuggestionItem
                         key={`${city.lat}-${city.lon}-${index}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleSelect(city);
+                        }}
+                        onTouchEnd={(e) => {
+                          e.preventDefault();
+                          handleSelect(city);
+                        }}
                         onClick={() => handleSelect(city)}
                       >
                          {city.name}
                         {city.state ? `, ${city.state}` : ""} ({city.country})
                         <br />
                         <span style={{ fontSize: "0.85em", color: "#fffcfc" }}>
-                         Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°
+                          Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°
                         </span>
                       </SuggestionItem>
                     ))}
@@ -3405,6 +3414,11 @@ const Hero = ({
                   </SuggestionsList>
                 )}
                 <HeroButton
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    if (cooldown === 0 && suggestions[0])
+                      handleSelect(suggestions[0]);
+                  }}
                   onClick={() => {
                     if (cooldown === 0 && suggestions[0])
                       handleSelect(suggestions[0]);
@@ -3541,6 +3555,10 @@ const Hero = ({
                   {coordinateSuggestions.map((city, index) => (
                     <SuggestionItem
                       key={`${city.lat}-${city.lon}-${index}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSelectCoordinateResult(city);
+                      }}
                       onClick={() => handleSelectCoordinateResult(city)}
                     >
                        {city.name}

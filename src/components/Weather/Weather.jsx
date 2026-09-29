@@ -1265,9 +1265,9 @@ const WeatherCardComponent = ({
     const nextEnabled = !isLocationEnabled;
     setIsLocationEnabled(nextEnabled);
     handleCloseDropdown();
-    if (handleRefreshCard && card.isMain) {
-      setTimeout(() => handleRefreshCard(card), 50);
-    }
+    // App.jsx має useEffect(() => { getInitialLocation(); }, [getInitialLocation])
+    // який автоматично спрацює після зміни isLocationEnabled
+    // (getInitialLocation перестворюється через useCallback з [isLocationEnabled])
   };
 
   useEffect(() => {
@@ -2970,23 +2970,30 @@ const HOLIDAYS_2027 = {
                 {card.isMain ? (
                   <button
                     onClick={handleGpsToggle}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      handleGpsToggle();
+                    }}
+                    title={isLocationEnabled ? "Вимкнути GPS (зараз увімкнено)" : "Увімкнути GPS (зараз вимкнено)"}
                     style={{
                       textAlign: "left",
                       padding: "10px",
-                      background: "transparent",
-                      color: isLocationEnabled
-                        ? isDarkMode
-                          ? "#fff"
-                          : "#000"
-                        : "#b300ad",
+                      background: isLocationEnabled
+                        ? "rgba(0,200,80,0.12)"
+                        : "rgba(180,0,0,0.08)",
+                      border: `1px solid ${isLocationEnabled ? "#00c84d" : "#b30000"}`,
+                      borderRadius: "6px",
+                      color: isLocationEnabled ? "#00c84d" : "#b30000",
                       fontSize: "13px",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "6px",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
                     }}
                   >
                     <BiCurrentLocation size={14} />{" "}
-                    {isLocationEnabled ? "GPS On" : "GPS Off"}
+                    {isLocationEnabled ? "GPS Увімк." : "GPS Вимк."}
                   </button>
                 ) : (
                   <button

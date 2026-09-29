@@ -995,6 +995,9 @@ const App = () => {
         );
         if (savedLibSettings) setLibraryBgSettings(savedLibSettings);
 
+        const savedLocationEnabled = await localforage.getItem("isLocationEnabled");
+        if (savedLocationEnabled !== null) setIsLocationEnabled(savedLocationEnabled);
+
         const savedCards = await localforage.getItem("weather_cards");
         if (savedCards) setWeatherCards(sanitizeWeatherCards(savedCards));
 
@@ -1405,6 +1408,7 @@ const App = () => {
   useEffect(() => {
     if (isHydrated) {
       localforage.setItem("isRoutingMode", isRoutingMode);
+      localforage.setItem("isLocationEnabled", isLocationEnabled);
       localforage.setItem(SECTION_ORDER_STORAGE_KEY, siteSections);
       localforage.setItem("hiddenSections", hiddenSections);
       localforage.setItem("weatherCardLayout", weatherCardLayout);
@@ -1437,6 +1441,7 @@ const App = () => {
     }
   }, [
     isRoutingMode,
+    isLocationEnabled,
     siteSections,
     hiddenSections,
     weatherCardLayout,
@@ -2264,6 +2269,23 @@ const App = () => {
     }
 
     if ("geolocation" in navigator) {
+      const optionsHigh = { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 };
+      const optionsLow = { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 };
+
+      const fallbackToKyiv = (err) => {
+        console.warn("Geolocation failed on mobile device:", err);
+        fetchWeather(
+          {
+            fullName:
+              "Київ(Увімкн. у налаштуваннях GPS, щоб бачити вашу локацію)",
+            id: "main-card",
+          },
+          true,
+          50.45,
+          30.52,
+        );
+      };
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
           fetchWeather(
@@ -2273,17 +2295,22 @@ const App = () => {
             position.coords.longitude,
           );
         },
-        () =>
-          fetchWeather(
-            {
-              fullName:
-                "Київ(Увімкн. у налаштуваннях GPS, щоб бачити вашу локацію)",
-              id: "main-card",
+        () => {
+          // Спробувати низьку точність (мережі/IP), якщо GPS-супутники недоступні/заблоковані на мобільному
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              fetchWeather(
+                { id: "main-card" },
+                true,
+                position.coords.latitude,
+                position.coords.longitude,
+              );
             },
-            true,
-            50.45,
-            30.52,
-          ),
+            fallbackToKyiv,
+            optionsLow
+          );
+        },
+        optionsHigh
       );
     } else {
       fetchWeather(
