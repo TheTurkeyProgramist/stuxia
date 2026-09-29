@@ -1,18 +1,13 @@
 import React, { useEffect } from "react";
 import styled, { keyframes } from "styled-components";
-// Імпортуємо кольорові Simple Icons із бібліотеки react-icons/si
-import { 
-  SiVite, 
-  SiBun, 
-  SiGithub, 
-  SiCloudflare, 
-  SiFirebase, 
-  SiVisualstudiocode, 
-  SiVercel, 
-  SiHostinger // Для HostIQ часто використовують універсальні/серверні іконки або подібні брендові
-} from "react-icons/si";
+import { BiLogoVisualStudio } from "react-icons/bi";
+import { SiBun, SiGithub, SiCloudflare, SiVercel, SiHostinger } from "react-icons/si";
+import { TbBrandVite } from "react-icons/tb";
+import { IoLogoFirebase } from "react-icons/io5";
+import { SiPixabay } from "react-icons/si";
 import loadtwo from "../../photos/hero-header/fogtwo.webp";
-
+import { TbBrandWindy } from "react-icons/tb";
+import { RiGeminiFill } from "react-icons/ri";
 const DOTS_CONFIG = [
   { r: 1, c: 1, delay: "0s" },
   { r: 1, c: 2, delay: "0.1s" },
@@ -30,12 +25,11 @@ const expandEntrance = keyframes`
 `;
 
 const dotFade = keyframes`
-  0% { opacity: 1; }
+  0%, 100% { opacity: 1; }
   12.5% { opacity: 0; }
   62.5% { opacity: 0.25; }
   75% { opacity: 0.5; }
   87.5% { opacity: 0.75; }
-  100% { opacity: 1; }
 `;
 
 const LoaderWrapper = styled.div`
@@ -50,45 +44,25 @@ const LoaderWrapper = styled.div`
   z-index: 1994;
   opacity: ${(props) => (props.$isFadingOut ? 0 : 1)};
   visibility: ${(props) => (props.$isFadingOut ? "hidden" : "visible")};
-  transition:
-    opacity 0.8s ease-in-out,
-    visibility 0.8s ease-in-out;
+  transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
   overflow: hidden;
   will-change: opacity, visibility;
 `;
 
-const LoaderContent = styled.div`
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-`;
-
 const ImageContainer = styled.div`
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: 1;
   overflow: hidden;
   animation: ${expandEntrance} 0.8s ease-out forwards;
-`;
 
-const LoaderImage = styled.img`
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  object-fit: cover;
-  object-position: center;
-  transition: opacity 0.8s ease-in-out;
-  opacity: ${(props) => (props.$active ? 1 : 0)};
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.8s ease-in-out;
+    opacity: ${(props) => (props.$active ? 1 : 0)};
+  }
 `;
 
 const UIOverlay = styled.div`
@@ -102,16 +76,9 @@ const UIOverlay = styled.div`
   margin-top: auto;
   margin-bottom: 0.5vh;
   text-align: center;
-`;
-
-const InfoText = styled.div`
-  margin-top: 12px;
   color: #fff;
   font-family: "Inter", sans-serif;
-  width: 100%;
 `;
-
-/* ===== НОВІ СТИЛІ ДЛЯ "POWERED BY" ТА ІКОНОК ===== */
 
 const PoweredByWrapper = styled.div`
   display: flex;
@@ -124,25 +91,24 @@ const PoweredByWrapper = styled.div`
   border-radius: 14px;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.05);
-`;
 
-const PoweredByText = styled.span`
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: 700;
+  span {
+    font-size: 15px;
+    letter-spacing: 1.5px;
+    color: #fff;
+    font-weight: 700;
+  }
 `;
 
 const IconsGrid = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 
   svg {
-    font-size: 18px;
+    font-size: 22px;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
     transition: transform 0.2s ease;
 
@@ -151,8 +117,6 @@ const IconsGrid = styled.div`
     }
   }
 `;
-
-/* ================================================ */
 
 const PhraseText = styled.div`
   font-size: 13px;
@@ -171,7 +135,6 @@ const PhraseText = styled.div`
 const CopyrightText = styled.p`
   margin: 8px 0 0;
   color: rgba(255, 255, 255, 0.82);
-  font-family: "Inter", sans-serif;
   font-size: 11px;
   line-height: 1.4;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
@@ -190,16 +153,15 @@ const TopRightContainer = styled.div`
   border-radius: 10px;
   backdrop-filter: blur(5px);
   border: 1px solid rgba(255, 255, 255, 0.03);
-`;
 
-const StatusText = styled.span`
-  font-size: 12px;
-  color: #fff;
-  font-family: "Inter", sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-align: right;
-  min-width: 170px;
+  span {
+    font-size: 12px;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-align: right;
+    min-width: 170px;
+  }
 `;
 
 const DotGrid = styled.div`
@@ -230,41 +192,38 @@ export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
   return (
     <LoaderWrapper $isFadingOut={isFadingOut}>
       <TopRightContainer>
-        <StatusText>v.1.0.0 | Я в Конотопі :)</StatusText>
+        <span>v.1.0.0 | Я в Конотопі :)</span>
         <DotGrid>
           {DOTS_CONFIG.map((dot, idx) => (
             <Dot key={idx} $r={dot.r} $c={dot.c}$delay={dot.delay} />
           ))}
         </DotGrid>
       </TopRightContainer>
-      <LoaderContent>
-        <ImageContainer>
-          <LoaderImage src={loadtwo} $active alt="Loading..." />
-        </ImageContainer>
-        <UIOverlay>
-          <InfoText>
-            {/* Секція Powered By */}
-            <PoweredByWrapper>
-              <PoweredByText>powered by:</PoweredByText>
-              <IconsGrid>
-                <SiVite style={{ color: "#646CFF" }} title="Vite" />
-                <SiBun style={{ color: "#FBF0DF" }} title="Bun" />
-                <SiGithub style={{ color: "#FFFFFF" }} title="GitHub" />
-                <SiCloudflare style={{ color: "#F38020" }} title="Cloudflare" />
-                <SiFirebase style={{ color: "#FFCA28" }} title="Firebase" />
-                <SiVisualstudiocode style={{ color: "#007ACC" }} title="VS Code" />
-                <SiVercel style={{ color: "#FFFFFF" }} title="Vercel" />
-                <SiHostinger style={{ color: "#673DE6" }} title="HostIQ / Hosting" />
-              </IconsGrid>
-            </PoweredByWrapper>
 
-            {randomPhrase && <PhraseText>{randomPhrase}</PhraseText>}
-            <CopyrightText>
-              2026 Stuxia™. Всі права захищені. Автор: TheTurkeyProgramist
-            </CopyrightText>
-          </InfoText>
-        </UIOverlay>
-      </LoaderContent>
+      <ImageContainer $active>
+        <img src={loadtwo} alt="Loading..." />
+      </ImageContainer>
+
+      <UIOverlay>
+        <PoweredByWrapper>
+          <span>Працює на базі:</span>
+          <IconsGrid>
+            <TbBrandVite style={{ color: "#2bfffb" }} title="Vite" />
+            <SiBun style={{ color: "#FBF0DF" }} title="Bun" />
+            <SiGithub style={{ color: "#FFFFFF" }} title="GitHub" />
+            <SiCloudflare style={{ color: "#F38020" }} title="Cloudflare" />
+            <IoLogoFirebase style={{ color: "#FFCA28" }} title="Firebase" />
+            <BiLogoVisualStudio style={{ color: "#007ACC" }} title="VS Code" />
+            <SiVercel style={{ color: "#FFFFFF" }} title="Vercel" />
+            <SiHostinger style={{ color: "#00fff7" }} title="HostIQ / Hosting" />
+          </IconsGrid>
+        </PoweredByWrapper>
+
+        {randomPhrase && <PhraseText>{randomPhrase}</PhraseText>}
+        <CopyrightText>
+          2026 Stuxia™. Всі права захищені. Автор: TheTurkeyProgramist
+        </CopyrightText>
+      </UIOverlay>
     </LoaderWrapper>
   );
 }
