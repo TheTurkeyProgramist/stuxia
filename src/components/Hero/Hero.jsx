@@ -2652,15 +2652,6 @@ const Hero = ({
     useState(false);
   const [isSearchingNearby, setIsSearchingNearby] = useState(false);
   const [nearbySearchStatus, setNearbySearchStatus] = useState("");
-  const [cooldown, setCooldown] = useState(() => {
-    const saved = localStorage.getItem("hero_cooldown_until");
-    if (saved) {
-      const until = parseInt(saved, 10);
-      const now = Date.now();
-      return until > now ? Math.ceil((until - now) / 1000) : 0;
-    }
-    return 0;
-  });
   const searchRef = useRef(null);
   const API_KEY = "5104647d3e574f4a3f23c0aa092eb2b9";
 
@@ -2807,25 +2798,9 @@ const Hero = ({
     fetchSuggestions(newLimit, inputValue, true);
   };
 
-  useEffect(() => {
-    let interval;
-    if (cooldown > 0) {
-      interval = setInterval(() => {
-        setCooldown((prev) => {
-          if (prev <= 1) {
-            localStorage.removeItem("hero_cooldown_until");
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [cooldown]);
+
 
   const handleSelectByCoordinates = async () => {
-    if (cooldown > 0) return;
-
     const lat = parseFloat(latitude);
     const lon = parseFloat(longitude);
 
@@ -2927,8 +2902,6 @@ const Hero = ({
   };
 
   const handleSelectCoordinateResult = (city) => {
-    if (cooldown > 0) return;
-
     const cityObj = {
       name: city.name,
       fullName: `${city.name}${city.state ? `, ${city.state}` : ""} (${city.country})`,
@@ -2937,8 +2910,6 @@ const Hero = ({
     };
     onAddCity(cityObj);
     window.dispatchEvent(new CustomEvent('domino-next-step-auto'));
-    setCooldown(10);
-    localStorage.setItem("hero_cooldown_until", Date.now() + 10000);
     
     setLatitude("");
     setLongitude("");
@@ -2947,8 +2918,6 @@ const Hero = ({
   };
 
   const handleSelect = (city) => {
-    if (cooldown > 0) return;
-
     const cityObj = {
       name: city.name,
       fullName: `${city.name}${city.state ? `, ${city.state}` : ""} (${city.country})`,
@@ -2957,8 +2926,6 @@ const Hero = ({
     };
     onAddCity(cityObj);
     window.dispatchEvent(new CustomEvent('domino-next-step-auto'));
-    setCooldown(9);
-    localStorage.setItem("hero_cooldown_until", Date.now() + 9000);
     
     setInputValue("");
     setSuggestions([]);
@@ -3361,12 +3328,7 @@ const Hero = ({
                     window.dispatchEvent(new CustomEvent('domino-hero-input-change', { detail: { value: e.target.value } }));
                   }}
                   onFocus={() => suggestions.length > 0 && setShowList(true)}
-                  placeholder={
-                    cooldown > 0
-                      ? `Зачекайте ${cooldown} сек...`
-                      : "Уведіть місто, село."
-                  }
-                  disabled={cooldown > 0}
+                  placeholder="Уведіть місто, село."
                   type="text"
                   autoComplete="off"
                   autoCorrect="off"
@@ -3416,16 +3378,13 @@ const Hero = ({
                 <HeroButton
                   onTouchStart={(e) => {
                     e.preventDefault();
-                    if (cooldown === 0 && suggestions[0])
-                      handleSelect(suggestions[0]);
+                    if (suggestions[0]) handleSelect(suggestions[0]);
                   }}
                   onClick={() => {
-                    if (cooldown === 0 && suggestions[0])
-                      handleSelect(suggestions[0]);
+                    if (suggestions[0]) handleSelect(suggestions[0]);
                   }}
-                  disabled={cooldown > 0}
                 >
-                  {cooldown > 0 ? cooldown : "⌕"}
+                  ⌕
                 </HeroButton>
               </SearchContainer>
             </HeroFormater>
@@ -3475,7 +3434,7 @@ const Hero = ({
                     onChange={(e) => setLatitude(e.target.value)}
                     placeholder="Широта: Від -90° до +90°"
                     $isDarkMode={isDarkMode}
-                    disabled={cooldown > 0 || isSearchingNearby}
+                    disabled={isSearchingNearby}
                     min="-90"
                     max="90"
                     step="0.01"
@@ -3488,7 +3447,7 @@ const Hero = ({
                     onChange={(e) => setLongitude(e.target.value)}
                     $isDarkMode={isDarkMode}
                     placeholder="Довгота: Від -180° до +180°"
-                    disabled={cooldown > 0 || isSearchingNearby}
+                    disabled={isSearchingNearby}
                     min="-180"
                     max="180"
                     step="0.01"
@@ -3496,10 +3455,10 @@ const Hero = ({
                 </CoordinateInput>
                 <HeroButton
                   onClick={handleSelectByCoordinates}
-                  disabled={cooldown > 0 || isSearchingNearby}
+                  disabled={isSearchingNearby}
                   style={{ alignSelf: "flex-start" }}
                 >
-                  {cooldown > 0 ? cooldown : isSearchingNearby ? "…" : "⌕"}
+                  {isSearchingNearby ? "…" : "⌕"}
                 </HeroButton>
               </CoordinatesContainer>
               {nearbySearchStatus && (
