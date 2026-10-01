@@ -910,6 +910,7 @@ const App = () => {
     calculateSecondsUntilNextHour(),
   );
   const weatherCardsRef = useRef([]);
+  const appHiddenAtRef = useRef(null);
   const bgAudioRef = useRef(null);
   const bgAudioRef2 = useRef(null); // Для Crossfade
   const [initialBgPosition, setInitialBgPosition] = useState(0);
@@ -1895,7 +1896,20 @@ const App = () => {
 
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&hourly=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset&timezone=auto&past_days=1&forecast_days=16`;
         console.log("Fetching weather from URL:", url);
-        const res = await axios.get(url, { timeout: 8000 });
+        let res;
+        let lastRequestError;
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          try {
+            res = await axios.get(url, { timeout: 20000 });
+            break;
+          } catch (error) {
+            lastRequestError = error;
+            if (attempt === 0) {
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+          }
+        }
+        if (!res) throw lastRequestError;
         const d = res.data;
 
         // СИРИЙ лог для перевірки що повертає API
@@ -2448,6 +2462,32 @@ const App = () => {
 
     return () => clearInterval(timerId);
   }, [isHydrated, handleRefreshCard, calculateSecondsUntilNextHour]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        appHiddenAtRef.current = Date.now();
+        return;
+      }
+
+      const hiddenDuration = appHiddenAtRef.current
+        ? Date.now() - appHiddenAtRef.current
+        : 0;
+      appHiddenAtRef.current = null;
+
+      if (hiddenDuration < 5 * 60 * 1000) return;
+
+      weatherCardsRef.current.forEach((card) => handleRefreshCard(card));
+      setSecondsUntilUpdate(calculateSecondsUntilNextHour());
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [isHydrated, handleRefreshCard, calculateSecondsUntilNextHour]);
+
   const handleDeleteCard = useCallback((id) => {
     setWeatherCards((prev) => prev.filter((card) => card.id !== id));
   }, []);

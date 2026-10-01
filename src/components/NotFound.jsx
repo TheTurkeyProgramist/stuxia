@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import turkeys from "../photos/vip-images/sirenhead/sirenhead.webp";
 const Container = styled.div`
   display: flex;
@@ -64,6 +65,7 @@ const HomeButton = styled(Link)`
 `;
 
 const NotFound = ({ isDarkMode = true }) => {
+  const { t } = useTranslation();
   return (
     <Container $isDarkMode={isDarkMode}>
       <GlitchText
@@ -79,9 +81,7 @@ const NotFound = ({ isDarkMode = true }) => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.6 }}
       >
-        Уведіть правильну назву сторінки! Треба було Доміно поставити на фото,
-        чи Ніцерона. А хоча воно ніби наказує що ти маєш не залишатися тут
-        довго.
+        {t("notFound.description")}
       </Description>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -91,7 +91,7 @@ const NotFound = ({ isDarkMode = true }) => {
         whileTap={{ scale: 0.95 }}
       >
         <HomeButton to="/" $isDarkMode={isDarkMode}>
-          Повернутися на головну
+          {t("notFound.goHome")}
         </HomeButton>
       </motion.div>
     </Container>
