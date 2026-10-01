@@ -6,7 +6,7 @@ import {
   signInAnonymously,
   signOut,
 } from "firebase/auth";
-import { initializeFirestore, doc, onSnapshot } from "firebase/firestore";
+import { initializeFirestore, doc, getDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCeoo6qt8hLP23X648LVOnqP46WzDscqvk",
@@ -27,33 +27,28 @@ export const googleProvider = new GoogleAuthProvider();
 export { signInWithPopup, signInAnonymously, signOut };
 
 /**
- * Підписка на стан техробіт із Firestore.
+ * Завантаження стану техробіт із Firestore.
  * Документ: config/global  →  поле isMaintenanceMode (boolean)
  *                            →  поле maintenanceEndTime  (string ISO / null)
  *                            →  поле maintenanceMessage  (string / null)
  *
- * @param {(data: {isMaintenanceMode: boolean, endTime: string|null, message: string|null}) => void} callback
- * @returns {() => void} unsubscribe
+ * @returns {Promise<{isMaintenanceMode: boolean, endTime: string|null, message: string|null}>}
  */
-export function subscribeToMaintenance(callback) {
-  const ref = doc(db, "config", "global");
-  return onSnapshot(
-    ref,
-    (snap) => {
-      if (!snap.exists()) {
-        callback({ isMaintenanceMode: false, endTime: null, message: null });
-        return;
-      }
-      const data = snap.data();
-      callback({
-        isMaintenanceMode: !!data.isMaintenanceMode,
-        endTime: data.maintenanceEndTime ?? null,
-        message: data.maintenanceMessage ?? null,
-      });
-    },
-    () => {
-      // При помилці доступу — не блокуємо сайт
-      callback({ isMaintenanceMode: false, endTime: null, message: null });
-    },
-  );
+export async function getMaintenanceStatus() {
+  try {
+    const snap = await getDoc(doc(db, "config", "global"));
+    if (!snap.exists()) {
+      return { isMaintenanceMode: false, endTime: null, message: null };
+    }
+
+    const data = snap.data();
+    return {
+      isMaintenanceMode: !!data.isMaintenanceMode,
+      endTime: data.maintenanceEndTime ?? null,
+      message: data.maintenanceMessage ?? null,
+    };
+  } catch {
+    // При помилці доступу або мережі не блокуємо сайт.
+    return { isMaintenanceMode: false, endTime: null, message: null };
+  }
 }

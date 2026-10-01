@@ -20,7 +20,7 @@ import WeatherCardComponent, {
 } from "./components/Weather/Weather.jsx";
 import NotFound from "./components/NotFound.jsx";
 import Maintenance from "./components/Maintenance.jsx";
-import { subscribeToMaintenance, db } from "./firebase.js";
+import { getMaintenanceStatus, db } from "./firebase.js";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import fogBackground from "./photos/hero-header/fogtwo.webp";
 import {
@@ -926,16 +926,26 @@ const App = () => {
   const [maintenanceEndTime, setMaintenanceEndTime] = useState(null);
   const [maintenanceMessage, setMaintenanceMessage] = useState(null);
 
-  // Підписка на стан техробіт з Firestore
+  // Перевіряємо стан техробіт без постійного Firestore listener.
   useEffect(() => {
-    const unsubscribe = subscribeToMaintenance(
-      ({ isMaintenanceMode, endTime, message }) => {
+    let isActive = true;
+
+    const refreshMaintenanceStatus = async () => {
+      if (document.visibilityState !== "visible") return;
+      const { isMaintenanceMode, endTime, message } = await getMaintenanceStatus();
+      if (isActive) {
         setIsMaintenanceMode(isMaintenanceMode);
         setMaintenanceEndTime(endTime);
         setMaintenanceMessage(message);
-      },
-    );
-    return unsubscribe;
+      }
+    };
+
+    refreshMaintenanceStatus();
+    document.addEventListener("visibilitychange", refreshMaintenanceStatus);
+    return () => {
+      isActive = false;
+      document.removeEventListener("visibilitychange", refreshMaintenanceStatus);
+    };
   }, []);
 
   // Гідратація даних з localforage

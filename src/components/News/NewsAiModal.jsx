@@ -14,7 +14,7 @@ import { GiSpikedDragonHead, GiTimeBomb } from "react-icons/gi";
 import readerfour from "../../photos/cursors/readerfour.webp";
 import readertwo from "../../photos/cursors/readertwo.webp";
 import readerthree from "../../photos/cursors/readerthree.webp";
-import readerVideo from "../../photos/cursors/reader.webm";
+import readerVideo from "../../photos/cursors/reader-nobg.webm";
 
 const frames = [
   reader,
@@ -710,7 +710,7 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
           {messages.length === 0 && !loading ? (
             <EmptyState $isDarkMode={isDarkMode}>
               <AnimatedCursor interval={250} />
-              <div style={{ marginTop: "-160px", color: isDarkMode ? "#ffffff" : "#080808",}}>
+              <div style={{ marginTop: "-140px", color: isDarkMode ? "#ffffff" : "#080808",}}>
                 Задайте питання про новину або оберіть питання:
               </div>
               <SuggestedQuestions>

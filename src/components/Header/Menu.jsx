@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes, css } from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { FaSun } from "react-icons/fa";
+import { FaSun, FaWindows, FaDownload } from "react-icons/fa";
 import { FaEyeSlash } from "react-icons/fa";
 import { GiPalette } from "react-icons/gi";
 import { FaAnchorCircleCheck } from "react-icons/fa6";
@@ -327,6 +327,41 @@ const MenuSectionTitle = styled.h3`
     @media (min-width: 768px) {
     display: inline-block;
   }
+`;
+
+const WindowsDownloadLink = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 9px 8px;
+  border: 1px solid ${(props) => (props.$isDarkMode ? "#44c2c9" : "#087e86")};
+  border-radius: 6px;
+  background: ${(props) => (props.$isDarkMode ? "#10383c" : "#e5f5f3")};
+  color: ${(props) => (props.$isDarkMode ? "#f4ffff" : "#064e52")};
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    background: ${(props) => (props.$isDarkMode ? "#185057" : "#cdebe8")};
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+`;
+
+const WindowsDownloadGroup = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 12px;
 `;
 
 const LegendList = styled.ul`
@@ -818,6 +853,24 @@ const Menu = ({
         <BurgerContentGrid>
           <MobileTabPanel $active={activeMenuTab === 'nav'}>
             <MenuSectionTitle>Навігація та порядок</MenuSectionTitle>
+            <WindowsDownloadGroup>
+              <WindowsDownloadLink
+                href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Setup-Windows.exe"
+                $isDarkMode={isDarkMode}
+                aria-label="Завантажити Windows-інсталятор EXE"
+              >
+                <FaWindows aria-hidden="true" />
+                <span><FaDownload aria-hidden="true" /> .exe</span>
+              </WindowsDownloadLink>
+              <WindowsDownloadLink
+                href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Windows.msi"
+                $isDarkMode={isDarkMode}
+                aria-label="Завантажити Windows-інсталятор MSI"
+              >
+                <FaWindows aria-hidden="true" />
+                <span><FaDownload aria-hidden="true" /> .msi</span>
+              </WindowsDownloadLink>
+            </WindowsDownloadGroup>
             {siteSections &&
               siteSections.map((section, idx) => {
                 const sectionLink = buildSectionLink(

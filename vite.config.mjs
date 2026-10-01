@@ -14,43 +14,39 @@ export default defineConfig({
       webp: { quality: 80 },
       avif: { 
         quality: 75, 
-        effort: 5, 
+        effort: 4, // Трохи зменшили effort з 5 до 4, щоб білд збирався швидше
       },
     }),
 
     viteCompression({
       algorithm: 'gzip',
       ext: '.gz',
+      threshold: 10240, // Стискати тільки файли більші за 10KB
     }),
 
     viteCompression({
       algorithm: 'brotliCompress',
       ext: '.br',
+      threshold: 10240,
     }),
   ],
 
   base: '/',
 
-  define: {
-    'process.env': {},
-  },
-
-  server: {
-    headers: {
-      "Cross-Origin-Opener-Policy": "unsafe-none",
-      "Cross-Origin-Embedder-Policy": "unsafe-none",
-    },
+  // Прискорює розробку (dev server)
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'firebase/app', 'firebase/firestore'],
   },
 
   build: {
     sourcemap: false,
-    chunkSizeWarningLimit: 10000,
-    minify: 'esbuild', 
+    chunkSizeWarningLimit: 1000, // Зменшили ліміт, щоб вчасно помічати роздуті файли
+    minify: 'esbuild',
+    target: 'esnext', // Дозволяє esbuild генерувати сучасніший і компактніший код
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            // Розбиваємо важкі бібліотеки на окремі файли
             if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
               return 'vendor-react';
             }
@@ -66,8 +62,7 @@ export default defineConfig({
             if (id.includes('chart.js') || id.includes('wavesurfer') || id.includes('fabric')) {
               return 'vendor-graphics';
             }
-            // Усі інші сторонні бібліотеки підуть сюди
-            return 'vendor';
+            return 'vendor-libs';
           }
         },
       },
