@@ -1,3 +1,7 @@
+// Initialize i18n BEFORE rendering (must be first import)
+import "./i18n/i18n.js";
+import "./i18n/i18n.css";
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router-dom";

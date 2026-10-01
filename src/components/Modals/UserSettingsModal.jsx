@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
 import InfoModal from "./UserSearchModal.jsx";
@@ -59,6 +60,7 @@ import songAiKnowledge from "../MusicPhoto/songAiKnowledge.json";
 import { assetMap } from "../MusicPhoto/MusicPhoto.assets";
 import { FILTERS, PRESETS, useVisualFilters } from "../Header/useVisualFilters";
 import { useDecorator } from "../Decorator/DecoratorContext.jsx";
+import LanguagePicker from "./LanguagePicker.jsx";
 
 // Keyframe Animations
 const fadeIn = keyframes`
@@ -523,6 +525,7 @@ const UserSettingsModal = ({
 }) => {
   const isGuest = !user;
   const dispatch = useDispatch();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState(isGuest ? "personalization" : "account");
   const [isClosing, setIsClosing] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -1130,15 +1133,16 @@ const UserSettingsModal = ({
 
   // ── Nav config ───────────────────────────────────────────────────────────
   const navItems = [
-    { key: "account", icon: <FiUser />, label: "Обліковий запис", locked: isGuest },
-    { key: "dateTime", icon: <FiClock />, label: "Час та дата" },
-    { key: "security", icon: <FiShield />, label: "Безпека", locked: isGuest },
-    { key: "personalization", icon: <FiSliders />, label: "Персоналізація" },
-    { key: "siteSections", icon: <FiCompass />, label: "Секції сайту" },
-    { key: "modes", icon: <FiZap />, label: "Режими сайту" },
-    { key: "filters", icon: <FiEye />, label: "Візуальні фільтри" },
-    { key: "bgMusic", icon: <FiMusic />, label: "Фонова музика" },
-    { key: "news", icon: <FiGlobe />, label: "Новини" },
+    { key: "account", icon: <FiUser />, label: t("settings.tabs.account"), locked: isGuest },
+    { key: "dateTime", icon: <FiClock />, label: t("settings.tabs.dateTime") },
+    { key: "security", icon: <FiShield />, label: t("settings.tabs.security"), locked: isGuest },
+    { key: "personalization", icon: <FiSliders />, label: t("settings.tabs.personalization") },
+    { key: "siteSections", icon: <FiCompass />, label: t("settings.tabs.siteSections") },
+    { key: "modes", icon: <FiZap />, label: t("settings.tabs.modes") },
+    { key: "filters", icon: <FiEye />, label: t("settings.tabs.filters") },
+    { key: "bgMusic", icon: <FiMusic />, label: t("settings.tabs.bgMusic") },
+    { key: "news", icon: <FiGlobe />, label: t("settings.tabs.news") },
+    { key: "language", icon: <FiGlobe />, label: t("settings.tabs.language") },
   ];
 
   return (
@@ -1161,9 +1165,9 @@ const UserSettingsModal = ({
                   <FiUser />
                 </div>
                 <div style={{ padding: isGuest ? "0 4px" : 0 }}>
-                  <HeaderTitle>Параметри</HeaderTitle>
+                  <HeaderTitle>{t("settings.title")}</HeaderTitle>
                   <HeaderSub>
-                    {isGuest ? "Гість • Увійдіть для повного доступу" : (user?.email || user?.account || "Обліковий запис")}
+                    {isGuest ? t("settings.guest") : (user?.email || user?.account || t("settings.tabs.account"))}
                   </HeaderSub>
                 </div>
               </UserBadge>
@@ -1171,7 +1175,7 @@ const UserSettingsModal = ({
             <HeaderActions>
               {!isGuest && (
                 <HeaderButton onClick={() => setShowKatScene(true)}>
-                  <FiFilm /> Титри
+                  <FiFilm /> {t("settings.credits")}
                 </HeaderButton>
               )}
               <CloseButton onClick={handleCancel}><FiX /></CloseButton>

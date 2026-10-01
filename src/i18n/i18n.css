@@ -1,0 +1,161 @@
+/*
+ * i18n Global Styles
+ * Handles RTL layout, tall-script line-height fixes,
+ * no-space word-break, and the Noto font variable.
+ *
+ * Import this file once in App.jsx or index.jsx.
+ */
+
+/* ── Font override via CSS variable set by applyLanguageToDOM() ── */
+:root {
+  --i18n-font: inherit;
+}
+
+/* Apply language-specific font if set */
+html[style*="--i18n-font"] body,
+html[style*="--i18n-font"] * {
+  font-family: var(--i18n-font);
+}
+
+/* ── RTL Layout Support ─────────────────────────────────────────── */
+html[dir="rtl"] {
+  /* Logical properties automatically flip direction */
+  direction: rtl;
+  unicode-bidi: embed;
+}
+
+/* Sidebar should come from the right in RTL */
+html[dir="rtl"] .sidebar-nav {
+  border-right: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Flip active indicator bar from left to right */
+html[dir="rtl"] .nav-item-active::before {
+  left: auto;
+  right: 3px;
+}
+
+/* Flip margin/padding for common layout patterns */
+html[dir="rtl"] .card-icon-box {
+  margin-right: 0;
+  margin-left: 14px;
+}
+
+/* Charts and sliders reverse in RTL — use transform flip */
+html[dir="rtl"] input[type="range"] {
+  transform: scaleX(-1);
+}
+
+/* ── Tall Script Languages (Thai, Devanagari, etc.) ─────────────── */
+html.lang-tall-script body,
+html.lang-tall-script * {
+  line-height: 1.8 !important;
+}
+
+html.lang-tall-script .card-title,
+html.lang-tall-script .card-description {
+  line-height: 2 !important;
+}
+
+/* ── No-Space Languages (Chinese, Japanese, Thai, Khmer) ─────────── */
+html.lang-no-space * {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+/* Preserve CJK word grouping where possible */
+html.lang-no-space p,
+html.lang-no-space span,
+html.lang-no-space div {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* ── Long-Word Languages (German, Finnish, Hungarian) ─────────────── */
+/* Prevent UI breakage from compound words */
+.card-title,
+.card-description,
+.nav-item-label {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* Button overflow protection */
+button, .win-button {
+  min-width: fit-content;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* ── Language Picker Card Styling ──────────────────────────────── */
+.lang-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 6px;
+}
+
+.lang-picker-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.15s ease;
+  text-align: start;
+}
+
+.lang-picker-card:hover {
+  background: rgba(96, 205, 255, 0.08);
+  border-color: rgba(96, 205, 255, 0.2);
+}
+
+.lang-picker-card.active {
+  background: rgba(96, 205, 255, 0.12);
+  border-color: #60cdff;
+}
+
+.lang-picker-card .lang-native {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
+.lang-picker-card .lang-speakers {
+  font-size: 10px;
+  color: #a0a0a0;
+  margin-top: 1px;
+}
+
+.lang-picker-region-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #60cdff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 0 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 6px;
+}
+
+/* RTL badge */
+.lang-rtl-badge {
+  font-size: 9px;
+  background: rgba(255, 179, 108, 0.15);
+  color: #ffb36c;
+  border: 1px solid rgba(255, 179, 108, 0.3);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+html[dir="rtl"] .lang-rtl-badge {
+  margin-left: 0;
+  margin-right: auto;
+}
