@@ -814,6 +814,8 @@ const SectionContent = memo(
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFadingOut, setIsFadingOut] = useState(false);
+  const [areInitialModulesReady, setAreInitialModulesReady] = useState(false);
+  const [minimumLoaderTimePassed, setMinimumLoaderTimePassed] = useState(false);
   const [phraseData, setPhraseData] = useState({ text: "", isNew: false });
   const [now, setNow] = useState(new Date());
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -1096,11 +1098,6 @@ const App = () => {
         if (savedShowUpdateTimer !== null)
           setShowUpdateTimer(savedShowUpdateTimer);
 
-        const savedStrategy = await localforage.getItem(
-          "modal_loading_strategy",
-        );
-        if (savedStrategy) setLoadingStrategy(savedStrategy);
-
         const deployId = process.env.REACT_APP_DEPLOY_ID;
         if (deployId && lastSeenVersion !== deployId) {
           setIsUpdatePending(true);
@@ -1171,29 +1168,29 @@ const App = () => {
     initPhrase();
   }, []);
 
-  const preloadComponents = useCallback(() => {
-    // Ручний виклик динамічного імпорту для кешування
-    import("./components/Aihelp/Aihelp.jsx");
-    import("./components/FanArt/FanArt.jsx");
-    import("./components/Modals/ShopModal.jsx");
-    import("./components/News/News.jsx");
-    import("./components/ClimateMap/ClimateMap.jsx");
-    import("./components/Modals/Modal.jsx");
-    import("./components/Modals/LoginModal.jsx");
-    import("./components/Modals/UserSettingsModal.jsx");
-    import("./components/Modals/WeatherDetailsModal.jsx");
-    import("./components/Modals/UserSearchModal.jsx");
+  const preloadComponents = useCallback(async () => {
+    await Promise.all([
+      import("./components/Aihelp/Aihelp.jsx"),
+      import("./components/FanArt/FanArt.jsx"),
+      import("./components/Modals/ShopModal.jsx"),
+      import("./components/News/News.jsx"),
+      import("./components/ClimateMap/ClimateMap.jsx"),
+      import("./components/Modals/Modal.jsx"),
+      import("./components/Modals/LoginModal.jsx"),
+      import("./components/Modals/UserSettingsModal.jsx"),
+      import("./components/Modals/WeatherDetailsModal.jsx"),
+      import("./components/Modals/UserSearchModal.jsx"),
+    ]);
   }, []);
 
   useEffect(() => {
     if (!isHydrated) return;
-    if (loadingStrategy === "eager") {
-      preloadComponents();
-    } else if (loadingStrategy === "delayed") {
-      const timer = setTimeout(preloadComponents, 8000);
-      return () => clearTimeout(timer);
-    }
-  }, [isHydrated, loadingStrategy, preloadComponents]);
+    preloadComponents()
+      .catch((error) => {
+        console.error("Помилка попереднього завантаження модулів:", error);
+      })
+      .finally(() => setAreInitialModulesReady(true));
+  }, [isHydrated, preloadComponents]);
 
   const phraseParticles = useMemo(() => {
     const count = phraseData.isNew ? 12 : 6;
@@ -2532,16 +2529,22 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    const fadeTimer = setTimeout(() => setIsFadingOut(true), 3500);
-    const removeTimer = setTimeout(() => setIsLoading(false), 5300);
+    const fadeTimer = setTimeout(() => setMinimumLoaderTimePassed(true), 3500);
     const clockTimer = setInterval(() => setNow(new Date()), 1000);
 
     return () => {
       clearTimeout(fadeTimer);
-      clearTimeout(removeTimer);
       clearInterval(clockTimer);
     };
   }, []);
+
+  useEffect(() => {
+    if (!areInitialModulesReady || !minimumLoaderTimePassed) return;
+
+    setIsFadingOut(true);
+    const removeTimer = setTimeout(() => setIsLoading(false), 1800);
+    return () => clearTimeout(removeTimer);
+  }, [areInitialModulesReady, minimumLoaderTimePassed]);
   const handleLogout = () => {
     setUser(null);
     setCurrentAvatar(userDefault);
