@@ -29,6 +29,9 @@ import { BsPinAngleFill } from "react-icons/bs";
 import herotext from "../../photos/hero-header/herotext.webp";
 import customLinksData from "./customLinks.json";
 import village from "../../photos/fan-art/village.webp"
+import villageCard1x from "../../photos/fan-art/village-card-1x.webp";
+import faded from "../../photos/fan-art/faded.webp";
+import fadedCard1x from "../../photos/fan-art/faded-card-1x.webp";
 import {
   buildWikipediaSearchUrl,
   parseWikipediaSnippet,
@@ -54,6 +57,15 @@ import {
   FloatingPortal,
   FloatingArrow,         
 } from "@floating-ui/react";
+const bgCardThumbnails = {
+  [village]: {
+    src: villageCard1x,
+  },
+  [faded]: {
+    src: fadedCard1x,
+  },
+};
+
 const TooltipBox = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0ceb" : "#fdff98e7")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
@@ -3922,6 +3934,7 @@ const Hero = ({
               {pagedBgs.map((bg, idx) => {
                 const rating = bgRatings[bg.src] || 0;
                 const qIndex = randomBgsList.findIndex((item) => item.src === bg.src);
+                const cardThumbnail = bgCardThumbnails[bg.src];
                 return (
                   <BgItem
                     key={idx}
@@ -4050,7 +4063,7 @@ const Hero = ({
                       />
                     ) : (
                       <BgSquare
-                        src={bg.src}
+                        src={cardThumbnail?.src || bg.src}
                         loading="lazy"
                         onClick={() => handleSelectBg(bg.src)}
                         title={bg.name}

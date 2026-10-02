@@ -2,10 +2,12 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import viteCompression from 'vite-plugin-compression';
+import { imagetools } from 'vite-imagetools'; 
 
 export default defineConfig({
   plugins: [
     react(),
+    imagetools(),
 
     ViteImageOptimizer({
       jpg: { quality: 80 },
@@ -14,14 +16,14 @@ export default defineConfig({
       webp: { quality: 80 },
       avif: { 
         quality: 75, 
-        effort: 4, // Трохи зменшили effort з 5 до 4, щоб білд збирався швидше
+        effort: 4,
       },
     }),
 
     viteCompression({
       algorithm: 'gzip',
       ext: '.gz',
-      threshold: 10240, // Стискати тільки файли більші за 10KB
+      threshold: 10240,
     }),
 
     viteCompression({
@@ -33,16 +35,15 @@ export default defineConfig({
 
   base: '/',
 
-  // Прискорює розробку (dev server)
   optimizeDeps: {
     include: ['react', 'react-dom', 'firebase/app', 'firebase/firestore'],
   },
 
   build: {
     sourcemap: false,
-    chunkSizeWarningLimit: 1000, // Зменшили ліміт, щоб вчасно помічати роздуті файли
+    chunkSizeWarningLimit: 1000,
     minify: 'esbuild',
-    target: 'esnext', // Дозволяє esbuild генерувати сучасніший і компактніший код
+    target: 'esnext',
     rollupOptions: {
       output: {
         manualChunks(id) {
