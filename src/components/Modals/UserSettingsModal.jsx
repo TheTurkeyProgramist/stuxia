@@ -504,7 +504,6 @@ const UserSettingsModal = ({
   // Modes & strategy props
   isRoutingMode = false,
   setIsRoutingMode = () => {},
-  loadingStrategy = "eager",
   onSetLoadingStrategy = () => {},
   isStickyBgMode = false,
   onToggleStickyBg = () => {},
@@ -1717,23 +1716,17 @@ const UserSettingsModal = ({
                       </CardInfo>
                     </CardLeft>
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
-                      {[
-                        { key: "eager", label: "Повний", desc: "Завантажує все відразу при старті" },
-                        { key: "delayed", label: "Оптимальний", desc: "Завантажує важкі модулі через 8 сек" },
-                        { key: "lazy", label: "Економний", desc: "Завантажує тільки за потребою" },
-                      ].map(({ key, label }) => (
-                        <WinButton
-                          key={key}
-                          onClick={() => onSetLoadingStrategy(key)}
-                          style={{
-                            flex: 1, minWidth: "120px",
-                            background: loadingStrategy === key ? "rgba(96,205,255,0.15)" : undefined,
-                            borderColor: loadingStrategy === key ? "#60cdff" : undefined,
-                          }}
-                        >
-                          {label}
-                        </WinButton>
-                      ))}
+                      <WinButton
+                        onClick={() => onSetLoadingStrategy("eager")}
+                        style={{
+                          flex: 1,
+                          minWidth: "120px",
+                          background: "rgba(96,205,255,0.15)",
+                          borderColor: "#60cdff",
+                        }}
+                      >
+                        Повний
+                      </WinButton>
                     </div>
                   </CardExpanded>
 

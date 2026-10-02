@@ -1318,26 +1318,6 @@ const Menu = ({
                       Повний
                     </FilterButtonInMenu>
                     </Tooltip>
-                     <Tooltip content="Завантажує важкі модулі через 8 секунд" isDarkMode={isDarkMode}>
-                    <FilterButtonInMenu
-                      $active={loadingStrategy === "delayed"}
-                      $isDarkMode={isDarkMode}
-                      onClick={() => onSetLoadingStrategy("delayed")}
-                      aria-label="Завантажує важкі модулі через 8 секунд"
-                    >
-                      Оптимальний
-                    </FilterButtonInMenu>
-                    </Tooltip>
-                <Tooltip content="Завантажує спливаюче вікно тільки при натисканні та елемент сайту коли ви до нього догортуєте (економія)" isDarkMode={isDarkMode}>
-                    <FilterButtonInMenu
-                      $active={loadingStrategy === "lazy"}
-                      $isDarkMode={isDarkMode}
-                      onClick={() => onSetLoadingStrategy("lazy")}
-                      aria-label="Завантажує спливаюче вікно тільки при натисканні та елемент сайту коли ви до нього догортуєте (економія)"
-                    >
-                      Економний
-                    </FilterButtonInMenu>
-                    </Tooltip>
                   </div>
                 </div>
               </li>
