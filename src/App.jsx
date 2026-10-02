@@ -190,9 +190,6 @@ const WeatherDetailsModal = lazy(
 const TermsModal = lazy(
   () => import("./components/Modals/UserSearchModal.jsx"),
 );
-const OtherOptionsModal = lazy(
-  () => import("./components/Header/OtherOptionsModal.jsx"),
-);
 
 const GlobalFilterLock = createGlobalStyle`
   ${(props) =>
@@ -1186,7 +1183,6 @@ const App = () => {
     import("./components/Modals/UserSettingsModal.jsx");
     import("./components/Modals/WeatherDetailsModal.jsx");
     import("./components/Modals/UserSearchModal.jsx");
-    import("./components/Header/OtherOptionsModal.jsx");
   }, []);
 
   useEffect(() => {

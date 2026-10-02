@@ -295,6 +295,8 @@ const CardHeader = styled.div`
 
 const ActionButtons = styled.div`
   display: flex;
+  align-self: stretch;
+  align-items: stretch;
   gap: 4px;
   button {
     background: #333;
@@ -2756,6 +2758,8 @@ const HOLIDAYS_2027 = {
               style={{
                 padding: "5px",
                 display: "inline-flex",
+                height: "100%",
+                boxSizing: "border-box",
                 color: `${isDarkMode ? "rgb(251, 251, 251)" : "rgb(3, 3, 3)"}`,
                 alignItems: "center",
                 gap: "4px",
