@@ -9,7 +9,7 @@ const config = {
   port: 21,
   localRoot: __dirname + "/dist",
   remoteRoot: "public_html/",
-  include: ["*"],
+  include: ["*", ".*"],
   exclude: ["**/node_modules/**", ".git/**", ".env"],
   deleteRemote: true,
   forcePasv: true,

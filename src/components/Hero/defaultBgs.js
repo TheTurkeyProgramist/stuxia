@@ -69,8 +69,6 @@ import village from "../../photos/fan-art/village.webp";
 import daysVideo from "../../mp4/sevendays.mp4";
 import vladOneVideo from "../../mp4/vladone.mp4";
 // Mia and me
-import DominosShop from "../../mp3/domino.webp";
-import DominosShopVideo from "../../mp4/shop.mp4";
 import faded from "../../photos/fan-art/faded.webp";
 import fadedVideo from "../../mp4/faded.mp4";
 import mia from "../../photos/vip-images/mia/miaandme.webp";
@@ -79,16 +77,14 @@ import clubstepVideo from "../../mp4/clubstep.mp4";
 // Pesimistic future
 import titanic from "../../photos/cursors/titanic.webp";
 import smit from "../../photos/cursors/smit.webp";
-import electrodynamixVideo from "../../mp4/electrodynamix.mp4";
+import electrodynamixVideo from "../../mp4/electrodynamix.webm";
 import volcanoVideo from "../../mp4/volcano.mp4";
 import whitesound from "../../mp4/whiteloud.mp4";
 import loft from "../../photos/fan-art/wall.webp";
 import secret from "../../photos/vip-modal/texts.webp";
 import slivkishow from "../../mp4/slivkishow.webm";
-import iceage from "../../mp4/days.mp4";
+import iceage from "../../mp4/days.webm";
 // Dinofroz full video (excerpt only — start/end)
-import dinofrozFullVideo from "../../mp3/dinofroz.webm";
-
 /**
  * DEFAULT_BGS — масив усіх вбудованих фонів.
  *
