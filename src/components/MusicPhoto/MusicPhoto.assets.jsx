@@ -59,16 +59,12 @@ import dinofroznine from "../../photos/vip-images/dinofroz/dinofroznine.webp";
 import hunger from "../../photos/hero-header/hunger.webp";
 import mia from "../../photos/vip-images/mia/miaandme.webp";
 import dinofrozAudio from "../../mp3/dinofroz.mp3";
-import monodyAudio from "../../mp3/thefatrat-monody.mp3";
-import unityAudio from "../../mp3/unity.mp3";
-import hungerAudio from "../../mp3/thefatrat-hunger.mp3";
+import monodyAudio from "../../mp3/thefatrat-monody.opus";
+import unityAudio from "../../mp3/unity.opus";
+import hungerAudio from "../../mp3/thefatrat-hunger.opus";
 import dragonoraAudio from "../../mp3/dragon.mp3";
-import harmonyAudio from "../../mp3/harmonic-japan.mp3";
-import electrodynamixAudio from "../../mp3/electrodynamix.mp3";
-import clubstepAudio from "../../mp3/clubstep.mp3";
-import theorytwoAudio from "../../mp3/theoty-of-everything-ll.mp3";
-import theoryAudio from "../../mp3/theory-of-everyting.mp3";
-import deadlockedAudio from "../../mp3/deadlocked.mp3";
+import theorytwoAudio from "../../mp3/theoty-of-everything-ll.opus";
+import theoryAudio from "../../mp3/theory-of-everyting.opus";
 export const assetMap = {
   faded,
   dinofrozVideo,
@@ -134,12 +130,8 @@ export const assetMap = {
   unityAudio,
   hungerAudio,
   dragonoraAudio,
-  harmonyAudio,
-  electrodynamixAudio,
-  clubstepAudio,
   theorytwoAudio,
   theoryAudio,
-  deadlockedAudio,
 };
 
 export const musicCards = songAiKnowledge.map((card) => ({

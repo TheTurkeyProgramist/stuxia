@@ -6,9 +6,7 @@ import hills from "../../photos/hero-header/fog.webp";
 import hillsVideo from "../../mp4/fog.webm";
 import dinofrozVideo from "../../mp4/nicerone.webm";
 import harmony from "../../photos/vip-images/asium/asium.webp";
-import horse from "../../photos/vip-images/horse/horse.webp";
 import theorytwo from "../../photos/fan-art/theorytwo.webp";
-import theorytwoVideo from "../../mp4/theorytwo.mp4";
 import theoryVideo from "../../mp4/theory.mp4";
 import fingerdash from "../../photos/vip-images/dinofroz/fingerdash.webp";
 import electrodynamix from "../../photos/vip-images/electrodynamix.webp";
@@ -28,8 +26,6 @@ import chess from "../../photos/vip-images/horse/chess.webp";
 import aurorahills from "../../photos/vip-images/aurorahills.webp";
 import turkeytwo from "../../photos/vip-images/turkeys/turkeytwo.webp";
 import turkeythree from "../../photos/vip-images/turkeys/turkeysthree.webp";
-import turkeyfour from "../../photos/vip-images/turkeys/turkeysfour.webp";
-import turkeyfive from "../../photos/vip-images/turkeys/turkeysfive.webp";
 import turkeysix from "../../photos/vip-images/turkeys/turkeyssix.webp";
 import turkeysone from "../../photos/vip-images/turkeys/turkeysone.webp";
 import turkeyseven from "../../photos/vip-images/turkeys/turkeysseven.webp";
@@ -237,16 +233,6 @@ export const DEFAULT_BGS = [
       "Цей фон створює атмосферу таємничості та невизначеності. Люди, які обирають його, часто мають схильність до дослідження невідомого та цікавляться містичними явищами. Вони можуть бути інтроспективними та люблять розгадувати загадки, що відображає їхню цікавість до світу навколо та бажання зрозуміти його глибше.",
   },
   {
-    src: DominosShopVideo,
-    name: "Магазин Доміно (Відео)",
-    category: "Природа та Стихії",
-    author: "TheTurkeyStudio",
-    start: 0,
-    end: 300,
-    description:
-      "Затишна та динамічна атмосфера міського життя. Цей фон підійде тим, хто шукає натхнення у звичайних щоденних моментах, цінує теплі міські локації та комфортний ритм сучасності.",
-  },
-  {
     src: prisonVideo,
     name: "Кришталева в'язниця",
     category: "Темрява та Містика",
@@ -255,14 +241,6 @@ export const DEFAULT_BGS = [
     end: 300,
     description:
       "Загадковий і холодний фон, що випромінює застережливу красу та напругу. Він приваблює шанувальників гостросюжетних історій, психологічних загадок та атмосфери таємничої небезпеки.",
-  },
-  {
-    src: DominosShop,
-    name: "Риболов",
-    category: "Природа та Стихії",
-    author: "TheTurkeyStudio",
-    description:
-      "Символ терпіння, витримки та спокійної спостережливості. Цей фон обирають люди, які цінують усамітнення на природі, вміють вичікувати правильний момент та шукають відпочинку від щоденної метушні.",
   },
   {
     src: loft,
@@ -393,12 +371,6 @@ export const DEFAULT_BGS = [
   },
   // Тварини та Істоти (Індики, Коні)
   {
-    src: horse,
-    name: "Кінь",
-    category: "Природа та Стихії",
-    author: "Генерація ШІ(Gemini)",
-  },
-  {
     src: turkeys,
     name: "Індичка Кейт",
     category: "Природа та Стихії",
@@ -419,18 +391,6 @@ export const DEFAULT_BGS = [
   {
     src: turkeythree,
     name: "Дивись мені в очі!",
-    category: "Природа та Стихії",
-    author: "TheTurkeyStudio",
-  },
-  {
-    src: turkeyfour,
-    name: "І знову про індиків",
-    category: "Природа та Стихії",
-    author: "TheTurkeyStudio",
-  },
-  {
-    src: turkeyfive,
-    name: "2 Індики",
     category: "Природа та Стихії",
     author: "TheTurkeyStudio",
   },
@@ -652,14 +612,6 @@ export const DEFAULT_BGS = [
     name: "Чорна діра",
     category: "Темрява та Містика",
     author: "TheTurkeyStudio",
-  },
-  {
-    src: theorytwoVideo,
-    name: "Чорна діра(Відео)",
-    category: "Темрява та Містика",
-    author: "TheTurkeyStudio",
-    start: 0,
-    end: 300,
   },
   {
     src: electrodynamix,

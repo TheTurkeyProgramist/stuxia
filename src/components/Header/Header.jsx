@@ -1,15 +1,12 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes, css } from "styled-components";
 import { BsMoonStarsFill } from "react-icons/bs";
-import BurgerMenu from "./Menu.jsx";
-import { IoIosEye } from "react-icons/io";
 import { GiShop, GiExitDoor } from "react-icons/gi";
 import relax from "../../mp3/modals/relax.mp3";
 import { FaSun } from "react-icons/fa";
 import { MdSettingsSuggest, MdMore, MdWallpaper } from "react-icons/md";
 import { FaBookOpen } from "react-icons/fa6";
 import bell from "../../mp3/modals/bell.mp3";
-import paper from "../../mp3/modals/paper.mp3";
 import conimg from "../../mp3/modals/concierge.mp3";
 import userDefault from "../../photos/hero-header/user.webp";
 import { useVisualFilters } from "./useVisualFilters";
@@ -205,10 +202,7 @@ const ProfileModalName = styled.div`
 `;
 
 const ProfileModalLabel = styled.div`
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  opacity: 0.7;
-  margin-bottom: 2px;
+  font-size: 12px;
 `;
 
 const ButtonsGroup = styled.div`
@@ -377,20 +371,10 @@ const Header = ({
   toggleTheme,
   isStickyBgMode,
   setIsStickyBgMode,
-  sectionThemes,
-  hiddenSections,
-  onToggleSectionVisibility,
-  onToggleSectionTheme,
-  onResetSectionThemes,
   onOpenAchievements,
   currentAvatar,
   onLogout,
   user,
-  siteSections,
-  moveSiteSection,
-  resetSiteSections,
-  isRoutingMode,
-  setIsRoutingMode,
   currentPath,
   setIsFsActive,
   loadingStrategy,
@@ -398,9 +382,8 @@ const Header = ({
 }) => {
   const { registerRef } = useTutorial?.() || { registerRef: () => {} };
   const [showUltra, setShowUltra] = useState(false);
-  const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const [showVisualSettings, setShowVisualSettings] = useState(false);
-  const avatarSource = user?.avatar || currentAvatar || userDefault;
+  const avatarSource = user?.photoURL || user?.avatar || currentAvatar || userDefault;
   const handleAvatarError = (event) => {
     event.currentTarget.onerror = null;
     event.currentTarget.src = userDefault;
@@ -463,13 +446,7 @@ const Header = ({
     toggleTheme();
   };
 
-  // 2. Бургер меню
-  const handleBurgerOpen = () => {
-    playSfx(paper);
-    setIsBurgerOpen(true);
-  };
-
-  // 3. Фон на увесь сайт
+  // 2. Фон на увесь сайт
   const handleStickyBgToggle = () => {
     playSfx(conimg);
     setIsStickyBgMode((prev) => !prev);
@@ -631,17 +608,6 @@ const Header = ({
             </IconButton>
           </Tooltip>
 
-          {/* Бургер
-          <Tooltip content="Відкрити меню" isDarkMode={isDarkMode}>
-            <IconButton
-              onClick={handleBurgerOpen}
-              $isDarkMode={isDarkMode}
-              aria-label="Відкрити меню"
-            >
-              <EmojiWrapper>☰</EmojiWrapper>
-            </IconButton>
-          </Tooltip> */}
-        </ButtonsGroup>
         <ProfileButtonWrap>
           <Tooltip content="Ваш профіль" isDarkMode={isDarkMode}>
           <ProfileButton
@@ -672,12 +638,13 @@ const Header = ({
                 />
                 <div>
                   <ProfileModalLabel>Профіль</ProfileModalLabel>
-                   <ProfileModalName>Ваше ім'я: {user.firstName}</ProfileModalName>
+                   <ProfileModalName>Електронна пошта: {user.email || user.account}</ProfileModalName>
                 </div>
               </ProfileModalBody>
             </ProfileModal>
           )}
         </ProfileButtonWrap>
+        </ButtonsGroup>
       </>
     ) : (
       <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)}>
@@ -738,16 +705,6 @@ const Header = ({
             </IconButton>
           </Tooltip>
 
-          {/* 
-          <Tooltip content="Відкрити меню" isDarkMode={isDarkMode}>
-            <IconButton
-              onClick={handleBurgerOpen}
-              $isDarkMode={isDarkMode}
-              aria-label="Відкрити меню"
-            >
-              <EmojiWrapper>☰</EmojiWrapper>
-            </IconButton>
-          </Tooltip> */}
         <button
           onClick={handleLoginClick}
           style={{
@@ -892,45 +849,6 @@ const Header = ({
     </VisualSettingsPanel>
   )}
 </HeaderDiv>
-      <BurgerMenu
-        isOpen={isBurgerOpen}
-        onClose={() => setIsBurgerOpen(false)}
-        isDarkMode={isDarkMode}
-        siteSections={siteSections}
-        moveSiteSection={moveSiteSection}
-        resetSiteSections={resetSiteSections}
-        sectionThemes={sectionThemes}
-        hiddenSections={hiddenSections}
-        onToggleSectionVisibility={onToggleSectionVisibility}
-        onToggleSectionTheme={onToggleSectionTheme}
-        onResetSectionThemes={onResetSectionThemes}
-        onToggleTheme={handleThemeToggle}
-        onOpenShop={handleShopClick}
-        onOpenVip={onOpenVip}
-        onOpenAchievements={onOpenAchievements}
-        showUltra={showUltra}
-        onOpenSettings={handleSettingsClick}
-        onOpenHelp={handleHelpClick}
-        onOpenInfo={onOpenInfo}
-        onOpenOtherOptions={handleOtherOptionsClick}
-        onLogout={handleLogoutClick}
-        isRoutingMode={isRoutingMode}
-        setIsRoutingMode={setIsRoutingMode}
-        currentPath={currentPath}
-        visualConfig={visualConfig}
-        setVisualConfig={setVisualConfig}
-        onResetFilters={resetFilters}
-        customPresets={customPresets}
-        onSavePreset={saveCustomPreset}
-        onDeletePreset={deleteCustomPreset}
-        onUpdatePresetName={updateCustomPresetName}
-        onReorderPresets={reorderCustomPresets}
-        setIsFsActive={setIsFsActive}
-        loadingStrategy={loadingStrategy}
-        onSetLoadingStrategy={onSetLoadingStrategy}
-        isStickyBgMode={isStickyBgMode}
-        onToggleStickyBg={handleStickyBgToggle}
-      />
     </>
   );
 };
