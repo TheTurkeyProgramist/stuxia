@@ -3,11 +3,47 @@ import react from '@vitejs/plugin-react-swc';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import viteCompression from 'vite-plugin-compression';
 import { imagetools } from 'vite-imagetools'; 
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+
+function inlineSmallEntryCss(maxBytes = 10 * 1024) {
+  return {
+    name: 'inline-small-entry-css',
+    apply: 'build',
+    async writeBundle(outputOptions, bundle) {
+      const htmlAsset = Object.values(bundle).find(
+        (asset) => asset.type === 'asset' && asset.fileName === 'index.html',
+      );
+      if (!htmlAsset || typeof htmlAsset.source !== 'string') return;
+
+      const stylesheetLinks = [...htmlAsset.source.matchAll(
+        /<link\b(?=[^>]*\brel=["']stylesheet["'])[^>]*\bhref=["']([^"']+)["'][^>]*>/gi,
+      )];
+      let html = htmlAsset.source;
+
+      for (const [, linkTag, href] of stylesheetLinks) {
+        const fileName = decodeURIComponent(href).replace(/^\//, '');
+        const cssAsset = bundle[fileName];
+        if (!cssAsset || cssAsset.type !== 'asset') continue;
+
+        const css = typeof cssAsset.source === 'string'
+          ? cssAsset.source
+          : await readFile(resolve(outputOptions.dir ?? 'dist', fileName), 'utf8');
+        if (Buffer.byteLength(css) > maxBytes) continue;
+
+        html = html.replace(linkTag, `<style>${css}</style>`);
+      }
+
+      htmlAsset.source = html;
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
     react(),
     imagetools(),
+    inlineSmallEntryCss(),
 
     ViteImageOptimizer({
       jpg: { quality: 80 },

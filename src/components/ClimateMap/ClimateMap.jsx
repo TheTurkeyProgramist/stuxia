@@ -762,6 +762,26 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     return false;
   });
   const [videoError, setVideoError] = useState(false);
+  const [shouldLoadTurkeyVideo, setShouldLoadTurkeyVideo] = useState(false);
+  const turkeyVideoRef = useRef(null);
+  const shouldShowLoader = !isMapActive || isLoading || !isOnline;
+
+  useEffect(() => {
+    if (isOnline && !isSlowConnection && !videoError) {
+      setShouldLoadTurkeyVideo(true);
+    }
+  }, [isOnline, isSlowConnection, videoError]);
+
+  useEffect(() => {
+    const video = turkeyVideoRef.current;
+    if (!video) return;
+
+    if (shouldShowLoader && isOnline && !isSlowConnection && !videoError) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }, [shouldShowLoader, isOnline, isSlowConnection, videoError]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -1583,25 +1603,33 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
           </div>
         ) : (
           <>
-            {(!isMapActive || isLoading || !isOnline) && (
-              <Loader>
+            <Loader
+              aria-hidden={!shouldShowLoader}
+              style={{ visibility: shouldShowLoader ? "visible" : "hidden" }}
+            >
                 {!isOnline || isSlowConnection || videoError ? (
                   <img
                     src={turkeyFrames[currentTurkeyFrame]}
                     alt="Це Доміно :)"
                     style={{ width: '340px', height: '210px', imageRendering: 'pixelated', marginBottom: '-50px' }}
                   />
-                ) : (
-                  <video
-                    src={turkey}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    onError={() => setVideoError(true)}
-                    style={{ width: '340px', height: '210px', marginBottom: '-50px', objectFit: 'contain' }}
-                  />
-                )}
+                ) : null}
+                <video
+                  ref={turkeyVideoRef}
+                  src={shouldLoadTurkeyVideo ? turkey : undefined}
+                  loop
+                  muted
+                  playsInline
+                  preload="auto"
+                  onError={() => setVideoError(true)}
+                  style={{
+                    display: isOnline && !isSlowConnection && !videoError ? "block" : "none",
+                    width: '340px',
+                    height: '210px',
+                    marginBottom: '-50px',
+                    objectFit: 'contain',
+                  }}
+                />
                 <p style={{ fontSize: "16px" }}>
                   {!isOnline
                     ? "Перевірте інтернет-з'єднання для користування картою"
@@ -1611,8 +1639,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 </p>
                 <p>Інтерактивні карти надано сервісами Windy, Ventusky, Карта тривог України і т.д. (містять файли cookie)</p>
                 <p>Кнопка «Налаштування стихії» відкриває безкоштовний доступ до перемикання мап, повноекранний режим, міні-плеєр та інші функції!</p>
-              </Loader>
-            )}
+            </Loader>
             <StyledIframe
               aria-label="Weather Map"
               src={isMapActive && isOnline ? embedUrl : undefined}
