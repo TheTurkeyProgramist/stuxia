@@ -43,6 +43,7 @@ import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
 import { MdOutlineSpeed } from "react-icons/md"; //Тиск
 import { FaCloudDownloadAlt, FaCloudUploadAlt, FaSmog, FaSnowflake, FaSun, FaExclamationTriangle } from "react-icons/fa"; //Іконки
 import { GiSunRadiations, GiSnowing, GiWaterRecycling, GiIceCube } from "react-icons/gi";//Сонячна радіація
+import { LiaCloudSunSolid } from "react-icons/lia";
 import {
   useFloating,
   autoUpdate,
@@ -285,7 +286,9 @@ const CardHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   border-bottom: 1px solid rgb(0, 238, 255);
+  overflow: visible;
   h3 {
     margin: 0;
     font-size: 13px;
@@ -294,6 +297,7 @@ const CardHeader = styled.div`
 `;
 
 const ActionButtons = styled.div`
+  position: relative;
   display: flex;
   align-self: stretch;
   align-items: stretch;
@@ -749,14 +753,16 @@ const ViewToggleButton = styled.button`
 
 const SettingsDropdownMenu = styled.div`
   position: absolute;
-  top: -10px;
-  left: -275px;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
   width: 100%;
+  max-width: 100%;
+  min-width: 100%;
   background: ${(props) => (props.$isDarkMode ? "#222" : "#fff")};
   border: 1px solid #ffb36c;
-  border-radius: 5px 5px 0 0;
-  display: flex;
-  min-width: 309px;
+  border-radius: 8px 8px 0 0;
+  display: grid;
   flex-direction: column;
   z-index: 200;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
@@ -764,9 +770,38 @@ const SettingsDropdownMenu = styled.div`
   animation: ${(props) => (props.$isClosing ? menuSlideUp : menuSlideDown)} 0.2s
     ease-out forwards;
   overflow: hidden;
-  max-height: 70vh;
+  height: calc(522px - 100% - 6px);
+grid-template-columns: repeat(2, 1fr); 
+  & > :first-child {
+    grid-column: span 2; 
+  }
+  @media (max-width: 767px) {
+    height: min(70vh, 700px);
+    grid-template-columns: repeat(1, 1fr); 
+    overflow-y: auto;
+  }
 `;
-
+const SettingsDropdownItem = styled.button`
+ text-align: left;
+ padding:8px 5px;
+ display: inline-flex;
+ align-items: center;
+  background: transparent;
+  font-size: 16px;
+ gap: 6px;
+  color: ${(props) => (props.$isDarkMode ? "#020202" : "#f1eeee")};
+border: 1px solid ${(props) => (props.$isDarkMode ? "#020202" : "#f1eeee")};
+  @media (min-width: 768px) {
+     padding:14px 30px;
+      gap: 14px;
+  }
+svg {
+    font-size: 18px;
+   @media (min-width: 768px) {
+    font-size: 29px;
+  }
+}
+`;
 const WeatherCardComponent = ({
   user,
   card,
@@ -1924,6 +1959,14 @@ const HOLIDAYS_2027 = {
             }
             return "";
           },
+          afterBody: (contextItems) => {
+            if (contextItems.length === 0) return "";
+            const firstContext = contextItems[0];
+            const hourlyData = visibleHourly?.[firstContext.dataIndex];
+            if (!hourlyData) return "";
+            const desc = hourlyData.description || getWeatherDescription(hourlyData.weather_code) || (hourlyData.iconPlaceholder || "").replace(hourlyData.iconSymbol || "", "").trim() || "Погода";
+            return `Стан погоди: ${desc}`;
+          },
         },
       },
     },
@@ -1953,7 +1996,7 @@ const HOLIDAYS_2027 = {
       },
       x: {
         offset: true,
-        ticks: { color: isDarkMode ? "#aaa" : "#888", font: { size: 10 } },
+        ticks: { color: "#fff", font: { size: 10 } },
         grid: { display: false },
       },
     },
@@ -1998,16 +2041,13 @@ const HOLIDAYS_2027 = {
             }
             return "";
           },
-          afterLabel: (context) => {
-            const daily = card.daily16?.[context.dataIndex];
+          afterBody: (contextItems) => {
+            if (contextItems.length === 0) return "";
+            const firstContext = contextItems[0];
+            const daily = card.daily16?.[firstContext.dataIndex];
             if (!daily) return "";
-            const parts = [];
-
-            if (context.datasetIndex === 0) {
-              parts.push(`Описання: ${daily.description || "—"}`);
-            }
-
-            return parts.length ? `\n${parts.join("\n")}` : "";
+            const desc = daily.description || getWeatherDescription(daily.weather_code) || (daily.iconPlaceholder || "").replace(daily.iconSymbol || "", "").trim() || "—";
+            return `Стан погоди: ${desc}`;
           },
         },
       },
@@ -2043,11 +2083,11 @@ const HOLIDAYS_2027 = {
           ...chartOptions.scales.x.ticks,
           color: (ctx) => {
             if (!card.daily16 || ctx.index >= card.daily16.length) {
-              return isDarkMode ? "#aaa" : "#888";
+              return "#fff";
             }
             const daily = card.daily16[ctx.index];
             const dateType = getDateType(daily.date, daily.day, daily.fullDate);
-            return dateType.color || (isDarkMode ? "#aaa" : "#888");
+            return dateType.color || "#fff";
           },
           font: {
             ...chartOptions.scales.x.ticks.font,
@@ -2239,13 +2279,13 @@ const HOLIDAYS_2027 = {
                   boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
                 }}
               >
-                <div style={{ fontSize: "12px", fontWeight: "bold", opacity: 0.85 }}>
+                <div style={{ fontSize: "12px", fontWeight: "bold", opacity: 0.85, color: "#fff" }}>
                   {item.time || item.label || `${idx}:00`}
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", margin: "2px 0" }}>
                   <div style={{ fontSize: "24px" }}>
-                    {item.iconSymbol || item.iconPlaceholder || "🌤️"}
+                    {item.iconSymbol || item.iconPlaceholder || <LiaCloudSunSolid />}
                   </div>
                   <TextContent $size="11px" $lh="1.2">
                     {item.description || getWeatherDescription(item.weather_code) || (item.iconPlaceholder || "").replace(item.iconSymbol || "", "").trim() || "Погода"}
@@ -2321,12 +2361,12 @@ const HOLIDAYS_2027 = {
                   fontSize: "11px",
                 }}
               >
-                <div style={{ fontSize: "13px", fontWeight: "bold", textAlign: "center", color: "#00eeff", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
+                <div style={{ fontSize: "13px", fontWeight: "bold", textAlign: "center", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
                   <FaClock /> {item.time || item.label || `${idx}:00`}
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "24px" }}>{item.iconSymbol || item.iconPlaceholder || "🌤️"}</span>
+                  <span style={{ fontSize: "24px" }}>{item.iconSymbol || item.iconPlaceholder || <LiaCloudSunSolid />}</span>
                   <span style={{ fontSize: "11px", fontWeight: "600", opacity: 0.9 }}>
                     {item.description || getWeatherDescription(item.weather_code) || (item.iconPlaceholder || "").replace(item.iconSymbol || "", "").trim() || "Погода"}
                   </span>
@@ -2414,12 +2454,12 @@ const HOLIDAYS_2027 = {
                   fontSize: "11px",
                 }}
               >
-                <div style={{ fontSize: "13px", fontWeight: "bold", textAlign: "center", color: dateType.color || "#ffb36c", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
+                <div style={{ fontSize: "13px", fontWeight: "bold", textAlign: "center", color: dateType.color || "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
                   <FaCalendarDays /> {d.date} {d.day}
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "26px" }}>{d.iconSymbol || d.iconPlaceholder || "🌤️"}</span>
+                  <span style={{ fontSize: "26px" }}>{d.iconSymbol || d.iconPlaceholder || <LiaCloudSunSolid />}</span>
                   <span style={{ fontSize: "11px", fontWeight: "600" }}>
                     {d.description || getWeatherDescription(d.weather_code) || (d.iconPlaceholder || "").replace(d.iconSymbol || "", "").trim() || "Погода"}
                   </span>
@@ -2490,7 +2530,7 @@ const HOLIDAYS_2027 = {
             const isPolarNight = d.isPolarNight || card.current?.isPolarNight;
             const isPolarDay = d.isPolarDay || card.current?.isPolarDay;
 
-            let headerColor = isDarkMode ? "#fff" : "#333";
+            let headerColor = "#fff";
             let borderColor = isDarkMode ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.1)";
             let badge = null;
 
@@ -2570,7 +2610,7 @@ const HOLIDAYS_2027 = {
 
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
                   <div style={{ fontSize: "28px" }}>
-                    {d.iconSymbol || d.iconPlaceholder || "🌤️"}
+                    {d.iconSymbol || d.iconPlaceholder || <LiaCloudSunSolid />}
                   </div>
                   <div style={{ fontSize: "10px", lineHeight: 1.3, opacity: 0.8, color: headerColor, fontWeight: 600 }}>
                     {d.description || getWeatherDescription(d.weather_code ?? 0) || "Погода"}
@@ -2745,59 +2785,73 @@ const HOLIDAYS_2027 = {
               Широта: {card.lat?.toFixed(2)}, Довгота: {card.lon?.toFixed(2)}
             </p>
           </div>
-          <ActionButtons style={{ position: "relative" }}>
-            <Tooltip content="Налаштування картки" isDarkMode={isDarkMode}>
-            <button
-              ref={(el) => { if (card.isMain && registerRef) registerRef('weatherGear', el); }}
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('domino-weather-gear-clicked'));
-                if (isDropdownOpen) handleCloseDropdown();
-                else setIsDropdownOpen(true);
-              }}
-              aria-label="Налаштування картки"
-              style={{
-                padding: "5px",
-                display: "inline-flex",
-                height: "100%",
-                boxSizing: "border-box",
-                color: `${isDarkMode ? "rgb(251, 251, 251)" : "rgb(3, 3, 3)"}`,
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <BiCog size={28} />
-            </button>
-            </Tooltip>
-            {(isDropdownOpen || isDropdownClosing) && (
-              <SettingsDropdownMenu
-                $isDarkMode={isDarkMode}
-                $isClosing={isDropdownClosing}
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            <ActionButtons style={{ position: "relative", zIndex: 2 }}>
+              <Tooltip content="Налаштування картки" isDarkMode={isDarkMode}>
+              <button
+                ref={(el) => { if (card.isMain && registerRef) registerRef('weatherGear', el); }}
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('domino-weather-gear-clicked'));
+                  if (isDropdownOpen) handleCloseDropdown();
+                  else setIsDropdownOpen(true);
+                }}
+                aria-label="Налаштування картки"
+                style={{
+                  padding: "5px",
+                  display: "inline-flex",
+                  height: "100%",
+                  boxSizing: "border-box",
+                  color: `${isDarkMode ? "rgb(251, 251, 251)" : "rgb(3, 3, 3)"}`,
+                  alignItems: "center",
+                  gap: "4px",
+                }}
               >
+                <BiCog/>
+              </button>
+              </Tooltip>
+            </ActionButtons>
+          </div>
+          {(isDropdownOpen || isDropdownClosing) && (
+            <SettingsDropdownMenu
+              $isDarkMode={isDarkMode}
+              $isClosing={isDropdownClosing}
+            >
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    padding: "6px 10px",
-                    borderBottom: "1px solid #444",
+                    padding: "15px 30px",
+                    borderBottom: `1px solid ${isDarkMode ? "rgba(255, 255, 255, 0.98)" : "rgb(0, 0, 0)"}`,
                   }}
                 >
-                  <span style={{ fontSize: "12px", fontWeight: "bold", color: isDarkMode ? "#ccc" : "#444" }}>Одиниці:</span>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                  <span style={{ fontSize: "15px", fontWeight: "bold", color: isDarkMode ? "#ccc" : "#444" }}>Одиниці:</span>
                   <div style={{ display: "flex", gap: "4px" }}>
                     {[
                       { key: "C", label: "°C (Рекомендовано)" },
                       { key: "K", label: "K (Кельвіни)" },
                       { key: "F", label: "°F (Фаренгейти)" },
                     ].map((u) => (
-                      <button
-                        key={u.key}
-                        onClick={() => changeTempUnit(u.key)}
-                        title={u.label}
-                        style={{
-                          padding: "3px 8px",
-                          fontSize: "12px",
+                      <Tooltip content={u.label} isDarkMode={isDarkMode}>
+                        <button
+                          key={u.key}
+                          onClick={() => changeTempUnit(u.key)}
+                          aria-label={u.label}
+                          style={{
+                          padding: "2px 15px",
+                          fontSize: "13px",
                           borderRadius: "4px",
-                          border: unit === u.key ? "1px solid #00eeff" : "1px solid #555",
+                          border: unit === u.key ? "1px solid #00eeff" : "1px solid #faf9f9",
                           background: unit === u.key ? (isDarkMode ? "#00eeff" : "#008cff") : "transparent",
                           color: unit === u.key ? "#000" : (isDarkMode ? "#fff" : "#000"),
                           fontWeight: unit === u.key ? "bold" : "normal",
@@ -2806,7 +2860,9 @@ const HOLIDAYS_2027 = {
                       >
                         {u.key === "C" ? "°C" : u.key === "K" ? "K" : "°F"}
                       </button>
+                      </Tooltip>
                     ))}
+                    </div>
                   </div>
                   <Tooltip content="Закрити меню" isDarkMode={isDarkMode}>
                   <button
@@ -2828,109 +2884,59 @@ const HOLIDAYS_2027 = {
                   </Tooltip>
                 </div>
                 {!isEditing && (
-                  <button
+                  <SettingsDropdownItem
+                    isDarkMode={isDarkMode}
                     onClick={() => {
                       setIsEditing(true);
                       handleCloseDropdown();
                     }}
-                    style={{
-                      textAlign: "left",
-                      padding: "0px 0px 10px 10px",
-                      background: "transparent",
-                      color: isDarkMode ? "#fff" : "#000",
-                      borderBottom: "1px solid #444",
-                      fontSize: "13px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
                   >
-                    <BiEdit size={16} /> Змінити назву
-                  </button>
+                    <BiEdit/> Змінити назву
+                  </SettingsDropdownItem>
                 )}
-                <button
+                <SettingsDropdownItem
+                 isDarkMode={isDarkMode}
                   onClick={() => {
                     setIsBgModalOpen(true);
-                    handleCloseDropdown();
-                  }}
-                  style={{
-                    textAlign: "left",
-                    padding: "10px",
-                    background: "transparent",
-                    color: isDarkMode ? "#fff" : "#000",
-                    borderBottom: "1px solid #444",
-                    fontSize: "13px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
-                  <BiImageAlt size={16} /> Змінити фон
-                </button>
-                <button
+                      handleCloseDropdown();
+                    }}
+                  >
+                    <BiImageAlt  /> Змінити фон
+                  </SettingsDropdownItem>
+                  <SettingsDropdownItem
+                  isDarkMode={isDarkMode}
                   onClick={() => {
                     handleAiToggle();
                     handleCloseDropdown();
                   }}
-                  style={{
-                    textAlign: "left",
-                    padding: "10px",
-                    background: "transparent",
-                    color: isDarkMode ? "#fff" : "#000",
-                    borderBottom: "1px solid #444",
-                    fontSize: "13px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
-                  <BiBrain size={16} />{" "}
+                > 
+                  <BiBrain />{" "}
                   {isAiEnabled ? "Вимкнути ШІ" : "Увімкнути ШІ"}
-                </button>
-                <button
+                </SettingsDropdownItem>
+                <SettingsDropdownItem
+                  isDarkMode={isDarkMode}
                   onClick={() => {
                     setIsCustomDatesModalOpen(true);
                     handleCloseDropdown();
                   }}
-                  style={{
-                    textAlign: "left",
-                    padding: "10px",
-                    background: "transparent",
-                    color: isDarkMode ? "#fff" : "#000",
-                    borderBottom: "1px solid #444",
-                    fontSize: "13px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
                 >
                   <FaCalendarPlus /> Встановити дати
-                </button>
-                <button
+                </SettingsDropdownItem>
+                <SettingsDropdownItem
+                  isDarkMode={isDarkMode}
                   onClick={() => {
                     onOpenDetails(cityImage || card.cityImage);
                   }}
-                  style={{
-                    textAlign: "left",
-                    padding: "10px",
-                    background: "transparent",
-                    color: isDarkMode ? "#fff" : "#000",
-                    borderBottom: "1px solid #444",
-                    fontSize: "13px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
                 >
-                  <BiLineChart size={16} /> Детальна погода
-                </button>
+                  <BiLineChart /> Детальна погода
+                </SettingsDropdownItem>
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     padding: "6px",
-                    borderBottom: "1px solid #444",
-                  }}
+                  borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.98)' : 'rgb(0, 0, 0)'}`,
+                 }}
                 >
                   <button
                     disabled={index === 0}
@@ -2972,7 +2978,7 @@ const HOLIDAYS_2027 = {
                   </button>
                 </div>
                 {card.isMain ? (
-                  <button
+                  <SettingsDropdownItem
                     onClick={handleGpsToggle}
                     onTouchEnd={(e) => {
                       e.preventDefault();
@@ -2980,45 +2986,31 @@ const HOLIDAYS_2027 = {
                     }}
                     title={isLocationEnabled ? "Вимкнути GPS (зараз увімкнено)" : "Увімкнути GPS (зараз вимкнено)"}
                     style={{
-                      textAlign: "left",
-                      padding: "10px",
                       background: isLocationEnabled
                         ? "rgba(0,200,80,0.12)"
                         : "rgba(180,0,0,0.08)",
                       border: `1px solid ${isLocationEnabled ? "#00c84d" : "#b30000"}`,
-                      borderRadius: "6px",
                       color: isLocationEnabled ? "#00c84d" : "#b30000",
-                      fontSize: "13px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      cursor: "pointer",
                       transition: "all 0.2s ease",
                     }}
                   >
-                    <BiCurrentLocation size={14} />{" "}
+                    <BiCurrentLocation  />{" "}
                     {isLocationEnabled ? "GPS Увімк." : "GPS Вимк."}
-                  </button>
+                  </SettingsDropdownItem>
                 ) : (
-                  <button
+                  <SettingsDropdownItem
                     onClick={() => {
                       handleDeleteCard(card.id);
                     }}
                     style={{
-                      textAlign: "left",
-                      padding: "10px",
                       background: "transparent",
                       color: "red",
-                      fontSize: "13px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
                     }}
                   >
-                    <BiTrash size={14} /> Видалити
-                  </button>
+                    <BiTrash/> Видалити
+                  </SettingsDropdownItem>
                 )}
-                <button
+                <SettingsDropdownItem
                   onClick={() => {
                     handleCloseDropdown();
                     if (!hasGeminiKey) return;
@@ -3035,24 +3027,16 @@ const HOLIDAYS_2027 = {
                   }}
                   style={{
                     textAlign: "left",
-                    padding: "10px",
                     background: hasGeminiKey
                       ? "linear-gradient(135deg, #5c1d3c, #62123d)"
                       : "rgba(120,120,120,0.3)",
-                    color: "#fff",
-                    borderBottom: "1px solid #444",
-                    fontSize: "13px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
                     cursor: hasGeminiKey ? "pointer" : "default",
                   }}
                 >
-                  <FiPlus size={16} /> Прикріпити до ШІ
-                </button>
+                  <FiPlus/> Прикріпити до ШІ
+                </SettingsDropdownItem>
               </SettingsDropdownMenu>
             )}
-          </ActionButtons>
         </CardHeader>
         <CustomTimersDisplay customDays={customDays} cardId={card.id} />
         <MobileTabBar>
@@ -3100,7 +3084,7 @@ const HOLIDAYS_2027 = {
               >
                 <DesktopTwoRowIndicators>
   <IndicatorCard aria-label={card.current.iconPlaceholder}>
-    <IconBox $size="32px" $lh="1">{card.current.iconSymbol || "🌤️"}</IconBox>
+    <IconBox $size="32px" $lh="1">{card.current.iconSymbol || <LiaCloudSunSolid />}</IconBox>
     <TextContent $size="11px" $lh="1.2">
       {(card.current.iconPlaceholder || "").replace(card.current.iconSymbol || "", "").trim() || "Мінлива хмарність"}
     </TextContent>
@@ -3736,7 +3720,7 @@ const HOLIDAYS_2027 = {
               onClick={() => setActiveTab("current")}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
-                <div style={{ fontSize: "36px" }}>{card.current?.iconSymbol || "🌤️"}</div>
+                <div style={{ fontSize: "36px" }}>{card.current?.iconSymbol || <LiaCloudSunSolid />}</div>
                 <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
                   <NameCardItem $active={activeTab === "current"}>Зараз: {card.current?.temp}</NameCardItem>
                   <SubNameCardItem $active={activeTab === "current"}>Відчувається: {card.current.feels_like}</SubNameCardItem>

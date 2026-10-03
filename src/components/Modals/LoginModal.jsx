@@ -170,6 +170,7 @@ const LoginModal = ({ onClose, onLogin }) => {
         firstName:
           firebaseUser.displayName || firebaseUser.email || "Користувач",
         avatar: firebaseUser.photoURL || "",
+        photoURL: firebaseUser.photoURL || "",
         email: firebaseUser.email || "",
       };
       await localforage.setItem("active_user", mappedUser);

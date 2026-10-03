@@ -58,6 +58,7 @@ import { DecoratorProvider } from "./components/Decorator/DecoratorContext.jsx";
 import { sanitizeWeatherCards } from "./utils/weatherPersistence.js";
 import { IoThunderstorm, IoRainy } from "react-icons/io5";
 import DecoratorOverlay from "./components/Decorator/DecoratorOverlay.jsx";
+import SiteContextMenu from "./components/SiteContextMenu.jsx";
 import { analyzeSearchQuery } from "./utils/searchAnalyzer.js";
 import { findCityInDatabase } from "./utils/citiesDatabase.js";
 import {
@@ -80,7 +81,7 @@ import { FaSmog } from "react-icons/fa6";
 import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { FaCloudMoonRain, FaCloudMoon } from "react-icons/fa";
-import { LiaCloudSunRainSolid, LiaCloudMoonRainSolid } from "react-icons/lia";
+import { LiaCloudSunRainSolid, LiaCloudMoonRainSolid, LiaCloudSunSolid } from "react-icons/lia";
 const Tooltipso = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
@@ -237,13 +238,10 @@ const StyledSectionContainer = styled.div`
   margin: 10px 0;
   display: ${(props) => (props.$isHidden ? "none" : "block")};
 `;
-
 const AVAILABLE_AVATARS = [
   turkeys,
   nicerone,
-  horrordog,
   dragons,
-  flame,
 ];
 ChartJS.register(
   CategoryScale,
@@ -256,7 +254,7 @@ ChartJS.register(
   Filler,
 );
 const getWeatherIcon = (code, isDay = 1) => {
-  if (code === 0) return isDay ? "☀️ Ясно" : "🌙 Ясно";
+  if (code === 0) return isDay ? "☀️ Сонячно" : "🌙 Місячно";
   if (code >= 1 && code <= 3) return isDay ? "🌤️ Мінлива хмарність" : "☁️ Мінлива хмарність";
   if (code >= 45 && code <= 48) return "☁️ Туман";
   if (code >= 51 && code <= 55) return "🌧️ Мряка";
@@ -287,12 +285,12 @@ const getWeatherSummaryText = (code, isDay = 1) => {
   return "Хмарно";
 };
 
-const getWeatherIconSymbol = (code, isDay = 1) => {
+export const getWeatherIconSymbol = (code, isDay = 1) => {
   if (code === 0) return isDay ? <FaSun /> : <BsMoonStarsFill />;
-  if (code >= 1 && code <= 3) return isDay ? "🌤️" : <FaCloudMoon />;
+  if (code >= 1 && code <= 3) return isDay ? <LiaCloudSunSolid /> : <FaCloudMoon />;
   if (code >= 45 && code <= 48) return <FaSmog/>;
-  if (code >= 51 && code <= 55) return "🌧️";
-  if (code >= 56 && code <= 57) return "🌧️";
+  if (code >= 51 && code <= 55) return <IoRainy />;
+  if (code >= 56 && code <= 57) return <IoRainy />;
   if (code >= 61 && code <= 65) return isDay ? <LiaCloudSunRainSolid /> : <FaCloudMoonRain />;
   if (code >= 66 && code <= 67) return isDay ? <LiaCloudSunRainSolid /> : <FaCloudMoonRain />;
   if (code >= 71 && code <= 75) return <GiSnowing />;
@@ -1791,10 +1789,11 @@ const App = () => {
   useEffect(() => {
     if (isHydrated) {
       if (user) {
-        localforage.setItem("active_user", user);
-        if (user.avatar) {
-          setCurrentAvatar(user.avatar);
-          localforage.setItem("currentAvatar", user.avatar);
+        const nextAvatar = user.photoURL || user.avatar || currentAvatar;
+        localforage.setItem("active_user", { ...user, photoURL: user.photoURL || user.avatar || "" });
+        if (nextAvatar) {
+          setCurrentAvatar(nextAvatar);
+          localforage.setItem("currentAvatar", nextAvatar);
         }
       } else {
         localforage.removeItem("active_user");
@@ -2865,6 +2864,7 @@ const App = () => {
 
   return (
     <DecoratorProvider isDarkMode={isDarkMode}>
+      <SiteContextMenu isDarkMode={isDarkMode} onToggleTheme={toggleTheme}>
       <DominoTutorial user={user} />
       <GlobalFilterLock $locked={isFsActive && lockFiltersInFs} />
       <Loader
@@ -2916,20 +2916,8 @@ const App = () => {
               user={user}
               isDarkMode={isDarkMode}
               toggleTheme={toggleTheme}
-              sectionThemes={sectionThemes}
-              hiddenSections={hiddenSections}
-              onToggleSectionVisibility={toggleSectionVisibility}
-              onToggleSectionTheme={toggleSectionTheme}
-              onResetSectionThemes={resetSectionThemes}
               currentAvatar={currentAvatar}
               onLogout={handleLogout}
-              siteSections={siteSections}
-              moveSiteSection={moveSiteSection}
-              resetSiteSections={() =>
-                setSiteSections([...DEFAULT_SITE_SECTIONS])
-              }
-              isRoutingMode={isRoutingMode}
-              setIsRoutingMode={setIsRoutingMode}
               currentPath={location.pathname.substring(1)}
               loadingStrategy={loadingStrategy}
               onSetLoadingStrategy={setLoadingStrategy}
@@ -3203,6 +3191,7 @@ const App = () => {
           message={maintenanceMessage}
         />
       )}
+      </SiteContextMenu>
     </DecoratorProvider>
   );
 };

@@ -54,15 +54,6 @@ const rainbowAnimation = css`
   animation: ${flow} 5s ease infinite;
 `;
 
-const AnimatedText = styled.span`
-  font-family: "Inter", sans-serif;
-  font-size: 11px;
-  font-weight: bold;
-  ${rainbowAnimation}
-  margin-left: 5px;
-  display: inline-block;
-`;
-
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -80,39 +71,41 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: ${(props) => (props.$isDarkMode ? "#2c2c2c" : "white")};
-  color: ${(props) => (props.$isDarkMode ? "#f0f0f0" : "#000000")};
-  padding: 3px;
-  border-radius: 15px;
-  width: 90%;
-  max-width: 400px;
+  background: ${(props) =>
+    props.$isDarkMode
+      ? "linear-gradient(145deg, #1f1f26, #121319)"
+      : "linear-gradient(145deg, #fffdf9, #f6f3ff)"};
+  color: ${(props) => (props.$isDarkMode ? "#f0f0f0" : "#111111")};
+  padding: 24px 20px 18px;
+  border-radius: 24px;
+  width: min(92vw, 440px);
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  gap: 12px;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.32);
   max-height: 90vh;
   overflow-y: auto;
-  border: 1px solid ${(props) => (props.$isDarkMode ? "#555" : "#ddd")};
+  border: 1px solid ${(props) => (props.$isDarkMode ? "#3d3f4d" : "#f1d9c5")};
   animation: ${(props) => (props.$isClosing ? slideOut : slideIn)} 0.5s ease-out
     forwards;
-  @media (min-width: 768px) {
-    max-width: 700px;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 179, 108, 0.7);
+    border-radius: 999px;
   }
 `;
 
 const FormColumn = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 12px;
   flex: 1;
   min-width: 250px;
-  @media (min-width: 768px) {
-    flex: 1;
-  }
 `;
 
 const CloseButton = styled.button`
@@ -123,7 +116,7 @@ const CloseButton = styled.button`
   border: none;
   font-size: 34px;
   cursor: pointer;
-  color: #000000;
+  color: ${(props) => (props.$isDarkMode ? "#f5f5f5" : "#000000")};
   &:hover {
     color: #ffb36c;
   }
@@ -133,87 +126,89 @@ const Title = styled.h3`
   text-align: center;
   margin: 0;
   font-weight: 900;
-  color: ${(props) => (props.$isDarkMode ? "#fff" : "#000000")};
+  letter-spacing: 0.02em;
+  color: ${(props) => (props.$isDarkMode ? "#fff" : "#1b1b1b")};
   width: 100%;
+  font-size: 2rem;
+  background: linear-gradient(135deg, #ffb36c, #ff7a59, #7ac7ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+const HeaderCaption = styled.div`
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: ${(props) => (props.$isDarkMode ? "#d6d6d6" : "#5d5d5d")};
+  margin-top: -4px;
+`;
+
+const FieldWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 `;
 
 const Input = styled.input`
-  padding: 5px;
-  border: 1px solid #000;
-  border-radius: 5px;
+  padding: 12px 14px;
+  border: 1px solid ${(props) => (props.$isDarkMode ? "#4d5365" : "#ebd4c0")};
+  border-radius: 12px;
   width: 100%;
   box-sizing: border-box;
   font-size: 14px;
-  color: ${(props) => (props.$isDarkMode ? "#fff" : "#000")}; /* Fix transparent text */
-  background: ${(props) => (props.$isDarkMode ? "#333" : "#fff")};
+  color: ${(props) => (props.$isDarkMode ? "#fff" : "#111")};
+  background: ${(props) => (props.$isDarkMode ? "#2a2d38" : "rgba(255,255,255,0.7)")};
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+  &::placeholder {
+    color: ${(props) => (props.$isDarkMode ? "#a7abb8" : "#7a7a7a")};
+  }
   &:focus {
     outline: none;
     border-color: #ffb36c;
+    box-shadow: 0 0 0 3px rgba(255, 179, 108, 0.2);
   }
 `;
 
-const NameInput = styled(Input)`
-  font-weight: bold;
-  caret-color: black;
-
-  ${(props) => {
-    const isGradient = props.$color?.includes("linear-gradient");
-    const isAnimated = props.$color?.includes("270deg");
-
-    if (isGradient) {
-      return css`
-        background: ${props.$color};
-        color: #fff;
-        ${
-          isAnimated
-            ? css`
-                background-size: 400% 400%;
-                animation: ${flow} 5s ease infinite;
-              `
-            : css`
-                background-size: 100% 100%;
-                animation: none;
-              `
-        }
-      `;
-    } else {
-      return css`
-        color: ${props.$color || "black"};
-        background: transparent;
-      `;
-    }
-  }}
-`;
-
 const Select = styled.select`
-  padding: 3px;
-  border: 1px solid #000;
-  border-radius: 8px;
+  padding: 11px 12px;
+  border: 1px solid ${(props) => (props.$isDarkMode ? "#4d5365" : "#ebd4c0")};
+  border-radius: 12px;
   width: 100%;
   box-sizing: border-box;
   font-size: 14px;
-  background: white;
-  color: ${(props) => (props.$isDarkMode ? "#fff" : "#000")};
-  background: ${(props) => (props.$isDarkMode ? "#333" : "#fff")};
+  color: ${(props) => (props.$isDarkMode ? "#fff" : "#111")};
+  background: ${(props) => (props.$isDarkMode ? "#2a2d38" : "rgba(255,255,255,0.75)")};
   cursor: pointer;
+  transition: all 0.2s ease;
   &:focus {
     outline: none;
     border-color: #ffb36c;
+    box-shadow: 0 0 0 3px rgba(255, 179, 108, 0.2);
   }
 `;
 
 const DateRow = styled.div`
   display: flex;
-  gap: 5px;
+  gap: 8px;
   justify-content: space-between;
 `;
 
 const CheckboxRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   font-size: 12px;
-  color: ${(props) => (props.$isDarkMode ? "#ccc" : "#555")};
+  line-height: 1.4;
+  color: ${(props) => (props.$isDarkMode ? "#d7d7d7" : "#4e4e4e")};
+  padding: 4px 2px;
+
+  input {
+    accent-color: #ffb36c;
+    width: 15px;
+    height: 15px;
+  }
 `;
 
 const TermsBtn = styled.span`
@@ -333,66 +328,90 @@ const ColorCircle = styled.div`
 `;
 
 const SubmitButton = styled.button`
-  background: #ffb36c;
-  color: ${(props) => (props.$isDarkMode ? "#000" : "black")};
-  font-weight: bold;
-  padding: 1px;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #ffb36c 0%, #ff8d6c 100%);
+  color: ${(props) => (props.$isDarkMode ? "#181818" : "#111")};
+  font-weight: 800;
+  padding: 14px 16px;
+  border-radius: 14px;
   cursor: pointer;
   border: none;
   font-size: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 10px 22px rgba(255, 153, 93, 0.25);
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px rgba(255, 153, 93, 0.3);
+  }
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    box-shadow: none;
   }
   width: 100%;
-  @media (min-width: 768px) {
-    grid-column: 1 / -1;
-  }
 `;
+
 const Google = styled.div`
   display: flex;
-  gap: 5px;
+  gap: 8px;
+  margin-top: 4px;
 `;
+
 const GoogleButton = styled.button`
-  background: #4285f4;
+  background: linear-gradient(135deg, #4d8af7 0%, #2d6ae8 100%);
   color: white;
-  font-weight: bold;
-  padding: 4px;
-  border-radius: 8px;
+  font-weight: 700;
+  padding: 12px 14px;
+  border-radius: 14px;
   border: 2px solid transparent;
   cursor: pointer;
-  margin-top: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
   font-size: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 22px rgba(66, 133, 244, 0.25);
   &:hover {
-    background: #3367d6;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px rgba(66, 133, 244, 0.32);
   }
 `;
-const COLORS = [
-  { name: "Сірий", value: "grey" },
-  { name: "Помаранчевий", value: "orange" },
-  { name: "Фіолетовий", value: "purple" },
-  { name: "Червоний", value: "red" },
-  {
-    name: "Веселковий Анімований",
-    value:
-      "linear-gradient(270deg, #ff7eb3, #ff758c, #7afcff, #feffb7, #58e2c2)",
-  },
-  { name: "Голубий", value: "#00e1ff" },
-  { name: "Синій", value: "blue" },
-  {
-    name: "Веселковий Статичний",
-    value:
-      "linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #8b00ff)",
-  },
-];
 
-const Modal = ({ onClose, onRegister, availableAvatars = [] }) => {
+const ErrorMessage = styled.div`
+  font-size: 12px;
+  line-height: 1.4;
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.09);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: center;
+`;
+
+const StrengthBar = styled.div`
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  background: ${(props) =>
+    props.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"};
+  overflow: hidden;
+  margin-top: -2px;
+`;
+
+const StrengthFill = styled.div`
+  height: 100%;
+  border-radius: inherit;
+  background: ${(props) => props.$color};
+  width: ${(props) => props.$width};
+  transition: width 0.3s ease, background-color 0.3s ease;
+`;
+const Modal = ({
+  onClose,
+  onRegister,
+  availableAvatars = [],
+  isDarkMode = false,
+}) => {
   const [formData, setFormData] = useState({
     account: "",
     firstName: "",
@@ -422,7 +441,7 @@ const Modal = ({ onClose, onRegister, availableAvatars = [] }) => {
   const [error, setError] = useState("");
   const [isClosing, setIsClosing] = useState(false);
   const [showKatScene] = useState(false);
-  const { isDarkMode } = { isDarkMode: false };
+
   const handleClose = (e) => {
     if (e) e.stopPropagation();
     setIsClosing(true);
@@ -477,7 +496,6 @@ const Modal = ({ onClose, onRegister, availableAvatars = [] }) => {
   const handleSubmit = async () => {
     if (
       !formData.account ||
-      !formData.firstName ||
       !formData.password ||
       !birthDate.day ||
       !birthDate.month ||
@@ -527,6 +545,7 @@ const Modal = ({ onClose, onRegister, availableAvatars = [] }) => {
           (availableAvatars.length
             ? availableAvatars[formData.avatarIndex]
             : ""),
+        photoURL: firebaseUser.photoURL || "",
         textColor: formData.textColor || "grey",
         borderColor: formData.borderColor || "grey",
         birthDate: "2000-01-01",
@@ -544,7 +563,7 @@ const Modal = ({ onClose, onRegister, availableAvatars = [] }) => {
   const completeRegistration = async () => {
     const registrationData = {
       account: formData.account,
-      firstName: formData.firstName,
+      firstName: formData.firstName || formData.account,
       password: formData.password,
       avatar: availableAvatars[formData.avatarIndex],
       textColor: formData.textColor,
@@ -567,170 +586,146 @@ const Modal = ({ onClose, onRegister, availableAvatars = [] }) => {
               onClick={(e) => e.stopPropagation()}
               $isDarkMode={isDarkMode}
             >
-              <CloseButton onClick={handleClose}>&times;</CloseButton>
+              <CloseButton onClick={handleClose} $isDarkMode={isDarkMode}>
+                &times;
+              </CloseButton>
               <Title $isDarkMode={isDarkMode}>Реєстрація</Title>
+              <HeaderCaption $isDarkMode={isDarkMode}>
+                Створи акаунт і почни вивчати погоду з комфортом.
+              </HeaderCaption>
 
               <FormColumn>
-                <Input
-                  type="email"
-                  placeholder="Gmail"
-                  onChange={(e) =>
-                    setFormData({ ...formData, account: e.target.value })
-                  }
-                  $isDarkMode={isDarkMode}
-                />
-
-                <NameInput
-                  $color={formData.textColor}
-                  style={
-                    !formData.textColor?.includes("linear-gradient")
-                      ? { color: formData.textColor }
-                      : { color: "#fff" }
-                  }
-                  placeholder="Ім'я та прізвище"
-                  value={formData.firstName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, firstName: e.target.value })
-                  }
-                  $isDarkMode={isDarkMode}
-                />
-
-                <DateRow>
-                  <Select
-                    value={birthDate.day}
+                <FieldWrap>
+                  <Input
+                    type="email"
+                    placeholder="Gmail"
                     onChange={(e) =>
-                      setBirthDate({ ...birthDate, day: e.target.value })
+                      setFormData({ ...formData, account: e.target.value })
                     }
                     $isDarkMode={isDarkMode}
-                  >
-                    <option value="" disabled>
-                      День
-                    </option>
-                    {days.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </Select>
-                  <Select
-                    value={birthDate.month}
-                    onChange={(e) =>
-                      setBirthDate({ ...birthDate, month: e.target.value })
-                    }
-                    $isDarkMode={isDarkMode}
-                  >
-                    <option value="" disabled>
-                      Місяць
-                    </option>
-                    {months.map((m, i) => (
-                      <option key={i} value={i + 1}>
-                        {m}
-                      </option>
-                    ))}
-                  </Select>
+                  />
+                </FieldWrap>
 
-                  <Select
-                    value={birthDate.year}
-                    onChange={(e) =>
-                      setBirthDate({ ...birthDate, year: e.target.value })
-                    }
-                    $isDarkMode={isDarkMode}
-                  >
-                    <option value="" disabled>
-                      Рік
-                    </option>
-                    {years.map((y) => (
-                      <option key={y} value={y}>
-                        {y}
+                <FieldWrap>
+                  <DateRow>
+                    <Select
+                      value={birthDate.day}
+                      onChange={(e) =>
+                        setBirthDate({ ...birthDate, day: e.target.value })
+                      }
+                      $isDarkMode={isDarkMode}
+                    >
+                      <option value="" disabled>
+                        День
                       </option>
-                    ))}
-                  </Select>
-                </DateRow>
+                      {days.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </Select>
+                    <Select
+                      value={birthDate.month}
+                      onChange={(e) =>
+                        setBirthDate({ ...birthDate, month: e.target.value })
+                      }
+                      $isDarkMode={isDarkMode}
+                    >
+                      <option value="" disabled>
+                        Місяць
+                      </option>
+                      {months.map((m, i) => (
+                        <option key={i} value={i + 1}>
+                          {m}
+                        </option>
+                      ))}
+                    </Select>
+
+                    <Select
+                      value={birthDate.year}
+                      onChange={(e) =>
+                        setBirthDate({ ...birthDate, year: e.target.value })
+                      }
+                      $isDarkMode={isDarkMode}
+                    >
+                      <option value="" disabled>
+                        Рік
+                      </option>
+                      {years.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </Select>
+                  </DateRow>
+                </FieldWrap>
 
                 {isInvalidDate && (
-                  <div
-                    style={{
-                      color: "red",
-                      fontSize: "11px",
-                      textAlign: "center",
-                      marginTop: "-10px",
-                    }}
-                  >
-                    Такої дати не існує!
-                  </div>
+                  <ErrorMessage>Такої дати не існує!</ErrorMessage>
                 )}
 
-                <Input
-                  name="signup-password-field"
-                  type="password"
-                  placeholder="Пароль"
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  style={{ marginBottom: formData.password ? "4px" : "8px" }}
-                  $isDarkMode={isDarkMode}
-                  autoComplete="new-password"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  data-form-type="other"
-                  data-lpignore="true"
-                />
-                {formData.password && (
-                  <>
-                    <div
-                      style={{
-                        background: "rgba(0,0,0,0.1)",
-                        height: "6px",
-                        borderRadius: "3px",
-                        width: "100%",
-                        marginTop: "-2px",
-                        marginBottom: "2px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
+                <FieldWrap>
+                  <Input
+                    name="signup-password-field"
+                    type="password"
+                    placeholder="Пароль"
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    $isDarkMode={isDarkMode}
+                    autoComplete="new-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-form-type="other"
+                    data-lpignore="true"
+                  />
+                  {formData.password && (
+                    <>
+                      <StrengthBar $isDarkMode={isDarkMode}>
+                        <StrengthFill
+                          $color={pwStrength.color}
+                          $width={pwStrength.width}
+                        />
+                      </StrengthBar>
+                      <span
                         style={{
-                          height: "100%",
-                          borderRadius: "3px",
-                          backgroundColor: pwStrength.color,
-                          width: pwStrength.width,
-                          transition:
-                            "width 0.3s ease, background-color 0.3s ease",
+                          fontSize: "11px",
+                          fontWeight: "bold",
+                          color: pwStrength.color,
+                          alignSelf: "flex-end",
+                          marginTop: "-2px",
                         }}
-                      />
-                    </div>
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: "bold",
-                        color: pwStrength.color,
-                        alignSelf: "flex-end",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      Надійність: {pwStrength.label}
-                    </span>
-                  </>
-                )}
-                <Input
-                  name="signup-confirm-password-field"
-                  type="password"
-                  placeholder="Підтвердіть пароль"
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      confirmPassword: e.target.value,
-                    })
-                  }
-                  $isDarkMode={isDarkMode}
-                  autoComplete="new-password"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  data-form-type="other"
-                  data-lpignore="true"
-                />
+                      >
+                        Надійність: {pwStrength.label}
+                      </span>
+                    </>
+                  )}
+                </FieldWrap>
+
+                <FieldWrap>
+                  <Input
+                    name="signup-confirm-password-field"
+                    type="password"
+                    placeholder="Підтвердіть пароль"
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
+                    $isDarkMode={isDarkMode}
+                    autoComplete="new-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    data-form-type="other"
+                    data-lpignore="true"
+                  />
+                </FieldWrap>
+
+                {error && <ErrorMessage>{error}</ErrorMessage>}
+
                 <CheckboxRow $isDarkMode={isDarkMode}>
                   <input
                     type="checkbox"
@@ -759,87 +754,6 @@ const Modal = ({ onClose, onRegister, availableAvatars = [] }) => {
                     🔑 Google Вхід
                   </GoogleButton>
                 </Google>
-              </FormColumn>
-              <FormColumn style={{ display: "none" }}>
-                <ColorSection>
-                  <ColorLabel $isDarkMode={isDarkMode}>
-                    Оберіть колір тексту
-                  </ColorLabel>
-                  <ColorContainer>
-                    {COLORS.map((color, index) => (
-                      <ColorCircle
-                        key={index}
-                        $color={color.value}
-                        $isSelected={formData.textColor === color.value}
-                        title={color.name}
-                        onClick={() =>
-                          setFormData({ ...formData, textColor: color.value })
-                        }
-                      />
-                    ))}
-                  </ColorContainer>
-                </ColorSection>
-
-                <ColorSection>
-                  <ColorLabel $isDarkMode={isDarkMode}>
-                    Оберіть колір рамки аватара
-                  </ColorLabel>
-                  <ColorContainer>
-                    {COLORS.map((color, index) => (
-                      <ColorCircle
-                        key={index}
-                        $color={color.value}
-                        $isSelected={formData.borderColor === color.value}
-                        title={color.name}
-                        onClick={() =>
-                          setFormData({ ...formData, borderColor: color.value })
-                        }
-                      />
-                    ))}
-                  </ColorContainer>
-                </ColorSection>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: "bold",
-                    color: isDarkMode ? "#ccc" : "grey",
-                  }}
-                >
-                  Оберіть аватар.
-                </div>
-                <ImageSelectionContainer>
-                  {availableAvatars.map((imgSrc, index) => (
-                    <AvatarOption
-                      key={index}
-                      $isSelected={formData.avatarIndex === index}
-                      $borderColor={formData.borderColor}
-                      onClick={() =>
-                        setFormData({ ...formData, avatarIndex: index })
-                      }
-                    >
-                      <img
-                        src={
-                          typeof imgSrc === "string"
-                            ? imgSrc
-                            : imgSrc?.default || imgSrc
-                        }
-                        alt={`avatar-${index}`}
-                      />
-                    </AvatarOption>
-                  ))}
-                </ImageSelectionContainer>
-
-                {error && (
-                  <div
-                    style={{
-                      color: "red",
-                      fontSize: "12px",
-                      textAlign: "center",
-                    }}
-                  >
-                    {error}
-                  </div>
-                )}
               </FormColumn>
             </ModalContent>
           </ModalOverlay>

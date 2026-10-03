@@ -1,65 +1,85 @@
 const fs = require("fs");
 const path = require("path");
-const possibleDirs = ["src/photos/fan-art"];
-// node find-unused.js
-let imagesDir = "";
-for (const dir of possibleDirs) {
-  const fullPath = path.join(__dirname, dir);
-  if (fs.existsSync(fullPath)) {
-    imagesDir = fullPath;
-    console.log(`✅ Знайдено папку з картинками: ${dir}`);
-    break;
-  }
-}
-if (!imagesDir) {
-  console.error(
-    "❌ Не вдалося знайти папку з зображеннями. Перевір назву папок у проекті!",
-  );
-  process.exit(1);
-}
-const srcDir = path.join(__dirname, "src");
-function getAllFiles(dirPath, arrayOfFiles) {
-  const files = fs.readdirSync(dirPath);
-  arrayOfFiles = arrayOfFiles || [];
-  files.forEach(function (file) {
-    if (fs.statSync(dirPath + "/" + file).isDirectory()) {
-      arrayOfFiles = getAllFiles(dirPath + "/" + file, arrayOfFiles);
+
+// Розширення медіафайлів (аудіо, відео, зображення)
+const MEDIA_EXTENSIONS = /\.(mp3|mp4|webm|webp|jpg|jpeg|png|gif|svg)$/i;
+
+// Розширення файлів коду/стилів, у яких шукаємо згадки
+const CODE_EXTENSIONS = /\.(js|jsx|ts|tsx|css|scss|sass|html|vue|svelte|json)$/i;
+
+// Головна папка для пошуку
+const SRC_DIR = path.join(__dirname, "src");
+
+/**
+ * Рекурсивно витягує ВСІ файли з src та всіх вкладених підпапок
+ */
+function getAllFiles(dirPath) {
+  let filesList = [];
+  if (!fs.existsSync(dirPath)) return filesList;
+
+  const items = fs.readdirSync(dirPath, { withFileTypes: true });
+
+  for (const item of items) {
+    const fullPath = path.join(dirPath, item.name);
+    if (item.isDirectory()) {
+      // Заходимо в глибину будь-якої підпапки
+      filesList = filesList.concat(getAllFiles(fullPath));
     } else {
-      arrayOfFiles.push(path.join(dirPath, "/", file));
+      filesList.push(fullPath);
     }
-  });
-  return arrayOfFiles;
-}
-try {
-  const images = fs
-    .readdirSync(imagesDir)
-    .filter((file) => /\.(jpg|jpeg|png|gif|svg|webp)$/.test(file));
-  const srcFiles = getAllFiles(srcDir);
-  console.log(
-    `🔎 Перевіряю ${images.length} зображень на використання у папці src...`,
-  );
-  const unused = images.filter((image) => {
-    let isUsed = false;
-    for (const file of srcFiles) {
-      if (/\.(js|jsx|ts|tsx|css|scss|html)$/.test(file)) {
-        const content = fs.readFileSync(file, "utf8");
-        if (content.includes(image)) {
-          isUsed = true;
-          break;
-        }
-      }
-    }
-    return !isUsed;
-  });
-  if (unused.length > 0) {
-    console.log("\n❌ НЕВИКОРИСТОВУВАНІ ЗОБРАЖЕННЯ:");
-    console.log("---------------------------------");
-    unused.forEach((img) => console.log(`- ${img}`));
-    console.log("---------------------------------");
-    console.log(`Разом: ${unused.length} файлів можна видалити.`);
-  } else {
-    console.log("\n✅ Всі зображення використовуються у коді!");
   }
-} catch (err) {
-  console.error("Помилка під час виконання:", err.message);
+
+  return filesList;
 }
+
+function findUnusedMedia() {
+  console.log("🔎 Сканування папки src та всіх вкладених папок...");
+
+  // Збираємо всі файли з усього дерева src
+  const allFiles = getAllFiles(SRC_DIR);
+
+  // Окремо відбираємо медіафайли та файли коду
+  const mediaFiles = allFiles.filter((file) => MEDIA_EXTENSIONS.test(file));
+  const codeFiles = allFiles.filter((file) => CODE_EXTENSIONS.test(file));
+
+  console.log(`📦 Знайдено всього медіафайлів (у всіх підпапках): ${mediaFiles.length}`);
+  console.log(`📄 Файлів коду для перевірки: ${codeFiles.length}`);
+
+  if (mediaFiles.length === 0) {
+    console.log("⚠️ Медіафайлів у папці src не знайдено.");
+    return;
+  }
+
+  // Зчитуємо вміст коду в пам'ять один раз
+  const codeContents = codeFiles.map((filePath) => {
+    try {
+      return fs.readFileSync(filePath, "utf8");
+    } catch {
+      return "";
+    }
+  });
+
+  console.log("\n🔎 Перевірка використання...");
+
+  const unusedFiles = mediaFiles.filter((mediaPath) => {
+    const fileName = path.basename(mediaPath); // Назва файлу, наприклад "hero-bg.webp"
+    return !codeContents.some((content) => content.includes(fileName));
+  });
+
+  // Вивід результату
+  console.log("\n-------------------------------------------------");
+  if (unusedFiles.length > 0) {
+    console.log(`❌ НЕВИКОРИСТОВУВАНІ ФАЙЛИ (${unusedFiles.length}):`);
+    unusedFiles.forEach((file) => {
+      // Показує повний відносний шлях (наприклад, src/assets/images/old/photo.webp)
+      console.log(`- ${path.relative(__dirname, file)}`);
+    });
+    console.log("-------------------------------------------------");
+    console.log(`Разом можна видалити: ${unusedFiles.length} файлів.`);
+  } else {
+    console.log("✅ Усі медіафайли з усіх папок використовуються у коді!");
+    console.log("-------------------------------------------------");
+  }
+}
+
+findUnusedMedia();

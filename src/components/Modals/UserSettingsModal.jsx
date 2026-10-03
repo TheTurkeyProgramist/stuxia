@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useTranslation } from "react-i18next";
+import { createPortal } from "react-dom";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
 import InfoModal from "./UserSearchModal.jsx";
@@ -60,7 +60,6 @@ import songAiKnowledge from "../MusicPhoto/songAiKnowledge.json";
 import { assetMap } from "../MusicPhoto/MusicPhoto.assets";
 import { FILTERS, PRESETS, useVisualFilters } from "../Header/useVisualFilters";
 import { useDecorator } from "../Decorator/DecoratorContext.jsx";
-import LanguagePicker from "./LanguagePicker.jsx";
 
 // Keyframe Animations
 const fadeIn = keyframes`
@@ -98,8 +97,14 @@ const ModalOverlay = styled.div`
   backdrop-filter: blur(8px);
   background: rgba(0, 0, 0, 0.7);
   display: flex; justify-content: center; align-items: center;
-  z-index: 1000;
+  z-index: 100001;
   animation: ${(p) => (p.$isClosing ? fadeOut : fadeIn)} 0.25s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+`;
+
+const NestedModalPortal = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 100002;
 `;
 
 const ModalWindow = styled.div`
@@ -107,7 +112,7 @@ const ModalWindow = styled.div`
   color: #f3f3f3;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 12px;
-  width: 94%; max-width: 1120px;
+  width: 95%;
   height: 88vh; max-height: 850px;
   display: flex; flex-direction: column;
   box-shadow: 0 24px 60px rgba(0,0,0,0.7), 0 0 1px rgba(255,255,255,0.2);
@@ -156,11 +161,11 @@ const HeaderButton = styled.button`
 `;
 
 const CloseButton = styled.button`
-  background: transparent; border: none; color: #a0a0a0;
+  background: transparent; border: none; color: #f4f2f2;
   width: 32px; height: 32px; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 18px; transition: all 0.15s ease;
-  &:hover { background: #c42b1c; color: #ffffff; }
+  cursor: pointer; font-size: 28px; transition: all 0.15s ease;
+  &:hover { background: #c42b1c; }
 `;
 
 const WindowBody = styled.div`
@@ -504,6 +509,7 @@ const UserSettingsModal = ({
   // Modes & strategy props
   isRoutingMode = false,
   setIsRoutingMode = () => {},
+  loadingStrategy = "eager",
   onSetLoadingStrategy = () => {},
   isStickyBgMode = false,
   onToggleStickyBg = () => {},
@@ -524,7 +530,6 @@ const UserSettingsModal = ({
 }) => {
   const isGuest = !user;
   const dispatch = useDispatch();
-  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState(isGuest ? "personalization" : "account");
   const [isClosing, setIsClosing] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -1132,21 +1137,24 @@ const UserSettingsModal = ({
 
   // ── Nav config ───────────────────────────────────────────────────────────
   const navItems = [
-    { key: "account", icon: <FiUser />, label: t("settings.tabs.account"), locked: isGuest },
-    { key: "dateTime", icon: <FiClock />, label: t("settings.tabs.dateTime") },
-    { key: "security", icon: <FiShield />, label: t("settings.tabs.security"), locked: isGuest },
-    { key: "personalization", icon: <FiSliders />, label: t("settings.tabs.personalization") },
-    { key: "siteSections", icon: <FiCompass />, label: t("settings.tabs.siteSections") },
-    { key: "modes", icon: <FiZap />, label: t("settings.tabs.modes") },
-    { key: "filters", icon: <FiEye />, label: t("settings.tabs.filters") },
-    { key: "bgMusic", icon: <FiMusic />, label: t("settings.tabs.bgMusic") },
-    { key: "news", icon: <FiGlobe />, label: t("settings.tabs.news") },
-    { key: "language", icon: <FiGlobe />, label: t("settings.tabs.language") },
+    { key: "account", icon: <FiUser />, label: "Обліковий запис", locked: isGuest },
+    { key: "dateTime", icon: <FiClock />, label: "Час та дата" },
+    { key: "security", icon: <FiShield />, label: "Безпека", locked: isGuest },
+    { key: "personalization", icon: <FiSliders />, label: "Персоналізація" },
+    { key: "siteSections", icon: <FiCompass />, label: "Секції сайту" },
+    { key: "modes", icon: <FiZap />, label: "Режими сайту" },
+    { key: "filters", icon: <FiEye />, label: "Візуальні фільтри" },
+    { key: "bgMusic", icon: <FiMusic />, label: "Фонова музика" },
+    { key: "news", icon: <FiGlobe />, label: "Новини" },
   ];
 
-  return (
+  return createPortal(
     <>
-      {showKatScene && <KatSceneModal onClose={() => setShowKatScene(false)} />}
+      {showKatScene && (
+        <NestedModalPortal>
+          <KatSceneModal onClose={() => setShowKatScene(false)} />
+        </NestedModalPortal>
+      )}
       <ModalOverlay $isClosing={isClosing} onClick={finishClosing}>
         <ModalWindow $isClosing={isClosing} onClick={(e) => e.stopPropagation()}>
 
@@ -1164,9 +1172,9 @@ const UserSettingsModal = ({
                   <FiUser />
                 </div>
                 <div style={{ padding: isGuest ? "0 4px" : 0 }}>
-                  <HeaderTitle>{t("settings.title")}</HeaderTitle>
+                  <HeaderTitle>Параметри</HeaderTitle>
                   <HeaderSub>
-                    {isGuest ? t("settings.guest") : (user?.email || user?.account || t("settings.tabs.account"))}
+                    {isGuest ? "Гість • Увійдіть для повного доступу" : (user?.email || user?.account || "Обліковий запис")}
                   </HeaderSub>
                 </div>
               </UserBadge>
@@ -1174,7 +1182,7 @@ const UserSettingsModal = ({
             <HeaderActions>
               {!isGuest && (
                 <HeaderButton onClick={() => setShowKatScene(true)}>
-                  <FiFilm /> {t("settings.credits")}
+                  <FiFilm /> Титри
                 </HeaderButton>
               )}
               <CloseButton onClick={handleCancel}><FiX /></CloseButton>
@@ -1206,25 +1214,6 @@ const UserSettingsModal = ({
               {activeTab === "account" && !isGuest && (
                 <CardGroup>
                   <SectionHeaderTitle><FiUser /> Обліковий запис</SectionHeaderTitle>
-
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox><FiUser /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Ім'я користувача</CardTitle>
-                        <CardDescription>Як вас називатимуть в інтерфейсі</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl style={{ minWidth: "220px" }}>
-                      <NameInputStyled
-                        value={formData.name}
-                        $textColor={formData.textColor}
-                        onChange={(e) => updateLivePreview({ name: e.target.value })}
-                        placeholder="Ваше ім'я"
-                      />
-                    </CardControl>
-                  </Card>
-
                   <CardExpanded>
                     <CardLeft>
                       <CardIconBox><FiEye /></CardIconBox>
@@ -1283,7 +1272,7 @@ const UserSettingsModal = ({
                         }}
                       >
                         <FiUpload style={{ fontSize: "16px" }} />
-                        <span style={{ fontSize: "8px", fontWeight: "700", textTransform: "uppercase" }}>З пристрою</span>
+                        <span style={{ fontSize: "8px", fontWeight: "700" }}>З пристрою</span>
                       </AvatarCard>
                     </AvatarGrid>
 
@@ -1306,38 +1295,6 @@ const UserSettingsModal = ({
               {activeTab === "dateTime" && (
                 <CardGroup>
                   <SectionHeaderTitle><FiClock /> Час та дата</SectionHeaderTitle>
-
-                  {!isGuest && (
-                    <CardExpanded>
-                      <CardLeft>
-                        <CardIconBox><FiCalendar /></CardIconBox>
-                        <CardInfo>
-                          <CardTitle>Дата народження</CardTitle>
-                          <CardDescription>
-                            {formattedBirthDate
-                              ? `${formattedBirthDate} ${currentAge !== null ? `(${currentAge} років)` : ""}`
-                              : "Укажіть день, місяць та рік"}
-                          </CardDescription>
-                        </CardInfo>
-                      </CardLeft>
-                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
-                        <WinSelect value={formData.day} onChange={(e) => updateLivePreview({ day: e.target.value })}>
-                          <option value="">День</option>
-                          {days.map((d) => <option key={d} value={d}>{d}</option>)}
-                        </WinSelect>
-                        <WinSelect value={formData.month} onChange={(e) => updateLivePreview({ month: e.target.value })}>
-                          <option value="">Місяць</option>
-                          {months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-                        </WinSelect>
-                        <WinSelect value={formData.year} onChange={(e) => updateLivePreview({ year: e.target.value })}>
-                          <option value="">Рік</option>
-                          {years.map((y) => <option key={y} value={y}>{y}</option>)}
-                        </WinSelect>
-                      </div>
-                      {isInvalidDate && <span style={{ color: "#ff4d4d", fontSize: "12px" }}>Вказана дата некоректна!</span>}
-                    </CardExpanded>
-                  )}
-
                   <Card>
                     <CardLeft>
                       <CardIconBox><FiClock /></CardIconBox>
@@ -1716,17 +1673,23 @@ const UserSettingsModal = ({
                       </CardInfo>
                     </CardLeft>
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
-                      <WinButton
-                        onClick={() => onSetLoadingStrategy("eager")}
-                        style={{
-                          flex: 1,
-                          minWidth: "120px",
-                          background: "rgba(96,205,255,0.15)",
-                          borderColor: "#60cdff",
-                        }}
-                      >
-                        Повний
-                      </WinButton>
+                      {[
+                        { key: "eager", label: "Повний", desc: "Завантажує все відразу при старті" },
+                        { key: "delayed", label: "Оптимальний", desc: "Завантажує важкі модулі через 8 сек" },
+                        { key: "lazy", label: "Економний", desc: "Завантажує тільки за потребою" },
+                      ].map(({ key, label }) => (
+                        <WinButton
+                          key={key}
+                          onClick={() => onSetLoadingStrategy(key)}
+                          style={{
+                            flex: 1, minWidth: "120px",
+                            background: loadingStrategy === key ? "rgba(96,205,255,0.15)" : undefined,
+                            borderColor: loadingStrategy === key ? "#60cdff" : undefined,
+                          }}
+                        >
+                          {label}
+                        </WinButton>
+                      ))}
                     </div>
                   </CardExpanded>
 
@@ -2187,8 +2150,13 @@ const UserSettingsModal = ({
         </ModalWindow>
       </ModalOverlay>
 
-      {showTerms && <InfoModal isOpen={showTerms} onClose={() => setShowTerms(false)} />}
-    </>
+      {showTerms && (
+        <NestedModalPortal>
+          <InfoModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
+        </NestedModalPortal>
+      )}
+    </>,
+    document.body,
   );
 };
 
