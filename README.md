@@ -1,5 +1,21 @@
 # Getting Started with Create React App
 
+## Desktop and Android releases
+
+Push a version tag such as `v1.1.0` to build and attach Windows installers,
+Linux AppImage/DEB packages, and an installable Android APK to the GitHub
+release. The Android APK is a debug-signed build intended for direct testing
+and installation; publishing on Google Play should use a separately
+configured release signing key.
+
+There is no iOS project or App Store build in the repository yet. iOS builds
+require a Mac with Xcode; App Store/TestFlight distribution also requires an
+Apple Developer account and signing credentials. Once those are available,
+add Capacitor's iOS platform and configure signing in the macOS release
+workflow. In the meantime, iPhone and iPad users can open https://stuxia.com
+in Safari and choose Share > Add to Home Screen to install the web app without
+the App Store; this is the website, not a native iOS app.
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
