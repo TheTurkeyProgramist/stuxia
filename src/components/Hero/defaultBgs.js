@@ -1,4 +1,4 @@
-import prisonVideo from "../../mp4/prison.mp4";
+import prisonVideo from "../../mp4/prison.webm";
 import mountains from "../../photos/hero-header/hiils.webp";
 import art from "../../photos/hero-header/studi.webp";
 import penny from "../../photos/vip-modal/penny.webp";
@@ -7,7 +7,7 @@ import hillsVideo from "../../mp4/fog.webm";
 import dinofrozVideo from "../../mp4/nicerone.webm";
 import harmony from "../../photos/vip-images/asium/asium.webp";
 import theorytwo from "../../photos/fan-art/theorytwo.webp";
-import theoryVideo from "../../mp4/theory.mp4";
+import theoryVideo from "../../mp4/theory.webm";
 import fingerdash from "../../photos/vip-images/dinofroz/fingerdash.webp";
 import electrodynamix from "../../photos/vip-images/electrodynamix.webp";
 import sirenhead from "../../photos/vip-images/sirenhead/sirenhead.webp"
@@ -66,19 +66,18 @@ import dinofroztwo from "../../photos/vip-images/dinofroz/vip-dragons.webp";
 import dinofroznine from "../../photos/vip-images/dinofroz/dinofroznine.webp";
 import nicerone from "../../photos/vip-images/dinofroz/nicerone.webp";
 import village from "../../photos/fan-art/village.webp";
-import daysVideo from "../../mp4/sevendays.mp4";
-import vladOneVideo from "../../mp4/vladone.mp4";
+import daysVideo from "../../mp4/sevendays.webm";
+import vladOneVideo from "../../mp4/vladone.webm";
 // Mia and me
 import faded from "../../photos/fan-art/faded.webp";
-import fadedVideo from "../../mp4/faded.mp4";
 import mia from "../../photos/vip-images/mia/miaandme.webp";
 import volcano from "../../photos/vip-images/fire.webp";
-import clubstepVideo from "../../mp4/clubstep.mp4";
+import clubstepVideo from "../../mp4/clubstep.webm";
 // Pesimistic future
 import titanic from "../../photos/cursors/titanic.webp";
 import smit from "../../photos/cursors/smit.webp";
 import electrodynamixVideo from "../../mp4/electrodynamix.webm";
-import volcanoVideo from "../../mp4/volcano.mp4";
+import volcanoVideo from "../../mp4/volcano.webm";
 import whitesound from "../../mp4/whiteloud.mp4";
 import loft from "../../photos/fan-art/wall.webp";
 import secret from "../../photos/vip-modal/texts.webp";
@@ -145,16 +144,6 @@ export const DEFAULT_BGS = [
     name: "Курорт",
     category: "Природа та Стихії",
     author: "TheTurkeyStudio",
-    description:
-      "Ви на пляжі! Цей фон створює атмосферу відпочинку та свободи. Люди, які обирають його, часто мають схильність до спокійного життя та цікавляться природою. Вони можуть бути відкритими та любити подорожувати.\nВикористав на сайті як обкладинку до пісні 'Faded' від Alan Walker.",
-  },
-  {
-    src: fadedVideo,
-    name: "Курорт (Відео)",
-    category: "Природа та Стихії",
-    author: "TheTurkeyStudio",
-    start: 0,
-    end: 300,
     description:
       "Ви на пляжі! Цей фон створює атмосферу відпочинку та свободи. Люди, які обирають його, часто мають схильність до спокійного життя та цікавляться природою. Вони можуть бути відкритими та любити подорожувати.\nВикористав на сайті як обкладинку до пісні 'Faded' від Alan Walker.",
   },
