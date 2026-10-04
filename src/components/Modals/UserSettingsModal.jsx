@@ -1459,9 +1459,74 @@ const UserSettingsModal = ({
                       <WinButton
                         as="a"
                         $primary
-                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Setup-Windows.exe"
+                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/download/v1.0.0/stuxia_1.0.0_x64-setup.exe"
                       >
                         <FiDownload /> Завантажити
+                      </WinButton>
+                    </CardControl>
+                  </Card>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiSmartphone /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Версія для Android</CardTitle>
+                        <CardDescription>APK для встановлення на Android-пристрої</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinButton
+                        as="a"
+                        $primary
+                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Android.apk"
+                      >
+                        <FiDownload /> Завантажити APK
+                      </WinButton>
+                    </CardControl>
+                  </Card>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiDownload /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Версія для Linux</CardTitle>
+                        <CardDescription>AppImage для більшості дистрибутивів або DEB для Debian/Ubuntu</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinButton
+                        as="a"
+                        $primary
+                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Linux.AppImage"
+                      >
+                        <FiDownload /> AppImage
+                      </WinButton>
+                      <WinButton
+                        as="a"
+                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Linux.deb"
+                      >
+                        <FiDownload /> DEB
+                      </WinButton>
+                    </CardControl>
+                  </Card>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiSmartphone /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>На iPhone та iPad</CardTitle>
+                        <CardDescription>Відкрийте сайт у Safari, натисніть «Поділитися» → «На початковий екран»</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinButton
+                        as="a"
+                        $primary
+                        href="https://stuxia.com"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <FiGlobe /> Відкрити сайт
                       </WinButton>
                     </CardControl>
                   </Card>

@@ -1,4 +1,4 @@
-name: Build Windows desktop app
+name: Build desktop and Android apps
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,11 +18,8 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Install website dependencies
+      - name: Install frontend dependencies
         run: bun install --frozen-lockfile
-
-      - name: Build website frontend
-        run: bun run build
 
       - name: Install Tauri dependencies
         working-directory: Stuxia
@@ -30,16 +27,125 @@ jobs:
 
       - name: Build Windows installers
         working-directory: Stuxia
-        run: bun run tauri build
+        run: bun run tauri build --bundles nsis,msi
 
-      - name: Prepare stable installer names
+      - name: Prepare Windows installers
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path release-assets | Out-Null
           Copy-Item "Stuxia/src-tauri/target/release/bundle/nsis/*.exe" "release-assets/Stuxia-Setup-Windows.exe"
           Copy-Item "Stuxia/src-tauri/target/release/bundle/msi/*.msi" "release-assets/Stuxia-Windows.msi"
 
-      - name: Publish installers
+      - name: Upload Windows installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installers
+          path: release-assets/*
+          if-no-files-found: error
+
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Tauri Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            file \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            patchelf \
+            pkg-config \
+            librsvg2-dev
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install Tauri dependencies
+        working-directory: Stuxia
+        run: bun install
+
+      - name: Build Linux packages
+        working-directory: Stuxia
+        run: bun run tauri build --bundles appimage,deb
+
+      - name: Prepare Linux packages
+        run: |
+          mkdir -p release-assets
+          cp Stuxia/src-tauri/target/release/bundle/appimage/*.AppImage release-assets/Stuxia-Linux.AppImage
+          cp Stuxia/src-tauri/target/release/bundle/deb/*.deb release-assets/Stuxia-Linux.deb
+
+      - name: Upload Linux packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: release-assets/*
+          if-no-files-found: error
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend
+        run: bun run build
+
+      - name: Sync Capacitor Android project
+        run: bun x cap sync android
+
+      - name: Build installable Android APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Prepare Android APK
+        run: |
+          mkdir -p release-assets
+          cp android/app/build/outputs/apk/debug/app-debug.apk release-assets/Stuxia-Android.apk
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: release-assets/*
+          if-no-files-found: error
+
+  publish:
+    runs-on: ubuntu-latest
+    needs:
+      - windows
+      - linux
+      - android
+    steps:
+      - name: Download all platform builds
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish platform installers
         uses: softprops/action-gh-release@v2
         with:
           name: Stuxia ${{ github.ref_name }}
