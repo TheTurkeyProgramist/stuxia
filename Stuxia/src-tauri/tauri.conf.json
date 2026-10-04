@@ -5,7 +5,7 @@
   "identifier": "com.dimka.stuxia",
   "build": {
   "beforeDevCommand": "",
-  "beforeBuildCommand": "",
+  "beforeBuildCommand": "bun run build",
   "frontendDist": "../../dist"
 },
 
