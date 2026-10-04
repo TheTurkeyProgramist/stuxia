@@ -39,6 +39,7 @@ import {
   FiCopy,
   FiCheck,
   FiZap,
+  FiDownload,
   FiLayers,
   FiSliders as FiSlidersIcon,
   FiRotateCcw,
@@ -1445,6 +1446,25 @@ const UserSettingsModal = ({
               {activeTab === "personalization" && (
                 <CardGroup>
                   <SectionHeaderTitle><FiSliders /> Персоналізація та інтерфейс</SectionHeaderTitle>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiDownload /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Версія для Windows</CardTitle>
+                        <CardDescription>Завантажити застосунок Stuxia для комп'ютера</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinButton
+                        as="a"
+                        $primary
+                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Setup-Windows.exe"
+                      >
+                        <FiDownload /> Завантажити
+                      </WinButton>
+                    </CardControl>
+                  </Card>
 
                   <Card>
                     <CardLeft>
