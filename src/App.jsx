@@ -1293,7 +1293,7 @@ const App = () => {
         turkeys,
       ];
       try {
-        await Promise.all(assets.map((url) => fetch(url)));
+        await Promise.all(assets.map((url) => fetch(url, { cache: "force-cache" })));
         console.log("KatScene assets preloaded in background");
       } catch (err) {
         console.warn("Failed to preload KatScene assets:", err);
@@ -1509,11 +1509,10 @@ const App = () => {
     }
 
     if (shouldPlay) {
-      if (
-        activeAudio.paused ||
-        activeAudio.src === "" ||
-        !activeAudio.src.includes(currentAudioUrl)
-      ) {
+      const needsNewSrc =
+        activeAudio.src === "" || !activeAudio.src.includes(currentAudioUrl);
+
+      if (needsNewSrc) {
         activeAudio.src = currentAudioUrl;
 
         if (!bgPositionApplied.current && initialBgPosition > 0) {
@@ -2285,8 +2284,8 @@ const App = () => {
     }
 
     if ("geolocation" in navigator) {
-      const optionsHigh = { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 };
-      const optionsLow = { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 };
+      const optionsHigh = { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 };
+      const optionsLow = { enableHighAccuracy: false, timeout: 15000, maximumAge: 0 };
 
       const fallbackToKyiv = (err) => {
         console.warn("Geolocation failed on mobile device:", err);

@@ -42,6 +42,19 @@ export const AnimatedCursor = ({ interval = 250, className = "" }) => {
     return false;
   });
   const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef(null);
+
+  // Явно зупиняємо відео при демонтуванні — браузер не завжди робить це сам
+  useEffect(() => {
+    return () => {
+      const vid = videoRef.current;
+      if (vid) {
+        vid.pause();
+        vid.src = "";
+        vid.load();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const updateConnection = () => {
@@ -88,11 +101,13 @@ export const AnimatedCursor = ({ interval = 250, className = "" }) => {
   if (!isSlowConnection && !videoError) {
     return (
       <video
+        ref={videoRef}
         src={readerVideo}
         autoPlay
         loop
         muted
         playsInline
+        preload="auto"
         onError={() => setVideoError(true)}
         className={className}
         style={{
