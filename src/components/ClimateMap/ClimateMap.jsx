@@ -1620,7 +1620,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   loop
                   muted
                   playsInline
-                  preload="auto"
+                  preload={isOnline && !isSlowConnection && !videoError ? "auto" : "none"}
                   onError={() => setVideoError(true)}
                   style={{
                     display: isOnline && !isSlowConnection && !videoError ? "block" : "none",

@@ -396,6 +396,9 @@ const VideoThumbnail = React.memo(({ bg, onClick }) => {
   );
 });
 
+// Кеш blob URL для відео-рядків — зберігає між монтуваннями, уникає повторних fetch
+const videoBlobCache = new Map();
+
 const BgLayer = React.memo((props) => {
   const {
     $image,
@@ -421,23 +424,41 @@ const BgLayer = React.memo((props) => {
       setBlobUrl(objectUrl);
       return () => URL.revokeObjectURL(objectUrl);
     } else if (typeof $image === "string" && $image) {
+      // Повертаємо кешований blob URL одразу, без повторного fetch
+      if (videoBlobCache.has($image)) {
+        setBlobUrl(videoBlobCache.get($image));
+        return;
+      }
       let active = true;
       fetch($image)
         .then((res) => res.blob())
         .then((blob) => {
-          if (active) {
-            const objectUrl = URL.createObjectURL(blob);
-            setBlobUrl(objectUrl);
-          }
+          if (!active) return;
+          const objectUrl = URL.createObjectURL(blob);
+          videoBlobCache.set($image, objectUrl);
+          setBlobUrl(objectUrl);
         })
         .catch(() => {
           if (active) setBlobUrl(null);
         });
       return () => {
         active = false;
+        // НЕ викликаємо revokeObjectURL тут — URL залишається в кеші для повторного використання
       };
     }
   }, [$image, isVideo]);
+
+  // Відкликаємо blobUrl для Blob-об'єктів при зміні (уникаємо витоку пам'яті)
+  const prevBlobUrlRef = useRef(null);
+  useEffect(() => {
+    // Тільки для Blob-об'єктів (не кешовані рядкові URL)
+    if (!($image instanceof Blob)) return;
+    const prev = prevBlobUrlRef.current;
+    if (prev && prev !== blobUrl) {
+      URL.revokeObjectURL(prev);
+    }
+    prevBlobUrlRef.current = blobUrl;
+  }, [blobUrl, $image]);
 
   const url =
     $image instanceof Blob
@@ -572,7 +593,7 @@ const HeroFi = styled.div`
 `;
 const HeroDate = styled.div`
   color: rgb(255, 255, 255);
-  font-size: 18px;
+  font-size: 16px;
   text-align: center;
   font-weight: 600;
   width: 300px;
