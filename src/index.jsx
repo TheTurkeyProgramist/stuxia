@@ -10,6 +10,17 @@ import { store } from "./app/store.js";
 import App from "./App.jsx";
 import { Toaster } from "react-hot-toast";
 
+// Глобальна зупинка всіх відео при зміні вкладки/згортанні
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    document.querySelectorAll("video").forEach((video) => {
+      if (!video.paused) {
+        video.pause();
+      }
+    });
+  }
+});
+
 window.addEventListener("error", (e) => {
   if (e.message.includes("AbortError") || e.message.includes("aborted")) {
     e.preventDefault();
