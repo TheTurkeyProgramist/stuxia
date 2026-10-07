@@ -12,7 +12,7 @@ import { FaMapLocationDot } from "react-icons/fa6";
 import { LuFullscreen } from "react-icons/lu";
 import { CgMiniPlayer } from "react-icons/cg";
 import { GiLockedChest } from "react-icons/gi";
-import turkey from "../../photos/cursors/turkey.webm";
+import turkey from "../../photos/cursors/turkey-compressed.webm";
 import toast, { Toaster } from "react-hot-toast";
 // Ctrl + Shift + M: Активувати/деактивувати мапу
 // Ctrl + Shift + F: Відкрити на весь екран
@@ -405,6 +405,46 @@ const Loader = styled.div`
   }
 `;
 
+const TurkeyVideoFrame = styled.div`
+  position: relative;
+  width: 340px;
+  height: 210px;
+  margin-bottom: -10px;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    left: 18%;
+    right: 18%;
+    bottom: -4%;
+    height: 28%;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse,
+      rgba(0, 0, 0, 0.92) 0%,
+      rgba(0, 0, 0, 0.76) 48%,
+      rgba(0, 0, 0, 0.76) 88%,
+      transparent 100%
+    );
+    filter: blur(10px);
+    pointer-events: none;
+  }
+`;
+
+const TurkeyVideo = styled.video`
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  opacity: 0.96;
+  transition: opacity 300ms ease, filter 300ms ease;
+  filter: brightness(1.04);
+`;
+
 const ActionButton = styled.button`
   background: ${(props) =>
     props.$active
@@ -776,12 +816,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     const video = turkeyVideoRef.current;
     if (!video) return;
 
-    if (shouldShowLoader && isOnline && !isSlowConnection && !videoError) {
-      video.play().catch(() => {});
+    if (shouldShowLoader && isOnline && !isSlowConnection && !videoError && shouldLoadTurkeyVideo) {
+      const p = video.play();
+      if (p !== undefined) p.catch(() => {});
     } else {
       video.pause();
     }
-  }, [shouldShowLoader, isOnline, isSlowConnection, videoError]);
+  }, [shouldShowLoader, isOnline, isSlowConnection, videoError, shouldLoadTurkeyVideo]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -1611,25 +1652,30 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   <img
                     src={turkeyFrames[currentTurkeyFrame]}
                     alt="Це Доміно :)"
-                    style={{ width: '340px', height: '210px', imageRendering: 'pixelated', marginBottom: '-50px' }}
+                    style={{ width: '340px', height: '210px', imageRendering: 'pixelated', marginBottom: '-20px' }}
                   />
                 ) : null}
-                <video
-                  ref={turkeyVideoRef}
-                  src={shouldLoadTurkeyVideo ? turkey : undefined}
-                  loop
-                  muted
-                  playsInline
-                  preload={isOnline && !isSlowConnection && !videoError ? "auto" : "none"}
-                  onError={() => setVideoError(true)}
-                  style={{
-                    display: isOnline && !isSlowConnection && !videoError ? "block" : "none",
-                    width: '340px',
-                    height: '210px',
-                    marginBottom: '-50px',
-                    objectFit: 'contain',
-                  }}
-                />
+                <TurkeyVideoFrame>
+                  <TurkeyVideo
+                    ref={turkeyVideoRef}
+                    src={shouldLoadTurkeyVideo ? turkey : undefined}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload={isOnline && !isSlowConnection && !videoError ? "auto" : "none"}
+                    onCanPlay={(e) => {
+                      if (shouldShowLoader && isOnline && !isSlowConnection && !videoError) {
+                        const p = e.target.play();
+                        if (p !== undefined) p.catch(() => {});
+                      }
+                    }}
+                    onError={() => setVideoError(true)}
+                    style={{
+                      display: isOnline && !isSlowConnection && !videoError ? "block" : "none",
+                    }}
+                  />
+                </TurkeyVideoFrame>
                 <p style={{ fontSize: "16px" }}>
                   {!isOnline
                     ? "Перевірте інтернет-з'єднання для користування картою"
