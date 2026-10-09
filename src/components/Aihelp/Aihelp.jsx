@@ -11,7 +11,6 @@ import { FaMicrophoneAlt } from "react-icons/fa";
 import { IoCamera } from "react-icons/io5";
 import { GiTimeTrap } from "react-icons/gi";
 import toast, { Toaster } from "react-hot-toast";
-import html2canvas from "html2canvas";
 import { FaCloudMoon } from "react-icons/fa";
 import { TbWorldStar } from "react-icons/tb";
 import { IoIosCloudyNight } from "react-icons/io";
@@ -1681,6 +1680,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
     setIsCapturing(true);
     setStatus("Роблю скріншот...");
     try {
+      const html2canvas = (await import("html2canvas")).default;
       const elem = document.getElementById("root") || document.documentElement || document.body;
       const canvas = await html2canvas(elem, {
         useCORS: true,

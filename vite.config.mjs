@@ -2,48 +2,13 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import viteCompression from 'vite-plugin-compression';
-import { imagetools } from 'vite-imagetools'; 
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-
-function inlineSmallEntryCss(maxBytes = 10 * 1024) {
-  return {
-    name: 'inline-small-entry-css',
-    apply: 'build',
-    async writeBundle(outputOptions, bundle) {
-      const htmlAsset = Object.values(bundle).find(
-        (asset) => asset.type === 'asset' && asset.fileName === 'index.html',
-      );
-      if (!htmlAsset || typeof htmlAsset.source !== 'string') return;
-
-      const stylesheetLinks = [...htmlAsset.source.matchAll(
-        /<link\b(?=[^>]*\brel=["']stylesheet["'])[^>]*\bhref=["']([^"']+)["'][^>]*>/gi,
-      )];
-      let html = htmlAsset.source;
-
-      for (const [, linkTag, href] of stylesheetLinks) {
-        const fileName = decodeURIComponent(href).replace(/^\//, '');
-        const cssAsset = bundle[fileName];
-        if (!cssAsset || cssAsset.type !== 'asset') continue;
-
-        const css = typeof cssAsset.source === 'string'
-          ? cssAsset.source
-          : await readFile(resolve(outputOptions.dir ?? 'dist', fileName), 'utf8');
-        if (Buffer.byteLength(css) > maxBytes) continue;
-
-        html = html.replace(linkTag, `<style>${css}</style>`);
-      }
-
-      htmlAsset.source = html;
-    },
-  };
-}
+import { imagetools } from 'vite-imagetools';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig({
   plugins: [
     react(),
     imagetools(),
-    inlineSmallEntryCss(),
 
     ViteImageOptimizer({
       jpg: { quality: 80 },
@@ -67,6 +32,14 @@ export default defineConfig({
       ext: '.br',
       threshold: 10240,
     }),
+
+    // Інтерактивна карта розміру файлів після білду
+    visualizer({
+      filename: './dist/stats.html',
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
+    }),
   ],
 
   base: '/',
@@ -78,31 +51,63 @@ export default defineConfig({
   build: {
     sourcemap: false,
     chunkSizeWarningLimit: 1000,
-    minify: 'esbuild',
-    target: 'esnext',
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
-              return 'vendor-react';
-            }
-            if (id.includes('three')) {
-              return 'vendor-three';
-            }
-            if (id.includes('@ffmpeg')) {
-              return 'vendor-ffmpeg';
-            }
-            if (id.includes('firebase')) {
-              return 'vendor-firebase';
-            }
-            if (id.includes('chart.js') || id.includes('wavesurfer') || id.includes('fabric')) {
-              return 'vendor-graphics';
-            }
-            return 'vendor-libs';
-          }
-        },
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
       },
     },
+    target: 'es2020',
+    cssCodeSplit: true,
+    modulePreload: {
+      polyfill: true,
+    },
+    rollupOptions: {
+  output: {manualChunks(id) {
+  if (id.includes('node_modules')) {
+    if (/\/node_modules\/(react|react-dom|scheduler)\//.test(id)) {
+      return 'vendor-react';
+    }
+    if (/\/node_modules\/(react-icons|@floating-ui|@radix-ui)\//.test(id)) {
+      return 'vendor-ui';
+    }
+    // Markdown та парсери
+    if (/\/node_modules\/(react-markdown|unified|micromark|vfile|mdast-util-|unread|property-information|stylis)\//.test(id)) {
+      return 'vendor-markdown';
+    }
+    // Інтернаціоналізація (i18n)
+    if (id.includes('i18next') || id.includes('react-i18next')) {
+      return 'vendor-i18n';
+    }
+    // Мережа та утиліти
+    if (id.includes('axios') || id.includes('localforage')) {
+      return 'vendor-utils';
+    }
+    if (/\/node_modules\/(firebase|@firebase)\//.test(id)) {
+      return 'vendor-firebase';
+    }
+    if (id.includes('html2canvas')) {
+      return 'vendor-html2canvas';
+    }
+    if (id.includes('framer-motion')) {
+      return 'vendor-motion';
+    }
+    if (id.includes('three')) {
+      return 'vendor-three';
+    }
+    if (id.includes('@ffmpeg')) {
+      return 'vendor-ffmpeg';
+    }
+    if (id.includes('chart.js') || id.includes('wavesurfer') || id.includes('fabric')) {
+      return 'vendor-graphics';
+    }
+    if (id.includes('@huggingface') || id.includes('@google/generative-ai')) {
+      return 'vendor-ai';
+    }
+  }
+}
+  },
+     },
   },
 });

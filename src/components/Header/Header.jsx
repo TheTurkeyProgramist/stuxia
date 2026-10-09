@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes, css } from "styled-components";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { GiShop, GiExitDoor } from "react-icons/gi";
@@ -6,11 +6,13 @@ import relax from "../../mp3/modals/relax.mp3";
 import { FaSun } from "react-icons/fa";
 import { MdSettingsSuggest, MdMore, MdWallpaper } from "react-icons/md";
 import { FaBookOpen } from "react-icons/fa6";
+import { IoColorPalette } from "react-icons/io5";
 import bell from "../../mp3/modals/bell.mp3";
 import conimg from "../../mp3/modals/concierge.mp3";
 import userDefault from "../../photos/hero-header/user.webp";
 import { useVisualFilters } from "./useVisualFilters";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
+import AntiHeaderAd from "./AntiHeaderAd";
 import {
   useFloating,
   autoUpdate,
@@ -50,23 +52,41 @@ const fadeInHeader = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
+
 const HeaderDiv = styled.div`
   height: 37px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  border-bottom: 2px solid ${(props) => (props.$isDarkMode ? "white" : "#000000")};
+  border-bottom: ${(props) =>
+    props.$accentColor
+      ? `3px solid ${props.$accentColor}`
+      : `2px solid ${props.$isDarkMode ? "white" : "#000000"}`};
   position: fixed;
-  background: ${(props) => (props.$isDarkMode ? "rgba(0, 0, 0, 0.45)" : "rgba(255, 255, 255, 0.86)")};
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: ${(props) => (props.$isStickyBgMode ? "blur(10px)" : "none")};
+  background-color: ${(props) => {
+    if (!props.$accentColor) {
+      return props.$isDarkMode ? "rgba(0, 0, 0, 0.45)" : "rgba(255, 255, 255, 0.86)";
+    }
+    // color-mix створює гарний, насичений і гарантовано помітний колір і для білої, і для чорної теми
+    return props.$isDarkMode
+      ? `color-mix(in srgb, ${props.$accentColor} 35%, #0d0d0d)`
+      : `color-mix(in srgb, ${props.$accentColor} 35%, #ffffff)`;
+  }};
+  box-shadow: ${(props) =>
+    props.$accentColor
+      ? `0 3px 14px ${props.$accentColor}66`
+      : "none"};
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: ${(props) => (props.$isStickyBgMode ? "blur(10px)" : "blur(8px)")};
   color: ${(props) => (props.$isDarkMode ? "white" : "#000000")};
   top: 0;
   left: 0;
   z-index: 1900;
   transition:
-    background-color 0.4s ease,
+    background-color 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
     backdrop-filter 0.4s ease;
   box-sizing: border-box;
   animation: ${fadeInHeader} 0.8s ease-out 4.3s both;
@@ -89,10 +109,19 @@ const IconButton = styled.button`
   cursor: pointer;
   display: flex;
   color: ${(props) => (props.$isDarkMode ? "#fff" : "#1a1a1a")};
+  background-color: ${(props) => (props.$isDarkMode ? "#090909" : "#fefbfb")};
   align-items: center;
+  height: 26px;
   justify-content: center;
-  padding: 2px;
+  padding: 4px 16px;
+  border-radius: 6px;
   flex-shrink: 0;
+  transition: outline 0.15s ease, transform 0.15s ease;
+
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
 `;
 
 const EmojiWrapper = styled.span`
@@ -172,6 +201,10 @@ const ProfileButton = styled.button`
 
   &:hover {
     transform: translateY(-1px);
+  }
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
   }
 `;
 const ProfileModal = styled.div`
@@ -272,7 +305,114 @@ const FilterButton = styled.button`
   &:hover {
     background: rgba(255, 179, 108, 0.3);
   }
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
 `;
+
+// ── Theme Picker Modal ─────────────────────────────────────────────────────
+const ThemePickerModal = styled.div`
+  position: absolute;
+  top: 42px;
+  left: 0;
+  z-index: 2100;
+  background: ${(props) =>
+    props.$isDarkMode ? "rgba(14, 14, 14, 0.97)" : "rgba(255, 255, 255, 0.97)"};
+  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)")};
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: ${(props) => (props.$isDarkMode ? "#fff" : "#111")};
+  min-width: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  outline: none;
+`;
+
+const ThemePickerSection = styled.div`
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.5;
+  margin-bottom: 2px;
+`;
+
+const ThemeBaseRow = styled.div`
+  display: flex;
+  gap: 6px;
+`;
+
+const ThemeBaseBtn = styled.button`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 2px solid ${(props) => (props.$active ? "#00afce" : "transparent")};
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  transition: border-color 0.15s, transform 0.1s;
+  background: ${(props) => props.$bg};
+  color: ${(props) => props.$color};
+  &:hover { transform: translateY(-1px); }
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+`;
+
+const AccentRow = styled.div`
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+`;
+
+const AccentDot = styled.button`
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid ${(props) => (props.$active ? "#fff" : "transparent")};
+  outline: 2px solid ${(props) => (props.$active ? props.$color : "transparent")};
+  background: ${(props) => props.$color};
+  cursor: pointer;
+  transition: transform 0.1s, outline 0.12s;
+  flex-shrink: 0;
+  &:hover { transform: scale(1.2); }
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 3px;
+    transform: scale(1.2);
+  }
+`;
+
+const AccentPreviewBar = styled.div`
+  height: 3px;
+  border-radius: 2px;
+  background: ${(props) => props.$color || "transparent"};
+  opacity: ${(props) => (props.$color ? 0.6 : 0)};
+  transition: background 0.2s;
+`;
+
+
+// 7 кольорів веселки + 8й "без накладення"
+const ACCENT_COLORS = [
+  { id: "none",   label: "Без накладення",  color: null,      hex: null },
+  { id: "red",    label: "Червоний",         color: "#FF3B30", hex: "#FF3B30" },
+  { id: "orange", label: "Оранжевий",        color: "#FF9500", hex: "#FF9500" },
+  { id: "yellow", label: "Жовтий",           color: "#FFD60A", hex: "#FFD60A" },
+  { id: "green",  label: "Зелений",          color: "#30D158", hex: "#30D158" },
+  { id: "cyan",   label: "Блакитний",        color: "#00C7BE", hex: "#00C7BE" },
+  { id: "blue",   label: "Синій",            color: "#0A84FF", hex: "#0A84FF" },
+  { id: "violet", label: "Фіолетовий",       color: "#BF5AF2", hex: "#BF5AF2" },
+  { id: "pink",   label: "Рожевий",          color: "#FF375F", hex: "#FF375F" },
+];
+
 export const Tooltip = ({
   content,
   children,
@@ -383,12 +523,17 @@ const Header = ({
   const { registerRef } = useTutorial?.() || { registerRef: () => {} };
   const [showUltra, setShowUltra] = useState(false);
   const [showVisualSettings, setShowVisualSettings] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
+  const [accentColor, setAccentColor] = useState(null); // null = без накладення
+  const themePickerRef = useRef(null);
+  const themePickerBtnRef = useRef(null);
   const avatarSource = user?.photoURL || user?.avatar || currentAvatar || userDefault;
   const handleAvatarError = (event) => {
     event.currentTarget.onerror = null;
     event.currentTarget.src = userDefault;
   };
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
 
   useEffect(() => {
     if (!isProfileModalOpen) return;
@@ -410,7 +555,104 @@ const Header = ({
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [isProfileModalOpen]);
-  
+
+  // isSettingsPaused removed — AntiHeaderAd manages its own pause state independently
+
+  // Глобальна комбінація клавіш (Alt + T) для фокусування та навігації по кнопках хедера
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (
+        e.altKey &&
+        (e.key.toLowerCase() === "t" || e.key === "е" || e.key === "Е" || e.key === "т" || e.key === "Т")
+      ) {
+        e.preventDefault();
+        playSfx(bell);
+        themePickerBtnRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [sfxVolume]);
+
+  // Фокус на першу кнопку при відкритті модалки
+  useEffect(() => {
+    if (showThemePicker) {
+      const timer = setTimeout(() => {
+        const firstBtn = themePickerRef.current?.querySelector("button");
+        firstBtn?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [showThemePicker]);
+
+  // Управління у відкритій модалці теми (Alt + A переключає акцентні кольори, стрілочки переміщують фокус)
+  const handleModalKeyDown = (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setShowThemePicker(false);
+      themePickerBtnRef.current?.focus();
+      return;
+    }
+
+    // Alt + A лише всередині відкритої модалки переключає колір акценту
+    if (e.altKey && (e.key.toLowerCase() === "a" || e.key === "ф" || e.key === "Ф" || e.key === "а" || e.key === "А")) {
+      e.preventDefault();
+      playSfx(relax);
+      const colors = ACCENT_COLORS.map((c) => c.color);
+      const curIdx = colors.indexOf(accentColor);
+      const nextIdx = (curIdx + 1) % colors.length;
+      setAccentColor(colors[nextIdx]);
+      return;
+    }
+
+    const focusables = Array.from(
+      themePickerRef.current?.querySelectorAll("button") || []
+    );
+    if (!focusables.length) return;
+
+    const currentIndex = focusables.indexOf(document.activeElement);
+
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      const nextIndex = currentIndex < focusables.length - 1 ? currentIndex + 1 : 0;
+      focusables[nextIndex]?.focus();
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const prevIndex = currentIndex > 0 ? currentIndex - 1 : focusables.length - 1;
+      focusables[prevIndex]?.focus();
+    }
+  };
+
+  // Переключення між ВСІМА кнопками ХЕДЕРУ за допомогою стрілочок
+  const handleHeaderKeyDown = (e) => {
+    // Якщо модалка теми відкрита і фокус всередині — модалка має свій обробник
+    if (themePickerRef.current && themePickerRef.current.contains(document.activeElement)) {
+      return;
+    }
+
+    if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(e.key)) {
+      const headerContainer = e.currentTarget;
+      const buttons = Array.from(
+        headerContainer.querySelectorAll("button, [tabindex='0']")
+      ).filter((btn) => btn.offsetWidth > 0 && btn.offsetHeight > 0);
+
+      if (!buttons.length) return;
+
+      const currentIndex = buttons.indexOf(document.activeElement);
+      if (currentIndex === -1) return;
+
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        const nextIndex = (currentIndex + 1) % buttons.length;
+        buttons[nextIndex]?.focus();
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const prevIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+        buttons[prevIndex]?.focus();
+      }
+    }
+  };
+
   const {
     visualConfig,
     setVisualConfig,
@@ -516,24 +758,102 @@ const Header = ({
     <><HeaderDiv
   $isDarkMode={isDarkMode}
   $isStickyBgMode={isStickyBgMode}
+  $accentColor={accentColor}
   data-decorator-ignore="true"
 >
   <HeaderFix>
     {user ? (
       <>
-        <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)}>
-          {/* Зміна теми */}
-          <Tooltip content="Змінити тему" isDarkMode={isDarkMode}>
-            <IconButton
-              onClick={handleThemeToggle}
-              $isDarkMode={isDarkMode}
-              aria-label="Змінити тему"
-            >
-              <EmojiWrapper style={{ fontSize: "19px" }}>
-                {isDarkMode ? <FaSun /> : <BsMoonStarsFill />}
-              </EmojiWrapper>
-            </IconButton>
-          </Tooltip>
+        <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)} onKeyDown={handleHeaderKeyDown}>
+          {/* Тема — відкриває міні-модалку вибору теми */}
+          <div style={{ position: "relative", display: "inline-flex" }}>
+            <Tooltip content="Вибір теми" isDarkMode={isDarkMode}>
+              <IconButton
+                ref={themePickerBtnRef}
+                onClick={() => { playSfx(bell); setShowThemePicker(p => !p); }}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+                    if (e.key === "ArrowDown") e.preventDefault();
+                    setShowThemePicker(true);
+                  }
+                }}
+                $isDarkMode={isDarkMode}
+                aria-label="Вибір теми (Alt + T)"
+                style={{ position: "relative" }}
+              >
+                <EmojiWrapper style={{ fontSize: "19px" }}>
+                  <IoColorPalette />
+                </EmojiWrapper>
+                {/* маленька крапка акценту */}
+                {accentColor && (
+                  <span style={{
+                    position: "absolute",
+                    bottom: 1, right: 1,
+                    width: 6, height: 6,
+                    borderRadius: "50%",
+                    background: accentColor,
+                    border: "1px solid rgba(0,0,0,0.3)"
+                  }} />
+                )}
+              </IconButton>
+            </Tooltip>
+
+            {showThemePicker && (
+              <ThemePickerModal
+                ref={themePickerRef}
+                $isDarkMode={isDarkMode}
+                tabIndex={-1}
+                onKeyDown={handleModalKeyDown}
+              >
+                {/* Базова тема */}
+                <ThemePickerSection>Базова тема</ThemePickerSection>
+                <ThemeBaseRow>
+                  <ThemeBaseBtn
+                    $bg="#ffffff"
+                    $color="#111"
+                    $active={!isDarkMode}
+                    onClick={() => { if (isDarkMode) { playSfx(bell); toggleTheme(); } }}
+                  >
+                    ☀️ Світла
+                  </ThemeBaseBtn>
+                  <ThemeBaseBtn
+                    $bg="#111111"
+                    $color="#fff"
+                    $active={isDarkMode}
+                    onClick={() => { if (!isDarkMode) { playSfx(bell); toggleTheme(); } }}
+                  >
+                    🌙 Темна
+                  </ThemeBaseBtn>
+                </ThemeBaseRow>
+
+                {/* Акцентний колір */}
+                <ThemePickerSection>Акцентний колір</ThemePickerSection>
+                <AccentRow>
+                  {ACCENT_COLORS.map((ac) => (
+                    <Tooltip key={ac.id} content={ac.label} isDarkMode={isDarkMode} placement="top">
+                      <AccentDot
+                        $color={ac.color || (isDarkMode ? "#555" : "#ccc")}
+                        $active={accentColor === ac.color}
+                        onClick={() => { playSfx(relax); setAccentColor(ac.color); }}
+                        title={ac.label}
+                        style={ac.id === "none" ? {
+                          background: "linear-gradient(135deg,#ccc 40%,#fff 60%)",
+                          border: "2px solid #aaa",
+                        } : {}}
+                      />
+                    </Tooltip>
+                  ))}
+                </AccentRow>
+                {/* Смуга-превью акценту */}
+                <AccentPreviewBar $color={accentColor} />
+                <div style={{ fontSize: 10, opacity: 0.45, textAlign: "center" }}>
+                  {accentColor
+                    ? `Акцент: ${ACCENT_COLORS.find(a => a.color === accentColor)?.label}`
+                    : "Без накладення кольору"}
+                </div>
+              </ThemePickerModal>
+            )}
+          </div>
 
           {/* Липкий фон */}
           <Tooltip content="Фон на увесь сайт" isDarkMode={isDarkMode}>
@@ -647,19 +967,80 @@ const Header = ({
         </ButtonsGroup>
       </>
     ) : (
-      <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)}>
+      <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)} onKeyDown={handleHeaderKeyDown}>
         {/* Незалогінений користувач */}
-        <Tooltip content="Змінити тему" isDarkMode={isDarkMode}>
-          <IconButton 
-            onClick={handleThemeToggle} 
-            $isDarkMode={isDarkMode}
-            aria-label="Змінити тему"
-          >
-            <EmojiWrapper style={{ fontSize: "18px" }}>
-              {isDarkMode ? <FaSun /> : <BsMoonStarsFill />}
-            </EmojiWrapper>
-          </IconButton>
-        </Tooltip>
+        {/* Тема — міні-модалка вибору */}
+        <div style={{ position: "relative", display: "inline-flex" }}>
+          <Tooltip content="Вибір теми" isDarkMode={isDarkMode}>
+            <IconButton
+              ref={themePickerBtnRef}
+              onClick={() => { playSfx(bell); setShowThemePicker(p => !p); }}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+                  if (e.key === "ArrowDown") e.preventDefault();
+                  setShowThemePicker(true);
+                }
+              }}
+              $isDarkMode={isDarkMode}
+              aria-label="Вибір теми (Alt + T)"
+              style={{ position: "relative" }}
+            >
+              <EmojiWrapper style={{ fontSize: "18px" }}>
+                <IoColorPalette />
+              </EmojiWrapper>
+              {accentColor && (
+                <span style={{
+                  position: "absolute", bottom: 1, right: 1,
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: accentColor, border: "1px solid rgba(0,0,0,0.3)"
+                }} />
+              )}
+            </IconButton>
+          </Tooltip>
+
+          {showThemePicker && (
+            <ThemePickerModal
+              ref={themePickerRef}
+              $isDarkMode={isDarkMode}
+              tabIndex={-1}
+              onKeyDown={handleModalKeyDown}
+            >
+              <ThemePickerSection>Базова тема</ThemePickerSection>
+              <ThemeBaseRow>
+                <ThemeBaseBtn $bg="#ffffff" $color="#111" $active={!isDarkMode}
+                  onClick={() => { if (isDarkMode) { playSfx(bell); toggleTheme(); } }}>
+                  ☀️ Світла
+                </ThemeBaseBtn>
+                <ThemeBaseBtn $bg="#111111" $color="#fff" $active={isDarkMode}
+                  onClick={() => { if (!isDarkMode) { playSfx(bell); toggleTheme(); } }}>
+                  🌙 Темна
+                </ThemeBaseBtn>
+              </ThemeBaseRow>
+              <ThemePickerSection>Акцентний колір</ThemePickerSection>
+              <AccentRow>
+                {ACCENT_COLORS.map((ac) => (
+                  <Tooltip key={ac.id} content={ac.label} isDarkMode={isDarkMode} placement="top">
+                    <AccentDot
+                      $color={ac.color || (isDarkMode ? "#555" : "#ccc")}
+                      $active={accentColor === ac.color}
+                      onClick={() => { playSfx(relax); setAccentColor(ac.color); }}
+                      style={ac.id === "none" ? {
+                        background: "linear-gradient(135deg,#ccc 40%,#fff 60%)",
+                        border: "2px solid #aaa",
+                      } : {}}
+                    />
+                  </Tooltip>
+                ))}
+              </AccentRow>
+              <AccentPreviewBar $color={accentColor} />
+              <div style={{ fontSize: 10, opacity: 0.45, textAlign: "center" }}>
+                {accentColor
+                  ? `Акцент: ${ACCENT_COLORS.find(a => a.color === accentColor)?.label}`
+                  : "Без накладення кольору"}
+              </div>
+            </ThemePickerModal>
+          )}
+        </div>
 
         <Tooltip content="Фон на увесь сайт" isDarkMode={isDarkMode}>
           <IconButton
@@ -848,7 +1229,13 @@ const Header = ({
       </div>
     </VisualSettingsPanel>
   )}
-</HeaderDiv>
+  </HeaderDiv>
+
+  {/* Окремий компонент Анти-хедера з рекламою та рекомендаціями */}
+  <AntiHeaderAd
+    isDarkMode={isDarkMode}
+    accentColor={accentColor}
+  />
     </>
   );
 };

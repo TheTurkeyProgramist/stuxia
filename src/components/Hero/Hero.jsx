@@ -902,7 +902,7 @@ const HeroInput = styled.input`
   font-size: 11px;
   color: #040404;
   padding-left: 8px;
-  padding-right: 35px;
+  padding-right: 8px;
   background: #ffffff;
   border-radius: 0;
   border: none;
@@ -3408,17 +3408,6 @@ const Hero = ({
                     )}
                   </SuggestionsList>
                 )}
-                <HeroButton
-                  onTouchStart={(e) => {
-                    e.preventDefault();
-                    if (suggestions[0]) handleSelect(suggestions[0]);
-                  }}
-                  onClick={() => {
-                    if (suggestions[0]) handleSelect(suggestions[0]);
-                  }}
-                >
-                  ⌕
-                </HeroButton>
               </SearchContainer>
             </HeroFormater>
           ) : searchMode === "links" ? (
@@ -3465,6 +3454,9 @@ const Hero = ({
                     type="number"
                     value={latitude}
                     onChange={(e) => setLatitude(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSelectByCoordinates();
+                    }}
                     placeholder="Широта: Від -90° до +90°"
                     $isDarkMode={isDarkMode}
                     disabled={isSearchingNearby}
@@ -3478,6 +3470,9 @@ const Hero = ({
                     type="number"
                     value={longitude}
                     onChange={(e) => setLongitude(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSelectByCoordinates();
+                    }}
                     $isDarkMode={isDarkMode}
                     placeholder="Довгота: Від -180° до +180°"
                     disabled={isSearchingNearby}
@@ -3486,13 +3481,6 @@ const Hero = ({
                     step="0.01"
                   />
                 </CoordinateInput>
-                <HeroButton
-                  onClick={handleSelectByCoordinates}
-                  disabled={isSearchingNearby}
-                  style={{ alignSelf: "flex-start" }}
-                >
-                  {isSearchingNearby ? "…" : "⌕"}
-                </HeroButton>
               </CoordinatesContainer>
               {nearbySearchStatus && (
                 <div style={{
@@ -4482,6 +4470,14 @@ const Hero = ({
                 $isDarkMode={isDarkMode}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && inputValue.trim()) {
+                    window.open(
+                      "https://www.google.com/search?q=" + encodeURIComponent(inputValue),
+                      "_blank"
+                    );
+                  }
+                }}
                 placeholder="Пошук сайтів, ігор, статей, авторів..."
                 type="text"
                 autoFocus
@@ -4497,16 +4493,6 @@ const Hero = ({
                   ×
                 </ClearButton>
               )}
-              <HeroButton
-                onClick={() => {
-                  if (inputValue.trim()) {
-                    window.open("https://www.google.com/search?q=" + encodeURIComponent(inputValue), "_blank");
-                  }
-                }}
-                style={{ width: "36px", height: "36px", borderRadius: "50%", fontSize: "16px" }}
-              >
-                ⌕
-              </HeroButton>
             </LinksSearchBar>
 
             <LinksSearchMeta $isDarkMode={isDarkMode}>
