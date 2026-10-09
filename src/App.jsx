@@ -649,22 +649,21 @@ const ParticleSymbol = styled.span`
 
 const UpdateTimerBadge = styled.div`
   position: fixed;
-  bottom: 10px;
+  bottom: 20px;
   right: 10px;
-  background: ${(props) => (props.$isDarkMode ? "rgba(6, 123, 110, 0.75)" : "rgba(98, 112, 8, 0.55)")};
-  color: ${(props) => (props.$isDarkMode ? "#00eaff" : "#fbff00")};
-  padding: 2px 8px;
+  background: ${(props) => (props.$isDarkMode ? "rgba(0, 0, 0, 0.89)" : "rgba(255, 255, 255, 0.97)")};
+  color: ${(props) => (props.$isDarkMode ? "#f8f9f9" : "#060606")};
+  padding: 0px 18px;
   border-radius: 7px;
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 14px;
+  font-weight: 700;
   z-index: 1998;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   gap: 8px;
   backdrop-filter: blur(6px);
   border: 2px solid
-    ${(props) => (props.$isDarkMode ? "rgba(128, 0, 255, 0.99)" : "rgb(255, 170, 0)")};
+    ${(props) => (props.$isDarkMode ? "rgba(249, 248, 250, 0.99)" : "rgb(5, 5, 5)")};
   pointer-events: auto;
   cursor: pointer;
    text-shadow: 
@@ -675,8 +674,7 @@ const UpdateTimerBadge = styled.div`
   transition: all 0.3s ease;
   &:hover {
     transform: scale(1.07);
-    background: ${(props) => (props.$isDarkMode ? "rgba(18, 43, 166, 0.69)" : "rgba(254, 102, 0, 0.73)")};
-  }
+     }
   &:active {
     transform: scale(0.95);
   }

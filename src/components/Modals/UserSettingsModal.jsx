@@ -583,6 +583,23 @@ const UserSettingsModal = ({
     try { return localStorage.getItem("saved_google_avatar") || null; } catch { return null; }
   });
 
+  const [isAdAntiHeaderEnabled, setIsAdAntiHeaderEnabled] = useState(() => {
+    try {
+      return localStorage.getItem("ad_antiheader_enabled") !== "false";
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleAdAntiHeader = () => {
+    const nextVal = !isAdAntiHeaderEnabled;
+    setIsAdAntiHeaderEnabled(nextVal);
+    try {
+      localStorage.setItem("ad_antiheader_enabled", nextVal ? "true" : "false");
+      window.dispatchEvent(new Event("storage"));
+    } catch {}
+  };
+
   useEffect(() => {
     if (user?.avatar && typeof user.avatar === "string" && user.avatar.startsWith("http") && availableAvatars.indexOf(user.avatar) === -1 && !user.avatar.startsWith("data:")) {
       setSavedGoogleAvatar(user.avatar);
@@ -1447,6 +1464,29 @@ const UserSettingsModal = ({
                 <CardGroup>
                   <SectionHeaderTitle><FiSliders /> Персоналізація та інтерфейс</SectionHeaderTitle>
 
+                  {/* AntiHeader Ad Toggle */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#60cdff"><FiInfo /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Реклама та підказки в хедері</CardTitle>
+                        <CardDescription>
+                          {isAdAntiHeaderEnabled
+                            ? "Авто-показ банера з порадами інструментів(можливостей) Стихії та гарячими клавішами"
+                            : "Банер підказок повністю вимкнено"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={toggleAdAntiHeader}>
+                        <ToggleStatusLabel $checked={isAdAntiHeaderEnabled}>
+                          {isAdAntiHeaderEnabled ? "Увімкнуто" : "Вимкнуто"}
+                        </ToggleStatusLabel>
+                        <SwitchPill $checked={isAdAntiHeaderEnabled} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
                   <Card>
                     <CardLeft>
                       <CardIconBox><FiDownload /></CardIconBox>
@@ -1711,6 +1751,29 @@ const UserSettingsModal = ({
                       <ToggleWrapper onClick={() => setIsRoutingMode(!isRoutingMode)}>
                         <ToggleStatusLabel $checked={isRoutingMode}>{isRoutingMode ? "Маршрути" : "Скрол"}</ToggleStatusLabel>
                         <SwitchPill $checked={isRoutingMode} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  {/* AntiHeader Ad Toggle */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#60cdff"><FiInfo /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Реклама та підказки в хедері</CardTitle>
+                        <CardDescription>
+                          {isAdAntiHeaderEnabled
+                            ? "Автоматичний показ Анти-хедера з порадами та клавішами"
+                            : "Анти-хедер повністю вимкнено"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={toggleAdAntiHeader}>
+                        <ToggleStatusLabel $checked={isAdAntiHeaderEnabled}>
+                          {isAdAntiHeaderEnabled ? "Увімкнуто" : "Вимкнуто"}
+                        </ToggleStatusLabel>
+                        <SwitchPill $checked={isAdAntiHeaderEnabled} />
                       </ToggleWrapper>
                     </CardControl>
                   </Card>
