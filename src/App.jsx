@@ -177,7 +177,6 @@ const { refs, floatingStyles, context } = useFloating({
   );
 };
 const Aihelp = lazy(() => import("./components/Aihelp/Aihelp.jsx"));
-const FanArt = lazy(() => import("./components/FanArt/FanArt.jsx"));
 const ShopModal = lazy(() => import("./components/Modals/ShopModal.jsx"));
 const ClimateMap = lazy(() => import("./components/ClimateMap/ClimateMap.jsx"));
 const Modal = lazy(() => import("./components/Modals/Modal.jsx"));
@@ -325,10 +324,27 @@ const WeatherCardsContainer = styled.div`
   justify-content: flex-start;
   width: 100%;
   scroll-behavior: smooth;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 255, 229, 0.7) rgba(0, 0, 0, 0.18);
 
   &::-webkit-scrollbar {
-    display: none;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #00ffe5, #8bdcff);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #6ef5ea, #b3ecff);
   }
 
   > * {
@@ -572,9 +588,7 @@ const LOADING_PHRASES = [
     "Погода така сама загадка і т/с 'Ральна містика'",
   "Хто що любить, хто що шукає? :)",
   "Зворотний зв'язок: фейсбук, ютуб або акаунт theturkeystudio@gmail.com на випадок помилок.",
-  "Хочете, щоб ваш трек або відсилка були на сайті? Надсилайте на пошту theturkeystudio@gmail.com",
-  "Фан-арти для роздрукування! І плоска 3D-картина краще виглядає на стіні, ніж на екрані. Примітка",
-  "0 казино, 0 підписок, 0 політики, 0 насильства, 0 шахрайства. Тільки погода, музика і відсилки.",
+  "0 казино, 0 підписок, 0 політики, 0 насильства, 0 шахрайства. Тільки погода і відсилки.",
   "«SlivkiShow» та «Дизель Шоу» (2015–2020) - це легенди...",
   "Людський будинок для індика - це бекрумс. Він нічого не розуміє. Особистий досвід :)",
  "Знайди речдок у телешоу «Речдок»",
@@ -583,16 +597,12 @@ const LOADING_PHRASES = [
   "Ми вас здивуємо багато чим :)",
   "І що всіх тягне на турецькі серіали?",
   "«Дизель Шоу»: В Америці - Сірі, в Ізраїлі - Сара",
-  "Морально підтримайте підпискою на ютуб, рекламою і побажаннями.",
-  "Навчання, оцінювання та коментування. І що я написав :)",
-  "Чекаю на ваші відсилки, фан-арти та побажання на пошту",
    "Чекаємо на «Aurora Hills: Chapter 3» та «Темрява та Полум'я 5»",
   "У нас немає сторінки 404 :) Радіовишки, ліси, тумани, сирени...",
   "Порада: використайте Lively Wallpaper, щоб відсилковий відеофон був на робочому столі.",
   "Підтримайте, будь ласка, рекламою нас у соцмережах :)",
   "У вас через сім днів буде хороша погода - поганої ж не існує :)",
   "«Теорія неймовірності» (Макс Кідрук) має одну частину :(",
-  "Ох, Марта любить, коли ти не тікаєш від долі стати картиною.",
   "Кейт — складна за характером індичка.",
   "Можливо, Доміно розмістив відсилки на «Динофроз» і «Dragon Village» через те, що індики схожі на драконів і динозаврів :)",
   "Хто ваш кумир? Зібров чи Винник?",
@@ -600,28 +610,31 @@ const LOADING_PHRASES = [
   "Хто знає, той у нас шукає. Всі сайти так кажуть і ми :)",
   "Місія неможлива - ніде не помилитись",
   "Льодовиковий період чи глобальне потепління через 24 роки.",
-  "Правило: дивіться на все під різними кутами.",
   "Попри все, погода не буває поганою - вона буває різною.",
-  "Ви: «Цей сайт дивний, тут погода, і відсилки, і старі хіти, зате прикольний індик в магазині»",
+  "Ви: «Цей сайт дивний, тут погода, і відсилки, і старі хіти, зате прикольний індик на карті»",
   "Оксану Самойлову з «Україна має талант» хто пам'ятає?",
   "Страху немає, упевненим робиться рух!",
   "Застрягли в минулому :) Але погода - це майбутнє!",
   "Mondo TV - Thanks for legendary cartoons.",
   "Раз, два, три. Погоду нам скажи!",
-  "Це початок початку чи початок кінця відсилкам? (Перший варіант)",
   "Вверх - ти летиш! Вниз - ти падаєш! ",  
   "Чорний айсберг, потопив ......? ",  
-    "Доміно тривожить Єллоустон",  
-        "Я знаю що її звати ......",  
+  "Доміно тривожить Єллоустон", 
+    "Обереш червону таблетку чи синю(фраза з Матриці...)", 
+  "Хто придумав фразу? «Як тобі таке Ілон Маск»", 
+  "Чи є листя у трави?", 
+    "Єдина ОС де ми недоступні це Temple OS :)", 
+    "«Дизель Шоу»: Цей світ остаточно тіктокнувся... :(", 
+  "Не новини, а країна(світ) чудес, бракує лише Аліси... Світ втратив глузд.", 
   "Цей сайт це реальна містика :)",
   "Доміно бажає гарної погоди :)",
-  "Кейт бажає творчого натхнення",
   "Сутінок - не найкраще, що можете побачити...",
-    "Драконяче видання...",
-    "Марта - і картини...",
-    "Відлуння порожнечі",
-        "Вам приснилися сни про погоду? Бо ви тут! :)",  
-   "Вам приснився жах що ...... і ...... програли і...",  
+  "Драконяче видання...",
+  "Марта - і картини...",
+  "Мені одному здається що більшість в політці крихітки Цахеси та безжалісні Ніцерони?",
+"Фрази «Бідний Йорик» і «Бути чи не бути» з якого твору?",
+   "Вам приснилися сни про погоду? Бо ви тут! :)",  
+   "Вам приснився жах що ..е... і ....і. програли і...(Відсилка...)",  
   "Ти ж знаєш, що відсилки - це не просто картинки і відео, а ще й загадки та сюжети :)",
   "Ліків у нас немає, їх украв доктор Хаус. Але погода лікує від усього :)",
 ];
@@ -666,11 +679,6 @@ const UpdateTimerBadge = styled.div`
     ${(props) => (props.$isDarkMode ? "rgba(249, 248, 250, 0.99)" : "rgb(5, 5, 5)")};
   pointer-events: auto;
   cursor: pointer;
-   text-shadow: 
-    -1px -1px 0 #080808,  
-     1px -1px 0 #080808,
-    -1px  1px 0 #080808,
-     1px  1px 0 #080808;
   transition: all 0.3s ease;
   &:hover {
     transform: scale(1.07);
@@ -700,6 +708,38 @@ const LoadingPhraseWrapper = styled.div`
 
 const SECTION_ORDER_STORAGE_KEY = "siteSectionsOrder";
 
+const mergeFanArtBackgrounds = (backgrounds, fanArtImages) => {
+  const merged = Array.isArray(backgrounds) ? [...backgrounds] : [];
+  const images = Array.isArray(fanArtImages) ? fanArtImages : [];
+  const existingKeys = new Set();
+
+  const addKeys = (image) => {
+    if (image?.id) existingKeys.add(`id:${image.id}`);
+    if (typeof image?.src === "string") {
+      existingKeys.add(`src:${image.src}`);
+    }
+  };
+
+  merged.forEach(addKeys);
+
+  images.forEach((image) => {
+    if (!image?.src) return;
+    const keys = [
+      image.id ? `id:${image.id}` : null,
+      typeof image.src === "string" ? `src:${image.src}` : null,
+    ].filter(Boolean);
+    if (keys.some((key) => existingKeys.has(key))) return;
+
+    merged.push({
+      ...image,
+      category: image.category || "Ваші зображення",
+    });
+    keys.forEach((key) => existingKeys.add(key));
+  });
+
+  return merged;
+};
+
 const SectionContent = memo(
   ({
     section,
@@ -712,22 +752,12 @@ const SectionContent = memo(
     moveWeatherCard,
     setIsLocationEnabled,
     user,
-    handleOpenRegister,
-    onUpdateUser,
-    setHeroBg,
-    customHeroBgs,
-    setCustomHeroBgs,
-    setCustomHolidayName,
     customHolidayName,
     weatherCards,
     weatherCardLayout,
-    isAnyModalOpen,
     heroDateString,
-    isWeatherDetailsOpen,
     setIsWeatherDetailsOpen,
-    selectedWeatherCard,
     setSelectedWeatherCard,
-    setIsFsActive,
   }) => {
     if (!section) return null;
 
@@ -788,19 +818,6 @@ const SectionContent = memo(
         {section.key === "map" && (
           <ClimateMap isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
         )}
-        {section.key === "aihelp" && (
-          <Aihelp isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
-        )}
-        {section.key === "fanart" && (
-          <FanArt
-            isStickyBgMode={isStickyBgMode}
-            isDarkMode={isDarkMode}
-            user={user}
-            setHeroBg={setHeroBg}
-            customHeroBgs={customHeroBgs}
-            setCustomHeroBgs={setCustomHeroBgs}
-          />
-        )}
         {section.key === "prison" && <Prison />}
       </div>
     );
@@ -845,7 +862,6 @@ const App = () => {
   const [heroBgZoom, setHeroBgZoom] = useState(1);
   const [heroBgBlur, setHeroBgBlur] = useState(0);
   const [heroBgPixelation, setHeroBgPixelation] = useState(0);
-  const [heroBgBlurType, setHeroBgBlurType] = useState("smooth"); // "smooth" або "pixelated"
   const [heroBgRotation, setHeroBgRotation] = useState(0);
   const [heroBgFocal1, setHeroBgFocal1] = useState({ x: 50, y: 50 });
   const [heroBgFocal2, setHeroBgFocal2] = useState({ x: 50, y: 50 });
@@ -1013,7 +1029,12 @@ const App = () => {
         if (savedHideUntil) setHideDeleteModalUntil(parseInt(savedHideUntil));
 
         const savedOrder = await localforage.getItem(SECTION_ORDER_STORAGE_KEY);
-        if (savedOrder) setSiteSections(savedOrder);
+        if (savedOrder) {
+          const filteredOrder = savedOrder.filter(
+            (s) => s.key !== "aihelp" && s.key !== "fanart",
+          );
+          setSiteSections(filteredOrder);
+        }
 
         const savedHeroBg = await localforage.getItem("hero_background");
         if (savedHeroBg) setHeroBg(savedHeroBg);
@@ -1026,7 +1047,14 @@ const App = () => {
         const savedCustomBgs = await localforage.getItem(
           "custom_hero_backgrounds",
         );
-        if (savedCustomBgs) setCustomHeroBgs(savedCustomBgs);
+        const savedFanArtImages = await localforage.getItem(
+          "fanart_custom_images",
+        );
+        const mergedBackgrounds = mergeFanArtBackgrounds(
+          savedCustomBgs,
+          savedFanArtImages,
+        );
+        if (mergedBackgrounds.length) setCustomHeroBgs(mergedBackgrounds);
         const savedMode = await localforage.getItem("hero_bg_mode");
         if (savedMode) setHeroBgMode(savedMode);
         const savedInterval = await localforage.getItem(
@@ -1047,8 +1075,6 @@ const App = () => {
         if (savedRotation !== null) setHeroBgRotation(savedRotation);
         const savedBlur = await localforage.getItem("hero_bg_blur");
         if (savedBlur !== null) setHeroBgBlur(savedBlur);
-        const savedBlurType = await localforage.getItem("hero_bg_blur_type");
-        if (savedBlurType) setHeroBgBlurType(savedBlurType);
         const savedPixelation = await localforage.getItem("hero_bg_pixelation");
         if (savedPixelation !== null) setHeroBgPixelation(savedPixelation);
 
@@ -1077,11 +1103,6 @@ const App = () => {
         );
         if (savedCustomHolidayName)
           setCustomHolidayName(savedCustomHolidayName);
-
-        const savedScreenshots = await localforage.getItem(
-          "dinofroz_screenshots",
-        );
-        if (savedScreenshots) setScreenshots(savedScreenshots);
 
         const lastSeenVersion = await localforage.getItem(
           "last_deployed_version",
@@ -1166,9 +1187,8 @@ const App = () => {
 
   const preloadComponents = useCallback(async () => {
     await Promise.all([
-      import("./components/Aihelp/Aihelp.jsx"),
-      import("./components/FanArt/FanArt.jsx"),
-      import("./components/Modals/ShopModal.jsx"),
+    import("./components/Aihelp/Aihelp.jsx"),
+    import("./components/Modals/ShopModal.jsx"),
       import("./components/News/News.jsx"),
       import("./components/ClimateMap/ClimateMap.jsx"),
       import("./components/Modals/Modal.jsx"),
@@ -1269,18 +1289,7 @@ const App = () => {
 
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [weatherCards, setWeatherCards] = useState([]);
-  const [screenshots, setScreenshots] = useState([]);
 
-  const isAnyModalOpen =
-    isModalOpen ||
-    isLoginOpen ||
-    isSettingsModalOpen ||
-    isVipModalOpen ||
-    isShopOpen ||
-    isAchivmentsOpen ||
-    isUserSearchOpen ||
-    isInfoOpen ||
-    isFirstTimeHelpOpen;
   const [hideDeleteModalUntil, setHideDeleteModalUntil] = useState(0);
   useEffect(() => {
     const preloadKatScene = async () => {
@@ -1364,7 +1373,11 @@ const App = () => {
                 setWeatherCardLayout(s.weatherCardLayout);
               if (s.isRoutingMode !== undefined)
                 setIsRoutingMode(s.isRoutingMode);
-              if (s.siteSections) setSiteSections(s.siteSections);
+              if (s.siteSections) {
+                setSiteSections(
+                  s.siteSections.filter((section) => section.key !== "fanart"),
+                );
+              }
               if (s.isStickyBgMode !== undefined)
                 setIsStickyBgMode(s.isStickyBgMode);
               if (s.sectionThemes) setSectionThemes(s.sectionThemes);
@@ -1373,7 +1386,14 @@ const App = () => {
               if (s.heroBg3) setHeroBg3(s.heroBg3);
               if (s.heroBg4) setHeroBg4(s.heroBg4);
               if (s.heroBgMode) setHeroBgMode(s.heroBgMode);
-              if (s.customHeroBgs) setCustomHeroBgs(s.customHeroBgs);
+              if (s.customHeroBgs) {
+                const savedFanArtImages = await localforage.getItem(
+                  "fanart_custom_images",
+                );
+                setCustomHeroBgs(
+                  mergeFanArtBackgrounds(s.customHeroBgs, savedFanArtImages),
+                );
+              }
               if (s.heroOverlayOpacity !== undefined)
                 setHeroOverlayOpacity(s.heroOverlayOpacity);
               if (s.bgRatings) setBgRatings(s.bgRatings);
@@ -1727,7 +1747,6 @@ const App = () => {
       localforage.setItem("hero_bg_zoom", heroBgZoom);
       localforage.setItem("hero_bg_rotation", heroBgRotation);
       localforage.setItem("hero_bg_blur", heroBgBlur);
-      localforage.setItem("hero_bg_blur_type", heroBgBlurType);
       localforage.setItem("hero_bg_pixelation", heroBgPixelation);
       localforage.setItem("hero_bg_focal1", heroBgFocal1);
       localforage.setItem("hero_bg_focal2", heroBgFocal2);
@@ -1756,7 +1775,6 @@ const App = () => {
     heroBgZoom,
     heroBgRotation,
     heroBgBlur,
-    heroBgBlurType,
     heroBgPixelation,
     heroBgFocal1,
     heroBgFocal2,
@@ -2645,8 +2663,6 @@ const App = () => {
     });
   };
 
-  const handleOpenRegister = useCallback(() => setIsModalOpen(true), []);
-
   const HeroAndWeather = (
     <>
       <div id="hero">
@@ -2685,10 +2701,8 @@ const App = () => {
           setHeroBgRotation={setHeroBgRotation}
           heroBgBlur={heroBgBlur}
           setHeroBgBlur={setHeroBgBlur}
-          heroBgBlurType={heroBgBlurType}
           heroBgPixelation={heroBgPixelation}
           setHeroBgPixelation={setHeroBgPixelation}
-          setHeroBgBlurType={setHeroBgBlurType}
           heroBgFocal1={heroBgFocal1}
           setHeroBgFocal1={setHeroBgFocal1}
           heroBgFocal2={heroBgFocal2}
@@ -2703,7 +2717,6 @@ const App = () => {
           setHeroBgPanSpeed={setHeroBgPanSpeed}
           videoPlaybackSpeed={videoPlaybackSpeed}
           setVideoPlaybackSpeed={setVideoPlaybackSpeed}
-          screenshots={screenshots}
           selectedTimezone={selectedTimezone}
           setSelectedTimezone={setSelectedTimezone}
           customHolidayName={customHolidayName}
@@ -2729,21 +2742,11 @@ const App = () => {
           moveWeatherCard={moveWeatherCard}
           setIsLocationEnabled={setIsLocationEnabled}
           user={user}
-          isAnyModalOpen={isAnyModalOpen}
-          onUpdateUser={setUser}
-          setHeroBg={setHeroBg}
-          customHeroBgs={customHeroBgs}
-          setCustomHeroBgs={setCustomHeroBgs}
-          handleOpenRegister={handleOpenRegister}
           customHolidayName={customHolidayName}
           isStickyBgMode={isStickyBgMode}
-          setCustomHolidayName={setCustomHolidayName}
           weatherCardLayout={weatherCardLayout}
-          isWeatherDetailsOpen={isWeatherDetailsOpen}
           setIsWeatherDetailsOpen={setIsWeatherDetailsOpen}
-          selectedWeatherCard={selectedWeatherCard}
           setSelectedWeatherCard={setSelectedWeatherCard}
-          setIsFsActive={setIsFsActive}
           isStickyBgMode={isStickyBgMode}
         />
       </StyledSectionContainer>
@@ -2787,10 +2790,8 @@ const App = () => {
           setHeroBgRotation={setHeroBgRotation}
           heroBgBlur={heroBgBlur}
           setHeroBgBlur={setHeroBgBlur}
-          heroBgBlurType={heroBgBlurType}
           heroBgPixelation={heroBgPixelation}
           setHeroBgPixelation={setHeroBgPixelation}
-          setHeroBgBlurType={setHeroBgBlurType}
           heroBgFocal1={heroBgFocal1}
           setHeroBgFocal1={setHeroBgFocal1}
           heroBgFocal2={heroBgFocal2}
@@ -2805,7 +2806,6 @@ const App = () => {
           setHeroBgPanSpeed={setHeroBgPanSpeed}
           videoPlaybackSpeed={videoPlaybackSpeed}
           setVideoPlaybackSpeed={setVideoPlaybackSpeed}
-          screenshots={screenshots}
           selectedTimezone={selectedTimezone}
           setSelectedTimezone={setSelectedTimezone}
           customHolidayName={customHolidayName}
@@ -2834,22 +2834,12 @@ const App = () => {
                   moveWeatherCard={moveWeatherCard}
                   setIsLocationEnabled={setIsLocationEnabled}
                   user={user}
-                  isAnyModalOpen={isAnyModalOpen}
-                  onUpdateUser={setUser}
-                  setHeroBg={setHeroBg}
-                  customHeroBgs={customHeroBgs}
-                  setCustomHeroBgs={setCustomHeroBgs}
-                  handleOpenRegister={handleOpenRegister}
                   customHolidayName={customHolidayName}
                   isStickyBgMode={isStickyBgMode}
-                  setCustomHolidayName={setCustomHolidayName}
                   weatherCardLayout={weatherCardLayout}
-                  isWeatherDetailsOpen={isWeatherDetailsOpen}
                   setIsWeatherDetailsOpen={setIsWeatherDetailsOpen}
-                  selectedWeatherCard={selectedWeatherCard}
                   setSelectedWeatherCard={setSelectedWeatherCard}
                   heroDateString={heroDateString}
-                  setIsFsActive={setIsFsActive}
                   isStickyBgMode={isStickyBgMode}
                 />
               </StyledSectionContainer>
@@ -2975,7 +2965,6 @@ const App = () => {
                               setHeroBgRotation={setHeroBgRotation}
                               heroBgBlur={heroBgBlur}
                               setHeroBgBlur={setHeroBgBlur}
-                              heroBgBlurType={heroBgBlurType}
                               heroBgPixelation={heroBgPixelation}
                               setHeroBgPixelation={setHeroBgPixelation}
                               heroBgFocal1={heroBgFocal1}
@@ -2992,7 +2981,6 @@ const App = () => {
                               setHeroBgPanSpeed={setHeroBgPanSpeed}
                               videoPlaybackSpeed={videoPlaybackSpeed}
                               setVideoPlaybackSpeed={setVideoPlaybackSpeed}
-                              screenshots={screenshots}
                               selectedTimezone={selectedTimezone}
                               setSelectedTimezone={setSelectedTimezone}
                               customHolidayName={customHolidayName}
@@ -3020,22 +3008,12 @@ const App = () => {
                                 moveWeatherCard={moveWeatherCard}
                                 setIsLocationEnabled={setIsLocationEnabled}
                                 user={user}
-                                isAnyModalOpen={isAnyModalOpen}
-                                onUpdateUser={setUser}
-                                setHeroBg={setHeroBg}
-                                customHeroBgs={customHeroBgs}
-                                setCustomHeroBgs={setCustomHeroBgs}
-                                handleOpenRegister={handleOpenRegister}
                                 customHolidayName={customHolidayName}
                                 isStickyBgMode={isStickyBgMode}
-                                setCustomHolidayName={setCustomHolidayName}
-                                isWeatherDetailsOpen={isWeatherDetailsOpen}
                                 setIsWeatherDetailsOpen={
                                   setIsWeatherDetailsOpen
                                 }
-                                selectedWeatherCard={selectedWeatherCard}
                                 setSelectedWeatherCard={setSelectedWeatherCard}
-                                setIsFsActive={setIsFsActive}
                                 isStickyBgMode={isStickyBgMode}
                               />
                             </StyledSectionContainer>
