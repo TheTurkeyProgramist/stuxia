@@ -150,15 +150,14 @@ const GLOBAL_COOLDOWN_KEY = "gemini_global_cooldown_until";
 const AihelpDiv = styled.div`
   display: flex;
   flex-direction: column;
-  height: 610px;
-  max-width: 1200px;
+  height: 560px;
   width: 100%;
   margin: 10px auto 0;
   padding: 0 5px;
   gap: 6px;
   z-index: 100;
   position: relative;
-  overflow-y: auto;
+  overflow: hidden;
   transition:
     background 0.4s ease,
     backdrop-filter 0.4s ease,
@@ -179,6 +178,176 @@ const AihelpDiv = styled.div`
       : css`
           background: transparent;
         `}
+`;
+
+/* ── Desktop layout: sidebar + main area ── */
+const DesktopLayout = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 6px;
+  overflow: hidden;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    gap: 0;
+  }
+`;
+
+const DesktopSidebar = styled.div`
+  display: none;
+
+  @media (min-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+    flex-shrink: 0;
+    border-right: 1px solid
+      ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)")};
+    padding: 6px 8px 8px 0;
+    gap: 6px;
+    overflow: hidden;
+  }
+`;
+
+const SidebarTitle = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)")};
+  padding: 2px 4px 4px;
+  flex-shrink: 0;
+`;
+
+const SidebarChatsList = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 149, 0, 0.5) transparent;
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ff9500, #ff6b00);
+    border-radius: 999px;
+  }
+`;
+
+const SidebarChatItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: ${(p) => (p.$active ? "700" : "500")};
+  color: ${(p) =>
+    p.$active
+      ? "#ff9500"
+      : p.$isDarkMode
+        ? "rgba(255,255,255,0.75)"
+        : "rgba(0,0,0,0.7)"};
+  background: ${(p) =>
+    p.$active
+      ? p.$isDarkMode
+        ? "rgba(255,149,0,0.15)"
+        : "rgba(255,149,0,0.12)"
+      : "transparent"};
+  border: 1px solid
+    ${(p) => (p.$active ? "rgba(255,149,0,0.4)" : "transparent")};
+  transition: all 0.15s ease;
+  overflow: hidden;
+  min-width: 0;
+
+  &:hover {
+    background: ${(p) =>
+      p.$active
+        ? p.$isDarkMode
+          ? "rgba(255,149,0,0.2)"
+          : "rgba(255,149,0,0.17)"
+        : p.$isDarkMode
+          ? "rgba(255,255,255,0.07)"
+          : "rgba(0,0,0,0.05)"};
+    border-color: rgba(255, 149, 0, 0.25);
+  }
+`;
+
+const SidebarChatLabel = styled.span`
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const SidebarDeleteBtn = styled.button`
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: rgba(255, 80, 80, 0.6);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: all 0.15s;
+
+  ${SidebarChatItem}:hover & {
+    opacity: 1;
+  }
+
+  &:hover {
+    color: #ff4d4d;
+    background: rgba(255, 77, 77, 0.12);
+  }
+`;
+
+const SidebarNewChatBtn = styled.button`
+  flex-shrink: 0;
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 149, 0, 0.5);
+  background: rgba(255, 149, 0, 0.06);
+  color: #ff9500;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 149, 0, 0.14);
+    border-color: #ff9500;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const ChatMainArea = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  gap: 6px;
+  overflow: hidden;
+
+  @media (min-width: 768px) {
+    padding-left: 10px;
+  }
 `;
 
 const HeaderBar = styled.div`
@@ -291,6 +460,31 @@ const NewChatHeaderBtn = styled.button`
   &:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(255, 149, 0, 0.45);
+  }
+`;
+
+const CloseAiModalHeaderBtn = styled.button`
+  background: ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)")};
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.15)")};
+  color: ${(p) => (p.$isDarkMode ? "#fff" : "#111")};
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(255, 77, 77, 0.2);
+    border-color: #ff4d4d;
+    color: #ff4d4d;
+    transform: scale(1.08);
   }
 `;
 
@@ -1030,11 +1224,19 @@ const ModalOverlay = styled.div`
   align-items: center;
   justify-content: center;
   padding: 16px;
+  overflow-y: auto;
   animation: ${fadeIn} 0.2s ease;
+`;
+
+const DesktopOnlyModalOverlay = styled(ModalOverlay)`
+  @media (max-width: 767px) {
+    display: none;
+  }
 `;
 
 const ModalContainer = styled.div`
   width: min(500px, 92vw);
+  max-height: calc(100vh - 32px);
   background: ${(p) => (p.$isDarkMode ? "#1a1a26" : "#ffffff")};
   color: ${(p) => (p.$isDarkMode ? "#f0f0f0" : "#111111")};
   border: 1px solid rgba(255, 160, 0, 0.4);
@@ -1045,6 +1247,7 @@ const ModalContainer = styled.div`
   flex-direction: column;
   gap: 4px;
   position: relative;
+  overflow: hidden;
 `;
 
 const ModalHeader = styled.div`
@@ -1082,6 +1285,21 @@ const LimitsList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-y: auto;
+  max-height: min(42vh, 260px);
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 149, 0, 0.7) transparent;
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ff9500, #ff6b00);
+    border-radius: 999px;
+  }
 `;
 
 const LimitItem = styled.div`
@@ -1122,13 +1340,20 @@ const ChatsListContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 340px;
+  max-height: min(52vh, 420px);
   overflow-y: auto;
   padding-right: 4px;
-  &::-webkit-scrollbar { width: 5px; }
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 149, 0, 0.7) transparent;
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
   &::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #ff9500, #ff6b00);
-    border-radius: 10px;
+    border-radius: 999px;
   }
 `;
 
@@ -1229,6 +1454,91 @@ const NewChatModalBtn = styled.button`
   &:hover {
     background: rgba(255, 149, 0, 0.18);
     transform: translateY(-1px);
+  }
+`;
+
+/* ── Mobile Chat Sidebar Drawer ── */
+const MobileChatDrawerOverlay = styled.div`
+  display: none;
+  @media (max-width: 767px) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 9990;
+    background: rgba(0, 0, 0, ${(p) => (p.$open ? "0.5" : "0")});
+    pointer-events: ${(p) => (p.$open ? "all" : "none")};
+    transition: background 0.3s ease;
+  }
+`;
+
+const MobileChatDrawer = styled.div`
+  display: none;
+  @media (max-width: 767px) {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(80vw, 300px);
+    z-index: 9991;
+    background: ${(p) => (p.$isDarkMode ? "#1a1a26" : "#ffffff")};
+    color: ${(p) => (p.$isDarkMode ? "#f0f0f0" : "#111111")};
+    border-right: 1px solid rgba(255, 160, 0, 0.4);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+    transform: translateX(${(p) => (p.$open ? "0" : "-100%")});
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 16px 12px 24px;
+    gap: 8px;
+    overflow: hidden;
+  }
+`;
+
+const DrawerHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 2px solid rgba(255, 160, 0, 0.2);
+  flex-shrink: 0;
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ff9500;
+  }
+`;
+
+const DrawerCloseBtn = styled.button`
+  background: transparent;
+  border: none;
+  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)")};
+  font-size: 22px;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 900;
+  &:hover {
+    color: #ff4d4d;
+    background: rgba(255, 77, 77, 0.1);
+  }
+`;
+
+const DrawerChatsList = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 149, 0, 0.7) transparent;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ff9500, #ff6b00);
+    border-radius: 999px;
   }
 `;
 
@@ -1440,7 +1750,7 @@ const createDefaultChatObject = (index = 1, initialMessages = []) => ({
 });
 
 /* ── Component ── */
-const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
+const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
   const [prompt, setPrompt] = useState("");
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState("");
@@ -1455,6 +1765,10 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
   const [attachedCards, setAttachedCards] = useState([]);
   const [loading, setLoading] = useState(false);
   const [googleSearchEnabled, setGoogleSearchEnabled] = useState(true);
+
+  // Mobile drawer swipe state
+  const swipeTouchStartX = useRef(null);
+  const swipeTouchStartY = useRef(null);
 
   useEffect(() => {
     const handleAttachCard = (e) => {
@@ -1595,6 +1909,30 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
     }
 
     toast.success("Чат видалено");
+  };
+
+  // Swipe handlers for mobile drawer
+  const handleTouchStart = (e) => {
+    swipeTouchStartX.current = e.touches[0].clientX;
+    swipeTouchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (swipeTouchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - swipeTouchStartX.current;
+    const dy = Math.abs(e.changedTouches[0].clientY - swipeTouchStartY.current);
+    // Only horizontal swipes (dx > dy threshold)
+    if (Math.abs(dx) > 40 && Math.abs(dx) > dy * 1.5) {
+      if (dx > 0 && swipeTouchStartX.current < 30) {
+        // Swipe right from left edge → open drawer
+        setIsChatsModalOpen(true);
+      } else if (dx < 0 && isChatsModalOpen) {
+        // Swipe left → close drawer
+        setIsChatsModalOpen(false);
+      }
+    }
+    swipeTouchStartX.current = null;
+    swipeTouchStartY.current = null;
   };
 
   const formatTime = (s) => {
@@ -2129,7 +2467,12 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
   const canSend = !loading && cooldownSeconds === 0 && (!!prompt.trim() || selectedFiles.length > 0 || attachedCards.length > 0);
 
   return (
-    <AihelpDiv $isStickyBgMode={isStickyBgMode} $isDarkMode={isDarkMode}>
+    <AihelpDiv
+      $isStickyBgMode={isStickyBgMode}
+      $isDarkMode={isDarkMode}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <Toaster
         position="top-center"
         toastOptions={{
@@ -2144,16 +2487,18 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
 
       <HeaderBar>
         <AihelpTitle $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-          Послуги ШІ
-          <TitleBadge>Gemini</TitleBadge>
+Gemini
         </AihelpTitle>
         <ChatControlsGroup>
+          {/* Show "Чати" button only on mobile where sidebar is hidden */}
           <Tooltip content="Переглянути список чатів" isDarkMode={isDarkMode}>
             <ChatHeaderBtn
               type="button"
               $isDarkMode={isDarkMode}
               onClick={() => setIsChatsModalOpen(true)}
               aria-label="Переглянути список чатів"
+              style={{ display: undefined }}
+              className="mobile-chats-btn"
             >
               Чати ({chats.length}/10)
             </ChatHeaderBtn>
@@ -2179,6 +2524,18 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
               Новий чат
             </NewChatHeaderBtn>
           </Tooltip>
+          {onClose && (
+            <Tooltip content="Закрити ШІ-асистент" isDarkMode={isDarkMode}>
+              <CloseAiModalHeaderBtn
+                type="button"
+                $isDarkMode={isDarkMode}
+                onClick={onClose}
+                aria-label="Закрити ШІ-асистент"
+              >
+                ✕
+              </CloseAiModalHeaderBtn>
+            </Tooltip>
+          )}
         </ChatControlsGroup>
       </HeaderBar>
 
@@ -2233,284 +2590,313 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
         </ProviderRow>
       </SettingsPanel>
 
-      <ChatHistory ref={chatContainerRef}>
-        {messages.length === 0 && (
-          <EmptyChatWelcome $isDarkMode={isDarkMode}>
-            <WelcomeTitle>Запитайте будь-що або оберіть одне з популярних питань:</WelcomeTitle>
-            <StarterQuestionsGrid>
-              <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Які новини про погоду у світі?")}>
-                <span><TbWorldStar /></span> Які новини про погоду у світі?
-              </StarterQuestionCard>
-              <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Яка погода в Україні?")}>
-                <span><FaCloudMoon /></span> Яка погода в Україні?
-              </StarterQuestionCard>
-              <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Порадити гру, кіно і т.д.?")}>
-                <span><FaClapperboard /></span> Порадити гру, кіно і т.д.?
-              </StarterQuestionCard>
-            </StarterQuestionsGrid>
-          </EmptyChatWelcome>
-        )}
-
-        {messages.map((m, i) => {
-          if (m.isBot) {
-            const { cleanText, questions } = parseSuggestedQuestions(m.text);
-            const hint = i % 2 === 0
-              ? "Підказка: Ви можете зменшити кількість пропонованих питань після запиту для економії кредитів і зменшення перезарядки. Натисніть «Пропозиції»."
-              : "Підказка: Для швидших відповідей зменште обсяг відповіді з «Нормально» на «Менше».";
-            return (
-              <React.Fragment key={i}>
-                <Message $isBot={true} $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-                  <CopyButton onClick={() => copyToClipboard(cleanText)}>🖺</CopyButton>
-                  <ReactMarkdown>{cleanText}</ReactMarkdown>
-                  {m.usage?.totalTokens > 0 && (
-                    <MessageMeta $isDarkMode={isDarkMode}>
-                      Витрачено токенів: {m.usage.totalTokens}
-                      {m.usage.promptTokens > 0 &&
-                        ` (запит: ${m.usage.promptTokens}, відповідь: ${m.usage.responseTokens})`}
-                    </MessageMeta>
-                  )}
-                </Message>
-                {questions.length > 0 && (
-                  <SuggestedQuestionsContainer>
-                    <SuggestedTitle> Спробуйте запитати далі:</SuggestedTitle>
-                    <SuggestedPillsRow>
-                      {questions.map((q, idx) => (
-                        <SuggestedPillBtn
-                          key={idx}
-                          $isDarkMode={isDarkMode}
-                          onClick={() => handleAsk(q)}
-                          disabled={loading || cooldownSeconds > 0}
-                        >
-                          {q}
-                        </SuggestedPillBtn>
-                      ))}
-                    </SuggestedPillsRow>
-                    <SuggestedTitle style={{ fontSize: "12px" }}>
-                      {hint}
-                    </SuggestedTitle>
-                  </SuggestedQuestionsContainer>
-                )}
-              </React.Fragment>
-            );
-          }
-          return (
-            <Message key={i} $isBot={false} $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-              <ReactMarkdown>{m.text}</ReactMarkdown>
-              <EditQuestionButton
-                type="button"
-                $isDarkMode={isDarkMode}
-                onClick={() => restoreQuestion(i)}
-              >
-                Редагувати це питання
-              </EditQuestionButton>
-            </Message>
-          );
-        })}
-
-        {streamingText && (
-          <Message $isBot $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-            <ReactMarkdown>{parseSuggestedQuestions(streamingText).cleanText}</ReactMarkdown>
-          </Message>
-        )}
-
-        {loading && !streamingText && (
-          <TypingIndicator $isDarkMode={isDarkMode}>
-            <Dot $delay="0s" />
-            <Dot $delay="0.2s" />
-            <Dot $delay="0.4s" />
-          </TypingIndicator>
-        )}
-
-        {error && (
-          <ErrorBox>
-            {error}
-            <RetryButton onClick={() => handleAsk(lastPromptRef.current)}>Повторити</RetryButton>
-          </ErrorBox>
-        )}
-        <div ref={chatEndRef} />
-      </ChatHistory>
-
-      {status && <StatusText>{status}</StatusText>}
-
-      {selectedFiles.length > 0 && (
-        <FilePreviewContainer>
-          <FileSizeText>
-            Розмір: {(totalFilesSize / (1024 * 1024)).toFixed(2)} MB / 100 MB
-          </FileSizeText>
-          {selectedFiles.map((f, i) => (
-            <FileThumb key={i} $isDarkMode={isDarkMode}>
-              <div
-                style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "zoom-in" }}
-                onClick={() => openViewer(f)}
-              >
-                {f.file.type.startsWith("video/") ? (
-                  <video src={f.objectURL} />
-                ) : f.file.type.startsWith("audio/") ? (
-                  <span style={{ fontSize: "26px" }}>🎵</span>
-                ) : (
-                  <img src={f.objectURL} alt="preview" />
-                )}
-              </div>
-              <RemoveFileBtn onClick={() => removeFile(i)}>✕</RemoveFileBtn>
-            </FileThumb>
-          ))}
-        </FilePreviewContainer>
-      )}
-
-      {attachedCards.length > 0 && (
-        <AttachedCardsContainer>
-          {attachedCards.map((card, i) => {
-            const cardLabel = card.type === "weather" ? "картку погоди" : "новину";
-            const actionText = `Видалити прикріплену ${cardLabel}`;
-
-            return (
-              <AttachedChip key={i} $isDarkMode={isDarkMode}>
-                {card.type === "weather" ? <IoIosCloudyNight /> : <PiNewspaperClippingFill />}
-                <span>{card.title}</span>
-                <Tooltip content={actionText} isDarkMode={isDarkMode}>
-                  <button
+      {/* Desktop sidebar + chat main area layout */}
+      <DesktopLayout>
+        {/* Left sidebar — always visible on ≥768px */}
+        <DesktopSidebar $isDarkMode={isDarkMode}>
+          <SidebarTitle $isDarkMode={isDarkMode}>Чати ({chats.length}/10)</SidebarTitle>
+          <SidebarChatsList>
+            {chats.map((chat, idx) => {
+              const isActive = chat.id === activeChatId;
+              return (
+                <SidebarChatItem
+                  key={chat.id}
+                  $active={isActive}
+                  $isDarkMode={isDarkMode}
+                  onClick={() => {
+                    setActiveChatId(chat.id);
+                    localforage.setItem("ai_help_active_chat_id", chat.id);
+                  }}
+                  title={chat.title || `Чат ${idx + 1}`}
+                >
+                  <SidebarChatLabel>{chat.title || `Чат ${idx + 1}`}</SidebarChatLabel>
+                  <SidebarDeleteBtn
                     type="button"
-                    style={{ marginRight: 12}}
-                    onClick={() =>
-                      setAttachedCards((prev) => prev.filter((_, idx) => idx !== i))
-                    }
-                    aria-label={actionText}
+                    onClick={(e) => handleDeleteChat(chat.id, e)}
+                    aria-label="Видалити чат"
                   >
-                    ✕
-                  </button>
-                </Tooltip>
-              </AttachedChip>
-            );
-          })}
-        </AttachedCardsContainer>
-      )}
-
-      <InputContainer
-        $isDarkMode={isDarkMode}
-        $isStickyBgMode={isStickyBgMode}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => { e.preventDefault(); handleFileSelect(e.dataTransfer.files); }}
-      >
-        <InputQuickSettings $isDarkMode={isDarkMode}>
-          <QuickGroup>
-            <QuickLabel htmlFor="response-length" $isDarkMode={isDarkMode}>
-              Обсяг:
-            </QuickLabel>
-            <QuickSelect
-              id="response-length"
-              aria-label="Обсяг відповіді"
-              $isDarkMode={isDarkMode}
-              value={responseLength}
-              onChange={(e) => setResponseLength(e.target.value)}
-            >
-              <option value="concise">Менше</option>
-              <option value="normal">Нормально</option>
-              <option value="detailed">Більше</option>
-            </QuickSelect>
-          </QuickGroup>
-
-          <QuickGroup>
-            <QuickLabel htmlFor="response-style" $isDarkMode={isDarkMode}>
-              Стиль:
-            </QuickLabel>
-            <QuickSelect
-              id="response-style"
-              aria-label="Стиль відповіді"
-              $isDarkMode={isDarkMode}
-              value={responseStyle}
-              onChange={(e) => setResponseStyle(e.target.value)}
-            >
-              <option value="friendly">Дружньо</option>
-              <option value="standard">Стандартно</option>
-              <option value="scientific">Науково</option>
-            </QuickSelect>
-          </QuickGroup>
-          {messages.length > 0 && (
-            <SuggestedQuestionsSetting>
-              <QuickLabel htmlFor="suggested-questions-count" $isDarkMode={isDarkMode}>
-                Пропозиції:
-              </QuickLabel>
-              <QuickSelect
-                id="suggested-questions-count"
-                $isDarkMode={isDarkMode}
-                value={suggestedQuestionsCount}
-                onChange={async (event) => {
-                  const count = event.target.value;
-                  setSuggestedQuestionsCount(count);
-                  await localforage.setItem(
-                    "gemini_suggested_questions_count",
-                    count,
-                  );
-                }}
-                aria-label="Кількість рекомендованих питань"
-              >
-                <option value="0">0 (5 с)</option>
-                <option value="1">1 (10 с)</option>
-                <option value="2">2 (15 с)</option>
-              </QuickSelect>
-            </SuggestedQuestionsSetting>
-          )}
-        </InputQuickSettings>
-
-        <TextArea
-          ref={textareaRef}
-          placeholder="Запитайте щось... (Enter — надіслати, Shift+Enter — новий рядок)"
-          value={prompt}
-          maxLength={MAX_MESSAGE_LENGTH}
-          onChange={handleTextChange}
-          onKeyDown={handleKeyDown}
-          rows={1}
-          $isDarkMode={isDarkMode}
-        />
-        <ActionButtons $isDarkMode={isDarkMode}>
-          <MessageCounter
-            $isDarkMode={isDarkMode}
-            $isLimitReached={prompt.length >= MAX_MESSAGE_LENGTH}
-            aria-live="polite"
+                    <RiDeleteBack2Fill />
+                  </SidebarDeleteBtn>
+                </SidebarChatItem>
+              );
+            })}
+          </SidebarChatsList>
+          <SidebarNewChatBtn
+            type="button"
+            onClick={handleCreateNewChat}
+            disabled={chats.length >= 10}
           >
-            {prompt.length}/{MAX_MESSAGE_LENGTH}
-          </MessageCounter>
-          <label style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
-            <Tooltip content="Додати фото, відео, аудіо" isDarkMode={isDarkMode}>
-            <IconBtn $isDarkMode={isDarkMode} $size="20px" aria-label="Додати фото, відео, аудіо">
-              <MdAddPhotoAlternate />
-            </IconBtn>
-            </Tooltip>
-            <input
-              type="file"
-              accept="image/*, video/*, audio/*"
-              multiple
-              hidden
-              onChange={(e) => handleFileSelect(e.target.files)}
+            + Новий чат
+          </SidebarNewChatBtn>
+        </DesktopSidebar>
+
+        {/* Main chat area */}
+        <ChatMainArea>
+          <ChatHistory ref={chatContainerRef}>
+            {messages.length === 0 && (
+              <EmptyChatWelcome $isDarkMode={isDarkMode}>
+                <WelcomeTitle>Запитайте будь-що або оберіть одне з популярних питань:</WelcomeTitle>
+                <StarterQuestionsGrid>
+                  <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Які новини про погоду у світі?")}>
+                    <span><TbWorldStar /></span> Які новини про погоду у світі?
+                  </StarterQuestionCard>
+                  <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Яка погода в Україні?")}>
+                    <span><FaCloudMoon /></span> Яка погода в Україні?
+                  </StarterQuestionCard>
+                  <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Порадити гру, кіно і т.д.?")}>
+                    <span><FaClapperboard /></span> Порадити гру, кіно і т.д.?
+                  </StarterQuestionCard>
+                </StarterQuestionsGrid>
+              </EmptyChatWelcome>
+            )}
+
+            {messages.map((m, i) => {
+              if (m.isBot) {
+                const { cleanText, questions } = parseSuggestedQuestions(m.text);
+                const hint = i % 2 === 0
+                  ? "Підказка: Ви можете зменшити кількість пропонованих питань після запиту для економії кредитів і зменшення перезарядки. Натисніть «Пропозиції»."
+                  : "Підказка: Для швидших відповідей зменште обсяг відповіді з «Нормально» на «Менше».";
+                return (
+                  <React.Fragment key={i}>
+                    <Message $isBot={true} $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
+                      <CopyButton onClick={() => copyToClipboard(cleanText)}>🖺</CopyButton>
+                      <ReactMarkdown>{cleanText}</ReactMarkdown>
+                      {m.usage?.totalTokens > 0 && (
+                        <MessageMeta $isDarkMode={isDarkMode}>
+                          Витрачено токенів: {m.usage.totalTokens}
+                          {m.usage.promptTokens > 0 &&
+                            ` (запит: ${m.usage.promptTokens}, відповідь: ${m.usage.responseTokens})`}
+                        </MessageMeta>
+                      )}
+                    </Message>
+                    {questions.length > 0 && (
+                      <SuggestedQuestionsContainer>
+                        <SuggestedTitle> Спробуйте запитати далі:</SuggestedTitle>
+                        <SuggestedPillsRow>
+                          {questions.map((q, idx) => (
+                            <SuggestedPillBtn
+                              key={idx}
+                              $isDarkMode={isDarkMode}
+                              onClick={() => handleAsk(q)}
+                              disabled={loading || cooldownSeconds > 0}
+                            >
+                              {q}
+                            </SuggestedPillBtn>
+                          ))}
+                        </SuggestedPillsRow>
+                        <SuggestedTitle style={{ fontSize: "12px" }}>
+                          {hint}
+                        </SuggestedTitle>
+                      </SuggestedQuestionsContainer>
+                    )}
+                  </React.Fragment>
+                );
+              }
+              return (
+                <Message key={i} $isBot={false} $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
+                  <ReactMarkdown>{m.text}</ReactMarkdown>
+                  <EditQuestionButton
+                    type="button"
+                    $isDarkMode={isDarkMode}
+                    onClick={() => restoreQuestion(i)}
+                  >
+                    Редагувати це питання
+                  </EditQuestionButton>
+                </Message>
+              );
+            })}
+
+            {streamingText && (
+              <Message $isBot $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
+                <ReactMarkdown>{parseSuggestedQuestions(streamingText).cleanText}</ReactMarkdown>
+              </Message>
+            )}
+
+            {loading && !streamingText && (
+              <TypingIndicator $isDarkMode={isDarkMode}>
+                <Dot $delay="0s" />
+                <Dot $delay="0.2s" />
+                <Dot $delay="0.4s" />
+              </TypingIndicator>
+            )}
+
+            {error && (
+              <ErrorBox>
+                {error}
+                <RetryButton onClick={() => handleAsk(lastPromptRef.current)}>Повторити</RetryButton>
+              </ErrorBox>
+            )}
+            <div ref={chatEndRef} />
+          </ChatHistory>
+
+
+          {status && <StatusText>{status}</StatusText>}
+
+          {selectedFiles.length > 0 && (
+            <FilePreviewContainer>
+              <FileSizeText>
+                Розмір: {(totalFilesSize / (1024 * 1024)).toFixed(2)} MB / 100 MB
+              </FileSizeText>
+              {selectedFiles.map((f, i) => (
+                <FileThumb key={i} $isDarkMode={isDarkMode}>
+                  <div
+                    style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "zoom-in" }}
+                    onClick={() => openViewer(f)}
+                  >
+                    {f.file.type.startsWith("video/") ? (
+                      <video src={f.objectURL} />
+                    ) : f.file.type.startsWith("audio/") ? (
+                      <span style={{ fontSize: "26px" }}>🎵</span>
+                    ) : (
+                      <img src={f.objectURL} alt="preview" />
+                    )}
+                  </div>
+                  <RemoveFileBtn onClick={() => removeFile(i)}>✕</RemoveFileBtn>
+                </FileThumb>
+              ))}
+            </FilePreviewContainer>
+          )}
+
+          {attachedCards.length > 0 && (
+            <AttachedCardsContainer>
+              {attachedCards.map((card, i) => {
+                const cardLabel = card.type === "weather" ? "картку погоди" : "новину";
+                const actionText = `Видалити прикріплену ${cardLabel}`;
+                return (
+                  <AttachedChip key={i} $isDarkMode={isDarkMode}>
+                    {card.type === "weather" ? <IoIosCloudyNight /> : <PiNewspaperClippingFill />}
+                    <span>{card.title}</span>
+                    <Tooltip content={actionText} isDarkMode={isDarkMode}>
+                      <button
+                        type="button"
+                        style={{ marginRight: 12 }}
+                        onClick={() => setAttachedCards((prev) => prev.filter((_, idx) => idx !== i))}
+                        aria-label={actionText}
+                      >
+                        ✕
+                      </button>
+                    </Tooltip>
+                  </AttachedChip>
+                );
+              })}
+            </AttachedCardsContainer>
+          )}
+
+          <InputContainer
+            $isDarkMode={isDarkMode}
+            $isStickyBgMode={isStickyBgMode}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => { e.preventDefault(); handleFileSelect(e.dataTransfer.files); }}
+          >
+            <InputQuickSettings $isDarkMode={isDarkMode}>
+              <QuickGroup>
+                <QuickLabel htmlFor="response-length" $isDarkMode={isDarkMode}>
+                  Обсяг:
+                </QuickLabel>
+                <QuickSelect
+                  id="response-length"
+                  aria-label="Обсяг відповіді"
+                  $isDarkMode={isDarkMode}
+                  value={responseLength}
+                  onChange={(e) => setResponseLength(e.target.value)}
+                >
+                  <option value="concise">Менше</option>
+                  <option value="normal">Нормально</option>
+                  <option value="detailed">Більше</option>
+                </QuickSelect>
+              </QuickGroup>
+
+              <QuickGroup>
+                <QuickLabel htmlFor="response-style" $isDarkMode={isDarkMode}>
+                  Стиль:
+                </QuickLabel>
+                <QuickSelect
+                  id="response-style"
+                  aria-label="Стиль відповіді"
+                  $isDarkMode={isDarkMode}
+                  value={responseStyle}
+                  onChange={(e) => setResponseStyle(e.target.value)}
+                >
+                  <option value="friendly">Дружньо</option>
+                  <option value="standard">Стандартно</option>
+                  <option value="scientific">Науково</option>
+                </QuickSelect>
+              </QuickGroup>
+              {messages.length > 0 && (
+                <SuggestedQuestionsSetting>
+                  <QuickLabel htmlFor="suggested-questions-count" $isDarkMode={isDarkMode}>
+                    Пропозиції:
+                  </QuickLabel>
+                  <QuickSelect
+                    id="suggested-questions-count"
+                    $isDarkMode={isDarkMode}
+                    value={suggestedQuestionsCount}
+                    onChange={async (event) => {
+                      const count = event.target.value;
+                      setSuggestedQuestionsCount(count);
+                      await localforage.setItem("gemini_suggested_questions_count", count);
+                    }}
+                    aria-label="Кількість рекомендованих питань"
+                  >
+                    <option value="0">0 (5 с)</option>
+                    <option value="1">1 (10 с)</option>
+                    <option value="2">2 (15 с)</option>
+                  </QuickSelect>
+                </SuggestedQuestionsSetting>
+              )}
+            </InputQuickSettings>
+
+            <TextArea
+              ref={textareaRef}
+              placeholder="Запитайте щось... (Enter — надіслати, Shift+Enter — новий рядок)"
+              value={prompt}
+              maxLength={MAX_MESSAGE_LENGTH}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyDown}
+              rows={1}
+              $isDarkMode={isDarkMode}
             />
-          </label>
-           <Tooltip content="Зробити скріншот" isDarkMode={isDarkMode}>
-          <IconBtn $isDarkMode={isDarkMode} onClick={captureScreen} aria-label="Зробити скріншот" disabled={loading || isCapturing}>
-            {isCapturing ? <GiTimeTrap /> : <IoCamera />}
-          </IconBtn>
-          </Tooltip>
-          <Tooltip content={isListening ? "Зупинити запис" : "Голосовий ввід"} isDarkMode={isDarkMode}>
-          <IconBtn $isDarkMode={isDarkMode} onClick={handleVoiceInput} aria-label={isListening ? "Зупинити запис" : "Голосовий ввід"} $listening={isListening}>
-            {isListening ? "◼" : <FaMicrophoneAlt />}
-          </IconBtn>
-          </Tooltip>
-          <Tooltip content="Зробити скріншот" isDarkMode={isDarkMode}>
-          <IconBtn $isDarkMode={isDarkMode} onClick={captureScreen} aria-label="Зробити скріншот" disabled={loading || isCapturing}>
-            {isCapturing ? <GiTimeTrap /> : <IoCamera />}
-          </IconBtn>
-          </Tooltip>
-          <Tooltip content="Очистити поточний чат" isDarkMode={isDarkMode}>
-          <IconBtn $isDarkMode={isDarkMode} $danger onClick={clearCurrentHistory} aria-label="Очистити поточний чат" $size="20px">
-            <RiDeleteBack2Fill />
-          </IconBtn>
-          </Tooltip>
-          <Tooltip content="Надіслати" isDarkMode={isDarkMode}>
-            <SendButton disabled={!canSend} $isDarkMode={isDarkMode} onClick={() => handleAsk()} aria-label="Надіслати">
-              {loading ? <GiTimeTrap /> : cooldownSeconds > 0 ? `${cooldownSeconds}с` : "➤"}
-            </SendButton>
-          </Tooltip>
-        </ActionButtons>
-      </InputContainer>
+            <ActionButtons $isDarkMode={isDarkMode}>
+              <MessageCounter
+                $isDarkMode={isDarkMode}
+                $isLimitReached={prompt.length >= MAX_MESSAGE_LENGTH}
+                aria-live="polite"
+              >
+                {prompt.length}/{MAX_MESSAGE_LENGTH}
+              </MessageCounter>
+              <label style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
+                <Tooltip content="Додати фото, відео, аудіо" isDarkMode={isDarkMode}>
+                <IconBtn $isDarkMode={isDarkMode} $size="20px" aria-label="Додати фото, відео, аудіо">
+                  <MdAddPhotoAlternate />
+                </IconBtn>
+                </Tooltip>
+                <input
+                  type="file"
+                  accept="image/*, video/*, audio/*"
+                  multiple
+                  hidden
+                  onChange={(e) => handleFileSelect(e.target.files)}
+                />
+              </label>
+              <Tooltip content={isListening ? "Зупинити запис" : "Голосовий ввід"} isDarkMode={isDarkMode}>
+              <IconBtn $isDarkMode={isDarkMode} onClick={handleVoiceInput} aria-label={isListening ? "Зупинити запис" : "Голосовий ввід"} $listening={isListening}>
+                {isListening ? "◼" : <FaMicrophoneAlt />}
+              </IconBtn>
+              </Tooltip>
+              <Tooltip content="Очистити поточний чат" isDarkMode={isDarkMode}>
+              <IconBtn $isDarkMode={isDarkMode} $danger onClick={clearCurrentHistory} aria-label="Очистити поточний чат" $size="20px">
+                <RiDeleteBack2Fill />
+              </IconBtn>
+              </Tooltip>
+              <Tooltip content="Надіслати" isDarkMode={isDarkMode}>
+                <SendButton disabled={!canSend} $isDarkMode={isDarkMode} onClick={() => handleAsk()} aria-label="Надіслати">
+                  {loading ? <GiTimeTrap /> : cooldownSeconds > 0 ? `${cooldownSeconds}с` : "➤"}
+                </SendButton>
+              </Tooltip>
+            </ActionButtons>
+          </InputContainer>
+        </ChatMainArea>
+      </DesktopLayout>
 
       {viewingFile && (
         <ViewerOverlay onClick={closeViewer}>
@@ -2586,8 +2972,64 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
         </ViewerOverlay>
       )}
 
+
+      {/* Mobile Sidebar Drawer (≤767px) */}
+      <MobileChatDrawerOverlay
+        $open={isChatsModalOpen}
+        onClick={() => setIsChatsModalOpen(false)}
+      />
+      <MobileChatDrawer $open={isChatsModalOpen} $isDarkMode={isDarkMode}>
+        <DrawerHeader>
+          <h3>Чати ({chats.length}/10)</h3>
+          <DrawerCloseBtn $isDarkMode={isDarkMode} onClick={() => setIsChatsModalOpen(false)}>
+            ✕
+          </DrawerCloseBtn>
+        </DrawerHeader>
+
+        <DrawerChatsList>
+          {chats.map((chat, idx) => {
+            const isActive = chat.id === activeChatId;
+            const msgCount = chat.messages ? chat.messages.length : 0;
+            return (
+              <ChatItemCard
+                key={chat.id}
+                $active={isActive}
+                $isDarkMode={isDarkMode}
+                onClick={() => handleSelectChat(chat.id)}
+              >
+                <ChatItemInfo>
+                  <ChatItemTitle $active={isActive}>
+                    {chat.title || `Чат ${idx + 1}`}
+                    {isActive && <ActiveBadge>Активний</ActiveBadge>}
+                  </ChatItemTitle>
+                  <ChatItemMeta>
+                    {msgCount > 0 ? `${msgCount} повідомл.` : "Порожній чат"}
+                  </ChatItemMeta>
+                </ChatItemInfo>
+                <DeleteChatBtn
+                  type="button"
+                  onClick={(e) => handleDeleteChat(chat.id, e)}
+                  aria-label="Видалити чат"
+                >
+                  <RiDeleteBack2Fill />
+                </DeleteChatBtn>
+              </ChatItemCard>
+            );
+          })}
+        </DrawerChatsList>
+
+        {chats.length < 10 && (
+          <NewChatModalBtn type="button" onClick={handleCreateNewChat}>
+            Створити новий чат ({chats.length}/10)
+          </NewChatModalBtn>
+        )}
+      </MobileChatDrawer>
+
+      {/* Desktop Modal (≥768px) */}
       {isChatsModalOpen && (
-        <ModalOverlay onClick={() => setIsChatsModalOpen(false)}>
+        <DesktopOnlyModalOverlay
+          onClick={() => setIsChatsModalOpen(false)}
+        >
           <ModalContainer $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
             <ModalHeader $isDarkMode={isDarkMode}>
               <h3>Список чатів ({chats.length}/10)</h3>
@@ -2636,8 +3078,10 @@ const Aihelp = ({ isDarkMode, isStickyBgMode }) => {
               </NewChatModalBtn>
             )}
           </ModalContainer>
-        </ModalOverlay>
+        </DesktopOnlyModalOverlay>
       )}
+
+
 
       {isLimitsModalOpen && (
         <ModalOverlay onClick={() => setIsLimitsModalOpen(false)}>

@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import ultra from "../../photos/hero-header/fogtwo.webp";
-import theoryAudio from "../../mp3/silent.mp3";
+import theoryAudio from "../../mp3/silent.opus";
 import { DEFAULT_BGS } from "../Hero/defaultBgs.js";
 
 // 1. Текстові титри

@@ -8,37 +8,48 @@ import React, {
 import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { createPortal } from "react-dom";
-import { TbWorldSearch } from "react-icons/tb";
 import { FaMountainCity } from "react-icons/fa6";
 import { FaMapLocationDot } from "react-icons/fa6";
 import planes from "../../photos/programs/youtub/planes.webp";
-import meridian from "../../photos/programs/meridian/meridian.webp"
 import castle from "../../photos/vip-modal/castle.webp"
 import { GiPalette } from "react-icons/gi";
-import { BsPinAngle } from "react-icons/bs";
+import {
+  FiClock,
+  FiDownload,
+  FiDroplet,
+  FiGrid,
+  FiImage,
+  FiPrinter,
+  FiRefreshCw,
+  FiRotateCw,
+  FiSearch,
+  FiShuffle,
+  FiSun,
+  FiUploadCloud,
+  FiVideo,
+  FiX,
+  FiZap,
+  FiZoomIn,
+} from "react-icons/fi";
 import styled, { keyframes, css } from "styled-components";
 import { useSelector, useDispatch } from "react-redux";
-import { MdSettingsSuggest, MdMore, MdWallpaper } from "react-icons/md";
+import { MdSettingsSuggest, MdMore, MdSearch, MdWallpaper, MdAutoAwesome } from "react-icons/md";
 import {
   addCustomDay,
   removeCustomDay,
 } from "../../features/counter/Counter.js";
 import localforage from "localforage";
 import hills from "../../photos/hero-header/fog.webp";
-import { BsPinAngleFill } from "react-icons/bs";
 import herotext from "../../photos/hero-header/herotext.webp";
-import customLinksData from "./customLinks.json";
 import village from "../../photos/fan-art/village.webp"
 import villageCard1x from "../../photos/fan-art/village-card-1x.webp";
 import faded from "../../photos/fan-art/faded.webp";
 import fadedCard1x from "../../photos/fan-art/faded-card-1x.webp";
-import {
-  buildWikipediaSearchUrl,
-  parseWikipediaSnippet,
-} from "../../utils/wikipediaUtils";
 import { DEFAULT_BGS } from "./defaultBgs";
 import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
 import News from "../News/News.jsx";
+import SearchModeModal from "./SearchModeModal.jsx";
+import React_lazy_Aihelp from "../Aihelp/Aihelp.jsx";
 import toast, { Toaster } from 'react-hot-toast';
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import {
@@ -57,6 +68,11 @@ import {
   FloatingPortal,
   FloatingArrow,         
 } from "@floating-ui/react";
+const CHANGE_BG_PREVIEW_IMAGES = [village, faded, planes, castle];
+const bgPreviewSwap = keyframes`
+  from { opacity: 0.35; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+`;
 const bgCardThumbnails = {
   [village]: {
     src: villageCard1x,
@@ -133,9 +149,9 @@ const HeroDiv = styled.div`
 `;
 const HeroDecors = styled.div`
   display: block;
-  width: 192px;
-  margin-top: 45px;
-  height: 71px;
+  width: 212px;
+  margin-top: 115px;
+  height: 78px;
   background-image: url(${(props) => props.$image});
   background-size: cover;
   background-position: top center;
@@ -190,16 +206,44 @@ const handleDownloadBg = async (bg) => {
   const name = typeof bg === "string" ? "background" : bg.name || "background";
   if (!src) return;
   const isVid = isVideoSource(src);
-  const ext = isVid ? ".mp4" : ".webp";
+  const sourcePath =
+    typeof src === "string"
+      ? src.split(/[?#]/, 1)[0]
+      : "";
+  const urlExtension = sourcePath.match(
+    /\.(avif|webp|png|jpe?g|gif|mp4|webm|ogg|mov)$/i,
+  )?.[0];
+  const blobExtension =
+    src instanceof Blob
+      ? {
+          "image/jpeg": ".jpg",
+          "image/png": ".png",
+          "image/webp": ".webp",
+          "image/avif": ".avif",
+          "video/mp4": ".mp4",
+          "video/webm": ".webm",
+          "video/ogg": ".ogg",
+        }[src.type]
+      : null;
+  const ext = urlExtension || blobExtension || (isVid ? ".mp4" : ".webp");
   const safeName = name.replace(/[/\\?%*:|"<>]/g, "-").trim() || "background";
-  const fileName = safeName.toLowerCase().endsWith(ext) ? safeName : `${safeName}${ext}`;
+  const fileName = /\.(avif|webp|png|jpe?g|gif|mp4|webm|ogg|mov)$/i.test(
+    safeName,
+  )
+    ? safeName
+    : `${safeName}${ext}`;
 
   const toastId = toast.loading("Завантаження файлу...", { id: "bg-download" });
 
   try {
-    const response = await fetch(src);
-    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-    const blob = await response.blob();
+    let blob;
+    if (src instanceof Blob) {
+      blob = src;
+    } else {
+      const response = await fetch(src);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      blob = await response.blob();
+    }
     const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = blobUrl;
@@ -227,6 +271,39 @@ const handleDownloadBg = async (bg) => {
   }
 };
 
+const handlePrintBg = (bg) => {
+  if (!bg?.src || isVideoSource(bg.src)) return;
+
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    toast.error("Дозвольте спливаюче вікно, щоб надрукувати зображення.");
+    return;
+  }
+
+  const image = printWindow.document.createElement("img");
+  const objectUrl = bg.src instanceof Blob ? URL.createObjectURL(bg.src) : null;
+  image.alt = bg.name || "Фон";
+  image.style.cssText =
+    "display:block;max-width:100%;max-height:100vh;margin:auto;object-fit:contain";
+  image.onload = () => {
+    printWindow.onafterprint = () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      printWindow.close();
+    };
+    printWindow.focus();
+    printWindow.print();
+  };
+  image.onerror = () => {
+    toast.error("Не вдалося відкрити зображення для друку.");
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    printWindow.close();
+  };
+  printWindow.document.title = bg.name || "Фон";
+  printWindow.document.body.style.margin = "0";
+  printWindow.document.body.appendChild(image);
+  image.src = objectUrl || bg.src;
+};
+
 const shuffleArray = (array) => {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -236,60 +313,7 @@ const shuffleArray = (array) => {
   return arr;
 };
 
-// Extract author from snippet "Постачальник(и): ..." or use link.author field
-const extractAuthor = (link) => {
-  if (link.author) return link.author;
-  if (!link.snippet) return null;
-  const match = link.snippet.match(/Постачальник(?:и)?:\s*([^\n]+)/);
-  return match ? match[1].trim() : null;
-};
 
-const getLinkModalBgImage = (linkModal) => {
-  if (!linkModal) return null;
-  const firstImg = linkModal.images?.[0];
-  if (firstImg) {
-    return imageMap[firstImg] || firstImg;
-  }
-  return null;
-};
-
-// Detect platform type from URL
-const detectPlatform = (url = "") => {
-  if (url.includes("play.google.com")) return "playmarket";
-  if (url.includes("store.steampowered.com")) return "steam";
-  if (url.includes("apps.apple.com") || url.includes("itunes.apple.com")) return "appstore";
-  return null;
-};
-
-// Get platform badge label/icon
-const PLATFORM_CONFIG = {
-  playmarket: { label: "Play Market", emoji: "🤖", color: "#01875f" },
-  steam: { label: "Steam", emoji: "🎮", color: "#1b2838" },
-  appstore: { label: "App Store", emoji: "🍎", color: "#0071e3" },
-};
-
-const getLinkPlatforms = (link) => {
-  if (!link) return [];
-  const result = [];
-  if (link.platforms && Array.isArray(link.platforms)) {
-    return link.platforms;
-  }
-  const detected = detectPlatform(link.url);
-  if (detected) {
-    result.push({ type: detected, url: link.url });
-  }
-  if (link.snippet) {
-    if (link.snippet.includes("play.google.com") && !result.some((p) => p.type === "playmarket")) {
-      const match = link.snippet.match(/(https:\/\/play\.google\.com\/[^\s\n\)]+)/);
-      if (match) result.push({ type: "playmarket", url: match[1] });
-    }
-    if (link.snippet.includes("store.steampowered.com") && !result.some((p) => p.type === "steam")) {
-      const match = link.snippet.match(/(https:\/\/store\.steampowered\.com\/[^\s\n\)]+)/);
-      if (match) result.push({ type: "steam", url: match[1] });
-    }
-  }
-  return result;
-};
 
 
 
@@ -327,10 +351,10 @@ const BgLayerStyled = styled.div`
     rotate(${(props) => props.$rotation || 0}deg);
   transform-origin: ${(props) => props.$focalX}% ${(props) => props.$focalY}%;
   filter: ${(props) => {
-    if (props.$blurType === "pixelated") {
-      return props.$pixelation > 0.5 ? `url(#pixelate-hero)` : "none";
-    }
-    return `blur(${props.$blur || 0}px)`;
+    const filters = [];
+    if (props.$blur > 0) filters.push(`blur(${props.$blur}px)`);
+    if (props.$pixelation > 0.5) filters.push("url(#pixelate-hero)");
+    return filters.length ? filters.join(" ") : "none";
   }};
   z-index: ${(props) => (props.$isStickyBgMode ? "-10" : "-2")} !important;
   animation: ${(props) =>
@@ -339,6 +363,59 @@ const BgLayerStyled = styled.div`
           ${panAnimation} ${props.$panSpeed || 6}s infinite linear
         `
       : "none"};
+`;
+
+const AiModalBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 200000;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(18px) saturate(0.65);
+  -webkit-backdrop-filter: blur(18px) saturate(0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: ${fadeIn} 180ms ease-out;
+`;
+
+const AiModalContainer = styled.div`
+  width: min(900px, calc(100vw - 16px));
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  animation: ${fadeIn} 220ms ease-out;
+`;
+
+const AiModalBody = styled.div`
+  flex: 1;
+  overflow: hidden;
+  background: ${(p) => (p.$isDarkMode ? "#0e0e16" : "#f8f8fc")};
+`;
+
+const AiSparkBtn = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,160,0,0.4);
+  background: ${(p) => (p.$isDarkMode ? "rgba(255,149,0,0.12)" : "rgba(255,149,0,0.08)")};
+  color: ${(p) => (p.$isDarkMode ? "#ffcf9e" : "#d96500")};
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: all 0.2s;
+  &:hover {
+    background: rgba(255,149,0,0.22);
+    border-color: #ff9500;
+    transform: translateY(-1px);
+  }
 `;
 
 const VideoThumbnail = React.memo(({ bg, onClick }) => {
@@ -411,7 +488,6 @@ const BgLayer = React.memo((props) => {
   } = props;
   const [blobUrl, setBlobUrl] = useState(null);
   const videoRef = useRef(null);
-  const isPixelated = props.$blurType === "pixelated";
   const isVideo = isVideoSource($image);
 
   useEffect(() => {
@@ -527,7 +603,6 @@ const BgLayer = React.memo((props) => {
             height: "100%",
             objectFit: "cover",
             objectPosition: `${$focalX}% ${$focalY}%`,
-            imageRendering: isPixelated ? "pixelated" : "auto",
           }}
         />
       ) : (
@@ -542,7 +617,6 @@ const BgLayer = React.memo((props) => {
             height: "100%",
             objectFit: "cover",
             objectPosition: `${$focalX}% ${$focalY}%`,
-            imageRendering: isPixelated ? "pixelated" : "auto",
             display: "block",
           }}
         />
@@ -578,6 +652,7 @@ const HeroFix = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  width: 100%;
   gap: 5px;
 
   @media (min-width: 768px) {
@@ -590,28 +665,51 @@ const HeroFi = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
 `;
 const HeroDate = styled.div`
-  color: rgb(255, 255, 255);
-  font-size: 16px;
-  text-align: center;
+  color: ${(props) => (props.$isDarkMode ? "#f4f7fb" : "#20242b")};
+  font-size: 13px;
+  text-align: right;
   font-weight: 600;
-  width: 300px;
-  background: #00000056;
-  backdrop-filter: blur(5px);
-  padding: 10px;
-  border-radius: 5px;
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  background: transparent;
+  padding: 6px 12px;
+  border-bottom: 1px solid
+    ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)")};
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+    gap: 8px;
+    padding: 6px 9px;
+
+  }
 `;
 const TimezoneButton = styled.button`
-  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: none;
+  gap: 3px;
+  border-radius: 6px;
+  padding: 0px 12px;
+  background: transparent;
+  color: ${(props) => (props.$isDarkMode ? "#fff" : "#30343b")};
   cursor: pointer;
-  font-size: 22px;
+  font-size: 12px;
   transition: all 0.3s ease;
+
+  &:hover {
+    background: ${(props) =>
+      props.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)"};
+  }
 `;
 
 const TimezoneMenu = styled.div`
@@ -694,9 +792,23 @@ const SearchWrapper = styled.div`
   position: relative;
   display: flex;
   width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
   flex-direction: column;
   align-items: center;
   z-index: 99;
+`;
+
+const BrowserSearchPanel = styled.div`
+  width: min(860px, calc(100vw - 8px));
+  box-sizing: border-box;
+  border: 1px solid
+    ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.18)")};
+  border-radius: 12px;
+  background: ${(props) =>
+    props.$isDarkMode ? "rgba(18, 22, 29, 0.96)" : "rgba(248, 250, 252, 0.97)"};
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(12px);
 `;
 
 const ModePicker = styled.div`
@@ -706,12 +818,13 @@ const ModePicker = styled.div`
 `;
 
 const ModeIconBtn = styled.button`
-  width: 30px;
+  width: 34px;
   height: 30px;
-  border-radius: 10px 0 0 0;
+  border-radius: 6px;
   border: none;
-  border-right: 2px solid black;
-  background: #1b4b64;
+  background: ${(props) =>
+    props.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)"};
+  color: ${(props) => (props.$isDarkMode ? "#f2f5f8" : "#30343b")};
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -723,101 +836,76 @@ const ModeIconBtn = styled.button`
   &:hover { background: #353988; }
 `;
 
-const ModeDropdown = styled.div`
-  position: absolute;
-  top: 19px;
-  left: 30px;
-  background: ${(props) => (props.$isDarkMode ? "rgba(10, 10, 20, 0.95)" : "rgba(255, 255, 255, 0.95)")};
-  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.15)")};
-  backdrop-filter: blur(12px);
-  border-radius: 5px;
-  overflow: hidden;
-  z-index: 200;
-  min-width: 180px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-`;
-
-const ModeDropdownItem = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 6px 10px;
-  background: ${(props) =>
-    props.$active
-      ? props.$isDarkMode
-        ? "rgba(108,255,228,0.15)"
-        : "rgba(0, 175, 206, 0.15)"
-      : "transparent"};
-  border: none;
-  border-bottom: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)")};
-  color: ${(props) =>
-    props.$active
-      ? props.$isDarkMode
-        ? "#6cffe4"
-        : "#007b99"
-      : props.$isDarkMode
-      ? "#fff"
-      : "#222"};
-  font-size: 15px;
-  font-weight: ${(props) => (props.$active ? "700" : "500")};
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.15s, color 0.15s;
-  &:last-child {
-    border-bottom: none;
-  }
-  &:hover {
-    background: ${(props) => (props.$isDarkMode ? "rgba(255,179,108,0.15)" : "rgba(255,179,108,0.25)")};
-    color: #ff8c2b;
-  }
-`;
-
-const ModeButton = styled.button`
-  padding: 14px;
-  background: ${(props) =>
-    props.$active ? "#6cffe48b" : "rgba(255, 234, 0, 0.5)"};
-  color: ${(props) => (props.$active ? "#000" : "#fff")};
-  border: 1px solid
-    ${(props) => (props.$active ? "#ffff00" : "rgb(0, 255, 238)")};
-  border-radius: 2px;
-  cursor: pointer;
-  font-weight: 600;
-  font-family: var(--font-family);
-  font-size: 12px;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-
-  &:hover {
-    background: ${(props) =>
-      props.$active ? "#98ff6ca0" : "rgba(0, 255, 119, 0.59)"};
-  }
-`;
-
 const CoordinatesContainer = styled.div`
   display: flex;
-  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
   justify-content: center;
 `;
 
 const CoordinateInput = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex: 1 1 180px;
+  min-width: 0;
   input {
-    width: 120px;
-    height: 30px;
-    padding: 5px;
-    font-size: 10px;
+    width: 100%;
+    height: 52px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    font-family: var(--font-family);
+    font-size: 14px;
     border-radius: 8px;
-    border: 1px solid #ffb36c;
-    background: ${(p) => (p.$isDarkMode ? "white" : "black")};
-    color: #222;
+    border: 1px solid transparent;
+    background: ${(p) => (p.$isDarkMode ? "#10151c" : "#fff")};
+    color: ${(p) => (p.$isDarkMode ? "#f4f7fb" : "#20242b")};
     font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
     &::placeholder {
-      color: #303030;
+      color: ${(p) => (p.$isDarkMode ? "#aab4c0" : "#68717d")};
     }
+
+    &:hover,
+    &:focus {
+      border-color: ${(p) => (p.$isDarkMode ? "#ecb900" : "#00fbff")};
+    }
+
+    &:focus {
+      box-shadow: inset 0 0 0 1px
+        ${(p) => (p.$isDarkMode ? "#ecb900" : "#00fbff")};
+    }
+  }
+`;
+
+const CoordinateSearchButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 96px;
+  height: 52px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  background: #2f81f7;
+  color: #fff;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #1f6feb;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 
@@ -885,32 +973,47 @@ const HeroFormater = styled.div`
   flex-direction: column;
   align-items: center;
   width: 100%;
+  gap: 8px;
 `;
 
 const SearchContainer = styled.div`
   position: relative;
   display: flex;
-  width: 99.7%;
+  width: 100%;
+  align-items: center;
   justify-content: center;
+  border-radius: 8px;
+  background: ${(props) =>
+    props.$isDarkMode ? "#10151c" : "#ffffff"};
 `;
 
 const HeroInput = styled.input`
   width: 100%;
-  height: 30px;
+  height: 52px;
   font-family: var(--font-family);
   font-weight: 500;
-  font-size: 11px;
-  color: #040404;
-  padding-left: 8px;
-  padding-right: 8px;
-  background: #ffffff;
-  border-radius: 0;
-  border: none;
-  border-right: 2px solid black;
+  font-size: 14px;
+  color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#040404")};
+  padding: 0 12px;
+  background: ${(p) => (p.$isDarkMode ? "#10151c" : "#ffffff")};
+  border-radius: 8px;
+  border: 1px solid transparent;
   outline: none;
   box-sizing: border-box;
-    &::placeholder {
-    color: #000000;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &::placeholder {
+    color: ${(p) => (p.$isDarkMode ? "#f3efef" : "#000000")};
+  }
+
+  &:hover,
+  &:focus {
+    border-color: ${(p) => (p.$isDarkMode ? "#ecb900" : "#00fbff")};
+  }
+
+  &:focus {
+    box-shadow: inset 0 0 0 1px
+      ${(p) => (p.$isDarkMode ? "#ecb900" : "#00fbff")};
   }
 `;
 const ClearButton = styled.button`
@@ -938,42 +1041,22 @@ const ClearButton = styled.button`
     transform: translateY(-50%) scale(0.9);
   }
 `;
-const HeroButton = styled.button`
-  position: relative;
-  border-radius: 0 10px 0px 0;
-  width: 30px;
-  height: 30px;
-  background: ${(props) => (props.disabled ? "#ffffff" : "yellow")};
-  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
-  border-left: 1px solid black;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  line-height: 1;
-  font-size: 20px;
-  color: black;
-  transition: all 0.7s ease-in-out;
-  overflow: hidden;
-  &:hover {
-    background: ${(props) => (props.disabled ? "#ccc" : "skyblue")};
-    color: ${(props) => (props.disabled ? "black" : "transparent")};
+const HeroInfo = styled.div`
+  display: ${(props) => (props.$desktopOnly ? "none" : "block")};
+  width: 100%;
+  color: ${(props) => (props.$isDarkMode ? "#f4f7fb" : "#30343b")};
+  font-size: 12px;
+  height: 40px; 
+  line-height: 1.4;
+  text-align: center;
+
+  @media (min-width: 560px) {
+    display: block;
   }
-  ${(props) =>
-    !props.disabled &&
-    css`
-      &:hover::after {
-        content: "+";
-        position: absolute;
-        color: black;
-        font-size: 22px;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-    `}
+
+  @media (max-width: 559px) {
+    display: ${(props) => (props.$desktopOnly ? "none" : "block")};
+  }
 `;
 const SuggestionsList = styled.div`
   position: absolute;
@@ -984,11 +1067,27 @@ const SuggestionsList = styled.div`
   border-radius: 0 0 15px 15px;
   z-index: 9999;
   display: flex;
-   width: 99.7%;
+  width: 99.7%;
   flex-direction: column;
   max-height: 350px;
   overflow-y: auto;
   border: 1px solid rgb(0, 0, 0);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 179, 108, 0.85) rgba(0, 0, 0, 0.12);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ffb36c 0%, #ff8c2b 100%);
+    border-radius: 999px;
+  }
 `;
 
 const SuggestionItem = styled.button`
@@ -1006,604 +1105,13 @@ const SuggestionItem = styled.button`
   }
 `;
 
-const LinksDropdown = styled.div`
-  position: absolute;
-  top: 100%;
-  justify-content: flex-start;
-  align-items: stretch;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
-  border-radius: 0 0 15px 15px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  max-height: 250px;
-  overflow-y: ${(props) => (props.$hasExpanded ? "hidden" : "auto")};
-  border-top: 2px solid rgb(0, 0, 0);
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: skyblue;
-    border-radius: 10px;
-  }
-`;
-
-const AccordionItem = styled.div`
-  width: 100%;
-  border-bottom: 1px solid #eee;
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const AccordionHeader = styled.div`
-  cursor: pointer;
-  font-weight: bold;
-  color: #fafafa;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #205d6e;
-  transition: background 0.2s;
-  &:hover {
-    background: #566fd2;
-    color: white;
-  }
-`;
-
-const AccordionContent = styled.div`
-  max-height: ${(props) => (props.$expanded ? "220px" : "0")};
-  overflow-y: ${(props) => (props.$expanded ? "auto" : "hidden")};
-  transition:
-    max-height 0.4s ease-in-out,
-    padding 0.4s ease-in-out;
-  padding: ${(props) => (props.$expanded ? "3px" : "0 15px")};
-  background: #00eaff;
-  font-size: 13px;
-  color: rgb(9, 9, 9);
-  font-weight: 900;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  white-space: pre-wrap;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #ffb36c;
-    border-radius: 10px;
-  }
-`;
-
-const TagsContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-`;
 
 const Tag = styled.span`
-  background: #f6ff00;
-  color: #000;
-    font-weight: 900;
-  padding: 1px 5px;
-  border-radius: 2px;
-  border: 1px solid #000;
+    color: ${(props) => (props.$isDarkMode ? "#fbfbfb" : "#060606")};
+  flex: 1;
+  text-align: right;
   font-size: 12px;
 `;
-
-/* ── Fullscreen Links Search Overlay ── */
-const LinksSearchOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  background: ${(p) => p.$isDarkMode
-    ? "rgba(10,10,20,0.97)"
-    : "rgba(245,247,255,0.97)"};
-  backdrop-filter: blur(18px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow: hidden;
-`;
-
-const LinksSearchHeader = styled.div`
-  width: 100%;
-  padding: 18px 16px 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#1a1a1a")};
-`;
-
-const LinksSearchBar = styled.div`
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: ${(p) => p.$isDarkMode ? "#1a1a2e" : "#fff"};
-  border: 2px solid ${(p) => p.$isDarkMode ? "#3a3a5a" : "#ddd"};
-  border-radius: 50px;
-  margin-top: 20px;
-  padding: 8px 14px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
-  transition: border-color 0.2s;
-  &:focus-within {
-    border-color: #ffb36c;
-    box-shadow: 0 4px 28px rgba(255,179,108,0.25);
-  }
-`;
-
-const LinksSearchInput = styled.input`
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 17px;
-  color: ${(p) => p.$isDarkMode ? "#f0f0f0" : "#111"};
-  &::placeholder { color: ${(p) => p.$isDarkMode ? "#666" : "#aaa"}; }
-`;
-
-const LinksSearchMeta = styled.div`
-  color: ${(p) => p.$isDarkMode ? "#ffffff" : "#080808"};
-  font-size: 12px;
-  text-align: center;
-`;
-
-const LinksResultsList = styled.div`
-  width: 100%;
-  max-width: 1200px;
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 1px 2px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;`;
-
-const LinksResultItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 5px 8px;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.12s;
-  background: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)"};
-  border: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"};
-  &:hover {
-    background: ${(p) => p.$isDarkMode ? "rgba(255,179,108,0.1)" : "rgba(255,179,108,0.15)"};
-    border-color: #ffb36c55;
-    transform: translateY(-1px);
-  }
-`;
-
-const LinkFavicon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: ${(p) => p.$bg || "linear-gradient(135deg,#205d6e,#566fd2)"};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-  font-weight: bold;
-  color: #fff;
-  overflow: hidden;
-`;
-
-const playStoreIconCache = new Map();
-const playStoreIconRequests = new Map();
-
-const getPlayStorePackageUrl = (link) => {
-  if (!link?.url?.includes("play.google.com/store/apps")) return null;
-  try {
-    const packageId = new URL(link.url).searchParams.get("id");
-    return packageId
-      ? `https://play.google.com/store/apps/details?id=${encodeURIComponent(packageId)}&hl=en`
-      : null;
-  } catch {
-    return null;
-  }
-};
-
-const loadPlayStoreIcon = async (pageUrl) => {
-  if (!pageUrl) return null;
-  if (playStoreIconCache.has(pageUrl)) return playStoreIconCache.get(pageUrl);
-  if (playStoreIconRequests.has(pageUrl)) {
-    return playStoreIconRequests.get(pageUrl);
-  }
-
-  const request = fetch(`https://r.jina.ai/http://${pageUrl.replace(/^https?:\/\//, "")}`)
-    .then((response) => (response.ok ? response.text() : ""))
-    .then((html) => {
-      const imageUrls = [
-        ...new Set(
-          [...html.matchAll(/https:\/\/play-lh\.googleusercontent\.com\/[^\s"')]+/g)]
-            .map(([url]) => url.replace(/\\u003d/g, "="))
-            .filter((url) => /=s(?:48|96)(?:-rw)?(?:\s|$)/.test(url)),
-        ),
-      ];
-      const iconUrl = imageUrls[0] || null;
-      if (iconUrl) playStoreIconCache.set(pageUrl, iconUrl);
-      return iconUrl;
-    })
-    .catch(() => null)
-    .finally(() => playStoreIconRequests.delete(pageUrl));
-
-  playStoreIconRequests.set(pageUrl, request);
-  return request;
-};
-
-const getLinkIconSources = (link, playStoreIcon) => {
-  const sources = [];
-  if (playStoreIcon) sources.push(playStoreIcon);
-  if (typeof link?.icon === "string" && link.icon.trim()) {
-    sources.push(link.icon.trim());
-  }
-
-  const imageSource = Array.isArray(link?.images)
-    ? link.images.find(
-        (image) => typeof image === "string" && /^https?:\/\//i.test(image),
-      )
-    : null;
-  const isPlayMarketLink = link?.url?.includes("play.google.com/store/apps");
-
-  if (isPlayMarketLink && imageSource) sources.push(imageSource);
-
-  if (!isPlayMarketLink) {
-    try {
-      const domain = new URL(link.url).hostname;
-      sources.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=64`);
-    } catch {
-      // The letter fallback is rendered when the URL is invalid.
-    }
-  }
-
-  return [...new Set(sources)];
-};
-
-const LinkFaviconImage = ({ link }) => {
-  const playStorePageUrl = getPlayStorePackageUrl(link);
-  const [playStoreIcon, setPlayStoreIcon] = useState(null);
-  const [sourceIndex, setSourceIndex] = useState(0);
-  useEffect(() => {
-    let isActive = true;
-    setPlayStoreIcon(null);
-    setSourceIndex(0);
-
-    if (playStorePageUrl) {
-      loadPlayStoreIcon(playStorePageUrl).then((iconUrl) => {
-        if (isActive) setPlayStoreIcon(iconUrl);
-      });
-    }
-
-    return () => {
-      isActive = false;
-    };
-  }, [link, playStorePageUrl]);
-
-  const iconSources = getLinkIconSources(link, playStoreIcon);
-
-  const fallbackLetter = link?.title?.charAt(0).toUpperCase() || "?";
-  const isPlayMarketLink = link?.url?.includes("play.google.com/store/apps");
-  const fallbackIcon = isPlayMarketLink ? "🎮" : fallbackLetter;
-  const iconSource = iconSources[sourceIndex];
-
-  if (!iconSource) return fallbackIcon;
-
-  return (
-    <img
-      src={iconSource}
-      alt=""
-      width="28"
-      height="28"
-      onError={() => {
-        if (sourceIndex < iconSources.length - 1) {
-          setSourceIndex((index) => index + 1);
-        } else {
-          setSourceIndex(iconSources.length);
-        }
-      }}
-      style={{ display: "block", objectFit: "contain" }}
-    />
-  );
-};
-
-const LinkMainInfo = styled.div`
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-`;
-
-const LinkTitle = styled.div`
-  font-size: 15px;
-  font-weight: 700;
-  color: ${(p) => p.$isDarkMode ? "#f0f0f0" : "#111"};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const LinkAuthor = styled.div`
-  font-size: 11px;
-  color: ${(p) => p.$isDarkMode ? "#fdfdfd" : "#050505"};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const LinkTagsRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  margin-top: 2px;
-`;
-
-const LinkTagBadge = styled.span`
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 20px;
-  background: ${(p) => p.$isDarkMode ? "rgba(255,183,108,0.15)" : "rgba(255,183,108,0.25)"};
-  color: ${(p) => p.$isDarkMode ? "#ffb36c" : "#a05000"};
-  font-weight: 600;
-`;
-
-const LinkPlatformBtns = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-shrink: 0;
-`;
-
-const PlatformBtn = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: none;
-  background: ${(p) => p.$color || "#333"};
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: opacity 0.15s, transform 0.12s;
-  &:hover { opacity: 0.85; transform: scale(1.03); }
-`;
-
-const LinksPinnedLabel = styled.div`
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: ${(p) => p.$isDarkMode ? "#ffb36c99" : "#666"};
-  text-transform: uppercase;
-  padding: 4px 2px 2px;
-`;
-
-const LinksSectionDivider = styled.div`
-  height: 1px;
-  background: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.12)"};
-  margin: 6px 0;
-`;
-
-/* ── Link Detail Modal ── */
-const LinkDetailOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 10100;
-  background: rgba(0,0,0,0.82);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-`;
-
-const LinkDetailCard = styled.div`
-  background-color: #0e15200a;
-  background-image: ${(p) => (p.$bgImage ? `url(${p.$bgImage})` : p.$bg || "none")};
-  background-size: cover;
-  background-position: center;
-  border: 2px solid #ffb36c77;
-  border-radius: 20px;
-  width: 100%;
-  max-width: 1200px;
-  max-height: 88vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.95);
-  position: relative;
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.69) 0%,
-      rgba(0, 0, 0, 0.73) 50%,
-      rgba(0, 0, 0, 0.68) 100%
-    );
-    z-index: 1;
-  }
-`;
-
-const LinkDetailHeader = styled.div`
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 18px 22px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.3);
-`;
-
-const LinkDetailBody = styled.div`
-  position: relative;
-  z-index: 2;
-  flex: 1;
-  overflow-y: auto;
-  padding: 18px 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-thumb { background: #ffb36c66; border-radius: 10px; }
-`;
-
-const LinkDetailFooter = styled.div`
-  position: relative;
-  z-index: 2;
-  padding: 14px 22px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-  flex-shrink: 0;
-`;
-
-const LinkDetailMedia = styled.div`
-  position: relative;
-  width: 100%;
-  min-height: 140px;
-  overflow: hidden;
-  background: #05080d00;
-  cursor: pointer;
-
-  img.main-image {
-    width: 100%;
-    height: 100%;
-    display: block;
-    object-fit: cover;
-    opacity: 0;
-    transition: transform 0.25s ease;
-  }
-
-  &:hover img.main-image {
-    transform: scale(1.02);
-  }
-
-`;
-
-const TrailerCorner = styled.button`
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
-  width: 220px;
-  aspect-ratio: 16 / 9;
-  padding: 0;
-  overflow: hidden;
-  border: 2px solid #ff3b30;
-  border-radius: 6px;
-  background: #000;
-  cursor: pointer;
-  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.7);
-
-  img {
-    width: 100%;
-    height: 100%;
-    display: block;
-    object-fit: cover;
-    opacity: 0.82;
-  }
-
-  span {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    color: #fff;
-    font-size: 28px;
-    text-shadow: 0 1px 5px #000;
-  }
-
-  @media (max-width: 600px) {
-    right: 8px;
-    bottom: 8px;
-    width: 145px;
-  }
-`;
-
-const getYoutubeId = (url) => {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
-};
-
-const ImageSlider = ({ images = [], youtubeTrailer, setFullscreenImage, imageMap, setFullscreenVideo }) => {
-  const youtubeId = youtubeTrailer ? getYoutubeId(youtubeTrailer) : null;
-  const youtubeThumbnail = youtubeId ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg` : null;
-  const mainImage = images
-    .map((image) => imageMap[image] || image)
-    .find(Boolean) || youtubeThumbnail;
-
-  return (
-    <LinkDetailMedia
-      onClick={(event) => {
-        event.stopPropagation();
-        if (mainImage) setFullscreenImage(mainImage);
-      }}
-    >
-      {mainImage && <img className="main-image" src={mainImage} alt="" />}
-      {youtubeThumbnail && youtubeTrailer && (
-        <TrailerCorner
-          type="button"
-          aria-label="Відкрити трейлер"
-          onClick={(event) => {
-            event.stopPropagation();
-            setFullscreenVideo(youtubeTrailer);
-          }}
-        >
-          <img src={youtubeThumbnail} alt="" />
-          <span>▶</span>
-        </TrailerCorner>
-      )}
-    </LinkDetailMedia>
-  );
-};
-
-const FullscreenImageOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.9);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 99999;
-  cursor: pointer;
-`;
-
-const FullscreenImage = styled.img`
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-`;
-
 const LoadMoreButton = styled.button`
   width: 100%;
   padding: 8px;
@@ -1620,26 +1128,42 @@ const LoadMoreButton = styled.button`
 
 const ChangeBgButton = styled.button`
   position: absolute;
-  top: 43px;
-  gap: 9px;
+  top: 109px;
+  gap: 6px;
   right: 7px;
   background: rgba(0, 0, 0, 0.4);
   color: white;
-  width: 110px;
-  height: 30px;
+  width: 138px;
+  height: 40px;
   border-radius: 5px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 4px 6px;
   z-index: 100;
   transition: all 0.3s;
-  font-size: 18px;
+  font-size: 14px;
   backdrop-filter: blur(5px);
   &:hover {
     background: #1d5b69;
     transform: scale(1.1);
   }
+`;
+
+const ChangeBgPreviewGroup = styled.span`
+  display: flex;
+  gap: 2px;
+  flex: 0 0 auto;
+`;
+
+const ChangeBgPreview = styled.img`
+  width: 27px;
+  height: 25px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  animation: ${bgPreviewSwap} 0.45s ease-out both;
 `;
 
 const ModalOverlay = styled.div`
@@ -1675,6 +1199,8 @@ const ModalContent = styled.div`
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 35px rgba(255, 179, 108, 0.12);
   animation: ${(props) => (props.$isClosing ? slideOut : slideIn)} 0.4s
     cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 179, 108, 0.85) rgba(255, 255, 255, 0.05);
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -1815,34 +1341,20 @@ const ModalConfigGrid = styled.div`
   grid-template-columns: 1fr;
   gap: 8px;
   align-items: stretch;
-  @media (min-width: 600px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (min-width: 900px) {
-    grid-template-columns: repeat(4, 1fr);
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
   }
   @media (min-width: 1200px) {
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(6, 1fr);
   }
 `;
 
-const FocusButtonsGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 15px;
-  @media (min-width: 600px) {
-    grid-template-columns: 1fr 1fr;
-  }
-`;
 
 const BgGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   padding: 2px;
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  }
 `;
 
 const BgItem = styled.div`
@@ -1942,7 +1454,11 @@ const SlotBtn = styled.button`
 `;
 
 const DropZone = styled.div`
-  position: relative;
+  position: sticky;
+  bottom: -20px;
+  z-index: 20;
+  flex-shrink: 0;
+  margin: 4px -20px -20px;
   border: 2px dashed rgba(255, 179, 108, 0.4);
   padding: 16px 20px;
   text-align: center;
@@ -1951,7 +1467,8 @@ const DropZone = styled.div`
   color: #ddd;
   font-size: 13px;
   font-weight: 500;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(10, 14, 26, 0.98);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -1964,6 +1481,27 @@ const DropZone = styled.div`
     border-color: #ffb36c;
     color: #fff;
     box-shadow: 0 0 15px rgba(255, 179, 108, 0.15);
+  }
+`;
+
+const SearchActionButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 179, 108, 0.55);
+  border-radius: 8px;
+  color: #17120d;
+  background: linear-gradient(135deg, #ffca91, #ff9d48);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.65;
   }
 `;
 
@@ -2171,7 +1709,6 @@ const imageMap = {
   planes: planes,
   village: village,
   herotext: herotext,
-  meridian: meridian,
   castle: castle,
   hills: hills,
 };
@@ -2214,8 +1751,6 @@ const Hero = ({
   setHeroBgBlur,
   heroBgPixelation,
   setHeroBgPixelation,
-  heroBgBlurType,
-  setHeroBgBlurType,
   heroBgFocal1,
   setHeroBgFocal1,
   heroBgFocal2,
@@ -2230,7 +1765,6 @@ const Hero = ({
   setHeroBgPanSpeed,
   videoPlaybackSpeed,
   setVideoPlaybackSpeed,
-  screenshots = [],
   selectedTimezone,
   setSelectedTimezone,
   customHolidayName,
@@ -2241,8 +1775,6 @@ const Hero = ({
   const customDays = useSelector((state) => state.calendar?.customDays || []);
   const [newDayInput, setNewDayInput] = useState({ date: "", reason: "" });
   const [inputValue, setInputValue] = useState("");
-  const linksDropdownRef = useRef(null);
-  const [expandedLinkId, setExpandedLinkId] = useState(null);
 
   useEffect(() => {
     const handleAutoKonotop = () => {
@@ -2254,27 +1786,25 @@ const Hero = ({
     window.addEventListener("domino-auto-input-konotop", handleAutoKonotop);
     return () => window.removeEventListener("domino-auto-input-konotop", handleAutoKonotop);
   }, [onAddCity]);
-
-  useEffect(() => {
-    if (expandedLinkId !== null && linksDropdownRef.current) {
-      const expandedElement = linksDropdownRef.current.querySelector(
-        `[data-id="${expandedLinkId}"]`
-      );
-      if (expandedElement) {
-        linksDropdownRef.current.scrollTo({
-          top: expandedElement.offsetTop,
-          behavior: "smooth",
-        });
-      }
-    }
-  }, [expandedLinkId]);
   const [suggestions, setSuggestions] = useState([]);
   const [limit, setLimit] = useState(3);
   const [showList, setShowList] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [pixabayQuery, setPixabayQuery] = useState("");
+  const [pixabayResults, setPixabayResults] = useState([]);
+  const [pixabayStatus, setPixabayStatus] = useState("idle");
+  const [pixabayPage, setPixabayPage] = useState(1);
   const [visibleBgCount, setVisibleBgCount] = useState(300);
+  const [backgroundPreviewPair, setBackgroundPreviewPair] = useState(0);
   const MAX_DAILY_HERO_CARDS = 1000;
   const [uploadedToday, setUploadedToday] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBackgroundPreviewPair((pair) => (pair === 0 ? 1 : 0));
+    }, 2400);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const loadCount = async () => {
@@ -2293,14 +1823,38 @@ const Hero = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [descriptionModal, setDescriptionModal] = useState(null); // { name, text }
-  const [linkDetailModal, setLinkDetailModal] = useState(null); // link object for detail modal
   const [showTimezoneMenu, setShowTimezoneMenu] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [searchMode, setSearchMode] = useState("city");
+  const [isSearchModeModalOpen, setIsSearchModeModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+
+  const handleSearchModeSelect = (mode) => {
+    setIsSearchModeModalOpen(false);
+
+    if (mode === "ai") {
+      setIsAiModalOpen(true);
+      return;
+    }
+
+    setSearchMode(mode);
+
+    if (mode === "city") {
+      setLatitude("");
+      setLongitude("");
+    } else {
+      setInputValue("");
+    }
+
+    setSuggestions([]);
+    setShowList(false);
+
+    if (mode !== "city") setShowCoordinateSuggestions(false);
+  };
 
   // Блокування прокрутки при відкритій модалці
   useEffect(() => {
-    if (isModalOpen || descriptionModal || showTimezoneMenu || linkDetailModal || searchMode === "links") {
+    if (isModalOpen || descriptionModal || showTimezoneMenu || isSearchModeModalOpen || isAiModalOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -2308,26 +1862,20 @@ const Hero = ({
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isModalOpen, descriptionModal, showTimezoneMenu, linkDetailModal, searchMode]);
+  }, [isModalOpen, descriptionModal, showTimezoneMenu, isSearchModeModalOpen, isAiModalOpen]);
 
-  // Закриття linksSearch/linkDetail по Escape
+  // Закриття по Escape
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") {
-        if (linkDetailModal) { setLinkDetailModal(null); return; }
-        if (searchMode === "links") { setSearchMode("city"); setSuggestions([]); setShowList(false); }
+        if (isAiModalOpen) { setIsAiModalOpen(false); return; }
+        if (isSearchModeModalOpen) return;
       }
     };
     document.addEventListener("keydown", handleEsc);
     return () => document.removeEventListener("keydown", handleEsc);
-  }, [linkDetailModal, searchMode]);
+  }, [isAiModalOpen, isSearchModeModalOpen]);
 
-  const [showModeDropdown, setShowModeDropdown] = useState(false);
-  const [fullscreenImage, setFullscreenImage] = useState(null);
-  const [fullscreenVideo, setFullscreenVideo] = useState(null);
-  const [pinnedLinks, setPinnedLinks] = useState([]);
-  const [wikipediaResults, setWikipediaResults] = useState([]);
-  const [isWikipediaLoading, setIsWikipediaLoading] = useState(false);
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [sortType, setSortType] = useState("rating");
@@ -2340,16 +1888,12 @@ const Hero = ({
   const [customTimezoneInputValue, setCustomTimezoneInputValue] = useState("");
   const isCustom = (src) => !DEFAULT_BGS.some((bg) => bg.src === src);
   const allBgs = useMemo(
-    () => [
-      ...DEFAULT_BGS,
-      ...(customHeroBgs || []),
-      ...(screenshots || []).map((s) => ({
-        src: s.image,
-        name: `Скріншот: ${s.trackName}`,
-        category: "Скріншоти",
-      })),
-    ],
-    [customHeroBgs, screenshots],
+    () => [...DEFAULT_BGS, ...(customHeroBgs || [])],
+    [customHeroBgs],
+  );
+  const currentBgPreviewImages = CHANGE_BG_PREVIEW_IMAGES.slice(
+    backgroundPreviewPair * 2,
+    backgroundPreviewPair * 2 + 2,
   );
 
   const handleSelectBg = useCallback(
@@ -2558,6 +2102,7 @@ const Hero = ({
     setHeroBgZoom(1);
     setHeroBgRotation(0);
     setHeroBgBlur(0);
+    setHeroBgPixelation(0);
     setHeroBgFocal1({ x: 50, y: 50 });
     setHeroBgFocal2({ x: 50, y: 50 });
     setHeroBgPanEnabled(false);
@@ -2571,6 +2116,82 @@ const Hero = ({
       const next = (current + 1) % 3; // 0 -> 1 -> 2 -> 0
       return { ...prev, [src]: next };
     });
+  };
+
+  const translatePixabayQuery = async (query) => {
+    try {
+      const response = await fetch(
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=uk&tl=en&dt=t&q=${encodeURIComponent(query)}`,
+      );
+      if (!response.ok) throw new Error(`Translation failed: ${response.status}`);
+      const data = await response.json();
+      return data[0].map((item) => item[0]).join("");
+    } catch (error) {
+      console.error("Pixabay query translation failed:", error);
+      return query;
+    }
+  };
+
+  const handleSearchPixabay = async (page = 1) => {
+    const query = pixabayQuery.trim();
+    if (!query || pixabayStatus === "loading") return;
+
+    setPixabayStatus("loading");
+    try {
+      const translatedQuery = await translatePixabayQuery(query);
+      const params = new URLSearchParams({
+        key: "50977795-feb18de71b048a02e0c824e54",
+        q: translatedQuery,
+        image_type: "photo",
+        per_page: "12",
+        page: String(page),
+        safesearch: "true",
+      });
+      const response = await fetch(`https://pixabay.com/api/?${params}`);
+      if (!response.ok) {
+        throw new Error(`Pixabay request failed: ${response.status}`);
+      }
+      const data = await response.json();
+      const results = (data.hits || []).map((hit) => ({
+        id: hit.id,
+        previewURL: hit.previewURL,
+        largeImageURL: hit.largeImageURL,
+        name: hit.tags || query,
+        source: "Pixabay",
+      }));
+
+      setPixabayResults((previous) =>
+        page === 1 ? results : [...previous, ...results],
+      );
+      setPixabayPage(page);
+      setPixabayStatus(results.length ? "idle" : "no-results");
+    } catch (error) {
+      console.error("Pixabay image search failed:", error);
+      setPixabayStatus("error");
+      toast.error("Не вдалося виконати пошук Pixabay. Спробуйте ще раз.");
+    }
+  };
+
+  const handleAddPixabayBackground = (image) => {
+    const src = image.largeImageURL || image.previewURL;
+    const existing = customHeroBgs.find(
+      (background) =>
+        background.id === image.id || background.src === src,
+    );
+    if (!existing) {
+      setCustomHeroBgs((previous) => [
+        {
+          id: `pixabay-${image.id}`,
+          src,
+          name: image.name,
+          category: "Ваші картинки",
+          source: image.source,
+        },
+        ...previous,
+      ]);
+    }
+    handleSelectBg(existing?.src || src);
+    toast.success("Фон встановлено.");
   };
 
   const fileInputRef = useRef(null);
@@ -2752,67 +2373,6 @@ const Hero = ({
     }
   };
 
-  useEffect(() => {
-    localforage.getItem("pinnedLinks").then((val) => {
-      if (val) setPinnedLinks(val);
-    });
-  }, []);
-
-  const togglePin = (id) => {
-    setPinnedLinks((prev) => {
-      let newPinned;
-      if (prev.includes(id)) {
-        newPinned = prev.filter((p) => p !== id);
-      } else {
-        newPinned = [id, ...prev].slice(0, 5);
-      }
-      localforage.setItem("pinnedLinks", newPinned);
-      return newPinned;
-    });
-  };
-
-  const fetchWikipediaResults = useCallback(async (query) => {
-    const trimmed = query.trim();
-    if (!trimmed) {
-      setWikipediaResults([]);
-      return;
-    }
-
-    setIsWikipediaLoading(true);
-    try {
-      const response = await fetch(buildWikipediaSearchUrl(trimmed));
-      if (!response.ok) {
-        throw new Error(`Wikipedia request failed: ${response.status}`);
-      }
-      const data = await response.json();
-      const results = (data?.query?.search || []).map((item) => ({
-        id: item.pageid,
-        title: item.title,
-        snippet: parseWikipediaSnippet(item.snippet),
-        url: `https://uk.wikipedia.org/wiki/${encodeURIComponent(item.title).replace(/%20/g, "_")}`,
-      }));
-      setWikipediaResults(results);
-    } catch (error) {
-      console.error("Wikipedia search error:", error);
-      setWikipediaResults([]);
-    } finally {
-      setIsWikipediaLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (searchMode !== "links") {
-      setWikipediaResults([]);
-      setIsWikipediaLoading(false);
-      return undefined;
-    }
-
-    const timeoutId = setTimeout(() => {
-      fetchWikipediaResults(inputValue);
-    }, 350);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchMode, inputValue, fetchWikipediaResults]);
 
   useEffect(() => {
     setLimit(3);
@@ -3043,6 +2603,13 @@ const Hero = ({
 
   return (
     <HeroDiv>
+      <SearchModeModal
+        isOpen={isSearchModeModalOpen}
+        isDarkMode={isDarkMode}
+        activeMode={searchMode}
+        onSelect={handleSearchModeSelect}
+        onClose={() => setIsSearchModeModalOpen(false)}
+      />
       <svg
         width="0"
         height="0"
@@ -3073,7 +2640,6 @@ const Hero = ({
         $rotationScale={rotationScale}
         $blur={heroBgBlur}
         $pixelation={heroBgPixelation}
-        $blurType={heroBgBlurType}
         $focalX={heroBgFocal1?.x || 50}
         $focalY={heroBgFocal1?.y || 50}
         $panEnabled={heroBgPanEnabled && heroBgZoom > 1}
@@ -3098,7 +2664,6 @@ const Hero = ({
         $rotationScale={rotationScale}
         $blur={heroBgBlur}
         $pixelation={heroBgPixelation}
-        $blurType={heroBgBlurType}
         $focalX={heroBgFocal2?.x || 50}
         $focalY={heroBgFocal2?.y || 50}
         $panEnabled={heroBgPanEnabled && heroBgZoom > 1}
@@ -3120,7 +2685,6 @@ const Hero = ({
         $rotationScale={rotationScale}
         $blur={heroBgBlur}
         $pixelation={heroBgPixelation}
-        $blurType={heroBgBlurType}
         $focalX={heroBgFocal3?.x || 50}
         $focalY={heroBgFocal3?.y || 50}
         $panEnabled={heroBgPanEnabled && heroBgZoom > 1}
@@ -3139,7 +2703,6 @@ const Hero = ({
         $rotationScale={rotationScale}
         $blur={heroBgBlur}
         $pixelation={heroBgPixelation}
-        $blurType={heroBgBlurType}
         $focalX={heroBgFocal4?.x || 50}
         $focalY={heroBgFocal4?.y || 50}
         $panEnabled={heroBgPanEnabled && heroBgZoom > 1}
@@ -3149,25 +2712,65 @@ const Hero = ({
         $videoPlaybackSpeed={videoPlaybackSpeed}
       />
       <Overlay $opacity={heroOverlayOpacity} $isStickyBgMode={isStickyBgMode} />
-      <ChangeBgButton ref={(el) => registerRef('changeBgButton', el)} onClick={() => setIsModalOpen(true)}>
-        <GiPalette /><p style={{fontSize: "11px"}}>Змінити фон?</p>
+      <ChangeBgButton
+        ref={(el) => registerRef("changeBgButton", el)}
+        onClick={() => setIsModalOpen(true)}
+        aria-label="Змінити фон"
+      >
+        <ChangeBgPreviewGroup aria-hidden="true">
+          {currentBgPreviewImages.map((src) => (
+            <ChangeBgPreview key={src} src={src} alt="" />
+          ))}
+        </ChangeBgPreviewGroup>
+        <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+          <GiPalette />
+          <span style={{ fontSize: 10 }}>Змінити фон</span>
+        </span>
       </ChangeBgButton>
       <HeroDecors $image={herotext} $start={startAnimation} />
       <DelayedContent $start={startAnimation}>
-        <HeroDecor>
-          <HeroFix>
-            <HeroFi>
-              <HeroDate ref={timezoneMenuRef}>
-                {heroDateString}
-                <Tooltip content="Змінити часовий пояс" isDarkMode={isDarkMode}>
+        <BrowserSearchPanel $isDarkMode={isDarkMode}>
+          <HeroDecor>
+            <HeroFix>
+              <HeroFi>
+                <HeroDate ref={timezoneMenuRef} $isDarkMode={isDarkMode}>
+                <ModePicker>
+                  <Tooltip content="Вибрати режим пошуку" isDarkMode={isDarkMode}>
+                    <ModeIconBtn
+                      onClick={() => setIsSearchModeModalOpen(true)}
+                      aria-label="Вибрати режим пошуку"
+                      $isDarkMode={isDarkMode}
+                    >
+                      {searchMode === "coordinates" ? (
+                        <FaMapLocationDot />
+                      ) : searchMode === "ai" ? (
+                        <MdAutoAwesome />
+                      ) : (
+                        <FaMountainCity />
+                      )}
+                    </ModeIconBtn>
+                  </Tooltip>
+                  <Tooltip content="Відкрити ШІ-асистент" isDarkMode={isDarkMode}>
+                    <AiSparkBtn
+                      onClick={() => setIsAiModalOpen(true)}
+                      aria-label="Відкрити ШІ-асистент"
+                      $isDarkMode={isDarkMode}
+                    >
+                      <MdAutoAwesome size={14} />
+                    </AiSparkBtn>
+                  </Tooltip>
+                </ModePicker>
+                <Tag $isDarkMode={isDarkMode} style={{ flex: 1, textAlign: "right" }}>
+                  {heroDateString}
+                </Tag>
                 <TimezoneButton
                   ref={(el) => registerRef('timezoneButton', el)}
                   onClick={() => setShowTimezoneMenu(!showTimezoneMenu)}
-                  aria-label="Змінити часовий пояс"
+                  aria-label="Змінити часовий пояс?"
+                  $isDarkMode={isDarkMode}
                 >
-                  <MdSettingsSuggest/>
+                   Часовий пояс <MdSettingsSuggest size={21}/>
                 </TimezoneButton>
-                </Tooltip>
                 {showTimezoneMenu && createPortal (
                   <TimezoneMenu>
                     <TimezoneMenuHeader>
@@ -3321,37 +2924,14 @@ const Hero = ({
                   </TimezoneMenu>,
   document.body 
                 )}
-              </HeroDate>
-            </HeroFi>
-          </HeroFix>
-        </HeroDecor>
-        <SearchWrapper ref={searchRef}>
+                </HeroDate>
+              </HeroFi>
+            </HeroFix>
+          </HeroDecor>
+          <SearchWrapper ref={searchRef}>
           {searchMode === "city" ? (
             <HeroFormater>
-              <SearchContainer>
-                <ModePicker>
-                  <Tooltip content="Вибрати режим пошуку" isDarkMode={isDarkMode}>
-                  <ModeIconBtn
-                    onClick={() => setShowModeDropdown((v) => !v)}
-                    aria-label="Вибрати режим пошуку"
-                  >
-                    <FaMountainCity />
-                  </ModeIconBtn>
-                  </Tooltip>
-                  {showModeDropdown && (
-                    <ModeDropdown $isDarkMode={isDarkMode}>
-                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "city"} onClick={() => { setSearchMode("city"); setShowModeDropdown(false); setLatitude(""); setLongitude(""); setSuggestions([]); setShowList(false); }}>
-                      <FaMountainCity /> За назвою міста
-                      </ModeDropdownItem>
-                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "coordinates"} onClick={() => { setSearchMode("coordinates"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); }}>
-                       <FaMapLocationDot /> Координати
-                      </ModeDropdownItem>
-                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "links"} onClick={() => { setSearchMode("links"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); setExpandedLinkId(null); }}>
-                      <TbWorldSearch />  Посилання
-                      </ModeDropdownItem>
-                    </ModeDropdown>
-                  )}
-                </ModePicker>
+              <SearchContainer $isDarkMode={isDarkMode}>
                 <HeroInput
                   ref={(el) => registerRef('heroInput', el)}
                   value={inputValue}
@@ -3361,7 +2941,7 @@ const Hero = ({
                     window.dispatchEvent(new CustomEvent('domino-hero-input-change', { detail: { value: e.target.value } }));
                   }}
                   onFocus={() => suggestions.length > 0 && setShowList(true)}
-                  placeholder="Уведіть місто, село."
+                  placeholder="Уведіть місто, село. Наприклад: Київ..."
                   type="text"
                   autoComplete="off"
                   autoCorrect="off"
@@ -3409,10 +2989,11 @@ const Hero = ({
                   </SuggestionsList>
                 )}
               </SearchContainer>
+              <HeroInfo $isDarkMode={isDarkMode}>
+                Ви заслуговуєте на багатофункціональний прогноз, де немає політики та реклами!
+                Гарної погоди!
+              </HeroInfo>
             </HeroFormater>
-          ) : searchMode === "links" ? (
-            /* ── Fullscreen links search mode: rendered via portal at end of HeroDiv ── */
-            null
           ) : (
             <div
               style={{
@@ -3425,31 +3006,7 @@ const Hero = ({
               }}
             >
               <CoordinatesContainer style={{ alignItems: "flex-start" }}>
-                <ModePicker style={{ alignSelf: "flex-start" }}>
-                 <Tooltip content="Вибрати режим пошуку" isDarkMode={isDarkMode}>
-                  <ModeIconBtn
-                    onClick={() => setShowModeDropdown((v) => !v)}
-                    aria-label="Вибрати режим пошуку"
-                    style={{ borderRadius: "8px 0 0 8px", height: "30px" }}
-                  >
-                    <FaMapLocationDot /> 
-                  </ModeIconBtn>
-                  </Tooltip>
-                  {showModeDropdown && (
-                    <ModeDropdown $isDarkMode={isDarkMode}>
-                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "city"} onClick={() => { setSearchMode("city"); setShowModeDropdown(false); setLatitude(""); setLongitude(""); setSuggestions([]); setShowList(false); }}>
-                        <FaMountainCity />  За назвою міста
-                      </ModeDropdownItem>
-                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "coordinates"} onClick={() => { setSearchMode("coordinates"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); }}>
-                        <FaMapLocationDot />  Координати
-                      </ModeDropdownItem>
-                      <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "links"} onClick={() => { setSearchMode("links"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); setExpandedLinkId(null); }}>
-                       <TbWorldSearch />   Посилання
-                      </ModeDropdownItem>
-                    </ModeDropdown>
-                  )}
-                </ModePicker>
-                <CoordinateInput>
+                <CoordinateInput $isDarkMode={isDarkMode}>
                   <input
                     type="number"
                     value={latitude}
@@ -3458,14 +3015,13 @@ const Hero = ({
                       if (e.key === "Enter") handleSelectByCoordinates();
                     }}
                     placeholder="Широта: Від -90° до +90°"
-                    $isDarkMode={isDarkMode}
                     disabled={isSearchingNearby}
                     min="-90"
                     max="90"
                     step="0.01"
                   />
                 </CoordinateInput>
-                <CoordinateInput>
+                <CoordinateInput $isDarkMode={isDarkMode}>
                   <input
                     type="number"
                     value={longitude}
@@ -3473,7 +3029,6 @@ const Hero = ({
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSelectByCoordinates();
                     }}
-                    $isDarkMode={isDarkMode}
                     placeholder="Довгота: Від -180° до +180°"
                     disabled={isSearchingNearby}
                     min="-180"
@@ -3481,7 +3036,19 @@ const Hero = ({
                     step="0.01"
                   />
                 </CoordinateInput>
+                <CoordinateSearchButton
+                  type="button"
+                  onClick={handleSelectByCoordinates}
+                  disabled={isSearchingNearby}
+                >
+                  <MdSearch />
+                  Знайти
+                </CoordinateSearchButton>
               </CoordinatesContainer>
+              <HeroInfo $isDarkMode={isDarkMode} $desktopOnly>
+                Ви заслуговуєте на багатофункціональний прогноз, де немає політики та реклами!
+                Гарної погоди!
+              </HeroInfo>
               {nearbySearchStatus && (
                 <div style={{
                   color: nearbySearchStatus.startsWith("✅") ? "#00e676"
@@ -3572,7 +3139,8 @@ const Hero = ({
               )}
             </div>
           )}
-        </SearchWrapper>
+          </SearchWrapper>
+        </BrowserSearchPanel>
         
         <div style={{ marginTop: "250px", zIndex: 90 }}>
           <News user={user} isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
@@ -3594,20 +3162,6 @@ const Hero = ({
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div
-                  style={{
-                    background: "linear-gradient(135deg, rgba(255, 179, 108, 0.25), rgba(255, 140, 43, 0.1))",
-                    border: "1px solid rgba(255, 179, 108, 0.4)",
-                    borderRadius: "10px",
-                    padding: "6px 10px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "18px",
-                  }}
-                >
-                  ✨
-                </div>
                 <div>
                   <h2
                     style={{
@@ -3629,16 +3183,16 @@ const Hero = ({
               </div>
               <div style={{ display: "flex", gap: "8px" }}>
                 <CloseBtn onClick={resetBgSettings}>
-                  🔄 Скинути
+                  <FiRefreshCw /> Скинути
                 </CloseBtn>
                 <CloseBtn $danger onClick={handleCloseModal}>
-                  ✖ Закрити
+                  <FiX /> Закрити
                 </CloseBtn>
               </div>
             </div>
             <ModalConfigGrid>
               <ConfigRow>
-                <label>🎞️ Режим фону:</label>
+                <label><FiImage /> Режим фону:</label>
                 <div style={{ display: "flex", gap: "5px", width: "100%" }}>
                   <select
                     value={heroBgMode}
@@ -3697,7 +3251,7 @@ const Hero = ({
                           whiteSpace: "nowrap",
                         }}
                       >
-                        🔀
+                        <FiShuffle />
                       </button>
                     </Tooltip>
                   )}
@@ -3705,7 +3259,7 @@ const Hero = ({
               </ConfigRow>
               <ConfigRow>
                 <label>
-                  🌘 Затемнення: {(heroOverlayOpacity * 100).toFixed(0)}%
+                  <FiSun /> Затемнення: {(heroOverlayOpacity * 100).toFixed(0)}%
                 </label>
                 <input
                   type="range"
@@ -3719,7 +3273,7 @@ const Hero = ({
                 />
               </ConfigRow>
               <ConfigRow>
-                <label>🔍 Наближення: {heroBgZoom.toFixed(2)}x</label>
+                <label><FiZoomIn /> Наближення: {heroBgZoom.toFixed(2)}x</label>
                 <input
                   type="range"
                   min="1"
@@ -3730,29 +3284,7 @@ const Hero = ({
                 />
               </ConfigRow>
               <ConfigRow>
-                <label>🎭 Ефект фокусу:</label>
-                <div style={{ display: "flex", gap: "4px" }}>
-                  <ModeButton
-                    $active={heroBgBlurType === "smooth"}
-                    onClick={() => {
-                      setHeroBgBlurType("smooth");
-                      setHeroBgPixelation(0);
-                    }}
-                    style={{ flex: 1, fontSize: "10px", padding: "3px", borderRadius: "6px" }}
-                  >
-                    Плавне
-                  </ModeButton>
-                  <ModeButton
-                    $active={heroBgBlurType === "pixelated"}
-                    onClick={() => setHeroBgBlurType("pixelated")}
-                    style={{ flex: 1, fontSize: "10px", padding: "3px", borderRadius: "6px" }}
-                  >
-                    Піксельне
-                  </ModeButton>
-                </div>
-              </ConfigRow>
-              <ConfigRow>
-                <label>🔄 Розворот: {heroBgRotation}°</label>
+                <label><FiRotateCw /> Розворот: {heroBgRotation}°</label>
                 <input
                   type="range"
                   min="-180"
@@ -3763,7 +3295,7 @@ const Hero = ({
                 />
               </ConfigRow>
               <ConfigRow>
-                <label>🌫️ Розмиття: {heroBgBlur.toFixed(1)}px</label>
+                <label><FiDroplet /> Розмиття: {heroBgBlur.toFixed(1)}px</label>
                 <input
                   type="range"
                   min="0"
@@ -3773,17 +3305,14 @@ const Hero = ({
                   onChange={(e) => setHeroBgBlur(parseFloat(e.target.value))}
                 />
               </ConfigRow>
-              <ConfigRow
-                style={{ opacity: heroBgBlurType === "pixelated" ? 1 : 0.4 }}
-              >
-                <label>👾 Пікселізація: {heroBgPixelation.toFixed(1)}</label>
+              <ConfigRow>
+                <label><FiGrid /> Пікселізація: {heroBgPixelation.toFixed(1)}</label>
                 <input
                   type="range"
                   min="0"
                   max="20"
                   step="0.2"
                   value={heroBgPixelation}
-                  disabled={heroBgBlurType !== "pixelated"}
                   onChange={(e) =>
                     setHeroBgPixelation(parseFloat(e.target.value))
                   }
@@ -3812,7 +3341,7 @@ const Hero = ({
                 >
                   <ConfigRow>
                     <label>
-                      ⏱️ Інтервал:{" "}
+                      <FiClock /> Інтервал:{" "}
                       {slideshowInterval >= 60
                         ? `${Math.floor(slideshowInterval / 60)}хв ${slideshowInterval % 60 > 0 ? (slideshowInterval % 60) + "с" : ""}`
                         : `${slideshowInterval}с`}
@@ -3829,7 +3358,7 @@ const Hero = ({
                     />
                   </ConfigRow>
                   <ConfigRow>
-                    <label>✨ Перехід: {slideshowTransition}с</label>
+                    <label><FiZap /> Перехід: {slideshowTransition}с</label>
                     <input
                       type="range"
                       min="0.5"
@@ -3842,7 +3371,7 @@ const Hero = ({
                     />
                   </ConfigRow>
                   <ConfigRow>
-                    <label>⚡ Швидкість відео: {videoPlaybackSpeed}x</label>
+                    <label><FiVideo /> Швидкість відео: {videoPlaybackSpeed}x</label>
                     <input
                       type="range"
                       min="0.25"
@@ -3860,8 +3389,106 @@ const Hero = ({
 
             <ModalDivider />
             <ModalSectionTitle>
-              🎨 Бібліотека зображень
+              <FiImage /> Бібліотека зображень
             </ModalSectionTitle>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                handleSearchPixabay(1);
+              }}
+              style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
+            >
+              <ModalSearchInput
+                aria-label="Пошук фонів на Pixabay"
+                placeholder="Пошук зображень на Pixabay..."
+                value={pixabayQuery}
+                onChange={(event) => setPixabayQuery(event.target.value)}
+                style={{ flex: "1 1 240px" }}
+              />
+              <SearchActionButton
+                type="submit"
+                disabled={pixabayStatus === "loading"}
+              >
+                <FiSearch />
+                {pixabayStatus === "loading" ? "Шукаємо..." : "Pixabay"}
+              </SearchActionButton>
+            </form>
+            {pixabayStatus === "no-results" && (
+              <span style={{ color: "#c5c8d0", fontSize: 12 }}>
+                Нічого не знайдено. Спробуйте інший запит.
+              </span>
+            )}
+            {pixabayStatus === "error" && (
+              <span role="alert" style={{ color: "#ff8a80", fontSize: 12 }}>
+                Пошук не вдався. Спробуйте ще раз.
+              </span>
+            )}
+            {pixabayResults.length > 0 && (
+              <>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(105px, 1fr))",
+                    gap: 8,
+                  }}
+                >
+                  {pixabayResults.map((image) => (
+                    <button
+                      key={image.id}
+                      type="button"
+                      onClick={() => handleAddPixabayBackground(image)}
+                      title={`Встановити фон: ${image.name}`}
+                      style={{
+                        position: "relative",
+                        aspectRatio: "1",
+                        overflow: "hidden",
+                        padding: 0,
+                        border: "1px solid rgba(255, 179, 108, 0.4)",
+                        borderRadius: 8,
+                        background: "#10131b",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <img
+                        src={image.previewURL}
+                        alt={image.name}
+                        loading="lazy"
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <span
+                        style={{
+                          position: "absolute",
+                          inset: "auto 0 0",
+                          padding: "4px",
+                          overflow: "hidden",
+                          color: "#fff",
+                          background: "rgba(0,0,0,.72)",
+                          fontSize: 10,
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {image.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {pixabayResults.length === pixabayPage * 12 && (
+                  <SearchActionButton
+                    type="button"
+                    disabled={pixabayStatus === "loading"}
+                    onClick={() => handleSearchPixabay(pixabayPage + 1)}
+                  >
+                    {pixabayStatus === "loading" ? "Завантажуємо..." : "Ще з Pixabay"}
+                  </SearchActionButton>
+                )}
+              </>
+            )}
             <div
               style={{
                 display: "flex",
@@ -3872,7 +3499,7 @@ const Hero = ({
               }}
             >
               <ModalSearchInput
-                placeholder="🔍 Пошук картин за назвою..."
+                placeholder="Фільтр наявних фонів за назвою..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -3909,8 +3536,7 @@ const Hero = ({
                     <option value="Природа та Стихії">Природа та Стихії</option>
                     <option value="Фентезі та Легенди">Фентезі та Легенди</option>
                     <option value="Темрява та Містика">Темрява та Містика</option>
-                    {/* <option value="Скріншоти">📸 Скріншоти</option> */}
-                    <option value="custom">📁 Ваші завантажені</option>
+                    <option value="custom">Ваші зображення та відео</option>
                   </select>
                 </div>
                 <div
@@ -3931,9 +3557,9 @@ const Hero = ({
                       cursor: "pointer",
                     }}
                   >
-                    <option value="rating">⭐ За рейтингом</option>
-                    <option value="az">🔤 Назва А-Я</option>
-                    <option value="za">🔤 Назва Я-А</option>
+                    <option value="rating">За рейтингом</option>
+                    <option value="az">Назва А-Я</option>
+                    <option value="za">Назва Я-А</option>
                   </select>
                 </div>
               </div>
@@ -3983,14 +3609,30 @@ const Hero = ({
                           <HeartIcon
                             $color="#ffda79"
                             aria-label="Скачати фон"
+                            title="Завантажити фон"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDownloadBg(bg);
                             }}
                           >
-                            📥
+                            <FiDownload />
                           </HeartIcon>
                         </Tooltip>
+                        {!isVideoSource(bg.src) && (
+                          <Tooltip content="Надрукувати фон" isDarkMode={isDarkMode}>
+                            <HeartIcon
+                              $color="#aef"
+                              aria-label="Надрукувати фон"
+                              title="Надрукувати фон"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePrintBg(bg);
+                              }}
+                            >
+                              <FiPrinter />
+                            </HeartIcon>
+                          </Tooltip>
+                        )}
                       </div>
                     </RatingOverlay>
                     {isCustom(bg.src) && (
@@ -4161,9 +3803,9 @@ const Hero = ({
             <DropZone
               onDragOver={handleDragOver}
               onDrop={handleDrop}
-              onClick={() => fileInputRef.current.click()}
+              onClick={() => fileInputRef.current?.click()}
             >
-              <div style={{ fontSize: "24px" }}>📤</div>
+              <FiUploadCloud size={24} aria-hidden="true" />
               <div>
                 <span style={{ color: "#ffb36c", fontWeight: "bold" }}>Перетягніть сюди</span> картинку або відео
               </div>
@@ -4173,7 +3815,10 @@ const Hero = ({
                 ref={fileInputRef}
                 hidden
                 accept="image/*,video/*"
-                onChange={(e) => handleFileUpload(e.target.files[0])}
+                onChange={(e) => {
+                  handleFileUpload(e.target.files[0]);
+                  e.target.value = "";
+                }}
               />
             </DropZone>
           </ModalContent>
@@ -4368,7 +4013,8 @@ const Hero = ({
                   onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
                   onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                 >
-                  📥 Скачати {isVideoSource(descriptionModal.src) ? "відео" : "картинку"}
+                  <FiDownload />
+                  Скачати {isVideoSource(descriptionModal.src) ? "відео" : "картинку"}
                 </button>
               </div>
             </div>
@@ -4376,470 +4022,31 @@ const Hero = ({
         </div>
       )}
 
-      {fullscreenImage && (
-        <FullscreenImageOverlay onClick={() => setFullscreenImage(null)}>
-          <FullscreenImage src={fullscreenImage} alt="Fullscreen" />
-        </FullscreenImageOverlay>
-      )}
 
-      {fullscreenVideo && (
-        <FullscreenImageOverlay onClick={() => setFullscreenVideo(null)}>
-          <div 
-            onClick={(e) => e.stopPropagation()} 
-            style={{ 
-              position: 'relative', 
-              width: '90%', 
-              maxWidth: '800px', 
-              aspectRatio: '16/9', 
-              background: '#000', 
-              borderRadius: '8px', 
-              overflow: 'hidden',
-              boxShadow: '0 0 20px rgba(255,255,255,0.2)'
-            }}
-          >
-            <iframe 
-              src={fullscreenVideo.includes("embed") ? `${fullscreenVideo}?autoplay=1` : `https://www.youtube.com/embed/${getYoutubeId(fullscreenVideo)}?autoplay=1`} 
-              aria-label="YouTube Video" 
-              frameBorder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowFullScreen
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 'none'
-              }}
-            ></iframe>
-            <button 
-              onClick={() => setFullscreenVideo(null)} 
-              style={{ 
-                position: 'absolute', 
-                top: '10px', 
-                right: '10px', 
-                background: 'rgba(0,0,0,0.6)', 
-                border: 'none', 
-                borderRadius: '50%', 
-                width: '30px', 
-                height: '30px', 
-                color: '#fff', 
-                cursor: 'pointer',
-                fontSize: '18px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 100
-              }}
-            >
-              ×
-            </button>
-          </div>
-        </FullscreenImageOverlay>
-      )}
-      {/* ── FULLSCREEN LINKS SEARCH OVERLAY ── */}
-      {searchMode === "links" && (
-        <LinksSearchOverlay $isDarkMode={isDarkMode}>
-          <LinksSearchHeader $isDarkMode={isDarkMode}>
-            <LinksSearchBar $isDarkMode={isDarkMode}>
-              <ModePicker>
-                <Tooltip content="Вибрати режим пошуку" isDarkMode={isDarkMode}>
-                  <ModeIconBtn
-                    onClick={() => setShowModeDropdown((v) => !v)}
-                    aria-label="Вибрати режим пошуку"
-                    style={{ background: "#ffb36c", color: "#000", borderRadius: "50%", width: "34px", height: "34px" }}
-                  >
-                    <TbWorldSearch />
-                  </ModeIconBtn>
-                </Tooltip>
-                {showModeDropdown && (
-                  <ModeDropdown $isDarkMode={isDarkMode}>
-                    <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "city"} onClick={() => { setSearchMode("city"); setShowModeDropdown(false); setLatitude(""); setLongitude(""); setSuggestions([]); setShowList(false); }}>
-                      <FaMountainCity /> За назвою міста
-                    </ModeDropdownItem>
-                    <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "coordinates"} onClick={() => { setSearchMode("coordinates"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); }}>
-                      <FaMapLocationDot /> Координати
-                    </ModeDropdownItem>
-                    <ModeDropdownItem $isDarkMode={isDarkMode} $active={searchMode === "links"} onClick={() => { setSearchMode("links"); setShowModeDropdown(false); setInputValue(""); setSuggestions([]); setShowList(false); }}>
-                      <TbWorldSearch /> Посилання
-                    </ModeDropdownItem>
-                  </ModeDropdown>
-                )}
-              </ModePicker>
-              <LinksSearchInput
-                $isDarkMode={isDarkMode}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && inputValue.trim()) {
-                    window.open(
-                      "https://www.google.com/search?q=" + encodeURIComponent(inputValue),
-                      "_blank"
-                    );
-                  }
-                }}
-                placeholder="Пошук сайтів, ігор, статей, авторів..."
-                type="text"
-                autoFocus
-                autoComplete="off"
+
+
+      <SearchModeModal
+        isOpen={isSearchModeModalOpen}
+        isDarkMode={isDarkMode}
+        activeMode={searchMode}
+        onSelect={handleSearchModeSelect}
+        onClose={() => setIsSearchModeModalOpen(false)}
+      />
+
+      {isAiModalOpen && createPortal(
+        <AiModalBackdrop onClick={() => setIsAiModalOpen(false)}>
+          <AiModalContainer onClick={(e) => e.stopPropagation()}>
+            <AiModalBody $isDarkMode={isDarkMode}>
+              <React_lazy_Aihelp
+                isDarkMode={isDarkMode}
+                isStickyBgMode={false}
+                onClose={() => setIsAiModalOpen(false)}
               />
-              {inputValue && (
-                <ClearButton
-                  onClick={() => setInputValue("")}
-                  aria-label="Очистити"
-                  type="button"
-                  style={{ position: "static", transform: "none", borderRadius: "50%" }}
-                >
-                  ×
-                </ClearButton>
-              )}
-            </LinksSearchBar>
-
-            <LinksSearchMeta $isDarkMode={isDarkMode}>
-              Натисніть на картку сайту, щоб відкрити повний опис та галерею • Esc для виходу
-            </LinksSearchMeta>
-          </LinksSearchHeader>
-
-          <LinksResultsList>
-            {inputValue.trim() === "" && pinnedLinks.length > 0 && (
-              <>
-                <LinksPinnedLabel $isDarkMode={isDarkMode}>📌 Закріплені сайти</LinksPinnedLabel>
-                {customLinksData
-                  .filter((link) => pinnedLinks.includes(link.id))
-                  .map((link) => {
-                    const author = extractAuthor(link);
-                    const platforms = getLinkPlatforms(link);
-                    return (
-                      <LinksResultItem
-                        key={`pinned-${link.id}`}
-                        $isDarkMode={isDarkMode}
-                        onClick={() => setLinkDetailModal(link)}
-                      >
-                        <LinkFavicon $bg="linear-gradient(135deg, #ffb36c 0%, #ff8c2b 100%)">
-                          <LinkFaviconImage link={link} />
-                        </LinkFavicon>
-                        <LinkMainInfo>
-                          <LinkTitle $isDarkMode={isDarkMode}>{link.title}</LinkTitle>
-                          {author && <LinkAuthor $isDarkMode={isDarkMode}> {author}</LinkAuthor>}
-                          {link.tags && (
-                            <LinkTagsRow>
-                              {link.tags.map((t) => (
-                                <LinkTagBadge key={t} $isDarkMode={isDarkMode}>#{t}</LinkTagBadge>
-                              ))}
-                            </LinkTagsRow>
-                          )}
-                        </LinkMainInfo>
-                        <LinkPlatformBtns onClick={(e) => e.stopPropagation()}>
-                          {platforms.map((p) => {
-                            const cfg = PLATFORM_CONFIG[p.type];
-                            if (!cfg) return null;
-                            return (
-                              <PlatformBtn
-                                key={p.type}
-                                $color={cfg.color}
-                                onClick={() => window.open(p.url, "_blank")}
-                              >
-                                {cfg.emoji} {cfg.label}
-                              </PlatformBtn>
-                            );
-                          })}
-                          <button
-                            onClick={() => window.open(link.url, "_blank")}
-                            style={{
-                              padding: "4px 10px",
-                              background: "#ffb36c",
-                              border: "none",
-                              borderRadius: "20px",
-                              fontWeight: "bold",
-                              color: "#000",
-                              fontSize: "11px",
-                              cursor: "pointer",
-                            }}
-                          >
-                            {link.buttonText || "Відкрити"}
-                          </button>
-                        </LinkPlatformBtns>
-                      </LinksResultItem>
-                    );
-                  })}
-                <LinksSectionDivider $isDarkMode={isDarkMode} />
-                <LinksPinnedLabel $isDarkMode={isDarkMode}>🌐 Усі сайти та ресурси</LinksPinnedLabel>
-              </>
-            )}
-
-            {/* Filtered Custom Links */}
-            {customLinksData
-              .filter((link) => {
-                if (inputValue.trim() === "") return true;
-                const lowerInput = inputValue.toLowerCase();
-                const matchesText =
-                  link.title.toLowerCase().includes(lowerInput) ||
-                  (link.snippet && link.snippet.toLowerCase().includes(lowerInput));
-                const matchesAuthor =
-                  extractAuthor(link)?.toLowerCase().includes(lowerInput);
-                const matchesTags =
-                  link.tags && link.tags.some((tag) => tag.toLowerCase().includes(lowerInput));
-                return matchesText || matchesAuthor || matchesTags;
-              })
-              .map((link) => {
-                const author = extractAuthor(link);
-                const platforms = getLinkPlatforms(link);
-                const isPinned = pinnedLinks.includes(link.id);
-                return (
-                  <LinksResultItem
-                    key={link.id}
-                    $isDarkMode={isDarkMode}
-                    onClick={() => setLinkDetailModal(link)}
-                  >
-                    <LinkFavicon>
-                      <LinkFaviconImage link={link} />
-                    </LinkFavicon>
-                    <LinkMainInfo>
-                      <LinkTitle $isDarkMode={isDarkMode}>{link.title}</LinkTitle>
-                      {author && <LinkAuthor $isDarkMode={isDarkMode}>{author}</LinkAuthor>}
-                      {link.tags && (
-                        <LinkTagsRow>
-                          {link.tags.map((t) => (
-                            <LinkTagBadge key={t} $isDarkMode={isDarkMode}>#{t}</LinkTagBadge>
-                          ))}
-                        </LinkTagsRow>
-                      )}
-                    </LinkMainInfo>
-                    <LinkPlatformBtns onClick={(e) => e.stopPropagation()}>
-                      {platforms.map((p) => {
-                        const cfg = PLATFORM_CONFIG[p.type];
-                        if (!cfg) return null;
-                        return (
-                          <PlatformBtn
-                            key={p.type}
-                            $color={cfg.color}
-                            onClick={() => window.open(p.url, "_blank")}
-                          >
-                            {cfg.emoji} {cfg.label}
-                          </PlatformBtn>
-                        );
-                      })}
-                      <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-                        <button
-                          onClick={() => window.open(link.url, "_blank")}
-                          style={{
-                            padding: "4px 10px",
-                            background: "#ffb36c",
-                            border: "none",
-                            borderRadius: "20px",
-                            fontWeight: "bold",
-                            color: "#000",
-                            fontSize: "11px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          {link.buttonText || "Відкрити"}
-                        </button>
-                        <button
-                          onClick={() => togglePin(link.id)}
-                          title={isPinned ? "Відкріпити" : "Закріпити"}
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            cursor: "pointer",
-                            fontSize: "16px",
-                            color: isPinned ? "#ffb36c" : (isDarkMode ? "#666" : "#aaa"),
-                          }}
-                        >
-                          {isPinned ? <BsPinAngleFill /> : <BsPinAngle />}
-                        </button>
-                      </div>
-                    </LinkPlatformBtns>
-                  </LinksResultItem>
-                );
-              })}
-
-            {/* Wikipedia Results */}
-            {wikipediaResults.map((result) => (
-              <LinksResultItem
-                key={result.id}
-                $isDarkMode={isDarkMode}
-                onClick={() => setLinkDetailModal({
-                  title: result.title,
-                  url: result.url,
-                  snippet: result.snippet,
-                  buttonText: "Читати у Вікіпедії",
-                  author: "Вікіпедія (Українська)",
-                  tags: ["вікіпедія", "енциклопедія"]
-                })}
-              >
-                <LinkFavicon $bg="linear-gradient(135deg, #00bfff, #0077ff)">
-                  W
-                </LinkFavicon>
-                <LinkMainInfo>
-                  <LinkTitle $isDarkMode={isDarkMode}>{result.title}</LinkTitle>
-                  <LinkAuthor $isDarkMode={isDarkMode}>🌐 Вікіпедія</LinkAuthor>
-                </LinkMainInfo>
-                <LinkPlatformBtns onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => window.open(result.url, "_blank")}
-                    style={{
-                      padding: "4px 10px",
-                      background: "#00bfff",
-                      border: "none",
-                      borderRadius: "20px",
-                      fontWeight: "bold",
-                      color: "#000",
-                      fontSize: "11px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Вікіпедія
-                  </button>
-                </LinkPlatformBtns>
-              </LinksResultItem>
-            ))}
-
-            {isWikipediaLoading && (
-              <div style={{ padding: "16px", textAlign: "center", color: isDarkMode ? "#aaa" : "#555" }}>
-                ⏳ Завантажую результати з Вікіпедії...
-              </div>
-            )}
-          </LinksResultsList>
-        </LinksSearchOverlay>
+            </AiModalBody>
+          </AiModalContainer>
+        </AiModalBackdrop>,
+        document.body
       )}
-
-      {/* ── LINK DETAIL MODAL ── */}
-      {linkDetailModal && (() => {
-        const bgImage = getLinkModalBgImage(linkDetailModal);
-        const author = extractAuthor(linkDetailModal);
-        return (
-          <LinkDetailOverlay onClick={() => setLinkDetailModal(null)}>
-            <LinkDetailCard
-              $bgImage={bgImage}
-              $bg={linkDetailModal.bg}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <LinkDetailHeader>
-                <div>
-                  <h2
-                    style={{
-                      color: "#ffb36c",
-                      margin: 0,
-                      fontSize: "22px",
-                      fontWeight: "bold",
-                      textShadow: "0 2px 6px rgba(0,0,0,0.9)",
-                    }}
-                  >
-                    {linkDetailModal.title}
-                  </h2>
-                  {author && (
-                    <div style={{ color: "#f9f6f6", fontSize: "13px", marginTop: "4px" }}>
-                      Автор / Постачальник: <b>{author}</b>
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => setLinkDetailModal(null)}
-                  style={{
-                    background: "rgba(0,0,0,0.6)",
-                    border: "1px solid rgba(255,255,255,0.3)",
-                    borderRadius: "50%",
-                    width: "32px",
-                    height: "32px",
-                    color: "#fff",
-                    fontSize: "20px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  ×
-                </button>
-              </LinkDetailHeader>
-
-              <LinkDetailBody>
-                {linkDetailModal.tags && (
-                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                    {linkDetailModal.tags.map((t) => (
-                      <span
-                        key={t}
-                        style={{
-                          background: "rgba(255, 179, 108, 0.2)",
-                          color: "#ffb36c",
-                          border: "1px solid rgba(255, 179, 108, 0.35)",
-                          padding: "2px 8px",
-                          borderRadius: "12px",
-                          fontSize: "12px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        #{t}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {((linkDetailModal.images && linkDetailModal.images.length > 0) || linkDetailModal.youtubeTrailer) && (
-                  <ImageSlider
-                    images={linkDetailModal.images || []}
-                    youtubeTrailer={linkDetailModal.youtubeTrailer}
-                    setFullscreenImage={setFullscreenImage}
-                    imageMap={imageMap}
-                    setFullscreenVideo={setFullscreenVideo}
-                  />
-                )}
-
-                <div
-                  style={{
-                    lineHeight: "1.8",
-                    whiteSpace: "pre-wrap",
-                    color: "#f0f0f0",
-                    fontSize: "14px",
-                    textShadow: "0 1px 4px rgba(0,0,0,0.9)",
-                    background: "rgba(0, 0, 0, 0.35)",
-                    padding: "14px",
-                    borderRadius: "12px",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                  }}
-                >
-                  {linkDetailModal.snippet}
-                </div>
-              </LinkDetailBody>
-
-              <LinkDetailFooter>
-                {getLinkPlatforms(linkDetailModal).map((p) => {
-                  const cfg = PLATFORM_CONFIG[p.type];
-                  if (!cfg) return null;
-                  return (
-                    <PlatformBtn
-                      key={p.type}
-                      $color={cfg.color}
-                      onClick={() => window.open(p.url, "_blank")}
-                      style={{ padding: "8px 14px", fontSize: "13px" }}
-                    >
-                      {cfg.emoji} Відкрити в {cfg.label}
-                    </PlatformBtn>
-                  );
-                })}
-
-                <button
-                  onClick={() => window.open(linkDetailModal.url, "_blank")}
-                  style={{
-                    background: "linear-gradient(135deg, #ffb36c 0%, #ff8c2b 100%)",
-                    color: "#000",
-                    border: "none",
-                    borderRadius: "20px",
-                    padding: "8px 20px",
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  marginLeft: "auto",
-                }}
-              >
-                {linkDetailModal.buttonText || "Перейти на сайт"}
-              </button>
-            </LinkDetailFooter>
-          </LinkDetailCard>
-        </LinkDetailOverlay>
-        );
-      })()}
     </HeroDiv>
   );
 };

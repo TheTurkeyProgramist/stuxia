@@ -68,7 +68,7 @@ const ImageContainer = styled.div`
 const UIOverlay = styled.div`
   position: relative;
   z-index: 2;
-  width: 90%;
+  width: 96%;
   max-width: 600px;
   display: flex;
   flex-direction: column;
@@ -125,17 +125,16 @@ const PhraseText = styled.div`
   font-weight: 900;
   max-width: 1200px;
   font-style: italic;
-  border-radius: 20px;
+  border-radius: 6px;
   background: rgba(0, 0, 0, 0.61);
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  padding: 8px 12px;
+  padding: 5px 12px;
   margin-top: 5px;
 `;
-
 const CopyrightText = styled.p`
-  margin: 8px 0 0;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 11px;
+  margin-bottom: 55px;
+  color: rgb(255, 255, 255);
+  font-size: 10px;
   line-height: 1.4;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
 `;

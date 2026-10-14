@@ -6,6 +6,7 @@ import hills from "../../photos/hero-header/fog.webp";
 import texts from "../../photos/vip-modal/texts.webp";
 import logofix from "../../photos/hero-header/logo.webp";
 import { FaHeartbeat } from "react-icons/fa";
+import { FiSearch, FiX } from "react-icons/fi";
 import { IoHeartDislikeSharp } from "react-icons/io5";
 import preview from "../../photos/hero-header/prewiew.webp";
 import info from "../../photos/hero-header/what.webp";
@@ -134,37 +135,6 @@ const ScrollArea = styled.div`
     border-radius: 10px;
   }
 `;
-const TabsContainer = styled.div`
-  display: flex;
-  justify-content: center;
-`;
-const TabButton = styled.button`
-  background: ${({ $active, $isDarkMode }) =>
-    $active
-      ? "#8a2be2"
-      : $isDarkMode
-      ? "#0c0c0cbf"
-      : "#fdff98"};
-
-  color: ${({ $active, $isDarkMode }) =>
-    $active ? "#ffffff" : $isDarkMode ? "#020202" : "#020202"};
-
-  border: none;
-  padding: 5px 12px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: ${({ $active, $isDarkMode }) =>
-      $active
-        ? "#7b22cc"
-        : $isDarkMode
-        ? "#1a1a1ce6"
-        : "#fbff02"};
-  }
-`;
 const CloseBtn = styled.button`
   position: absolute;
   top: 0px;
@@ -194,46 +164,73 @@ const PreviewCloseBtn = styled(CloseBtn)`
 `;
 
 const AccordionWrapper = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+  gap: 12px;
   margin-top: 3px;
 `;
 
-const AccordionItem = styled.div`
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+const AccordionItem = styled.article`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 190px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  background-color: #174348;
+  background-image: ${({ $image }) =>
+    $image
+      ? `linear-gradient(135deg, rgba(10, 20, 25, 0.82), rgba(10, 20, 25, 0.54)), url("${$image}")`
+      : "linear-gradient(135deg, #174348, #263d5b)"};
+  background-position: center;
+  background-size: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+
   ${animatedStyle}
 `;
-const Question = styled.div`
+const Question = styled.button`
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 16px 10px;
+  border: none;
+  background: transparent;
   cursor: pointer;
+  text-align: left;
   font-weight: 700;
   font-size: 14px;
-  color: ${({ $rating, $isDarkMode }) => 
-    $rating === 1 ? "#8a2be2" : $isDarkMode ? "#ffffff" : "#111111"};
-  opacity: ${(props) => (props.$rating === -1 ? 0.4 : 1)};
-  transition: all 0.3s ease;
+  color: #ffffff;
 
-  &::before {
-    content: "";
-    width: 4px;
-    height: 20px;
-    background: ${({ $rating, $isDarkMode }) => 
-      $rating === -1 ? ($isDarkMode ? "#555555" : "#cccccc") : "#8a2be2"};
-    margin-right: 12px;
-    display: inline-block;
+  &:focus-visible {
+    outline: 2px solid #ffd001;
+    outline-offset: -4px;
   }
-`;
-const QuestionContent = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: 5px;
 `;
 
 const QuestionText = styled.div`
-  flex: 1;
+  overflow: hidden;
+  max-height: calc(1.4em * 3);
+  line-height: 1.4;
+  font-size: 15px;
+`;
+
+const AnswerPreview = styled.div`
+  overflow: hidden;
+  max-height: calc(1.45em * 3);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
 `;
 
 const LikeButton = styled.button`
@@ -242,6 +239,7 @@ const LikeButton = styled.button`
   cursor: pointer;
   font-size: 14px;
   padding: 1px;
+  color: #ffffff;
   transition: transform 0.2s;
   display: flex;
   align-items: center;
@@ -257,6 +255,8 @@ const ArrowContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 7px;
+  align-self: flex-end;
+  padding: 0 12px 10px;
 `;
 
 const AnswerImage = styled.img`
@@ -386,20 +386,94 @@ const PreviewImage = styled.img`
   cursor: zoom-out;
 `;
 
-const SearchInput = styled.input`
+const SearchField = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  padding: 5px 10px;
-  border: 2px solid rgb(50, 215, 0);
-  border-bottom-left-radius: 25px;
-  background: rgba(2, 2, 2, 0.9);
-  color: #fffefe;
-  font-size: 13px;
-  outline: none;
-  margin-bottom: 10px;
-  transition: border-color 0.3s ease;
+  min-height: 46px;
+  margin-bottom: 14px;
+  padding: 0 14px;
+  border: 1px solid
+    ${({ $isDarkMode }) =>
+      $isDarkMode ? "rgba(90, 230, 216, 0.32)" : "rgba(23, 67, 72, 0.24)"};
+  border-radius: 14px;
+  background: ${({ $isDarkMode }) =>
+    $isDarkMode ? "rgba(5, 24, 29, 0.78)" : "rgba(255, 255, 255, 0.82)"};
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.12);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease,
+    transform 0.25s ease, background 0.25s ease;
+
+  &:focus-within {
+    transform: translateY(-2px);
+    border-color: ${({ $isDarkMode }) =>
+      $isDarkMode ? "#51e6d5" : "#174348"};
+    background: ${({ $isDarkMode }) =>
+      $isDarkMode ? "rgba(5, 24, 29, 0.96)" : "#ffffff"};
+    box-shadow: 0 0 0 3px
+        ${({ $isDarkMode }) =>
+          $isDarkMode ? "rgba(81, 230, 213, 0.16)" : "rgba(23, 67, 72, 0.12)"},
+      0 8px 22px rgba(0, 0, 0, 0.18);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+const SearchIcon = styled(FiSearch)`
+  flex: 0 0 auto;
+  color: ${({ $isDarkMode }) =>
+    $isDarkMode ? "rgba(138, 235, 224, 0.72)" : "rgba(23, 67, 72, 0.65)"};
+  font-size: 18px;
+  transition: color 0.25s ease, transform 0.25s ease;
+
+  ${SearchField}:focus-within & {
+    color: ${({ $isDarkMode }) => ($isDarkMode ? "#51e6d5" : "#174348")};
+    transform: scale(1.12) rotate(-8deg);
+  }
+`;
+
+const SearchInput = styled.input`
+  flex: 1;
+  min-width: 0;
+  padding: 12px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: ${({ $isDarkMode }) => ($isDarkMode ? "#ffffff" : "#142326")};
+  font: inherit;
+  font-size: 14px;
 
   &::placeholder {
-    color: #f9f9f9;
+    color: ${({ $isDarkMode }) =>
+      $isDarkMode ? "rgba(255, 255, 255, 0.58)" : "rgba(20, 35, 38, 0.55)"};
+  }
+
+  &::-webkit-search-cancel-button {
+    display: none;
+  }
+`;
+
+const ClearSearchButton = styled.button`
+  display: grid;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: ${({ $isDarkMode }) =>
+    $isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(23, 67, 72, 0.1)"};
+  color: ${({ $isDarkMode }) => ($isDarkMode ? "#ffffff" : "#174348")};
+  cursor: pointer;
+  animation: ${fadeIn} 0.18s ease both;
+  transition: background 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    transform: rotate(90deg);
+    background: ${({ $isDarkMode }) =>
+      $isDarkMode ? "rgba(255, 255, 255, 0.2)" : "rgba(23, 67, 72, 0.18)"};
   }
 `;
 
@@ -491,7 +565,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
   const [selectedFaq, setSelectedFaq] = useState(null);
   const [ratings, setRatings] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("faq");
   const LIKE = 1;
   const DISLIKE = -1;
 
@@ -600,7 +673,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
       );
       if (matchingIndex >= 0) {
         faqToOpen = faqData[matchingIndex];
-        setActiveTab("faq");
       }
     }
 
@@ -700,39 +772,30 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
 >
   Останнє оновлення: 30 серпня 2026 року
 </p>
-          <TabsContainer>
-            <TabButton
-              $active={activeTab === "faq"}
-              onClick={() => setActiveTab("faq")}
-              style={{
-                borderBottomLeftRadius: "20px",
-                borderTopLeftRadius: "20px",
-                borderRight: "1px solid rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              Питання (FAQ)
-            </TabButton>
-            <TabButton
-              $active={activeTab === "ai"}
-              style={{
-                borderBottomRightRadius: "20px",
-                borderTopRightRadius: "20px",
-              }}
-            >
-              ШІ Асистент
-            </TabButton>
-          </TabsContainer>
         </Conten>
         <ScrollArea>
-          {activeTab === "faq" && (
-            <>
+          <>
+            <SearchField $isDarkMode={isDarkMode}>
+              <SearchIcon $isDarkMode={isDarkMode} aria-hidden="true" />
               <SearchInput
                 type="search"
-                placeholder="Пошук питань..."
+                placeholder="Знайти питання або відповідь..."
                 aria-label="Пошук питань"
                 value={searchQuery}
+                $isDarkMode={isDarkMode}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <ClearSearchButton
+                  type="button"
+                  $isDarkMode={isDarkMode}
+                  onClick={() => setSearchQuery("")}
+                  aria-label="Очистити пошук"
+                >
+                  <FiX aria-hidden="true" />
+                </ClearSearchButton>
+              )}
+            </SearchField>
               <AccordionWrapper style={{ marginTop: 0 }}>
                 {sortedFaqData.length === 0 && (
                   <p style={{ textAlign: "center", color: "#555" }}>
@@ -742,17 +805,47 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                 {sortedFaqData.map((item, displayIndex) => {
                 const originalIndex = item.originalIndex;
                 const rating = ratings[originalIndex] || 0;
+                const answerPreview = (item.a || "")
+                  .replace(/<[^>]*>/g, " ")
+                  .replace(/\s+/g, " ")
+                  .trim();
                 return (
-                  <AccordionItem key={originalIndex} $index={displayIndex + 1}>
-                    <Question $isDarkMode={isDarkMode}
-                      $rating={rating}
-                      onClick={() => setSelectedFaq(item)}
+                  <AccordionItem
+                    key={originalIndex}
+                    $index={displayIndex + 1}
+                    $image={item.image || hills}
+                    onClick={(event) => {
+                      if (event.target.closest("[data-rating-button]")) {
+                        return;
+                      }
+
+                      const hasOverflow = Array.from(
+                        event.currentTarget.querySelectorAll("[data-truncated-content]"),
+                      ).some(
+                        (element) =>
+                          element.scrollHeight > element.clientHeight + 1,
+                      );
+
+                      if (hasOverflow) {
+                        setSelectedFaq(item);
+                      }
+                    }}
+                  >
+                    <Question
+                      type="button"
+                      aria-label={`Переглянути відповідь: ${item.q}`}
                     >
-                      <QuestionContent>
-                        <QuestionText>{item.q}</QuestionText>
-                        <ArrowContainer>
+                      <QuestionText data-truncated-content>
+                        {item.q}
+                      </QuestionText>
+                      <AnswerPreview data-truncated-content>
+                        {answerPreview || "Натисніть, щоб переглянути відповідь."}
+                      </AnswerPreview>
+                    </Question>
+                    <ArrowContainer>
                     <Tooltip content="Корисно" isDarkMode={isDarkMode}>
                           <LikeButton
+                            data-rating-button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleLike(originalIndex, LIKE);
@@ -764,6 +857,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                           </Tooltip>
                            <Tooltip content="Не корисно" isDarkMode={isDarkMode}>
                           <LikeButton
+                            data-rating-button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleLike(originalIndex, DISLIKE);
@@ -777,15 +871,12 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                             )}
                           </LikeButton>
                           </Tooltip>
-                        </ArrowContainer>
-                      </QuestionContent>
-                    </Question>
+                    </ArrowContainer>
                   </AccordionItem>
                 );
                 })}
               </AccordionWrapper>
-            </>
-          )}
+          </>
         </ScrollArea>
       </Content>
       {selectedFaq && (

@@ -113,7 +113,7 @@ const IconButton = styled.button`
   align-items: center;
   height: 26px;
   justify-content: center;
-  padding: 4px 16px;
+  padding: 4px 20%;
   border-radius: 6px;
   flex-shrink: 0;
   transition: outline 0.15s ease, transform 0.15s ease;
@@ -534,6 +534,13 @@ const Header = ({
   };
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
+  // Helper to play sound effects with current volume
+  // Оголошено ТУТ — до useEffect-ів, щоб вони могли її викликати
+  const playSfx = (sound) => {
+    const audio = new Audio(sound);
+    audio.volume = sfxVolume;
+    audio.play().catch(() => {});
+  };
 
   useEffect(() => {
     if (!isProfileModalOpen) return;
@@ -671,12 +678,6 @@ const Header = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Helper to play sound effects with current volume
-  const playSfx = (sound) => {
-    const audio = new Audio(sound);
-    audio.volume = sfxVolume;
-    audio.play().catch(() => {});
-  };
 
   // ==========================================
   //     ОКРЕМІ ОБРОБНИКИ ЗВУКІВ ДЛЯ КНОПОК
@@ -1235,6 +1236,7 @@ const Header = ({
   <AntiHeaderAd
     isDarkMode={isDarkMode}
     accentColor={accentColor}
+    onOpenShop={handleShopClick}
   />
     </>
   );

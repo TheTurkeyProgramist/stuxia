@@ -1652,7 +1652,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   <img
                     src={turkeyFrames[currentTurkeyFrame]}
                     alt="Це Доміно :)"
-                    style={{ width: '340px', height: '210px', imageRendering: 'pixelated', marginBottom: '-20px' }}
+                    style={{ width: '340px', height: 'auto', maxWidth: '100%', imageRendering: 'pixelated', marginBottom: '-20px' }}
                   />
                 ) : null}
                 <TurkeyVideoFrame>

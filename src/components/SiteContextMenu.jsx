@@ -9,6 +9,7 @@ import {
   FiExternalLink,
   FiEye,
   FiImage,
+  FiMonitor,
   FiPrinter,
   FiSearch,
   FiVideo,
@@ -130,6 +131,15 @@ export default function SiteContextMenu({ children, isDarkMode }) {
     if (media) window.open(media.src, "_blank", "noopener,noreferrer");
   };
 
+  /** Браузери блокують відкриття нативного меню через JS (isTrusted=false).
+   *  Єдиний спосіб — Shift + права кнопка миші. Показуємо підказку. */
+  const openNativeMenu = () => {
+    toast("Утримайте Shift і натисніть правою кнопкою миші — відкриється меню браузера", {
+      icon: "🖥️",
+      duration: 5000,
+    });
+  };
+
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
@@ -147,6 +157,17 @@ export default function SiteContextMenu({ children, isDarkMode }) {
           collisionPadding={10}
           sideOffset={5}
         >
+          {/* ── Меню браузера (вгорі) ── */}
+          <ContextMenu.Item
+            className="site-context-menu-item"
+            title="Браузер не дозволяє сайту відкрити своє меню. Натисніть Shift + ПКМ."
+            onSelect={openNativeMenu}
+          >
+            <FiMonitor aria-hidden="true" />
+            <span>Меню браузера (Shift + права кнопка миші)</span>
+          </ContextMenu.Item>
+          <ContextMenu.Separator className="site-context-menu-separator" />
+
           <ContextMenu.Item
             className="site-context-menu-item"
             title="Відкрийте DevTools клавішами F12 або Ctrl+Shift+I"

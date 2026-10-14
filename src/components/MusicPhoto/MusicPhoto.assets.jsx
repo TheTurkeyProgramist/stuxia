@@ -5,7 +5,6 @@ import harmony from "../../photos/vip-images/asium/asium.webp";
 import horse from "../../photos/vip-images/horse/horse.webp";
 import theorytwo from "../../photos/fan-art/theorytwo.webp";
 import fingerdash from "../../photos/vip-images/dinofroz/fingerdash.webp";
-import humorVideo from "../../mp3/humor.mp4";
 import electrodynamix from "../../photos/vip-images/electrodynamix.webp";
 import deserttwo from "../../photos/vip-images/desert/deserttwo.webp";
 import desertthree from "../../photos/vip-images/desert/desertthree.webp";
@@ -72,7 +71,6 @@ export const assetMap = {
   horse,
   theorytwo,
   fingerdash,
-  humorVideo,
   electrodynamix,
   deserttwo,
   desertthree,
