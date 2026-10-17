@@ -8,13 +8,15 @@ import logofix from "../../photos/hero-header/logo.webp";
 import { FaHeartbeat } from "react-icons/fa";
 import { FiSearch, FiX } from "react-icons/fi";
 import { IoHeartDislikeSharp } from "react-icons/io5";
-import preview from "../../photos/hero-header/prewiew.webp";
 import info from "../../photos/hero-header/what.webp";
 import one from "../../photos/hero-header/my/myone.webp";
 import two from "../../photos/hero-header/my/mytwo.webp";
-import soon from "../../photos/hero-header/my/soon.webp";
-import might from "../../photos/hero-header/my/myone.webp";
-import three from "../../photos/hero-header/my/mythree.webp";
+import might from "../../photos/hero-header/my/might.webp";
+import finance from "../../photos/fan-art/finance.webp";
+import newsImage from "../../photos/cursors/daysthunders.webp";
+import aiHelp from "../../photos/cursors/reader.webp";
+import climate from "../../photos/cursors/climate.webp";
+import registration from "../../photos/hero-header/user.webp";
 import {
   useFloating,
   autoUpdate,
@@ -165,9 +167,13 @@ const PreviewCloseBtn = styled(CloseBtn)`
 
 const AccordionWrapper = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-top: 3px;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const AccordionItem = styled.article`
@@ -226,7 +232,11 @@ const QuestionText = styled.div`
 
 const AnswerPreview = styled.div`
   overflow: hidden;
-  max-height: calc(1.45em * 3);
+  max-height: calc(1.45em * 6);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
   color: rgba(255, 255, 255, 0.78);
   font-size: 12px;
   font-weight: 400;
@@ -630,16 +640,18 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
 
   const faqData = React.useMemo(() => {
     const imageMap = {
-      hills,
-      texts,
-      logofix,
-      preview,
-      info,
-      one,
-      two,
-      soon,
-      might,
-      three,
+      latestUpdate: info,
+      agreement: texts,
+      collaboration: might,
+      weather: hills,
+      noAds: finance,
+      news: newsImage,
+      aiHelp,
+      climate,
+      general: one,
+      settings: logofix,
+      registration,
+      plans: two,
     };
     const baseFaqData = rawFaqData.map((item) => ({
       ...item,
