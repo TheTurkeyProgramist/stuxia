@@ -15,10 +15,6 @@ export default defineConfig({
       jpeg: { quality: 80 },
       png: { quality: 80 },
       webp: { quality: 80 },
-      avif: { 
-        quality: 75, 
-        effort: 4,
-      },
     }),
 
     viteCompression({

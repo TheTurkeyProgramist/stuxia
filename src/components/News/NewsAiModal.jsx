@@ -308,25 +308,148 @@ const SuggestedQuestions = styled.div`
   margin-top: 8px;
 `;
 
+const starterQuestions = [
+  {
+    icon: <FaLightbulb aria-hidden="true" />,
+    text: "Поясни головну думку новини.",
+  },
+  {
+    icon: <GiSpikedDragonHead aria-hidden="true" />,
+    text: "Які факти є найцікавішими?",
+  },
+  {
+    icon: <GiTimeBomb aria-hidden="true" />,
+    text: "Які можуть бути наслідки?",
+  },
+  {
+    icon: <FaLightbulb aria-hidden="true" />,
+    text: "Які джерела підтверджують цю новину?",
+  },
+  {
+    icon: <GiSpikedDragonHead aria-hidden="true" />,
+    text: "Що важливо знати про цю подію?",
+  },
+];
+
+const StarterCarouselViewport = styled.div`
+  width: min(310px, 90vw);
+  height: 156px;
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
+`;
+
+const StarterCarouselTrack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: ${(p) =>
+    p.$isResetting
+      ? "none"
+      : "transform 650ms cubic-bezier(0.22, 1, 0.36, 1)"};
+  transform: ${(p) => `translateY(-${p.$position * 52}px)`};
+`;
+
 const SuggestedQuestion = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px;
-  border: 2px solid rgba(255, 179, 108, 0.45);
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 179, 108, 0.45);
   border-radius: 9px;
-  background: transparent;
-  width: 310px;
+  background: ${(p) => (p.$isDarkMode ? "rgba(255,179,108,0.06)" : "rgba(255,138,61,0.05)")};
+  width: 100%;
+  height: 46px;
+  flex: 0 0 46px;
+  box-sizing: border-box;
   font-weight:700;
-  color: white;
+  color: ${(p) => (p.$isDarkMode ? "#f3f4f6" : "#1f2937")};
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
+  text-align: left;
+  transform: scale(${(p) => (p.$isCenter ? 1 : 0.94)});
+  transition:
+    transform 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.2s ease,
+    border-color 0.2s ease;
+  &:hover {
+    background: rgba(255, 179, 108, 0.16);
+    border-color: #ffb36c;
+  }
    svg {
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
     flex-shrink: 0;
   }
 `;
+
+const StarterQuestionsCarousel = ({ isDarkMode, onAsk }) => {
+  const [position, setPosition] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return undefined;
+
+    const timer = setInterval(() => {
+      setPosition((current) => current + 1);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
+  return (
+    <StarterCarouselViewport
+      role="group"
+      aria-label="Популярні запитання про новину"
+      aria-roledescription="карусель"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setIsPaused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          setIsPaused(false);
+        }
+      }}
+    >
+      <StarterCarouselTrack
+        $position={position}
+        $isResetting={isResetting}
+        onTransitionEnd={(event) => {
+          if (event.propertyName === "transform" && position === starterQuestions.length) {
+            setIsResetting(true);
+            setPosition(0);
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => setIsResetting(false));
+            });
+          }
+        }}
+      >
+        {[...starterQuestions, ...starterQuestions].map(({ icon, text }, index) => {
+          const isVisible = index >= position && index < position + 3;
+          return (
+            <SuggestedQuestion
+              key={`${text}-${index}`}
+              type="button"
+              $isDarkMode={isDarkMode}
+              $isCenter={index === position + 1}
+              onClick={() => onAsk(text)}
+              aria-hidden={!isVisible}
+              tabIndex={isVisible ? 0 : -1}
+            >
+              {icon}
+              {text}
+            </SuggestedQuestion>
+          );
+        })}
+      </StarterCarouselTrack>
+    </StarterCarouselViewport>
+  );
+};
 
 const Body = styled.div`
   padding: 5px;
@@ -452,21 +575,6 @@ const parseSuggestedQuestions = (text) => {
     .slice(0, 2);
   return { cleanText: text.replace(regex, "").trim(), questions };
 };
-
-const starterQuestions = [
-  {
-    icon: <FaLightbulb aria-hidden="true" />,
-    text: "Поясни головну думку новини.",
-  },
-  {
-    icon: <GiSpikedDragonHead aria-hidden="true" />,
-    text: "Які факти є найцікавішими?",
-  },
-  {
-    icon: <GiTimeBomb aria-hidden="true" />,
-    text: "Які можуть бути наслідки?",
-  },
-];
 
 export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
   const [responseLength, setResponseLength] = useState("normal");
@@ -728,14 +836,10 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
               <div style={{ marginTop: "-140px", color: isDarkMode ? "#ffffff" : "#080808",}}>
                 Задайте питання про новину або оберіть питання:
               </div>
-              <SuggestedQuestions>
-                {starterQuestions.map(({ icon, text }) => (
-                    <SuggestedQuestion key={text} onClick={() => handleSend(text)}>
-                      {icon}
-                      {text}
-                    </SuggestedQuestion>
-                ))}
-              </SuggestedQuestions>
+              <StarterQuestionsCarousel
+                isDarkMode={isDarkMode}
+                onAsk={handleSend}
+              />
             </EmptyState>
           ) : (
             <ChatHistory>

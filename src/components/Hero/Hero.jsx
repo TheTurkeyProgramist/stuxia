@@ -42,9 +42,7 @@ import localforage from "localforage";
 import hills from "../../photos/hero-header/fog.webp";
 import herotext from "../../photos/hero-header/herotext.webp";
 import village from "../../photos/fan-art/village.webp"
-import villageCard1x from "../../photos/fan-art/village-card-1x.webp";
 import faded from "../../photos/fan-art/faded.webp";
-import fadedCard1x from "../../photos/fan-art/faded-card-1x.webp";
 import { DEFAULT_BGS } from "./defaultBgs";
 import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
 import News from "../News/News.jsx";
@@ -139,7 +137,7 @@ const fadeInContent = keyframes`
 const HeroDiv = styled.div`
   position: relative;
   width: 100%;
-  min-height: 732px;
+  height: 632px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -211,7 +209,7 @@ const handleDownloadBg = async (bg) => {
       ? src.split(/[?#]/, 1)[0]
       : "";
   const urlExtension = sourcePath.match(
-    /\.(avif|webp|png|jpe?g|gif|mp4|webm|ogg|mov)$/i,
+    /\.(webp|png|jpe?g|gif|mp4|webm|ogg|mov)$/i,
   )?.[0];
   const blobExtension =
     src instanceof Blob
@@ -219,7 +217,6 @@ const handleDownloadBg = async (bg) => {
           "image/jpeg": ".jpg",
           "image/png": ".png",
           "image/webp": ".webp",
-          "image/avif": ".avif",
           "video/mp4": ".mp4",
           "video/webm": ".webm",
           "video/ogg": ".ogg",
@@ -227,7 +224,7 @@ const handleDownloadBg = async (bg) => {
       : null;
   const ext = urlExtension || blobExtension || (isVid ? ".mp4" : ".webp");
   const safeName = name.replace(/[/\\?%*:|"<>]/g, "-").trim() || "background";
-  const fileName = /\.(avif|webp|png|jpe?g|gif|mp4|webm|ogg|mov)$/i.test(
+  const fileName = /\.(webp|png|jpe?g|gif|mp4|webm|ogg|mov)$/i.test(
     safeName,
   )
     ? safeName
@@ -1128,18 +1125,15 @@ const LoadMoreButton = styled.button`
 
 const ChangeBgButton = styled.button`
   position: absolute;
-  top: 109px;
+  top: 40px;
   gap: 6px;
-  right: 7px;
+  left: 4px;
   background: rgba(0, 0, 0, 0.4);
   color: white;
-  width: 138px;
-  height: 40px;
+  width: 148px;
+  height: 70px;
   border-radius: 5px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 4px 6px;
   z-index: 100;
   transition: all 0.3s;
@@ -1158,8 +1152,8 @@ const ChangeBgPreviewGroup = styled.span`
 `;
 
 const ChangeBgPreview = styled.img`
-  width: 27px;
-  height: 25px;
+  width: 67px;
+  height: 35px;
   object-fit: cover;
   border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.75);
@@ -2717,15 +2711,15 @@ const Hero = ({
         onClick={() => setIsModalOpen(true)}
         aria-label="Змінити фон"
       >
-        <ChangeBgPreviewGroup aria-hidden="true">
+        <span style={{ display: "flex", gap: "5px" }}>
+          <GiPalette size={27} />
+          <span style={{ fontSize: "14px" }}>Змінити фон?</span>
+        </span>
+                <ChangeBgPreviewGroup aria-hidden="true">
           {currentBgPreviewImages.map((src) => (
             <ChangeBgPreview key={src} src={src} alt="" />
           ))}
         </ChangeBgPreviewGroup>
-        <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-          <GiPalette />
-          <span style={{ fontSize: 10 }}>Змінити фон</span>
-        </span>
       </ChangeBgButton>
       <HeroDecors $image={herotext} $start={startAnimation} />
       <DelayedContent $start={startAnimation}>
@@ -3142,7 +3136,7 @@ const Hero = ({
           </SearchWrapper>
         </BrowserSearchPanel>
         
-        <div style={{ marginTop: "250px", zIndex: 90 }}>
+        <div style={{ marginTop: "30px", zIndex: 90 }}>
           <News user={user} isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
         </div>
       </DelayedContent>

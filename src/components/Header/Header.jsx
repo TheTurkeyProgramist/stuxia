@@ -12,7 +12,7 @@ import conimg from "../../mp3/modals/concierge.mp3";
 import userDefault from "../../photos/hero-header/user.webp";
 import { useVisualFilters } from "./useVisualFilters";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
-import AntiHeaderAd from "./AntiHeaderAd";
+// import AntiHeaderAd from "./AntiHeaderAd";
 import {
   useFloating,
   autoUpdate,
@@ -1232,12 +1232,11 @@ const Header = ({
   )}
   </HeaderDiv>
 
-  {/* Окремий компонент Анти-хедера з рекламою та рекомендаціями */}
-  <AntiHeaderAd
+   {/* <AntiHeaderAd
     isDarkMode={isDarkMode}
     accentColor={accentColor}
     onOpenShop={handleShopClick}
-  />
+  /> */}
     </>
   );
 };
