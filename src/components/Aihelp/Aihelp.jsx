@@ -11,7 +11,7 @@ import { FaMicrophoneAlt } from "react-icons/fa";
 import { IoCamera } from "react-icons/io5";
 import { GiTimeTrap } from "react-icons/gi";
 import toast, { Toaster } from "react-hot-toast";
-import { FaCloudMoon } from "react-icons/fa";
+import { FaHandsHelping } from "react-icons/fa";
 import { TbWorldStar } from "react-icons/tb";
 import { IoIosCloudyNight } from "react-icons/io";
 import { PiNewspaperClippingFill } from "react-icons/pi";
@@ -1594,6 +1594,7 @@ const StarterQuestionCard = styled.button`
   flex: 0 0 46px;
   padding: 8px 12px;
   box-sizing: border-box;
+  transform: scale(${(p) => (p.$isCenter ? 1 : 0.94)});
   border-radius: 10px;
   border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.3)" : "rgba(255, 140, 0, 0.25)")};
   background: ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.08)" : "rgba(255, 140, 0, 0.06)")};
@@ -1602,7 +1603,11 @@ const StarterQuestionCard = styled.button`
   font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 650ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   span { font-size: 16px; }
   &:hover {
     background: rgba(255, 160, 0, 0.2);
@@ -1629,9 +1634,9 @@ const StarterCarouselTrack = styled.div`
 const StarterQuestionsCarousel = ({ isDarkMode, onAsk }) => {
   const questions = [
     { text: "Які новини про погоду у світі?", icon: <TbWorldStar /> },
-    { text: "Яка погода в Україні?", icon: <FaCloudMoon /> },
+    { text: "Як зміни клімату впливають на природу?", icon: <PiNewspaperClippingFill /> },
     { text: "Яка погода буде завтра в Києві?", icon: <IoIosCloudyNight /> },
-    { text: "Як зміни клімату впливають на погоду?", icon: <PiNewspaperClippingFill /> },
+    { text: "Порадь екологічні компанії", icon: < FaHandsHelping/> },
     { text: "Порадити гру, кіно і т.д.?", icon: <FaClapperboard /> },
   ];
   const [position, setPosition] = useState(0);
@@ -1643,7 +1648,7 @@ const StarterQuestionsCarousel = ({ isDarkMode, onAsk }) => {
 
     const timer = setInterval(() => {
       setPosition((current) => current + 1);
-    }, 5000);
+    }, 3000);
     return () => clearInterval(timer);
   }, [isPaused]);
 
@@ -1685,6 +1690,7 @@ const StarterQuestionsCarousel = ({ isDarkMode, onAsk }) => {
                 key={`${question.text}-${index}`}
                 type="button"
                 $isDarkMode={isDarkMode}
+                $isCenter={index === position + 1}
                 onClick={() => onAsk(question.text)}
                 aria-hidden={!isVisible}
                 tabIndex={isVisible ? 0 : -1}
