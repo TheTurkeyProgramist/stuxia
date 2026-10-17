@@ -1568,39 +1568,137 @@ const WelcomeSubtitle = styled.div`
 `;
 
 const StarterQuestionsGrid = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   width: 100%;
   max-width: 460px;
   margin-top: 6px;
+`;
+
+const StarterCarouselViewport = styled.div`
+  height: 152px;
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 12%,
+    #000 88%,
+    transparent 100%
+  );
 `;
 
 const StarterQuestionCard = styled.button`
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 8px;
+  width: 100%;
+  height: 46px;
+  flex: 0 0 46px;
+  padding: 8px 12px;
+  box-sizing: border-box;
   border-radius: 10px;
-  border: 2px solid ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.3)" : "rgba(255, 140, 0, 0.25)")};
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.3)" : "rgba(255, 140, 0, 0.25)")};
   background: ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.08)" : "rgba(255, 140, 0, 0.06)")};
   color: ${(p) => (p.$isDarkMode ? "#f0f0f0" : "#222")};
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   span { font-size: 16px; }
   &:hover {
     background: rgba(255, 160, 0, 0.2);
     border-color: #ff9500;
-    transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(255, 149, 0, 0.2);
   }
   svg {
-    font-size: 26px;
-    }
+    font-size: 21px;
+    flex-shrink: 0;
+  }
 `;
+
+const StarterCarouselTrack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  transition: ${(p) =>
+    p.$isResetting
+      ? "none"
+      : "transform 650ms cubic-bezier(0.22, 1, 0.36, 1)"};
+  transform: ${(p) => `translateY(-${p.$position * 53}px)`};
+`;
+
+const StarterQuestionsCarousel = ({ isDarkMode, onAsk }) => {
+  const questions = [
+    { text: "Які новини про погоду у світі?", icon: <TbWorldStar /> },
+    { text: "Яка погода в Україні?", icon: <FaCloudMoon /> },
+    { text: "Яка погода буде завтра в Києві?", icon: <IoIosCloudyNight /> },
+    { text: "Як зміни клімату впливають на погоду?", icon: <PiNewspaperClippingFill /> },
+    { text: "Порадити гру, кіно і т.д.?", icon: <FaClapperboard /> },
+  ];
+  const [position, setPosition] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return undefined;
+
+    const timer = setInterval(() => {
+      setPosition((current) => current + 1);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
+  return (
+    <StarterQuestionsGrid
+      role="group"
+      aria-label="Популярні запитання"
+      aria-roledescription="карусель"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setIsPaused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          setIsPaused(false);
+        }
+      }}
+    >
+      <StarterCarouselViewport>
+        <StarterCarouselTrack
+          $position={position}
+          $isResetting={isResetting}
+          onTransitionEnd={(event) => {
+            if (
+              event.propertyName === "transform" &&
+              position === questions.length
+            ) {
+              setIsResetting(true);
+              setPosition(0);
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => setIsResetting(false));
+              });
+            }
+          }}
+        >
+          {[...questions, ...questions.slice(0, 3)].map((question, index) => {
+            const isVisible = index >= position && index < position + 3;
+            return (
+              <StarterQuestionCard
+                key={`${question.text}-${index}`}
+                type="button"
+                $isDarkMode={isDarkMode}
+                onClick={() => onAsk(question.text)}
+                aria-hidden={!isVisible}
+                tabIndex={isVisible ? 0 : -1}
+              >
+                <span>{question.icon}</span>
+                {question.text}
+              </StarterQuestionCard>
+            );
+          })}
+        </StarterCarouselTrack>
+      </StarterCarouselViewport>
+    </StarterQuestionsGrid>
+  );
+};
 
 const SuggestedQuestionsContainer = styled.div`
   display: flex;
@@ -2636,17 +2734,10 @@ Gemini
             {messages.length === 0 && (
               <EmptyChatWelcome $isDarkMode={isDarkMode}>
                 <WelcomeTitle>Запитайте будь-що або оберіть одне з популярних питань:</WelcomeTitle>
-                <StarterQuestionsGrid>
-                  <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Які новини про погоду у світі?")}>
-                    <span><TbWorldStar /></span> Які новини про погоду у світі?
-                  </StarterQuestionCard>
-                  <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Яка погода в Україні?")}>
-                    <span><FaCloudMoon /></span> Яка погода в Україні?
-                  </StarterQuestionCard>
-                  <StarterQuestionCard $isDarkMode={isDarkMode} onClick={() => handleAsk("Порадити гру, кіно і т.д.?")}>
-                    <span><FaClapperboard /></span> Порадити гру, кіно і т.д.?
-                  </StarterQuestionCard>
-                </StarterQuestionsGrid>
+                <StarterQuestionsCarousel
+                  isDarkMode={isDarkMode}
+                  onAsk={handleAsk}
+                />
               </EmptyChatWelcome>
             )}
 
