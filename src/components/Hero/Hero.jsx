@@ -42,7 +42,9 @@ import localforage from "localforage";
 import hills from "../../photos/hero-header/fog.webp";
 import herotext from "../../photos/hero-header/herotext.webp";
 import village from "../../photos/fan-art/village.webp"
+import villagePreview from "../../photos/fan-art/village.webp?w=128&format=webp&quality=50";
 import faded from "../../photos/fan-art/faded.webp";
+import fadedPreview from "../../photos/fan-art/faded.webp?w=128&format=webp&quality=50";
 import { DEFAULT_BGS } from "./defaultBgs";
 import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
 import News from "../News/News.jsx";
@@ -50,6 +52,8 @@ import SearchModeModal from "./SearchModeModal.jsx";
 import React_lazy_Aihelp from "../Aihelp/Aihelp.jsx";
 import toast, { Toaster } from 'react-hot-toast';
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
+import turkeytwoPreview from "../../photos/vip-images/turkeys/turkeytwo.webp?w=128&format=webp&quality=50";
+import niceronePreview from "../../photos/vip-images/dinofroz/nicerone.webp?w=128&format=webp&quality=50";
 import {
   useFloating,
   autoUpdate,
@@ -66,17 +70,22 @@ import {
   FloatingPortal,
   FloatingArrow,         
 } from "@floating-ui/react";
-const CHANGE_BG_PREVIEW_IMAGES = [village, faded, planes, castle];
+const CHANGE_BG_PREVIEW_IMAGES = [
+  villagePreview,
+  fadedPreview,
+  niceronePreview,
+  turkeytwoPreview,
+];
 const bgPreviewSwap = keyframes`
   from { opacity: 0.35; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 `;
 const bgCardThumbnails = {
   [village]: {
-    src: villageCard1x,
+    src: village,
   },
   [faded]: {
-    src: fadedCard1x,
+    src: faded,
   },
 };
 
