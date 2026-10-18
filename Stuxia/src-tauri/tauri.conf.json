@@ -28,7 +28,12 @@
     "targets": "all",
     "windows": {
       "nsis": {
-        "installerIcon": "icons/icon.ico"
+        "installerIcon": "icons/icon.ico",
+        "sidebarImage": "icons/installer-sidebar.bmp",
+        "languages": ["Ukrainian"],
+        "customLanguageFiles": {
+          "Ukrainian": "languages/Ukrainian.nsh"
+        }
       }
     },
     "icon": [
