@@ -982,6 +982,29 @@ const HeroFormater = styled.div`
   gap: 8px;
 `;
 
+const SearchBorder = styled.svg`
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+
+  g {
+    opacity: 0;
+  }
+
+  rect {
+    fill: none;
+    stroke: url(#search-border-gradient);
+    stroke-width: 1.4px;
+    stroke-linecap: round;
+    stroke-dasharray: 1000 0;
+    filter: url(#search-border-glow);
+  }
+`;
+
 const SearchContainer = styled.div`
   position: relative;
   display: flex;
@@ -991,6 +1014,11 @@ const SearchContainer = styled.div`
   border-radius: 8px;
   background: ${(props) =>
     props.$isDarkMode ? "#10151c" : "#ffffff"};
+
+  &:has(> input:hover) ${SearchBorder} rect,
+  &:has(> input:focus) ${SearchBorder} rect {
+    opacity: 1;
+  }
 `;
 
 const HeroInput = styled.input`
@@ -1006,20 +1034,12 @@ const HeroInput = styled.input`
   border: 1px solid transparent;
   outline: none;
   box-sizing: border-box;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
+  &:focus {
+    box-shadow: none;
+  }
   &::placeholder {
     color: ${(p) => (p.$isDarkMode ? "#f3efef" : "#000000")};
-  }
-
-  &:hover,
-  &:focus {
-    border-color: ${(p) => (p.$isDarkMode ? "#ecb900" : "#00fbff")};
-  }
-
-  &:focus {
-    box-shadow: inset 0 0 0 1px
-      ${(p) => (p.$isDarkMode ? "#ecb900" : "#00fbff")};
   }
 `;
 const ClearButton = styled.button`
@@ -2956,6 +2976,64 @@ const Hero = ({
                   data-form-type="other"
                   data-lpignore="true"
                 />
+                <SearchBorder aria-hidden="true" focusable="false">
+                  <defs>
+                    <linearGradient
+                      id="search-border-gradient"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="0%"
+                      gradientTransform="rotate(0 0.5 0.5)"
+                    >
+                      <animateTransform
+                        attributeName="gradientTransform"
+                        type="rotate"
+                        from="0 0.5 0.5"
+                        to="360 0.5 0.5"
+                        dur="28s"
+                        repeatCount="indefinite"
+                      />
+                      <stop offset="0%" stopColor="#00bfff" />
+                      <stop offset="50%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#ffd400" />
+                    </linearGradient>
+                    <filter
+                      id="search-border-glow"
+                      x="-50%"
+                      y="-100%"
+                      width="200%"
+                      height="300%"
+                    >
+                      <feGaussianBlur
+                        in="SourceGraphic"
+                        stdDeviation="3.4"
+                        result="wideGlow"
+                      />
+                      <feComponentTransfer in="wideGlow" result="softGlow">
+                        <feFuncA type="linear" slope="0.35" />
+                      </feComponentTransfer>
+                      <feGaussianBlur
+                        in="SourceGraphic"
+                        stdDeviation="1.4"
+                        result="coreGlow"
+                      />
+                      <feMerge>
+                        <feMergeNode in="softGlow" />
+                        <feMergeNode in="coreGlow" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <rect
+                    x="2"
+                    y="2"
+                    width="calc(100% - 4px)"
+                    height="calc(100% - 4px)"
+                    rx="8"
+                    pathLength="1000"
+                  />
+                </SearchBorder>
                 {showList && suggestions.length > 0 && (
                   <SuggestionsList>
                     {suggestions.map((city, index) => (

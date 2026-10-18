@@ -181,6 +181,59 @@ const HeaderAvatar = styled.img`
       : props.$bColor || "transparent"};
 `;
 
+const RecoveringAvatar = ({ src, ...props }) => {
+  const [hasFailed, setHasFailed] = useState(false);
+  const [hasRetried, setHasRetried] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+  const retryTimerRef = useRef(null);
+
+  useEffect(() => {
+    window.clearTimeout(retryTimerRef.current);
+    setHasFailed(false);
+    setHasRetried(false);
+    setRetryKey(0);
+  }, [src]);
+
+  useEffect(() => {
+    const retryAvatar = () => {
+      if (document.visibilityState !== "visible") return;
+      window.clearTimeout(retryTimerRef.current);
+      setHasFailed(false);
+      setHasRetried(false);
+      setRetryKey((key) => key + 1);
+    };
+
+    window.addEventListener("online", retryAvatar);
+    document.addEventListener("visibilitychange", retryAvatar);
+    return () => {
+      window.clearTimeout(retryTimerRef.current);
+      window.removeEventListener("online", retryAvatar);
+      document.removeEventListener("visibilitychange", retryAvatar);
+    };
+  }, []);
+
+  const handleError = () => {
+    if (!hasRetried) {
+      setHasRetried(true);
+      retryTimerRef.current = window.setTimeout(
+        () => setRetryKey((key) => key + 1),
+        1000,
+      );
+      return;
+    }
+    setHasFailed(true);
+  };
+
+  return (
+    <HeaderAvatar
+      key={retryKey}
+      src={hasFailed ? userDefault : src}
+      onError={handleError}
+      {...props}
+    />
+  );
+};
+
 const ProfileButtonWrap = styled.div`
   position: relative;
   display: flex;
@@ -528,10 +581,6 @@ const Header = ({
   const themePickerRef = useRef(null);
   const themePickerBtnRef = useRef(null);
   const avatarSource = user?.photoURL || user?.avatar || currentAvatar || userDefault;
-  const handleAvatarError = (event) => {
-    event.currentTarget.onerror = null;
-    event.currentTarget.src = userDefault;
-  };
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Helper to play sound effects with current volume
@@ -937,9 +986,8 @@ const Header = ({
             onClick={() => setIsProfileModalOpen((prev) => !prev)}
             aria-label="Профіль користувача"
           >
-            <HeaderAvatar
+            <RecoveringAvatar
               src={avatarSource}
-              onError={handleAvatarError}
               $bColor={user.borderColor}
               style={{ width: "33px", height: "33px" }}
             />
@@ -951,9 +999,8 @@ const Header = ({
               $isDarkMode={isDarkMode}
             >
               <ProfileModalBody>
-                <HeaderAvatar
+                <RecoveringAvatar
                   src={avatarSource}
-                  onError={handleAvatarError}
                   $bColor={user.borderColor}
                   style={{ width: "42px", height: "42px" }}
                 />
