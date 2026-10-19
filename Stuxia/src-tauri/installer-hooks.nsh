@@ -9,4 +9,5 @@
 !define MUI_UNCONFIRMPAGE_TEXT_TOP "Стихію буде видалено з вашого комп’ютера."
 !define MUI_UNCONFIRMPAGE_TEXT_LOCATION "Тека програми:"
 
-!define MUI_INSTFILESPAGE_PROGRESSBAR "smooth"
+!define MUI_INSTFILESPAGE_COLORS "70E6CE 111B31"
+!define MUI_INSTFILESPAGE_PROGRESSBAR "colored"
