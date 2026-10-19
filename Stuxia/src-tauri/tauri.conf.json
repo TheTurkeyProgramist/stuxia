@@ -30,6 +30,10 @@
       "nsis": {
         "installerIcon": "icons/icon.ico",
         "sidebarImage": "icons/installer-sidebar.bmp",
+        "headerImage": "icons/installer-header.bmp",
+        "uninstallerIcon": "icons/icon.ico",
+        "uninstallerHeaderImage": "icons/installer-header.bmp",
+        "installerHooks": "installer-hooks.nsh",
         "languages": ["Ukrainian"],
         "customLanguageFiles": {
           "Ukrainian": "languages/Ukrainian.nsh"
