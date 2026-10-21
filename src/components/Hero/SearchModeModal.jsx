@@ -18,7 +18,7 @@ const riseIn = keyframes`
 const Backdrop = styled.div`
   position: fixed;
   inset: 0;
-  z-index: 100000;
+  z-index: 2147483647;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,7 +30,22 @@ const Backdrop = styled.div`
 `;
 
 const Dialog = styled.div`
+  width: min(440px, 100%);
+  max-height: calc(100vh - 48px);
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid
+    ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)")};
+  border-radius: 18px;
+  background: ${(props) => (props.$isDarkMode ? "#171b22" : "#f8fafc")};
+  color: ${(props) => (props.$isDarkMode ? "#f9f9f9" : "#20242b")};
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
   animation: ${riseIn} 220ms ease-out;
+
+  @media (max-width: 480px) {
+    padding: 18px;
+  }
 `;
 
 const Header = styled.div`
@@ -150,6 +165,12 @@ const OptionText = styled.span`
 
 const searchModes = [
   {
+    id: "ai",
+    label: "Запитати ШІ ✦",
+    description: "Відкрити чат з Google Gemini для допомоги",
+    Icon: MdAutoAwesome,
+  },
+  {
     id: "city",
     label: "За назвою міста",
     description: "Знайдіть прогноз за назвою населеного пункту",
@@ -160,12 +181,6 @@ const searchModes = [
     label: "Координати",
     description: "Введіть широту й довготу точки",
     Icon: FaMapLocationDot,
-  },
-  {
-    id: "ai",
-    label: "Запитати ШІ ✦",
-    description: "Відкрити чат з Google Gemini для допомоги",
-    Icon: MdAutoAwesome,
   },
 ];
 
@@ -189,6 +204,16 @@ export default function SearchModeModal({
 
   if (!isOpen) return null;
 
+  const currentMode = searchModes.find(({ id }) => id === activeMode);
+  const availableModes = searchModes
+    .filter(({ id }) => id !== activeMode)
+    .sort((first, second) => {
+      if (activeMode === "ai") {
+        return first.id === "city" ? -1 : second.id === "city" ? 1 : 0;
+      }
+      return 0;
+    });
+
   return createPortal(
     <Backdrop
       onMouseDown={(event) => {
@@ -204,7 +229,9 @@ export default function SearchModeModal({
         <Header>
           <Heading>
             <h2 id="search-mode-heading">Режим пошуку</h2>
-            <p>Оберіть спосіб пошуку погоди</p>
+            <p>
+              Зараз: {currentMode?.label ?? "не вибрано"}. Оберіть інший режим.
+            </p>
           </Heading>
           <CloseButton
             type="button"
@@ -215,19 +242,17 @@ export default function SearchModeModal({
           </CloseButton>
         </Header>
         <Options>
-          {searchModes.map(({ id, label, description, Icon }) => (
+          {availableModes.map(({ id, label, description, Icon }) => (
             <Option
               key={id}
               type="button"
-              $active={activeMode === id}
               $isDarkMode={isDarkMode}
-              aria-current={activeMode === id ? "true" : undefined}
               onClick={() => onSelect(id)}
             >
               <OptionIcon $isDarkMode={isDarkMode}>
                 <Icon />
               </OptionIcon>
-              <OptionText $isDarkMode={isDarkMode} $active={activeMode === id}>
+              <OptionText $isDarkMode={isDarkMode}>
                 <strong>{label}</strong>
                 <span>{description}</span>
               </OptionText>

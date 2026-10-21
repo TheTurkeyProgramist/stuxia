@@ -157,7 +157,7 @@ const HeroDiv = styled.div`
 const HeroDecors = styled.div`
   display: block;
   width: 212px;
-  margin-top: 115px;
+  margin-top: 75px;
   height: 78px;
   background-image: url(${(props) => props.$image});
   background-size: cover;
@@ -400,28 +400,6 @@ const AiModalBody = styled.div`
   flex: 1;
   overflow: hidden;
   background: ${(p) => (p.$isDarkMode ? "#0e0e16" : "#f8f8fc")};
-`;
-
-const AiSparkBtn = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  height: 30px;
-  padding: 0 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(255,160,0,0.4);
-  background: ${(p) => (p.$isDarkMode ? "rgba(255,149,0,0.12)" : "rgba(255,149,0,0.08)")};
-  color: ${(p) => (p.$isDarkMode ? "#ffcf9e" : "#d96500")};
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  letter-spacing: 0.3px;
-  transition: all 0.2s;
-  &:hover {
-    background: rgba(255,149,0,0.22);
-    border-color: #ff9500;
-    transform: translateY(-1px);
-  }
 `;
 
 const VideoThumbnail = React.memo(({ bg, onClick }) => {
@@ -697,6 +675,15 @@ const HeroDate = styled.div`
 
   }
 `;
+
+const HeroControls = styled.div`
+ display: flex;
+ flex: 0 0 auto;
+ flex-direction: column;
+ align-items: flex-start;
+ gap: 2px;
+`;
+
 const TimezoneButton = styled.button`
   display: flex;
   align-items: center;
@@ -823,9 +810,29 @@ const ModePicker = styled.div`
   align-items: center;
 `;
 
+const modeIconEnter = keyframes`
+  from { opacity: 0; transform: scale(0.75); }
+  to { opacity: 1; transform: scale(1); }
+`;
+
+const ModePreviewIcon = styled.span`
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 16px;
+  place-items: center;
+  animation: ${modeIconEnter} 300ms ease both;
+`;
+
+const ModePreviewText = styled.span`
+  white-space: nowrap;
+  animation: ${modeIconEnter} 300ms ease both;
+`;
+
 const ModeIconBtn = styled.button`
-  width: 34px;
-  height: 30px;
+  width: 176px;
+  box-sizing: border-box;
+  height: 19px;
   border-radius: 6px;
   border: none;
   background: ${(props) =>
@@ -835,10 +842,11 @@ const ModeIconBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 21px;
-  padding: 0;
+  gap: 6px;
+  font-size: 12px;
+  padding: 0 4px;
   flex-shrink: 0;
-  transition: background 0.2s;
+  transition: background 0.2s ease;
   &:hover { background: #353988; }
 `;
 
@@ -1849,8 +1857,34 @@ const Hero = ({
   const [showTimezoneMenu, setShowTimezoneMenu] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [searchMode, setSearchMode] = useState("city");
+  const [searchModeOptionIndex, setSearchModeOptionIndex] = useState(0);
   const [isSearchModeModalOpen, setIsSearchModeModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+
+  const searchModePrompts = [
+    "ШІ-асистент (Gemini)",
+    "Змінити режим пошуку?",
+    searchMode === "coordinates" ? "За назвою міста" : "Координати (шир/дов)",
+    "Змінити режим пошуку?",
+  ];
+  const rotatingSearchPrompt = searchModePrompts[searchModeOptionIndex];
+  const rotatingSearchModeIcon =
+    searchModeOptionIndex === 0
+      ? "ai"
+      : searchModeOptionIndex === 2
+        ? searchMode === "coordinates"
+          ? "city"
+          : "coordinates"
+        : searchMode;
+
+  useEffect(() => {
+    setSearchModeOptionIndex(0);
+    const interval = setInterval(() => {
+      setSearchModeOptionIndex((index) => (index + 1) % searchModePrompts.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [searchMode, searchModePrompts.length]);
 
   const handleSearchModeSelect = (mode) => {
     setIsSearchModeModalOpen(false);
@@ -1877,7 +1911,13 @@ const Hero = ({
 
   // Блокування прокрутки при відкритій модалці
   useEffect(() => {
-    if (isModalOpen || descriptionModal || showTimezoneMenu || isSearchModeModalOpen || isAiModalOpen) {
+    if (
+      isModalOpen ||
+      descriptionModal ||
+      showTimezoneMenu ||
+      isSearchModeModalOpen ||
+      isAiModalOpen
+    ) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -2626,13 +2666,6 @@ const Hero = ({
 
   return (
     <HeroDiv>
-      <SearchModeModal
-        isOpen={isSearchModeModalOpen}
-        isDarkMode={isDarkMode}
-        activeMode={searchMode}
-        onSelect={handleSearchModeSelect}
-        onClose={() => setIsSearchModeModalOpen(false)}
-      />
       <svg
         width="0"
         height="0"
@@ -2757,43 +2790,44 @@ const Hero = ({
             <HeroFix>
               <HeroFi>
                 <HeroDate ref={timezoneMenuRef} $isDarkMode={isDarkMode}>
-                <ModePicker>
-                  <Tooltip content="Вибрати режим пошуку" isDarkMode={isDarkMode}>
-                    <ModeIconBtn
-                      onClick={() => setIsSearchModeModalOpen(true)}
-                      aria-label="Вибрати режим пошуку"
-                      $isDarkMode={isDarkMode}
+                <HeroControls>
+                  <TimezoneButton
+                    ref={(el) => registerRef('timezoneButton', el)}
+                    onClick={() => setShowTimezoneMenu(!showTimezoneMenu)}
+                    aria-label="Змінити часовий пояс?"
+                    $isDarkMode={isDarkMode}
+                  >
+                    <MdSettingsSuggest size={18} /> Змінити часовий пояс?
+                  </TimezoneButton>
+                  <ModePicker>
+                    <Tooltip
+                      content="Натисніть, щоб відкрити вибір режиму пошуку"
+                      isDarkMode={isDarkMode}
                     >
-                      {searchMode === "coordinates" ? (
-                        <FaMapLocationDot />
-                      ) : searchMode === "ai" ? (
-                        <MdAutoAwesome />
-                      ) : (
-                        <FaMountainCity />
-                      )}
-                    </ModeIconBtn>
-                  </Tooltip>
-                  <Tooltip content="Відкрити ШІ-асистент" isDarkMode={isDarkMode}>
-                    <AiSparkBtn
-                      onClick={() => setIsAiModalOpen(true)}
-                      aria-label="Відкрити ШІ-асистент"
-                      $isDarkMode={isDarkMode}
-                    >
-                      <MdAutoAwesome size={14} />
-                    </AiSparkBtn>
-                  </Tooltip>
-                </ModePicker>
+                      <ModeIconBtn
+                        onClick={() => setIsSearchModeModalOpen(true)}
+                        aria-label="Відкрити вибір режиму пошуку"
+                        $isDarkMode={isDarkMode}
+                      >
+                        <ModePreviewIcon key={`${searchModeOptionIndex}-${rotatingSearchModeIcon}`}>
+                          {rotatingSearchModeIcon === "coordinates" ? (
+                            <FaMapLocationDot />
+                          ) : rotatingSearchModeIcon === "ai" ? (
+                            <MdAutoAwesome />
+                          ) : (
+                            <FaMountainCity />
+                          )}
+                        </ModePreviewIcon>
+                        <ModePreviewText key={`${searchModeOptionIndex}-${rotatingSearchPrompt}`}>
+                          {rotatingSearchPrompt}
+                        </ModePreviewText>
+                      </ModeIconBtn>
+                    </Tooltip>
+                  </ModePicker>
+                </HeroControls>
                 <Tag $isDarkMode={isDarkMode} style={{ flex: 1, textAlign: "right" }}>
                   {heroDateString}
                 </Tag>
-                <TimezoneButton
-                  ref={(el) => registerRef('timezoneButton', el)}
-                  onClick={() => setShowTimezoneMenu(!showTimezoneMenu)}
-                  aria-label="Змінити часовий пояс?"
-                  $isDarkMode={isDarkMode}
-                >
-                   Часовий пояс <MdSettingsSuggest size={21}/>
-                </TimezoneButton>
                 {showTimezoneMenu && createPortal (
                   <TimezoneMenu>
                     <TimezoneMenuHeader>
@@ -3175,10 +3209,10 @@ const Hero = ({
                     }}
                   >
                     {isSearchingNearby
-                      ? "🔄 Шукаємо поруч…"
+                      ? "Шукаємо поруч…"
                       : coordinateSuggestions.length > 1
-                        ? "📍 Знайдено поруч з координатами:"
-                        : "📍 Лише точка за координатами (міст не знайдено)"}
+                        ? "Знайдено поруч з координатами:"
+                        : "Лише точка за координатами (міст не знайдено)"}
                   </div>
                   {coordinateSuggestions.map((city, index) => (
                     <SuggestionItem
