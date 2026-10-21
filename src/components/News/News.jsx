@@ -156,16 +156,19 @@ const Decoder = styled.div`
 
 const SOURCES = [
   {
+    id: "phys-org",
     url: "https://phys.org/rss-feed/biology-news/animals-news/",
     name: "Phys.org",
     home: "https://phys.org",
   },
   {
+    id: "science-daily",
     url: "https://www.sciencedaily.com/rss/top/environment.xml",
     name: "ScienceDaily",
     home: "https://www.sciencedaily.com",
   },
   {
+    id: "nature",
     url: "https://www.nature.com/nature.rss",
     name: "Nature",
     home: "https://www.nature.com",
@@ -1153,6 +1156,16 @@ const extractImageFromContent = (item) => {
   return null;
 };
 
+const parseJsonFeed = (feed) =>
+  (feed.items || []).map((item) => ({
+    title: item.title || "",
+    link: item.url || item.external_url || "",
+    description: item.summary || item.content_text || item.content_html || "",
+    content: item.content_html || "",
+    pubDate: item.date_published || item.date_modified || "",
+    thumbnail: item.image || "",
+  })).filter((item) => item.title && item.link);
+
 /**
  * Масив лише зображень (без відео) з DEFAULT_BGS — для запасних обкладинок новин.
  */
@@ -1590,6 +1603,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   const [loading, setLoading] = useState(true);
   const [loadProgress, setLoadProgress] = useState(0);
   const [hasError, setHasError] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [filterSources, setFilterSources] = useState(["all"]);
   const handleToggleFilter = (sourceName) => {
     if (sourceName === "all") {
@@ -1717,13 +1731,17 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   const getData = useCallback(async (showLoader = false) => {
     const controller = new AbortController();
     const signal = controller.signal;
+    if (isMounted.current) {
+      setHasError(false);
+      setLoadError("");
+    }
     if (showLoader && isMounted.current) {
       setLoading(true);
       setLoadProgress(5);
-      setHasError(false);
     }
     try {
       let allItems = [];
+      const sourceErrors = [];
       const savedCustom =
         (await localforage.getItem("custom_news_sources")) || [];
       const allSources = [...SOURCES, ...savedCustom];
@@ -1781,34 +1799,60 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
               allItems = [...allItems, ...customData.items];
             }
           } else {
-            const res = await fetch(
-              `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}`,
-              { signal },
-            );
-            const data = await res.json();
-            if (data.status === "ok" && data.items.length > 0) {
-              const itemsWithSource = data.items.map((item) => {
-                const ytThumb = getYoutubeThumbnail(item.link);
-                const extractedImg = extractImageFromContent(item);
-                return {
-                  ...item,
-                  thumbnail: ytThumb || extractedImg || "",
-                  displayImage: ytThumb || extractedImg || rainbow,
-                  sourceName: source.name,
-                  sourceFlag: source.flag,
-                  sourceHome: source.home,
-                  sourceUrl: source.url,
-                };
-              });
-              allItems = [...allItems, ...itemsWithSource];
+            const builtInSource = SOURCES.find((item) => item.url === source.url);
+            let feedItems;
+            if (builtInSource) {
+              const res = await fetch(
+                `/api/news-feed?source=${encodeURIComponent(builtInSource.id)}`,
+                { signal },
+              );
+              if (!res.ok) {
+                throw new Error(`RSS-сервер відповів HTTP ${res.status}`);
+              }
+              feedItems = parseJsonFeed(await res.json());
+            } else {
+              const res = await fetch(
+                `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}`,
+                { signal },
+              );
+              if (!res.ok) {
+                throw new Error(`RSS-конвертер відповів HTTP ${res.status}`);
+              }
+              const data = await res.json();
+              if (data.status !== "ok" || !Array.isArray(data.items)) {
+                throw new Error(data.message || "RSS-конвертер повернув некоректну відповідь");
+              }
+              feedItems = data.items;
             }
+
+            const itemsWithSource = feedItems.map((item) => {
+              const ytThumb = getYoutubeThumbnail(item.link);
+              const extractedImg = extractImageFromContent(item);
+              return {
+                ...item,
+                thumbnail: ytThumb || extractedImg || item.thumbnail || "",
+                displayImage: ytThumb || extractedImg || item.thumbnail || rainbow,
+                sourceName: source.name,
+                sourceFlag: source.flag,
+                sourceHome: source.home,
+                sourceUrl: source.url,
+              };
+            });
+            allItems = [...allItems, ...itemsWithSource];
           }
         } catch (e) {
+          sourceErrors.push(`${source.name}: ${e.message}`);
+          console.warn(`Не вдалося завантажити новини з ${source.name}:`, e);
           continue;
         }
       }
       if (allItems.length === 0) {
         if (isMounted.current) {
+          setLoadError(
+            sourceErrors.length > 0
+              ? `Не вдалося отримати новини. ${sourceErrors[0]}. Спробуйте оновити сторінку пізніше.`
+              : "Зараз немає доступних новин. Спробуйте оновити сторінку пізніше.",
+          );
           setHasError(true);
           setLoadProgress(100);
           setLoading(false);
@@ -1978,6 +2022,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       }
       console.error("Справжня помилка завантаження:", e);
       if (isMounted.current) {
+        setLoadError("Сталася помилка під час завантаження новин. Спробуйте ще раз пізніше.");
         setHasError(true);
         setLoadProgress(100);
         if (showLoader) {
@@ -2584,7 +2629,11 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         </div>
       ) : (
         <div style={{ textAlign: "center", color: "white", padding: "14px", background: "#0000009c", marginTop: "20px", fontSize: "12px" }}>
-          Перевірте інтернет зв'язок. У випадку стабільного зв'язку це означає, що всі новини сайту мали недопустимий характер і ми їх не пропустили.
+          {hasError
+            ? loadError
+            : items.length === 0
+              ? "Усі отримані новини приховані фільтром вмісту."
+              : "Для обраних джерел поки немає новин."}
         </div>
       )}
 

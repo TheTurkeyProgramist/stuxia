@@ -18,6 +18,13 @@ the App Store; this is the website, not a native iOS app.
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## News feeds
+
+The built-in news feeds use the Vercel function in `api/news-feed.js` to fetch
+and convert feeds server-side, returning up to 10 items per source. Deploy the
+app to Vercel for the built-in feeds to work; static-only deployments do not
+run this function.
+
 ## Available Scripts
 
 In the project directory, you can run:

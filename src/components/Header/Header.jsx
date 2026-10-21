@@ -1,3 +1,10 @@
+//bun run --cwd Stuxia tauri android build --apk - Android
+//bun run --cwd Stuxia tauri build --bundles nsis - Windows
+//Launch wsl.exe 
+//
+//cd ~/projects/stuxia-linux-build
+//bun run --cwd Stuxia tauri build --bundles deb
+//bun run --cwd Stuxia tauri build --bundles deb - WSL(Linux)
 import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes, css } from "styled-components";
 import { BsMoonStarsFill } from "react-icons/bs";

@@ -32,7 +32,6 @@ export const LANGUAGE_GROUPS = [
       { code: 'el', name: 'Ελληνικά', nativeName: 'Ελληνικά', speakers: '~13M' },
       { code: 'cs', name: 'Čeština', nativeName: 'Čeština', speakers: '~11M' },
       { code: 'hu', name: 'Magyar', nativeName: 'Magyar', speakers: '~13M' },
-      { code: 'ru', name: 'Русский', nativeName: 'Русский', speakers: '~250M' },
     ],
   },
   {

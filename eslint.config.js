@@ -54,7 +54,7 @@ export default [
   },
   // 2. Конфіг для кореневих JS-скриптів
   {
-    files: ["*.js"],
+    files: ["*.js", "api/**/*.js"],
     languageOptions: {
       globals: {
         ...globals.node,
