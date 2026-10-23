@@ -585,7 +585,9 @@ const normalizeObfuscatedText = (text) =>
 
 const hasBannedPattern = (text) =>
   BANNED_CONTENT_PATTERN.test(text) ||
-  BANNED_CONTENT_PATTERN.test(text.replace(/і/g, "и"));
+  BANNED_CONTENT_PATTERN.test(
+    text.replace(/виборі/giu, " ").replace(/і/g, "и"),
+  );
 
 /**
  * Перевіряє текст на наявність забороненого контенту за допомогою Regex та нормалізації.

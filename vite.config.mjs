@@ -5,8 +5,59 @@ import viteCompression from 'vite-plugin-compression';
 import { imagetools } from 'vite-imagetools';
 import { visualizer } from 'rollup-plugin-visualizer';
 
+function newsFeedPlugin() {
+  const handlerMiddleware = async (req, res, next) => {
+    if (!req.url || !req.url.startsWith('/api/news-feed')) {
+      return next();
+    }
+    const url = new URL(req.url, 'http://localhost');
+    const query = Object.fromEntries(url.searchParams.entries());
+
+    const adaptedReq = {
+      method: req.method,
+      query,
+    };
+
+    const adaptedRes = {
+      setHeader: (k, v) => res.setHeader(k, v),
+      status: (code) => {
+        res.statusCode = code;
+        return {
+          json: (data) => {
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.end(JSON.stringify(data));
+          },
+          end: () => res.end(),
+        };
+      },
+      end: () => res.end(),
+    };
+
+    try {
+      const { default: handler } = await import('./api/news-feed.js');
+      await handler(adaptedReq, adaptedRes);
+    } catch (err) {
+      res.statusCode = 502;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.end(JSON.stringify({ error: err.message }));
+    }
+  };
+
+  return {
+    name: 'vite-plugin-news-feed',
+    configureServer(server) {
+      server.middlewares.use(handlerMiddleware);
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(handlerMiddleware);
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
+    newsFeedPlugin(),
     react(),
     imagetools(),
 

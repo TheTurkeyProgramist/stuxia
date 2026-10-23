@@ -732,10 +732,28 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
       }
       const suggestionCount = Number(suggestedQuestionsCount);
       const suggestionsInstruction = suggestionCount
-        ? `Додай рівно ${suggestionCount} коротке(их) питання(нь) у блоці [РЕКОМЕНДОВАНІ_ПИТАННЯ].`
+        ? `Додай рівно ${suggestionCount} коротке(их) змістовне(их) питання(нь) у блоці [РЕКОМЕНДОВАНІ_ПИТАННЯ], щоб допомогти обдумати тему, перевірити припущення чи побачити іншу перспективу, а не просто продовжити чат.`
         : "Не додавай блок рекомендованих питань.";
-      const systemInstructions = `Ти - ШІ-помічник для аналізу новини.\n${getResponseLengthInstruction(responseLength)}\n${getResponseStyleInstruction(responseStyle)}\n${suggestionsInstruction}`;
-      const promptText = `${systemInstructions}\nНовина:\nЗаголовок: ${newsItem?.title || ""}\nОпис: ${newsItem?.description || ""}\nПосилання: ${newsItem?.link || ""}\n${webContext}\nЗапит користувача: ${textToSend}`;
+      const systemInstructions = `Ти — ШІ-помічник для аналізу новин і живої дискусії.
+${getResponseLengthInstruction(responseLength)}
+${getResponseStyleInstruction(responseStyle)}
+Відповідай українською, якщо користувач не пише іншою мовою. Розрізняй підтверджені факти, твердження джерела та власні висновки; не вигадуй деталей, яких немає в новині чи наданому контексті.
+Не підтакуй автоматично, не використовуй лестощів і не хвали користувача без конкретної підстави. Оцінюй твердження за доказами; якщо не погоджуєшся, спокійно поясни чому. Відокремлюй факти, припущення й оцінки та визнавай невизначеність.
+Тримай стриманий, нейтральний і предметний тон без порожніх вступів і надмірної емоційності. Враховуй попередні репліки, пояснюй ключову логіку й за потреби став одне конкретне запитання, що допоможе перевірити припущення або обдумати тему. Не додавай запитання механічно.
+Якщо користувач розв'язує навчальну задачу, спершу дай одну конкретну підказку — навіть на перше прохання про готову відповідь. Після його спроби допоможи з наступним кроком; якщо він повторно просить повний розв'язок, поясни його без подальших відмов.
+Якщо користувач питає про суб'єктивний особистий вибір, наприклад колір волосся чи стін, прямо скажи, що це його особистий вибір, і не вирішуй за нього. Не видавай смак за об'єктивний факт і не підміняй відповідь шаблонною символікою. Допоможи визначити критерії та порівняти практичні наслідки; якщо критеріїв немає, постав одне конкретне запитання, яке допоможе людині обрати самостійно.
+${suggestionsInstruction}`;
+      const conversationContext = messages
+        .slice(-6)
+        .map((message) => `${message.isBot ? "Асистент" : "Користувач"}: ${message.text}`)
+        .join("\n");
+      const promptText = `${systemInstructions}
+${conversationContext ? `Попередній діалог:\n${conversationContext}\n` : ""}Новина:
+Заголовок: ${newsItem?.title || ""}
+Опис: ${newsItem?.description || ""}
+Посилання: ${newsItem?.link || ""}
+${webContext}
+Запит користувача: ${textToSend}`;
 
       const result = await model.generateContent(promptText);
       const response = await result.response;
