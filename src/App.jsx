@@ -20,7 +20,7 @@ import WeatherCardComponent, {
 } from "./components/Weather/Weather.jsx";
 import NotFound from "./components/NotFound.jsx";
 import Maintenance from "./components/Maintenance.jsx";
-import { getMaintenanceStatus, db } from "./firebase.js";
+import { getMaintenanceStatus, db, auth, signOut } from "./firebase.js";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import fogBackground from "./photos/hero-header/fogtwo.webp";
 import {
@@ -1340,6 +1340,23 @@ const App = () => {
         try {
           const userDocRef = doc(db, "config", userRef.current.uid);
           const userDoc = await getDoc(userDocRef);
+          const cloudData = userDoc.exists() ? userDoc.data() : {};
+          if (!cloudData.savedWeatherCards && weatherCardsRef.current.length) {
+            // Перший вхід: у хмарі ще немає карток — вивантажуємо локальні.
+            setDoc(
+              userDocRef,
+              {
+                savedWeatherCards: weatherCardsRef.current.map((c) => ({
+                  id: c.id,
+                  isMain: c.isMain,
+                  locationName: c.locationName,
+                  lat: c.lat,
+                  lon: c.lon,
+                })),
+              },
+              { merge: true },
+            ).catch(console.error);
+          }
           if (userDoc.exists()) {
             const data = userDoc.data();
             if (data.savedWeatherCards) {
@@ -2560,6 +2577,7 @@ const App = () => {
     return () => clearTimeout(removeTimer);
   }, [areInitialModulesReady, minimumLoaderTimePassed]);
   const handleLogout = () => {
+    signOut(auth).catch((err) => console.warn("Firebase signOut:", err));
     setUser(null);
     setCurrentAvatar(userDefault);
     localforage.removeItem("currentAvatar");

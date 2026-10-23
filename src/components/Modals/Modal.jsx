@@ -3,7 +3,12 @@ import styled, { keyframes, css } from "styled-components";
 import localforage from "localforage";
 import InfoModal from "./UserSearchModal.jsx";
 import KatSceneModal from "./KatSceneModal";
-import { auth, googleProvider, signInWithPopup } from "../../firebase";
+import {
+  auth,
+  googleProvider,
+  signInWithPopup,
+  ensureEmailPasswordAuth,
+} from "../../firebase";
 
 const slideIn = keyframes`
   0% { 
@@ -561,7 +566,12 @@ const Modal = ({
   };
 
   const completeRegistration = async () => {
+    const firebaseUser = await ensureEmailPasswordAuth(
+      formData.account,
+      formData.password,
+    );
     const registrationData = {
+      ...(firebaseUser ? { uid: firebaseUser.uid, id: firebaseUser.uid } : {}),
       account: formData.account,
       firstName: formData.firstName || formData.account,
       password: formData.password,

@@ -5,6 +5,8 @@ import styled, { keyframes, css } from "styled-components";
 import InfoModal from "./UserSearchModal.jsx";
 import KatSceneModal from "./KatSceneModal";
 import { auth } from "../../firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import localforage from "localforage";
 import { GoogleAuthProvider, linkWithPopup, unlink, verifyBeforeUpdateEmail, reauthenticateWithPopup } from "firebase/auth";
 import {
   FiUser,
@@ -645,19 +647,24 @@ const UserSettingsModal = ({
   // ── Account Relinking Handlers ───────────────────────────────────────────
   const [relinkEmail, setRelinkEmail] = useState(user?.email || user?.account || "");
   const [relinkStatus, setRelinkStatus] = useState("");
-  const [isLinkedGoogle, setIsLinkedGoogle] = useState(() => {
-    return Boolean(
-      auth.currentUser?.providerData?.some((p) => p.providerId === "google.com") ||
-      (user?.email && !user?.password) ||
-      savedGoogleAvatar
-    );
-  });
+  const [firebaseUserState, setFirebaseUserState] = useState(auth.currentUser);
+  useEffect(() => onAuthStateChanged(auth, setFirebaseUserState), []);
 
-  const isGoogleAccount = isLinkedGoogle || Boolean(user?.isGoogle || user?.provider === "google");
+  const providerIds = (firebaseUserState?.providerData || []).map((p) => p.providerId);
+  const isLinkedGoogle = providerIds.includes("google.com");
+  const hasPasswordProvider = providerIds.includes("password");
+  const hasFirebaseSession = Boolean(firebaseUserState);
+  const googleEmail =
+    firebaseUserState?.providerData?.find((p) => p.providerId === "google.com")?.email ||
+    user?.email ||
+    user?.account;
+
+  const isGoogleAccount = isLinkedGoogle && !hasPasswordProvider;
 
   const handleRelinkGoogle = async () => {
-    if (!auth.currentUser) {
-      alert("Потрібно авторизуватись у системі!");
+    const currentFbUser = auth.currentUser;
+    if (!currentFbUser) {
+      alert("Хмарний акаунт неактивний. Вийдіть і увійдіть знову, щоб активувати прив'язки.");
       return;
     }
     try {
@@ -666,24 +673,19 @@ const UserSettingsModal = ({
       provider.setCustomParameters({ prompt: "select_account" });
 
       let result;
-      try {
-        // Try to link a (possibly different) Google account
-        result = await linkWithPopup(auth.currentUser, provider);
-      } catch (linkErr) {
-        if (
-          linkErr.code === "auth/provider-already-linked" ||
-          linkErr.code === "auth/credential-already-in-use" ||
-          linkErr.code === "auth/email-already-in-use"
-        ) {
-          // Already linked — re-authenticate (still shows account picker)
-          result = await reauthenticateWithPopup(auth.currentUser, provider);
-        } else {
-          throw linkErr;
-        }
+      if (isLinkedGoogle && providerIds.length > 1) {
+        // Є інший спосіб входу — безпечно замінити прив'язаний Google-акаунт.
+        if (!window.confirm("Замінити прив'язаний Google-акаунт на інший?")) return;
+        await unlink(currentFbUser, "google.com");
+        result = await linkWithPopup(currentFbUser, provider);
+      } else if (isLinkedGoogle) {
+        // Google — єдиний спосіб входу: лише повторне підтвердження того ж акаунта.
+        result = await reauthenticateWithPopup(currentFbUser, provider);
+      } else {
+        result = await linkWithPopup(currentFbUser, provider);
       }
 
       const newGoogleUser = result.user;
-      setIsLinkedGoogle(true);
       const newPhoto = newGoogleUser.photoURL || newGoogleUser.providerData?.[0]?.photoURL;
       if (newPhoto) {
         setSavedGoogleAvatar(newPhoto);
@@ -699,7 +701,9 @@ const UserSettingsModal = ({
       if (err.code === "auth/cancelled-popup-request" || err.code === "auth/popup-closed-by-user") {
         // user closed popup — silent
       } else if (err.code === "auth/user-mismatch") {
-        alert("⚠️ Цей Google акаунт не збігається з поточним профілем!");
+        alert("⚠️ Цей Google акаунт не збігається з поточним профілем! Якщо Google — єдиний спосіб входу, його не можна замінити.");
+      } else if (err.code === "auth/credential-already-in-use" || err.code === "auth/email-already-in-use") {
+        alert("⚠️ Цей Google акаунт уже прив'язаний до іншого профілю.");
       } else {
         alert("Помилка: " + (err.message || err.code));
       }
@@ -709,15 +713,18 @@ const UserSettingsModal = ({
 
   const handleUnlinkGoogle = async () => {
     if (!auth.currentUser) return;
+    if (providerIds.length <= 1) {
+      alert("Google — єдиний спосіб входу в цей профіль, відв'язати його не можна, інакше ви втратите доступ.");
+      return;
+    }
     const confirmUnlink = window.confirm("Ви дійсно бажаєте відв'язати Google від цього профілю?\n\nПісля відв'язки для входу буде потрібен пароль.");
     if (!confirmUnlink) return;
     try {
       await unlink(auth.currentUser, "google.com");
-      setIsLinkedGoogle(false);
+      setFirebaseUserState(auth.currentUser);
       alert("✅ Google акаунт відв'язано успішно.");
     } catch (err) {
       if (err.code === "auth/no-such-provider") {
-        setIsLinkedGoogle(false);
         alert("Google вже не прив'язано до цього профілю.");
       } else {
         alert("Помилка відв'язування: " + (err.message || err.code));
@@ -738,26 +745,29 @@ const UserSettingsModal = ({
       return;
     }
 
+    const cu = auth.currentUser;
+    if (!cu) {
+      setRelinkStatus("⚠️ Хмарний акаунт неактивний — вийдіть та увійдіть знову, потім спробуйте ще раз.");
+      return;
+    }
+    if (!hasPasswordProvider) {
+      setRelinkStatus("⚠️ Пошта цього профілю керується Google і не може бути змінена тут.");
+      return;
+    }
+
     setRelinkLoading(true);
-    setRelinkStatus("⏳ Оновлюємо пошту...");
+    setRelinkStatus("⏳ Надсилаємо лист...");
 
     try {
-      const cu = auth.currentUser;
-      // Detect if user is Google-authenticated (no email/password provider)
-      const isGoogleOnly = cu?.providerData?.length > 0 &&
-        cu.providerData.every(p => p.providerId !== "password");
-
-      if (isGoogleOnly || !cu) {
-        // For Google accounts — just update the profile display email locally
-        // Firebase auth email is managed by Google and can't be changed via verifyBeforeUpdateEmail
-        onUpdate({ ...user, email: trimmed, account: trimmed });
-        setRelinkStatus(`✅ Пошту профілю оновлено на ${trimmed}. (Google-акаунт: авторизація залишається через Google)`);
-      } else {
-        // For email/password accounts — send Firebase verification email to new address
-        await verifyBeforeUpdateEmail(cu, trimmed);
-        onUpdate({ ...user, email: trimmed, account: trimmed });
-        setRelinkStatus(`✅ Лист підтвердження надіслано на ${trimmed}. Перевірте вхідні (та спам). Зміна набере чинності після кліку на посилання.`);
-      }
+      await verifyBeforeUpdateEmail(cu, trimmed);
+      // Пошту профілю не змінюємо, доки її не підтверджено за посиланням у листі.
+      const withPending = { ...user, pendingEmail: trimmed };
+      onUpdate(withPending);
+      try {
+        const registered = await localforage.getItem("registered_user");
+        if (registered) await localforage.setItem("registered_user", { ...registered, pendingEmail: trimmed });
+      } catch {}
+      setRelinkStatus(`✅ Лист підтвердження надіслано на ${trimmed}. Перевірте вхідні (та спам). Після кліку на посилання входьте з новою поштою.`);
     } catch (err) {
       if (err.code === "auth/requires-recent-login") {
         setRelinkStatus("⚠️ Потрібна повторна авторизація — вийдіть та увійдіть знову, потім спробуйте ще раз.");
@@ -766,9 +776,7 @@ const UserSettingsModal = ({
       } else if (err.code === "auth/invalid-email") {
         setRelinkStatus("❌ Неправильний формат електронної пошти!");
       } else {
-        // Any other error — update locally
-        onUpdate({ ...user, email: trimmed, account: trimmed });
-        setRelinkStatus(`📝 Пошту профілю оновлено локально: ${trimmed}.`);
+        setRelinkStatus(`❌ Не вдалося надіслати лист: ${err.code || err.message}`);
       }
     } finally {
       setRelinkLoading(false);
@@ -967,6 +975,7 @@ const UserSettingsModal = ({
     const finalAvatar = getActiveAvatarUrl(formData.avatarIndex);
 
     onUpdate({
+      ...user,
       account: user?.account || formData.name,
       firstName: formData.name,
       avatar: finalAvatar,
@@ -1384,14 +1393,16 @@ const UserSettingsModal = ({
                         <div style={{ display: "flex", flexDirection: "column" }}>
                           <span style={{ fontSize: "13px", fontWeight: "600", color: "#ffffff" }}>Google Акаунт</span>
                           <span style={{ fontSize: "11px", color: isLinkedGoogle ? "#60cdff" : "#a0a0a0" }}>
-                            {isLinkedGoogle ? `✓ Прив'язано (${user?.email || "Google"})` : "Не прив'язано"}
+                            {!hasFirebaseSession
+                              ? "Хмарний акаунт неактивний — увійдіть знову"
+                              : isLinkedGoogle ? `✓ Прив'язано (${googleEmail || "Google"})` : "Не прив'язано"}
                           </span>
                         </div>
                         <div style={{ display: "flex", gap: "6px" }}>
-                          <WinButton type="button" onClick={handleRelinkGoogle}>
-                            {isLinkedGoogle ? "Переприв'язати Google" : "Прив'язати Google"}
+                          <WinButton type="button" onClick={handleRelinkGoogle} disabled={!hasFirebaseSession}>
+                            {!isLinkedGoogle ? "Прив'язати Google" : providerIds.length > 1 ? "Переприв'язати Google" : "Підтвердити Google"}
                           </WinButton>
-                          {isLinkedGoogle && (
+                          {isLinkedGoogle && providerIds.length > 1 && (
                             <WinButton type="button" $danger onClick={handleUnlinkGoogle}>
                               Відв'язати
                             </WinButton>
@@ -1400,6 +1411,13 @@ const UserSettingsModal = ({
                       </div>
 
                       {/* Email Re-binding */}
+                      {!hasPasswordProvider ? (
+                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "10px", fontSize: "11px", color: "#888" }}>
+                          {hasFirebaseSession
+                            ? "Пошта цього профілю керується Google і змінюється в налаштуваннях Google-акаунту."
+                            : "Щоб змінити пошту, вийдіть та увійдіть знову."}
+                        </div>
+                      ) : (
                       <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "10px" }}>
                         <span style={{ fontSize: "13px", fontWeight: "600", color: "#ffffff" }}>Зміна прив'язаної пошти</span>
                         <span style={{ fontSize: "11px", color: "#888" }}>
@@ -1429,6 +1447,7 @@ const UserSettingsModal = ({
                           }}>{relinkStatus}</span>
                         )}
                       </div>
+                      )}
                     </div>
                   </CardExpanded>
 

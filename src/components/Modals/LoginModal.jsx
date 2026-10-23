@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import localforage from "localforage";
-import { auth, googleProvider, signInWithPopup } from "../../firebase";
+import {
+  auth,
+  googleProvider,
+  signInWithPopup,
+  ensureEmailPasswordAuth,
+} from "../../firebase";
 const slideIn = keyframes`
   0% {
     transform: translateY(100%) scale(0.5);
@@ -150,7 +155,31 @@ const LoginModal = ({ onClose, onLogin }) => {
       savedUser.account === email &&
       savedUser.password === pass
     ) {
-      onLogin(savedUser);
+      let loggedUser = savedUser;
+      // Зміна пошти підтверджується листом: якщо підтверджено, Firebase вже
+      // приймає нову пошту — переносимо її в локальний профіль.
+      let firebaseUser = null;
+      if (savedUser.pendingEmail) {
+        firebaseUser = await ensureEmailPasswordAuth(
+          savedUser.pendingEmail,
+          pass,
+          { createIfMissing: false },
+        );
+        if (firebaseUser) {
+          loggedUser = { ...loggedUser, account: savedUser.pendingEmail, email: savedUser.pendingEmail };
+          delete loggedUser.pendingEmail;
+        }
+      }
+      if (!firebaseUser) {
+        firebaseUser = await ensureEmailPasswordAuth(savedUser.account, pass);
+      }
+      if (firebaseUser) {
+        loggedUser = { ...loggedUser, uid: firebaseUser.uid, id: firebaseUser.uid };
+      }
+      if (loggedUser !== savedUser) {
+        await localforage.setItem("registered_user", loggedUser);
+      }
+      onLogin(loggedUser);
       handleClose();
     } else {
       setError("Невірний Gmail або пароль!");
