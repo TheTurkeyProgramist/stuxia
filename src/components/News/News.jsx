@@ -1802,27 +1802,91 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             const builtInSource = SOURCES.find((item) => item.url === source.url);
             let feedItems;
             if (builtInSource) {
-              const res = await fetch(
-                `/api/news-feed?source=${encodeURIComponent(builtInSource.id)}`,
-                { signal },
-              );
-              if (!res.ok) {
-                throw new Error(`RSS-сервер відповів HTTP ${res.status}`);
+              let fetched = false;
+              try {
+                const res = await fetch(
+                  `/api/news-feed?source=${encodeURIComponent(builtInSource.id)}`,
+                  { signal },
+                );
+                const contentType = res.headers.get("content-type") || "";
+                if (res.ok && contentType.includes("json")) {
+                  const data = await res.json();
+                  if (data && Array.isArray(data.items)) {
+                    feedItems = parseJsonFeed(data);
+                    fetched = true;
+                  }
+                }
+              } catch (err) {
+                if (err.name === "AbortError") throw err;
               }
-              feedItems = parseJsonFeed(await res.json());
+
+              if (!fetched) {
+                const fallbackRes = await fetch(
+                  `https://stuxia.com/api/news-feed?source=${encodeURIComponent(builtInSource.id)}`,
+                  { signal },
+                );
+                if (!fallbackRes.ok) {
+                  throw new Error(`RSS-сервер відповів HTTP ${fallbackRes.status}`);
+                }
+                const contentType = fallbackRes.headers.get("content-type") || "";
+                if (!contentType.includes("json")) {
+                  throw new Error("RSS-сервер повернув некоректну відповідь");
+                }
+                const data = await fallbackRes.json();
+                feedItems = parseJsonFeed(data);
+              }
             } else {
-              const res = await fetch(
-                `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}`,
-                { signal },
-              );
-              if (!res.ok) {
-                throw new Error(`RSS-конвертер відповів HTTP ${res.status}`);
+              let fetched = false;
+              try {
+                const res = await fetch(
+                  `/api/news-feed?url=${encodeURIComponent(source.url)}`,
+                  { signal },
+                );
+                const contentType = res.headers.get("content-type") || "";
+                if (res.ok && contentType.includes("json")) {
+                  const data = await res.json();
+                  if (data && Array.isArray(data.items)) {
+                    feedItems = parseJsonFeed(data);
+                    fetched = true;
+                  }
+                }
+              } catch (err) {
+                if (err.name === "AbortError") throw err;
               }
-              const data = await res.json();
-              if (data.status !== "ok" || !Array.isArray(data.items)) {
-                throw new Error(data.message || "RSS-конвертер повернув некоректну відповідь");
+
+              if (!fetched) {
+                try {
+                  const res = await fetch(
+                    `https://stuxia.com/api/news-feed?url=${encodeURIComponent(source.url)}`,
+                    { signal },
+                  );
+                  const contentType = res.headers.get("content-type") || "";
+                  if (res.ok && contentType.includes("json")) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data.items)) {
+                      feedItems = parseJsonFeed(data);
+                      fetched = true;
+                    }
+                  }
+                } catch (err) {
+                  if (err.name === "AbortError") throw err;
+                }
               }
-              feedItems = data.items;
+
+              if (!fetched) {
+                const res = await fetch(
+                  `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}`,
+                  { signal },
+                );
+                if (!res.ok) {
+                  throw new Error(`RSS-конвертер відповів HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                if (data.status !== "ok" || !Array.isArray(data.items)) {
+                  throw new Error(data.message || "RSS-конвертер повернув некоректну відповідь");
+                }
+                feedItems = data.items;
+              }
             }
 
             const itemsWithSource = feedItems.map((item) => {

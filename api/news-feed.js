@@ -6,13 +6,29 @@ const FEEDS = {
 const MAX_ITEMS_PER_FEED = 10;
 
 module.exports = async (request, response) => {
+  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (request.method === "OPTIONS") {
+    response.statusCode = 204;
+    return response.end ? response.end() : response.status(204).end();
+  }
+
   if (request.method !== "GET") {
-    response.setHeader("Allow", "GET");
+    response.setHeader("Allow", "GET, OPTIONS");
     return response.status(405).json({ error: "Method not allowed" });
   }
 
   const source = request.query?.source;
-  const feedUrl = typeof source === "string" ? FEEDS[source] : null;
+  const rawUrl = request.query?.url;
+  const feedUrl =
+    typeof source === "string"
+      ? FEEDS[source] || (source.startsWith("http://") || source.startsWith("https://") ? source : null)
+      : typeof rawUrl === "string" && (rawUrl.startsWith("http://") || rawUrl.startsWith("https://"))
+        ? rawUrl
+        : null;
+
   if (!feedUrl) {
     return response.status(400).json({ error: "Unknown RSS source" });
   }

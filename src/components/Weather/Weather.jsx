@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
@@ -23,6 +23,9 @@ import {
   BiX,
   BiTable,
   BiGridAlt,
+  BiCoinStack,
+  BiLink,
+  BiRefresh,
 } from "react-icons/bi";
 import { FiPlus } from "react-icons/fi";
 import {
@@ -30,13 +33,30 @@ import {
   addCustomDay,
 } from "../../features/counter/Counter.js";
 import { getHourlyForecastDayGroups } from "../../utils/hourlyForecast";
+import { generateRuleBasedForecast, cleanAiText } from "../../utils/ruleBasedForecast";
 import { DEFAULT_BGS } from "../Hero/defaultBgs";
 import { getWindDirectionText } from "../../utils/windUtils";
-import { FaCalendarPlus, FaClock, FaDroplet, FaCloudRain, FaCalendarDays, FaMoon, FaPlantWilt, FaGauge, FaCloud } from "react-icons/fa6";
+import {
+  FaCalendarPlus,
+  FaClock,
+  FaDroplet,
+  FaCloudRain,
+  FaCalendarDays,
+  FaMoon,
+  FaPlantWilt,
+  FaGauge,
+  FaCloud,
+  FaUmbrella,
+  FaShirt,
+  FaCar,
+  FaPersonWalking,
+  FaLightbulb,
+  FaGaugeHigh,
+} from "react-icons/fa6";
 import CustomDatesModal from "../Modals/CustomDatesModal";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { PiThermometerFill } from "react-icons/pi"; //Нормальна температура
-import { BsThermometerSnow, BsThermometerSun, BsMoonStarsFill } from "react-icons/bs"; //Холодна температура / Ніч
+import { BsThermometerSnow, BsThermometerSun, BsMoonStarsFill, BsClockHistory } from "react-icons/bs"; //Холодна температура / Ніч
 import { FaGlassWater, FaGlassWaterDroplet } from "react-icons/fa6"; //Вологість
 import { BiWind } from "react-icons/bi"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
@@ -682,6 +702,87 @@ const ShowMoreBtn = styled.button`
   text-decoration: underline;
 `;
 
+const ModePillButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: ${(props) =>
+    props.$active
+      ? "1.5px solid #00f0ff"
+      : props.$isDarkMode
+        ? "1px solid rgba(255, 255, 255, 0.2)"
+        : "1px solid rgba(0, 0, 0, 0.15)"};
+  background: ${(props) =>
+    props.$active
+      ? props.$isDarkMode
+        ? "linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(138, 43, 226, 0.35))"
+        : "linear-gradient(135deg, rgba(0, 200, 255, 0.2), rgba(138, 43, 226, 0.2))"
+      : props.$isDarkMode
+        ? "rgba(255, 255, 255, 0.05)"
+        : "rgba(0, 0, 0, 0.04)"};
+  color: ${(props) =>
+    props.$active
+      ? props.$isDarkMode
+        ? "#00f0ff"
+        : "#0066cc"
+      : props.$isDarkMode
+        ? "#bbb"
+        : "#555"};
+  transition: all 0.2s ease;
+  &:hover {
+    color: ${(props) => (props.$isDarkMode ? "#fff" : "#000")};
+    border-color: #00f0ff;
+    transform: translateY(-1px);
+  }
+`;
+
+const RuleBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  background: ${(props) => (props.$isDarkMode ? "rgba(0, 238, 255, 0.12)" : "rgba(0, 180, 220, 0.15)")};
+  color: ${(props) => (props.$isDarkMode ? "#00eeff" : "#007a99")};
+  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(0, 238, 255, 0.35)" : "rgba(0, 180, 220, 0.35)")};
+`;
+
+const RuleSectionCard = styled.div`
+  background: ${(props) =>
+    props.$isDarkMode ? "rgba(25, 20, 35, 0.65)" : "rgba(245, 248, 252, 0.85)"};
+  border: 1px solid ${(props) =>
+    props.$isDarkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)"};
+  border-left: 3.5px solid ${(props) => props.$accent || "#00eeff"};
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const RuleSectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: ${(props) => (props.$isDarkMode ? "#fff" : "#111")};
+`;
+
+const RuleSectionBody = styled.div`
+  font-size: 12px;
+  line-height: 1.5;
+  color: ${(props) => (props.$isDarkMode ? "#ddd" : "#333")};
+  white-space: pre-line;
+`;
+
 const PromptEditor = styled.div`
   display: flex;
   flex-direction: column;
@@ -828,12 +929,16 @@ const WeatherCardComponent = ({
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(card.locationName);
   const [selectedDay, setSelectedDay] = useState(null);
+  const [forecastMode, setForecastMode] = useState("rules"); // "rules" (експертні правила) або "ai" (Gemini)
+  const [copiedForecast, setCopiedForecast] = useState(false);
   const [aiSummary, setAiSummary] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isAiEnabled, setIsAiEnabled] = useState(true);
   const [customAiPrompt, setCustomAiPrompt] = useState("");
-  const [responseLength, setResponseLength] = useState("concise");
+  const [responseLength, setResponseLength] = useState("extensive");
   const [aiStyle, setAiStyle] = useState("friendly");
+  const [useAiSynergy, setUseAiSynergy] = useState(true); // Синергія ШІ з експертними правилами
+  const [aiTokenUsage, setAiTokenUsage] = useState(null); // Витрачені кредити / токени ШІ
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
   const [savedCustomAiPrompt, setSavedCustomAiPrompt] = useState("");
   const [aiPromptChangedAt, setAiPromptChangedAt] = useState(0);
@@ -844,6 +949,11 @@ const WeatherCardComponent = ({
   const [dailyViewMode, setDailyViewMode] = useState("charts");
   const defaultChartHeight = typeof window !== "undefined" && window.innerWidth < 768 ? "250px" : "380px";
   const [unit, setUnit] = useState("C"); // "C", "K", "F"
+
+  const ruleForecast = useMemo(() => {
+    return generateRuleBasedForecast(card, { unit, currentTimeString });
+  }, [card, unit, currentTimeString]);
+
   const [cityImage, setCityImage] = useState(card.cityImage || "");
   const [bgMode, setBgMode] = useState("wiki");
   const [isBgModalOpen, setIsBgModalOpen] = useState(false);
@@ -1415,6 +1525,12 @@ const WeatherCardComponent = ({
       if (savedLength) setResponseLength(savedLength);
       const savedStyle = await localforage.getItem(`ai_style_${card.id}`);
       if (savedStyle) setAiStyle(savedStyle);
+      const savedSynergy = await localforage.getItem(`ai_synergy_${card.id}`);
+      if (savedSynergy !== null) setUseAiSynergy(savedSynergy);
+      const savedTokens = await localforage.getItem(`ai_token_usage_${card.id}`);
+      if (savedTokens) setAiTokenUsage(savedTokens);
+      const savedMode = await localforage.getItem(`forecast_mode_${card.id}`);
+      if (savedMode) setForecastMode(savedMode);
     };
     loadAiSetting();
   }, [card.id]);
@@ -1444,10 +1560,8 @@ const WeatherCardComponent = ({
         )
         .join("; ");
 
-      const lengthInstruction =
-        responseLength === "extensive"
-          ? "надай розгорнуту відповідь (кілька речень)"
-          : "згенеруй лаконічний прогноз одним реченням (макс 25 слів)";
+      const detailedInstruction =
+        "Склади розгорнутий, багатий деталями та структурований прогноз погоди (щонайменше 3-4 докладні абзаци). Уникай коротких однорядкових відповідей! Детально проаналізуй температурний режим доби, поведінку хмарності та опадів (зокрема у другій половині дня та ввечері), вітер, тиск, тенденцію на найближчі дні та дай практичні життєві поради щодо одягу та планів.";
 
       const styleInstruction =
         aiStyle === "scientific"
@@ -1456,9 +1570,19 @@ const WeatherCardComponent = ({
             ? "додай дрібку сарказму та іронії"
             : "використовуй дружній та теплий тон";
 
+      const formattingRules =
+        "\n\nСУВОРІ ОБОВ'ЯЗКОВІ ПРАВИЛА ОФОРМЛЕННЯ:\n" +
+        "1. Категорично заборонено використовувати капслок (Caps Lock / слова повністю великими літерами, такі як 'КРИТИЧНІ ПОПЕРЕДЖЕННЯ' чи 'ПОРИВИ ВІТРУ'). Усі заголовки та підзаголовки пиши виключно звичайним регістром речення (наприклад: 'Критичні застереження:', 'Пориви вітру:').\n" +
+        "2. Категорично заборонено використовувати зірочки '*' (жодних **подвійних зірочок для виділення жирним**, маркованих списків із зірочками чи знаків множення). Замість зірочок формуй зв'язні абзаци або за потреби використовуй тире '—'.\n" +
+        "3. Категорично заборонено використовувати емодзі у тексті (жодних значків ⚠️, 🌧️ тощо), замість них використовуй тільки чистий текст.";
+
+      const synergyContext = useAiSynergy && ruleForecast
+        ? `\n\n[ЕКСПЕРТНІ ОФЛАЙН-РОЗРАХУНКИ ДЛЯ СИНЕРГІЇ]:\n- Виявлені патерни: ${ruleForecast.allBadges?.join(", ") || "немає"}\n- Добовий хід (день/ніч): ${ruleForecast.dayNight?.message || ""}\n- Опади та піки доби: ${ruleForecast.hourlyData?.rainWindowText || ""} ${ruleForecast.hourlyData?.peakTempText || ""} ${ruleForecast.hourlyData?.windTrendText || ""}\n- Тижнева динаміка: ${ruleForecast.weeklyData?.trendText || ""} ${ruleForecast.weeklyData?.weekSummaryText || ""}\nІнструкція синергії: Гармонійно синтезуй ці точні обчислені дані та патерни у свій розгорнутий художній прогноз у вибраному стилі. Не скорочуй відповідь, опиши все повно та цікаво.`
+        : "";
+
       const systemInstructions = customAiPrompt.trim()
-        ? `Ти метеоролог-асистент. ${styleInstruction}. Виконуй цю інструкцію: ${customAiPrompt}. Критичні попередження (якщо є) виводь на самому початку. Використовуй абзаци для розбиття тексту. Відповідь надай українською мовою.`
-        : `Ти метеоролог-асистент. На основі наданих даних ${lengthInstruction}. ${styleInstruction}. Згадай про комфортний одяг. КРИТИЧНІ ПОПЕРЕДЖЕННЯ (температура, вітер, УФ) став найвище. Використовуй абзаци для зручності читання. Відповідь виключно українською мовою.`;
+        ? `Ти метеоролог-асистент. ${styleInstruction}. Виконуй цю інструкцію: ${customAiPrompt}. ${detailedInstruction} Критичні попередження (якщо є) виводь на самому початку звичайним регістром. Використовуй абзаци для розбиття тексту. Відповідь надай українською мовою.${synergyContext}${formattingRules}`
+        : `Ти метеоролог-асистент. ${detailedInstruction} ${styleInstruction}. Згадай про комфортний одяг. Критичні застереження та попередження (температура, вітер, ожеледиця, УФ), якщо вони є, розміщуй на самому початку звичайним регістром. Використовуй абзаци для зручності читання. Відповідь виключно українською мовою.${synergyContext}${formattingRules}`;
 
       const promptText = `${systemInstructions}\n\nМісто: ${card.locationName}. Поточний час на сайті: ${currentTimeString}.\n\nПоточні показники: ${current.temp}, ${current.description}, вологість ${current.humidity}, вітер ${current.wind_speed}.\nНайближчі години: ${shortTermForecast}.\nПрогноз на дні: завтра ${daily[1]?.temp_day || "н/д"}, післязавтра ${daily[2]?.temp_day || "н/д"}.\nТенденція на 2 тижні: 1-й тиждень ~${daily[7]?.temp_day || "н/д"}, 2-й тиждень ~${daily[14]?.temp_day || "н/д"}.`;
 
@@ -1480,12 +1604,28 @@ const WeatherCardComponent = ({
       if (!result) throw lastErr || new Error("Не вдалося отримати прогноз від Gemini");
 
       const response = await result.response;
-      const text = response.text().trim();
+      const rawText = response.text().trim();
+      const text = cleanAiText(rawText);
+
+      const usage = response.usageMetadata || result.usageMetadata || null;
+      const promptTokens = usage?.promptTokenCount || 0;
+      const candidateTokens = usage?.candidatesTokenCount || 0;
+      const totalTokens = usage?.totalTokenCount || (promptTokens + candidateTokens);
+
+      const tokenInfo = {
+        promptTokens,
+        candidateTokens,
+        totalTokens,
+        timestamp: Date.now(),
+      };
+      setAiTokenUsage(tokenInfo);
+      await localforage.setItem(`ai_token_usage_${card.id}`, tokenInfo);
 
       setAiSummary(text);
       await localforage.setItem(`ai_weather_summary_${card.id}`, {
         text,
         timestamp: Date.now(),
+        tokenInfo,
       });
     } catch (e) {
       console.error("Gemini Weather Error:", e);
@@ -1498,6 +1638,8 @@ const WeatherCardComponent = ({
     customAiPrompt,
     responseLength,
     aiStyle,
+    useAiSynergy,
+    ruleForecast,
     currentTimeString,
   ]);
 
@@ -1512,7 +1654,8 @@ const WeatherCardComponent = ({
     if (needsUpdate) {
       generateWeatherSummary();
     } else {
-      setAiSummary(saved.text);
+      setAiSummary(cleanAiText(saved.text));
+      if (saved.tokenInfo) setAiTokenUsage(saved.tokenInfo);
     }
   }, [card.id, generateWeatherSummary]);
 
@@ -1522,10 +1665,19 @@ const WeatherCardComponent = ({
     await localforage.setItem(`ai_enabled_${card.id}`, newVal);
   };
 
+  const handleForecastModeChange = async (mode) => {
+    setForecastMode(mode);
+    await localforage.setItem(`forecast_mode_${card.id}`, mode);
+    if (mode === "ai" && !aiSummary && isAiEnabled) {
+      checkAndUpdate();
+    }
+  };
+
   const handleAiTabClick = () => {
     setActiveTab("ai");
-    if (!isAiEnabled) return;
-    checkAndUpdate();
+    if (forecastMode === "ai" && isAiEnabled) {
+      checkAndUpdate();
+    }
   };
 
   useEffect(() => {
@@ -2234,7 +2386,7 @@ const HOLIDAYS_2027 = {
           const order = ["current", "hourly", "daily", "ai"];
           const nextIndex = (order.indexOf(prev) + 1) % order.length;
           const next = order[nextIndex];
-          if (next === "ai" && !aiSummary && isAiEnabled) {
+          if (next === "ai" && forecastMode === "ai" && !aiSummary && isAiEnabled) {
             checkAndUpdate();
           }
           return next;
@@ -2242,7 +2394,7 @@ const HOLIDAYS_2027 = {
       }
     }, 6500);
     return () => clearInterval(interval);
-  }, [isBannerHovered, aiSummary, isAiEnabled, checkAndUpdate]);
+  }, [isBannerHovered, aiSummary, isAiEnabled, forecastMode, checkAndUpdate]);
 
   const renderHourlyTable = () => {
     if (!visibleHourly || visibleHourly.length === 0) {
@@ -3044,7 +3196,7 @@ const HOLIDAYS_2027 = {
             { key: "current", label: "Зараз" },
             { key: "hourly",  label: "Годинна" },
             { key: "daily",   label: "Місячна" },
-            { key: "ai",      label: "ШІ" },
+            { key: "ai",      label: forecastMode === "rules" ? "Смарт" : "ШІ" },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -3532,180 +3684,578 @@ const HOLIDAYS_2027 = {
             </div>
           )}
 
-          {/* Аналіз ШІ */}
+          {/* Смарт-прогноз (Правила) та ШІ (Gemini) */}
           {activeTab === "ai" && (
             <AiSummaryBox $isDarkMode={isDarkMode} layout>
+              {/* Перемикач режимів: 1-й спосіб (Експертні правила без ШІ) та 2-й спосіб (Gemini AI) */}
               <div
                 style={{
                   display: "flex",
+                  flexWrap: "wrap",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  marginBottom: "8px",
+                  gap: "8px",
+                  marginBottom: "12px",
+                  paddingBottom: "8px",
+                  borderBottom: isDarkMode
+                    ? "1px solid rgba(255, 255, 255, 0.12)"
+                    : "1px solid rgba(0, 0, 0, 0.1)",
                 }}
               >
-                <span
-                  className="ai-header-text"
-                  style={{
-                    fontWeight: 800,
-                    color: isDarkMode ? "#fff" : "#000",
-                    fontSize: "18px",
-                    letterSpacing: "1px",
-                  }}
-                >
-                  Прогноз ШІ (Gemini)
-                </span>
-                <button
-                  className="ai-edit-btn"
-                  onClick={() => setIsEditingPrompt(!isEditingPrompt)}
-                  style={{
-                    background: "rgba(138, 43, 226, 0.2)",
-                    border: "1px solid rgba(138, 43, 226, 0.6)",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    fontSize: "11px",
-                    color: isDarkMode ? "#fff" : "#000",
-                    padding: "4px 8px",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  {isEditingPrompt ? "Повернутися до ШІ Викладу" : "Редагувати умову промпту"}
-                </button>
-              </div>
-              {isEditingPrompt ? (
-                <PromptEditor $isDarkMode={isDarkMode}>
-                  <label style={{ fontSize: "11px", fontWeight: "bold" }}>
-                    Своя інструкція до прогнозу:
-                  </label>
-                  <PromptTextarea
+                <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+                  <ModePillButton
+                    $active={forecastMode === "rules"}
                     $isDarkMode={isDarkMode}
-                    value={customAiPrompt}
-                    onChange={(e) => setCustomAiPrompt(e.target.value)}
-                    placeholder="Наприклад: Дай поради для рибалки на основі вітру та тиску..."
-                  />
+                    onClick={() => handleForecastModeChange("rules")}
+                    title="Аналіз на базі умов, збігів та фізичних параметрів без ШІ та інтернету"
+                  >
+                    <BiLineChart style={{ fontSize: "14px" }} />
+                    <span>Смарт-правила (Офлайн)</span>
+                  </ModePillButton>
+                  <ModePillButton
+                    $active={forecastMode === "ai"}
+                    $isDarkMode={isDarkMode}
+                    onClick={() => handleForecastModeChange("ai")}
+                    title="Генеративний прогноз від моделі Google Gemini AI"
+                  >
+                    <BiBrain style={{ fontSize: "14px" }} />
+                    <span>Нейромережа (Gemini)</span>
+                  </ModePillButton>
+                </div>
+
+                {forecastMode === "ai" && (
+                  <button
+                    className="ai-edit-btn"
+                    onClick={() => setIsEditingPrompt(!isEditingPrompt)}
+                    style={{
+                      background: "rgba(138, 43, 226, 0.2)",
+                      border: "1px solid rgba(138, 43, 226, 0.6)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                      fontSize: "11px",
+                      color: isDarkMode ? "#fff" : "#000",
+                      padding: "4px 8px",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {isEditingPrompt ? "Повернутися" : "Промпт & Стиль"}
+                  </button>
+                )}
+
+                {forecastMode === "rules" && (
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button
+                      onClick={() => {
+                        if (ruleForecast?.fullText) {
+                          navigator.clipboard?.writeText(ruleForecast.fullText);
+                          setCopiedForecast(true);
+                          setTimeout(() => setCopiedForecast(false), 2000);
+                        }
+                      }}
+                      style={{
+                        background: copiedForecast
+                          ? "rgba(0, 255, 150, 0.25)"
+                          : isDarkMode
+                            ? "rgba(255, 255, 255, 0.1)"
+                            : "rgba(0, 0, 0, 0.08)",
+                        border: copiedForecast
+                          ? "1px solid #00ff96"
+                          : isDarkMode
+                            ? "1px solid rgba(255, 255, 255, 0.2)"
+                            : "1px solid rgba(0, 0, 0, 0.15)",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontWeight: 600,
+                        fontSize: "11px",
+                        color: copiedForecast
+                          ? "#00ff96"
+                          : isDarkMode
+                            ? "#fff"
+                            : "#222",
+                        padding: "4px 8px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        transition: "all 0.2s",
+                      }}
+                      title="Скопіювати текст прогнозу"
+                    >
+                      <BiCheck style={{ fontSize: "14px" }} />
+                      <span>{copiedForecast ? "Скопійовано!" : "Скопіювати"}</span>
+                    </button>
+                    <button
+                      onClick={() => setIsAiModalOpen(true)}
+                      style={{
+                        background: "rgba(0, 238, 255, 0.15)",
+                        border: "1px solid rgba(0, 238, 255, 0.5)",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontWeight: 600,
+                        fontSize: "11px",
+                        color: isDarkMode ? "#00eeff" : "#007a99",
+                        padding: "4px 8px",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      Повний звіт
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* РЕЖИМ 1: Експертні правила без ШІ */}
+              {forecastMode === "rules" ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {/* Головний статус та бейджі збігів */}
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 800,
+                        color: isDarkMode ? "#00eeff" : "#0066aa",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      {ruleForecast?.headline}
+                    </div>
+                    {ruleForecast?.allBadges && ruleForecast.allBadges.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "8px" }}>
+                        {ruleForecast.allBadges.map((badge, bIdx) => (
+                          <RuleBadge key={bIdx} $isDarkMode={isDarkMode}>
+                            {badge.toLowerCase().includes("дощ") && <FaCloudRain style={{ marginRight: "4px" }} />}
+                            {badge.toLowerCase().includes("вітер") && <BiWind style={{ marginRight: "4px" }} />}
+                            {badge.toLowerCase().includes("підйом") && <BiLineChart style={{ marginRight: "4px" }} />}
+                            {badge.toLowerCase().includes("спад") && <BsThermometerSnow style={{ marginRight: "4px" }} />}
+                            {(badge.toLowerCase().includes("контраст") || badge.toLowerCase().includes("ніч")) && (
+                              <BsMoonStarsFill style={{ marginRight: "4px" }} />
+                            )}
+                            <span>{badge}</span>
+                          </RuleBadge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 1. Блок: Добовий хід (день / ніч) */}
+                  <RuleSectionCard $isDarkMode={isDarkMode} $accent="#ffb300">
+                    <RuleSectionHeader $isDarkMode={isDarkMode}>
+                      <BsMoonStarsFill style={{ color: "#facc15", fontSize: "14px" }} />
+                      <span>Добовий контраст (день vs ніч)</span>
+                    </RuleSectionHeader>
+                    <RuleSectionBody $isDarkMode={isDarkMode}>
+                      {ruleForecast?.dayNight?.message}
+                    </RuleSectionBody>
+                  </RuleSectionCard>
+
+                  {/* 2. Блок: Погодинні події, опади у 2-й половині дня, пік тепла */}
+                  <RuleSectionCard $isDarkMode={isDarkMode} $accent="#00bfff">
+                    <RuleSectionHeader $isDarkMode={isDarkMode}>
+                      <BsClockHistory style={{ color: "#00bfff", fontSize: "14px" }} />
+                      <span>Динаміка доби (опади, пік тепла, вітер)</span>
+                    </RuleSectionHeader>
+                    <RuleSectionBody $isDarkMode={isDarkMode}>
+                      <div style={{ display: "flex", gap: "6px", alignItems: "flex-start" }}>
+                        <FaCloudRain style={{ color: "#38bdf8", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                        <span>{ruleForecast?.hourlyData?.rainWindowText}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: "6px", alignItems: "flex-start", marginTop: "4px" }}>
+                        <PiThermometerFill style={{ color: "#f97316", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                        <span>{ruleForecast?.hourlyData?.peakTempText}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: "6px", alignItems: "flex-start", marginTop: "4px" }}>
+                        <BiWind style={{ color: "#00eeff", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                        <span>{ruleForecast?.hourlyData?.windTrendText}</span>
+                      </div>
+                    </RuleSectionBody>
+                  </RuleSectionCard>
+
+                  {/* 3. Блок: Тижневий тренд (різкий підйом або спад) */}
+                  <RuleSectionCard $isDarkMode={isDarkMode} $accent="#a855f7">
+                    <RuleSectionHeader $isDarkMode={isDarkMode}>
+                      <BiLineChart style={{ color: "#a855f7", fontSize: "14px" }} />
+                      <span>Тижневий тренд та динаміка</span>
+                    </RuleSectionHeader>
+                    <RuleSectionBody $isDarkMode={isDarkMode}>
+                      <div>{ruleForecast?.weeklyData?.trendText}</div>
+                      <div style={{ marginTop: "4px", opacity: 0.9 }}>
+                        {ruleForecast?.weeklyData?.weekSummaryText}
+                      </div>
+                    </RuleSectionBody>
+                  </RuleSectionCard>
+
+                  {/* 4. Блок: Рекомендації та гардероб */}
+                  {ruleForecast?.lifestyleAdvice && ruleForecast.lifestyleAdvice.length > 0 && (
+                    <RuleSectionCard $isDarkMode={isDarkMode} $accent="#10b981">
+                      <RuleSectionHeader $isDarkMode={isDarkMode}>
+                        <FaLightbulb style={{ color: "#10b981", fontSize: "14px" }} />
+                        <span>Поради та гардероб</span>
+                      </RuleSectionHeader>
+                      <RuleSectionBody $isDarkMode={isDarkMode}>
+                        {ruleForecast.lifestyleAdvice.map((adv, aIdx) => {
+                          if (adv.type === "wind_warning") {
+                            return (
+                              <div
+                                key={aIdx}
+                                style={{
+                                  display: "flex",
+                                  gap: "8px",
+                                  alignItems: "flex-start",
+                                  background: isDarkMode ? "rgba(255, 179, 0, 0.15)" : "rgba(255, 179, 0, 0.12)",
+                                  border: "1px solid rgba(255, 179, 0, 0.45)",
+                                  borderRadius: "8px",
+                                  padding: "8px 10px",
+                                  marginTop: aIdx > 0 ? "5px" : 0,
+                                }}
+                              >
+                                <FaExclamationTriangle
+                                  style={{ color: "#ffb300", fontSize: "16px", flexShrink: 0, marginTop: "2px" }}
+                                />
+                                <div style={{ fontSize: "12px", lineHeight: "1.5" }}>
+                                  <strong style={{ color: isDarkMode ? "#ffd166" : "#b45309" }}>{adv.title}</strong>{" "}
+                                  <span>{adv.text}</span>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div
+                              key={aIdx}
+                              style={{
+                                display: "flex",
+                                gap: "8px",
+                                alignItems: "flex-start",
+                                marginTop: aIdx > 0 ? "4px" : 0,
+                              }}
+                            >
+                              {adv.type === "cloth" && (
+                                <FaShirt style={{ color: "#10b981", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                              )}
+                              {adv.type === "umbrella" && (
+                                <FaUmbrella style={{ color: "#00bfff", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                              )}
+                              {adv.type === "car" && (
+                                <FaCar style={{ color: "#f59e0b", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                              )}
+                              {adv.type === "sport" && (
+                                <FaPersonWalking style={{ color: "#10b981", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                              )}
+                              <div>
+                                <strong>{adv.title}:</strong> {adv.text}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </RuleSectionBody>
+                    </RuleSectionCard>
+                  )}
+
+                  {/* 5. Блок: Атмосфера та самопочуття */}
+                  {ruleForecast?.atmosphereNotes && ruleForecast.atmosphereNotes.length > 0 && (
+                    <RuleSectionCard $isDarkMode={isDarkMode} $accent="#ec4899">
+                      <RuleSectionHeader $isDarkMode={isDarkMode}>
+                        <FaGaugeHigh style={{ color: "#ec4899", fontSize: "14px" }} />
+                        <span>Атмосферний тиск та фактори</span>
+                      </RuleSectionHeader>
+                      <RuleSectionBody $isDarkMode={isDarkMode}>
+                        {ruleForecast.atmosphereNotes.map((note, nIdx) => (
+                          <div
+                            key={nIdx}
+                            style={{
+                              display: "flex",
+                              gap: "8px",
+                              alignItems: "flex-start",
+                              marginTop: nIdx > 0 ? "4px" : 0,
+                            }}
+                          >
+                            {(note.type === "pressure_low" || note.type === "pressure_high") && (
+                              <FaGaugeHigh style={{ color: "#ec4899", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                            )}
+                            {note.type === "humidity" && (
+                              <FaDroplet style={{ color: "#38bdf8", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                            )}
+                            {note.type === "uvi" && (
+                              <GiSunRadiations style={{ color: "#eab308", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                            )}
+                            <div>
+                              <strong>{note.title}:</strong> {note.text}
+                            </div>
+                          </div>
+                        ))}
+                      </RuleSectionBody>
+                    </RuleSectionCard>
+                  )}
+                </div>
+              ) : (
+                /* РЕЖИМ 2: ШІ (Gemini AI) */
+                <>
                   <div
                     style={{
                       display: "flex",
-                      flexWrap: "wrap",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      gap: "10px",
-                      marginTop: "6px",
+                      marginBottom: "8px",
+                      flexWrap: "wrap",
+                      gap: "6px",
                     }}
                   >
-                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                        <span style={{ fontSize: "14px", fontWeight: "600" }}>Обсяг:</span>
-                        <select
-                          value={responseLength}
-                          onChange={(e) => setResponseLength(e.target.value)}
-                          style={{
-                            fontSize: "12px",
-                            padding: "6px 10px",
-                            borderRadius: "6px",
-                            background: isDarkMode ? "#252535" : "#fff",
-                            color: isDarkMode ? "#fff" : "#000",
-                            border: "1px solid rgba(138, 43, 226, 0.5)",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <option value="concise">Стисло</option>
-                          <option value="extensive">Обширно</option>
-                        </select>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                        <span style={{ fontSize: "14px", fontWeight: "600" }}>Стиль:</span>
-                        <select
-                          value={aiStyle}
-                          onChange={(e) => setAiStyle(e.target.value)}
-                          style={{
-                            fontSize: "12px",
-                            padding: "6px 10px",
-                            borderRadius: "6px",
-                            background: isDarkMode ? "#252535" : "#fff",
-                            color: isDarkMode ? "#fff" : "#000",
-                            border: "1px solid rgba(138, 43, 226, 0.5)",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <option value="friendly">Дружній</option>
-                          <option value="scientific">Науковий</option>
-                          <option value="sarcastic">Саркастичний</option>
-                        </select>
-                      </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <span
+                        className="ai-header-text"
+                        style={{
+                          fontWeight: 800,
+                          color: isDarkMode ? "#fff" : "#000",
+                          fontSize: "16px",
+                          letterSpacing: "1px",
+                        }}
+                      >
+                        Прогноз ШІ (Gemini)
+                      </span>
+                      <button
+                        onClick={async () => {
+                          const nextVal = !useAiSynergy;
+                          setUseAiSynergy(nextVal);
+                          await localforage.setItem(`ai_synergy_${card.id}`, nextVal);
+                        }}
+                        style={{
+                          background: useAiSynergy
+                            ? (isDarkMode ? "rgba(0, 238, 255, 0.15)" : "rgba(0, 180, 220, 0.15)")
+                            : "transparent",
+                          border: `1px solid ${useAiSynergy ? "#00eeff" : "rgba(150, 150, 150, 0.4)"}`,
+                          borderRadius: "12px",
+                          cursor: "pointer",
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: useAiSynergy ? (isDarkMode ? "#00eeff" : "#007a99") : (isDarkMode ? "#888" : "#666"),
+                          padding: "2px 8px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          transition: "all 0.2s",
+                        }}
+                        title="Увімкнути / вимкнути синергію (передачу точних розрахунків правил у модель ШІ)"
+                      >
+                        <BiLink style={{ fontSize: "12px" }} />
+                        <span>{useAiSynergy ? "Синергія: УВІМКНЕНО" : "Синергія: вимкнено"}</span>
+                      </button>
                     </div>
                     <button
-                      onClick={async () => {
-                        const nextPrompt = customAiPrompt.trim();
-                        const previousPrompt = savedCustomAiPrompt.trim();
-                        const promptWasChanged = nextPrompt !== previousPrompt;
-                        const now = Date.now();
-                        const DAY_MS = 24 * 60 * 60 * 1000;
-
-                        if (
-                          promptWasChanged &&
-                          aiPromptChangedAt &&
-                          now - aiPromptChangedAt < DAY_MS
-                        ) {
-                          const hoursLeft = Math.ceil(
-                            (DAY_MS - (now - aiPromptChangedAt)) / (60 * 60 * 1000),
-                          );
-                          alert(`Промпт можна змінити знову через ${hoursLeft} год.`);
-                          return;
-                        }
-
-                        await localforage.setItem(`ai_custom_prompt_${card.id}`, customAiPrompt);
-                        await localforage.setItem(`ai_response_length_${card.id}`, responseLength);
-                        await localforage.setItem(`ai_style_${card.id}`, aiStyle);
-                        if (promptWasChanged) {
-                          await localforage.setItem(
-                            `ai_custom_prompt_changed_at_${card.id}`,
-                            now,
-                          );
-                          setSavedCustomAiPrompt(customAiPrompt);
-                          setAiPromptChangedAt(now);
-                        }
-                        setIsEditingPrompt(false);
-                        generateWeatherSummary();
-                      }}
+                      onClick={() => generateWeatherSummary()}
+                      disabled={isAiLoading}
                       style={{
-                        background: "linear-gradient(135deg, #8a2be2, #a855f7)",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "8px",
-                        padding: "8px 16px",
-                        fontSize: "12px",
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                        boxShadow: "0 3px 10px rgba(138, 43, 226, 0.35)",
-                        marginTop: "auto",
+                        background: "rgba(138, 43, 226, 0.25)",
+                        border: "1px solid rgba(138, 43, 226, 0.6)",
+                        borderRadius: "6px",
+                        cursor: isAiLoading ? "not-allowed" : "pointer",
+                        fontWeight: 600,
+                        fontSize: "11px",
+                        color: isDarkMode ? "#fff" : "#000",
+                        padding: "4px 8px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        transition: "all 0.2s",
                       }}
                     >
-                      Зберегти та оновити
+                      <BiRefresh style={{ fontSize: "14px" }} />
+                      <span>{isAiLoading ? "Генерація..." : "Згенерувати знову"}</span>
                     </button>
                   </div>
-                </PromptEditor>
-              ) : isAiLoading ? (
-                <div style={{ color: "#b362ff", padding: "10px 0", fontSize: "12px" }}>
-                  Генерація прогнозу ШІ...
-                </div>
-              ) : aiSummary ? (
-                <>
-                  <motion.div layout transition={{ duration: 0.3 }}>
-                    <SummaryText ref={summaryRef} $isExpanded={false}>
-                      {aiSummary}
-                    </SummaryText>
-                  </motion.div>
-                  {hasOverflow && (
-                    <ShowMoreBtn onClick={() => setIsAiModalOpen(true)}>
-                      Читати далі...
-                    </ShowMoreBtn>
+
+                  {/* Показ витрачених токенів / кредитів ШІ */}
+                  {aiTokenUsage && aiTokenUsage.totalTokens > 0 && (
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        padding: "4px 10px",
+                        borderRadius: "6px",
+                        background: isDarkMode ? "rgba(255, 215, 0, 0.12)" : "rgba(255, 180, 0, 0.15)",
+                        border: `1px solid ${isDarkMode ? "rgba(255, 215, 0, 0.4)" : "rgba(255, 180, 0, 0.4)"}`,
+                        color: isDarkMode ? "#ffd700" : "#b45309",
+                        marginBottom: "8px",
+                        width: "fit-content",
+                      }}
+                      title="Використані токени Gemini API (вхідні + вихідні)"
+                    >
+                      <BiCoinStack style={{ fontSize: "15px" }} />
+                      <span>
+                        Витрачено кредитів: <strong>{aiTokenUsage.totalTokens} токенів</strong> (вхід: {aiTokenUsage.promptTokens}, відповідь: {aiTokenUsage.candidateTokens})
+                      </span>
+                    </div>
+                  )}
+
+                  {isEditingPrompt ? (
+                    <PromptEditor $isDarkMode={isDarkMode}>
+                      <label style={{ fontSize: "11px", fontWeight: "bold" }}>
+                        Своя інструкція до прогнозу:
+                      </label>
+                      <PromptTextarea
+                        $isDarkMode={isDarkMode}
+                        value={customAiPrompt}
+                        onChange={(e) => setCustomAiPrompt(e.target.value)}
+                        placeholder="Наприклад: Дай поради для рибалки на основі вітру та тиску..."
+                      />
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: "10px",
+                          marginTop: "6px",
+                        }}
+                      >
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                            <span style={{ fontSize: "14px", fontWeight: "600" }}>Стиль:</span>
+                            <select
+                              value={aiStyle}
+                              onChange={(e) => setAiStyle(e.target.value)}
+                              style={{
+                                fontSize: "12px",
+                                padding: "6px 10px",
+                                borderRadius: "6px",
+                                background: isDarkMode ? "#252535" : "#fff",
+                                color: isDarkMode ? "#fff" : "#000",
+                                border: "1px solid rgba(138, 43, 226, 0.5)",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <option value="friendly">Дружній</option>
+                              <option value="scientific">Науковий</option>
+                              <option value="sarcastic">Саркастичний</option>
+                            </select>
+                          </div>
+                          <label
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              color: useAiSynergy ? "#00eeff" : isDarkMode ? "#aaa" : "#555",
+                              background: useAiSynergy
+                                ? (isDarkMode ? "rgba(0, 238, 255, 0.12)" : "rgba(0, 180, 220, 0.15)")
+                                : "transparent",
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              border: `1px solid ${useAiSynergy ? "rgba(0, 238, 255, 0.4)" : "rgba(128, 128, 128, 0.2)"}`,
+                              marginTop: "auto",
+                              userSelect: "none",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={useAiSynergy}
+                              onChange={(e) => setUseAiSynergy(e.target.checked)}
+                              style={{ cursor: "pointer", accentColor: "#00eeff" }}
+                            />
+                            <BiLink style={{ fontSize: "14px" }} />
+                            <span>Синергія (збагатити даними правил)</span>
+                          </label>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            const nextPrompt = customAiPrompt.trim();
+                            const previousPrompt = savedCustomAiPrompt.trim();
+                            const promptWasChanged = nextPrompt !== previousPrompt;
+                            const now = Date.now();
+                            const DAY_MS = 24 * 60 * 60 * 1000;
+
+                            if (
+                              promptWasChanged &&
+                              aiPromptChangedAt &&
+                              now - aiPromptChangedAt < DAY_MS
+                            ) {
+                              const hoursLeft = Math.ceil(
+                                (DAY_MS - (now - aiPromptChangedAt)) / (60 * 60 * 1000),
+                              );
+                              alert(`Промпт можна змінити знову через ${hoursLeft} год.`);
+                              return;
+                            }
+
+                            await localforage.setItem(`ai_custom_prompt_${card.id}`, customAiPrompt);
+                            await localforage.setItem(`ai_response_length_${card.id}`, "extensive");
+                            await localforage.setItem(`ai_style_${card.id}`, aiStyle);
+                            await localforage.setItem(`ai_synergy_${card.id}`, useAiSynergy);
+                            if (promptWasChanged) {
+                              await localforage.setItem(
+                                `ai_custom_prompt_changed_at_${card.id}`,
+                                now,
+                              );
+                              setSavedCustomAiPrompt(customAiPrompt);
+                              setAiPromptChangedAt(now);
+                            }
+                            setIsEditingPrompt(false);
+                            generateWeatherSummary();
+                          }}
+                          style={{
+                            background: "linear-gradient(135deg, #8a2be2, #a855f7)",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "8px",
+                            padding: "8px 16px",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                            fontWeight: "bold",
+                            boxShadow: "0 3px 10px rgba(138, 43, 226, 0.35)",
+                            marginTop: "auto",
+                          }}
+                        >
+                          Зберегти та оновити
+                        </button>
+                      </div>
+                    </PromptEditor>
+                  ) : isAiLoading ? (
+                    <div style={{ color: "#b362ff", padding: "10px 0", fontSize: "12px" }}>
+                      Генерація прогнозу ШІ...
+                    </div>
+                  ) : aiSummary ? (
+                    <>
+                      {useAiSynergy && (
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            color: isDarkMode ? "#00eeff" : "#007a99",
+                            background: isDarkMode ? "rgba(0, 238, 255, 0.1)" : "rgba(0, 180, 220, 0.12)",
+                            border: `1px solid ${isDarkMode ? "rgba(0, 238, 255, 0.35)" : "rgba(0, 180, 220, 0.35)"}`,
+                            borderRadius: "10px",
+                            padding: "2px 8px",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          <BiLink style={{ fontSize: "12px" }} />
+                          <span>Синергія:</span>
+                          <span style={{ opacity: 0.9 }}>збагачено розрахунками офлайн-правил</span>
+                        </div>
+                      )}
+                      <motion.div layout transition={{ duration: 0.3 }}>
+                        <SummaryText ref={summaryRef} $isExpanded={false}>
+                          {cleanAiText(aiSummary)}
+                        </SummaryText>
+                      </motion.div>
+                      {hasOverflow && (
+                        <ShowMoreBtn onClick={() => setIsAiModalOpen(true)}>
+                          Читати далі...
+                        </ShowMoreBtn>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ color: isDarkMode ? "#aaa" : "#555", padding: "8px 0", fontSize: "12px" }}>
+                      ШІ-аналіз недоступний. Ви можете відредагувати умову промпту вище та натиснути "Зберегти та оновити".
+                    </div>
                   )}
                 </>
-              ) : (
-                <div style={{ color: isDarkMode ? "#aaa" : "#555", padding: "8px 0", fontSize: "12px" }}>
-                  ШІ-аналіз недоступний. Ви можете відредагувати умову промпту вище та натиснути "Зберегти та оновити".
-                </div>
               )}
             </AiSummaryBox>
           )}
@@ -3761,10 +4311,16 @@ const HOLIDAYS_2027 = {
               onClick={() => handleAiTabClick()}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
-                <div style={{ fontSize: "36px", color: "#a855f7" }}><BiBrain /></div>
+                <div style={{ fontSize: "36px", color: forecastMode === "rules" ? "#00eeff" : "#a855f7" }}>
+                  {forecastMode === "rules" ? <BiLineChart /> : <BiBrain />}
+                </div>
                 <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
-                  <NameCardItem $active={activeTab === "ai"}>ШІ Прогноз</NameCardItem>
-                  <SubNameCardItem $active={activeTab === "ai"}>Gemini AI</SubNameCardItem>
+                  <NameCardItem $active={activeTab === "ai"}>
+                    {forecastMode === "rules" ? "Смарт-прогноз" : "ШІ Прогноз"}
+                  </NameCardItem>
+                  <SubNameCardItem $active={activeTab === "ai"}>
+                    {forecastMode === "rules" ? "Експертні правила" : "Gemini AI"}
+                  </SubNameCardItem>
                 </div>
               </div>
             </SideCardItem>
@@ -3791,11 +4347,11 @@ const HOLIDAYS_2027 = {
           <div
             style={{
               background: isDarkMode ? "#1a1a2e" : "#fff",
-              border: "1px solid rgba(138,43,226,0.5)",
+              border: `1px solid ${forecastMode === "rules" ? "rgba(0,238,255,0.6)" : "rgba(138,43,226,0.5)"}`,
               borderRadius: "12px",
               padding: "20px",
               width: "90%",
-              maxWidth: "480px",
+              maxWidth: "520px",
               maxHeight: "80vh",
               overflowY: "auto",
               color: isDarkMode ? "#efefff" : "#222",
@@ -3806,17 +4362,32 @@ const HOLIDAYS_2027 = {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <span style={{ fontWeight: 800, color: "#b362ff", fontSize: "13px", letterSpacing: "1px" }}>
-                Прогноз ШІ — повний текст
+              <span
+                style={{
+                  fontWeight: 800,
+                  color: forecastMode === "rules" ? "#00eeff" : "#b362ff",
+                  fontSize: "14px",
+                  letterSpacing: "1px",
+                }}
+              >
+                {forecastMode === "rules"
+                  ? "Смарт-прогноз (Офлайн / Правила) — повний звіт"
+                  : "Прогноз ШІ (Gemini) — повний текст"}
               </span>
               <button
                 onClick={() => setIsAiModalOpen(false)}
-                style={{ background: "none", border: "none", color: "#b362ff", fontSize: "18px", cursor: "pointer" }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: forecastMode === "rules" ? "#00eeff" : "#b362ff",
+                  fontSize: "18px",
+                  cursor: "pointer",
+                }}
               >
                 ✕
               </button>
             </div>
-            {aiSummary}
+            {forecastMode === "rules" ? (ruleForecast?.fullText || "Дані формуються...") : cleanAiText(aiSummary)}
           </div>
         </div>
       )}
