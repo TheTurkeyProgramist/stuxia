@@ -2,6 +2,8 @@ const FEEDS = {
   "phys-org": "https://phys.org/rss-feed/biology-news/animals-news/",
   "science-daily": "https://www.sciencedaily.com/rss/top/environment.xml",
   nature: "https://www.nature.com/nature.rss",
+  mongabay: "https://news.mongabay.com/feed/",
+  "guardian-environment": "https://www.theguardian.com/environment/rss",
 };
 const MAX_ITEMS_PER_FEED = 10;
 

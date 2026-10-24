@@ -13,8 +13,9 @@ import { FaClapperboard } from "react-icons/fa6";
 import { FaYoutube } from "react-icons/fa6";
 import { GiTreeBeehive } from "react-icons/gi";
 import { PiNewspaperClippingFill } from "react-icons/pi";
-import { FaFacebookSquare } from "react-icons/fa";
+import { FaRss } from "react-icons/fa";
 import { MdOutlineReportOff } from "react-icons/md"; //Заглушити
+import { MdHelpOutline, MdBlock, MdSelectAll } from "react-icons/md";
 import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
 import { FiPlus } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
@@ -173,7 +174,57 @@ const SOURCES = [
     name: "Nature",
     home: "https://www.nature.com",
   },
+  {
+    id: "mongabay",
+    url: "https://news.mongabay.com/feed/",
+    name: "Mongabay",
+    home: "https://news.mongabay.com",
+    unblockable: true,
+  },
+  {
+    id: "guardian-environment",
+    url: "https://www.theguardian.com/environment/rss",
+    name: "The Guardian Environment",
+    home: "https://www.theguardian.com/environment",
+    unblockable: true,
+  },
 ];
+
+// Рекомендовані новинні сайти (адреси перевірено через RSS-конвертер)
+const RECOMMENDED_SOURCES = [
+  { name: "BBC News", url: "https://feeds.bbci.co.uk/news/rss.xml" },
+  { name: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml" },
+  { name: "CNN", url: "http://rss.cnn.com/rss/edition.rss" },
+  { name: "The New York Times", url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml" },
+  { name: "The Guardian World", url: "https://www.theguardian.com/world/rss" },
+  { name: "Al Jazeera", url: "https://www.aljazeera.com/xml/rss/all.xml" },
+  { name: "Fox News", url: "https://moxie.foxnews.com/google-publisher/latest.xml" },
+  { name: "NBC News", url: "https://feeds.nbcnews.com/nbcnews/public/news" },
+  { name: "ABC News", url: "https://abcnews.go.com/abcnews/topstories" },
+  { name: "CBS News", url: "https://www.cbsnews.com/latest/rss/main" },
+  { name: "Sky News", url: "https://feeds.skynews.com/feeds/rss/world.xml" },
+  { name: "Deutsche Welle", url: "https://rss.dw.com/rdf/rss-en-all" },
+  { name: "France 24", url: "https://www.france24.com/en/rss" },
+  { name: "Euronews", url: "https://www.euronews.com/rss" },
+  { name: "The Hill", url: "https://thehill.com/feed/" },
+  { name: "Wired", url: "https://www.wired.com/feed/rss" },
+  { name: "TechCrunch", url: "https://techcrunch.com/feed/" },
+  { name: "The Verge", url: "https://www.theverge.com/rss/index.xml" },
+  { name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index" },
+  { name: "NASA", url: "https://www.nasa.gov/rss/dyn/breaking_news.rss" },
+  { name: "Українська правда", url: "https://www.pravda.com.ua/rss/view_news/" },
+  { name: "Укрінформ", url: "https://www.ukrinform.ua/rss/block-lastnews" },
+  { name: "Радіо Свобода", url: "https://www.radiosvoboda.org/api/zrqiteuuir" },
+];
+
+// Facebook не підтримуємо: безкоштовно пости не віддає, тож замість стрічки показуємо підказку
+const FACEBOOK_QUERY = /facebook|фейсбук|fb\.com|fb\.me|\bfb\b|\bфб\b/i;
+const FACEBOOK_NOTE =
+  "🪦 Facebook — мертвий сад, з якого всі йдуть, а він ще й вимагає гроші за рекламу. Тому бундючна студія звідти й пішла. Шукай їх у YouTube, Telegram або Bluesky.";
+
+const UNBLOCKABLE_SOURCE_URLS = new Set(
+  SOURCES.filter((s) => s.unblockable).map((s) => s.url),
+);
 
 const levitate = keyframes`
   0%, 100% {
@@ -369,6 +420,8 @@ const CarouselHintItem = styled.button`
 const CarouselSlide = styled.div`
   flex: 0 0 280px;
   width: 280px;
+  flex: 0 0 280px;
+  width: 280px;
   scroll-snap-align: center;
   display: flex;
   flex-direction: column;
@@ -387,7 +440,8 @@ const CarouselSlide = styled.div`
   transform-origin: center center;
   transition: transform 0.25s ease, opacity 0.25s ease;
 
-  @media (max-width: 479px) {flex: 0 0 calc(100vw - 48px);
+  @media (max-width: 479px) {
+    flex: 0 0 calc(100vw - 48px);
     width: calc(100vw - 48px);
     min-width: calc(100vw - 48px);
     max-width: 320px;
@@ -400,9 +454,73 @@ const CarouselSlide = styled.div`
   }
 
   @media (min-width: 900px) {
-    flex: 0 0 calc(28% - 4px);
-    width: calc(28% - 4px);
-    min-width: calc(28% - 4px);
+    flex: 0 0 calc(33.333% - 4px);
+    width: calc(33.333% - 4px);
+    min-width: calc(33.333% - 4px);
+  }
+`;
+
+const MoreNewsButton = styled.button`
+  display: block;
+  margin: 12px auto 0;
+  padding: 10px 22px;
+  border: 2px solid #ffaa00;
+  border-radius: 6px;
+  background: #000;
+  color: #ffaa00;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(255, 170, 0, 0.35);
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+
+  &:hover {
+    box-shadow: 0 0 18px rgba(255, 170, 0, 0.99);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+`;
+
+/* Телефон — один стовпчик; планшет і комп’ютер — сітка 2×2 */
+const MoreNewsPanel = styled.div`
+  width: 100%;
+  max-width: 1400px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: #111;
+  border: 1px solid rgba(255, 170, 0, 0.4);
+  border-radius: 10px;
+  padding: 12px;
+  box-sizing: border-box;
+  color: #fff;
+`;
+
+const MoreNewsGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+
+  @media (min-width: 600px) {
+    flex: 1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(240px, 1fr));
+
+    /* Картки розтягуються на всю висоту модалки */
+    & > a {
+      height: 100%;
+    }
+    & > a > div:first-child {
+      flex: 1;
+      height: auto !important;
+    }
   }
 `;
 
@@ -657,49 +775,6 @@ const FullscreenModalContent = styled.div`
   padding-right: 8px;
 `;
 
-const SourceRowSection = styled.div`
-  margin-bottom: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const SourceRowHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffaa00;
-  border-bottom: 1px solid rgba(255, 170, 0, 0.3);
-  padding-bottom: 6px;
-`;
-
-const HorizontalRowScroll = styled.div`
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  padding: 10px 4px 16px;
-  scrollbar-width: thin;
-  scrollbar-color: #ffaa00 #1a1a1a;
-
-  &::-webkit-scrollbar {
-    height: 8px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #ffaa00;
-    border-radius: 4px;
-  }
-  &::-webkit-scrollbar-track {
-    background: #1a1a1a;
-  }
-
-  & > div {
-    flex: 0 0 280px;
-    width: 280px;
-  }
-`;
 
 const CloseButton = styled.button`
   background: #ffb36c;
@@ -971,8 +1046,9 @@ const NewsCard = ({
             loading="lazy"
             decoding="async"
             onError={(e) => {
+              // Зображення не завантажилось — підставляємо обкладинку з природи
               e.target.onerror = null;
-              e.target.src = rainbow;
+              e.target.src = getNewsFallbackImage(item.link || item.title || "");
             }}
           />
         )}
@@ -1071,6 +1147,98 @@ const FilterBtn = styled.button`
     opacity: 0.5;
   }
 `;
+/* Плитки джерел у повноекранному вікні: кілька в ряд, іконка над текстом */
+const SourceTileGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 3px;
+`;
+
+const SourceTile = styled(FilterBtn)`
+  position: relative;
+  /* По 3 в ряд; плитки неповного останнього ряду ділять ширину порівну */
+  flex: 1 1 calc((100% - 20px) / 3);
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 96px;
+  padding: 12px 8px;
+  text-align: center;
+  line-height: 1.25;
+  border-radius: 10px;
+
+  & > svg {
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+`;
+
+const SourceSearchInput = styled.input`
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 170, 0, 0.5);
+  background: #111;
+  color: #fff;
+  font-family: var(--font-family);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    border-color: #ffaa00;
+    box-shadow: 0 0 12px rgba(255, 170, 0, 0.35);
+  }
+`;
+
+const RecoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 4px;
+`;
+
+const RecoItem = styled.button`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 86px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgb(26, 49, 56);
+  color: #fff;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  & > svg {
+    font-size: 24px;
+  }
+  &:hover:not(:disabled) {
+    background: rgba(255, 179, 108, 0.3);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+`;
+
 const ProgressBar = styled.div`
   width: 300px;
   height: 8px;
@@ -1118,7 +1286,6 @@ const getSourceType = (url) => {
   if (lowerUrl.includes("youtube.com") || lowerUrl.includes("youtu.be")) return "youtube";
   if (lowerUrl.includes("t.me/") || lowerUrl.includes("telegram.org") || lowerUrl.startsWith("@")) return "telegram";
   if (lowerUrl.includes("telegra.ph/")) return "telegraph";
-  if (lowerUrl.includes("facebook.com")) return "facebook";
   if (lowerUrl.includes("withhive.com")) return "hive";
   return "rss";
 };
@@ -1170,7 +1337,11 @@ const parseJsonFeed = (feed) =>
  * Масив лише зображень (без відео) з DEFAULT_BGS — для запасних обкладинок новин.
  */
 const NEWS_FALLBACK_IMAGES = DEFAULT_BGS
-  .filter((bg) => /\.(webp|jpe?g|png|gif)(\?.*)?$/i.test(bg.src || ""))
+  .filter(
+    (bg) =>
+      bg.category === "Природа та Стихії" &&
+      /\.(webp|jpe?g|png|gif)(\?.*)?$/i.test(bg.src || ""),
+  )
   .map((bg) => bg.src);
 
 /**
@@ -1205,6 +1376,18 @@ const fetchWithProxyFallback = async (url) => {
 const resolveYoutubeChannelId = async (youtubeUrl) => {
   const directMatch = youtubeUrl.match(/(UC[a-zA-Z0-9_-]{22})/);
   if (directMatch) return directMatch[1];
+
+  try {
+    const res = await fetch(
+      `/api/news-feed?resolve=youtube&url=${encodeURIComponent(youtubeUrl)}`,
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.channelId) return data.channelId;
+    }
+  } catch {
+    // переходимо до запасного шляху
+  }
 
   try {
     const html = await fetchWithProxyFallback(youtubeUrl);
@@ -1376,51 +1559,6 @@ const fetchTelegraphFeed = async (source) => {
   }
 };
 
-const fetchFacebookFeed = async (source) => {
-  try {
-    const html = await fetchWithProxyFallback(source.url);
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    
-    const title = doc.querySelector('meta[property="og:title"]')?.getAttribute("content") || source.name;
-    const desc = doc.querySelector('meta[property="og:description"]')?.getAttribute("content") || "Переглянути сторінку у Facebook.";
-    const image = doc.querySelector('meta[property="og:image"]')?.getAttribute("content") || "";
-    
-    return {
-      status: "ok",
-      items: [{
-        title: title,
-        description: desc,
-        link: source.url,
-        pubDate: new Date().toISOString(),
-        thumbnail: image || "",
-        displayImage: image || rainbow,
-        sourceName: source.name,
-        sourceFlag: "📘",
-        sourceHome: source.url,
-        sourceUrl: source.url,
-      }]
-    };
-  } catch (e) {
-    console.error("Facebook OG parsing failed, trying simple card:", e);
-    return {
-      status: "ok",
-      items: [{
-        title: source.name,
-        description: "Перегляньте оновлення сторінки у Facebook за цим посиланням.",
-        link: source.url,
-        pubDate: new Date().toISOString(),
-        thumbnail: "",
-        displayImage: rainbow,
-        sourceName: source.name,
-        sourceFlag: "📘",
-        sourceHome: source.url,
-        sourceUrl: source.url,
-      }]
-    };
-  }
-};
-
 const getHiveDetails = (url) => {
   const match = url.match(/withhive\.com\/([a-zA-Z0-9_-]+)(?:\/([a-z]{2}))?\/board\/([0-9]+)/i);
   if (match) {
@@ -1589,8 +1727,6 @@ const fetchCustomSource = async (source) => {
     return await fetchTelegraphFeed(source);
   } else if (type === "hive") {
     return await fetchHiveFeed(source);
-  } else if (type === "facebook") {
-    return await fetchFacebookFeed(source);
   }
   return null;
 };
@@ -1631,11 +1767,12 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       const res = await fetch(
         `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=uk&dt=t&q=${encodeURIComponent(text)}`,
       );
-      if (!isMounted.current) return text; // Тепер isMounted доступний!
+      if (!res.ok || !isMounted.current) return null;
       const data = await res.json();
       return data[0].map((s) => s[0]).join("");
     } catch {
-      return text;
+      // null = переклад не вдався, щоб не кешувати оригінал як переклад
+      return null;
     }
   };
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -1656,6 +1793,9 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   // 1. Стан розмонтування для Memory Leak Protection
   const isMounted = useRef(true);
   const newsSectionRef = useRef(null);
+  const abortRef = useRef(null);
+  const [showMoreNews, setShowMoreNews] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
 
   useEffect(() => {
     isMounted.current = true;
@@ -1668,6 +1808,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     loadCustomSources();
     return () => {
       isMounted.current = false;
+      abortRef.current?.abort();
     };
   }, []);
 
@@ -1728,8 +1869,11 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     };
   }, []);
 
-  const getData = useCallback(async (showLoader = false) => {
+  const getData = useCallback(async (showLoader = false, forceFresh = false) => {
+    // Скасовуємо попереднє завантаження, щоб старі запити не конкурували з новим
+    abortRef.current?.abort();
     const controller = new AbortController();
+    abortRef.current = controller;
     const signal = controller.signal;
     if (isMounted.current) {
       setHasError(false);
@@ -1744,14 +1888,33 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       const sourceErrors = [];
       const savedCustom =
         (await localforage.getItem("custom_news_sources")) || [];
-      const allSources = [...SOURCES, ...savedCustom];
+      // Старі збережені стрічки Facebook мовчки пропускаємо
+      const allSources = [
+        ...SOURCES,
+        ...savedCustom.filter((source) => !FACEBOOK_QUERY.test(source.url || "")),
+      ];
 
       // Отримуємо списки заблокованих
       let bNews = [];
       let bSourcesList = [];
       try {
-        const newsSnapshot = await getDocs(collection(db, "news_reports"));
-        const rssSnapshot = await getDocs(collection(db, "rss_reports"));
+        // Кеш чорних списків на 15 хв, щоб не читати цілі колекції Firestore при кожному оновленні
+        const BLOCKLIST_TTL = 15 * 60 * 1000;
+        const cachedBlocklist = forceFresh
+          ? null
+          : await localforage.getItem("news_blocklist_cache");
+        if (cachedBlocklist && Date.now() - cachedBlocklist.savedAt < BLOCKLIST_TTL) {
+          bNews = cachedBlocklist.bNews;
+          bSourcesList = cachedBlocklist.blockedSources.map((s) => s.url);
+          if (isMounted.current) {
+            setBlockedNewsUrls(bNews);
+            setBlockedSources(cachedBlocklist.blockedSources);
+          }
+        } else {
+        const [newsSnapshot, rssSnapshot] = await Promise.all([
+          getDocs(collection(db, "news_reports")),
+          getDocs(collection(db, "rss_reports")),
+        ]);
         const now = Date.now();
         const oneDay = 24 * 60 * 60 * 1000;
 
@@ -1774,6 +1937,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
               return now - time < oneDay;
             }).length >= 20
           ) {
+            if (UNBLOCKABLE_SOURCE_URLS.has(decodeURIComponent(docSnap.id)))
+              return;
             blockedSourcesArr.push({
               id: docSnap.id,
               url: decodeURIComponent(docSnap.id),
@@ -1787,129 +1952,106 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           setBlockedNewsUrls(bNews);
           setBlockedSources(blockedSourcesArr);
         }
+        await localforage.setItem("news_blocklist_cache", {
+          savedAt: Date.now(),
+          bNews,
+          blockedSources: blockedSourcesArr,
+        });
+        }
       } catch (e) {}
 
-      for (const source of allSources) {
-        if (bSourcesList.includes(source.url)) continue;
+      const tryJsonFeed = async (endpoint) => {
         try {
-          const type = getSourceType(source.url);
-          if (type !== "rss" && type !== "youtube") {
-            const customData = await fetchCustomSource(source);
-            if (customData && customData.items && customData.items.length > 0) {
-              allItems = [...allItems, ...customData.items];
-            }
-          } else {
-            const builtInSource = SOURCES.find((item) => item.url === source.url);
-            let feedItems;
-            if (builtInSource) {
-              let fetched = false;
-              try {
-                const res = await fetch(
-                  `/api/news-feed?source=${encodeURIComponent(builtInSource.id)}`,
-                  { signal },
-                );
-                const contentType = res.headers.get("content-type") || "";
-                if (res.ok && contentType.includes("json")) {
-                  const data = await res.json();
-                  if (data && Array.isArray(data.items)) {
-                    feedItems = parseJsonFeed(data);
-                    fetched = true;
-                  }
-                }
-              } catch (err) {
-                if (err.name === "AbortError") throw err;
-              }
-
-              if (!fetched) {
-                const fallbackRes = await fetch(
-                  `https://stuxia.com/api/news-feed?source=${encodeURIComponent(builtInSource.id)}`,
-                  { signal },
-                );
-                if (!fallbackRes.ok) {
-                  throw new Error(`RSS-сервер відповів HTTP ${fallbackRes.status}`);
-                }
-                const contentType = fallbackRes.headers.get("content-type") || "";
-                if (!contentType.includes("json")) {
-                  throw new Error("RSS-сервер повернув некоректну відповідь");
-                }
-                const data = await fallbackRes.json();
-                feedItems = parseJsonFeed(data);
-              }
-            } else {
-              let fetched = false;
-              try {
-                const res = await fetch(
-                  `/api/news-feed?url=${encodeURIComponent(source.url)}`,
-                  { signal },
-                );
-                const contentType = res.headers.get("content-type") || "";
-                if (res.ok && contentType.includes("json")) {
-                  const data = await res.json();
-                  if (data && Array.isArray(data.items)) {
-                    feedItems = parseJsonFeed(data);
-                    fetched = true;
-                  }
-                }
-              } catch (err) {
-                if (err.name === "AbortError") throw err;
-              }
-
-              if (!fetched) {
-                try {
-                  const res = await fetch(
-                    `https://stuxia.com/api/news-feed?url=${encodeURIComponent(source.url)}`,
-                    { signal },
-                  );
-                  const contentType = res.headers.get("content-type") || "";
-                  if (res.ok && contentType.includes("json")) {
-                    const data = await res.json();
-                    if (data && Array.isArray(data.items)) {
-                      feedItems = parseJsonFeed(data);
-                      fetched = true;
-                    }
-                  }
-                } catch (err) {
-                  if (err.name === "AbortError") throw err;
-                }
-              }
-
-              if (!fetched) {
-                const res = await fetch(
-                  `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}`,
-                  { signal },
-                );
-                if (!res.ok) {
-                  throw new Error(`RSS-конвертер відповів HTTP ${res.status}`);
-                }
-                const data = await res.json();
-                if (data.status !== "ok" || !Array.isArray(data.items)) {
-                  throw new Error(data.message || "RSS-конвертер повернув некоректну відповідь");
-                }
-                feedItems = data.items;
-              }
-            }
-
-            const itemsWithSource = feedItems.map((item) => {
-              const ytThumb = getYoutubeThumbnail(item.link);
-              const extractedImg = extractImageFromContent(item);
-              return {
-                ...item,
-                thumbnail: ytThumb || extractedImg || item.thumbnail || "",
-                displayImage: ytThumb || extractedImg || item.thumbnail || rainbow,
-                sourceName: source.name,
-                sourceFlag: source.flag,
-                sourceHome: source.home,
-                sourceUrl: source.url,
-              };
-            });
-            allItems = [...allItems, ...itemsWithSource];
+          const res = await fetch(endpoint, { signal });
+          const contentType = res.headers.get("content-type") || "";
+          if (res.ok && contentType.includes("json")) {
+            const data = await res.json();
+            if (data && Array.isArray(data.items)) return parseJsonFeed(data);
           }
-        } catch (e) {
-          sourceErrors.push(`${source.name}: ${e.message}`);
-          console.warn(`Не вдалося завантажити новини з ${source.name}:`, e);
-          continue;
+        } catch (err) {
+          if (err.name === "AbortError") throw err;
         }
-      }
+        return null;
+      };
+
+      const withSourceInfo = (feedItems, source) =>
+        feedItems.map((item) => {
+          const ytThumb = getYoutubeThumbnail(item.link);
+          const extractedImg = extractImageFromContent(item);
+          return {
+            ...item,
+            thumbnail: ytThumb || extractedImg || item.thumbnail || "",
+            displayImage: ytThumb || extractedImg || item.thumbnail || rainbow,
+            sourceName: source.name,
+            sourceFlag: source.flag,
+            sourceHome: source.home,
+            sourceUrl: source.url,
+          };
+        });
+
+      // Завантажуємо одну стрічку: повертає масив новин або кидає помилку
+      const loadSource = async (source) => {
+        const type = getSourceType(source.url);
+        if (type !== "rss" && type !== "youtube") {
+          // Telegram спершу беремо через власну функцію (без публічних проксі)
+          if (type === "telegram") {
+            const viaApi = await tryJsonFeed(
+              `/api/news-feed?url=${encodeURIComponent(source.url)}`,
+            );
+            if (viaApi && viaApi.length > 0) return withSourceInfo(viaApi, source);
+          }
+          const customData = await fetchCustomSource(source);
+          return customData?.items?.length > 0 ? customData.items : [];
+        }
+
+        const builtInSource = SOURCES.find((item) => item.url === source.url);
+        const localEndpoint = builtInSource
+          ? `/api/news-feed?source=${encodeURIComponent(builtInSource.id)}`
+          : `/api/news-feed?url=${encodeURIComponent(source.url)}`;
+
+        let feedItems = await tryJsonFeed(localEndpoint);
+
+        // Під час локальної розробки функцій Cloudflare немає — беремо зовнішній ендпоінт
+        if (!feedItems && import.meta.env.DEV) {
+          feedItems = await tryJsonFeed(`https://stuxia.com${localEndpoint}`);
+        }
+
+        if (!feedItems) {
+          const res = await fetch(
+            `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}`,
+            { signal },
+          );
+          if (!res.ok) {
+            throw new Error(`RSS-конвертер відповів HTTP ${res.status}`);
+          }
+          const data = await res.json();
+          if (data.status !== "ok" || !Array.isArray(data.items)) {
+            throw new Error(data.message || "RSS-конвертер повернув некоректну відповідь");
+          }
+          feedItems = data.items;
+        }
+
+        return withSourceInfo(feedItems, source);
+      };
+
+      // Усі стрічки паралельно: збій однієї не зачіпає інші
+      const activeSources = allSources.filter(
+        (source) => !bSourcesList.includes(source.url),
+      );
+      const settled = await Promise.allSettled(activeSources.map(loadSource));
+      settled.forEach((result, i) => {
+        if (result.status === "fulfilled") {
+          allItems = [...allItems, ...result.value];
+          return;
+        }
+        if (result.reason?.name === "AbortError") return;
+        sourceErrors.push(`${activeSources[i].name}: ${result.reason?.message}`);
+        console.warn(
+          `Не вдалося завантажити новини з ${activeSources[i].name}:`,
+          result.reason,
+        );
+      });
+      if (signal.aborted) return;
       if (allItems.length === 0) {
         if (isMounted.current) {
           setLoadError(
@@ -1950,7 +2092,13 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       if (isMounted.current) setFilteredNewsCount(uniqueLinks.length);
 
       // Збільшуємо кількість новин до 45
-      const limited = clean.slice(0, 45);
+      // Не більше 10 новин з одного джерела, щоб частіші стрічки не витісняли решту
+      const perSourceCount = {};
+      const balanced = clean.filter((i) => {
+        perSourceCount[i.sourceName] = (perSourceCount[i.sourceName] || 0) + 1;
+        return perSourceCount[i.sourceName] <= 10;
+      });
+      const limited = balanced.slice(0, 45);
       const results = new Array(limited.length);
       const toTranslateIndices = [];
       const stringsToTranslate = [];
@@ -2024,20 +2172,42 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             indices: currentBatchIndices,
           });
         }
+        // Переклад однієї пари «заголовок + опис»; null, якщо не вдався або роздільник зіпсовано
+        const translatePair = async (title, desc) => {
+          const combined = await translateText(`${title} ___ ${desc}`);
+          if (combined === null) return null;
+          const parts = combined.split(/\s*___\s*/);
+          return parts.length === 2 ? parts : null;
+        };
+
         for (const batch of batches) {
-          const combinedText = batch.strings.join(" ___ ");
-          const translatedCombined = await translateText(combinedText);
-          const splitResults = translatedCombined.split(/\s*___\s*/);
+          const translatedCombined = await translateText(
+            batch.strings.join(" ___ "),
+          );
+          let splitResults =
+            translatedCombined === null
+              ? null
+              : translatedCombined.split(/\s*___\s*/);
+          // Якщо пакетний переклад зіпсував роздільники — перекладаємо кожну новину окремо
+          const batchValid =
+            splitResults && splitResults.length === batch.strings.length;
+
           for (let j = 0; j < batch.indices.length; j++) {
             const idx = batch.indices[j];
             const item = limited[idx];
+            const originalTitle = batch.strings[j * 2];
+            const originalDesc = batch.strings[j * 2 + 1];
             const bestImg =
               extractImageFromContent(item) ||
               rainbow;
 
+            const pair = batchValid
+              ? [splitResults[j * 2], splitResults[j * 2 + 1]]
+              : await translatePair(originalTitle, originalDesc);
+
             const translatedItem = {
-              title: splitResults[j * 2]?.trim() || item.title,
-              description: (splitResults[j * 2 + 1]?.trim() || "") + "...",
+              title: pair?.[0]?.trim() || item.title,
+              description: (pair ? pair[1]?.trim() || "" : originalDesc) + "...",
               link: item.link,
               displayImage: bestImg,
               sourceName: item.sourceName,
@@ -2048,10 +2218,13 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
               isBlocked: bNews.includes(encodeURIComponent(item.link)),
             };
 
-            await localforage.setItem(
-              `news_trans_${item.link}`,
-              translatedItem,
-            );
+            // Кешуємо лише успішний переклад, щоб оригінал не застряг як «переклад»
+            if (pair) {
+              await localforage.setItem(
+                `news_trans_${item.link}`,
+                translatedItem,
+              );
+            }
             results[idx] = translatedItem;
           }
         }
@@ -2095,7 +2268,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         }
       }
     } finally {
-      if (isMounted.current) {
+      // Якщо запит скасовано новішим, лоадер лишається за новим запитом
+      if (isMounted.current && abortRef.current === controller) {
         setLoading(false);
       }
     }
@@ -2229,8 +2403,9 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       localforage.removeItem("news_refresh_cooldown_end");
     }
   }, [cooldown]);
-  const handleAddSource = async () => {
-    let inputUrl = newUrl.trim();
+  const handleAddSource = async (urlOverride, nameOverride) => {
+    let inputUrl = (typeof urlOverride === "string" ? urlOverride : newUrl).trim();
+    if (FACEBOOK_QUERY.test(inputUrl)) return; // підказку показано під полем
     if (!inputUrl) return;
     
     if (customSources.length >= 5) {
@@ -2244,7 +2419,11 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       let flag = <PiNewspaperClippingFill/>;
       let home = "";
       
-      if (resolvedUrl.startsWith("@")) {
+      // @user@instance.social → профіль Mastodon
+      const mastodonHandle = resolvedUrl.match(/^@([\w.-]+)@([\w-]+(?:\.[\w-]+)+)$/);
+      if (mastodonHandle) {
+        resolvedUrl = `https://${mastodonHandle[2]}/@${mastodonHandle[1]}`;
+      } else if (resolvedUrl.startsWith("@")) {
         resolvedUrl = `https://t.me/${resolvedUrl.slice(1)}`;
       }
       
@@ -2284,19 +2463,18 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         name = `Telegraph`;
         flag = <PiNewspaperClippingFill/>;
         home = "https://telegra.ph";
-      } else if (type === "facebook") {
-        const parts = resolvedUrl.split("/");
-        const pageName = parts[parts.length - 1] || parts[parts.length - 2];
-        resolvedUrl = `https://www.facebook.com/${pageName}`;
-        name = `Facebook: ${pageName}`;
-        flag = <FaFacebookSquare/>;
-        home = resolvedUrl;
       } else if (type === "hive") {
         const match = resolvedUrl.match(/withhive\.com\/([a-zA-Z0-9_-]+)/);
         const game = match ? match[1] : "Hive";
         name = `Hive: ${game}`;
         flag = <GiTreeBeehive/>;
         home = `https://community.withhive.com/${game}`;
+      } else if (/^bsky\.app$/i.test(domain) && urlObj.pathname.startsWith("/profile/")) {
+        name = `Bluesky: ${urlObj.pathname.split("/")[2] || domain}`;
+        flag = "🦋";
+      } else if (/^\/@[^/]+\/?$/.test(urlObj.pathname)) {
+        name = `Mastodon: ${urlObj.pathname.replace(/\//g, "")}@${domain}`;
+        flag = "🐘";
       } else {
         name = domain;
         flag = <PiNewspaperClippingFill/>;
@@ -2304,7 +2482,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       
       const newSource = {
         url: resolvedUrl,
-        name: name,
+        name: (typeof nameOverride === "string" && nameOverride) || name,
         flag: flag,
         home: home,
         type: type
@@ -2321,6 +2499,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         setCustomSources(updated);
         setNewUrl("");
         setIsAddingSource(false);
+        setIsSearchActive(false);
         getData(true);
       } else {
         alert("Це джерело вже додано.");
@@ -2389,7 +2568,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       }
 
       alert("Скаргу прийнято. Дякуємо!");
-      getData(true);
+      getData(true, true);
     } catch (err) {
       console.warn("Помилка відправки скарги:", err);
       alert("Помилка відправки скарги.");
@@ -2459,13 +2638,6 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   const showDescription = isVisible("description");
 
   const [isFullscreenNewsOpen, setIsFullscreenNewsOpen] = useState(false);
-
-  const groupedBySource = displayedItems.reduce((acc, item) => {
-    const source = item.sourceName || "Джерело";
-    if (!acc[source]) acc[source] = [];
-    acc[source].push(item);
-    return acc;
-  }, {});
 
   return (
     <NewsDiv ref={newsSectionRef}>
@@ -2687,6 +2859,9 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 </CarouselWrapper>
             </motion.div>
           </AnimatePresence>
+          <MoreNewsButton onClick={() => setShowMoreNews(true)}>
+            Більше новин
+          </MoreNewsButton>
           <FilteredNewsCounter $isDarkMode={$isDarkMode}>
             За сьогодні відфільтровано {filteredNewsCount} небажаних новин.
           </FilteredNewsCounter>
@@ -2758,6 +2933,59 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 
       {createPortal(
         <AnimatePresence>
+          {showMoreNews && (
+            <FullscreenModalOverlay
+              key="more-news-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setShowMoreNews(false)}
+              style={{ alignItems: "center", justifyContent: "center", padding: "8px" }}
+            >
+              <MoreNewsPanel onClick={(e) => e.stopPropagation()}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "12px",
+                    paddingBottom: "6px",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
+                  }}
+                >
+                  <h2 style={{ margin: 0, color: "#ffaa00", fontSize: "15px" }}>
+                    Більше новин
+                  </h2>
+                  <CloseButton onClick={() => setShowMoreNews(false)}>✕</CloseButton>
+                </div>
+                <MoreNewsGrid>
+                  {displayedItems.slice(0, 4).map((item) => (
+                    <NewsCard
+                      key={item.link}
+                      item={item}
+                      $isDarkMode={$isDarkMode}
+                      showImage={showImage}
+                      showTitle={showTitle}
+                      showDescription={showDescription}
+                      onAiSummaryClick={(news) => {
+                        setSelectedNews(news);
+                        setIsAiModalOpen(true);
+                      }}
+                      onReportClick={handleReport}
+                      onMuteClick={handleMute}
+                      onUnmuteClick={handleUnmute}
+                    />
+                  ))}
+                </MoreNewsGrid>
+              </MoreNewsPanel>
+            </FullscreenModalOverlay>
+          )}
+        </AnimatePresence>,
+        document.body,
+      )}
+      {createPortal(
+        <AnimatePresence>
           {isFullscreenNewsOpen && (
             <FullscreenModalOverlay
               initial={{ opacity: 0, scale: 0.95 }}
@@ -2802,45 +3030,111 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                   <div style={{ marginBottom: "10px", fontWeight: "600", fontSize: "14px" }}>
                     Налаштування та вибір авторів / джерел:
                   </div>
-                  <FilterContainer style={{ justifyContent: "flex", width: "100%", flexDirection: "column" }}>
-                    <FilterBtn
+                  <SourceSearchInput
+                    type="text"
+                    value={newUrl}
+                    onChange={(e) => setNewUrl(e.target.value)}
+                    onFocus={() => setIsSearchActive(true)}
+                    onBlur={() => setIsSearchActive(false)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newUrl.trim()) handleAddSource();
+                      if (e.key === "Escape") e.currentTarget.blur();
+                    }}
+                    placeholder="Додати стрічку: назва сайту або посилання (RSS, YouTube, Telegram, Mastodon, Bluesky, Hive)"
+                  />
+                  {isSearchActive ? (
+                    <div onMouseDown={(e) => e.preventDefault()}>
+                      <RecoGrid>
+                        {FACEBOOK_QUERY.test(newUrl) && (
+                          <div
+                            style={{
+                              gridColumn: "1 / -1",
+                              padding: "14px",
+                              borderRadius: "10px",
+                              border: "1px dashed rgba(255, 170, 0, 0.6)",
+                              background: "rgba(255, 170, 0, 0.08)",
+                              color: "#ffd9a0",
+                              fontSize: "14px",
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            {FACEBOOK_NOTE}
+                          </div>
+                        )}
+                        {newUrl.trim() && !FACEBOOK_QUERY.test(newUrl) && (
+                          <RecoItem onClick={() => handleAddSource()}>
+                            <FiPlus />
+                            Додати «{newUrl.trim().length > 40 ? newUrl.trim().slice(0, 40) + "…" : newUrl.trim()}»
+                          </RecoItem>
+                        )}
+                        {RECOMMENDED_SOURCES.filter((r) => {
+                          const q = newUrl.trim().toLowerCase();
+                          return !q || r.name.toLowerCase().includes(q) || r.url.toLowerCase().includes(q);
+                        }).map((r) => {
+                          const added =
+                            SOURCES.some((x) => x.url === r.url) ||
+                            customSources.some((x) => x.url === r.url);
+                          return (
+                            <RecoItem
+                              key={r.url}
+                              disabled={added || customSources.length >= 5}
+                              onClick={() => handleAddSource(r.url, r.name)}
+                            >
+                              <FaRss />
+                              {r.name}
+                              {added && <span style={{ fontSize: "11px" }}>✓ Додано</span>}
+                            </RecoItem>
+                          );
+                        })}
+                      </RecoGrid>
+                    </div>
+                  ) : (
+                    <SourceTileGrid>
+                    <SourceTile
                       $isDarkMode={$isDarkMode}
                       onClick={() => setIsHelpModalOpen(true)}
                     >
+                      <MdHelpOutline />
                       Інструкція
-                    </FilterBtn>
-                    <FilterBtn
+                    </SourceTile>
+                    <SourceTile
                       $isDarkMode={$isDarkMode}
                       $active={filterSources.includes("all")}
                       onClick={() => handleToggleFilter("all")}
                     >
+                      <MdSelectAll />
                       {filterSources.includes("all") ? "☑" : "☐"} Усі
-                    </FilterBtn>
+                    </SourceTile>
                     {SOURCES.map((s) => (
-                      <FilterBtn
+                      <SourceTile
                         key={s.name}
                         $isDarkMode={$isDarkMode}
                         $active={filterSources.includes(s.name)}
                         onClick={() => handleToggleFilter(s.name)}
                       >
+                        <FaRss />
                         {filterSources.includes(s.name) ? "☑" : "☐"} {s.name}
-                      </FilterBtn>
+                      </SourceTile>
                     ))}
                     {customSources.map((s) => (
-                      <FilterBtn
+                      <SourceTile
                         key={s.url}
                         $isDarkMode={$isDarkMode}
                         $active={filterSources.includes(s.name)}
                         onClick={() => handleToggleFilter(s.name)}
                       >
-                        {filterSources.includes(s.name) ? "☑" : "☐"} {s.name}
+                        <FaRss />
+                        <span>{filterSources.includes(s.name) ? "☑" : "☐"} {s.name}</span>
                         <span
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRemoveSource(s.url);
                           }}
                           style={{
-                            marginLeft: "6px",
+                            position: "absolute",
+                            top: "4px",
+                            right: "10px",
+                            fontSize: "18px",
                             color: "#ff4d4d",
                             fontWeight: "bold",
                           }}
@@ -2848,18 +3142,9 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                         >
                           ×
                         </span>
-                      </FilterBtn>
+                      </SourceTile>
                     ))}
-                    {customSources.length < 5 && (
-                      <FilterBtn
-                        $isDarkMode={$isDarkMode}
-                        onClick={() => setIsAddingSource(!isAddingSource)}
-                        style={{ borderStyle: "dashed" }}
-                      >
-                        {isAddingSource ? "Скасувати" : "Додати стрічку"}
-                      </FilterBtn>
-                    )}
-                    <FilterBtn
+                    <SourceTile
                       $isDarkMode={$isDarkMode}
                       onClick={() => setShowBlacklist(true)}
                       style={{
@@ -2868,90 +3153,13 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                         color: "#ff4d4d",
                       }}
                     >
+                      <MdBlock />
                       Чорний список ({blockedSources.length})
-                    </FilterBtn>
-                  </FilterContainer>
+                    </SourceTile>
+                  </SourceTileGrid>
+                  )}
 
-                  <AnimatePresence>
-                    {isAddingSource && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        style={{ overflow: "hidden", marginTop: "10px" }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "flex-start",
-                            gap: "8px",
-                            flexWrap: "wrap",
-                          }}
-                        >
-                          <input
-                            type="text"
-                            value={newUrl}
-                            onChange={(e) => setNewUrl(e.target.value)}
-                            placeholder="Введіть URL RSS (Н-д: https://rss.com/day)"
-                            style={{
-                              padding: "6px 10px",
-                              borderRadius: "5px",
-                              border: "1px solid rgba(255, 255, 255, 0.3)",
-                              background: "#111",
-                              color: "#fff",
-                              outline: "none",
-                              minWidth: "280px",
-                              fontSize: "13px",
-                            }}
-                          />
-                          <FilterBtn
-                            $isDarkMode={$isDarkMode}
-                            onClick={handleAddSource}
-                            style={{ background: "#ffb36c", color: "#000", padding: "6px 14px" }}
-                          >
-                            Додати
-                          </FilterBtn>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
-                {Object.keys(groupedBySource).length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px", color: "#aaa" }}>
-                    Немає новин для відображення.
-                  </div>
-                ) : (
-                  Object.entries(groupedBySource).map(([sourceName, sourceItems]) => (
-                    <SourceRowSection key={sourceName}>
-                      <SourceRowHeader>
-                        <span>Автор/Джерело: {sourceName}</span>
-                        <span style={{ fontSize: "12px", fontWeight: 800 }}>
-                          ({sourceItems.length} новин)
-                        </span>
-                      </SourceRowHeader>
-                      <HorizontalRowScroll>
-                        {sourceItems.map((item, idx) => (
-                          <div key={`${item.link}-${idx}`}>
-                            <NewsCard
-                              item={item}
-                              $isDarkMode={$isDarkMode}
-                              showImage={showImage}
-                              showTitle={showTitle}
-                              showDescription={showDescription}
-                              onAiSummaryClick={(news) => {
-                                setSelectedNews(news);
-                                setIsAiModalOpen(true);
-                              }}
-                              onReportClick={handleReport}
-                              onMuteClick={handleMute}
-                              onUnmuteClick={handleUnmute}
-                            />
-                          </div>
-                        ))}
-                      </HorizontalRowScroll>
-                    </SourceRowSection>
-                  ))
-                )}
               </FullscreenModalContent>
             </FullscreenModalOverlay>
           )}
