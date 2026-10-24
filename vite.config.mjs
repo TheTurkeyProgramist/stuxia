@@ -143,13 +143,10 @@ export default defineConfig({
     if (id.includes('three')) {
       return 'vendor-three';
     }
-    if (id.includes('@ffmpeg')) {
-      return 'vendor-ffmpeg';
-    }
-    if (id.includes('chart.js') || id.includes('wavesurfer') || id.includes('fabric')) {
+    if (id.includes('chart.js') || id.includes('fabric')) {
       return 'vendor-graphics';
     }
-    if (id.includes('@huggingface') || id.includes('@google/generative-ai')) {
+    if (id.includes('@google/generative-ai')) {
       return 'vendor-ai';
     }
   }

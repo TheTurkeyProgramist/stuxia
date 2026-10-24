@@ -2790,7 +2790,6 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
               color: "#fff",
               borderRadius: "5px",
               padding: "10px 15px",
-              borderRadius: "5px",
               display: "inline-block",
               fontWeight: "900",
             }}

@@ -1,13 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
 import daynight from "../../photos/cursors/sunnight.webp";
 import daysthunders from "../../photos/cursors/daysthunders.webp";
-import { Line } from "react-chartjs-2";
-import html2canvas from "html2canvas";
 import localforage from "localforage";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
   BiCog,
   BiEdit,
@@ -80,6 +77,13 @@ import {
   FloatingPortal,
   FloatingArrow,         
 } from "@floating-ui/react";
+
+const LazyLineChart = lazy(() => import("./WeatherLineChart.jsx"));
+const Line = (props) => (
+  <Suspense fallback={null}>
+    <LazyLineChart {...props} />
+  </Suspense>
+);
 const TooltipBox = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
@@ -1110,6 +1114,7 @@ const WeatherCardComponent = ({
 
   const createChartImage = async (panelRef, targetWidth = undefined, targetHeight = undefined) => {
     if (!panelRef.current) return null;
+    const { default: html2canvas } = await import("html2canvas");
     return html2canvas(panelRef.current, {
       backgroundColor: isDarkMode ? "#000000" : "#f5f5f5",
       scale: 2,
@@ -1546,6 +1551,7 @@ const WeatherCardComponent = ({
     setIsAiLoading(true);
     try {
       const cleanedKey = (key || "").trim().replace(/^["']|["']$/g, "");
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
       const genAI = new GoogleGenerativeAI(cleanedKey);
 
       const current = card.current;
