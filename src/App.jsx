@@ -169,7 +169,6 @@ const Aihelp = lazy(() => import("./components/Aihelp/Aihelp.jsx"));
 const ShopModal = lazy(() => import("./components/Modals/ShopModal.jsx"));
 const ClimateMap = lazy(() => import("./components/ClimateMap/ClimateMap.jsx"));
 const Modal = lazy(() => import("./components/Modals/Modal.jsx"));
-const LoginModal = lazy(() => import("./components/Modals/LoginModal.jsx"));
 const UserSettingsModal = lazy(
   () => import("./components/Modals/UserSettingsModal.jsx"),
 );
@@ -861,7 +860,6 @@ const App = () => {
 
   const [currentAvatar, setCurrentAvatar] = useState(userDefault);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
   const [isShopOpen, setIsShopOpen] = useState(false);
@@ -1171,7 +1169,6 @@ const App = () => {
       import("./components/News/News.jsx"),
       import("./components/ClimateMap/ClimateMap.jsx"),
       import("./components/Modals/Modal.jsx"),
-      import("./components/Modals/LoginModal.jsx"),
       import("./components/Modals/UserSettingsModal.jsx"),
       import("./components/Modals/WeatherDetailsModal.jsx"),
       import("./components/Modals/UserSearchModal.jsx"),
@@ -2881,7 +2878,6 @@ const App = () => {
             <Header
               sfxVolume={sfxVolume}
               onOpenRegister={() => setIsModalOpen(true)}
-              onOpenLogin={() => setIsLoginOpen(true)}
               onOpenSettings={() => setIsSettingsModalOpen(true)}
               onOpenVip={() => setIsVipModalOpen(true)}
               onOpenShop={() => setIsShopOpen(true)}
@@ -3029,15 +3025,6 @@ const App = () => {
                 }}
                 availableAvatars={AVAILABLE_AVATARS}
                 isDarkMode={isDarkMode}
-              />
-            )}
-            {isLoginOpen && (
-              <LoginModal
-                onClose={() => setIsLoginOpen(false)}
-                onLogin={(data) => {
-                  setUser(data);
-                  setIsLoginOpen(false);
-                }}
               />
             )}
             {(isSettingsModalOpen || isOtherOptionsOpen) && (

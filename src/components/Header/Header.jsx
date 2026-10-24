@@ -557,7 +557,6 @@ const { refs, floatingStyles, context } = useFloating({
 };
 const Header = ({
   sfxVolume = 0.2,
-  onOpenLogin,
   onOpenRegister,
   onOpenSettings,
   onOpenVip,
@@ -787,13 +786,7 @@ const Header = ({
     if (onLogout) onLogout();
   };
 
-  // 10. Кнопка "Вхід" (для незалогіненого)
-  const handleLoginClick = () => {
-    playSfx(relax);
-    if (onOpenLogin) onOpenLogin();
-  };
-
-  // 11. Кнопка "Акаунт" / "Реєстрація" (для незалогіненого)
+  // 11. Кнопка "Акаунт" (вхід) (для незалогіненого)
   const handleRegisterClick = () => {
     playSfx(relax);
     if (onOpenRegister) onOpenRegister();
@@ -1140,21 +1133,6 @@ const Header = ({
               <EmojiWrapper style={{ fontSize: "18px" }}><FaBookOpen/></EmojiWrapper>
             </IconButton>
           </Tooltip>
-
-        <button
-          onClick={handleLoginClick}
-          style={{
-            fontSize: "11px",
-            cursor: "pointer",
-            background: "none",
-            border: "none",
-            textDecoration: "underline",
-            display: "none",
-            color: isDarkMode ? "#fff" : "#000",
-          }}
-        >
-          Вхід
-        </button>
 
         <button
           onClick={handleRegisterClick}
