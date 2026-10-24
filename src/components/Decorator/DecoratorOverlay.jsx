@@ -131,7 +131,6 @@ const DecoratorOverlay = ({ isStickyBgMode }) => {
         <DecoratorModal
           targetElement={selectedEl}
           onClose={() => setSelectedEl(null)}
-          isStickyBgMode={isStickyBgMode}
         />
       )}
     </>

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
-import { useDecorator, getUniqueSelector } from "./DecoratorContext";
+import {
+  useDecorator,
+  getUniqueSelector,
+  buildOverridesCss,
+} from "./DecoratorContext";
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -28,8 +32,7 @@ const Overlay = styled.div`
 `;
 
 const Modal = styled.div`
-  background: ${(props) => (props.$isStickyBgMode ? "rgba(30, 30, 46, 0.85)" : "#1e1e2e")};
-  backdrop-filter: ${(props) => (props.$isStickyBgMode ? "blur(10px)" : "none")};
+  background: #1e1e2e;
   color: #cdd6f4;
   border-radius: 16px;
   border: 2px solid #ffb36c;
@@ -224,133 +227,225 @@ const PassthroughBtn = styled(ActionBtn)`
   color: #cdd6f4;
   &:hover {
     background: rgba(255, 255, 255, 0.15);
+    `
+const SmallBtn = styled.button`
+  background: rgba(255, 179, 108, 0.12);
+  border: 1px solid rgba(255, 179, 108, 0.35);
+  color: #ffb36c;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  &:hover {
+    background: rgba(255, 179, 108, 0.25);
   }
 `;
+
+const selectStyle = {
+  background: "rgba(0, 0, 0, 0.3)",
+  border: "1px solid rgba(255, 179, 108, 0.3)",
+  color: "#cdd6f4",
+  padding: "7px 8px",
+  borderRadius: "8px",
+  fontSize: "12px",
+  outline: "none",
+};
 
 const EDITABLE_PROPS_CONFIG = {
   color: {
     label: "Колір тексту",
     cssProp: "color",
     type: "color",
-    desc: "Змінює колір шрифту елемента"
+    desc: "Змінює колір шрифту елемента",
   },
   backgroundColor: {
     label: "Колір фону",
     cssProp: "backgroundColor",
     type: "color",
-    desc: "Змінює фоновий колір елемента"
+    desc: "Змінює фоновий колір елемента",
   },
   border: {
     label: "Рамка (бордюр)",
     cssProp: "border",
     type: "border",
-    desc: "Налаштування межі елемента"
+    desc: "Налаштування межі елемента",
   },
   borderRadius: {
     label: "Заокруглення кутів",
     cssProp: "borderRadius",
     type: "text",
     placeholder: "напр., 8px або 50%",
-    desc: "Радіус заокруглення рамки"
+    desc: "Радіус заокруглення рамки",
   },
   boxShadow: {
     label: "Тінь елемента",
     cssProp: "boxShadow",
     type: "text",
     placeholder: "напр., 0 4px 10px rgba(0,0,0,0.3)",
-    desc: "Додає ефект тіні навколо елемента"
+    desc: "Додає ефект тіні навколо елемента",
   },
   textShadow: {
     label: "Тінь тексту",
     cssProp: "textShadow",
     type: "text",
     placeholder: "напр., 1px 1px 2px #000",
-    desc: "Ефект тіні для тексту"
+    desc: "Ефект тіні для тексту",
   },
   backdropFilter: {
     label: "Розмиття фону",
     cssProp: "backdropFilter",
     type: "text",
     placeholder: "напр., blur(10px)",
-    desc: "Ефекти для фону (скляний ефект)"
+    desc: "Ефекти для фону (скляний ефект)",
   },
   filter: {
     label: "Фільтри",
     cssProp: "filter",
     type: "text",
     placeholder: "напр., grayscale(50%)",
-    desc: "Ефекти зображення/кольору"
+    desc: "Ефекти зображення/кольору",
+  },
+  transform: {
+    label: "Трансформація",
+    cssProp: "transform",
+    type: "transform",
+    placeholder: "напр., rotate(5deg) scale(1.1) або skewY(3deg)",
+    desc: "Зсув, поворот, масштаб, нахил — або свій CSS",
+  },
+  transformOrigin: {
+    label: "Точка трансформації",
+    cssProp: "transformOrigin",
+    type: "text",
+    placeholder: "напр., center, top left, 50% 100%",
+    desc: "Відносно чого виконується трансформація",
+  },
+  transition: {
+    label: "Анімація переходу",
+    cssProp: "transition",
+    type: "text",
+    placeholder: "напр., all 0.3s ease",
+    desc: "Плавність зміни стилів (корисно для :hover)",
   },
   outline: {
     label: "Контур",
     cssProp: "outline",
     type: "text",
     placeholder: "напр., 2px solid red",
-    desc: "Зовнішня рамка елемента"
+    desc: "Зовнішня рамка елемента",
   },
   textDecoration: {
     label: "Декорування тексту",
     cssProp: "textDecoration",
     type: "text",
     placeholder: "напр., underline або none",
-    desc: "Підкреслення, закреслення тощо"
+    desc: "Підкреслення, закреслення тощо",
   },
   cursor: {
     label: "Курсор миші",
     cssProp: "cursor",
     type: "cursor",
-    desc: "Вигляд курсора при наведенні"
+    desc: "Вигляд курсора при наведенні",
   },
 };
 
 const EDITABLE_PROPS = Object.values(EDITABLE_PROPS_CONFIG);
+const KNOWN_PROPS = new Set(EDITABLE_PROPS.map((p) => p.cssProp));
+const MODES = ["light_default", "light_hover", "dark_default", "dark_hover"];
+const FORBIDDEN_PROPS = new Set(["opacity"]);
 
+/* ---------- Хелпери ---------- */
 const rgbToHex = (rgb) => {
   if (!rgb || rgb === "transparent" || rgb === "rgba(0, 0, 0, 0)")
     return "#000000";
-  if (rgb.startsWith("#")) return rgb;
+  if (rgb.startsWith("#")) {
+    if (/^#[0-9a-f]{3}$/i.test(rgb)) {
+      return "#" + rgb.slice(1).split("").map((c) => c + c).join("");
+    }
+    return /^#[0-9a-f]{6}/i.test(rgb) ? rgb.slice(0, 7) : "#000000";
+  }
   const match = rgb.match(/\d+/g);
   if (!match || match.length < 3) return "#000000";
   return (
     "#" +
     match
       .slice(0, 3)
-      .map((n) => parseInt(n).toString(16).padStart(2, "0"))
+      .map((n) => Math.min(255, parseInt(n)).toString(16).padStart(2, "0"))
       .join("")
   );
 };
 
-const parseBorder = (borderStr) => {
-  if (!borderStr || borderStr === "none") {
-    return { width: "0px", style: "none", color: "#000000" };
-  }
-  const parts = borderStr.split(/\s+/);
-  let width = "1px";
-  let style = "solid";
-  let color = "#000000";
+const BORDER_STYLES = ["solid", "double", "dashed", "dotted", "groove", "ridge", "inset", "outset"];
+const BORDER_WIDTHS = ["0px", "1px", "2px", "3px", "4px", "5px", "8px", "10px"];
 
-  parts.forEach(part => {
-    if (/^\d+(px|em|rem|%|pt)$/.test(part) || /^\d+$/.test(part)) {
-      width = part.includes("px") || part.includes("em") || part.includes("rem") || part.includes("%") || part.includes("pt") ? part : part + "px";
-    } else if (["solid", "double", "dashed", "dotted", "groove", "ridge", "inset", "outset", "none"].includes(part)) {
+const parseBorder = (borderStr) => {
+  let width = "1px";
+  let style = "none";
+  let color = "#000000";
+  if (!borderStr || borderStr === "none") return { width, style, color };
+
+  style = "solid";
+  const parts = borderStr.match(/(?:rgba?|hsla?)\([^)]*\)|\S+/g) || [];
+  parts.forEach((part) => {
+    if (/^\d*\.?\d+(px|em|rem|pt)?$/.test(part)) {
+      width = /[a-z]/.test(part) ? part : part + "px";
+    } else if (part === "none") {
+      style = "none";
+    } else if (BORDER_STYLES.includes(part)) {
       style = part;
-    } else if (part.startsWith("#") || part.startsWith("rgb") || part.startsWith("hsl") || /^[a-zA-Z]+$/.test(part)) {
+    } else {
       color = part;
     }
   });
   return { width, style, color };
 };
 
-const combineBorder = (width, style, color) => {
-  if (style === "none" || width === "0px") return "none";
-  return `${width} ${style} ${color}`;
+const combineBorder = (width, style, color) =>
+  style === "none" ? "none" : `${width} ${style} ${color}`;
+
+const TRANSFORM_FIELDS = [
+  { key: "translateX", label: "X (px)", unit: "px", def: 0, step: 1 },
+  { key: "translateY", label: "Y (px)", unit: "px", def: 0, step: 1 },
+  { key: "rotate", label: "Поворот (°)", unit: "deg", def: 0, step: 1 },
+  { key: "scale", label: "Масштаб", unit: "", def: 1, step: 0.05 },
+  { key: "skewX", label: "Нахил X (°)", unit: "deg", def: 0, step: 1 },
+  { key: "skewY", label: "Нахил Y (°)", unit: "deg", def: 0, step: 1 },
+];
+
+const parseTransform = (str) => {
+  const result = {};
+  if (!str) return result;
+  const re = /(translateX|translateY|rotate|scale|skewX|skewY)\(\s*(-?\d*\.?\d+)\s*(?:px|deg)?\s*\)/g;
+  let m;
+  while ((m = re.exec(str))) result[m[1]] = m[2];
+  return result;
 };
 
-const DecoratorModal = ({ targetElement, onClose, isStickyBgMode }) => {
-  const { applyStyle, getOverridesForElement, isDarkMode } = useDecorator();
+// Збирає transform; невідомі функції (matrix, 3d тощо) зберігаються з вихідного рядка
+const buildTransform = (fields, original = "") => {
+  const known = TRANSFORM_FIELDS.map((f) => f.key).join("|");
+  const extra = original
+    .replace(new RegExp(`(${known})\\(\\s*-?\\d*\\.?\\d+\\s*(?:px|deg)?\\s*\\)`, "g"), "")
+    .trim();
+  const own = TRANSFORM_FIELDS.filter(
+    (f) => fields[f.key] !== undefined && fields[f.key] !== "" && Number(fields[f.key]) !== f.def,
+  )
+    .map((f) => `${f.key}(${fields[f.key]}${f.unit})`)
+    .join(" ");
+  return [own, extra].filter(Boolean).join(" ");
+};
+
+const toCamel = (name) =>
+  name.startsWith("--") ? name : name.trim().replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+
+const DecoratorModal = ({ targetElement, onClose }) => {
+  const { applyStyle, getOverridesForElement, isDarkMode, activePreset } = useDecorator();
 
   const [activeTheme, setActiveTheme] = useState(isDarkMode ? "dark" : "light");
   const [activeState, setActiveState] = useState("default");
+  const [newPropName, setNewPropName] = useState("");
+  const [newPropValue, setNewPropValue] = useState("");
+  const [customError, setCustomError] = useState("");
 
   const currentMode = `${activeTheme}_${activeState}`;
 
@@ -359,49 +454,76 @@ const DecoratorModal = ({ targetElement, onClose, isStickyBgMode }) => {
 
   const [editedStyles, setEditedStyles] = useState({});
 
+  // Завантажуємо збережені стилі лише при зміні елемента (інакше ввід скидався б при кожному оновленні контексту)
   useEffect(() => {
     if (elementId) {
-      const existing = getOverridesForElement(elementId);
-      setEditedStyles(JSON.parse(JSON.stringify(existing)));
+      setEditedStyles(JSON.parse(JSON.stringify(getOverridesForElement(elementId))));
     }
-  }, [elementId, getOverridesForElement]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [elementId]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   const handleChange = (key, value) => {
+    setEditedStyles((prev) => {
+      const modeStyles = { ...(prev[currentMode] || {}) };
+      if (value === "" || value == null) delete modeStyles[key];
+      else modeStyles[key] = value;
+      return { ...prev, [currentMode]: modeStyles };
+    });
+  };
+
+  const handleAddCustom = () => {
+    const name = toCamel(newPropName);
+    if (!/^(--)?[a-zA-Z][a-zA-Z0-9-]*$/.test(name)) {
+      setCustomError("Некоректна назва властивості");
+      return;
+    }
+    if (FORBIDDEN_PROPS.has(name)) {
+      setCustomError("Прозорість (opacity) не підтримується");
+      return;
+    }
+    if (!newPropValue.trim()) {
+      setCustomError("Вкажіть значення");
+      return;
+    }
+    handleChange(name, newPropValue.trim());
+    setNewPropName("");
+    setNewPropValue("");
+    setCustomError("");
+  };
+
+  const clearCurrentTheme = () => {
     setEditedStyles((prev) => ({
       ...prev,
-      [currentMode]: {
-        ...(prev[currentMode] || {}),
-        [key]: value,
-      },
+      [`${activeTheme}_default`]: {},
+      [`${activeTheme}_hover`]: {},
     }));
   };
 
   const handleApply = () => {
     const existing = getOverridesForElement(elementId);
 
-    ["light_default", "light_hover", "dark_default", "dark_hover"].forEach(
-      (mode) => {
-        const modeStyles = editedStyles[mode] || {};
-        const oldStyles = existing[mode] || {};
+    MODES.forEach((mode) => {
+      const modeStyles = editedStyles[mode] || {};
+      const oldStyles = existing[mode] || {};
+      const props = new Set([...Object.keys(modeStyles), ...Object.keys(oldStyles)]);
 
-        EDITABLE_PROPS.forEach(({ cssProp }) => {
-          if (modeStyles[cssProp] !== oldStyles[cssProp]) {
-            if (modeStyles[cssProp]) {
-              applyStyle(
-                elementId,
-                tagName,
-                cssProp,
-                oldStyles[cssProp],
-                modeStyles[cssProp],
-                mode,
-              );
-            } else if (oldStyles[cssProp]) {
-              applyStyle(elementId, tagName, cssProp, oldStyles[cssProp], "", mode);
-            }
-          }
-        });
-      },
-    );
+      props.forEach((cssProp) => {
+        if (FORBIDDEN_PROPS.has(cssProp)) return;
+        const next = modeStyles[cssProp] || "";
+        const prev = oldStyles[cssProp] || "";
+        if (next !== prev) {
+          applyStyle(elementId, tagName, cssProp, prev, next, mode);
+        }
+      });
+    });
 
     onClose();
   };
@@ -424,42 +546,43 @@ const DecoratorModal = ({ targetElement, onClose, isStickyBgMode }) => {
   if (!targetElement) return null;
 
   const currentModeStyles = editedStyles[currentMode] || {};
+  const customProps = Object.entries(currentModeStyles).filter(
+    ([k]) => !KNOWN_PROPS.has(k) && !FORBIDDEN_PROPS.has(k),
+  );
 
-  let previewCss = "";
-  if (editedStyles) {
-    const selector = elementId.includes(" > ") || elementId.includes("#") || elementId.includes(":") 
-      ? elementId 
-      : `[data-decorator-id="${elementId}"]`;
+  const previewCss = buildOverridesCss(elementId, editedStyles);
 
-    if (editedStyles.light_default) {
-      previewCss += `body:not(.decorator-dark-mode) ${selector} { `;
-      Object.entries(editedStyles.light_default).forEach(([prop, val]) => {
-        previewCss += `${prop.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${val} !important; `;
-      });
-      previewCss += `}\n`;
-    }
-    if (editedStyles.light_hover) {
-      previewCss += `body:not(.decorator-dark-mode) ${selector}:hover { `;
-      Object.entries(editedStyles.light_hover).forEach(([prop, val]) => {
-        previewCss += `${prop.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${val} !important; `;
-      });
-      previewCss += `}\n`;
-    }
-    if (editedStyles.dark_default) {
-      previewCss += `body.decorator-dark-mode ${selector} { `;
-      Object.entries(editedStyles.dark_default).forEach(([prop, val]) => {
-        previewCss += `${prop.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${val} !important; `;
-      });
-      previewCss += `}\n`;
-    }
-    if (editedStyles.dark_hover) {
-      previewCss += `body.decorator-dark-mode ${selector}:hover { `;
-      Object.entries(editedStyles.dark_hover).forEach(([prop, val]) => {
-        previewCss += `${prop.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${val} !important; `;
-      });
-      previewCss += `}\n`;
-    }
-  }
+  const renderTransform = (cssProp, val, placeholder) => {
+    const fields = parseTransform(val);
+    const setField = (key, v) =>
+      handleChange(cssProp, buildTransform({ ...fields, [key]: v }, val));
+    return (
+      <>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px" }}>
+          {TRANSFORM_FIELDS.map((f) => (
+            <label key={f.key} style={{ fontSize: "10px", color: "#a6adc8", display: "flex", flexDirection: "column", gap: "2px" }}>
+              {f.label}
+              <PropInput
+                type="number"
+                step={f.step}
+                value={fields[f.key] ?? ""}
+                placeholder={String(f.def)}
+                onChange={(e) => setField(f.key, e.target.value)}
+                data-decorator-ignore="true"
+                style={{ minWidth: 0 }}
+              />
+            </label>
+          ))}
+        </div>
+        <PropInput
+          value={val}
+          onChange={(e) => handleChange(cssProp, e.target.value)}
+          placeholder={placeholder}
+          data-decorator-ignore="true"
+        />
+      </>
+    );
+  };
 
   return (
     <Overlay
@@ -470,11 +593,7 @@ const DecoratorModal = ({ targetElement, onClose, isStickyBgMode }) => {
     >
       <style>{previewCss}</style>
 
-      <Modal
-        data-decorator-ignore="true"
-        onClick={(e) => e.stopPropagation()}
-        $isStickyBgMode={isStickyBgMode}
-      >
+      <Modal data-decorator-ignore="true" onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
           <Title>
             🎨 Декоратор <TagBadge>&lt;{tagName}&gt;</TagBadge>
@@ -487,34 +606,31 @@ const DecoratorModal = ({ targetElement, onClose, isStickyBgMode }) => {
         <Body>
           <ModeTabsContainer>
             <TabGroup>
-              <Tab
-                $active={activeTheme === "light"}
-                onClick={() => setActiveTheme("light")}
-              >
+              <Tab $active={activeTheme === "light"} onClick={() => setActiveTheme("light")}>
                 🌞 Денна
               </Tab>
-              <Tab
-                $active={activeTheme === "dark"}
-                onClick={() => setActiveTheme("dark")}
-              >
+              <Tab $active={activeTheme === "dark"} onClick={() => setActiveTheme("dark")}>
                 🌙 Темна
               </Tab>
             </TabGroup>
             <TabGroup>
-              <Tab
-                $active={activeState === "default"}
-                onClick={() => setActiveState("default")}
-              >
+              <Tab $active={activeState === "default"} onClick={() => setActiveState("default")}>
                 Стандарт
               </Tab>
-              <Tab
-                $active={activeState === "hover"}
-                onClick={() => setActiveState("hover")}
-              >
+              <Tab $active={activeState === "hover"} onClick={() => setActiveState("hover")}>
                 :hover
               </Tab>
             </TabGroup>
           </ModeTabsContainer>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "11px", color: "#858da3" }}>
+              Пресет {activePreset + 1} — зміни не впливають на інші пресети
+            </span>
+            <SmallBtn onClick={clearCurrentTheme} data-decorator-ignore="true">
+              Очистити тему
+            </SmallBtn>
+          </div>
 
           {EDITABLE_PROPS.map(({ cssProp, label, type, placeholder, desc }) => {
             const val = currentModeStyles[cssProp] || "";
@@ -522,9 +638,9 @@ const DecoratorModal = ({ targetElement, onClose, isStickyBgMode }) => {
             return (
               <PropRow key={cssProp}>
                 <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: "5px" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
                     <PropLabel>{label}</PropLabel>
-                    <span style={{ fontSize: "10px", color: "#858da3" }}>{desc}</span>
+                    <span style={{ fontSize: "10px", color: "#858da3", textAlign: "right" }}>{desc}</span>
                   </div>
 
                   {type === "color" && (
@@ -549,16 +665,7 @@ const DecoratorModal = ({ targetElement, onClose, isStickyBgMode }) => {
                       value={val}
                       onChange={(e) => handleChange(cssProp, e.target.value)}
                       data-decorator-ignore="true"
-                      style={{
-                        background: "rgba(0, 0, 0, 0.3)",
-                        border: "1px solid rgba(255, 179, 108, 0.3)",
-                        color: "#cdd6f4",
-                        padding: "7px 10px",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                        outline: "none",
-                        width: "100%"
-                      }}
+                      style={{ ...selectStyle, width: "100%" }}
                     >
                       <option value="">успадковується (default)</option>
                       <option value="default">стрілка (default)</option>
@@ -575,89 +682,63 @@ const DecoratorModal = ({ targetElement, onClose, isStickyBgMode }) => {
                     </select>
                   )}
 
-                  {type === "border" && (() => {
-                    const parsed = parseBorder(val);
-                    return (
-                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-                        <select
-                          value={parsed.width}
-                          onChange={(e) => {
-                            const newBorder = combineBorder(e.target.value, parsed.style, parsed.color);
-                            handleChange(cssProp, newBorder);
-                          }}
-                          data-decorator-ignore="true"
-                          style={{
-                            background: "rgba(0, 0, 0, 0.3)",
-                            border: "1px solid rgba(255, 179, 108, 0.3)",
-                            color: "#cdd6f4",
-                            padding: "7px 8px",
-                            borderRadius: "8px",
-                            fontSize: "12px",
-                            outline: "none",
-                            flex: 1
-                          }}
-                        >
-                          <option value="0px">0px</option>
-                          <option value="1px">1px</option>
-                          <option value="2px">2px</option>
-                          <option value="3px">3px</option>
-                          <option value="4px">4px</option>
-                          <option value="5px">5px</option>
-                          <option value="8px">8px</option>
-                          <option value="10px">10px</option>
-                        </select>
+                  {type === "border" &&
+                    (() => {
+                      const parsed = parseBorder(val);
+                      const widths = BORDER_WIDTHS.includes(parsed.width)
+                        ? BORDER_WIDTHS
+                        : [...BORDER_WIDTHS, parsed.width];
+                      const set = (w, s, c) => handleChange(cssProp, combineBorder(w, s, c));
+                      return (
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                          <select
+                            value={parsed.width}
+                            onChange={(e) => set(e.target.value, parsed.style, parsed.color)}
+                            data-decorator-ignore="true"
+                            style={{ ...selectStyle, flex: 1 }}
+                          >
+                            {widths.map((w) => (
+                              <option key={w} value={w}>
+                                {w}
+                              </option>
+                            ))}
+                          </select>
 
-                        <select
-                          value={parsed.style}
-                          onChange={(e) => {
-                            const newBorder = combineBorder(parsed.width, e.target.value, parsed.color);
-                            handleChange(cssProp, newBorder);
-                          }}
-                          data-decorator-ignore="true"
-                          style={{
-                            background: "rgba(0, 0, 0, 0.3)",
-                            border: "1px solid rgba(255, 179, 108, 0.3)",
-                            color: "#cdd6f4",
-                            padding: "7px 8px",
-                            borderRadius: "8px",
-                            fontSize: "12px",
-                            outline: "none",
-                            flex: 2
-                          }}
-                        >
-                          <option value="none">немає (none)</option>
-                          <option value="solid">суцільна (solid)</option>
-                          <option value="double">подвійна (double)</option>
-                          <option value="dashed">штрихова (dashed)</option>
-                          <option value="dotted">пунктирна (dotted)</option>
-                          <option value="groove">3D жолоб (groove)</option>
-                          <option value="ridge">3D гребінь (ridge)</option>
-                          <option value="inset">3D втиснута (inset)</option>
-                          <option value="outset">3D витиснута (outset)</option>
-                        </select>
+                          <select
+                            value={parsed.style}
+                            onChange={(e) => set(parsed.width, e.target.value, parsed.color)}
+                            data-decorator-ignore="true"
+                            style={{ ...selectStyle, flex: 2 }}
+                          >
+                            <option value="none">немає (none)</option>
+                            <option value="solid">суцільна (solid)</option>
+                            <option value="double">подвійна (double)</option>
+                            <option value="dashed">штрихова (dashed)</option>
+                            <option value="dotted">пунктирна (dotted)</option>
+                            <option value="groove">3D жолоб (groove)</option>
+                            <option value="ridge">3D гребінь (ridge)</option>
+                            <option value="inset">3D втиснута (inset)</option>
+                            <option value="outset">3D витиснута (outset)</option>
+                          </select>
 
-                        <ColorInput
-                          type="color"
-                          value={rgbToHex(parsed.color)}
-                          onChange={(e) => {
-                            const newBorder = combineBorder(parsed.width, parsed.style, e.target.value);
-                            handleChange(cssProp, newBorder);
-                          }}
-                          data-decorator-ignore="true"
-                        />
-                        <PropInput
-                          value={parsed.color}
-                          onChange={(e) => {
-                            const newBorder = combineBorder(parsed.width, parsed.style, e.target.value);
-                            handleChange(cssProp, newBorder);
-                          }}
-                          placeholder="#ffb36c"
-                          data-decorator-ignore="true"
-                          style={{ flex: 2, minWidth: "70px" }}
-                        />
-                      </div>
-                    );
-                  })()}
+                          <ColorInput
+                            type="color"
+                            value={rgbToHex(parsed.color)}
+                            onChange={(e) => set(parsed.width, parsed.style, e.target.value)}
+                            data-decorator-ignore="true"
+                          />
+                          <PropInput
+                            value={parsed.color}
+                            onChange={(e) => set(parsed.width, parsed.style, e.target.value)}
+                            placeholder="#ffb36c"
+                            data-decorator-ignore="true"
+                            style={{ flex: 2, minWidth: "70px" }}
+                          />
+                        </div>
+                      );
+                    })()}
+
+                  {type === "transform" && renderTransform(cssProp, val, placeholder)}
 
                   {type === "text" && (
                     <PropInput
@@ -671,13 +752,54 @@ const DecoratorModal = ({ targetElement, onClose, isStickyBgMode }) => {
               </PropRow>
             );
           })}
+
+          <PropRow>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <PropLabel>Власні CSS-властивості</PropLabel>
+              <span style={{ fontSize: "10px", color: "#858da3" }}>Будь-яка властивість, окрім opacity</span>
+            </div>
+
+            {customProps.map(([name, value]) => (
+              <div key={name} style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                <TagBadge style={{ minWidth: "90px" }}>{name}</TagBadge>
+                <PropInput
+                  value={value}
+                  onChange={(e) => setEditedStyles((prev) => ({
+                    ...prev,
+                    [currentMode]: { ...(prev[currentMode] || {}), [name]: e.target.value },
+                  }))}
+                  data-decorator-ignore="true"
+                />
+                <SmallBtn onClick={() => handleChange(name, "")} data-decorator-ignore="true">
+                  ✕
+                </SmallBtn>
+              </div>
+            ))}
+
+            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+              <PropInput
+                value={newPropName}
+                onChange={(e) => setNewPropName(e.target.value)}
+                placeholder="напр., letter-spacing"
+                data-decorator-ignore="true"
+              />
+              <PropInput
+                value={newPropValue}
+                onChange={(e) => setNewPropValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddCustom()}
+                placeholder="напр., 2px"
+                data-decorator-ignore="true"
+              />
+              <SmallBtn onClick={handleAddCustom} data-decorator-ignore="true">
+                +
+              </SmallBtn>
+            </div>
+            {customError && <span style={{ fontSize: "11px", color: "#f38ba8" }}>{customError}</span>}
+          </PropRow>
         </Body>
 
         <Footer>
-          <PassthroughBtn
-            onClick={handlePassthrough}
-            data-decorator-ignore="true"
-          >
+          <PassthroughBtn onClick={handlePassthrough} data-decorator-ignore="true">
             ▶ Виконати дію
           </PassthroughBtn>
           <ApplyBtn onClick={handleApply} data-decorator-ignore="true">

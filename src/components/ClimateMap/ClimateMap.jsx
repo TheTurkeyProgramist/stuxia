@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import styled, { keyframes, css } from "styled-components";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import pixelturkey from "../../photos/cursors/pixelturkey.webp"
 import twoturkey from "../../photos/cursors/twoturkey.webp"
 import { FaKeyboard } from "react-icons/fa";
@@ -18,12 +17,8 @@ import toast, { Toaster } from "react-hot-toast";
 // Ctrl + Shift + F: Відкрити на весь екран
 // Ctrl + Shift + P: Відкрити/закрити міні-плеєр
 // Ctrl + Shift + W: Перемкнути джерело (Windy / Ventusky)
-// Ctrl + Shift + S: Відкрити поле ШІ пошуку
-const spin = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-`;
-
+// Ctrl + Shift + L: Закріпити/відкріпити локацію
+// Ctrl + Shift + K: Відкрити/закрити налаштування
 const AihelpTitle = styled.div`
   font-size: 15px;
   text-align: center;
@@ -100,10 +95,6 @@ const MapWrapper = styled.div`
   }
 `;
 
-
-const Controls = styled.div`
-  display: none;
-`;
 
 const KeyboardShortcut = styled.kbd`
   display: ${(props) => (props.$visible ? "inline-flex" : "none")};
@@ -236,12 +227,6 @@ const Dov = styled.div`
   gap: 1px;
   flex: 1;
   min-width: 0;
-`;
-
-const SettingDivider = styled.div`
-  height: 1px;
-  margin: 8px 0 2px;
-  background: linear-gradient(90deg, rgba(255,179,108,0.12), rgba(255,255,255,0.05), transparent);
 `;
 
 const SettingLabel = styled.div`
@@ -478,30 +463,6 @@ const ActionButton = styled.button`
   }
 `;
 
-const SearchContainer = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-`;
-
-const SearchInput = styled.input`
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  font-size: 12px;
-  outline: none;
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-  }
-`;
-
 const MiniPlayerWindow = styled.div`
   position: fixed;
   z-index: 2200;
@@ -620,28 +581,6 @@ const FormButton = styled.button`
   &:active { transform: translateY(0); }
 `;
 
-const SourceSelect = styled.select`
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(0, 0, 0, 0.75);
-  color: white;
-  font-size: 13px;
-  font-weight: 700;
-  outline: none;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: border-color 0.2s;
-
-  &:hover, &:focus {
-    border-color: #ffb36c;
-  }
-
-  option {
-    background: #121826;
-    color: white;
-  }
-`;
 
 const MobileSettingSelectGroup = styled.div`
   display: flex;
@@ -725,15 +664,14 @@ const KbdModeSelect = styled.select`
 
 
 
+const turkeyFrames = [pixelturkey, twoturkey];
+const BUILTIN_PROVIDERS = ["ventusky", "windy", "alerts-ua", "excalidraw", "saveecobot", "radarbox"];
+
 const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [lat, setLat] = useState(48.379);
   const [lon, setLon] = useState(31.165);
   const [zoom, setZoom] = useState(5);
-  const [isAiSearchOpen, setIsAiSearchOpen] = useState(false);
   const [isControlsOpen, setIsControlsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [geminiKey, setGeminiKey] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [overlay, setOverlay] = useState("wind");
   const [isMapActive, setIsMapActive] = useState(false);
@@ -746,7 +684,6 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [provider, setProvider] = useState("ventusky");
   const [isPinned, setIsPinned] = useState(false);
 
-  const turkeyFrames = [pixelturkey, twoturkey];
   const [currentTurkeyFrame, setCurrentTurkeyFrame] = useState(0);
   const [keyboardShortcutMode, setKeyboardShortcutMode] = useState("auto");
   const [isCoarsePointer, setIsCoarsePointer] = useState(false);
@@ -763,12 +700,6 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
     return () =>
       pointerQuery.removeEventListener("change", updatePointerType);
-  }, []);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTurkeyFrame((prev) => (prev + 1) % turkeyFrames.length);
-    }, 1500);
-    return () => clearInterval(interval);
   }, []);
 
   const [miniPlayerPosition, setMiniPlayerPosition] = useState(() => {
@@ -805,6 +736,15 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [shouldLoadTurkeyVideo, setShouldLoadTurkeyVideo] = useState(false);
   const turkeyVideoRef = useRef(null);
   const shouldShowLoader = !isMapActive || isLoading || !isOnline;
+  const isTurkeyFallback = !isOnline || isSlowConnection || videoError;
+
+  useEffect(() => {
+    if (!shouldShowLoader || !isTurkeyFallback) return;
+    const interval = setInterval(() => {
+      setCurrentTurkeyFrame((prev) => (prev + 1) % turkeyFrames.length);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [shouldShowLoader, isTurkeyFallback]);
 
   useEffect(() => {
     if (isOnline && !isSlowConnection && !videoError) {
@@ -869,6 +809,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     };
   }, []);
 
+  useEffect(() => () => pipWindow?.close(), [pipWindow]);
+
   const handleSetProvider = async (newProvider) => {
     setProvider(newProvider);
     try {
@@ -903,8 +845,6 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       "Налаштування Стихії",
       "Додавання карти(фреймів)",
       "Налаштування Стихії",
-      "Пошук місця",
-      "Налаштування Стихії",
       "Закріпити локацію",
        "Налаштування Стихії",
       "Карти та безліч функцій",
@@ -928,11 +868,17 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const savedKey = await localforage.getItem("gemini_api_key");
-        if (savedKey) setGeminiKey(savedKey);
+
+        const savedUserFrames = await localforage.getItem("climate_custom_user_frames");
+        const frames = Array.isArray(savedUserFrames) ? savedUserFrames : [];
+        setCustomFrames(frames);
+        const knownProviders = [...BUILTIN_PROVIDERS, ...frames.map((f) => f.id)];
+        const applyProvider = (id) => {
+          if (id && knownProviders.includes(id)) setProvider(id);
+        };
 
         const savedProvider = await localforage.getItem("selected_climate_provider");
-        if (savedProvider) setProvider(savedProvider);
+        applyProvider(savedProvider);
 
         const savedKeyboardShortcutMode = await localforage.getItem(
           "climate_keyboard_shortcut_mode",
@@ -947,7 +893,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
           setLon(pinnedLoc.lon);
           setZoom(pinnedLoc.zoom);
           if (pinnedLoc.overlay) setOverlay(pinnedLoc.overlay);
-          if (pinnedLoc.provider) setProvider(pinnedLoc.provider);
+          applyProvider(pinnedLoc.provider);
           setIsPinned(true);
         }
 
@@ -955,11 +901,6 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
         if (lastUnlocked && Date.now() - lastUnlocked < SEVEN_DAYS_MS) {
           setIsMapActive(true);
-        }
-
-        const savedUserFrames = await localforage.getItem("climate_custom_user_frames");
-        if (savedUserFrames && Array.isArray(savedUserFrames)) {
-          setCustomFrames(savedUserFrames);
         }
       } catch (error) {
         console.error("Error loading map data:", error);
@@ -1050,7 +991,6 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     if (e) e.stopPropagation();
     try {
       await localforage.removeItem("pinned_map_location");
-      await localforage.removeItem("selected_climate_provider");
       setIsPinned(false);
       toast("Закріплення локації знято.", { icon: "📌", duration: 2000 });
     } catch (error) {
@@ -1083,54 +1023,6 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       }
     } else {
       setIsMiniPlayerOpen(true);
-    }
-  };
-
-  const handleAiSearch = async (e) => {
-    e?.preventDefault();
-    if (!searchQuery.trim() || isAiLoading) return;
-    if (!geminiKey) {
-      toast.error("API-ключ Gemini не знайдено. Додайте його в налаштуваннях ШІ.", { icon: "🔑" });
-      return;
-    }
-
-    setIsAiLoading(true);
-    try {
-      const genAI = new GoogleGenerativeAI(geminiKey);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        tools: [{ googleSearch: {} }],
-      });
-      const prompt = `Ти помічник з географії. Користувач шукає локацію. Твоя задача: знайти координати цього місця. 
-      Поверни ВИНЯТКОВО валідний JSON без markdown форматування, приклад: {"lat": 48.8566, "lon": 2.3522, "zoom": 6}.
-      Запит: ${searchQuery}`;
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      let text = response.text().trim();
-      if (text.startsWith("```json")) {
-        text = text
-          .replace(/```json/g, "")
-          .replace(/```/g, "")
-          .trim();
-      } else if (text.startsWith("```")) {
-        text = text.replace(/```/g, "").trim();
-      }
-
-      const data = JSON.parse(text);
-      if (Number.isFinite(data.lat) && Number.isFinite(data.lon)) {
-        setLat(data.lat);
-        setLon(data.lon);
-        setSearchQuery("");
-        setIsAiSearchOpen(false);
-        setIsMapActive(true);
-        toast.success(`Локацію знайдено! ${searchQuery}`, { icon: "🗺️" });
-      }
-    } catch (error) {
-      console.error("AI Search error:", error);
-      toast.error("Не вдалося знайти локацію. Спробуйте змінити запит.");
-    } finally {
-      setIsAiLoading(false);
     }
   };
 
@@ -1168,12 +1060,14 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       resizeStateRef.current = null;
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("pointermove", handleMouseMove);
+    window.addEventListener("pointerup", handleMouseUp);
+    window.addEventListener("pointercancel", handleMouseUp);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("pointermove", handleMouseMove);
+      window.removeEventListener("pointerup", handleMouseUp);
+      window.removeEventListener("pointercancel", handleMouseUp);
     };
   }, []);
 
@@ -1195,16 +1089,17 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
 
       if (e.shiftKey && e.ctrlKey) {
-        switch (e.key.toLowerCase()) {
-          case 'm':
+        switch (e.code) {
+          case 'KeyM':
             e.preventDefault();
-            setIsMapActive(prev => !prev);
+            if (isMapActive) handleDeactivateMap();
+            else handleActivateMap();
             break;
-          case 'f':
+          case 'KeyF':
             e.preventDefault();
             toggleFullscreen();
             break;
-          case 'p':
+          case 'KeyP':
             e.preventDefault();
             if (isMiniPlayerOpen) {
               if (pipWindow) pipWindow.close();
@@ -1213,7 +1108,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               handleOpenMiniPlayer();
             }
             break;
-          case 'w': {
+          case 'KeyW': {
             e.preventDefault();
             const allSources = ["ventusky", "windy", ...customFrames.map((f) => f.id)];
             setProvider((current) => {
@@ -1223,17 +1118,14 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
             });
             break;
           }
-          case 's':
+          case 'KeyL':
             e.preventDefault();
-            setIsAiSearchOpen((prev) => !prev);
+            if (isPinned) handleUnpin();
+            else handlePinLocation();
             break;
-          case 'l':
+          case 'KeyK':
             e.preventDefault();
-            handlePinLocation();
-            break;
-          case 'k':
-            e.preventDefault();
-            setIsFramesModalOpen((prev) => !prev);
+            setIsControlsOpen((prev) => !prev);
             break;
         }
       }
@@ -1241,7 +1133,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isMiniPlayerOpen, pipWindow, customFrames]);
+  }, [isMiniPlayerOpen, pipWindow, customFrames, isMapActive, isPinned, lat, lon, zoom, overlay, provider]);
 
   const handleMiniPlayerDragStart = (event) => {
     if (event.target.closest("button")) return;
@@ -1357,102 +1249,6 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         $isFullscreen={isFullscreen}
         onClick={() => !isMapActive && handleActivateMap()}
       >
-        <Controls $isOpen={isControlsOpen}>
-          {isAiSearchOpen && (
-            <SearchContainer onSubmit={handleAiSearch}>
-              <SearchInput
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Місто, село..."
-                autoFocus
-              />
-              <ActionButton
-                type="submit"
-                $active={true}
-                disabled={isAiLoading}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {isAiLoading ? "Шукаю..." : "Знайти"}
-              </ActionButton>
-            </SearchContainer>
-          )}
-
-          <ActionButton
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsAiSearchOpen(!isAiSearchOpen);
-            }}
-          >
-            ШІ Пошук
-          </ActionButton>
-
-          <ActionButton onClick={handlePinLocation}>
-            Закріпити
-          </ActionButton>
-
-          <SourceSelect
-            value={provider}
-            onChange={(e) => handleSetProvider(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Оберіть джерело мапи"
-          >
-            <option value="ventusky">Ventusky</option>
-            <option value="windy">Windy</option>
-            <option value="alerts-ua">Карта тривог України</option>
-            <option value="excalidraw">Онлайн-дошка (Excalidraw)</option>
-            <option value="saveecobot">Якість повітря (SaveEcoBot)</option>
-            <option value="radarbox">Моніторинг польотів (RadarBox)</option>
-            {customFrames.map((frame) => (
-              <option key={frame.id} value={frame.id}>
-                {frame.title}
-              </option>
-            ))}
-          </SourceSelect>
-
-          <div
-            style={{
-              height: "1px",
-              background: "rgba(255,255,255,0.2)",
-              margin: "4px 0",
-            }}
-          />
-
-          <ActionButton
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!isMapActive) handleActivateMap();
-              else setIsMapActive(false);
-            }}
-            style={{
-              border: isMapActive ? "1px solid #ff4d4d" : "1px solid skyblue",
-            }}
-          >
-            {isMapActive ? "Деактивувати" : "Активувати"}
-          </ActionButton>
-          <ActionButton
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleFullscreen();
-            }}
-          >
-            {isFullscreen ? "Згорнути" : "На весь екран"}
-          </ActionButton>
-
-          <ActionButton
-            onClick={(e) => {
-              e.stopPropagation();
-              if (isMiniPlayerOpen) {
-                if (pipWindow) pipWindow.close();
-                else setIsMiniPlayerOpen(false);
-              } else {
-                handleOpenMiniPlayer();
-              }
-            }}
-          >
-            {isMiniPlayerOpen ? "Закрити міні-плеєр" : "Міні-плеєр"}
-          </ActionButton>
-        </Controls>
-
         {isControlsOpen && (
           <MobileSettingsOverlay $isDarkMode={isDarkMode} onClick={() => setIsControlsOpen(false)}>
             <MobileSettingsPanel $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
@@ -1648,7 +1444,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               aria-hidden={!shouldShowLoader}
               style={{ visibility: shouldShowLoader ? "visible" : "hidden" }}
             >
-                {!isOnline || isSlowConnection || videoError ? (
+                {isTurkeyFallback ? (
                   <img
                     src={turkeyFrames[currentTurkeyFrame]}
                     alt="Це Доміно :)"
@@ -1712,8 +1508,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
             allowFullScreen
             sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
             referrerPolicy="strict-origin-when-cross-origin"
-            loading="lazy"
-            style={{ width: "100%", height: "100vh" }}
+            style={{ width: "100%", height: "100vh", border: "none" }}
           />,
           pipWindow.document.body
         )
@@ -1728,7 +1523,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
             height: miniPlayerSize.height,
           }}
         >
-          <MiniPlayerHeader onMouseDown={handleMiniPlayerDragStart}>
+          <MiniPlayerHeader style={{ touchAction: "none" }} onPointerDown={handleMiniPlayerDragStart}>
             <MiniHeaderTitle>
               Міні-карта • подвійний клік — назад
             </MiniHeaderTitle>
@@ -1769,7 +1564,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               referrerPolicy="strict-origin-when-cross-origin"
               loading="lazy"
             />
-            <ResizeHandle onMouseDown={handleMiniPlayerResizeStart} />
+            <ResizeHandle style={{ touchAction: "none" }} onPointerDown={handleMiniPlayerResizeStart} />
           </MiniPlayerBody>
         </MiniPlayerWindow>
       )}

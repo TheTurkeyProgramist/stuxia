@@ -23,17 +23,6 @@ import Maintenance from "./components/Maintenance.jsx";
 import { getMaintenanceStatus, db, auth, signOut } from "./firebase.js";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import fogBackground from "./photos/hero-header/fogtwo.webp";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from "chart.js";
 import userDefault from "./photos/hero-header/user.webp";
 import turkeys from "./photos/vip-images/turkeys/ultra-vip-turkeys.webp";
 import dragons from "./photos/vip-images/dinofroz/vip-dragons.webp";
@@ -42,7 +31,6 @@ import horrordog from "./photos/vip-images/horror/horror.webp";
 import nicerone from "./photos/vip-images/dinofroz/vip-dinofroz.webp";
 import flame from "./photos/vip-images/flame.webp";
 // Ресурси для фонового завантаження кат-сцени
-import dinofrozVideo from "./mp3/dinofroz.webm";
 import startImage from "./photos/hero-header/fogtwo.webp";
 import {
   assetMap,
@@ -243,16 +231,6 @@ const AVAILABLE_AVATARS = [
   nicerone,
   dragons,
 ];
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-);
 const getWeatherIcon = (code, isDay = 1) => {
   if (code === 0) return isDay ? "☀️ Сонячно" : "🌙 Місячно";
   if (code >= 1 && code <= 3) return isDay ? "🌤️ Мінлива хмарність" : "☁️ Мінлива хмарність";
@@ -895,7 +873,7 @@ const App = () => {
   const [isOtherOptionsOpen, setIsOtherOptionsOpen] = useState(false);
   const [bgMusicEnabled, setBgMusicEnabled] = useState(false);
   const [autoMuteBgMusic, setAutoMuteBgMusic] = useState(true);
-  const [bgMusicSource, setBgMusicSource] = useState(dinofrozVideo);
+  const [bgMusicSource, setBgMusicSource] = useState("");
   const [bgMusicMode, setBgMusicMode] = useState("loop"); // 'loop' або 'order'
   const [bgMusicShuffle, setBgMusicShuffle] = useState(false);
   const [activeBgTrackId, setActiveBgTrackId] = useState(23); // ID для індиків за замовчуванням
@@ -1293,23 +1271,18 @@ const App = () => {
 
   const [hideDeleteModalUntil, setHideDeleteModalUntil] = useState(0);
   useEffect(() => {
+    if (!hasInteracted) return undefined;
     const preloadKatScene = async () => {
-      const assets = [
-        dinofrozVideo,
-        startImage,
-        fogBackground,
-        turkeys,
-      ];
+      const assets = [...new Set([startImage, fogBackground, turkeys])];
       try {
         await Promise.all(assets.map((url) => fetch(url, { cache: "force-cache" })));
-        console.log("KatScene assets preloaded in background");
       } catch (err) {
         console.warn("Failed to preload KatScene assets:", err);
       }
     };
     const timer = setTimeout(preloadKatScene, 4000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [hasInteracted]);
   const [siteSections, setSiteSections] = useState([...DEFAULT_SITE_SECTIONS]);
   useEffect(() => {
     if (isHydrated) {
@@ -1677,7 +1650,7 @@ const App = () => {
           const libPool = songAiKnowledge
             .map((s) => ({
               id: s.id,
-              file: assetMap[s.audio] || turkeysAudio,
+              file: assetMap[s.audio] || s.audio,
               enabled: libraryBgSettings[s.id]?.enabled !== false,
             }))
             .filter((t) => t.enabled);

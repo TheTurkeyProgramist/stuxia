@@ -547,6 +547,8 @@ const UserSettingsModal = ({
     resetAll = () => {},
     isPersistent = false,
     setIsPersistent = () => {},
+    activePreset = 0,
+    switchPreset = () => {},
   } = useDecorator();
 
   // Visual filters hook
@@ -1033,6 +1035,7 @@ const UserSettingsModal = ({
 
   // ── Music tab state ──────────────────────────────────────────────────────
   const activeSlotRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [libSearch, setLibSearch] = useState("");
   const [musicTab, setMusicTab] = useState("library");
   const [currentTime, setCurrentTime] = useState(0);
@@ -1886,6 +1889,21 @@ const UserSettingsModal = ({
                               <ToggleStatusLabel $checked={isPersistent}>{isPersistent ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
                               <SwitchPill $checked={isPersistent} />
                             </ToggleWrapper>
+                          </div>
+
+                          <div style={{ fontSize: "12px", fontWeight: "600", color: "#60cdff", marginTop: "4px" }}>
+                            Версія Декоратора (кожна зберігає свої окремі зміни)
+                          </div>
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            {[0, 1, 2].map((i) => (
+                              <WinButton
+                                key={i}
+                                onClick={() => switchPreset(i)}
+                                style={{ flex: 1, outline: activePreset === i ? "2px solid #60cdff" : "none" }}
+                              >
+                                Пресет {i + 1}
+                              </WinButton>
+                            ))}
                           </div>
 
                           <div style={{ fontSize: "12px", fontWeight: "600", color: "#60cdff", marginTop: "4px" }}>

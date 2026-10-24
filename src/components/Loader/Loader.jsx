@@ -19,6 +19,17 @@ const DOTS_CONFIG = [
   { r: 2, c: 1, delay: "0.7s" },
 ];
 
+const TECH_STACK = [
+  { Icon: TbBrandVite, color: "#2bfffb", title: "Vite" },
+  { Icon: SiBun, color: "#FBF0DF", title: "Bun" },
+  { Icon: SiGithub, color: "#FFFFFF", title: "GitHub" },
+  { Icon: SiCloudflare, color: "#F38020", title: "Cloudflare" },
+  { Icon: IoLogoFirebase, color: "#FFCA28", title: "Firebase" },
+  { Icon: BiLogoVisualStudio, color: "#007ACC", title: "VS Code" },
+  { Icon: SiVercel, color: "#FFFFFF", title: "Vercel" },
+  { Icon: SiHostinger, color: "#00fff7", title: "HostIQ / Hosting" },
+];
+
 const expandEntrance = keyframes`
   0% { transform: scale(1.1); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
@@ -46,7 +57,7 @@ const LoaderWrapper = styled.div`
   visibility: ${(props) => (props.$isFadingOut ? "hidden" : "visible")};
   transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
   overflow: hidden;
-  will-change: opacity, visibility;
+  will-change: opacity;
 `;
 
 const ImageContainer = styled.div`
@@ -132,7 +143,7 @@ const PhraseText = styled.div`
   margin-top: 5px;
 `;
 const CopyrightText = styled.p`
-  margin-bottom: 55px;
+  margin-bottom: clamp(24px, 6vh, 55px);
   color: rgb(255, 255, 255);
   font-size: 10px;
   line-height: 1.4;
@@ -159,7 +170,7 @@ const TopRightContainer = styled.div`
     font-weight: 600;
     letter-spacing: 0.5px;
     text-align: right;
-    min-width: 170px;
+    min-width: min(170px, 40vw);
   }
 `;
 
@@ -189,7 +200,7 @@ export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
   if (!isLoading) return null;
 
   return (
-    <LoaderWrapper $isFadingOut={isFadingOut}>
+    <LoaderWrapper $isFadingOut={isFadingOut} role="status" aria-live="polite">
       <TopRightContainer>
         <span>v.1.0.0 | Я в Конотопі :)</span>
         <DotGrid>
@@ -207,14 +218,9 @@ export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
         <PoweredByWrapper>
           <span>Працює на базі:</span>
           <IconsGrid>
-            <TbBrandVite style={{ color: "#2bfffb" }} title="Vite" />
-            <SiBun style={{ color: "#FBF0DF" }} title="Bun" />
-            <SiGithub style={{ color: "#FFFFFF" }} title="GitHub" />
-            <SiCloudflare style={{ color: "#F38020" }} title="Cloudflare" />
-            <IoLogoFirebase style={{ color: "#FFCA28" }} title="Firebase" />
-            <BiLogoVisualStudio style={{ color: "#007ACC" }} title="VS Code" />
-            <SiVercel style={{ color: "#FFFFFF" }} title="Vercel" />
-            <SiHostinger style={{ color: "#00fff7" }} title="HostIQ / Hosting" />
+            {TECH_STACK.map(({ Icon, color, title }) => (
+              <Icon key={title} style={{ color }} title={title} />
+            ))}
           </IconsGrid>
         </PoweredByWrapper>
 

@@ -18,7 +18,7 @@ export const getUniqueSelector = (el) => {
   while (current && current.nodeType === Node.ELEMENT_NODE && current !== document.body && current !== document.documentElement) {
     let selector = current.nodeName.toLowerCase();
     if (current.id) {
-      selector += "#" + current.id;
+      selector += "#" + (window.CSS?.escape ? CSS.escape(current.id) : current.id);
       path.unshift(selector);
       break; // ID is unique, we can stop here!
     } else {
@@ -38,12 +38,46 @@ export const getUniqueSelector = (el) => {
   return path.join(" > ");
 };
 
+export const toCssSelector = (elId) =>
+  elId.includes(" > ") || elId.includes("#") || elId.includes(":")
+    ? elId
+    : `[data-decorator-id="${elId}"]`;
+
+const toKebab = (prop) =>
+  prop.startsWith("--") ? prop : prop.replace(/([A-Z])/g, "-$1").toLowerCase();
+
+const MODE_PREFIX = {
+  light_default: (sel) => `body:not(.decorator-dark-mode) ${sel}`,
+  light_hover: (sel) => `body:not(.decorator-dark-mode) ${sel}:hover`,
+  dark_default: (sel) => `body.decorator-dark-mode ${sel}`,
+  dark_hover: (sel) => `body.decorator-dark-mode ${sel}:hover`,
+};
+
+// Будує CSS для елемента; порожні значення та opacity ігноруються
+export const buildOverridesCss = (elId, modes) => {
+  const selector = toCssSelector(elId);
+  let css = "";
+  Object.entries(MODE_PREFIX).forEach(([mode, wrap]) => {
+    const decls = Object.entries(modes?.[mode] || {})
+      .filter(([prop, val]) => val !== "" && val != null && prop !== "opacity")
+      .map(([prop, val]) => `${toKebab(prop)}: ${val} !important;`)
+      .join(" ");
+    if (decls) css += `${wrap(selector)} { ${decls} }\n`;
+  });
+  return css;
+};
+
+export const PRESET_COUNT = 3;
+
 export const DecoratorProvider = ({ children, isDarkMode }) => {
   const [isDecoratorMode, setIsDecoratorMode] = useState(false);
   const [isPersistent, setIsPersistent] = useState(false);
   const [styleOverrides, setStyleOverrides] = useState({});
   const [changeLog, setChangeLog] = useState([]);
   const [isHydrated, setIsHydrated] = useState(false);
+  // Три незалежні версії декоратора: активна живе в styleOverrides/changeLog, решта — у slots
+  const [activePreset, setActivePreset] = useState(0);
+  const [slots, setSlots] = useState({});
 
   // Sync isDarkMode to body class for CSS selection
   useEffect(() => {
@@ -88,6 +122,10 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
               setStyleOverrides(migrated);
             }
             if (savedLog) setChangeLog(savedLog);
+            const savedSlots = await localforage.getItem("decorator_slots");
+            const savedActive = await localforage.getItem("decorator_active_preset");
+            if (savedSlots) setSlots(savedSlots);
+            if (Number.isInteger(savedActive)) setActivePreset(savedActive);
           }
         }
       } catch (err) {
@@ -104,12 +142,16 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
     if (isPersistent) {
       localforage.setItem("decorator_overrides", styleOverrides);
       localforage.setItem("decorator_changelog", changeLog);
+      localforage.setItem("decorator_slots", slots);
+      localforage.setItem("decorator_active_preset", activePreset);
     } else {
+      localforage.removeItem("decorator_slots");
+      localforage.removeItem("decorator_active_preset");
       localforage.removeItem("decorator_overrides");
       localforage.removeItem("decorator_changelog");
     }
     localforage.setItem("decorator_persistent", isPersistent);
-  }, [styleOverrides, changeLog, isPersistent, isHydrated]);
+  }, [styleOverrides, changeLog, slots, activePreset, isPersistent, isHydrated]);
 
   // Generate and inject global CSS
   useEffect(() => {
@@ -122,42 +164,7 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
 
     let css = "";
     Object.entries(styleOverrides).forEach(([elId, modes]) => {
-      const selector = elId.includes(" > ") || elId.includes("#") || elId.includes(":") 
-        ? elId 
-        : `[data-decorator-id="${elId}"]`;
-
-      // Light Default
-      if (modes.light_default && Object.keys(modes.light_default).length > 0) {
-        css += `body:not(.decorator-dark-mode) ${selector} { `;
-        Object.entries(modes.light_default).forEach(([prop, val]) => {
-          css += `${prop.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${val} !important; `;
-        });
-        css += `}\n`;
-      }
-      // Light Hover
-      if (modes.light_hover && Object.keys(modes.light_hover).length > 0) {
-        css += `body:not(.decorator-dark-mode) ${selector}:hover { `;
-        Object.entries(modes.light_hover).forEach(([prop, val]) => {
-          css += `${prop.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${val} !important; `;
-        });
-        css += `}\n`;
-      }
-      // Dark Default
-      if (modes.dark_default && Object.keys(modes.dark_default).length > 0) {
-        css += `body.decorator-dark-mode ${selector} { `;
-        Object.entries(modes.dark_default).forEach(([prop, val]) => {
-          css += `${prop.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${val} !important; `;
-        });
-        css += `}\n`;
-      }
-      // Dark Hover
-      if (modes.dark_hover && Object.keys(modes.dark_hover).length > 0) {
-        css += `body.decorator-dark-mode ${selector}:hover { `;
-        Object.entries(modes.dark_hover).forEach(([prop, val]) => {
-          css += `${prop.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${val} !important; `;
-        });
-        css += `}\n`;
-      }
+      css += buildOverridesCss(elId, modes);
     });
 
     styleTag.innerHTML = css;
@@ -173,18 +180,25 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
       mode = "light_default",
     ) => {
       setStyleOverrides((prev) => {
-        const elStyles = prev[elementId] || {};
-        const modeStyles = elStyles[mode] || {};
-        return {
-          ...prev,
-          [elementId]: {
-            ...elStyles,
-            [mode]: {
-              ...modeStyles,
-              [property]: newValue,
-            },
-          },
-        };
+        const elStyles = { ...(prev[elementId] || {}) };
+        const modeStyles = { ...(elStyles[mode] || {}) };
+        if (newValue === "" || newValue == null) {
+          delete modeStyles[property];
+        } else {
+          modeStyles[property] = newValue;
+        }
+        if (Object.keys(modeStyles).length === 0) {
+          delete elStyles[mode];
+        } else {
+          elStyles[mode] = modeStyles;
+        }
+        const next = { ...prev };
+        if (Object.keys(elStyles).length === 0) {
+          delete next[elementId];
+        } else {
+          next[elementId] = elStyles;
+        }
+        return next;
       });
 
       setChangeLog((prev) => [
@@ -202,6 +216,21 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
       ]);
     },
     [],
+  );
+
+  const switchPreset = useCallback(
+    (index) => {
+      if (index === activePreset || index < 0 || index >= PRESET_COUNT) return;
+      const next = slots[index] || { overrides: {}, log: [] };
+      setSlots((prev) => ({
+        ...prev,
+        [activePreset]: { overrides: styleOverrides, log: changeLog },
+      }));
+      setStyleOverrides(next.overrides || {});
+      setChangeLog(next.log || []);
+      setActivePreset(index);
+    },
+    [activePreset, slots, styleOverrides, changeLog],
   );
 
   const undoChange = useCallback((changeId) => {
@@ -275,6 +304,8 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
         getOverridesForElement,
         isPersistent,
         setIsPersistent,
+        activePreset,
+        switchPreset,
         isDarkMode,
       }}
     >
