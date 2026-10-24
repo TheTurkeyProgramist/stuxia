@@ -82,6 +82,7 @@ import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { FaCloudMoonRain, FaCloudMoon } from "react-icons/fa";
 import { LiaCloudSunRainSolid, LiaCloudMoonRainSolid, LiaCloudSunSolid } from "react-icons/lia";
+import { stripSecrets } from "./utils/passwordHash";
 const Tooltipso = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
@@ -1822,7 +1823,7 @@ const App = () => {
     if (isHydrated) {
       if (user) {
         const nextAvatar = user.photoURL || user.avatar || currentAvatar;
-        localforage.setItem("active_user", { ...user, photoURL: user.photoURL || user.avatar || "" });
+        localforage.setItem("active_user", { ...stripSecrets(user), photoURL: user.photoURL || user.avatar || "" });
         if (nextAvatar) {
           setCurrentAvatar(nextAvatar);
           localforage.setItem("currentAvatar", nextAvatar);

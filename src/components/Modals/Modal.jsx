@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from "react";
-import styled, { keyframes, css } from "styled-components";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import styled, { keyframes } from "styled-components";
 import localforage from "localforage";
 import InfoModal from "./UserSearchModal.jsx";
-import KatSceneModal from "./KatSceneModal";
+import { hashPassword, stripSecrets } from "../../utils/passwordHash";
 import {
   auth,
   googleProvider,
@@ -35,28 +35,6 @@ const slideOut = keyframes`
 const fadeOut = keyframes`
   0% { opacity: 1; }
   100% { opacity: 0; }
-`;
-
-const flow = keyframes`
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-`;
-
-const rainbowAnimation = css`
-  background: linear-gradient(
-    270deg,
-    #ff7eb3,
-    #ff758c,
-    #7afcff,
-    #feffb7,
-    #58e2c2
-  );
-  background-size: 400% 400%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: ${flow} 5s ease infinite;
 `;
 
 const ModalOverlay = styled.div`
@@ -216,122 +194,6 @@ const CheckboxRow = styled.div`
   }
 `;
 
-const TermsBtn = styled.span`
-  color: ${(props) => (props.$isDarkMode ? "#ffb36c" : "#ffb36c")};
-  text-decoration: underline;
-  cursor: pointer;
-  font-weight: bold;
-`;
-
-const AvatarOption = styled.div`
-  width: 34px;
-  height: 34px;
-  min-width: 60px;
-  min-height: 60px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  padding: 3px;
-  background: ${(props) =>
-    props.$isSelected ? props.$borderColor : "transparent"};
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-
-  ${(props) => {
-    const isAnimated = props.$borderColor?.includes("270deg");
-    if (props.$isSelected && props.$borderColor?.includes("linear-gradient")) {
-      return isAnimated
-        ? css`
-            background-size: 400% 400%;
-            animation: ${flow} 5s ease infinite;
-          `
-        : css`
-            background-size: 100% 100%;
-            animation: none;
-          `;
-    }
-  }}
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-    display: block;
-  }
-`;
-
-const ImageSelectionContainer = styled.div`
-  display: flex;
-  gap: 5px;
-  overflow-x: auto;
-  padding: 5px 2px;
-  min-height: 45px;
-  align-items: center;
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #ffb36c;
-    border-radius: 10px;
-  }
-`;
-
-const ColorSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-`;
-
-const ColorLabel = styled.div`
-  font-size: 12px;
-  font-weight: bold;
-  color: grey;
-`;
-
-const ColorContainer = styled.div`
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 5px 2px;
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #ffb36c;
-    border-radius: 10px;
-  }
-`;
-
-const ColorCircle = styled.div`
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
-  border-radius: 50%;
-  background: ${(props) => props.$color};
-  cursor: pointer;
-  border: 2px solid ${(props) => (props.$isSelected ? "#000" : "transparent")};
-  box-shadow: ${(props) =>
-    props.$isSelected ? "0 0 5px rgba(0,0,0,0.5)" : "0 0 2px rgba(0,0,0,0.2)"};
-
-  ${(props) => {
-    const isAnimated = props.$color?.includes("270deg");
-    if (props.$color?.includes("linear-gradient")) {
-      return isAnimated
-        ? css`
-            background-size: 400% 400%;
-            animation: ${flow} 5s ease infinite;
-          `
-        : css`
-            background-size: 100% 100%;
-            animation: none;
-          `;
-    }
-  }}
-`;
-
 const SubmitButton = styled.button`
   background: linear-gradient(135deg, #ffb36c 0%, #ff8d6c 100%);
   color: ${(props) => (props.$isDarkMode ? "#181818" : "#111")};
@@ -353,6 +215,17 @@ const SubmitButton = styled.button`
     box-shadow: none;
   }
   width: 100%;
+`;
+
+const TermsBtn = styled.button`
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: #ffb36c;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: bold;
 `;
 
 const Google = styled.div`
@@ -411,6 +284,48 @@ const StrengthFill = styled.div`
   width: ${(props) => props.$width};
   transition: width 0.3s ease, background-color 0.3s ease;
 `;
+const MONTHS = [
+  "Січень",
+  "Лютий",
+  "Березень",
+  "Квітень",
+  "Травень",
+  "Червень",
+  "Липень",
+  "Серпень",
+  "Вересень",
+  "Жовтень",
+  "Листопад",
+  "Грудень",
+];
+const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+const DRAFT_KEY = "signup_draft";
+const MIN_YEAR = 1909;
+const MIN_PASSWORD_LENGTH = 6;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const getPasswordStrength = (password) => {
+  if (!password) return { width: "0%", color: "transparent", label: "" };
+  let score = 0;
+  if (password.length >= 6) score += 1;
+  if (password.length >= 8) score += 1;
+  if (/[A-Za-z]/.test(password)) score += 1;
+  if (/\d/.test(password)) score += 1;
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+  if (score <= 1) return { width: "33%", color: "#ff4d4d", label: "Слабкий" };
+  if (score <= 2) return { width: "66%", color: "#ffb36c", label: "Середній" };
+  return { width: "100%", color: "#4caf50", label: "Надійний" };
+};
+
+const calculateAge = (d, m, y) => {
+  const today = new Date();
+  const birth = new Date(y, m - 1, d);
+  let age = today.getFullYear() - birth.getFullYear();
+  const mDiff = today.getMonth() - birth.getMonth();
+  if (mDiff < 0 || (mDiff === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+};
+
 const Modal = ({
   onClose,
   onRegister,
@@ -426,61 +341,84 @@ const Modal = ({
     textColor: "grey",
     borderColor: "grey",
   });
-  const getPasswordStrength = (password) => {
-    if (!password) return { width: "0%", color: "transparent", label: "" };
-    let score = 0;
-    if (password.length >= 6) score += 1;
-    if (password.length >= 8) score += 1;
-    if (/[A-Z]/.test(password) || /[a-z]/.test(password)) score += 1;
-    if (/\d/.test(password)) score += 1;
-    if (/[^A-Za-z0-9]/.test(password)) score += 1;
-    if (score <= 1) return { width: "33%", color: "#ff4d4d", label: "Слабкий" };
-    if (score <= 2)
-      return { width: "66%", color: "#ffb36c", label: "Середній" };
-    return { width: "100%", color: "#4caf50", label: "Надійний" };
-  };
-  const pwStrength = getPasswordStrength(formData.password);
+  const pwStrength = useMemo(
+    () => getPasswordStrength(formData.password),
+    [formData.password],
+  );
   const [birthDate, setBirthDate] = useState({ day: "", month: "", year: "" });
   const [accepted, setAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [error, setError] = useState("");
   const [isClosing, setIsClosing] = useState(false);
-  const [showKatScene] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const closeTimerRef = useRef(null);
+
+  useEffect(() => () => clearTimeout(closeTimerRef.current), []);
+
+  // Чернетка форми (без паролів) на випадок раптового закриття.
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    localforage
+      .getItem(DRAFT_KEY)
+      .then((draft) => {
+        if (cancelled || !draft) return;
+        if (draft.account)
+          setFormData((prev) => ({ ...prev, account: draft.account }));
+        if (draft.birthDate) setBirthDate(draft.birthDate);
+        if (draft.accepted) setAccepted(true);
+      })
+      .catch(() => {})
+      .finally(() => !cancelled && setDraftLoaded(true));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!draftLoaded) return;
+    const timer = setTimeout(() => {
+      localforage
+        .setItem(DRAFT_KEY, {
+          account: formData.account,
+          birthDate,
+          accepted,
+        })
+        .catch(() => {});
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [draftLoaded, formData.account, birthDate, accepted]);
 
   const handleClose = (e) => {
     if (e) e.stopPropagation();
+    if (closeTimerRef.current) return;
     setIsClosing(true);
-    setTimeout(() => {
-      onClose();
-    }, 500);
+    closeTimerRef.current = setTimeout(onClose, 500);
   };
 
-  const months = [
-    "Січень",
-    "Лютий",
-    "Березень",
-    "Квітень",
-    "Травень",
-    "Червень",
-    "Липень",
-    "Серпень",
-    "Вересень",
-    "Жовтень",
-    "Листопад",
-    "Грудень",
-  ];
-  const years = Array.from(
-    { length: new Date().getFullYear() - 1909 + 1 },
-    (_, i) => 1909 + i,
-  ).reverse();
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" && !showTerms) handleClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showTerms, onClose]);
+
+  const years = useMemo(
+    () =>
+      Array.from(
+        { length: new Date().getFullYear() - MIN_YEAR + 1 },
+        (_, i) => MIN_YEAR + i,
+      ).reverse(),
+    [],
+  );
 
   const isInvalidDate = useMemo(() => {
     const { day, month, year } = birthDate;
     if (!day || !month || !year) return false;
-    const d = parseInt(day);
-    const m = parseInt(month);
-    const y = parseInt(year);
+    const d = Number(day);
+    const m = Number(month);
+    const y = Number(year);
     const dateCheck = new Date(y, m - 1, d);
     return (
       dateCheck.getFullYear() !== y ||
@@ -489,18 +427,11 @@ const Modal = ({
     );
   }, [birthDate]);
 
-  const calculateAge = (d, m, y) => {
-    const today = new Date();
-    const birth = new Date(y, m - 1, d);
-    let age = today.getFullYear() - birth.getFullYear();
-    const mDiff = today.getMonth() - birth.getMonth();
-    if (mDiff < 0 || (mDiff === 0 && today.getDate() < birth.getDate())) age--;
-    return age;
-  };
-
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+    const account = formData.account.trim();
     if (
-      !formData.account ||
+      !account ||
       !formData.password ||
       !birthDate.day ||
       !birthDate.month ||
@@ -508,32 +439,44 @@ const Modal = ({
     ) {
       return setError("Заповніть всі поля!");
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.account)) {
-      return setError("Невірний формат Gmail!");
-    }
+    if (!EMAIL_REGEX.test(account)) return setError("Невірний формат Gmail!");
     if (isInvalidDate) return setError("Такої дати не існує!");
+    if (formData.password.length < MIN_PASSWORD_LENGTH)
+      return setError(
+        `Пароль має містити мінімум ${MIN_PASSWORD_LENGTH} символів!`,
+      );
     if (formData.password !== formData.confirmPassword)
       return setError("Паролі не співпадають!");
     if (!accepted) return setError("Прийміть угоду!");
 
     const age = calculateAge(
-      parseInt(birthDate.day),
-      parseInt(birthDate.month),
-      parseInt(birthDate.year),
+      Number(birthDate.day),
+      Number(birthDate.month),
+      Number(birthDate.year),
     );
     if (age < 13) return setError("Реєстрація дозволена лише з 13 років!");
 
-    const existingUser = await localforage.getItem("registered_user");
-    if (existingUser && existingUser.account === formData.account) {
-      return setError("Акаунт з таким Gmail вже існує!");
+    setIsSubmitting(true);
+    setError("");
+    try {
+      const existingUser = await localforage.getItem("registered_user");
+      if (existingUser?.account?.toLowerCase() === account.toLowerCase()) {
+        return setError("Акаунт з таким Gmail вже існує!");
+      }
+      await completeRegistration(account);
+    } catch (err) {
+      console.error("Registration error:", err);
+      setError("Не вдалося зареєструватися. Спробуйте ще раз.");
+    } finally {
+      setIsSubmitting(false);
     }
-    await completeRegistration();
   };
 
   const handleGoogleAuth = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseUser = result.user;
@@ -544,7 +487,6 @@ const Modal = ({
         account: firebaseUser.email || "",
         firstName:
           firebaseUser.displayName || firebaseUser.email || "Користувач",
-        password: "",
         avatar:
           firebaseUser.photoURL ||
           (availableAvatars.length
@@ -557,39 +499,41 @@ const Modal = ({
       };
 
       await localforage.setItem("registered_user", registrationData);
+      localforage.removeItem(DRAFT_KEY).catch(() => {});
       onRegister(registrationData);
       handleClose(e);
     } catch (err) {
       console.error("Google Auth Error:", err);
-      setError("Помилка Google: " + (err.message || err.toString()));
+      if (err?.code !== "auth/popup-closed-by-user") {
+        setError("Помилка Google: " + (err.message || err.toString()));
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const completeRegistration = async () => {
+  const completeRegistration = async (account) => {
     const firebaseUser = await ensureEmailPasswordAuth(
-      formData.account,
+      account,
       formData.password,
     );
     const registrationData = {
       ...(firebaseUser ? { uid: firebaseUser.uid, id: firebaseUser.uid } : {}),
-      account: formData.account,
-      firstName: formData.firstName || formData.account,
-      password: formData.password,
+      account,
+      firstName: formData.firstName || account,
+      ...(await hashPassword(formData.password)),
       avatar: availableAvatars[formData.avatarIndex],
       textColor: formData.textColor,
       borderColor: formData.borderColor,
-      birthDate: `${birthDate.year}-${birthDate.month.padStart(2, "0")}-${birthDate.day.padStart(2, "0")}`,
+      birthDate: `${birthDate.year}-${String(birthDate.month).padStart(2, "0")}-${String(birthDate.day).padStart(2, "0")}`,
     };
     await localforage.setItem("registered_user", registrationData);
-    onRegister(registrationData);
+    localforage.removeItem(DRAFT_KEY).catch(() => {});
+    onRegister(stripSecrets(registrationData));
   };
 
   return (
     <>
-      {showKatScene ? (
-        <KatSceneModal onClose={completeRegistration} />
-      ) : (
-        <>
           <ModalOverlay $isClosing={isClosing} onClick={handleClose}>
             <ModalContent
               $isClosing={isClosing}
@@ -608,7 +552,10 @@ const Modal = ({
                 <FieldWrap>
                   <Input
                     type="email"
+                    name="signup-email"
                     placeholder="Gmail"
+                    value={formData.account}
+                    autoComplete="email"
                     onChange={(e) =>
                       setFormData({ ...formData, account: e.target.value })
                     }
@@ -628,7 +575,7 @@ const Modal = ({
                       <option value="" disabled>
                         День
                       </option>
-                      {days.map((d) => (
+                      {DAYS.map((d) => (
                         <option key={d} value={d}>
                           {d}
                         </option>
@@ -644,7 +591,7 @@ const Modal = ({
                       <option value="" disabled>
                         Місяць
                       </option>
-                      {months.map((m, i) => (
+                      {MONTHS.map((m, i) => (
                         <option key={i} value={i + 1}>
                           {m}
                         </option>
@@ -679,6 +626,7 @@ const Modal = ({
                     name="signup-password-field"
                     type="password"
                     placeholder="Пароль"
+                    value={formData.password}
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
@@ -718,6 +666,7 @@ const Modal = ({
                     name="signup-confirm-password-field"
                     type="password"
                     placeholder="Підтвердіть пароль"
+                    value={formData.confirmPassword}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -738,15 +687,19 @@ const Modal = ({
 
                 <CheckboxRow $isDarkMode={isDarkMode}>
                   <input
+                    id="accept-terms"
                     type="checkbox"
                     checked={accepted}
                     onChange={(e) => setAccepted(e.target.checked)}
                   />
-                  <label>
+                  <label htmlFor="accept-terms">
                     Я погоджуюсь з{" "}
                     <TermsBtn
-                      $isDarkMode={isDarkMode}
-                      onClick={() => setShowTerms(true)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowTerms(true);
+                      }}
                     >
                       Угодою
                     </TermsBtn>
@@ -755,12 +708,16 @@ const Modal = ({
                 <Google>
                   <SubmitButton
                     onClick={handleSubmit}
-                    disabled={!accepted || isInvalidDate}
+                    disabled={!accepted || isInvalidDate || isSubmitting}
                     $isDarkMode={isDarkMode}
                   >
                     Зареєструватися
                   </SubmitButton>
-                  <GoogleButton type="button" onClick={handleGoogleAuth}>
+                  <GoogleButton
+                    type="button"
+                    onClick={handleGoogleAuth}
+                    disabled={isSubmitting}
+                  >
                     🔑 Google Вхід
                   </GoogleButton>
                 </Google>
@@ -768,10 +725,12 @@ const Modal = ({
             </ModalContent>
           </ModalOverlay>
           {showTerms && (
-            <InfoModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
+            <InfoModal
+              isOpen={showTerms}
+              isDarkMode={isDarkMode}
+              onClose={() => setShowTerms(false)}
+            />
           )}
-        </>
-      )}
     </>
   );
 };
