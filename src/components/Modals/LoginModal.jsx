@@ -2,6 +2,12 @@ import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import localforage from "localforage";
 import {
+  canHash,
+  hashPassword,
+  verifyPassword,
+  stripSecrets,
+} from "../../utils/passwordHash";
+import {
   auth,
   googleProvider,
   signInWithPopup,
@@ -148,17 +154,48 @@ const LoginModal = ({ onClose, onLogin }) => {
     e.preventDefault();
     const activeUser = await localforage.getItem("active_user");
     const registeredUser = await localforage.getItem("registered_user");
-    const savedUser = activeUser || registeredUser;
+    const login = email.trim().toLowerCase();
+    // Облікові дані беремо з акаунта, чия пошта збігається з введеною.
+    const savedUser = [registeredUser, activeUser].find(
+      (u) => u && u.account?.toLowerCase() === login,
+    );
 
-    if (
-      savedUser &&
-      savedUser.account === email &&
-      savedUser.password === pass
-    ) {
-      let loggedUser = savedUser;
+    // Старі акаунти зберігали пароль відкритим текстом — приймаємо його
+    // востаннє і одразу переводимо на хеш.
+    let passwordOk = false;
+    // Наявний хеш зберігаємо, навіть якщо цього разу перевіряє Firebase.
+    let credentials = savedUser?.passwordHash
+      ? {
+          passwordHash: savedUser.passwordHash,
+          passwordSalt: savedUser.passwordSalt,
+        }
+      : {};
+    let verifiedFirebaseUser = null;
+    if (savedUser?.passwordHash && canHash()) {
+      passwordOk = await verifyPassword(pass, savedUser);
+    } else if (savedUser?.password) {
+      passwordOk = savedUser.password === pass;
+      if (passwordOk) credentials = await hashPassword(pass);
+    } else if (savedUser) {
+      // Локального хеша немає (запис створено без crypto.subtle або на
+      // пристрої його не підтримує) — пароль перевіряє Firebase.
+      verifiedFirebaseUser = await ensureEmailPasswordAuth(
+        savedUser.account,
+        pass,
+        { createIfMissing: false },
+      );
+      passwordOk = Boolean(verifiedFirebaseUser);
+      if (passwordOk && !credentials.passwordHash) {
+        credentials = await hashPassword(pass);
+      }
+    }
+
+    if (passwordOk) {
+      const cleanSaved = stripSecrets(savedUser);
+      let loggedUser = { ...cleanSaved, ...credentials };
       // Зміна пошти підтверджується листом: якщо підтверджено, Firebase вже
       // приймає нову пошту — переносимо її в локальний профіль.
-      let firebaseUser = null;
+      let firebaseUser = verifiedFirebaseUser;
       if (savedUser.pendingEmail) {
         firebaseUser = await ensureEmailPasswordAuth(
           savedUser.pendingEmail,
@@ -176,10 +213,8 @@ const LoginModal = ({ onClose, onLogin }) => {
       if (firebaseUser) {
         loggedUser = { ...loggedUser, uid: firebaseUser.uid, id: firebaseUser.uid };
       }
-      if (loggedUser !== savedUser) {
-        await localforage.setItem("registered_user", loggedUser);
-      }
-      onLogin(loggedUser);
+      await localforage.setItem("registered_user", loggedUser);
+      onLogin(stripSecrets(loggedUser));
       handleClose();
     } else {
       setError("Невірний Gmail або пароль!");

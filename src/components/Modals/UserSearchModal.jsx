@@ -5,9 +5,7 @@ import rawFaqData from "./faqData.json";
 import hills from "../../photos/hero-header/fog.webp";
 import texts from "../../photos/vip-modal/texts.webp";
 import logofix from "../../photos/hero-header/logo.webp";
-import { FaHeartbeat } from "react-icons/fa";
 import { FiSearch, FiX } from "react-icons/fi";
-import { IoHeartDislikeSharp } from "react-icons/io5";
 import info from "../../photos/hero-header/what.webp";
 import one from "../../photos/hero-header/my/myone.webp";
 import two from "../../photos/hero-header/my/mytwo.webp";
@@ -241,32 +239,6 @@ const AnswerPreview = styled.div`
   font-size: 12px;
   font-weight: 400;
   line-height: 1.45;
-`;
-
-const LikeButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 1px;
-  color: #ffffff;
-  transition: transform 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  min-width: 22px;
-  justify-content: flex-end;
-  &:hover {
-    transform: scale(1.2);
-  }
-`;
-
-const ArrowContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  align-self: flex-end;
-  padding: 0 12px 10px;
 `;
 
 const AnswerImage = styled.img`
@@ -573,10 +545,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
   const [isClosing, setIsClosing] = useState(false);
   const customDays = useSelector((state) => state.calendar?.customDays || []);
   const [selectedFaq, setSelectedFaq] = useState(null);
-  const [ratings, setRatings] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
-  const LIKE = 1;
-  const DISLIKE = -1;
 
   const [previewImage, setPreviewImage] = useState(null);
 
@@ -597,21 +566,57 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
     }, 400);
   }, [onClose, previewImage, selectedFaq]);
 
-  const handleDownloadImage = (imgSrc) => {
+  const handleDownloadImage = async (imgSrc) => {
+    let href = imgSrc;
+    let objectUrl = null;
+    let ext = (imgSrc.split(/[?#]/)[0].match(/.(w{2,5})$/) || [])[1] || "webp";
+    try {
+      const blob = await (await fetch(imgSrc)).blob();
+      objectUrl = URL.createObjectURL(blob);
+      href = objectUrl;
+      if (blob.type.startsWith("image/")) {
+        ext = blob.type.split("/")[1].replace("jpeg", "jpg").split("+")[0];
+      }
+    } catch {
+      // fallback: пряме посилання
+    }
     const a = document.createElement("a");
-    a.href = imgSrc;
-    a.download = `stykhiya_image_${Date.now()}.png`;
+    a.href = href;
+    a.download = `stykhiya_image_${Date.now()}.${ext}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   };
 
   const handlePrintImage = (imgSrc) => {
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(
-      `<html><head><title>Print Image</title></head><body style="text-align:center;"><img src="${imgSrc}" style="max-width:100%;" onload="window.print();window.close()" /></body></html>`,
+    const frame = document.createElement("iframe");
+    frame.style.cssText =
+      "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
+    const cleanup = () => setTimeout(() => frame.remove(), 1000);
+    frame.onload = () => {
+      const win = frame.contentWindow;
+      const img = win.document.querySelector("img");
+      const doPrint = () => {
+        try {
+          win.focus();
+          win.print();
+        } finally {
+          cleanup();
+        }
+      };
+      if (img.complete) doPrint();
+      else {
+        img.onload = doPrint;
+        img.onerror = cleanup;
+      }
+    };
+    const safeSrc = new URL(imgSrc, window.location.href).href.replace(
+      /"/g,
+      "&quot;",
     );
-    printWindow.document.close();
+    frame.srcdoc = `<!doctype html><html><head><title>Друк</title><style>@page{margin:0}body{margin:0;text-align:center}img{max-width:100%;max-height:100vh}</style></head><body><img src="${safeSrc}" /></body></html>`;
+    document.body.appendChild(frame);
   };
 
   useEffect(() => {
@@ -623,12 +628,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
       return () => window.removeEventListener("keydown", handleEsc);
     }
   }, [isOpen, isClosing, handleClose]);
-
-  const handleLike = (index, points) => {
-    const currentRating = ratings[index] || 0;
-    const newRating = currentRating === points ? 0 : points;
-    setRatings({ ...ratings, [index]: newRating });
-  };
 
   const pastEvents = React.useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -747,7 +746,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
     .map((item, originalIndex) => ({
       ...item,
       originalIndex,
-      rating: ratings[originalIndex] || 0,
     }))
     .filter((item) => {
       if (!searchQuery) return true;
@@ -756,8 +754,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
         item.q?.toLowerCase().includes(query) ||
         item.a?.toLowerCase().includes(query)
       );
-    })
-    .sort((a, b) => b.rating - a.rating);
+    });
 
   return (
     <Overlay $isClosing={isClosing} onClick={handleClose}>
@@ -816,7 +813,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                 )}
                 {sortedFaqData.map((item, displayIndex) => {
                 const originalIndex = item.originalIndex;
-                const rating = ratings[originalIndex] || 0;
                 const answerPreview = (item.a || "")
                   .replace(/<[^>]*>/g, " ")
                   .replace(/\s+/g, " ")
@@ -827,10 +823,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                     $index={displayIndex + 1}
                     $image={item.image || hills}
                     onClick={(event) => {
-                      if (event.target.closest("[data-rating-button]")) {
-                        return;
-                      }
-
                       const hasOverflow = Array.from(
                         event.currentTarget.querySelectorAll("[data-truncated-content]"),
                       ).some(
@@ -854,36 +846,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                         {answerPreview || "Натисніть, щоб переглянути відповідь."}
                       </AnswerPreview>
                     </Question>
-                    <ArrowContainer>
-                    <Tooltip content="Корисно" isDarkMode={isDarkMode}>
-                          <LikeButton
-                            data-rating-button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleLike(originalIndex, LIKE);
-                            }}
-                            aria-label="Корисно"
-                          >
-                            {rating === LIKE ? <FaHeartbeat style={{color: "blue"}}/> : <FaHeartbeat />}
-                          </LikeButton>
-                          </Tooltip>
-                           <Tooltip content="Не корисно" isDarkMode={isDarkMode}>
-                          <LikeButton
-                            data-rating-button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleLike(originalIndex, DISLIKE);
-                            }}
-                            aria-label="Не корисно"
-                          >        
-                            {rating === DISLIKE ? (
-                              <IoHeartDislikeSharp />
-                            ) : (
-                              <IoHeartDislikeSharp />
-                            )}
-                          </LikeButton>
-                          </Tooltip>
-                    </ArrowContainer>
                   </AccordionItem>
                 );
                 })}
