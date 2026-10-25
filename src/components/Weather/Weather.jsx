@@ -182,13 +182,15 @@ const { refs, floatingStyles, context } = useFloating({
 const fadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
 const CustomTimersDisplay = ({ customDays, cardId }) => {
   const [now, setNow] = useState(new Date());
+  const myEvents = customDays.filter(d => d.cardId === 'all' || d.cardId === cardId);
+  const hasEvents = myEvents.length > 0;
   useEffect(() => {
+    if (!hasEvents) return undefined;
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [hasEvents]);
 
-  const myEvents = customDays.filter(d => d.cardId === 'all' || d.cardId === cardId);
-  if (myEvents.length === 0) return null;
+  if (!hasEvents) return null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "5px", padding: "10px", marginTop: "10px" }}>
@@ -951,12 +953,33 @@ const WeatherCardComponent = ({
   const [selectedHourlyDay, setSelectedHourlyDay] = useState(0);
   const [hourlyViewMode, setHourlyViewMode] = useState("charts");
   const [dailyViewMode, setDailyViewMode] = useState("charts");
-  const defaultChartHeight = typeof window !== "undefined" && window.innerWidth < 768 ? "250px" : "380px";
+  const [isNarrowScreen, setIsNarrowScreen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768
+  );
+  useEffect(() => {
+    const onResize = () => setIsNarrowScreen(window.innerWidth < 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  const defaultChartHeight = isNarrowScreen ? "250px" : "380px";
   const [unit, setUnit] = useState("C"); // "C", "K", "F"
 
+  // currentTimeString змінюється щосекунди (годинник), тому для прогнозу
+  // беремо "заморожений" час і оновлюємо його раз на 33 хв.
+  const [forecastTimeString, setForecastTimeString] = useState(currentTimeString);
+  const latestTimeStringRef = useRef(currentTimeString);
+  latestTimeStringRef.current = currentTimeString;
+  useEffect(() => {
+    const timer = setInterval(
+      () => setForecastTimeString(latestTimeStringRef.current),
+      33 * 60 * 1000
+    );
+    return () => clearInterval(timer);
+  }, []);
+
   const ruleForecast = useMemo(() => {
-    return generateRuleBasedForecast(card, { unit, currentTimeString });
-  }, [card, unit, currentTimeString]);
+    return generateRuleBasedForecast(card, { unit, currentTimeString: forecastTimeString });
+  }, [card, unit, forecastTimeString]);
 
   const [cityImage, setCityImage] = useState(card.cityImage || "");
   const [bgMode, setBgMode] = useState("wiki");
@@ -1200,25 +1223,31 @@ const WeatherCardComponent = ({
     
     await new Promise((r) => setTimeout(r, 100));
 
-    const canvas = await createChartImage(panelRef, targetWidth, targetHeight);
+    let canvas;
+    try {
+      canvas = await createChartImage(panelRef, targetWidth, targetHeight);
+    } finally {
+      el.style.cssText = origCss;
 
-    el.style.cssText = origCss;
+      if (!wasChartFullscreen) {
+        setFullscreenChart(null);
+      }
 
-    if (!wasChartFullscreen) {
-      setFullscreenChart(null);
-    }
-    
-    setIsCapturing(false);
+      setIsCapturing(false);
 
-    // Чекаємо, поки React поверне оригінальний вигляд, і тільки потім прибираємо клон
-    if (clone) {
-      await new Promise((r) => setTimeout(r, 100));
-      clone.remove();
-      if (placeholder) placeholder.remove();
+      // Чекаємо, поки React поверне оригінальний вигляд, і тільки потім прибираємо клон
+      if (clone) {
+        await new Promise((r) => setTimeout(r, 100));
+        clone.remove();
+        if (placeholder) placeholder.remove();
+      }
     }
 
     return canvas;
   };
+
+  const escapeHtml = (str) =>
+    String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   const downloadChartScreenshot = async (chartKey, panelRef) => {
     const canvas = await captureFullChart(chartKey, panelRef);
@@ -1249,7 +1278,7 @@ const WeatherCardComponent = ({
     const doc = iframe.contentWindow.document;
     doc.open();
     doc.write(`
-      <html><head><title>${card.locationName} - ${chartKey}</title>
+      <html><head><title>${escapeHtml(card.locationName)} - ${escapeHtml(chartKey)}</title>
       <style>body{margin:0;text-align:center} img{max-width:100%}</style>
       </head>
       <body><img src="${imageUrl}" onload="window.focus();window.print();" /></body></html>
@@ -1310,9 +1339,8 @@ const WeatherCardComponent = ({
       }}
     >
       {items.map((item) => (
-       <Tooltip content={`Натисніть, щоб ${datasetOpacity[item.key] === 1 ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`} isDarkMode={isDarkMode}>
+       <Tooltip key={item.key} content={`Натисніть, щоб ${datasetOpacity[item.key] === 1 ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`} isDarkMode={isDarkMode}>
         <button
-          key={item.key}
           type="button"
           onClick={() => toggleDatasetVisibility(item.key)}
           aria-label={`Натисніть, щоб ${datasetOpacity[item.key] === 1 ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`}

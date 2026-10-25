@@ -205,14 +205,14 @@ export const BANNED_PATTERNS = [
   /бойов(?:і|их|им|ий|а|ої)/iu,
   /конфлікт(?:у|и|ів|ом)?/iu,
   /(?<!\p{L})фронт(?:у|і|ом)?(?!\p{L})/iu,
-  /атак(?:а|и|у|ою|ам|ах|увал.*)/iu,
+  /(?<!\p{L})атак(?:а|и|у|ою|ам|ах|ув\p{L}*)/iu,
   /обстріл(?:у|и|ів|ом|ами)?/iu,
-  /безпілотник(?:и|ів|ами|ом)?|дрон(?:и|ів|ами)?|(?<!\p{L})бпла(?!\p{L})/iu,
+  /безпілотник(?:и|ів|ами|ом)?|(?<!\p{L})дрон(?:и|ів|ами|а|у|ом)?(?!\p{L})|(?<!\p{L})бпла(?!\p{L})/iu,
   /загибл(?:ий|их|і|им|ними)/iu,
   /поранен(?:ий|их|і|им|ними)/iu,
   /руйнуванн(?:я|ь|ям)/iu,
   /військов(?:ий|і|их|им|ними|е|а|ого)/iu,
-  /армі(?:я|ї|ю|єю)/iu,
+  /(?<!\p{L})армі(?:я|ї|ю|єю)/iu,
   /окупант(?:и|ів|ами)?|агресор(?:и|ів)?/iu,
   /ракет(?:а|и|ний|них|ами)/iu,
   /збройн(?:і|их)\s+сил(?:и|)/iu,
@@ -297,14 +297,14 @@ export const BANNED_PATTERNS = [
   /халяв(?:а|и|у|ою)/iu,
 
   // Бренди казино та БК
-  /favbet|фавбет|favorit|фаворит/iu,
+  /favbet|фавбет|favorit\s*(?:bet|casino|sport)|фаворит\s*(?:спорт|казино|бет)/iu,
   /vbet|вбет/iu,
   /cosmolot|космолот/iu,
   /slots\s*city|слотс\s*сіт(?:і|и)/iu,
   /supergra|супер\s*гра|супергра/iu,
-  /first\s*casino|ферст|фірст/iu,
+  /first\s*casino|ферст\s*казино|фірст\s*казино/iu,
   /casino\s*ua|казино\s*юа/iu,
-  /champion\s*(?:casino)?|чемпіон\s*(?:казино)?/iu,
+  /champion\s*casino|чемпіон\s*казино/iu,
   /ggbet|ггбет/iu,
   /slotoking|слотокінг|слотокинг/iu,
   /pin-?up|пінап|пін\s*ап/iu,
@@ -313,7 +313,7 @@ export const BANNED_PATTERNS = [
   /parimatch|париматч|паріматч/iu,
   /1xbet|1хбэт|1хбет|1xslots/iu,
   /mostbet|мостбет/iu,
-  /vulkan|vulcan|вулкан/iu,
+  /(?:vulkan|vulcan|вулкан)\s*(?:casino|bet|vegas|казино|вегас|клуб|ставк\p{L}*)/iu,
   /joycasino|джойказино/iu,
   /casino-x|казино\s*ікс|казино\s*икс/iu,
   /vavada|вавада/iu,
@@ -327,11 +327,11 @@ export const BANNED_PATTERNS = [
   /bet365|бет365/iu,
   /unibet|унібет|унибет/iu,
   /william\s*hill|вільям\s*хілл/iu,
-  /888\s*(?:casino|poker)?/iu,
+  /(?<!\d)888\s*(?:casino|poker|казино|покер)/iu,
   /pokerstars|покерстарс/iu,
   /betfair|бетфеір|бетфеар/iu,
   /bwin|бвін/iu,
-  /stake\s*(?:casino)?|bc\.game|roobet|rollbit/iu,
+  /stake\.com|stake\s*casino|bc\.game|roobet|rollbit/iu,
 
   // Крипта
   /крипто(?:валюта|валют|гроші|валютні)?|крипт(?:а|і)/iu,
@@ -353,7 +353,7 @@ export const BANNED_PATTERNS = [
   /мольфар(?:и|ів|ами)?|екстрасенс(?:и|ів)?|ворожк(?:а|и|ам)/iu,
   /карт(?:и|ах)\s+таро|(?<!\p{L})гаданн(?:я|ь)(?!\p{L})|нумеролог/iu,
   /пророцтв(?:о|а|ення)|передбаченн(?:я|ь)\s+(?:мольфара|астролога|ванг)/iu,
-  /порч(?:а|і)|сглаз|приворо/iu,
+  /(?<!\p{L})порч(?:а|і)(?!\p{L})|сглаз|приворо/iu,
 
   // ==========================================
   // 6. ІНШЕ
@@ -409,7 +409,7 @@ export const BANNED_PATTERNS = [
   // Дмитро Гордон
   /(?<!\p{L})(?:гордон(?:а|у|ом)?|дмитро\s+гордон)(?!\p{L})/iu,
   // Спартак Суббота (уточнюємо ім'я, щоб не зачепити день тижня)
-  /(?<!\p{L})спартак(?:\s+суббот?а|\s+суббот?и)?(?!\p{L})/iu,
+  /(?<!\p{L})спартак\s+суббот\p{L}*/iu,
   // Анна Алхім
   /(?<!\p{L})(?:алх[іi]м(?:а|у)?|анн(?:а|и)\s+алх[іi]м)(?!\p{L})/iu,
   // Скандальні блогери, інфлюенсери та шоумени
@@ -423,7 +423,7 @@ export const BANNED_PATTERNS = [
   /(?<!\p{L})(?:каб(?:и|ів|ами)?|фаб(?:и|ів)?)(?!\p{L})|шахед(?:и|ів|ами)?|геран(?:ь|і)/iu,
   /повітрян(?:а|і)\s+тривог(?:а|и)|укритт(?:я|ях)|бомбосховищ(?:е|ах)|приліт(?:и|ів)?|контрнаступ/iu,
   /блек\s*аут|відключенн(?:я|ь)\s+(?:світла|електроенергії)|графік(?:и|ів)\s+відключень/iu,
-  /інфляці(?:я|ї)|дефолт|подорожчанн(?:я|ь)|податк(?:и|ів)|борг(?:и|ів)|дефіцит\s+бюджету/iu,
+  /інфляці(?:я|ї)|дефолт|подорожчанн(?:я|ь)|податк(?:и|ів)|(?<!\p{L})борг(?:и|ів)(?!\p{L})|дефіцит\s+бюджету/iu,
   /банкрутств(?:о|а)/iu,
   /(?<!\p{L})(?:шольц(?:а|у)?|пісторіус(?:а|у)?|фіцо|мелоні|блінкен(?:а|у)?|столтенберг(?:а|у)?|рютте|гросс(?:і|і))(?!\p{L})/iu,
   /фаріон/iu,
@@ -467,7 +467,7 @@ export const BANNED_PATTERNS = [
   /сталін(?:а|у|ом)?/iu,
   /ленін(?:а|у|ом)?/iu,
   /берій?(?:я|ї|ю|єю)/iu,
-  /молотов(?:а|у|ом)?/iu,
+  /(?<!коктейл[ьюяі]?\s)(?<!\p{L})молотов(?:а|у|ом)?(?!\p{L})/iu,
   /гітлер(?:а|у|ом)?/iu,
 
   // ==========================================
@@ -495,7 +495,7 @@ export const BANNED_PATTERNS = [
   /(?<!\p{L})(?:коломойськ(?:ий|ого)|ахметов(?:а|у)?|пінчук(?:а|у)?|фірташ(?:а|у)?)(?!\p{L})/iu,
 
   // Світові постаті та медіа-магнати
-  /(?<!\p{L})(?:маск(?:а|у)?|ілон\s*маск|ердоган(?:а|у)?|нетаньягу)(?!\p{L})/iu,
+  /(?<!\p{L})(?:ілон\s*маск(?:а|у|ом)?|ердоган(?:а|у)?|нетаньягу)(?!\p{L})/iu,
   // ==========================================
   // 14. ТЕЛЕВЕДУЧІ НОВИН ТА СУПЕРЕЧЛИВІ ШОУ
   // ==========================================
@@ -542,7 +542,13 @@ const ZERO_WIDTH_CHARACTERS = /[\u00AD\u200B-\u200D\u2060\uFEFF]/g;
 const WORD_CHARACTERS = /[\p{L}\p{M}]+/gu;
 const LATIN_CHARACTERS = /[a-z]/i;
 const CYRILLIC_CHARACTERS = /[а-яіїєґ]/iu;
-const OBFUSCATION_SEPARATORS = /(?<=\p{L})[^\p{L}\s\n\r]{0,3}(?=\p{L})|(?<=\p{L})[\s\n\r]+(?=\p{L})/gu;
+const APOSTROPHE_VARIANTS = /[’ʼ`´‘]/g;
+// "п о р н о", "п.о.р.н.о": 3+ окремі літери через роздільники (пробіли не прибираємо у звичайному тексті)
+const SPACED_LETTERS = /(?<![\p{L}\p{N}])(?:\p{L}[\s.,_\-*]{1,2}){2,}\p{L}(?![\p{L}\p{N}])/gu;
+// "по*рно", "по.рно": символи всередині слова без пробілів
+const INNER_SEPARATORS = /(?<=\p{L})[^\p{L}\p{N}\s]{1,3}(?=\p{L})/gu;
+const REPEATED_LETTERS = /(\p{L})\1{2,}/gu;
+const TOKEN_CHARACTERS = /[\p{L}\p{N}@$]+/gu;
 const LEET_CHARACTERS = /[04513@$]/g;
 const LEET_MAP = {
   0: "о",
@@ -568,6 +574,7 @@ export const normalizeText = (text) => {
   return text
     .normalize("NFKC")
     .replace(ZERO_WIDTH_CHARACTERS, "")
+    .replace(APOSTROPHE_VARIANTS, "'")
     .toLowerCase()
     .replace(WORD_CHARACTERS, (word) => {
       if (!LATIN_CHARACTERS.test(word) || !CYRILLIC_CHARACTERS.test(word)) {
@@ -578,10 +585,18 @@ export const normalizeText = (text) => {
     });
 };
 
+// Leet застосовуємо лише до токенів, де цифри/символи змішані з літерами ("п0рно"),
+// щоб не псувати чисті числа ("18+", "2024").
+const applyLeet = (text) =>
+  text.replace(TOKEN_CHARACTERS, (token) =>
+    /\p{L}/u.test(token) ? token.replace(LEET_CHARACTERS, (m) => LEET_MAP[m]) : token,
+  );
+
 const normalizeObfuscatedText = (text) =>
-  normalizeText(text)
-    .replace(LEET_CHARACTERS, (match) => LEET_MAP[match])
-    .replace(OBFUSCATION_SEPARATORS, "");
+  applyLeet(normalizeText(text))
+    .replace(SPACED_LETTERS, (match) => match.replace(/[\s.,_\-*]/g, ""))
+    .replace(INNER_SEPARATORS, "")
+    .replace(REPEATED_LETTERS, "$1");
 
 const hasBannedPattern = (text) =>
   BANNED_CONTENT_PATTERN.test(text) ||
@@ -594,6 +609,23 @@ const hasBannedPattern = (text) =>
  * @param {string} text - Текст для перевірки
  * @returns {boolean} - true, якщо знайдено заборонений контент
  */
+const NEWS_FILTER_STORAGE_KEY = "news_filter_enabled";
+
+/** Фільтр новин увімкнений за замовчуванням; вимикається лише явним "false". */
+export const isNewsFilterEnabled = () => {
+  try {
+    return localStorage.getItem(NEWS_FILTER_STORAGE_KEY) !== "false";
+  } catch {
+    return true;
+  }
+};
+
+export const setNewsFilterEnabled = (enabled) => {
+  try {
+    localStorage.setItem(NEWS_FILTER_STORAGE_KEY, enabled ? "true" : "false");
+  } catch {}
+};
+
 export const hasBannedContent = (text) => {
   if (!text) return false;
   const normalized = normalizeText(text);

@@ -63,6 +63,7 @@ import songAiKnowledge from "../MusicPhoto/songAiKnowledge.json";
 import { assetMap } from "../MusicPhoto/MusicPhoto.assets";
 import { FILTERS, PRESETS, useVisualFilters } from "../Header/useVisualFilters";
 import { useDecorator } from "../Decorator/DecoratorContext.jsx";
+import { isNewsFilterEnabled, setNewsFilterEnabled } from "../../utils/contentFilter";
 
 // Keyframe Animations
 const fadeIn = keyframes`
@@ -602,6 +603,14 @@ const UserSettingsModal = ({
       localStorage.setItem("ad_antiheader_enabled", nextVal ? "true" : "false");
       window.dispatchEvent(new Event("storage"));
     } catch {}
+  };
+
+  const [isNewsFilterOn, setIsNewsFilterOn] = useState(isNewsFilterEnabled);
+
+  const toggleNewsFilter = () => {
+    const nextVal = !isNewsFilterOn;
+    setIsNewsFilterOn(nextVal);
+    setNewsFilterEnabled(nextVal);
   };
 
   useEffect(() => {
@@ -2256,6 +2265,22 @@ const UserSettingsModal = ({
               {activeTab === "news" && (
                 <CardGroup>
                   <SectionHeaderTitle><FiGlobe /> Налаштування новин</SectionHeaderTitle>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiShield /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Фільтр новин</CardTitle>
+                        <CardDescription>Приховує новини про війну, політику, кримінал та інший небажаний контент. Зміни діють після оновлення новин</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={toggleNewsFilter}>
+                        <ToggleStatusLabel $checked={isNewsFilterOn}>{isNewsFilterOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <SwitchPill $checked={isNewsFilterOn} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
 
                   {!isGuest ? (
                     <Card>

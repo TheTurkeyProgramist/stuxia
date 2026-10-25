@@ -20,7 +20,7 @@ import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
 import { FiPlus } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
 import toast from "react-hot-toast";
-import { hasBannedContent } from "../../utils/contentFilter";
+import { hasBannedContent, isNewsFilterEnabled } from "../../utils/contentFilter";
 import { auth, db, signInAnonymously } from "../../firebase";
 import {
   doc,
@@ -2069,7 +2069,9 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 
       allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
+      const filterEnabled = isNewsFilterEnabled();
       const clean = allItems.filter((i) => {
+        if (!filterEnabled) return true;
         const content = i.title + " " + (i.description || "");
         return !hasBannedContent(content);
       });

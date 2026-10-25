@@ -1,10 +1,49 @@
 import React, { useState } from "react";
+import styled from "styled-components";
+import { motion } from "framer-motion";
 import authorsData from "../MusicPhoto/authors.json";
-import {
-  ModalOverlay,
-  PlaylistModalContent,
-  PlaylistCloseButton,
-} from "../MusicPhoto/MusicPhoto.styled.jsx";
+
+const ModalOverlay = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+`;
+
+const PlaylistModalContent = styled(motion.div)`
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+  @media (max-width: 640px) {
+    & > div {
+      grid-template-columns: 1fr !important;
+    }
+  }
+`;
+
+const PlaylistCloseButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 1;
+  }
+`;
 
 const AuthorsDirectoryModal = ({ isOpen, onClose }) => {
   const [selectedAuthor, setSelectedAuthor] = useState(authorsData[0] || null);

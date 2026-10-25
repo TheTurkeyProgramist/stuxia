@@ -81,7 +81,7 @@ import volcanoVideo from "../../mp4/volcano.webm";
 import whitesound from "../../mp4/whiteloud.mp4";
 import loft from "../../photos/fan-art/wall.webp";
 import secret from "../../photos/vip-modal/texts.webp";
-import slivkishow from "../../mp4/slivkishow.webm";
+import slivkishow from "../../mp4/slivkishow_00-00-58.webp";
 import iceage from "../../mp4/days.webm";
 // Dinofroz full video (excerpt only — start/end)
 /**

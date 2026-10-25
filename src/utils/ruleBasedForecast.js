@@ -17,7 +17,7 @@ const parseNum = (val, fallback = 0) => {
 const formatTempWithSign = (val, unit = "C") => {
   const num = parseNum(val, null);
   if (num === null) return "—";
-  let displayNum = num;
+  let displayNum;
   let symbol = "°C";
 
   if (unit === "F") {
@@ -46,7 +46,7 @@ export const analyzeDayNightContrast = (current, todayDaily, unit = "C") => {
   const delta = Math.round((dayTemp - nightTemp) * 10) / 10;
   const feelsDiff = Math.round((feelsLike - currentTemp) * 10) / 10;
 
-  let message = "";
+  let message;
   let badge = null;
 
   if (delta >= 11) {
@@ -135,7 +135,7 @@ export const analyzeHourlyTimeline = (hourly = [], unit = "C") => {
     (h) => (h.hourNum < 6 || h.hourNum > 22) && h.isRain
   );
 
-  let rainWindowText = "";
+  let rainWindowText;
 
   if (afternoonRain.length > 0 && morningRain.length === 0) {
     const firstRainHour = afternoonRain[0].time || `${afternoonRain[0].hourNum}:00`;
@@ -170,7 +170,7 @@ export const analyzeHourlyTimeline = (hourly = [], unit = "C") => {
     curr.wind > prev.wind ? curr : prev, itemsWithHour[0]
   );
 
-  let windTrendText = "";
+  let windTrendText;
   let windWarning = null;
   const roundedWind = Math.round(maxWindItem.wind);
 
@@ -234,8 +234,8 @@ export const analyzeWeeklyTrends = (daily16 = [], unit = "C") => {
     }
   }
 
-  let trendText = "";
-  let jumpBadge = null;
+  let trendText;
+  let jumpBadge;
 
   if (maxJump >= 5 && jumpDay) {
     jumpBadge = `Різкий підйом: +${Math.round(maxJump)}°C`;
@@ -253,7 +253,7 @@ export const analyzeWeeklyTrends = (daily16 = [], unit = "C") => {
     (d) => d.pop >= 45 || d.desc.includes("дощ") || d.desc.includes("злив")
   ).length;
 
-  let weekSummaryText = "";
+  let weekSummaryText;
   if (rainyDaysCount >= 4) {
     weekSummaryText = `Загалом тиждень буде вологим та дощовим (${rainyDaysCount} з ${days.length} днів очікуються з опадами).`;
   } else if (rainyDaysCount === 0) {
@@ -490,9 +490,10 @@ export const cleanAiText = (raw) => {
 
   // 1. Прибираємо сирі емодзі (знаки небезпеки, погодні значки тощо)
   text = text.replace(
-    /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FE0F}]/gu,
+    /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1FA00}-\u{1FAFF}]/gu,
     ""
   );
+  text = text.replace(/[︀-️]/g, "");
 
   // 2. Прибираємо markdown-заголовки з дієзами (## Заголовок -> Заголовок)
   text = text.replace(/^[ \t]*#{1,6}\s+/gm, "");

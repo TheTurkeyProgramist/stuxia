@@ -71,6 +71,7 @@ import { BsMoonStarsFill } from "react-icons/bs";
 import { FaCloudMoonRain, FaCloudMoon } from "react-icons/fa";
 import { LiaCloudSunRainSolid, LiaCloudMoonRainSolid, LiaCloudSunSolid } from "react-icons/lia";
 import { stripSecrets } from "./utils/passwordHash";
+const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
 const Tooltipso = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
@@ -1901,21 +1902,38 @@ const App = () => {
 
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&hourly=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset&timezone=auto&past_days=1&forecast_days=16`;
         console.log("Fetching weather from URL:", url);
-        let res;
-        let lastRequestError;
-        for (let attempt = 0; attempt < 2; attempt += 1) {
-          try {
-            res = await axios.get(url, { timeout: 20000 });
-            break;
-          } catch (error) {
-            lastRequestError = error;
-            if (attempt === 0) {
-              await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Кеш відповіді Open-Meteo: 10 хв на пару координат
+        const cacheKey = `om_cache_${Number(targetLat).toFixed(2)},${Number(targetLon).toFixed(2)}`;
+        let d = null;
+        try {
+          const cached = await localforage.getItem(cacheKey);
+          if (cached?.data && Date.now() - cached.time < WEATHER_CACHE_TTL_MS) {
+            d = cached.data;
+          }
+        } catch {
+          d = null;
+        }
+
+        if (!d) {
+          let res;
+          let lastRequestError;
+          for (let attempt = 0; attempt < 2; attempt += 1) {
+            try {
+              res = await axios.get(url, { timeout: 20000 });
+              break;
+            } catch (error) {
+              lastRequestError = error;
+              if (attempt === 0) {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+              }
             }
           }
+          if (!res) throw lastRequestError;
+          d = res.data;
+          localforage
+            .setItem(cacheKey, { time: Date.now(), data: d })
+            .catch(() => {});
         }
-        if (!res) throw lastRequestError;
-        const d = res.data;
 
         // СИРИЙ лог для перевірки що повертає API
         console.log("💾 RAW API RESPONSE for", displayName, d);
