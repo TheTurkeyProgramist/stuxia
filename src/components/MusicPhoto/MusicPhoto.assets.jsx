@@ -57,16 +57,19 @@ import dinofroztwo from "../../photos/vip-images/dinofroz/vip-dragons.webp";
 import dinofroznine from "../../photos/vip-images/dinofroz/dinofroznine.webp";
 import hunger from "../../photos/hero-header/hunger.webp";
 import mia from "../../photos/vip-images/mia/miaandme.webp";
-import dinofrozAudio from "../../mp3/dinofroz.mp3";
+import silentAudio from "../../mp3/silent.opus";
+import silent from "../../photos/hero-header/fog.webp";
+import dinofrozAudio from "../../mp3/dinofroz.opus";
 import monodyAudio from "../../mp3/thefatrat-monody.opus";
 import unityAudio from "../../mp3/unity.opus";
 import hungerAudio from "../../mp3/thefatrat-hunger.opus";
-import dragonoraAudio from "../../mp3/dragon.mp3";
-import theorytwoAudio from "../../mp3/theoty-of-everything-ll.opus";
-import theoryAudio from "../../mp3/theory-of-everyting.opus";
+import theorytwoAudio from "../../mp3/theory-of-everything-ll.opus";
+import theoryAudio from "../../mp3/theory-of-everything.opus";
 export const assetMap = {
   faded,
   dinofrozVideo,
+  silent,
+  silentAudio,
   harmony,
   horse,
   theorytwo,
@@ -127,7 +130,6 @@ export const assetMap = {
   monodyAudio,
   unityAudio,
   hungerAudio,
-  dragonoraAudio,
   theorytwoAudio,
   theoryAudio,
 };

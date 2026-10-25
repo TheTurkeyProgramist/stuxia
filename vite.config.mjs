@@ -4,6 +4,58 @@ import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import viteCompression from 'vite-plugin-compression';
 import { imagetools } from 'vite-imagetools';
 import { visualizer } from 'rollup-plugin-visualizer';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const SIZE_GROUPS = [
+  ['JS', /\.(m?js|map)$/i],
+  ['CSS', /\.css$/i],
+  ['Зображення', /\.(webp|png|jpe?g|gif|svg|ico|avif)$/i],
+  ['Відео', /\.(webm|mp4)$/i],
+  ['Аудіо', /\.(mp3|ogg|wav)$/i],
+  ['Стиснені (.gz/.br)', /\.(gz|br)$/i],
+];
+
+function buildSizeSummaryPlugin() {
+  let outDir = 'dist';
+  const walk = (dir) =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+      const p = path.join(dir, e.name);
+      return e.isDirectory() ? walk(p) : [p];
+    });
+  const fmt = (b) => `${(b / 1024 / 1024).toFixed(2)} МБ`;
+
+  return {
+    name: 'build-size-summary',
+    apply: 'build',
+    enforce: 'post',
+    configResolved(config) {
+      outDir = path.resolve(config.root, config.build.outDir);
+    },
+    closeBundle: {
+      order: 'post',
+      handler() {
+        if (!fs.existsSync(outDir)) return;
+        const totals = new Map(SIZE_GROUPS.map(([name]) => [name, 0]));
+        let other = 0;
+        let all = 0;
+        for (const file of walk(outDir)) {
+          const size = fs.statSync(file).size;
+          all += size;
+          const group = SIZE_GROUPS.find(([, re]) => re.test(file));
+          if (group) totals.set(group[0], totals.get(group[0]) + size);
+          else other += size;
+        }
+        console.log('\n📦 Розмір збірки:', outDir);
+        for (const [name, size] of totals) {
+          if (size) console.log(`   ${name.padEnd(20)} ${fmt(size)}`);
+        }
+        if (other) console.log(`   ${'Інше'.padEnd(20)} ${fmt(other)}`);
+        console.log(`   ${'РАЗОМ'.padEnd(20)} ${fmt(all)}\n`);
+      },
+    },
+  };
+}
 
 function newsFeedPlugin() {
   const handlerMiddleware = async (req, res, next) => {
@@ -87,6 +139,8 @@ export default defineConfig({
       gzipSize: true,
       brotliSize: true,
     }),
+
+    buildSizeSummaryPlugin(),
   ],
 
   base: '/',

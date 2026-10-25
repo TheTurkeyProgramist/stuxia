@@ -4,7 +4,7 @@
     "image": "dinofrozone",
     "audio": "dinofrozAudio",
     "author": "Mondo TV",
-    "text": "Динофроз"
+    "text": "Dinofroz"
   },
   {
     "id": 2,
@@ -12,13 +12,6 @@
     "audio": "monodyAudio",
     "author": "TheFatRat",
     "text": "Monody"
-  },
-  {
-    "id": 3,
-    "image": "dinofroztwo",
-    "audio": "dragonoraAudio",
-    "author": "SayGames - MyLittleUniverse(Estoty)",
-    "text": "Dragonora"
   },
   {
     "id": 4,
@@ -47,5 +40,12 @@
     "audio": "hungerAudio",
     "author": "TheFatRat",
     "text": "Hunger"
+  },
+  {
+    "id": 8,
+    "image": "silent",
+    "audio": "silentAudio",
+    "author": "TheTurkeyStudio",
+    "text": "Silent"
   }
 ]

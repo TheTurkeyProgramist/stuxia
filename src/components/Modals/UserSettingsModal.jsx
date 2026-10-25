@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import avatarPlaceholder from "../../mp4/avatar.webp";
 import { createPortal } from "react-dom";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
@@ -145,7 +146,7 @@ const UserBadge = styled.div`
 `;
 
 const UserAvatarThumb = styled.img`
-  width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
+  width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
 `;
 
 const HeaderTitle = styled.h2`font-size: 16px; font-weight: 600; margin: 0; color: #ffffff;`;
@@ -355,23 +356,6 @@ const WinButton = styled.button`
   &:disabled { opacity: 0.4; cursor: not-allowed; }
 `;
 
-// Avatar
-const AvatarGrid = styled.div`
-  display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; align-items: center;
-  &::-webkit-scrollbar { height: 4px; }
-  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
-`;
-const AvatarCard = styled.div`
-  width: 54px; height: 54px; min-width: 54px;
-  border-radius: 8px; padding: 2px;
-  background: ${(p) => (p.$isSelected ? "#60cdff" : "rgba(255,255,255,0.08)")};
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: transform 0.15s ease;
-  position: relative;
-  &:hover { transform: scale(1.05); }
-  img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
-`;
-
 // Password
 const PasswordStrengthBar = styled.div`
   height: 4px; border-radius: 2px;
@@ -534,7 +518,7 @@ const UserSettingsModal = ({
 }) => {
   const isGuest = !user;
   const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState(isGuest ? "personalization" : "account");
+  const [activeTab, setActiveTab] = useState("personalization");
   const [isClosing, setIsClosing] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showKatScene, setShowKatScene] = useState(false);
@@ -565,17 +549,6 @@ const UserSettingsModal = ({
 
   const [newPresetName, setNewPresetName] = useState("");
   const [copiedSectionKey, setCopiedSectionKey] = useState(null);
-
-  // ── Desktop Avatar Upload State ──────────────────────────────────────────
-  const desktopAvatarInputRef = useRef(null);
-  const [uploadedCustomAvatar, setUploadedCustomAvatar] = useState(() => {
-    try {
-      if (user?.avatar && typeof user.avatar === "string" && user.avatar.startsWith("data:image")) {
-        return user.avatar;
-      }
-      return localStorage.getItem("custom_desktop_avatar") || null;
-    } catch { return null; }
-  });
 
   // ── Google Avatar Persistence ────────────────────────────────────────────
   const [savedGoogleAvatar, setSavedGoogleAvatar] = useState(() => {
@@ -619,41 +592,6 @@ const UserSettingsModal = ({
       try { localStorage.setItem("saved_google_avatar", user.avatar); } catch {}
     }
   }, [user, availableAvatars]);
-
-  const handleDesktopAvatarUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const todayDate = new Date().toISOString().split("T")[0];
-    const lastUploadDate = localStorage.getItem("last_custom_avatar_upload_date");
-
-    if (lastUploadDate === todayDate) {
-      alert("Аватарку з пристрою можна змінювати лише 1 раз на день! Спробуйте завтра.");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Файл занадто великий! Максимум 5 МБ.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target.result;
-      try {
-        localStorage.setItem("custom_desktop_avatar", dataUrl);
-        localStorage.setItem("last_custom_avatar_upload_date", todayDate);
-      } catch (err) {
-        console.error("Localstorage quota error", err);
-      }
-      setUploadedCustomAvatar(dataUrl);
-      updateLivePreview({ avatarIndex: -2 });
-      if (!isGuest) {
-        onUpdate({ ...user, avatar: dataUrl, lastAvatarUploadDate: todayDate });
-      }
-    };
-    reader.readAsDataURL(file);
-  };
 
   // ── Account Relinking Handlers ───────────────────────────────────────────
   const [relinkEmail, setRelinkEmail] = useState(user?.email || user?.account || "");
@@ -812,20 +750,10 @@ const UserSettingsModal = ({
   }, [mirrorX, mirrorY]);
 
   // Form State
-  const initialAvatarIndex = useMemo(() => {
-    if (uploadedCustomAvatar && user?.avatar === uploadedCustomAvatar) return -2;
-    if (savedGoogleAvatar && user?.avatar === savedGoogleAvatar) return -1;
-    if (availableAvatars.indexOf(user?.avatar) !== -1) return availableAvatars.indexOf(user?.avatar);
-    if (user?.avatar && typeof user.avatar === "string" && user.avatar.startsWith("http")) return -1;
-    if (user?.avatar && typeof user.avatar === "string" && user.avatar.startsWith("data:")) return -2;
-    return 0;
-  }, [user, availableAvatars, savedGoogleAvatar, uploadedCustomAvatar]);
-
   const [formData, setFormData] = useState({
     name: user?.firstName || "",
     day: "", month: "", year: "",
     oldPassword: "", newPassword: "", confirmPassword: "",
-    avatarIndex: initialAvatarIndex,
     textColor: user?.textColor || "grey",
     borderColor: user?.borderColor || "grey",
     fontFamily: user?.fontFamily || "",
@@ -864,7 +792,6 @@ const UserSettingsModal = ({
       month: initialM ? String(parseInt(initialM)) : "",
       year: initialY ? String(parseInt(initialY)) : "",
       oldPassword: "", newPassword: "", confirmPassword: "",
-      avatarIndex: initialAvatarIndex,
       textColor: user?.textColor || "grey",
       borderColor: user?.borderColor || "grey",
       fontFamily: user?.fontFamily || "",
@@ -878,14 +805,9 @@ const UserSettingsModal = ({
       gestureSensitivity: user?.gestureSensitivity ?? 1.5,
       fastClicks: user?.fastClicks ?? false,
     });
-  }, [user, availableAvatars, showUpdateTimer, initialAvatarIndex]);
+  }, [user, availableAvatars, showUpdateTimer]);
 
-  const getActiveAvatarUrl = (idx) => {
-    if (idx === -2 && uploadedCustomAvatar) return uploadedCustomAvatar;
-    if (idx === -1 && savedGoogleAvatar) return savedGoogleAvatar;
-    if (idx >= 0 && availableAvatars[idx]) return availableAvatars[idx];
-    return user?.avatar || availableAvatars[0];
-  };
+  const getActiveAvatarUrl = () => savedGoogleAvatar || avatarPlaceholder;
 
   const updateLivePreview = (updates) => {
     const newFormData = { ...formData, ...updates };
@@ -893,7 +815,7 @@ const UserSettingsModal = ({
     if (updates.hasOwnProperty("showUpdateTimer")) setShowUpdateTimer(updates.showUpdateTimer);
     if (!user) return;
 
-    const newAvatar = getActiveAvatarUrl(newFormData.avatarIndex);
+    const newAvatar = getActiveAvatarUrl();
 
     onUpdate({
       ...user,
@@ -983,7 +905,7 @@ const UserSettingsModal = ({
       if (formData.newPassword !== formData.confirmPassword) { alert("Нові паролі не збігаються!"); return; }
       if (formData.newPassword.length < 6) { alert("Пароль занадто короткий!"); return; }
     }
-    const finalAvatar = getActiveAvatarUrl(formData.avatarIndex);
+    const finalAvatar = getActiveAvatarUrl();
 
     onUpdate({
       ...user,
@@ -1176,7 +1098,6 @@ const UserSettingsModal = ({
 
   // ── Nav config ───────────────────────────────────────────────────────────
   const navItems = [
-    { key: "account", icon: <FiUser />, label: "Обліковий запис", locked: isGuest },
     { key: "dateTime", icon: <FiClock />, label: "Час та дата" },
     { key: "security", icon: <FiShield />, label: "Безпека", locked: isGuest },
     { key: "personalization", icon: <FiSliders />, label: "Персоналізація" },
@@ -1203,7 +1124,7 @@ const UserSettingsModal = ({
               <UserBadge>
                 {!isGuest && (
                   <UserAvatarThumb
-                    src={getActiveAvatarUrl(formData.avatarIndex)}
+                    src={getActiveAvatarUrl()}
                     alt="User avatar"
                   />
                 )}
@@ -1248,87 +1169,6 @@ const UserSettingsModal = ({
             </Sidebar>
 
             <MainContent>
-
-              {/* ── ACCOUNT TAB ─────────────────────────────────────── */}
-              {activeTab === "account" && !isGuest && (
-                <CardGroup>
-                  <SectionHeaderTitle><FiUser /> Обліковий запис</SectionHeaderTitle>
-                  <CardExpanded>
-                    <CardLeft>
-                      <CardIconBox><FiEye /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Аватарка профілю</CardTitle>
-                        <CardDescription>Оберіть пресет або завантажте з комп'ютера (1 раз на день)</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-
-                    <AvatarGrid>
-                      {/* Presets */}
-                      {availableAvatars.map((img, i) => (
-                        <AvatarCard key={i} $isSelected={formData.avatarIndex === i} onClick={() => updateLivePreview({ avatarIndex: i })}>
-                          <img src={img} alt={`avatar-${i}`} />
-                        </AvatarCard>
-                      ))}
-
-                      {/* Google Avatar option (always preserved!) */}
-                      {savedGoogleAvatar && (
-                        <AvatarCard
-                          $isSelected={formData.avatarIndex === -1}
-                          onClick={() => {
-                            updateLivePreview({ avatarIndex: -1 });
-                            if (!isGuest) onUpdate({ ...user, avatar: savedGoogleAvatar });
-                          }}
-                          title="Google аватарка"
-                        >
-                          <img src={savedGoogleAvatar} alt="Google avatar" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = availableAvatars[0]; }} />
-                        </AvatarCard>
-                      )}
-
-                      {/* Custom Uploaded Desktop Avatar Option */}
-                      {uploadedCustomAvatar && (
-                        <AvatarCard
-                          $isSelected={formData.avatarIndex === -2}
-                          onClick={() => {
-                            updateLivePreview({ avatarIndex: -2 });
-                            if (!isGuest) onUpdate({ ...user, avatar: uploadedCustomAvatar });
-                          }}
-                          title="Аватарка з комп'ютера"
-                        >
-                          <img src={uploadedCustomAvatar} alt="Desktop Custom Avatar" />
-                        </AvatarCard>
-                      )}
-
-                      {/* Tile to upload from Desktop */}
-                      <AvatarCard
-                        onClick={() => desktopAvatarInputRef.current?.click()}
-                        title="Завантажити аватарку з комп'ютера (ліміт: 1 раз на день)"
-                        style={{
-                          background: "rgba(96, 205, 255, 0.12)",
-                          border: "1px dashed #60cdff",
-                          flexDirection: "column",
-                          gap: "2px",
-                          color: "#60cdff",
-                        }}
-                      >
-                        <FiUpload style={{ fontSize: "16px" }} />
-                        <span style={{ fontSize: "8px", fontWeight: "700" }}>З пристрою</span>
-                      </AvatarCard>
-                    </AvatarGrid>
-
-                    <input
-                      ref={desktopAvatarInputRef}
-                      type="file"
-                      accept="image/*"
-                      style={{ display: "none" }}
-                      onChange={handleDesktopAvatarUpload}
-                    />
-
-                    <div style={{ fontSize: "11px", color: "#a0a0a0", marginTop: "4px" }}>
-                      ℹ️ Завантаження з комп'ютера обмежено <b>1 раз на день</b>. Google-аватарка завжди зберігається у списку для повернення.
-                    </div>
-                  </CardExpanded>
-                </CardGroup>
-              )}
 
               {/* ── DATE & TIME TAB ─────────────────────────────────── */}
               {activeTab === "dateTime" && (
