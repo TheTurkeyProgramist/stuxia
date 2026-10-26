@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspens
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
-import daynight from "../../photos/cursors/sunnight.webp";
-import daysthunders from "../../photos/cursors/daysthunders.webp";
+import daynight from "../../photos/thumbs/sunnight.webp";
+import daysthunders from "../../photos/thumbs/daysthunders.webp";
 import localforage from "localforage";
 import {
   BiCog,

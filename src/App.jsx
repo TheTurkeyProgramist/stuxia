@@ -12,13 +12,11 @@ import React, {
 import styled, { keyframes, css, createGlobalStyle } from "styled-components";
 import localforage from "localforage";
 import { GiSnowing } from "react-icons/gi";
-import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 //import { useSelector } from "react-redux";
 import Loader from "./components/Loader/Loader.jsx";
 import WeatherCardComponent, {
   AihelpTitle,
 } from "./components/Weather/Weather.jsx";
-import NotFound from "./components/NotFound.jsx";
 import Maintenance from "./components/Maintenance.jsx";
 import { getMaintenanceStatus, db, auth, signOut } from "./firebase.js";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -949,9 +947,6 @@ const App = () => {
         const savedAvatar = await localforage.getItem("currentAvatar");
         if (savedAvatar) setCurrentAvatar(savedAvatar);
 
-        const savedRoutingMode = await localforage.getItem("isRoutingMode");
-        if (savedRoutingMode !== null) setIsRoutingMode(savedRoutingMode);
-
         const savedTimezone = await localforage.getItem("selected_timezone");
         if (savedTimezone) setSelectedTimezone(savedTimezone);
 
@@ -1235,7 +1230,6 @@ const App = () => {
       window.removeEventListener("touchstart", handleInteraction);
     };
   }, []);
-  const [isRoutingMode, setIsRoutingMode] = useState(false);
 
   useEffect(() => {
     if (
@@ -1350,8 +1344,6 @@ const App = () => {
               if (s.hiddenSections) setHiddenSections(s.hiddenSections);
               if (s.weatherCardLayout)
                 setWeatherCardLayout(s.weatherCardLayout);
-              if (s.isRoutingMode !== undefined)
-                setIsRoutingMode(s.isRoutingMode);
               if (s.siteSections) {
                 setSiteSections(
                   s.siteSections.filter((section) => section.key !== "fanart"),
@@ -1406,7 +1398,6 @@ const App = () => {
 
   useEffect(() => {
     if (isHydrated) {
-      localforage.setItem("isRoutingMode", isRoutingMode);
       localforage.setItem("isLocationEnabled", isLocationEnabled);
       localforage.setItem(SECTION_ORDER_STORAGE_KEY, siteSections);
       localforage.setItem("hiddenSections", hiddenSections);
@@ -1422,7 +1413,6 @@ const App = () => {
           isDarkMode,
           hiddenSections,
           weatherCardLayout,
-          isRoutingMode,
           siteSections,
           isStickyBgMode,
           sectionThemes,
@@ -1439,7 +1429,6 @@ const App = () => {
       }
     }
   }, [
-    isRoutingMode,
     isLocationEnabled,
     siteSections,
     hiddenSections,
@@ -2641,15 +2630,6 @@ const App = () => {
     }
   })();
 
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    if (!isRoutingMode && location.pathname !== "/") {
-      navigate("/");
-    }
-  }, [isRoutingMode, navigate, location.pathname]);
-
   const moveSiteSection = (idx, dir) => {
     setSiteSections((prev) => {
       const arr = [...prev];
@@ -2660,95 +2640,6 @@ const App = () => {
     });
   };
 
-  const HeroAndWeather = (
-    <>
-      <div id="hero">
-        <Hero
-          heroDateString={heroDateString}
-          onAddCity={handleAddCityFromHero}
-          startAnimation={!isLoading}
-          user={user}
-          checkWeatherDanger={checkWeatherDanger}
-          heroBg={heroBg}
-          setHeroBg={setHeroBg}
-          heroBg2={heroBg2}
-          setHeroBg2={setHeroBg2}
-          heroBg3={heroBg3}
-          setHeroBg3={setHeroBg3}
-          heroBg4={heroBg4}
-          setHeroBg4={setHeroBg4}
-           isDarkMode={isDarkMode}
-          customHeroBgs={customHeroBgs}
-          setCustomHeroBgs={setCustomHeroBgs}
-          heroBgMode={heroBgMode}
-          setHeroBgMode={setHeroBgMode}
-          heroOverlayOpacity={heroOverlayOpacity}
-          setHeroOverlayOpacity={setHeroOverlayOpacity}
-          bgRatings={bgRatings}
-          setBgRatings={setBgRatings}
-          slideshowInterval={slideshowInterval}
-          setSlideshowInterval={setSlideshowInterval}
-          slideshowTransition={slideshowTransition}
-          setSlideshowTransition={setSlideshowTransition}
-          filterCategory={heroBgFilterCategory}
-          setFilterCategory={setHeroBgFilterCategory}
-          heroBgZoom={heroBgZoom}
-          setHeroBgZoom={setHeroBgZoom}
-          heroBgRotation={heroBgRotation}
-          setHeroBgRotation={setHeroBgRotation}
-          heroBgBlur={heroBgBlur}
-          setHeroBgBlur={setHeroBgBlur}
-          heroBgPixelation={heroBgPixelation}
-          setHeroBgPixelation={setHeroBgPixelation}
-          heroBgFocal1={heroBgFocal1}
-          setHeroBgFocal1={setHeroBgFocal1}
-          heroBgFocal2={heroBgFocal2}
-          setHeroBgFocal2={setHeroBgFocal2}
-          heroBgFocal3={heroBgFocal3}
-          setHeroBgFocal3={setHeroBgFocal3}
-          heroBgFocal4={heroBgFocal4}
-          setHeroBgFocal4={setHeroBgFocal4}
-          heroBgPanEnabled={heroBgPanEnabled}
-          setHeroBgPanEnabled={setHeroBgPanEnabled}
-          heroBgPanSpeed={heroBgPanSpeed}
-          setHeroBgPanSpeed={setHeroBgPanSpeed}
-          videoPlaybackSpeed={videoPlaybackSpeed}
-          setVideoPlaybackSpeed={setVideoPlaybackSpeed}
-          selectedTimezone={selectedTimezone}
-          setSelectedTimezone={setSelectedTimezone}
-          customHolidayName={customHolidayName}
-          isStickyBgMode={isStickyBgMode}
-          setCustomHolidayName={setCustomHolidayName}
-        />
-      </div>
-      <StyledSectionContainer
-        className="weather-section"
-        $isDarkMode={sectionThemes["weather"] ?? isDarkMode}
-        $isStickyBgMode={isStickyBgMode}
-        $isHidden={hiddenSections.includes("weather")}
-      >
-        <SectionContent
-          section={siteSections.find((s) => s.key === "weather")}
-          weatherCards={weatherCards}
-          heroDateString={heroDateString}
-          isDarkMode={sectionThemes["weather"] ?? isDarkMode}
-          isLocationEnabled={isLocationEnabled}
-          handleRefreshCard={handleRefreshCard}
-          handleDeleteCard={handleDeleteCard}
-          handleRenameCard={handleRenameCard}
-          moveWeatherCard={moveWeatherCard}
-          setIsLocationEnabled={setIsLocationEnabled}
-          user={user}
-          customHolidayName={customHolidayName}
-          isStickyBgMode={isStickyBgMode}
-          weatherCardLayout={weatherCardLayout}
-          setIsWeatherDetailsOpen={setIsWeatherDetailsOpen}
-          setSelectedWeatherCard={setSelectedWeatherCard}
-          isStickyBgMode={isStickyBgMode}
-        />
-      </StyledSectionContainer>
-    </>
-  );
   const LandingPage = (
     <>
       <div id="hero">
@@ -2901,7 +2792,6 @@ const App = () => {
               toggleTheme={toggleTheme}
               currentAvatar={currentAvatar}
               onLogout={handleLogout}
-              currentPath={location.pathname.substring(1)}
               loadingStrategy={loadingStrategy}
               onSetLoadingStrategy={setLoadingStrategy}
               setIsFsActive={setIsFsActive}
@@ -2911,116 +2801,7 @@ const App = () => {
           </div>
           <main>
             <Suspense fallback={null}>
-              <Routes>
-                <Route path="/" element={LandingPage} />
-                {siteSections.map((section) => (
-                  <Route
-                    key={section.key}
-                    path={`/${section.path}`}
-                    element={
-                      section.key === "weather" ? (
-                        HeroAndWeather
-                      ) : (
-                        <div
-                          className="container"
-                          style={{ paddingTop: "40px", minHeight: "80vh" }}
-                        >
-                          {section.key === "hero" ? (
-                            <Hero
-                              heroDateString={heroDateString}
-                              onAddCity={handleAddCityFromHero}
-                              startAnimation={!isLoading}
-                              user={user}
-                              isDarkMode={sectionThemes["hero"] ?? isDarkMode}
-                              checkWeatherDanger={checkWeatherDanger}
-                              heroBg={heroBg}
-                              setHeroBg={setHeroBg}
-                              heroBg2={heroBg2}
-                              setHeroBg2={setHeroBg2}
-                              heroBg3={heroBg3}
-                              setHeroBg3={setHeroBg3}
-                              heroBg4={heroBg4}
-                              setHeroBg4={setHeroBg4}
-                              customHeroBgs={customHeroBgs}
-                              setCustomHeroBgs={setCustomHeroBgs}
-                              heroBgMode={heroBgMode}
-                              setHeroBgMode={setHeroBgMode}
-                              heroOverlayOpacity={heroOverlayOpacity}
-                              setHeroOverlayOpacity={setHeroOverlayOpacity}
-                              bgRatings={bgRatings}
-                              setBgRatings={setBgRatings}
-                              slideshowInterval={slideshowInterval}
-                              setSlideshowInterval={setSlideshowInterval}
-                              slideshowTransition={slideshowTransition}
-                              setSlideshowTransition={setSlideshowTransition}
-                              filterCategory={heroBgFilterCategory}
-                              setFilterCategory={setHeroBgFilterCategory}
-                              heroBgZoom={heroBgZoom}
-                              setHeroBgZoom={setHeroBgZoom}
-                              heroBgRotation={heroBgRotation}
-                              setHeroBgRotation={setHeroBgRotation}
-                              heroBgBlur={heroBgBlur}
-                              setHeroBgBlur={setHeroBgBlur}
-                              heroBgPixelation={heroBgPixelation}
-                              setHeroBgPixelation={setHeroBgPixelation}
-                              heroBgFocal1={heroBgFocal1}
-                              setHeroBgFocal1={setHeroBgFocal1}
-                              heroBgFocal2={heroBgFocal2}
-                              setHeroBgFocal2={setHeroBgFocal2}
-                              heroBgFocal3={heroBgFocal3}
-                              setHeroBgFocal3={setHeroBgFocal3}
-                              heroBgFocal4={heroBgFocal4}
-                              setHeroBgFocal4={setHeroBgFocal4}
-                              heroBgPanEnabled={heroBgPanEnabled}
-                              setHeroBgPanEnabled={setHeroBgPanEnabled}
-                              heroBgPanSpeed={heroBgPanSpeed}
-                              setHeroBgPanSpeed={setHeroBgPanSpeed}
-                              videoPlaybackSpeed={videoPlaybackSpeed}
-                              setVideoPlaybackSpeed={setVideoPlaybackSpeed}
-                              selectedTimezone={selectedTimezone}
-                              setSelectedTimezone={setSelectedTimezone}
-                              customHolidayName={customHolidayName}
-                              isStickyBgMode={isStickyBgMode}
-                              setCustomHolidayName={setCustomHolidayName}
-                            />
-                          ) : (
-                            <StyledSectionContainer
-                              $isDarkMode={
-                                sectionThemes[section.key] ?? isDarkMode
-                              }
-                              $isStickyBgMode={isStickyBgMode}
-                              $isHidden={false}
-                            >
-                              <SectionContent
-                                section={section}
-                                weatherCards={weatherCards}
-                                isDarkMode={
-                                  sectionThemes[section.key] ?? isDarkMode
-                                }
-                                isLocationEnabled={isLocationEnabled}
-                                handleRefreshCard={handleRefreshCard}
-                                handleDeleteCard={handleDeleteCard}
-                                handleRenameCard={handleRenameCard}
-                                moveWeatherCard={moveWeatherCard}
-                                setIsLocationEnabled={setIsLocationEnabled}
-                                user={user}
-                                customHolidayName={customHolidayName}
-                                isStickyBgMode={isStickyBgMode}
-                                setIsWeatherDetailsOpen={
-                                  setIsWeatherDetailsOpen
-                                }
-                                setSelectedWeatherCard={setSelectedWeatherCard}
-                                isStickyBgMode={isStickyBgMode}
-                              />
-                            </StyledSectionContainer>
-                          )}
-                        </div>
-                      )
-                    }
-                  />
-                ))}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              {LandingPage}
             </Suspense>
           </main>
           <Suspense fallback={null}>
@@ -3083,8 +2864,6 @@ const App = () => {
                 onToggleSectionVisibility={toggleSectionVisibility}
                 onToggleSectionTheme={toggleSectionTheme}
                 onResetSectionThemes={resetSectionThemes}
-                isRoutingMode={isRoutingMode}
-                setIsRoutingMode={setIsRoutingMode}
                 loadingStrategy={loadingStrategy}
                 onSetLoadingStrategy={setLoadingStrategy}
                 isStickyBgMode={isStickyBgMode}

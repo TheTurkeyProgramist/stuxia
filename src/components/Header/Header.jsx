@@ -574,7 +574,6 @@ const Header = ({
   currentAvatar,
   onLogout,
   user,
-  currentPath,
   setIsFsActive,
   loadingStrategy,
   onSetLoadingStrategy,

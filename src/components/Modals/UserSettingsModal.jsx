@@ -49,7 +49,6 @@ import {
   FiPlus,
 } from "react-icons/fi";
 import { TbAutomation, TbMenuOrder } from "react-icons/tb";
-import { FaRocket, FaAnchorCircleCheck } from "react-icons/fa6";
 import { GiPalette } from "react-icons/gi";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { FaSun as FaSunIcon, FaEye, FaEyeSlash } from "react-icons/fa";
@@ -494,8 +493,6 @@ const UserSettingsModal = ({
   onToggleSectionTheme = () => {},
   onResetSectionThemes = () => {},
   // Modes & strategy props
-  isRoutingMode = false,
-  setIsRoutingMode = () => {},
   loadingStrategy = "eager",
   onSetLoadingStrategy = () => {},
   isStickyBgMode = false,
@@ -547,7 +544,6 @@ const UserSettingsModal = ({
   } = useVisualFilters(user);
 
   const [newPresetName, setNewPresetName] = useState("");
-  const [copiedSectionKey, setCopiedSectionKey] = useState(null);
 
   // ── Google Avatar Persistence ────────────────────────────────────────────
   const [savedGoogleAvatar, setSavedGoogleAvatar] = useState(() => {
@@ -935,32 +931,6 @@ const UserSettingsModal = ({
     const newLayout = newsLayout.map((b) => b.key === key ? { ...b, visible: !b.visible } : b);
     setNewsLayout(newLayout);
     updateLivePreview({ newsLayout: newLayout });
-  };
-
-  const buildSectionLink = (sectionPath) => {
-    if (typeof window === "undefined") return "";
-    const normalizedPath = sectionPath ? `/${sectionPath}`.replace(/\/+/g, "/") : "/";
-    const basePath = `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "");
-    return `${basePath}#${normalizedPath}`;
-  };
-
-  const handleCopySectionLink = async (sectionKey, sectionPath) => {
-    const link = buildSectionLink(sectionPath || sectionKey);
-    if (!link) return;
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(link);
-      } else {
-        const tempInput = document.createElement("input");
-        tempInput.value = link; document.body.appendChild(tempInput);
-        tempInput.select(); document.execCommand("copy");
-        document.body.removeChild(tempInput);
-      }
-      setCopiedSectionKey(sectionKey);
-      setTimeout(() => setCopiedSectionKey(null), 1500);
-    } catch (err) {
-      console.error("Copy link failed", err);
-    }
   };
 
   // ── Music tab state ──────────────────────────────────────────────────────
@@ -1541,7 +1511,6 @@ const UserSettingsModal = ({
                   {siteSections && siteSections.map((sec, idx) => {
                     const isHidden = hiddenSections?.includes(sec.key);
                     const isDarkTheme = sectionThemes?.[sec.key] ?? isDarkMode;
-                    const link = buildSectionLink(sec.path || sec.key);
 
                     return (
                       <CardExpanded key={sec.key}>
@@ -1550,15 +1519,9 @@ const UserSettingsModal = ({
                             <CardIconBox $color="#60cdff"><FiLayers /></CardIconBox>
                             <CardInfo>
                               <CardTitle>{sec.label}</CardTitle>
-                              <CardDescription style={{ fontSize: "11px", wordBreak: "break-all" }}>{link}</CardDescription>
                             </CardInfo>
                           </CardLeft>
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            {/* Copy Link */}
-                            <WinButton onClick={() => handleCopySectionLink(sec.key, sec.path)} style={{ padding: "4px 8px", fontSize: "12px" }}>
-                              {copiedSectionKey === sec.key ? <><FiCheck style={{ color: "#4caf50" }} /> Скопійовано</> : <><FiCopy /> Посилання</>}
-                            </WinButton>
-
                             {/* Theme Toggle */}
                             <IconBtn onClick={() => onToggleSectionTheme(sec.key)} title="Змінити тему секції">
                               {isDarkTheme ? <BsMoonStarsFill style={{ fontSize: "13px" }} /> : <FaSunIcon style={{ fontSize: "13px", color: "#ffb36c" }} />}
@@ -1605,25 +1568,6 @@ const UserSettingsModal = ({
               {activeTab === "modes" && (
                 <CardGroup>
                   <SectionHeaderTitle><FiZap /> Режими та швидкість сайту</SectionHeaderTitle>
-
-                  {/* Routing mode */}
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox $color="#ffb36c">{isRoutingMode ? <FaRocket /> : <FaAnchorCircleCheck />}</CardIconBox>
-                      <CardInfo>
-                        <CardTitle>{isRoutingMode ? "Режим Маршрутизації (Зміна URL)" : "Режим Навігації (Плавний скрол)"}</CardTitle>
-                        <CardDescription>
-                          {isRoutingMode ? "Переходи змінюють посилання сторінки" : "Переходи плавно прокручують екрани"}
-                        </CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <ToggleWrapper onClick={() => setIsRoutingMode(!isRoutingMode)}>
-                        <ToggleStatusLabel $checked={isRoutingMode}>{isRoutingMode ? "Маршрути" : "Скрол"}</ToggleStatusLabel>
-                        <SwitchPill $checked={isRoutingMode} />
-                      </ToggleWrapper>
-                    </CardControl>
-                  </Card>
 
                   {/* AntiHeader Ad Toggle */}
                   <Card>

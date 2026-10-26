@@ -4,6 +4,26 @@ import styled, { keyframes, css } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import localforage from "localforage";
 import rainbow from "../../photos/vip-images/stars.webp";
+import asiumelevenFull from "../../photos/vip-images/asium/asiumeleven.webp";
+import chessFull from "../../photos/vip-images/horse/chess.webp";
+import studiFull from "../../photos/hero-header/studi.webp";
+import fireFull from "../../photos/vip-images/fire.webp";
+import slivkishowFull from "../../mp4/slivkishow.webp";
+import asiumelevenThumb from "../../photos/thumbs/asiumeleven.webp";
+import chessThumb from "../../photos/thumbs/chess.webp";
+import studiThumb from "../../photos/thumbs/studi.webp";
+import fireThumb from "../../photos/thumbs/fire.webp";
+import slivkishowThumb from "../../photos/thumbs/slivkishow.webp";
+import asiuntwoFull from "../../photos/vip-images/asium/asiuntwo.webp";
+import asiumtwelveFull from "../../photos/vip-images/asium/asiumtwelve.webp";
+import ultraTurkeysFull from "../../photos/vip-images/turkeys/ultra-vip-turkeys.webp";
+import castleFull from "../../photos/vip-modal/castle.webp";
+import swampnineFull from "../../photos/vip-images/swamp/swampnine.webp";
+import asiuntwoThumb from "../../photos/thumbs/asiuntwo.webp";
+import asiumtwelveThumb from "../../photos/thumbs/asiumtwelve.webp";
+import ultraTurkeysThumb from "../../photos/thumbs/ultra-vip-turkeys.webp";
+import castleThumb from "../../photos/thumbs/castle.webp";
+import swampnineThumb from "../../photos/thumbs/swampnine.webp";
 import { DEFAULT_BGS } from "../Hero/defaultBgs.js";
 import NewsAiModal from "./NewsAiModal";
 import InfoModal from "../Modals/UserSearchModal.jsx";
@@ -1336,13 +1356,26 @@ const parseJsonFeed = (feed) =>
 /**
  * Масив лише зображень (без відео) з DEFAULT_BGS — для запасних обкладинок новин.
  */
+const NEWS_THUMBS = new Map([
+  [asiumelevenFull, asiumelevenThumb],
+  [chessFull, chessThumb],
+  [studiFull, studiThumb],
+  [fireFull, fireThumb],
+  [slivkishowFull, slivkishowThumb],
+  [asiuntwoFull, asiuntwoThumb],
+  [asiumtwelveFull, asiumtwelveThumb],
+  [ultraTurkeysFull, ultraTurkeysThumb],
+  [castleFull, castleThumb],
+  [swampnineFull, swampnineThumb],
+]);
+
 const NEWS_FALLBACK_IMAGES = DEFAULT_BGS
   .filter(
     (bg) =>
       bg.category === "Природа та Стихії" &&
       /\.(webp|jpe?g|png|gif)(\?.*)?$/i.test(bg.src || ""),
   )
-  .map((bg) => bg.src);
+  .map((bg) => NEWS_THUMBS.get(bg.src) || bg.src);
 
 /**
  * Повертає стабільне (детерміноване за URL статті) запасне зображення.

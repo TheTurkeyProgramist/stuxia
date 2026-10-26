@@ -4,7 +4,6 @@ import "./i18n/i18n.css";
 
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { HashRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import { store } from "./app/store.js";
 import App from "./App.jsx";
@@ -41,9 +40,7 @@ window.addEventListener("unhandledrejection", (e) => {
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <Provider store={store}>
-    <HashRouter>
-      <App />
-      <Toaster position="bottom-right" reverseOrder={false} />
-    </HashRouter>
+    <App />
+    <Toaster position="bottom-right" reverseOrder={false} />
   </Provider>,
 );
