@@ -63,6 +63,7 @@ import songAiKnowledge from "../MusicPhoto/songAiKnowledge.json";
 import { assetMap } from "../MusicPhoto/MusicPhoto.assets";
 import { FILTERS, PRESETS, useVisualFilters } from "../Header/useVisualFilters";
 import { useDecorator } from "../Decorator/DecoratorContext.jsx";
+import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { isNewsFilterEnabled, setNewsFilterEnabled } from "../../utils/contentFilter";
 
 // Keyframe Animations
@@ -514,6 +515,7 @@ const UserSettingsModal = ({
 }) => {
   const isGuest = !user;
   const dispatch = useDispatch();
+  const tutorial = useTutorial();
   const [activeTab, setActiveTab] = useState("personalization");
   const [isClosing, setIsClosing] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -1589,6 +1591,28 @@ const UserSettingsModal = ({
                         </ToggleStatusLabel>
                         <SwitchPill $checked={isAdAntiHeaderEnabled} />
                       </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  {/* Restart tutorial */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#60cdff"><FiRotateCcw /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Навчання від Доміно</CardTitle>
+                        <CardDescription>Пройти інтерактивне навчання по сайту ще раз</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinButton
+                        disabled={!tutorial}
+                        onClick={() => {
+                          handleCancel();
+                          setTimeout(() => tutorial?.startTutorial(), 300);
+                        }}
+                      >
+                        <FiPlay /> Запустити
+                      </WinButton>
                     </CardControl>
                   </Card>
 

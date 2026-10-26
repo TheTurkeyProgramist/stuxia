@@ -8,6 +8,11 @@ const fadeIn = keyframes`
   to { opacity: 1; transform: scale(1); }
 `;
 
+const fadeOut = keyframes`
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.9); }
+`;
+
 const Overlay = styled.div`
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
@@ -38,6 +43,62 @@ const ModalBox = styled.div`
     border-radius: 16px;
     border-width: 3px;
   }
+`;
+
+const CornerPrompt = styled.div`
+  position: fixed;
+  bottom: 70px;
+  right: 10px;
+  max-width: 240px;
+  padding: 12px 14px 10px;
+  border: 2px solid #fff;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  z-index: 10000;
+  animation: ${(p) => (p.$closing ? fadeOut : fadeIn)} 0.3s ease-out forwards;
+  pointer-events: ${(p) => (p.$closing ? 'none' : 'auto')};
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+`;
+
+const CornerButton = styled.button`
+  width: 100%;
+  background: transparent;
+  color: #fff;
+  border: 1px solid #fff;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  &:hover { background: rgba(255,255,255,0.25); }
+`;
+
+const CornerHint = styled.div`
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #ccc;
+`;
+
+const CornerClose = styled.button`
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  &:hover { color: #fff; }
 `;
 
 const ModalTitle = styled.h2`
@@ -147,7 +208,7 @@ const DominoTutorial = ({ user }) => {
     currentStep,
     showInitialModal,
     startTutorial,
-    skipTutorialWeek,
+    skipTutorial,
     refs,
     nextStep,
     jumpToStep,
@@ -160,6 +221,17 @@ const DominoTutorial = ({ user }) => {
   const [skipDisabled, setSkipDisabled] = useState(false);
   const showTimerRef = useRef(null);
   const currentTargetRef = useRef(null);
+  // Тримаємо віконце змонтованим на час анімації зникнення.
+  const [promptMounted, setPromptMounted] = useState(false);
+
+  useEffect(() => {
+    if (showInitialModal) {
+      setPromptMounted(true);
+      return undefined;
+    }
+    const t = setTimeout(() => setPromptMounted(false), 300);
+    return () => clearTimeout(t);
+  }, [showInitialModal]);
 
   const recalcPosition = useCallback((targetEl) => {
     if (!targetEl) return;
@@ -348,18 +420,13 @@ const DominoTutorial = ({ user }) => {
     jumpToStep(8);
   }, [skipDisabled, jumpToStep]);
 
-  if (showInitialModal) {
+  if (promptMounted || showInitialModal) {
     return (
-      <Overlay>
-        <ModalBox>
-          <ModalTitle>Отримати навчання?</ModalTitle>
-          <ModalText>Доміно пропонує вам безкоштовну допомогу, для швидшого опанування сайту</ModalText>
-          <ButtonRow>
-            <Button onClick={startTutorial}>Так, і не нагадувати про це 30 днів</Button>
-            <Button onClick={skipTutorialWeek}>Ні, і не нагадувати тиждень!</Button>
-          </ButtonRow>
-        </ModalBox>
-      </Overlay>
+      <CornerPrompt $closing={!showInitialModal}>
+        <CornerClose onClick={skipTutorial} aria-label="Закрити">×</CornerClose>
+        <CornerButton onClick={startTutorial}>Отримати навчання!</CornerButton>
+        <CornerHint>Запустити знову можна в Параметрах → Режими сайту</CornerHint>
+      </CornerPrompt>
     );
   }
 

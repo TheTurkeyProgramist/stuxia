@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import styled, { keyframes, css } from "styled-components";
-import pixelturkey from "../../photos/cursors/pixelturkey.webp"
-import twoturkey from "../../photos/cursors/twoturkey.webp"
 import { FaKeyboard } from "react-icons/fa";
 import climate from "../../photos/cursors/climate.webp";
 import localforage from "localforage";
@@ -664,7 +662,6 @@ const KbdModeSelect = styled.select`
 
 
 
-const turkeyFrames = [pixelturkey, twoturkey];
 const BUILTIN_PROVIDERS = ["ventusky", "windy", "alerts-ua", "excalidraw", "saveecobot", "radarbox"];
 
 const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
@@ -684,7 +681,6 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [provider, setProvider] = useState("ventusky");
   const [isPinned, setIsPinned] = useState(false);
 
-  const [currentTurkeyFrame, setCurrentTurkeyFrame] = useState(0);
   const [keyboardShortcutMode, setKeyboardShortcutMode] = useState("auto");
   const [isCoarsePointer, setIsCoarsePointer] = useState(false);
   const showKeyboardShortcuts =
@@ -722,47 +718,21 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [newFrameTitle, setNewFrameTitle] = useState("");
   const [newFrameUrl, setNewFrameUrl] = useState("");
 
-  const [isSlowConnection, setIsSlowConnection] = useState(() => {
-    if (typeof navigator === "undefined" || !navigator.onLine) return true;
-    if (navigator.connection) {
-      const conn = navigator.connection;
-      if (conn.saveData || ["slow-2g", "2g", "3g"].includes(conn.effectiveType)) {
-        return true;
-      }
-    }
-    return false;
-  });
   const [videoError, setVideoError] = useState(false);
-  const [shouldLoadTurkeyVideo, setShouldLoadTurkeyVideo] = useState(false);
   const turkeyVideoRef = useRef(null);
   const shouldShowLoader = !isMapActive || isLoading || !isOnline;
-  const isTurkeyFallback = !isOnline || isSlowConnection || videoError;
-
-  useEffect(() => {
-    if (!shouldShowLoader || !isTurkeyFallback) return;
-    const interval = setInterval(() => {
-      setCurrentTurkeyFrame((prev) => (prev + 1) % turkeyFrames.length);
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [shouldShowLoader, isTurkeyFallback]);
-
-  useEffect(() => {
-    if (isOnline && !isSlowConnection && !videoError) {
-      setShouldLoadTurkeyVideo(true);
-    }
-  }, [isOnline, isSlowConnection, videoError]);
 
   useEffect(() => {
     const video = turkeyVideoRef.current;
     if (!video) return;
 
-    if (shouldShowLoader && isOnline && !isSlowConnection && !videoError && shouldLoadTurkeyVideo) {
+    if (shouldShowLoader) {
       const p = video.play();
       if (p !== undefined) p.catch(() => {});
     } else {
       video.pause();
     }
-  }, [shouldShowLoader, isOnline, isSlowConnection, videoError, shouldLoadTurkeyVideo]);
+  }, [shouldShowLoader, videoError]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -777,35 +747,16 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
   useEffect(() => {
     const updateConnection = () => {
-      const online = typeof navigator !== "undefined" ? navigator.onLine : true;
-      setIsOnline(online);
-      if (!online) {
-        setIsSlowConnection(true);
-        return;
-      }
-      if (typeof navigator !== "undefined" && navigator.connection) {
-        const conn = navigator.connection;
-        setIsSlowConnection(
-          !!conn.saveData || ["slow-2g", "2g", "3g"].includes(conn.effectiveType)
-        );
-      } else {
-        setIsSlowConnection(false);
-      }
+      setIsOnline(typeof navigator !== "undefined" ? navigator.onLine : true);
     };
 
     updateConnection();
     window.addEventListener("online", updateConnection);
     window.addEventListener("offline", updateConnection);
-    if (typeof navigator !== "undefined" && navigator.connection) {
-      navigator.connection.addEventListener("change", updateConnection);
-    }
 
     return () => {
       window.removeEventListener("online", updateConnection);
       window.removeEventListener("offline", updateConnection);
-      if (typeof navigator !== "undefined" && navigator.connection) {
-        navigator.connection.removeEventListener("change", updateConnection);
-      }
     };
   }, []);
 
@@ -1444,34 +1395,26 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               aria-hidden={!shouldShowLoader}
               style={{ visibility: shouldShowLoader ? "visible" : "hidden" }}
             >
-                {isTurkeyFallback ? (
-                  <img
-                    src={turkeyFrames[currentTurkeyFrame]}
-                    alt="Це Доміно :)"
-                    style={{ width: '340px', height: 'auto', maxWidth: '100%', imageRendering: 'pixelated', marginBottom: '-20px' }}
-                  />
-                ) : null}
-                <TurkeyVideoFrame>
-                  <TurkeyVideo
-                    ref={turkeyVideoRef}
-                    src={shouldLoadTurkeyVideo ? turkey : undefined}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    preload={isOnline && !isSlowConnection && !videoError ? "auto" : "none"}
-                    onCanPlay={(e) => {
-                      if (shouldShowLoader && isOnline && !isSlowConnection && !videoError) {
-                        const p = e.target.play();
-                        if (p !== undefined) p.catch(() => {});
-                      }
-                    }}
-                    onError={() => setVideoError(true)}
-                    style={{
-                      display: isOnline && !isSlowConnection && !videoError ? "block" : "none",
-                    }}
-                  />
-                </TurkeyVideoFrame>
+                {!videoError && (
+                  <TurkeyVideoFrame>
+                    <TurkeyVideo
+                      ref={turkeyVideoRef}
+                      src={turkey}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      preload="auto"
+                      onCanPlay={(e) => {
+                        if (shouldShowLoader) {
+                          const p = e.target.play();
+                          if (p !== undefined) p.catch(() => {});
+                        }
+                      }}
+                      onError={() => setVideoError(true)}
+                    />
+                  </TurkeyVideoFrame>
+                )}
                 <p style={{ fontSize: "16px" }}>
                   {!isOnline
                     ? "Перевірте інтернет-з'єднання для користування картою"

@@ -646,8 +646,10 @@ const UpdateTimerBadge = styled.div`
     ${(props) => (props.$isDarkMode ? "rgba(249, 248, 250, 0.99)" : "rgb(5, 5, 5)")};
   pointer-events: auto;
   cursor: pointer;
+  opacity: ${(props) => (props.$isVisible ? 1 : 0)};
   transition: all 0.3s ease;
   &:hover {
+    opacity: 1;
     transform: scale(1.07);
      }
   &:active {
@@ -2915,11 +2917,11 @@ const App = () => {
             <TooltipS content="Налаштування вигляду" isDarkMode={isDarkMode}>
             <UpdateTimerBadge
               $isDarkMode={isDarkMode}
+              $isVisible={Math.floor(secondsUntilUpdate / 60) % 10 === 0}
               onClick={handleManualBulkRefresh}
               aria-label="Показує час оновлення картки теперішньої погоди і ШІ прогноз."
             >
-              Оновлення погоди через: {Math.floor(secondsUntilUpdate / 60)}:
-              {(secondsUntilUpdate % 60).toString().padStart(2, "0")}
+              Оновлення погоди через: {Math.floor(secondsUntilUpdate / 60)} хв
             </UpdateTimerBadge>
             </TooltipS>
           )}

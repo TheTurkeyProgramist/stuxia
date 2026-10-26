@@ -2,6 +2,10 @@ import React, { createContext, useState, useRef, useContext, useEffect } from 'r
 import localforage from 'localforage';
 
 const TutorialContext = createContext();
+const SEEN_KEY = 'domino_tutorial_seen';
+const SHOWN_COUNT_KEY = 'domino_tutorial_shown_count';
+const MAX_PROMPT_VISITS = 2;
+const PROMPT_VISIBLE_MS = 9000;
 
 export const TutorialProvider = ({ children }) => {
   const [isActive, setIsActive] = useState(false);
@@ -18,6 +22,9 @@ export const TutorialProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    let timerId;
+    let hideTimerId;
+    let cancelled = false;
     const checkTutorial = async () => {
       try {
         const searchParams = new URLSearchParams(window.location.search);
@@ -36,24 +43,41 @@ export const TutorialProvider = ({ children }) => {
         }
       } catch (e) {}
 
-      const lastPrompt = await localforage.getItem('domino_tutorial_prompt');
-      const now = Date.now();
-      if (!lastPrompt || now > lastPrompt) {
-        setTimeout(() => setShowInitialModal(true), 2500);
+      // Згода/хрестик (SEEN_KEY) або старий ключ — більше не пропонуємо.
+      // Інакше пропозиція висить PROMPT_VISIBLE_MS і зникає сама; після
+      // MAX_PROMPT_VISITS заходів без згоди її видаляємо назавжди.
+      const seen = await localforage.getItem(SEEN_KEY);
+      const legacy = await localforage.getItem('domino_tutorial_prompt');
+      const shownCount = (await localforage.getItem(SHOWN_COUNT_KEY)) || 0;
+      if (cancelled || seen || legacy) return;
+      if (shownCount >= MAX_PROMPT_VISITS) {
+        await localforage.setItem(SEEN_KEY, true);
+        return;
       }
+      // Даємо погоді встигнути з'явитися, щоб вікно не перекривало її одразу.
+      timerId = setTimeout(async () => {
+        await localforage.setItem(SHOWN_COUNT_KEY, shownCount + 1);
+        setShowInitialModal(true);
+        hideTimerId = setTimeout(() => setShowInitialModal(false), PROMPT_VISIBLE_MS);
+      }, 6000);
     };
     checkTutorial();
+    return () => {
+      cancelled = true;
+      clearTimeout(timerId);
+      clearTimeout(hideTimerId);
+    };
   }, []);
 
-  const startTutorial = async () => {
-    await localforage.setItem('domino_tutorial_prompt', Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const startTutorial = () => {
+    localforage.setItem(SEEN_KEY, true);
     setShowInitialModal(false);
     setIsActive(true);
     setCurrentStep(1);
   };
 
-  const skipTutorialWeek = async () => {
-    await localforage.setItem('domino_tutorial_prompt', Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const skipTutorial = () => {
+    localforage.setItem(SEEN_KEY, true);
     setShowInitialModal(false);
   };
 
@@ -84,7 +108,7 @@ export const TutorialProvider = ({ children }) => {
         closeTutorial,
         showInitialModal,
         startTutorial,
-        skipTutorialWeek,
+        skipTutorial,
       }}
     >
       {children}
