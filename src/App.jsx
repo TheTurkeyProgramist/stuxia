@@ -25,11 +25,6 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import fogBackground from "./photos/hero-header/fogtwo.webp";
 import userDefault from "./photos/hero-header/user.webp";
 import turkeys from "./photos/vip-images/turkeys/ultra-vip-turkeys.webp";
-import dragons from "./photos/vip-images/dinofroz/vip-dragons.webp";
-import horrordog from "./photos/vip-images/horror/horror.webp";
-
-import nicerone from "./photos/vip-images/dinofroz/vip-dinofroz.webp";
-import flame from "./photos/vip-images/flame.webp";
 // Ресурси для фонового завантаження кат-сцени
 import startImage from "./photos/hero-header/fogtwo.webp";
 import {
@@ -226,11 +221,6 @@ const StyledSectionContainer = styled.div`
   margin: 10px 0;
   display: ${(props) => (props.$isHidden ? "none" : "block")};
 `;
-const AVAILABLE_AVATARS = [
-  turkeys,
-  nicerone,
-  dragons,
-];
 const getWeatherIcon = (code, isDay = 1) => {
   if (code === 0) return isDay ? "☀️ Сонячно" : "🌙 Місячно";
   if (code >= 1 && code <= 3) return isDay ? "🌤️ Мінлива хмарність" : "☁️ Мінлива хмарність";
@@ -3041,7 +3031,6 @@ const App = () => {
                   setUser(data);
                   setIsModalOpen(false);
                 }}
-                availableAvatars={AVAILABLE_AVATARS}
                 isDarkMode={isDarkMode}
               />
             )}
@@ -3052,7 +3041,6 @@ const App = () => {
                   setIsOtherOptionsOpen(false);
                 }}
                 user={user}
-                availableAvatars={AVAILABLE_AVATARS}
                 onUpdate={setUser}
                 weatherCardLayout={weatherCardLayout}
                 onUpdateLayout={setWeatherCardLayout}

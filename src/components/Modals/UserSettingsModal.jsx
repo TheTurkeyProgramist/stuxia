@@ -477,7 +477,6 @@ const CustomPresetCard = styled.div`
 const UserSettingsModal = ({
   onClose,
   user,
-  availableAvatars = [],
   onUpdate,
   weatherCardLayout = [],
   isDarkMode = false,
@@ -552,7 +551,7 @@ const UserSettingsModal = ({
 
   // ── Google Avatar Persistence ────────────────────────────────────────────
   const [savedGoogleAvatar, setSavedGoogleAvatar] = useState(() => {
-    if (user?.avatar && typeof user.avatar === "string" && user.avatar.startsWith("http") && availableAvatars.indexOf(user.avatar) === -1) {
+    if (user?.avatar && typeof user.avatar === "string" && user.avatar.startsWith("http")) {
       return user.avatar;
     }
     if (user?.photoURL && typeof user.photoURL === "string" && user.photoURL.startsWith("http")) {
@@ -587,11 +586,11 @@ const UserSettingsModal = ({
   };
 
   useEffect(() => {
-    if (user?.avatar && typeof user.avatar === "string" && user.avatar.startsWith("http") && availableAvatars.indexOf(user.avatar) === -1 && !user.avatar.startsWith("data:")) {
+    if (user?.avatar && typeof user.avatar === "string" && user.avatar.startsWith("http") && !user.avatar.startsWith("data:")) {
       setSavedGoogleAvatar(user.avatar);
       try { localStorage.setItem("saved_google_avatar", user.avatar); } catch {}
     }
-  }, [user, availableAvatars]);
+  }, [user]);
 
   // ── Account Relinking Handlers ───────────────────────────────────────────
   const [relinkEmail, setRelinkEmail] = useState(user?.email || user?.account || "");
@@ -805,7 +804,7 @@ const UserSettingsModal = ({
       gestureSensitivity: user?.gestureSensitivity ?? 1.5,
       fastClicks: user?.fastClicks ?? false,
     });
-  }, [user, availableAvatars, showUpdateTimer]);
+  }, [user, showUpdateTimer]);
 
   const getActiveAvatarUrl = () => savedGoogleAvatar || avatarPlaceholder;
 

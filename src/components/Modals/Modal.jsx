@@ -259,7 +259,6 @@ const ErrorMessage = styled.div`
 const Modal = ({
   onClose,
   onRegister,
-  availableAvatars = [],
   isDarkMode = false,
 }) => {
   const [email, setEmail] = useState("");
@@ -387,7 +386,7 @@ const Modal = ({
         account: firebaseUser.email || "",
         firstName:
           firebaseUser.displayName || firebaseUser.email || "Користувач",
-        avatar: firebaseUser.photoURL || availableAvatars[0] || "",
+        avatar: firebaseUser.photoURL || "",
         photoURL: firebaseUser.photoURL || "",
         textColor: "grey",
         borderColor: "grey",

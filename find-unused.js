@@ -70,12 +70,18 @@ function findUnusedMedia() {
   console.log("\n-------------------------------------------------");
   if (unusedFiles.length > 0) {
     console.log(`❌ НЕВИКОРИСТОВУВАНІ ФАЙЛИ (${unusedFiles.length}):`);
-    unusedFiles.forEach((file) => {
+    const withSizes = unusedFiles
+      .map((file) => ({ file, size: fs.statSync(file).size }))
+      .sort((a, b) => b.size - a.size);
+    const toMb = (bytes) => (bytes / 1024 / 1024).toFixed(2);
+
+    withSizes.forEach(({ file, size }) => {
       // Показує повний відносний шлях (наприклад, src/assets/images/old/photo.webp)
-      console.log(`- ${path.relative(__dirname, file)}`);
+      console.log(`- ${path.relative(__dirname, file)} (${toMb(size)} МБ)`);
     });
+    const totalBytes = withSizes.reduce((sum, { size }) => sum + size, 0);
     console.log("-------------------------------------------------");
-    console.log(`Разом можна видалити: ${unusedFiles.length} файлів.`);
+    console.log(`Разом можна очистити: ${toMb(totalBytes)} МБ (${unusedFiles.length} файлів).`);
   } else {
     console.log("✅ Усі медіафайли з усіх папок використовуються у коді!");
     console.log("-------------------------------------------------");

@@ -1,6 +1,5 @@
 import songAiKnowledge from "./songAiKnowledge.json";
 import faded from "../../photos/fan-art/faded.webp";
-import dinofrozVideo from "../../mp3/dinofroz.webm";
 import harmony from "../../photos/vip-images/asium/asium.webp";
 import horse from "../../photos/vip-images/horse/horse.webp";
 import theorytwo from "../../photos/fan-art/theorytwo.webp";
@@ -67,7 +66,6 @@ import theorytwoAudio from "../../mp3/theory-of-everything-ll.opus";
 import theoryAudio from "../../mp3/theory-of-everything.opus";
 export const assetMap = {
   faded,
-  dinofrozVideo,
   silent,
   silentAudio,
   harmony,
@@ -150,4 +148,4 @@ export const musicCards = songAiKnowledge.map((card) => ({
     : card.filters,
 }));
 
-export { songAiKnowledge, dinofrozVideo };
+export { songAiKnowledge };

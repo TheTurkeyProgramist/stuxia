@@ -8,7 +8,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const SIZE_GROUPS = [
-  ['JS', /\.(m?js|map)$/i],
+  ['JS', /\.m?js$/i],
+  ['Sourcemap (.map)', /\.map$/i],
   ['CSS', /\.css$/i],
   ['Зображення', /\.(webp|png|jpe?g|gif|svg|ico|avif)$/i],
   ['Відео', /\.(webm|mp4)$/i],
@@ -150,7 +151,7 @@ export default defineConfig({
   },
 
   build: {
-    sourcemap: true,
+    sourcemap: false,
     chunkSizeWarningLimit: 1000,
     minify: 'terser',
     terserOptions: {

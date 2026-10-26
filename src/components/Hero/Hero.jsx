@@ -262,6 +262,8 @@ const BgLayerStyled = styled.div`
     return filters.length ? filters.join(" ") : "none";
   }};
   z-index: ${(props) => (props.$isStickyBgMode ? "-10" : "-2")} !important;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
   animation: ${(props) =>
     props.$panEnabled && props.$zoom > 1
       ? css`
@@ -316,7 +318,34 @@ const BgLayer = React.memo((props) => {
   } = props;
   const [blobUrl, setBlobUrl] = useState(null);
   const videoRef = useRef(null);
+  const layerRef = useRef(null);
   const isVideo = isVideoSource($image);
+  const [inView, setInView] = useState(true);
+  const [tabVisible, setTabVisible] = useState(
+    typeof document === "undefined" || !document.hidden,
+  );
+
+  // Не декодуємо відео, коли Hero поза екраном або вкладка прихована
+  useEffect(() => {
+    if (!isVideo) return;
+    const el = layerRef.current;
+    let observer;
+    if (el && typeof IntersectionObserver !== "undefined") {
+      observer = new IntersectionObserver(
+        ([entry]) => setInView(entry.isIntersecting),
+        { threshold: 0 },
+      );
+      observer.observe(el);
+    }
+    const onVisibility = () => setTabVisible(!document.hidden);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      observer?.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [isVideo]);
+
+  const shouldPlay = $active && inView && tabVisible;
 
   useEffect(() => {
     if (!isVideo) {
@@ -375,7 +404,7 @@ const BgLayer = React.memo((props) => {
     const vid = videoRef.current;
     if (!vid) return;
 
-    if ($active) {
+    if (shouldPlay) {
       if ($videoPlaybackSpeed && vid.playbackRate !== $videoPlaybackSpeed) {
         vid.playbackRate = $videoPlaybackSpeed;
       }
@@ -391,13 +420,13 @@ const BgLayer = React.memo((props) => {
         vid.pause();
       }
     }
-  }, [$active, $videoStart, $videoPlaybackSpeed, url]);
+  }, [shouldPlay, $videoStart, $videoPlaybackSpeed, url]);
 
   const videoStart = $videoStart ?? 0;
   const videoEnd = $videoEnd ?? null; // null = play to natural end
 
   return (
-    <BgLayerStyled {...props}>
+    <BgLayerStyled ref={layerRef} {...props}>
       {isVideo ? (
         <video
           ref={videoRef}
@@ -406,8 +435,10 @@ const BgLayer = React.memo((props) => {
           muted
           loop
           playsInline
+          disablePictureInPicture
+          disableRemotePlayback
           onCanPlay={(e) => {
-            if ($active) {
+            if (shouldPlay) {
               const vid = e.target;
               if ($videoPlaybackSpeed && vid.playbackRate !== $videoPlaybackSpeed) {
                 vid.playbackRate = $videoPlaybackSpeed;
