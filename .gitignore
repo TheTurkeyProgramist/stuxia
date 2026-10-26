@@ -37,3 +37,5 @@ server/.env
 node_modules/
 
 package-lock.json
+# PocketBase
+pb_data/
