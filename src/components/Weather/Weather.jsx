@@ -51,6 +51,9 @@ import {
   FaGaugeHigh,
 } from "react-icons/fa6";
 import CustomDatesModal from "../Modals/CustomDatesModal";
+import { createPortal } from "react-dom";
+import UnitsModal from "../Modals/UnitsModal";
+import { DEFAULT_UNITS, makeFormatters, tempLabel, windLabel, pressureLabel } from "../../utils/units.js";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { PiThermometerFill } from "react-icons/pi"; //Нормальна температура
 import { BsThermometerSnow, BsThermometerSun, BsMoonStarsFill, BsClockHistory } from "react-icons/bs"; //Холодна температура / Ніч
@@ -309,6 +312,7 @@ const WeatherCard = styled.div`
 //
 const CardHeader = styled.div`
   position: relative;
+  z-index: 300;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -858,6 +862,46 @@ const ViewToggleButton = styled.button`
   box-shadow: ${(props) => (props.$active ? "0 2px 8px rgba(138, 43, 226, 0.4)" : "none")};
 `;
 
+const REPORT_ICONS = {
+  pressure_low: <MdOutlineSpeed />,
+  pressure_high: <MdOutlineSpeed />,
+  humidity: <FaDroplet />,
+  uvi: <GiSunRadiations />,
+  wind_warning: <BiWind />,
+  cloth: <FaShirt />,
+  umbrella: <FaUmbrella />,
+  car: <FaCar />,
+  sport: <FaPersonWalking />,
+};
+const REPORT_COLORS = {
+  pressure_low: "#4da6ff",
+  pressure_high: "#ff4d4d",
+  humidity: "#4da6ff",
+  uvi: "#ffd700",
+  wind_warning: "#ff9900",
+  cloth: "#ffb36c",
+  umbrella: "#14b8a6",
+  car: "#aaa",
+  sport: "#4ade80",
+};
+
+const ReportSection = ({ title, icon, color, children }) => (
+  <div style={{ borderLeft: `3px solid ${color}`, paddingLeft: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "15px", color }}>
+      <span style={{ display: "inline-flex", fontSize: "18px" }}>{icon}</span>
+      {title}
+    </div>
+    {children}
+  </div>
+);
+
+const ReportLine = ({ icon, color, children }) => (
+  <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+    <span style={{ display: "inline-flex", flexShrink: 0, marginTop: "3px", fontSize: "16px", color }}>{icon}</span>
+    <span>{children}</span>
+  </div>
+);
+
 const SettingsDropdownMenu = styled.div`
   position: absolute;
   top: calc(100% + 6px);
@@ -962,7 +1006,10 @@ const WeatherCardComponent = ({
     return () => window.removeEventListener("resize", onResize);
   }, []);
   const defaultChartHeight = isNarrowScreen ? "250px" : "380px";
-  const [unit, setUnit] = useState("C"); // "C", "K", "F"
+  const [units, setUnits] = useState(DEFAULT_UNITS);
+  const unit = units.temp; // "C", "K", "F"
+  const fmt = makeFormatters(units);
+  const [isUnitsModalOpen, setIsUnitsModalOpen] = useState(false);
 
   // currentTimeString змінюється щосекунди (годинник), тому для прогнозу
   // беремо "заморожений" час і оновлюємо його раз на 33 хв.
@@ -989,35 +1036,32 @@ const WeatherCardComponent = ({
   const [hasGeminiKey, setHasGeminiKey] = useState(false);
 
   useEffect(() => {
-    localforage.getItem("temp_unit").then((val) => {
-      if (val) setUnit(val);
+    localforage.getItem("units_settings").then(async (saved) => {
+      if (saved) {
+        setUnits({ ...DEFAULT_UNITS, ...saved });
+        return;
+      }
+      // міграція зі старого ключа лише для температури
+      const legacyTemp = await localforage.getItem("temp_unit");
+      if (legacyTemp) setUnits((prev) => ({ ...prev, temp: legacyTemp }));
     });
-    const handleUnitChange = (e) => {
-      if (e.detail) setUnit(e.detail);
+    const handleUnitsChange = (e) => {
+      if (e.detail) setUnits({ ...DEFAULT_UNITS, ...e.detail });
     };
-    window.addEventListener("tempUnitChanged", handleUnitChange);
-    return () => window.removeEventListener("tempUnitChanged", handleUnitChange);
+    window.addEventListener("unitsChanged", handleUnitsChange);
+    return () => window.removeEventListener("unitsChanged", handleUnitsChange);
   }, []);
 
-  const changeTempUnit = (newUnit) => {
-    setUnit(newUnit);
-    localforage.setItem("temp_unit", newUnit);
-    window.dispatchEvent(new CustomEvent("tempUnitChanged", { detail: newUnit }));
+  const changeUnits = (next) => {
+    setUnits(next);
+    localforage.setItem("units_settings", next);
+    window.dispatchEvent(new CustomEvent("unitsChanged", { detail: next }));
   };
 
   const formatTemp = (tempVal) => {
     if (tempVal === null || tempVal === undefined || tempVal === "—") return "—";
-    const num = parseFloat(tempVal);
-    if (isNaN(num)) return tempVal;
-    if (unit === "F") {
-      const f = Math.round((num * 9) / 5 + 32);
-      return `${f}°F`;
-    }
-    if (unit === "K") {
-      const k = Math.round((num + 273.15) * 10) / 10;
-      return `${k}K`;
-    }
-    return `${Math.round(num * 10) / 10}°C`;
+    if (isNaN(parseFloat(tempVal))) return tempVal;
+    return fmt.temp(tempVal);
   };
 
   useEffect(() => {
@@ -1078,6 +1122,13 @@ const WeatherCardComponent = ({
     wind: 1,
   });
   const [legendFontSize, setLegendFontSize] = useState(12);
+  const [rightMetric, setRightMetric] = useState("wind"); // "wind" | "uv" | "precip"
+  const RIGHT_METRICS = {
+    wind: { label: "Вітер", axis: fmt.windAxis, color: "#0099ff", rgb: "0, 153, 255", icon: <BiWind /> },
+    uv: { label: "УФ-індекс", axis: "УФ-індекс", color: "#a855f7", rgb: "168, 85, 247", icon: <FaSun /> },
+    precip: { label: "Опади", axis: "Опади (%)", color: "#14b8a6", rgb: "20, 184, 166", icon: <FaCloudRain /> },
+  };
+  const rightMeta = RIGHT_METRICS[rightMetric];
 
   const toggleDatasetVisibility = (datasetKey) => {
     setDatasetOpacity((prev) => ({
@@ -1338,7 +1389,42 @@ const WeatherCardComponent = ({
         alignItems: "center",
       }}
     >
-      {items.map((item) => (
+      {items.map((item) => item.key === "wind" ? (
+        <span
+          key={item.key}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            border: `1px solid ${rightMeta.color}`,
+            borderRadius: "4px",
+            background: isDarkMode ? "#222" : "#fff",
+            color: rightMeta.color,
+            opacity: datasetOpacity.wind,
+            fontWeight: "bold",
+          }}
+        >
+          <Tooltip content={`Натисніть, щоб ${datasetOpacity.wind === 1 ? "сховати" : "показати"} шкалу графіка`} isDarkMode={isDarkMode}>
+            <button
+              type="button"
+              onClick={() => toggleDatasetVisibility("wind")}
+              aria-label="Сховати або показати праву шкалу"
+              style={{ display: "inline-flex", alignItems: "center", padding: "3px 4px 3px 6px", border: "none", background: "transparent", color: "inherit", cursor: "pointer", fontSize: "14px" }}
+            >
+              {rightMeta.icon}
+            </button>
+          </Tooltip>
+          <select
+            value={rightMetric}
+            onChange={(e) => setRightMetric(e.target.value)}
+            aria-label="Показник правої осі графіка"
+            style={{ padding: "3px 2px", border: "none", background: "transparent", color: "inherit", fontSize: "inherit", fontWeight: "bold", cursor: "pointer", outline: "none" }}
+          >
+            {Object.entries(RIGHT_METRICS).map(([k, m]) => (
+              <option key={k} value={k} style={{ color: "#000" }}>{m.label}</option>
+            ))}
+          </select>
+        </span>
+      ) : (
        <Tooltip key={item.key} content={`Натисніть, щоб ${datasetOpacity[item.key] === 1 ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`} isDarkMode={isDarkMode}>
         <button
           type="button"
@@ -1562,8 +1648,6 @@ const WeatherCardComponent = ({
       if (savedSynergy !== null) setUseAiSynergy(savedSynergy);
       const savedTokens = await localforage.getItem(`ai_token_usage_${card.id}`);
       if (savedTokens) setAiTokenUsage(savedTokens);
-      const savedMode = await localforage.getItem(`forecast_mode_${card.id}`);
-      if (savedMode) setForecastMode(savedMode);
     };
     loadAiSetting();
   }, [card.id]);
@@ -1827,12 +1911,19 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
   const hourlyDayGroups = getHourlyForecastDayGroups(card.hourly || []);
   const visibleHourly = hourlyDayGroups[selectedHourlyDay]?.items || [];
   const hourlyChartWidth = Math.max(873, (visibleHourly?.length || 24) * 35);
+  const tempSuffix = unit === "F" ? "°F" : unit === "K" ? "K" : "°C";
+  const toDisplayTemp = (c) => {
+    if (!Number.isFinite(c)) return c;
+    if (unit === "F") return Math.round(((c * 9) / 5 + 32) * 10) / 10;
+    if (unit === "K") return Math.round((c + 273.15) * 10) / 10;
+    return c;
+  };
   const hourlyChartData = {
     labels: visibleHourly?.map((h) => h.time) || [],
     datasets: [
       {
-        label: "Температура (°C)",
-        data: visibleHourly?.map((h) => h.tempNum ?? 0) || [],
+        label: `Температура (${tempSuffix})`,
+        data: visibleHourly?.map((h) => toDisplayTemp(h.tempNum ?? 0)) || [],
         fill: true,
         backgroundColor: "rgba(255, 179, 108, 0.2)",
         borderColor: "rgba(255, 179, 108, 1)",
@@ -1852,22 +1943,38 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
         tension: 0.4,
         yAxisID: "y",
       },
-      {
-        label: "Вітер (м/с)",
-        data: visibleHourly?.map((h) => h.windNum ?? 0) || [],
-        borderColor: "rgba(0, 190, 235, 1)",
-        backgroundColor: "rgba(0, 190, 235, 0.1)",
-        pointRadius: 6,
-        pointBackgroundColor:
-          visibleHourly?.map((h) =>
-            (h.windNum ?? 0) > 10 ? "#ff6a00" : "rgba(0, 190, 235, 1)",
-          ) || [],
-        pointStyle: visibleHourly?.map((h) =>
-          createDirectionArrowCanvas(h.wind_direction_10m, 18, datasetOpacity.wind),
-        ) || [],
-        tension: 0.4,
-        yAxisID: "y1",
-      },
+      rightMetric === "wind"
+        ? {
+            label: fmt.windAxis,
+            data: visibleHourly?.map((h) => fmt.windValue(h.windNum ?? 0)) || [],
+            borderColor: "rgba(0, 190, 235, 1)",
+            backgroundColor: "rgba(0, 190, 235, 0.1)",
+            pointRadius: 6,
+            pointBackgroundColor:
+              visibleHourly?.map((h) =>
+                (h.windNum ?? 0) > 10 ? "#ff6a00" : "rgba(0, 190, 235, 1)",
+              ) || [],
+            pointStyle: visibleHourly?.map((h) =>
+              createDirectionArrowCanvas(h.wind_direction_10m, 18, datasetOpacity.wind),
+            ) || [],
+            tension: 0.4,
+            yAxisID: "y1",
+          }
+        : {
+            label: rightMeta.axis,
+            data:
+              visibleHourly?.map((h) =>
+                rightMetric === "uv" ? h.uv_index ?? 0 : h.precipitation_probability ?? 0,
+              ) || [],
+            borderColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind})`,
+            backgroundColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind * 0.15})`,
+            fill: rightMetric === "precip",
+            pointStyle: "circle",
+            pointRadius: 4,
+            pointBackgroundColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind})`,
+            tension: 0.4,
+            yAxisID: "y1",
+          },
     ],
   };
 
@@ -2050,8 +2157,8 @@ const HOLIDAYS_2027 = {
     labels: card.daily16?.map((d) => `${d.date}\n${d.day}`) || [],
     datasets: [
       {
-        label: "День (°C)",
-        data: card.daily16?.map((d) => parseInt(d.temp_day)) || [],
+        label: `День (${tempSuffix})`,
+        data: card.daily16?.map((d) => toDisplayTemp(parseInt(d.temp_day))) || [],
         borderColor: `rgba(255, 179, 108, ${datasetOpacity.day})`,
         backgroundColor: `rgba(255, 179, 108, ${datasetOpacity.day * 0.5})`,
         pointRadius: 12,
@@ -2071,8 +2178,8 @@ const HOLIDAYS_2027 = {
         yAxisID: "y",
       },
       {
-        label: "Ніч (°C)",
-        data: card.daily16?.map((d) => parseInt(d.temp_night)) || [],
+        label: `Ніч (${tempSuffix})`,
+        data: card.daily16?.map((d) => toDisplayTemp(parseInt(d.temp_night))) || [],
         borderColor: `rgba(255, 20, 147, ${datasetOpacity.night})`,
         backgroundColor: `rgba(255, 20, 147, ${datasetOpacity.night * 0.2})`,
         pointStyle: "circle",
@@ -2080,23 +2187,40 @@ const HOLIDAYS_2027 = {
         tension: 0.3,
         yAxisID: "y",
       },
-      {
-        label: "Вітер (м/с)",
-        data: card.daily16?.map((d) => parseFloat(d.wind_speed) || 0) || [],
-        borderColor: `rgba(0, 153, 255, ${datasetOpacity.wind})`,
-        backgroundColor: `rgba(0, 153, 255, ${datasetOpacity.wind * 0.2})`,
-        pointStyle: card.daily16?.map((d) =>
-          createDirectionArrowCanvas(d.wind_direction_10m, 18, datasetOpacity.wind),
-        ),
-        pointRadius: 6,
-        pointBorderColor: "#ffffff",
-        pointBorderWidth: 1.5,
-        pointBackgroundColor: card.daily16?.map((d) =>
-          parseFloat(d.wind_speed) > 10 ? "#ff6a00" : "#0099ff",
-        ),
-        tension: 0.3,
-        yAxisID: "y1",
-      },
+      rightMetric === "wind"
+        ? {
+            label: fmt.windAxis,
+            data: card.daily16?.map((d) => fmt.windValue(parseFloat(d.wind_speed) || 0)) || [],
+            borderColor: `rgba(0, 153, 255, ${datasetOpacity.wind})`,
+            backgroundColor: `rgba(0, 153, 255, ${datasetOpacity.wind * 0.2})`,
+            pointStyle: card.daily16?.map((d) =>
+              createDirectionArrowCanvas(d.wind_direction_10m, 18, datasetOpacity.wind),
+            ),
+            pointRadius: 6,
+            pointBorderColor: "#ffffff",
+            pointBorderWidth: 1.5,
+            pointBackgroundColor: card.daily16?.map((d) =>
+              parseFloat(d.wind_speed) > 10 ? "#ff6a00" : "#0099ff",
+            ),
+            tension: 0.3,
+            yAxisID: "y1",
+          }
+        : {
+            label: rightMeta.axis,
+            data:
+              card.daily16?.map((d) =>
+                rightMetric === "uv"
+                  ? parseFloat(d.uv_index) || 0
+                  : parseFloat(d.precipitation_probability_max) || 0,
+              ) || [],
+            borderColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind})`,
+            backgroundColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind * 0.2})`,
+            pointStyle: "circle",
+            pointRadius: 4,
+            pointBackgroundColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind})`,
+            tension: 0.3,
+            yAxisID: "y1",
+          },
     ],
   };
 
@@ -2122,7 +2246,7 @@ const HOLIDAYS_2027 = {
           label: (context) => {
             if (context.datasetIndex === 0) {
               // Температура
-              const temp = context.parsed.y || 0;
+              const temp = visibleHourly?.[context.dataIndex]?.tempNum ?? 0;
               let label = `Температура: ${formatTemp(temp)}`;
 
               let dangers = [];
@@ -2133,9 +2257,13 @@ const HOLIDAYS_2027 = {
                 label += ` ⚠️ ${dangers.join(", ")}`;
               }
               return label;
+            } else if (context.datasetIndex === 1 && rightMetric === "uv") {
+              return ` УФ-індекс: ${(context.parsed.y || 0).toFixed(1)}`;
+            } else if (context.datasetIndex === 1 && rightMetric === "precip") {
+              return ` Ймовірність опадів: ${Math.round(context.parsed.y || 0)}%`;
             } else if (context.datasetIndex === 1) {
-              const wind = context.parsed.y || 0;
-              let label = ` Вітер: ${wind.toFixed(1)} м/с`;
+              const wind = visibleHourly?.[context.dataIndex]?.windNum ?? 0;
+              let label = ` Вітер: ${fmt.wind(wind)}`;
               if (wind > 10) label += ` ⚠️ СИЛЬНИЙ ВІТЕР`;
               const hourlyData = visibleHourly?.[context.dataIndex];
               if (hourlyData) {
@@ -2159,7 +2287,7 @@ const HOLIDAYS_2027 = {
     scales: {
       y: {
         beginAtZero: false,
-        title: { display: true, text: "Температура", color: "#ffb36c" },
+        title: { display: true, text: `Температура (${tempSuffix})`, color: "#ffb36c" },
         ticks: { color: isDarkMode ? "#aaa" : "#888", font: { size: 10 } },
         grid: {
           color: isDarkMode
@@ -2172,12 +2300,13 @@ const HOLIDAYS_2027 = {
         display: true,
         position: "right",
         beginAtZero: true,
+        ...(rightMetric === "precip" ? { max: 100 } : {}),
         title: {
           display: true,
-          text: "Вітер (м/с)",
-          color: "rgba(0, 190, 235, 1)",
+          text: rightMeta.axis,
+          color: rightMetric === "wind" ? "rgba(0, 190, 235, 1)" : rightMeta.color,
         },
-        ticks: { color: "rgba(0, 190, 235, 1)", font: { size: 10 } },
+        ticks: { color: rightMetric === "wind" ? "rgba(0, 190, 235, 1)" : rightMeta.color, font: { size: 10 } },
         grid: { drawOnChartArea: false },
       },
       x: {
@@ -2217,13 +2346,17 @@ const HOLIDAYS_2027 = {
             const isNight = context.datasetIndex === 1;
             const isWind = context.datasetIndex === 2;
             if (isDay) {
-              return `☀️ День: ${formatTemp(context.parsed.y)}`;
+              return `☀️ День: ${formatTemp(parseInt(card.daily16?.[context.dataIndex]?.temp_day))}`;
             } else if (isNight) {
-              return `🌙 Ніч: ${formatTemp(context.parsed.y)}`;
+              return `🌙 Ніч: ${formatTemp(parseInt(card.daily16?.[context.dataIndex]?.temp_night))}`;
+            } else if (isWind && rightMetric === "uv") {
+              return `☀️ УФ-індекс: ${(context.parsed.y || 0).toFixed(1)}`;
+            } else if (isWind && rightMetric === "precip") {
+              return `🌧️ Ймовірність опадів: ${Math.round(context.parsed.y || 0)}%`;
             } else if (isWind) {
               const daily = card.daily16?.[context.dataIndex];
               const direction = daily?.wind_direction_10m || 0;
-              return `🌬️ Вітер: ${context.parsed.y.toFixed(1)} м/с | ${getWindDirectionLabel(direction)} (${Math.round(direction)}°)`;
+              return `🌬️ Вітер: ${fmt.wind(parseFloat(daily?.wind_speed) || 0)} | ${getWindDirectionLabel(direction)} (${Math.round(direction)}°)`;
             }
             return "";
           },
@@ -2242,7 +2375,7 @@ const HOLIDAYS_2027 = {
       ...chartOptions.scales,
       y: {
         beginAtZero: false,
-        title: { display: true, text: "Температура (°C)", color: "#ffb36c" },
+        title: { display: true, text: `Температура (${tempSuffix})`, color: "#ffb36c" },
         ticks: { color: isDarkMode ? "#aaa" : "#888", font: { size: 10 } },
         grid: {
           color: isDarkMode
@@ -2255,12 +2388,13 @@ const HOLIDAYS_2027 = {
         display: true,
         position: "right",
         beginAtZero: true,
+        ...(rightMetric === "precip" ? { max: 100 } : {}),
         title: {
           display: true,
-          text: "Вітер (м/с)",
-          color: "#0099ff",
+          text: rightMeta.axis,
+          color: rightMeta.color,
         },
-        ticks: { color: "#0099ff", font: { size: 10 } },
+        ticks: { color: rightMeta.color, font: { size: 10 } },
         grid: { drawOnChartArea: false },
       },
       x: {
@@ -2491,7 +2625,7 @@ const HOLIDAYS_2027 = {
 
                 <div style={{ fontSize: "10px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: "700", color: "#0099ff" }}>
-                   Сила вітру: <span>{item.wind_speed || item.windSpeed || "0"} м/с</span>
+                   Сила вітру: <span>{fmt.wind(item.windNum ?? item.wind_speed ?? item.windSpeed ?? 0)}</span>
                   </div>
                   <div style={{ fontSize: "9px", opacity: 0.8 }}>
                     Напрямок: <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "12px" }}>⬇</span>
@@ -2499,7 +2633,7 @@ const HOLIDAYS_2027 = {
                    <div style={{ fontSize: "9px", opacity: 0.8 }}> {windText} ({Math.round(windDeg)}°)</div>
                   {(item.wind_gusts_10m || item.wind_gusts) && parseFloat(item.wind_gusts_10m || item.wind_gusts) > 0 && (
                     <div style={{ fontSize: "9px", color: "#ff9900", fontWeight: "600" }}>
-                      Пориви: {item.wind_gusts_10m || item.wind_gusts}м/с
+                      Пориви: {fmt.wind(item.wind_gusts_10m || item.wind_gusts)}
                     </div>
                   )}
                 </div>
@@ -2582,15 +2716,15 @@ const HOLIDAYS_2027 = {
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><BiWind style={{ color: "#00eeff" }} /> Вітер:</strong> {item.wind_speed || item.windSpeed || "0"} м/с ({windText})</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><BiWind style={{ color: "#00eeff" }} /> Вітер:</strong> {fmt.wind(item.windNum ?? item.wind_speed ?? item.windSpeed ?? 0)} ({windText})</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaDroplet style={{ color: "#4da6ff" }} /> Вологість:</strong> {item.humidity ?? card.current?.humidity ?? "—"}%</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><GiGrassMushroom style={{ color: "#00ffcc" }} /> Точка роси:</strong> {item.dew_point_2m !== undefined ? formatTemp(item.dew_point_2m) : "—"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaCloudRain style={{ color: "#3399ff" }} /> Опади:</strong> {item.precipitation !== undefined ? `${item.precipitation} мм` : "0 мм"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaSnowflake style={{ color: "#80d4ff" }} /> Сніг:</strong> {item.snowfall !== undefined ? `${item.snowfall} см` : "0 см"}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaCloudRain style={{ color: "#3399ff" }} /> Опади:</strong> {fmt.precip(item.precipitation ?? 0)}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaSnowflake style={{ color: "#80d4ff" }} /> Сніг:</strong> {fmt.snow(item.snowfall ?? 0)}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><GiIceCube style={{ color: "#00cdff" }} /> Ґрунт:</strong> {item.soil_temperature_0cm !== undefined ? formatTemp(item.soil_temperature_0cm) : "—"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><PiThermometerFill style={{ color: "#ff9d3b" }} /> Рівень 0°C:</strong> {item.freezing_level_height !== undefined ? `${item.freezing_level_height}м` : "—"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><GiWaterRecycling style={{ color: "#00eeff" }} /> Випаровування:</strong> {item.evapotranspiration !== undefined ? `${parseFloat(item.evapotranspiration).toFixed(2)} мм` : "—"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><MdOutlineSpeed style={{ color: "#ffb36c" }} /> Тиск:</strong> {item.pressure ?? card.current?.pressure ?? "—"} hPa</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><PiThermometerFill style={{ color: "#ff9d3b" }} /> Рівень 0°C:</strong> {item.freezing_level_height !== undefined ? fmt.height(item.freezing_level_height) : "—"}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><GiWaterRecycling style={{ color: "#00eeff" }} /> Випаровування:</strong> {item.evapotranspiration !== undefined ? fmt.precip(item.evapotranspiration, 2) : "—"}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><MdOutlineSpeed style={{ color: "#ffb36c" }} /> Тиск:</strong> {fmt.pressure(item.pressure_msl ?? item.pressure ?? card.current?.pressure)}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaCloud style={{ color: "#aaa" }} /> Хмари:</strong> {item.cloud_cover ?? card.current?.cloud_cover ?? "—"}%</div>
                 </div>
               </div>
@@ -2680,11 +2814,11 @@ const HOLIDAYS_2027 = {
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><BiWind style={{ color: "#00eeff" }} /> Вітер:</strong> {d.wind_speed || "0"} м/с ({windText})</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><BiWind style={{ color: "#00eeff" }} /> Вітер:</strong> {fmt.wind(d.wind_speed ?? 0)} ({windText})</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaSun style={{ color: "#ffd700" }} /> УФ-індекс:</strong> {d.uv_index ?? "—"}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaDroplet style={{ color: "#4da6ff" }} /> Ймовірність опадів:</strong> {d.pop !== undefined ? `${d.pop}%` : "—"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaCloudRain style={{ color: "#3399ff" }} /> Дощ:</strong> {d.rain !== undefined ? `${d.rain} мм` : "0.0 мм"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><GiWaterRecycling style={{ color: "#00eeff" }} /> Випаровування:</strong> {d.evapotranspiration !== undefined ? `${parseFloat(d.evapotranspiration).toFixed(2)} мм` : "—"}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaCloudRain style={{ color: "#3399ff" }} /> Дощ:</strong> {fmt.precip(d.rain ?? 0)}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><GiWaterRecycling style={{ color: "#00eeff" }} /> Випаровування:</strong> {d.evapotranspiration !== undefined ? fmt.precip(d.evapotranspiration, 2) : "—"}</div>
                 </div>
               </div>
             );
@@ -2865,7 +2999,7 @@ const HOLIDAYS_2027 = {
           $isMain={card.isMain}
           style={{
             position: "relative",
-            zIndex: 10,
+            zIndex: 300,
             background: isDarkMode ? "#040404" : "rgb(246, 246, 246)",
           }}
         >
@@ -3022,33 +3156,23 @@ const HOLIDAYS_2027 = {
                 >
                   <div style={{ display: "flex", gap: "6px" }}>
                   <span style={{ fontSize: "15px", fontWeight: "bold", color: isDarkMode ? "#ccc" : "#444" }}>Одиниці:</span>
-                  <div style={{ display: "flex", gap: "4px" }}>
-                    {[
-                      { key: "C", label: "°C (Рекомендовано)" },
-                      { key: "K", label: "K (Кельвіни)" },
-                      { key: "F", label: "°F (Фаренгейти)" },
-                    ].map((u) => (
-                      <Tooltip content={u.label} isDarkMode={isDarkMode}>
-                        <button
-                          key={u.key}
-                          onClick={() => changeTempUnit(u.key)}
-                          aria-label={u.label}
-                          style={{
-                          padding: "2px 15px",
-                          fontSize: "13px",
-                          borderRadius: "4px",
-                          border: unit === u.key ? "1px solid #00eeff" : "1px solid #faf9f9",
-                          background: unit === u.key ? (isDarkMode ? "#00eeff" : "#008cff") : "transparent",
-                          color: unit === u.key ? "#000" : (isDarkMode ? "#fff" : "#000"),
-                          fontWeight: unit === u.key ? "bold" : "normal",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {u.key === "C" ? "°C" : u.key === "K" ? "K" : "°F"}
-                      </button>
-                      </Tooltip>
-                    ))}
-                    </div>
+                  <Tooltip content="Температура, вітер, тиск та інші одиниці виміру" isDarkMode={isDarkMode}>
+                    <button
+                      onClick={() => setIsUnitsModalOpen(true)}
+                      aria-label="Налаштувати одиниці виміру"
+                      style={{
+                        padding: "2px 15px",
+                        fontSize: "13px",
+                        borderRadius: "4px",
+                        border: "1px solid #00eeff",
+                        background: "transparent",
+                        color: isDarkMode ? "#fff" : "#000",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {tempLabel(units.temp)} · {windLabel(units.wind)} · {pressureLabel(units.pressure)}
+                    </button>
+                  </Tooltip>
                   </div>
                   <Tooltip content="Закрити меню" isDarkMode={isDarkMode}>
                   <button
@@ -3089,16 +3213,6 @@ const HOLIDAYS_2027 = {
                   >
                     <BiImageAlt  /> Змінити фон
                   </SettingsDropdownItem>
-                  <SettingsDropdownItem
-                  isDarkMode={isDarkMode}
-                  onClick={() => {
-                    handleAiToggle();
-                    handleCloseDropdown();
-                  }}
-                > 
-                  <BiBrain />{" "}
-                  {isAiEnabled ? "Вимкнути ШІ" : "Увімкнути ШІ"}
-                </SettingsDropdownItem>
                 <SettingsDropdownItem
                   isDarkMode={isDarkMode}
                   onClick={() => {
@@ -3230,7 +3344,7 @@ const HOLIDAYS_2027 = {
             { key: "current", label: "Зараз" },
             { key: "hourly",  label: "Годинна" },
             { key: "daily",   label: "Місячна" },
-            { key: "ai",      label: forecastMode === "rules" ? "Смарт" : "ШІ" },
+            { key: "ai",      label: "Смарт" },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -3296,10 +3410,10 @@ const HOLIDAYS_2027 = {
   <IndicatorCard aria-label={`Вітер: ${card.current.wind_speed}, Напрямок: ${card.current.wind_direction_10m}° (${getWindDirectionText(card.current.wind_direction_10m)}), Пориви: ${card.current.wind_gusts_10m} м/с`}>
     <IconBox $size="28px" $rotate={Math.round((card.current.wind_direction_10m || 0) / 45) * 45 % 360}>⬇</IconBox>
     <TextContent $mt="-5px">
-      Швидкість вітру: {card.current.wind_speed}
+      Швидкість вітру: {fmt.wind(card.current.windNum ?? card.current.wind_speed)}
       <SubText>{card.current.wind_direction_10m}° {getWindDirectionText(card.current.wind_direction_10m)}</SubText>
       <SubText $weight="bold" $opacity={0.9} style={{ color: isExtremeWind ? "#ff4d4d" : "inherit" }}>
-        Пориви: {card.current.wind_gusts_10m}м/с
+        Пориви: {fmt.wind(card.current.wind_gusts_10m)}
       </SubText>
     </TextContent>
   </IndicatorCard>
@@ -3315,7 +3429,7 @@ const HOLIDAYS_2027 = {
     <IconBox $color={parseFloat(card.current.pressure) < 1000 ? "#4da6ff" : parseFloat(card.current.pressure) > 1020 ? "#ff4d4d" : "inherit"}>
       <MdOutlineSpeed />
     </IconBox>
-    <TextContent>Атмосферний тиск: {card.current.pressure}</TextContent>
+    <TextContent>Атмосферний тиск: {fmt.pressure(card.current.pressure)}</TextContent>
   </IndicatorCard>
 
   <IndicatorCard aria-label="Хмарність">
@@ -3332,7 +3446,7 @@ const HOLIDAYS_2027 = {
     >
       <FaSmog />
     </IconBox>
-    <TextContent $size="10px">Видимість:{card.current.visibility !== undefined ? (card.current.visibility / 1000).toFixed(1) : "—"}км</TextContent>
+    <TextContent $size="10px">Видимість: {card.current.visibility !== undefined ? fmt.visibility(card.current.visibility / 1000) : "—"}</TextContent>
   </IndicatorCard>
 
   <IndicatorCard aria-label="УФ-індекс / Сонячна радіація" $pad="10px">
@@ -3348,7 +3462,7 @@ const HOLIDAYS_2027 = {
         <FaSnowflake />
       </IconBox>
       <TextContent $size="10px">
-        Сніг: {card.current.snow_depth ? `${(card.current.snow_depth * 100).toFixed(1)} см` : "0 см"}
+        Сніг: {fmt.snow((card.current.snow_depth || 0) * 100)}
       </TextContent>
     </IndicatorCard>
   </Tooltip>
@@ -3360,7 +3474,7 @@ const HOLIDAYS_2027 = {
       </IconBox>
       <TextContent $size="10px">
         Ґрунт: {card.current.soil_temperature_0cm !== undefined ? formatTemp(card.current.soil_temperature_0cm) : "—"}
-        <SubText $size="9px">Рівень 0°C: {card.current.freezing_level_height ?? "—"}м</SubText>
+        <SubText $size="9px">Рівень 0°C: {card.current.freezing_level_height != null ? fmt.height(card.current.freezing_level_height) : "—"}</SubText>
       </TextContent>
     </IndicatorCard>
   </Tooltip>
@@ -3371,7 +3485,7 @@ const HOLIDAYS_2027 = {
         <GiWaterRecycling />
       </IconBox>
       <TextContent $size="10px">
-        Випаровування: {card.current.evapotranspiration !== undefined ? `${card.current.evapotranspiration.toFixed(2)} мм` : "0 мм"}
+        Випаровування: {fmt.precip(card.current.evapotranspiration ?? 0, 2)}
       </TextContent>
     </IndicatorCard>
   </Tooltip>
@@ -3396,24 +3510,6 @@ const HOLIDAYS_2027 = {
               >
                 <h4 style={{ margin: 0, fontSize: "14px" }}>Годинний прогноз</h4>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <ViewToggleGroup $isDarkMode={isDarkMode} style={{ borderRadius: "8px", padding: "2px" }}>
-                    {[
-                      { key: "C", label: "°C" },
-                      { key: "K", label: "K" },
-                      { key: "F", label: "°F" },
-                    ].map((u) => (
-                      <ViewToggleButton
-                        key={u.key}
-                        $active={unit === u.key}
-                        $isDarkMode={isDarkMode}
-                        onClick={() => changeTempUnit(u.key)}
-                        title={`Переключити на ${u.key}`}
-                        style={{ padding: "3px 8px", fontSize: "12px" }}
-                      >
-                        {u.label}
-                      </ViewToggleButton>
-                    ))}
-                  </ViewToggleGroup>
                   <ViewToggleGroup $isDarkMode={isDarkMode}>
                     <ViewToggleButton
                       $active={hourlyViewMode === "charts"}
@@ -3487,7 +3583,7 @@ const HOLIDAYS_2027 = {
                   >
                     {renderChartHeader("hourly", hourlyChartPanelRef, [
                       { key: "day", label: "Температура", color: "#ffb36c", icon: <BsThermometerSun /> },
-                      { key: "wind", label: "Вітер", color: "#0099ff", icon: <BiWind /> },
+                      { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
                     ])}
                     <div style={{ position: "relative", width: "100%" }}>
                       <ChartScrollWrapper>
@@ -3564,24 +3660,6 @@ const HOLIDAYS_2027 = {
                   Прогноз на 16 днів (включаючи 2 минулі дні)
                 </h4>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <ViewToggleGroup $isDarkMode={isDarkMode} style={{ borderRadius: "8px", padding: "2px" }}>
-                    {[
-                      { key: "C", label: "°C" },
-                      { key: "K", label: "K" },
-                      { key: "F", label: "°F" },
-                    ].map((u) => (
-                      <ViewToggleButton
-                        key={u.key}
-                        $active={unit === u.key}
-                        $isDarkMode={isDarkMode}
-                        onClick={() => changeTempUnit(u.key)}
-                        title={`Переключити на ${u.key}`}
-                        style={{ padding: "3px 8px", fontSize: "12px" }}
-                      >
-                        {u.label}
-                      </ViewToggleButton>
-                    ))}
-                  </ViewToggleGroup>
                   <ViewToggleGroup $isDarkMode={isDarkMode}>
                     <ViewToggleButton
                       $active={dailyViewMode === "charts"}
@@ -3624,12 +3702,12 @@ const HOLIDAYS_2027 = {
                     background: isDarkMode ? "rgba(0, 0, 0, 0.7)" : "rgba(255, 255, 255, 0.7)",
                     backdropFilter: "blur(4px)",
                     borderBottom: "1px solid #ffb36c",
-                    zIndex: 100,
+                    zIndex: 10,
                   }}>
                     {renderChartLegend([
                       { key: "day", label: "День", color: "#ffb36c", icon: <FaSun /> },
                       { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
-                      { key: "wind", label: "Вітер", color: "#0099ff", icon: <BiWind /> },
+                      { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
                     ])}
                     {renderChartActions("daily", dailyChartPanelRef)}
                   </div>
@@ -3649,7 +3727,7 @@ const HOLIDAYS_2027 = {
                     {fullscreenChart === "daily" && renderChartHeader("daily", dailyChartPanelRef, [
                       { key: "day", label: "День", color: "#ffb36c", icon: <FaSun /> },
                       { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
-                      { key: "wind", label: "Вітер", color: "#0099ff", icon: <BiWind /> },
+                      { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
                     ])}
                     <div style={{ position: "relative", width: "100%" }}>
                       <ChartScrollWrapper ref={dailyChartRef}>
@@ -3736,46 +3814,13 @@ const HOLIDAYS_2027 = {
                     : "1px solid rgba(0, 0, 0, 0.1)",
                 }}
               >
-                <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
-                  <ModePillButton
-                    $active={forecastMode === "rules"}
-                    $isDarkMode={isDarkMode}
-                    onClick={() => handleForecastModeChange("rules")}
-                    title="Аналіз на базі умов, збігів та фізичних параметрів без ШІ та інтернету"
-                  >
-                    <BiLineChart style={{ fontSize: "14px" }} />
-                    <span>Смарт-правила (Офлайн)</span>
-                  </ModePillButton>
-                  <ModePillButton
-                    $active={forecastMode === "ai"}
-                    $isDarkMode={isDarkMode}
-                    onClick={() => handleForecastModeChange("ai")}
-                    title="Генеративний прогноз від моделі Google Gemini AI"
-                  >
-                    <BiBrain style={{ fontSize: "14px" }} />
-                    <span>Нейромережа (Gemini)</span>
-                  </ModePillButton>
+                <div
+                  style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "12px", fontWeight: 700, color: isDarkMode ? "#00eeff" : "#0066aa" }}
+                  title="Аналіз на базі умов, збігів та фізичних параметрів без ШІ та інтернету"
+                >
+                  <BiLineChart style={{ fontSize: "14px" }} />
+                  <span>Системні повідомлення</span>
                 </div>
-
-                {forecastMode === "ai" && (
-                  <button
-                    className="ai-edit-btn"
-                    onClick={() => setIsEditingPrompt(!isEditingPrompt)}
-                    style={{
-                      background: "rgba(138, 43, 226, 0.2)",
-                      border: "1px solid rgba(138, 43, 226, 0.6)",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontWeight: 600,
-                      fontSize: "11px",
-                      color: isDarkMode ? "#fff" : "#000",
-                      padding: "4px 8px",
-                      transition: "all 0.2s",
-                    }}
-                  >
-                    {isEditingPrompt ? "Повернутися" : "Промпт & Стиль"}
-                  </button>
-                )}
 
                 {forecastMode === "rules" && (
                   <div style={{ display: "flex", gap: "6px" }}>
@@ -4362,16 +4407,14 @@ const HOLIDAYS_2027 = {
         </DesktopLayoutWrapper>
       </WeatherCard>
 
-      {isAiModalOpen && (
+      {isAiModalOpen && createPortal(
         <div
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
+            inset: 0,
             background: "rgba(0,0,0,0.75)",
-            zIndex: 1300,
+            backdropFilter: "blur(4px)",
+            zIndex: 3000,
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -4379,51 +4422,135 @@ const HOLIDAYS_2027 = {
           onClick={() => setIsAiModalOpen(false)}
         >
           <div
+            role="dialog"
+            aria-label="Повний звіт прогнозу"
             style={{
               background: isDarkMode ? "#1a1a2e" : "#fff",
               border: `1px solid ${forecastMode === "rules" ? "rgba(0,238,255,0.6)" : "rgba(138,43,226,0.5)"}`,
               borderRadius: "12px",
               padding: "20px",
-              width: "90%",
-              maxWidth: "520px",
-              maxHeight: "80vh",
+              width: "95%",
+              maxWidth: "95vw",
+              maxHeight: "92vh",
               overflowY: "auto",
               color: isDarkMode ? "#efefff" : "#222",
-              fontSize: "13px",
+              fontSize: "14px",
               lineHeight: 1.6,
               whiteSpace: "pre-line",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
               <span
                 style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
                   fontWeight: 800,
                   color: forecastMode === "rules" ? "#00eeff" : "#b362ff",
                   fontSize: "14px",
                   letterSpacing: "1px",
                 }}
               >
+                {forecastMode === "rules" ? <BiLineChart size={22} /> : <BiBrain size={22} />}
                 {forecastMode === "rules"
                   ? "Смарт-прогноз (Офлайн / Правила) — повний звіт"
                   : "Прогноз ШІ (Gemini) — повний текст"}
               </span>
-              <button
-                onClick={() => setIsAiModalOpen(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: forecastMode === "rules" ? "#00eeff" : "#b362ff",
-                  fontSize: "18px",
-                  cursor: "pointer",
-                }}
-              >
-                ✕
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                {forecastMode === "rules" && (
+                  <button
+                    onClick={() => {
+                      if (ruleForecast?.fullText) {
+                        navigator.clipboard?.writeText(ruleForecast.fullText);
+                        setCopiedForecast(true);
+                        setTimeout(() => setCopiedForecast(false), 2000);
+                      }
+                    }}
+                    title="Скопіювати текст прогнозу"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      background: copiedForecast ? "rgba(0,255,150,0.2)" : "rgba(0,238,255,0.12)",
+                      border: `1px solid ${copiedForecast ? "#00ff96" : "rgba(0,238,255,0.5)"}`,
+                      color: copiedForecast ? "#00ff96" : "#00eeff",
+                      borderRadius: "6px",
+                      padding: "4px 8px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <BiCheck size={16} />
+                    {copiedForecast ? "Скопійовано!" : "Скопіювати"}
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsAiModalOpen(false)}
+                  aria-label="Закрити"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: forecastMode === "rules" ? "#00eeff" : "#b362ff",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    padding: "2px",
+                  }}
+                >
+                  <BiX size={30} />
+                </button>
+              </div>
             </div>
-            {forecastMode === "rules" ? (ruleForecast?.fullText || "Дані формуються...") : cleanAiText(aiSummary)}
+            {forecastMode === "rules" ? (
+              ruleForecast ? (
+                <div style={{ whiteSpace: "normal", display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 20px", opacity: 0.85 }}>
+                    <ReportLine icon={<BiCurrentLocation />} color="#00eeff">Прогноз для {ruleForecast.locationName}</ReportLine>
+                    <ReportLine icon={<FaClock />} color="#aaa">Час: {forecastTimeString || "зараз"}</ReportLine>
+                  </div>
+
+                  <ReportSection title="Добовий баланс" icon={<FaSun />} color="#ffb36c">
+                    <ReportLine icon={<PiThermometerFill />} color="#ffb36c">{ruleForecast.dayNight?.message}</ReportLine>
+                  </ReportSection>
+
+                  <ReportSection title="Погодинні зміни" icon={<BsClockHistory />} color="#00b7ff">
+                    <ReportLine icon={<FaCloudRain />} color="#14b8a6">{ruleForecast.hourlyData?.rainWindowText}</ReportLine>
+                    <ReportLine icon={<BsThermometerSun />} color="#ff9d3b">{ruleForecast.hourlyData?.peakTempText}</ReportLine>
+                    <ReportLine icon={<BiWind />} color="#00b7ff">{ruleForecast.hourlyData?.windTrendText}</ReportLine>
+                  </ReportSection>
+
+                  <ReportSection title="Тижневий тренд" icon={<FaCalendarDays />} color="#b362ff">
+                    <ReportLine icon={<BiLineChart />} color="#b362ff">{ruleForecast.weeklyData?.trendText}</ReportLine>
+                    <ReportLine icon={<FaCloud />} color="#aaa">{ruleForecast.weeklyData?.weekSummaryText}</ReportLine>
+                  </ReportSection>
+
+                  {ruleForecast.atmosphereNotes?.length > 0 && (
+                    <ReportSection title="Атмосферні фактори" icon={<FaGauge />} color="#4da6ff">
+                      {ruleForecast.atmosphereNotes.map((n, i) => (
+                        <ReportLine key={i} icon={REPORT_ICONS[n.type] || <FaExclamationTriangle />} color={REPORT_COLORS[n.type] || "#4da6ff"}>
+                          <b>{n.title}:</b> {n.text}
+                        </ReportLine>
+                      ))}
+                    </ReportSection>
+                  )}
+
+                  {ruleForecast.lifestyleAdvice?.length > 0 && (
+                    <ReportSection title="Рекомендації та гардероб" icon={<FaLightbulb />} color="#4ade80">
+                      {ruleForecast.lifestyleAdvice.map((a, i) => (
+                        <ReportLine key={i} icon={REPORT_ICONS[a.type] || <FaLightbulb />} color={REPORT_COLORS[a.type] || "#4ade80"}>
+                          <b>{a.title}</b> {a.text}
+                        </ReportLine>
+                      ))}
+                    </ReportSection>
+                  )}
+                </div>
+              ) : "Дані формуються..."
+            ) : cleanAiText(aiSummary)}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
 
@@ -4432,6 +4559,15 @@ const HOLIDAYS_2027 = {
           isDarkMode={isDarkMode}
           currentCardId={card.id}
           onClose={() => setIsCustomDatesModalOpen(false)}
+        />
+      )}
+
+      {isUnitsModalOpen && (
+        <UnitsModal
+          units={units}
+          onChange={changeUnits}
+          isDarkMode={isDarkMode}
+          onClose={() => setIsUnitsModalOpen(false)}
         />
       )}
 

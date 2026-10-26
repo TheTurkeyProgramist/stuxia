@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import localforage from "localforage";
+import { DEFAULT_UNITS, makeFormatters } from "../../utils/units.js";
 import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import { getHourlyForecastDayGroups } from "../../utils/hourlyForecast";
@@ -286,8 +288,22 @@ const HourlyTable = styled.div`
 const WeatherDetailsModal = ({ isOpen, onClose, card, isDarkMode }) => {
   const [activeTab, setActiveTab] = useState("hourly");
   const [selectedHourlyDay, setSelectedHourlyDay] = useState(0);
+  const [units, setUnits] = useState(DEFAULT_UNITS);
+
+  useEffect(() => {
+    localforage.getItem("units_settings").then((saved) => {
+      if (saved) setUnits({ ...DEFAULT_UNITS, ...saved });
+    });
+    const onUnits = (e) => {
+      if (e.detail) setUnits({ ...DEFAULT_UNITS, ...e.detail });
+    };
+    window.addEventListener("unitsChanged", onUnits);
+    return () => window.removeEventListener("unitsChanged", onUnits);
+  }, []);
 
   if (!isOpen || !card) return null;
+
+  const fmt = makeFormatters(units);
 
   const current = card.current || {};
   const hourly = card.hourly || [];
@@ -560,7 +576,7 @@ const WeatherDetailsModal = ({ isOpen, onClose, card, isDarkMode }) => {
                   <div className="content">
                     <span className="label">Сніг / Замерзання ґрунту</span>
                     <span className="val">
-                      {current.snow_depth ? `${(current.snow_depth * 100).toFixed(1)} см` : "0 см"} | Ґрунт: {current.soil_temperature_0cm ?? 0}°C
+                      {fmt.snow((current.snow_depth || 0) * 100)} | Ґрунт: {fmt.temp(current.soil_temperature_0cm ?? 0)}
                     </span>
                   </div>
                 </AstroCard>
@@ -569,7 +585,7 @@ const WeatherDetailsModal = ({ isOpen, onClose, card, isDarkMode }) => {
                   <div className="icon">💧</div>
                   <div className="content">
                     <span className="label">Випаровування (ET0)</span>
-                    <span className="val">{current.evapotranspiration ? `${current.evapotranspiration.toFixed(2)} мм` : "0 мм"}</span>
+                    <span className="val">{fmt.precip(current.evapotranspiration ?? 0, 2)}</span>
                   </div>
                 </AstroCard>
               </AstroGrid>
@@ -580,7 +596,7 @@ const WeatherDetailsModal = ({ isOpen, onClose, card, isDarkMode }) => {
                     <tr>
                       <th>Час</th>
                       <th>Температура<br/>(Відчувається)</th>
-                      <th>Вітер (м/с)<br/>Напрям</th>
+                      <th>{fmt.windAxis}<br/>Напрям</th>
                       <th>Вологість<br/>Точка роси</th>
                       <th>Опади / Сніг</th>
                       <th>Замерзання 0°C / Ґрунт</th>
@@ -604,25 +620,25 @@ const WeatherDetailsModal = ({ isOpen, onClose, card, isDarkMode }) => {
                                     : "#ffb36c"
                               }
                             >
-                              {h.tempNum}°C
+                              {fmt.temp(h.tempNum)}
                             </DangerHighlight>
                           ) : (
-                            `${h.tempNum !== undefined ? h.tempNum : "—"}°C`
+                            h.tempNum !== undefined ? fmt.temp(h.tempNum) : "—"
                           )}
                           <br/>
                           <span style={{ fontSize: "10px", opacity: 0.7 }}>
-                            ({h.feels_like !== undefined ? h.feels_like : "—"})
+                            ({h.feels_like !== undefined ? fmt.temp(h.feels_like) : "—"})
                           </span>
                         </td>
                         <td>
                           {h.windNum !== undefined && h.windNum > 10 ? (
                             <DangerHighlight $color="#ff9800">
-                              {h.windNum.toFixed(1)} м/с
+                              {fmt.wind(h.windNum)}
                             </DangerHighlight>
                           ) : (
-                            `${h.windNum !== undefined ? h.windNum.toFixed(1) : "—"}`
+                            h.windNum !== undefined ? fmt.wind(h.windNum) : "—"
                           )}
-                          {h.wind_gusts_10m ? ` (${h.wind_gusts_10m.toFixed(1)})` : ""}
+                          {h.wind_gusts_10m ? ` (${fmt.wind(h.wind_gusts_10m)})` : ""}
                           <br/>
                           <span style={{ fontSize: "10px" }}>{getWindDirectionText(h.wind_direction_10m)}</span>
                         </td>
@@ -630,28 +646,28 @@ const WeatherDetailsModal = ({ isOpen, onClose, card, isDarkMode }) => {
                           {h.relative_humidity_2m ?? "—"}%
                           <br/>
                           <span style={{ fontSize: "10px", opacity: 0.7 }}>
-                            TR: {h.dew_point_2m !== undefined ? `${h.dew_point_2m}°C` : "—"}
+                            TR: {h.dew_point_2m !== undefined ? fmt.temp(h.dew_point_2m) : "—"}
                           </span>
                         </td>
                         <td>
-                          {h.precipitation !== undefined ? h.precipitation.toFixed(1) : "—"} мм
+                          {h.precipitation !== undefined ? fmt.precip(h.precipitation) : "—"}
                           <br/>
                           <span style={{ fontSize: "10px", opacity: 0.7 }}>
-                            {h.snow_depth ? `Сніг: ${(h.snow_depth * 100).toFixed(1)}см` : "Без снігу"}
+                            {h.snow_depth ? `Сніг: ${fmt.snow(h.snow_depth * 100)}` : "Без снігу"}
                           </span>
                         </td>
                         <td>
-                          {h.freezing_level_height ? `${h.freezing_level_height}м` : "—"}
+                          {h.freezing_level_height ? fmt.height(h.freezing_level_height) : "—"}
                           <br/>
                           <span style={{ fontSize: "10px", opacity: 0.7 }}>
-                            Ґрунт: {h.soil_temperature_0cm !== undefined ? `${h.soil_temperature_0cm}°C` : "—"}
+                            Ґрунт: {h.soil_temperature_0cm !== undefined ? fmt.temp(h.soil_temperature_0cm) : "—"}
                           </span>
                         </td>
                         <td>
-                          {h.evapotranspiration !== undefined ? `${h.evapotranspiration.toFixed(2)} мм` : "0 мм"}
+                          {fmt.precip(h.evapotranspiration ?? 0, 2)}
                         </td>
                         <td>
-                          {h.pressure_msl ? Math.round(h.pressure_msl) : "—"} hPa
+                          {h.pressure_msl ? fmt.pressure(h.pressure_msl) : "—"}
                           <br/>
                           <span style={{ fontSize: "10px", opacity: 0.7 }}>
                             Хмари: {h.cloud_cover ?? "—"}%
@@ -682,7 +698,7 @@ const WeatherDetailsModal = ({ isOpen, onClose, card, isDarkMode }) => {
                       <th>Вітер</th>
                       <th>УФ</th>
                       <th>Опади %</th>
-                      <th>Дощ (мм)</th>
+                      <th>Дощ</th>
                       <th>Випаровування (ET0)</th>
                     </tr>
                   </thead>
@@ -698,20 +714,20 @@ const WeatherDetailsModal = ({ isOpen, onClose, card, isDarkMode }) => {
                                 parseInt(d.temp_day) > 30 ? "#ff6b6b" : "#4169e1"
                               }
                             >
-                              {d.temp_day}
+                              {fmt.temp(d.temp_day)}
                             </DangerHighlight>
                           ) : (
-                            d.temp_day
+                            fmt.temp(d.temp_day)
                           )}
                         </td>
-                        <td>{d.temp_night}</td>
+                        <td>{fmt.temp(d.temp_night)}</td>
                         <td>
                           {parseFloat(d.wind_speed) > 10 ? (
                             <DangerHighlight $color="#ff9800">
-                              {d.wind_speed}
+                              {fmt.wind(d.wind_speed)}
                             </DangerHighlight>
                           ) : (
-                            d.wind_speed
+                            fmt.wind(d.wind_speed)
                           )}
                         </td>
                         <td>
@@ -725,10 +741,10 @@ const WeatherDetailsModal = ({ isOpen, onClose, card, isDarkMode }) => {
                         </td>
                         <td>{d.precipitation_probability_max ?? "—"}%</td>
                         <td>
-                          {d.rain_sum !== undefined ? d.rain_sum.toFixed(1) : "—"}
+                          {d.rain_sum !== undefined ? fmt.precip(d.rain_sum) : "—"}
                         </td>
                         <td>
-                          {d.evapotranspiration !== undefined ? `${d.evapotranspiration.toFixed(2)} мм` : "—"}
+                          {d.evapotranspiration !== undefined ? fmt.precip(d.evapotranspiration, 2) : "—"}
                         </td>
                       </tr>
                     ))}

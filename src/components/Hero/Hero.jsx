@@ -250,7 +250,8 @@ const BgLayerStyled = styled.div`
     width 0.5s ease,
     height 0.5s ease,
     z-index 0s;
-  transform: scale(
+  transform: translateZ(0)
+    scale(
       ${(props) => (props.$zoom || 1) * (props.$rotationScale || 1)}
     )
     rotate(${(props) => props.$rotation || 0}deg);
@@ -471,6 +472,11 @@ const BgLayer = React.memo((props) => {
           fetchPriority={$active ? "high" : "low"}
           loading={$active ? "eager" : "lazy"}
           decoding="async"
+          onLoad={(e) => {
+            // Одразу декодуємо картинку, щоб текстура була готова для GPU
+            // до першого показу (без підвисання при зміні фону).
+            e.currentTarget.decode?.().catch(() => {});
+          }}
           style={{
             width: "100%",
             height: "100%",

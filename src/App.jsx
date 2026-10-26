@@ -1879,7 +1879,7 @@ const App = () => {
           }
         }
 
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&hourly=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset&timezone=auto&past_days=1&forecast_days=16`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm,uv_index,precipitation_probability&hourly=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset&timezone=auto&past_days=1&forecast_days=16`;
         console.log("Fetching weather from URL:", url);
         // Кеш відповіді Open-Meteo: 10 хв на пару координат
         const cacheKey = `om_cache_${Number(targetLat).toFixed(2)},${Number(targetLon).toFixed(2)}`;
@@ -2082,6 +2082,9 @@ const App = () => {
                     d.hourly?.relative_humidity_2m?.[dataIdx] ?? null,
                   dew_point_2m: d.hourly?.dew_point_2m?.[dataIdx] ?? 0,
                   precipitation: d.hourly?.precipitation?.[dataIdx] ?? null,
+                  precipitation_probability:
+                    d.hourly?.precipitation_probability?.[dataIdx] ?? 0,
+                  uv_index: d.hourly?.uv_index?.[dataIdx] ?? 0,
                   rain: d.hourly?.rain?.[dataIdx] ?? null,
                   pressure_msl: d.hourly?.pressure_msl?.[dataIdx] ?? null,
                   cloud_cover: d.hourly?.cloud_cover?.[dataIdx] ?? null,
