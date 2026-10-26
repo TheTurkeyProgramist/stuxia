@@ -11,7 +11,7 @@ import { FaMapLocationDot } from "react-icons/fa6";
 import { LuFullscreen } from "react-icons/lu";
 import { CgMiniPlayer } from "react-icons/cg";
 import { GiLockedChest } from "react-icons/gi";
-import turkey from "../../photos/cursors/turkey-compressed.webm";
+import turkey from "../../photos/cursors/turkey-compressed-small.webm";
 import toast, { Toaster } from "react-hot-toast";
 // Ctrl + Shift + M: Активувати/деактивувати мапу
 // Ctrl + Shift + F: Відкрити на весь екран

@@ -14,7 +14,7 @@ import { GiSpikedDragonHead, GiTimeBomb } from "react-icons/gi";
 import readerfour from "../../photos/cursors/readerfour.webp";
 import readertwo from "../../photos/cursors/readertwo.webp";
 import readerthree from "../../photos/cursors/readerthree.webp";
-import readerVideo from "../../photos/cursors/reader-nobg.webm";
+import readerVideo from "../../photos/cursors/reader-nobg-small.webm";
 
 const frames = [
   reader,
