@@ -1,14 +1,18 @@
-.logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #ffe21c);
-}
 :root {
+  --accent: #70e6ce;
+  --accent-2: #5aa9ff;
+  --ink: #eef4f8;
+  --ink-soft: rgba(238, 244, 248, 0.72);
+  --glass: rgba(17, 27, 49, 0.55);
+  --glass-border: rgba(112, 230, 206, 0.25);
+
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
 
-  color: #0f0f0f;
-  background-color: #f6f6f6;
+  color: var(--ink);
+  background-color: #0b1220;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -17,96 +21,370 @@
   -webkit-text-size-adjust: 100%;
 }
 
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ---------- Фон ---------- */
+
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.bg__image {
+  position: absolute;
+  inset: -5%;
+  background: url("/assets/bg-fog.webp") center / cover no-repeat;
+  animation: bg-drift 30s ease-in-out infinite alternate;
+}
+
+.bg__fog {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(ellipse at 30% 60%, rgba(200, 225, 235, 0.18), transparent 55%),
+    radial-gradient(ellipse at 75% 40%, rgba(112, 230, 206, 0.12), transparent 50%);
+  animation: fog-move 18s ease-in-out infinite alternate;
+}
+
+.bg__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(11, 18, 32, 0.35), rgba(11, 18, 32, 0.85));
+}
+
+@keyframes bg-drift {
+  from {
+    transform: scale(1) translate(0, 0);
+  }
+  to {
+    transform: scale(1.12) translate(-2%, -1.5%);
+  }
+}
+
+@keyframes fog-move {
+  from {
+    transform: translateX(-6%) rotate(0deg);
+  }
+  to {
+    transform: translateX(6%) rotate(2deg);
+  }
+}
+
+/* ---------- Контент ---------- */
+
 .container {
   margin: 0;
-  padding-top: 10vh;
+  padding: 10vh 16px 160px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   text-align: center;
+  perspective: 900px;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.6em;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  background: linear-gradient(90deg, var(--ink), var(--accent), var(--ink));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+
+p {
+  color: var(--ink-soft);
 }
 
 .logo {
   height: 6em;
   padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
+  will-change: filter, transform;
+  transition:
+    filter 0.75s,
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logo:hover {
+  transform: translateY(-6px) scale(1.08) rotate(-4deg);
 }
 
 .logo.tauri:hover {
   filter: drop-shadow(0 0 2em #24c8db);
 }
 
+.logo.vanilla:hover {
+  filter: drop-shadow(0 0 2em #ffe21c);
+}
+
 .row {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--accent);
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #535bf2;
+  color: #24c8db;
 }
 
-h1 {
-  text-align: center;
-}
+/* ---------- Поля ---------- */
 
 input,
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+  color: var(--ink);
+  background-color: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  outline: none;
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s,
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+input {
+  min-width: 0;
+  width: 220px;
+}
+
+input::placeholder {
+  color: rgba(238, 244, 248, 0.45);
+}
+
+input:focus {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px rgba(112, 230, 206, 0.2),
+    0 10px 28px rgba(0, 0, 0, 0.45);
+  transform: translateY(-3px) scale(1.03);
+}
+
+input.is-typing {
+  animation: key-pop 0.22s ease-out;
+}
+
+@keyframes key-pop {
+  0% {
+    transform: translateY(-3px) scale(1.03);
+  }
+  45% {
+    transform: translateY(-5px) scale(1.06) rotate(-0.6deg);
+    box-shadow:
+      0 0 0 5px rgba(112, 230, 206, 0.28),
+      0 12px 30px rgba(0, 0, 0, 0.45);
+  }
+  100% {
+    transform: translateY(-3px) scale(1.03);
+  }
 }
 
 button {
   cursor: pointer;
+  background-image: linear-gradient(135deg, rgba(112, 230, 206, 0.25), rgba(90, 169, 255, 0.25));
 }
 
 button:hover {
-  border-color: #396cd8;
+  border-color: var(--accent);
+  transform: translateY(-3px);
 }
+
 button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
+  transform: translateY(1px) scale(0.96);
 }
 
-input,
-button {
-  outline: none;
+#greet-msg {
+  min-height: 24px;
+  opacity: 0;
 }
 
-#greet-input {
-  margin-right: 5px;
+#greet-msg.is-shown {
+  animation: msg-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
+@keyframes msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.9);
   }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 
-  a:hover {
-    color: #24c8db;
-  }
+/* ---------- Поява полів під час заповнення шкали ---------- */
 
-  input,
-  button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
+.reveal {
+  opacity: 0;
+  filter: blur(8px);
+  transition:
+    opacity 0.9s ease,
+    filter 0.9s ease,
+    transform 1s cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
+.reveal[data-anim="drop"] {
+  transform: translateY(-60px) scale(0.8);
+}
+
+.reveal[data-anim="spin"] {
+  transform: rotate(-200deg) scale(0.2);
+}
+
+.reveal[data-anim="flip"] {
+  transform: rotateX(90deg) translateY(20px);
+}
+
+.reveal[data-anim="zoom"] {
+  transform: translateY(50px) scale(0.6) skewX(-8deg);
+}
+
+.reveal.is-shown {
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+/* ---------- Шкала завантаження ---------- */
+
+.loader {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  width: min(520px, calc(100% - 32px));
+  box-sizing: border-box;
+  padding: 16px 20px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  transform: translateX(-50%);
+  animation: loader-in 0.8s cubic-bezier(0.22, 1.2, 0.36, 1);
+  transition:
+    transform 0.8s cubic-bezier(0.6, -0.3, 0.7, 0.2),
+    opacity 0.8s ease;
+}
+
+.loader.is-done {
+  opacity: 0;
+  transform: translateX(-50%) translateY(140%) scale(0.9);
+  pointer-events: none;
+}
+
+@keyframes loader-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(60px);
   }
-  button:active {
-    background-color: #0f0f0f69;
+}
+
+.loader__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.loader__title {
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.85em;
+}
+
+.loader__percent {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.loader__bar {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.loader__fill {
+  height: 100%;
+  border-radius: inherit;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.45) 50%,
+      transparent 100%
+    ) 0 0 / 40% 100% no-repeat,
+    linear-gradient(90deg, var(--accent-2), var(--accent));
+  box-shadow: 0 0 14px rgba(112, 230, 206, 0.6);
+  animation: bar-shine 1.6s linear infinite;
+}
+
+@keyframes bar-shine {
+  from {
+    background-position: -40% 0, 0 0;
+  }
+  to {
+    background-position: 140% 0, 0 0;
+  }
+}
+
+.loader__tip {
+  margin: 12px 0 0;
+  min-height: 24px;
+  font-size: 0.95em;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease;
+}
+
+.loader__tip.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

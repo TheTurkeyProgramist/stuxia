@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="uk">
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="styles.css" />
@@ -8,11 +8,17 @@
     <script type="module" src="/main.js" defer></script>
   </head>
 
-  <body>
-    <main class="container">
-      <h1>Welcome to Tauri</h1>
+  <body class="is-loading">
+    <div class="bg" aria-hidden="true">
+      <div class="bg__image"></div>
+      <div class="bg__fog"></div>
+      <div class="bg__shade"></div>
+    </div>
 
-      <div class="row">
+    <main class="container">
+      <h1 class="reveal" data-at="10" data-anim="drop">Welcome to Tauri</h1>
+
+      <div class="row reveal" data-at="30" data-anim="spin">
         <a href="https://tauri.app" target="_blank">
           <img src="/assets/tauri.svg" class="logo tauri" alt="Tauri logo" />
         </a>
@@ -27,13 +33,26 @@
           />
         </a>
       </div>
-      <p>Click on the Tauri logo to learn more about the framework</p>
+      <p class="reveal" data-at="50" data-anim="flip">
+        Click on the Tauri logo to learn more about the framework
+      </p>
 
-      <form class="row" id="greet-form">
+      <form class="row reveal" id="greet-form" data-at="70" data-anim="zoom">
         <input id="greet-input" placeholder="Enter a name..." />
         <button type="submit">Greet</button>
       </form>
       <p id="greet-msg"></p>
     </main>
+
+    <div id="loader" class="loader" role="status" aria-live="polite">
+      <div class="loader__head">
+        <span class="loader__title">Стихія</span>
+        <span class="loader__percent" id="loader-percent">0%</span>
+      </div>
+      <div class="loader__bar">
+        <div class="loader__fill" id="loader-fill"></div>
+      </div>
+      <p class="loader__tip" id="loader-tip"></p>
+    </div>
   </body>
 </html>
