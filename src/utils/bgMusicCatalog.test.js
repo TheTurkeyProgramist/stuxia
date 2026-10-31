@@ -1,19 +1,25 @@
 import { BASE_BG_TRACKS, getAvailableTrackCatalog, isBaseBgTrack } from "./bgMusicCatalog";
 
 describe("bgMusicCatalog", () => {
-  it("exposes four built-in tracks for instant access", () => {
-    expect(BASE_BG_TRACKS).toHaveLength(4);
-    expect(BASE_BG_TRACKS.map((track) => track.name)).toEqual([
-      "Динофроз",
-      "Monody",
-      "Unity",
-      "Faded",
-    ]);
+  it("keeps every built-in track available even when omitted from the UI state", () => {
+    const catalog = getAvailableTrackCatalog([]);
+    BASE_BG_TRACKS.forEach((track) => {
+      expect(isBaseBgTrack(track.file)).toBe(true);
+      expect(catalog).toContainEqual(track);
+    });
   });
 
-  it("keeps base tracks available even when they are omitted from the UI state", () => {
-    const track = BASE_BG_TRACKS[0];
-    expect(isBaseBgTrack(track.file)).toBe(true);
-    expect(getAvailableTrackCatalog([])).toContainEqual(track);
+  it("adds extra tracks and drops invalid ones", () => {
+    const extra = { id: 900, name: "Custom", file: "custom.opus" };
+    const catalog = getAvailableTrackCatalog([extra, null, { id: 901, name: "No file" }]);
+    expect(catalog).toContainEqual(extra);
+    expect(catalog).toHaveLength(BASE_BG_TRACKS.length + 1);
+    expect(getAvailableTrackCatalog("not an array")).toEqual(BASE_BG_TRACKS);
+  });
+
+  it("does not treat empty or unknown files as built-in", () => {
+    expect(isBaseBgTrack("")).toBe(false);
+    expect(isBaseBgTrack(undefined)).toBe(false);
+    expect(isBaseBgTrack("custom.opus")).toBe(false);
   });
 });

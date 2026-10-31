@@ -23,18 +23,22 @@ test('sanitizeWeatherCards strips React elements and keeps plain data', () => {
 
   assert.deepEqual(sanitized, [{
     id: 'main',
+    // iconPlaceholder — запасна іконка, яку UI показує, якщо iconSymbol порожній
     current: {
       iconSymbol: '☀️',
+      iconPlaceholder: '☀️',
       temp: '20°C',
     },
     hourly: [{
       time: '09:00',
       iconSymbol: '☀️',
+      iconPlaceholder: '☀️',
       tempNum: 18,
     }],
     daily16: [{
       date: '12.09',
       iconSymbol: '☀️',
+      iconPlaceholder: '☀️',
     }],
   }]);
 });
