@@ -2756,7 +2756,6 @@ const App = () => {
                   setIsWeatherDetailsOpen={setIsWeatherDetailsOpen}
                   setSelectedWeatherCard={setSelectedWeatherCard}
                   heroDateString={heroDateString}
-                  isStickyBgMode={isStickyBgMode}
                 />
               </StyledSectionContainer>
             ),
