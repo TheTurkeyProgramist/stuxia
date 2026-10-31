@@ -674,11 +674,17 @@ const NewsSettingsBtn = styled(CardAction)`
   color: #ffffff;
   width: 50px;
   height: 40px;
+  /* Глобальне правило CardAction span ховає будь-який span до ховеру — шестерня має бути видима завжди */
+  span {
+    max-width: none;
+    opacity: 1;
+    overflow: visible;
+  }
   &:hover,
   &:focus-visible {
     background: rgb(27, 27, 27);
-      width: 50px;
-  height: 40px;
+    width: 50px;
+    height: 40px;
   }
 `;
 
@@ -890,8 +896,13 @@ const NewsCard = ({
           if (item.displayImage && item.displayImage !== rainbow) {
             setImgSrc(item.displayImage);
           } else {
-            // Немає обкладинки — підбираємо стабільне фото з бібліотеки сайту
-            setImgSrc(getNewsFallbackImage(item.link || item.title || ""));
+            // Немає обкладинки у стрічці — пробуємо og:image зі сторінки статті,
+            // а якщо його нема — стабільне фото з бібліотеки сайту
+            const fallback = getNewsFallbackImage(item.link || item.title || "");
+            setImgSrc(fallback);
+            fetchOgImage(item.link).then((og) => {
+              if (og) setImgSrc(og);
+            });
           }
         }
       },
@@ -1445,6 +1456,30 @@ const fetchWithProxyFallback = async (url) => {
     if (!res.ok) throw new Error("corsproxy.io error status: " + res.status, { cause: e });
     const text = await res.text();
     return text;
+  }
+};
+
+/**
+ * Дістає og:image зі сторінки статті (для стрічок без картинок, напр. Phys.org).
+ * Результат кешується в localforage під ключем og_img_<link>; "" — картинки немає.
+ */
+const fetchOgImage = async (link) => {
+  if (!link || !/^https?:\/\//i.test(link)) return null;
+  const cacheKey = `og_img_${link}`;
+  try {
+    const cached = await localforage.getItem(cacheKey);
+    if (typeof cached === "string") return cached || null;
+    const html = await fetchWithProxyFallback(link);
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const og =
+      doc.querySelector('meta[property="og:image"]')?.getAttribute("content") ||
+      doc.querySelector('meta[name="twitter:image"]')?.getAttribute("content") ||
+      "";
+    const absolute = og ? new URL(og, link).href : "";
+    await localforage.setItem(cacheKey, absolute);
+    return absolute || null;
+  } catch {
+    return null;
   }
 };
 

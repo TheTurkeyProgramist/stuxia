@@ -75,6 +75,7 @@ const Tooltipso = styled.div`
   font-weight: 500;
   padding: 5px 9px;
   z-index: 10000;
+  pointer-events: none;
 `;
 
 export const TooltipS = ({
@@ -132,7 +133,10 @@ const { refs, floatingStyles, context } = useFloating({
     <>
       <span
         ref={refs.setReference}
-        {...getReferenceProps()}
+        {...getReferenceProps({
+          onMouseLeave: () => setIsOpen(false),
+          onClick: () => setIsOpen(false),
+        })}
         style={{ display: "inline-flex" }}
       >
         {children}
@@ -287,15 +291,13 @@ const WeatherCardsContainer = styled.div`
   gap: 5px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding: 0 42px 10px;
+  padding: 0 42px;
   justify-content: flex-start;
   width: 100%;
   scroll-behavior: smooth;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 255, 229, 0.7) rgba(0, 0, 0, 0.18);
 
   &::-webkit-scrollbar {
-    height: 8px;
+    height: 18px;
   }
 
   &::-webkit-scrollbar-track {
@@ -306,7 +308,7 @@ const WeatherCardsContainer = styled.div`
   &::-webkit-scrollbar-thumb {
     background: linear-gradient(90deg, #00ffe5, #8bdcff);
     border-radius: 999px;
-    border: 2px solid transparent;
+    border: 3px solid transparent;
     background-clip: padding-box;
   }
 
@@ -330,7 +332,15 @@ const CarouselNav = styled.div`
   gap: 6px;
   flex-wrap: wrap;
   z-index: 9000;
-  margin-top: -45px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
+  pointer-events: none;
+
+  & > button {
+    pointer-events: auto;
+  }
 `;
 const CarouselSideButton = styled.button`
   position: absolute;
@@ -2090,6 +2100,8 @@ const App = () => {
               freezing_level_height: d.current.freezing_level_height ?? 0,
               soil_temperature_0cm: d.current.soil_temperature_0cm ?? 0,
               description: "За кодом: " + d.current.weather_code,
+              weather_code: d.current.weather_code,
+              is_day: d.current.is_day,
               iconPlaceholder: getWeatherIcon(d.current.weather_code, d.current.is_day),
               iconSymbol: getWeatherIconSymbol(d.current.weather_code, d.current.is_day),
             },
@@ -2136,6 +2148,8 @@ const App = () => {
                   evapotranspiration: d.hourly?.et0_fao_evapotranspiration?.[dataIdx] ?? 0,
                   freezing_level_height: d.hourly?.freezing_level_height?.[dataIdx] ?? 0,
                   soil_temperature_0cm: d.hourly?.soil_temperature_0cm?.[dataIdx] ?? 0,
+                  weather_code: d.hourly?.weather_code?.[dataIdx] ?? 0,
+                  is_day: hourIsDay,
                   iconPlaceholder: getWeatherIcon(
                     d.hourly?.weather_code?.[dataIdx] ?? 0,
                     hourIsDay
@@ -2170,6 +2184,8 @@ const App = () => {
               evapotranspiration: d.daily.et0_fao_evapotranspiration?.[i] ?? 0,
               sunrise: d.daily.sunrise?.[i] ?? null,
               sunset: d.daily.sunset?.[i] ?? null,
+              weather_code: d.daily.weather_code[i] ?? 0,
+              is_day: 1,
               iconPlaceholder: getWeatherIcon(d.daily.weather_code[i] ?? 0, 1),
               iconSymbol: getWeatherIconSymbol(d.daily.weather_code[i] ?? 0, 1),
               description: getWeatherSummaryText(d.daily.weather_code[i] ?? 0, 1),

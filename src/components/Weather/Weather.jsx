@@ -31,7 +31,7 @@ import {
   removeCustomDay,
   addCustomDay,
 } from "../../features/counter/Counter.js";
-import { getHourlyForecastDayGroups } from "../../utils/hourlyForecast";
+import { getHourlyForecastDetailGroups } from "../../utils/hourlyForecast";
 import { generateRuleBasedForecast, cleanAiText } from "../../utils/ruleBasedForecast";
 import { DEFAULT_BGS } from "../Hero/defaultBgs";
 import { getWindDirectionText } from "../../utils/windUtils";
@@ -64,13 +64,13 @@ import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, tempLabel, windLabel, press
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { PiThermometerFill } from "react-icons/pi"; //Нормальна температура
 import { BsThermometerSnow, BsThermometerSun, BsMoonStarsFill, BsClockHistory } from "react-icons/bs"; //Холодна температура / Ніч
-import { FaGlassWater, FaGlassWaterDroplet } from "react-icons/fa6"; //Вологість
+import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, CloudWithTrend, getCloudTrend, getSnowStyle } from "./AnimatedWeatherIcons.jsx"; //Анімовані іконки
+import { WeatherIcon, stripEmoji } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
 import { BiWind } from "react-icons/bi"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
 import { MdOutlineSpeed, MdClose, MdStraighten } from "react-icons/md"; //Тиск
-import { FaCloudDownloadAlt, FaCloudUploadAlt, FaSmog, FaSnowflake, FaSun, FaExclamationTriangle } from "react-icons/fa"; //Іконки
+import { FaSnowflake, FaSun, FaExclamationTriangle } from "react-icons/fa"; //Іконки
 import { GiSunRadiations, GiSnowing, GiWaterRecycling, GiIceCube } from "react-icons/gi";//Сонячна радіація
-import { LiaCloudSunSolid } from "react-icons/lia";
 import {
   useFloating,
   autoUpdate,
@@ -162,7 +162,10 @@ const { refs, floatingStyles, context } = useFloating({
     <>
       <span
         ref={refs.setReference}
-        {...getReferenceProps()}
+        {...getReferenceProps({
+          onMouseLeave: () => setIsOpen(false),
+          onClick: () => setIsOpen(false),
+        })}
         style={{ display: "inline-flex" }}
       >
         {children}
@@ -544,11 +547,7 @@ const ChartScrollWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
   &::-webkit-scrollbar {
-    height: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #555;
-    border-radius: 10px;
+    height: 10px;
   }
 `;
 
@@ -1940,8 +1939,11 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
     }
   };
 
-  const hourlyDayGroups = getHourlyForecastDayGroups(card.hourly || []);
+  const hourlyDayGroups = getHourlyForecastDetailGroups(card.hourly || []);
   const visibleHourly = hourlyDayGroups[selectedHourlyDay]?.items || [];
+  const hourlyChartAvailable = hourlyDayGroups[selectedHourlyDay]?.chartAvailable !== false;
+  const effectiveHourlyViewMode =
+    hourlyViewMode === "charts" && !hourlyChartAvailable ? "blocks" : hourlyViewMode;
   const hourlyChartWidth = Math.max(873, (visibleHourly?.length || 24) * 35);
   const tempSuffix = unit === "F" ? "°F" : unit === "K" ? "K" : "°C";
   const toDisplayTemp = (c) => {
@@ -2343,7 +2345,7 @@ const HOLIDAYS_2027 = {
             const firstContext = contextItems[0];
             const hourlyData = visibleHourly?.[firstContext.dataIndex];
             if (!hourlyData) return "";
-            const desc = hourlyData.description || getWeatherDescription(hourlyData.weather_code) || (hourlyData.iconPlaceholder || "").replace(hourlyData.iconSymbol || "", "").trim() || "Погода";
+            const desc = hourlyData.description || getWeatherDescription(hourlyData.weather_code) || stripEmoji(hourlyData.iconPlaceholder) || "Погода";
             return `Стан погоди: ${desc}`;
           },
         },
@@ -2430,7 +2432,7 @@ const HOLIDAYS_2027 = {
             const firstContext = contextItems[0];
             const daily = card.daily16?.[firstContext.dataIndex];
             if (!daily) return "";
-            const desc = daily.description || getWeatherDescription(daily.weather_code) || (daily.iconPlaceholder || "").replace(daily.iconSymbol || "", "").trim() || "—";
+            const desc = daily.description || getWeatherDescription(daily.weather_code) || stripEmoji(daily.iconPlaceholder) || "—";
             return `Стан погоди: ${desc}`;
           },
         },
@@ -2670,10 +2672,10 @@ const HOLIDAYS_2027 = {
 
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", margin: "2px 0" }}>
                   <div style={{ fontSize: "24px" }}>
-                    {item.iconSymbol || item.iconPlaceholder || <LiaCloudSunSolid />}
+                    <WeatherIcon item={item} />
                   </div>
                   <TextContent $size="11px" $lh="1.2">
-                    {item.description || getWeatherDescription(item.weather_code) || (item.iconPlaceholder || "").replace(item.iconSymbol || "", "").trim() || "Погода"}
+                    {item.description || getWeatherDescription(item.weather_code) || stripEmoji(item.iconPlaceholder) || "Погода"}
                   </TextContent>
                 </div>
 
@@ -2751,9 +2753,9 @@ const HOLIDAYS_2027 = {
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "24px" }}>{item.iconSymbol || item.iconPlaceholder || <LiaCloudSunSolid />}</span>
+                  <span style={{ fontSize: "24px" }}><WeatherIcon item={item} /></span>
                   <span style={{ fontSize: "11px", fontWeight: "600", opacity: 0.9 }}>
-                    {item.description || getWeatherDescription(item.weather_code) || (item.iconPlaceholder || "").replace(item.iconSymbol || "", "").trim() || "Погода"}
+                    {item.description || getWeatherDescription(item.weather_code) || stripEmoji(item.iconPlaceholder) || "Погода"}
                   </span>
                 </div>
 
@@ -2844,9 +2846,9 @@ const HOLIDAYS_2027 = {
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "26px" }}>{d.iconSymbol || d.iconPlaceholder || <LiaCloudSunSolid />}</span>
+                  <span style={{ fontSize: "26px" }}><WeatherIcon item={d} /></span>
                   <span style={{ fontSize: "11px", fontWeight: "600" }}>
-                    {d.description || getWeatherDescription(d.weather_code) || (d.iconPlaceholder || "").replace(d.iconSymbol || "", "").trim() || "Погода"}
+                    {d.description || getWeatherDescription(d.weather_code) || stripEmoji(d.iconPlaceholder) || "Погода"}
                   </span>
                 </div>
 
@@ -2995,7 +2997,7 @@ const HOLIDAYS_2027 = {
 
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
                   <div style={{ fontSize: "28px" }}>
-                    {d.iconSymbol || d.iconPlaceholder || <LiaCloudSunSolid />}
+                    <WeatherIcon item={d} />
                   </div>
                   <div style={{ fontSize: "10px", lineHeight: 1.3, opacity: 0.8, color: headerColor, fontWeight: 600 }}>
                     {d.description || getWeatherDescription(d.weather_code ?? 0) || "Погода"}
@@ -3416,15 +3418,18 @@ const HOLIDAYS_2027 = {
               >
                 <DesktopTwoRowIndicators>
   <IndicatorCard aria-label={card.current.iconPlaceholder}>
-    <IconBox $size="32px" $lh="1">{card.current.iconSymbol || <LiaCloudSunSolid />}</IconBox>
+    <IconBox $size="32px" $lh="1"><WeatherIcon item={card.current} /></IconBox>
     <TextContent $size="11px" $lh="1.2">
-      {(card.current.iconPlaceholder || "").replace(card.current.iconSymbol || "", "").trim() || "Мінлива хмарність"}
+      {stripEmoji(card.current.iconPlaceholder) || "Мінлива хмарність"}
     </TextContent>
   </IndicatorCard>
 
   <IndicatorCard aria-label="Температура / Відчувається як">
     <IconBox $color={parseFloat(card.current.temp) < 5 ? "#4da6ff" : parseFloat(card.current.temp) > 25 ? "#ff4d4d" : "inherit"}>
-      {parseFloat(card.current.temp) < 5 ? <BsThermometerSnow /> : parseFloat(card.current.temp) > 25 ? <BsThermometerSun /> : <PiThermometerFill />}
+      <TempThermometer
+        temp={card.current.temp}
+        mercuryColor={parseFloat(card.current.temp) < 5 ? "#4da6ff" : parseFloat(card.current.temp) > 25 ? "#ff4d4d" : "#ff9d3b"}
+      />
     </IconBox>
     <TextContent $mt="0px">
       {formatTemp(card.current.temp)}
@@ -3433,8 +3438,8 @@ const HOLIDAYS_2027 = {
   </IndicatorCard>
 
   <IndicatorCard aria-label="Відносна вологість">
-    <IconBox $color={parseFloat(card.current.humidity) > 70 ? "#4da6ff" : "inherit"}>
-      {parseFloat(card.current.humidity) > 70 ? <FaGlassWater /> : <FaGlassWaterDroplet />}
+    <IconBox>
+      <HumidityGlass humidity={card.current.humidity} />
     </IconBox>
     <TextContent $mt="10px">Вологість: {card.current.humidity ?? "—"}</TextContent>
   </IndicatorCard>
@@ -3459,14 +3464,14 @@ const HOLIDAYS_2027 = {
 
   <IndicatorCard aria-label="Атмосферний тиск" $pad="10px">
     <IconBox $color={parseFloat(card.current.pressure) < 1000 ? "#4da6ff" : parseFloat(card.current.pressure) > 1020 ? "#ff4d4d" : "inherit"}>
-      <MdOutlineSpeed />
+      <PressureGauge pressure={card.current.pressure} />
     </IconBox>
     <TextContent>Атмосферний тиск: {fmt.pressure(card.current.pressure)}</TextContent>
   </IndicatorCard>
 
   <IndicatorCard aria-label="Хмарність">
     <IconBox>
-      {parseFloat(card.current.cloud_cover) < 50 ? <FaCloudDownloadAlt /> : <FaCloudUploadAlt />}
+      <CloudWithTrend cloudCover={card.current.cloud_cover} trend={getCloudTrend(card.current.cloud_cover, card.hourly)} />
     </IconBox>
     <TextContent $size="11px">Хмарність: {card.current.cloud_cover}%</TextContent>
   </IndicatorCard>
@@ -3476,21 +3481,21 @@ const HOLIDAYS_2027 = {
       $opacity={Math.min(1, Math.max(0.3, (card.current.visibility || 10000) / 10000))}
       $color={(card.current.visibility || 10000) < 2000 ? "#ff4d4d" : "inherit"}
     >
-      <FaSmog />
+      <VisibilityFog />
     </IconBox>
     <TextContent $size="10px">Видимість: {card.current.visibility !== undefined ? fmt.visibility(card.current.visibility / 1000) : "—"}</TextContent>
   </IndicatorCard>
 
   <IndicatorCard aria-label="УФ-індекс / Сонячна радіація" $pad="10px">
     <IconBox $color={(card.current.uv_index || 0) > 5 ? "#ff4d4d" : (card.current.uv_index || 0) > 2 ? "#ffd700" : "inherit"}>
-      <GiSunRadiations />
+      <UvSun uv={card.current.uv_index} />
     </IconBox>
     <TextContent $size="10px">УФ-індекс: {card.current.uv_index ?? 0}</TextContent>
   </IndicatorCard>
 
   <Tooltip content="Товщина снігового покриву (см)" isDarkMode={isDarkMode}>
     <IndicatorCard aria-label="Сніговий покрив">
-      <IconBox $color={card.current.snow_depth > 0 ? "#00eeff" : "inherit"}>
+      <IconBox $color={getSnowStyle((card.current.snow_depth || 0) * 100).color} $opacity={getSnowStyle((card.current.snow_depth || 0) * 100).opacity}>
         <FaSnowflake />
       </IconBox>
       <TextContent $size="10px">
@@ -3544,15 +3549,17 @@ const HOLIDAYS_2027 = {
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <ViewToggleGroup $isDarkMode={isDarkMode}>
                     <ViewToggleButton
-                      $active={hourlyViewMode === "charts"}
+                      $active={effectiveHourlyViewMode === "charts"}
                       $isDarkMode={isDarkMode}
-                      onClick={() => setHourlyViewMode("charts")}
-                      title="Графіки"
+                      onClick={() => hourlyChartAvailable && setHourlyViewMode("charts")}
+                      disabled={!hourlyChartAvailable}
+                      style={!hourlyChartAvailable ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
+                      title={hourlyChartAvailable ? "Графіки" : "Графік доступний лише на перші 72 год"}
                     >
                       <BiLineChart size={18} />
                     </ViewToggleButton>
                     <ViewToggleButton
-                      $active={hourlyViewMode === "table"}
+                      $active={effectiveHourlyViewMode === "table"}
                       $isDarkMode={isDarkMode}
                       onClick={() => setHourlyViewMode("table")}
                       title="Таблиця"
@@ -3560,7 +3567,7 @@ const HOLIDAYS_2027 = {
                       <BiTable size={18} />
                     </ViewToggleButton>
                     <ViewToggleButton
-                      $active={hourlyViewMode === "blocks"}
+                      $active={effectiveHourlyViewMode === "blocks"}
                       $isDarkMode={isDarkMode}
                       onClick={() => setHourlyViewMode("blocks")}
                       title="Блоки"
@@ -3598,7 +3605,7 @@ const HOLIDAYS_2027 = {
                 </div>
               )}
 
-              {hourlyViewMode === "charts" ? (
+              {effectiveHourlyViewMode === "charts" ? (
                 visibleHourly && visibleHourly.length > 0 && (
                   <div
                     ref={hourlyChartPanelRef}
@@ -3676,7 +3683,7 @@ const HOLIDAYS_2027 = {
                     </div>
                   </div>
                 )
-              ) : hourlyViewMode === "table" ? (
+              ) : effectiveHourlyViewMode === "table" ? (
                 renderHourlyTable()
               ) : (
                 renderHourlyBlocks()
@@ -4381,7 +4388,7 @@ const HOLIDAYS_2027 = {
               onClick={() => setActiveTab("current")}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
-                <div style={{ fontSize: "36px" }}>{card.current?.iconSymbol || <LiaCloudSunSolid />}</div>
+                <div style={{ fontSize: "36px" }}><WeatherIcon item={card.current} /></div>
                 <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
                   <NameCardItem $active={activeTab === "current"}>Зараз: {formatTemp(card.current?.temp)}</NameCardItem>
                   <SubNameCardItem $active={activeTab === "current"}>Відчувається: {formatTemp(card.current?.feels_like)}</SubNameCardItem>
@@ -4396,8 +4403,8 @@ const HOLIDAYS_2027 = {
               <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                 <div style={{ fontSize: "36px", color: "#ffb36c" }}><BiLineChart /></div>
                 <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
-                  <NameCardItem $active={activeTab === "hourly"}>Годинна(24г)</NameCardItem>
-                  <SubNameCardItem $active={activeTab === "hourly"}>Погодинна на 7 днів</SubNameCardItem>
+                  <NameCardItem $active={activeTab === "hourly"}>Годинна(72г)</NameCardItem>
+                  <SubNameCardItem $active={activeTab === "hourly"}>Детально 72г, далі до 7 днів</SubNameCardItem>
                 </div>
               </div>
             </SideCardItem>

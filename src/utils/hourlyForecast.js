@@ -33,6 +33,62 @@ const formatDayLabel = (dateLabel, index = 0) => {
   return normalized;
 };
 
+const DETAILED_DAYS = 1;
+const THREE_HOUR_DAYS = 3;
+const PART_OF_DAY_HOURS = [0, 6, 12, 18];
+
+const getItemHour = (item) => {
+  const hour = parseInt(String(item?.time ?? "").split(":")[0], 10);
+  return Number.isNaN(hour) ? null : hour;
+};
+
+const PART_OF_DAY_NAMES = { 0: "Ніч", 6: "Ранок", 12: "День", 18: "Вечір" };
+const SUM_FIELDS = ["precipitation", "snowfall", "evapotranspiration"];
+const MAX_FIELDS = ["windNum", "wind_gusts_10m", "wind_gusts"];
+
+// Одна відмітка на 6 годин: температура/стан — на початок проміжку,
+// опади — сума, вітер і пориви — максимум за проміжок.
+const aggregatePartsOfDay = (items) =>
+  PART_OF_DAY_HOURS.map((start) => {
+    const windowItems = items.filter((item) => {
+      const hour = getItemHour(item);
+      return hour !== null && hour >= start && hour < start + 6;
+    });
+    if (windowItems.length === 0) return null;
+
+    const result = { ...windowItems[0], time: `${PART_OF_DAY_NAMES[start]} ${String(start).padStart(2, "0")}:00` };
+
+    SUM_FIELDS.forEach((field) => {
+      const values = windowItems.map((i) => Number(i[field])).filter(Number.isFinite);
+      if (values.length) result[field] = values.reduce((a, b) => a + b, 0);
+    });
+    MAX_FIELDS.forEach((field) => {
+      const values = windowItems.map((i) => Number(i[field])).filter(Number.isFinite);
+      if (values.length) result[field] = Math.max(...values);
+    });
+
+    return result;
+  }).filter(Boolean);
+
+// День 1: щогодини; дні 2–3: кожні 3 год; далі: 00/06/12/18 (без графіка).
+export const getHourlyForecastDetailGroups = (hourly = []) =>
+  getHourlyForecastDayGroups(hourly).map((group, index) => {
+    if (index < DETAILED_DAYS) return { ...group, chartAvailable: true };
+
+    if (index < THREE_HOUR_DAYS) {
+      return {
+        ...group,
+        items: group.items.filter((item) => {
+          const hour = getItemHour(item);
+          return hour === null || hour % 3 === 0;
+        }),
+        chartAvailable: true,
+      };
+    }
+
+    return { ...group, items: aggregatePartsOfDay(group.items), chartAvailable: false };
+  });
+
 export const getHourlyForecastDayGroups = (hourly = []) => {
   if (!Array.isArray(hourly) || hourly.length === 0) return [];
 

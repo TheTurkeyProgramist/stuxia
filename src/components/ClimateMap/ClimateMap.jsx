@@ -1,7 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import styled, { keyframes, css } from "styled-components";
-import { FaKeyboard } from "react-icons/fa";
+import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket } from "react-icons/fa";
+import { FiPlay, FiPlus, FiX } from "react-icons/fi";
+import { MdDragIndicator } from "react-icons/md";
+import { Reorder, motion, useDragControls } from "framer-motion";
 import climate from "../../photos/cursors/climate.webp";
 import localforage from "localforage";
 import { BsFillPinAngleFill } from "react-icons/bs";
@@ -11,12 +14,21 @@ import { CgMiniPlayer } from "react-icons/cg";
 import { GiLockedChest } from "react-icons/gi";
 import turkey from "../../photos/cursors/turkey-compressed-small.webm";
 import toast, { Toaster } from "react-hot-toast";
-// Ctrl + Shift + M: Активувати/деактивувати мапу
-// Ctrl + Shift + F: Відкрити на весь екран
-// Ctrl + Shift + P: Відкрити/закрити міні-плеєр
-// Ctrl + Shift + W: Перемкнути джерело (Windy / Ventusky)
-// Ctrl + Shift + L: Закріпити/відкріпити локацію
-// Ctrl + Shift + K: Відкрити/закрити налаштування
+import coverVentusky from "../../photos/programs/youtub/ventusky.webp";
+import coverWindy from "../../photos/programs/youtub/windy.webp";
+import coverAlerts from "../../photos/programs/youtub/alertone.webp";
+import coverAirTargets from "../../photos/programs/youtub/alerttwo.webp";
+import coverExcalidraw from "../../photos/programs/youtub/desk.webp";
+import coverSaveEcoBot from "../../photos/programs/youtub/saveecobot.webp";
+import coverAirTraffic from "../../photos/programs/youtub/airplane.webp";
+import coverDeepState from "../../photos/programs/youtub/deepstate.webp";
+// Ctrl + Alt + M: Активувати/деактивувати мапу
+// Ctrl + Alt + F: Відкрити на весь екран
+// Ctrl + Alt + P: Відкрити/закрити міні-плеєр
+// Ctrl + Alt + S: Наступне джерело карти
+// Ctrl + Alt + O: Закріпити/відкріпити локацію
+// Ctrl + Alt + K: Відкрити/закрити налаштування
+// (Ctrl + Shift + ... не використовуємо: Ctrl+Shift+W закриває вікно браузера, M/P/K зайняті Chrome/Firefox)
 const AihelpTitle = styled.div`
   font-size: 15px;
   text-align: center;
@@ -97,10 +109,7 @@ const MapWrapper = styled.div`
 const KeyboardShortcut = styled.kbd`
   display: ${(props) => (props.$visible ? "inline-flex" : "none")};
   align-items: center;
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+  margin-left: auto;
   padding: 2px 7px;
   border: 1px solid rgba(255, 184, 108, 0.3);
   border-bottom-width: 2px;
@@ -167,8 +176,7 @@ const MobileSettingsPanel = styled.div`
   width: min(100%, 1200px);
   max-height: calc(100% - 8px);
   overflow-y: auto;
-  padding: 8px 10px 16px;
-  padding-top: 64px;
+  padding: 0 10px 16px;
   background: ${(p) => p.$isDarkMode
     ? "linear-gradient(170deg, rgba(10,16,30,0.97) 0%, rgba(15,22,40,0.97) 60%, rgba(18,14,8,0.97) 100%)"
     : "linear-gradient(170deg, rgba(255,252,245,0.99) 0%, rgba(255,248,235,0.99) 60%, rgba(255,243,220,0.99) 100%)"};
@@ -185,11 +193,10 @@ const MobileSettingsHeading = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
-  padding: 10px 16px 10px 18px;
+  margin: 0 -10px 4px;
+  padding: 12px 16px 12px 18px;
   background: ${(p) => p.$isDarkMode
     ? "linear-gradient(90deg, rgba(8,14,28,0.98) 0%, rgba(14,18,34,0.98) 50%, rgba(20,12,4,0.98) 100%)"
     : "linear-gradient(90deg, rgba(255,252,245,0.99) 0%, rgba(255,248,235,0.99) 100%)"};
@@ -244,7 +251,7 @@ const MobileSetting = styled.button`
   position: relative;
   width: 100%;
   margin-top: 4px;
-  padding: 10px 44px 10px 12px;
+  padding: 10px 12px;
   border: 1px solid ${(p) => {
     if (p.$active) return p.$isDarkMode ? "rgba(255,179,108,0.6)" : "rgba(200,100,0,0.5)";
     if (p.$danger) return p.$isDarkMode ? "rgba(255,80,80,0.4)" : "rgba(200,40,40,0.35)";
@@ -314,8 +321,16 @@ const MobileSetting = styled.button`
   }
 `;
 
+// && піднімає специфічність над `span` у MobileSetting (інакше бейдж розтягується на всю ширину)
 const StatusBadge = styled.span`
-  display: inline-flex;
+  && {
+    display: inline-flex;
+    align-self: flex-start;
+    width: fit-content;
+    font-size: 10px;
+    line-height: 1.4;
+    margin-top: 2px;
+  }
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
@@ -360,6 +375,21 @@ const StyledIframe = styled.iframe`
   pointer-events: ${(props) => (props.$isReady ? "auto" : "none")};
   transition: opacity 0.5s ease;
   opacity: ${(props) => (props.$isLoading ? "0" : "1")};
+`;
+
+const FramesGrid = styled.div`
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: ${(p) => (p.$split ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)")};
+  gap: ${(p) => (p.$split ? "2px" : "0")};
+`;
+
+const FramePane = styled.div`
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 `;
 
 const Loader = styled.div`
@@ -662,7 +692,448 @@ const KbdModeSelect = styled.select`
 
 
 
-const BUILTIN_PROVIDERS = ["ventusky", "windy", "alerts-ua", "excalidraw", "saveecobot", "radarbox"];
+// ── Бічна панель джерел (планшети та комп'ютери) ──
+const WIDE_LAYOUT_QUERY = "(min-width: 768px)";
+const SIDEBAR_ACCENT = "#ffb36c";
+const SPLIT_MIN_WIDTH_QUERY = "(min-width: 1200px)";
+
+const MapLayout = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(190px, 22%, 260px);
+  gap: 12px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  & > ${MapWrapper} {
+    margin: 0;
+    min-width: 0;
+  }
+`;
+
+// Панель сама прокручується; contain: size не дає списку збільшувати висоту ряду — вона дорівнює висоті карти.
+const SourcesSidebar = styled(motion.aside)`
+  position: relative;
+  z-index: 10;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 560px;
+  contain: size;
+  border-radius: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: ${(p) => p.$isDarkMode ? "#1b1c1f" : "#f6f7f9"};
+  border: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"};
+  box-shadow: ${(p) => p.$isDarkMode ? "0 20px 50px rgba(0,0,0,0.6)" : "0 12px 32px rgba(0,0,0,0.12)"};
+  ${PanelScrollbar}
+`;
+
+const SourcesScroll = styled.div`
+  box-sizing: border-box;
+  padding: 20px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const CardDelete = styled.button`
+  position: absolute;
+  top: 6px;
+  right: 38px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s ease, background 0.18s ease;
+
+  &:hover { background: rgba(220, 50, 50, 0.9); }
+  &:focus-visible { opacity: 1; }
+`;
+
+const DragHandle = styled.button`
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 18px;
+  cursor: grab;
+  opacity: 0;
+  touch-action: none;
+  transition: opacity 0.18s ease, background 0.18s ease;
+
+  &:hover { background: rgba(0, 0, 0, 0.8); }
+  &:active { cursor: grabbing; }
+  &:focus-visible { opacity: 1; }
+  @media (hover: none) { opacity: 1; }
+`;
+
+const SplitCheck = styled.label`
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.18s ease;
+
+  &:hover { background: rgba(0, 0, 0, 0.82); }
+  input { margin: 0; width: 14px; height: 14px; cursor: pointer; accent-color: ${SIDEBAR_ACCENT}; }
+  input:disabled { cursor: not-allowed; }
+`;
+
+const SourceCardWrap = styled(Reorder.Item)`
+  position: relative;
+  flex-shrink: 0;
+  list-style: none;
+
+  &:hover ${CardDelete}, &:hover ${DragHandle} { opacity: 1; }
+`;
+
+const CardCorner = styled.span`
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 54px;
+  height: 54px;
+  background: ${(p) => p.$active ? "rgba(255,255,255,0.3)" : "#ffffff"};
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  transition: background 0.2s ease;
+
+  svg {
+    position: absolute;
+    top: 9px;
+    left: 9px;
+    font-size: 17px;
+    color: ${(p) => p.$active ? "#ffffff" : "#202124"};
+  }
+`;
+
+const CardArt = styled.span`
+  position: absolute;
+  right: -6%;
+  bottom: -16%;
+  display: flex;
+  font-size: 96px;
+  color: rgba(255, 255, 255, 0.2);
+  transform: rotate(-12deg);
+  transition: transform 0.3s ease;
+`;
+
+const CardImage = styled.img`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+  pointer-events: none;
+`;
+
+const CardFaviconBackdrop = styled.img`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70%;
+  transform: translate(-50%, -50%) scale(2.4);
+  filter: blur(22px) saturate(1.4);
+  opacity: 0.45;
+  pointer-events: none;
+`;
+
+const CardFavicon = styled.span`
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-62%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  transition: transform 0.3s ease;
+
+  img { width: 36px; height: 36px; object-fit: contain; }
+`;
+
+const CardInitial = styled.span`
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-62%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  font-size: 28px;
+  font-weight: 700;
+  text-transform: uppercase;
+`;
+
+const CardText = styled.span`
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+
+  strong, small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  strong { font-size: 15px; font-weight: 700; }
+  small { font-size: 11px; opacity: 0.85; }
+`;
+
+const SourceCard = styled.button`
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  background: ${(p) => p.$bg};
+  color: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  outline: ${(p) => p.$active ? `2px solid ${SIDEBAR_ACCENT}` : "2px solid transparent"};
+  outline-offset: 3px;
+  transition: transform 0.2s ease, outline-color 0.2s ease;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.7) 32%, rgba(0, 0, 0, 0.25) 58%, transparent 80%);
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    ${CardArt} { transform: rotate(-6deg) scale(1.06); }
+    ${CardImage} { transform: scale(1.05); }
+    ${CardFavicon} { transform: translateY(-62%) scale(1.08); }
+  }
+  &:focus-visible { outline: 2px solid ${SIDEBAR_ACCENT}; }
+`;
+
+const AddSourceTile = styled.button`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  border: 2px dashed ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.2)"};
+  background: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)"};
+  color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.5)"};
+  font-size: 40px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  span { font-size: 13px; font-weight: 600; letter-spacing: 0.01em; }
+
+  &:hover, &:focus-visible {
+    border-color: ${SIDEBAR_ACCENT};
+    color: ${SIDEBAR_ACCENT};
+    background: rgba(255, 179, 108, 0.08);
+    outline: none;
+  }
+`;
+
+// Висота як у плитки «+» і карток (16:9), щоб панель не стрибала при відкритті форми
+const SidebarAddForm = styled(AddFrameForm)`
+  flex-shrink: 0;
+  margin-top: 0;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px;
+  border-width: 2px;
+
+  input {
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  button {
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+`;
+
+const FormCancelButton = styled(FormButton)`
+  background: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"};
+  color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.8)" : "rgba(30,10,0,0.75)"};
+`;
+
+const BUILTIN_SOURCES = [
+  { id: "ventusky", title: "Ventusky", subtitle: "Прогноз погоди", Icon: FaCloudSun, bg: "linear-gradient(135deg, #1e3c72, #2a8bd8)", cover: coverVentusky },
+  { id: "windy", title: "Windy", subtitle: "Вітер і шари", Icon: FaWind, bg: "linear-gradient(135deg, #3b1d8f, #1fa2b8)", cover: coverWindy },
+  { id: "alerts-ua", title: "Тривоги", subtitle: "Карта тривог України", Icon: FaBell, bg: "linear-gradient(135deg, #5c1010, #d63333)", cover: coverAlerts },
+  { id: "ukrainealarm", title: "Повітряні цілі", subtitle: "Шахеди, ракети (орієнтовно)", Icon: FaRocket, bg: "linear-gradient(135deg, #3a0d0d, #b8451f)", cover: coverAirTargets },
+  { id: "excalidraw", title: "Excalidraw", subtitle: "Онлайн-дошка", Icon: FaPencilAlt, bg: "linear-gradient(135deg, #4b3fc4, #9d93f5)", cover: coverExcalidraw },
+  { id: "saveecobot", title: "SaveEcoBot", subtitle: "Якість повітря", Icon: FaLeaf, bg: "linear-gradient(135deg, #0f6b5f, #7cbf1e)", cover: coverSaveEcoBot },
+  { id: "airtraffic", title: "Авіарадар", subtitle: "TheAirTraffic (ADS-B)", Icon: FaPlane, bg: "linear-gradient(135deg, #0b2545, #d98a0b)", cover: coverAirTraffic },
+  { id: "deepstate", title: "DeepState", subtitle: "Карта подій в Україні", Icon: FaMapMarkedAlt, bg: "linear-gradient(135deg, #1b2a3a, #3d6b4f)", cover: coverDeepState },
+];
+
+const BUILTIN_PROVIDERS = BUILTIN_SOURCES.map((s) => s.id);
+
+// Картка джерела; перетягується лише за ручку, щоб не заважати прокрутці на дотик
+const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSplitChecked, splitLocked, onToggleSplit }) => {
+  const controls = useDragControls();
+  const { id, title, subtitle, Icon, bg, frame, cover, favicon } = item;
+  const [faviconFailed, setFaviconFailed] = useState(false);
+  return (
+    <SourceCardWrap
+      value={id}
+      forwardedAs="div"
+      dragListener={false}
+      dragControls={controls}
+    >
+      <SourceCard
+        type="button"
+        $bg={bg}
+        $active={isActive}
+        aria-pressed={isActive}
+        title={title}
+        onClick={(e) => onSelect(id, e)}
+      >
+        <CardCorner $active={isActive}><FiPlay /></CardCorner>
+        {cover ? (
+          <CardImage src={cover} alt="" loading="lazy" draggable={false} />
+        ) : favicon && !faviconFailed ? (
+          <>
+            <CardFaviconBackdrop src={favicon} alt="" draggable={false} />
+            <CardFavicon>
+              <img
+                src={favicon}
+                alt=""
+                draggable={false}
+                referrerPolicy="no-referrer"
+                onError={() => setFaviconFailed(true)}
+              />
+            </CardFavicon>
+          </>
+        ) : frame ? (
+          <CardInitial>{(title || "?").trim().charAt(0)}</CardInitial>
+        ) : (
+          <CardArt><Icon /></CardArt>
+        )}
+        <CardText>
+          <strong>{title}</strong>
+          <small>{subtitle}</small>
+        </CardText>
+      </SourceCard>
+      <DragHandle
+        type="button"
+        aria-label={`Перетягнути ${title}`}
+        title="Перетягнути, щоб змінити порядок"
+        onPointerDown={(e) => controls.start(e)}
+      >
+        <MdDragIndicator />
+      </DragHandle>
+      {splitAvailable && (
+        <SplitCheck title="Показувати поруч у два фрейми">
+          <input
+            type="checkbox"
+            checked={isSplitChecked}
+            disabled={splitLocked}
+            onChange={() => onToggleSplit(id)}
+          />
+          2 фрейми
+        </SplitCheck>
+      )}
+      {frame && (
+        <CardDelete
+          type="button"
+          aria-label={`Видалити ${title}`}
+          title="Видалити"
+          onClick={() => onDelete(frame)}
+        >
+          <FiX />
+        </CardDelete>
+      )}
+    </SourceCardWrap>
+  );
+};
+
+const customFrameBg = (id) => {
+  let hash = 0;
+  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
+  return `linear-gradient(135deg, hsl(${hash}, 50%, 26%), hsl(${(hash + 40) % 360}, 60%, 46%))`;
+};
+
+// Іконка сайту для власних фреймів (на випадок помилки показуємо першу літеру назви)
+const getFrameFavicon = (url) => {
+  try {
+    return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`;
+  } catch {
+    return null;
+  }
+};
+
+const getFrameHost = (url) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "Власний віджет";
+  }
+};
 
 const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [lat, setLat] = useState(48.379);
@@ -698,6 +1169,38 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       pointerQuery.removeEventListener("change", updatePointerType);
   }, []);
 
+  const [isWideLayout, setIsWideLayout] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia(WIDE_LAYOUT_QUERY).matches,
+  );
+  const [isSplitEnabled, setIsSplitEnabled] = useState(false);
+  const [secondProvider, setSecondProvider] = useState("windy");
+  const [isLoadingSecond, setIsLoadingSecond] = useState(true);
+  // Два фрейми — лише для комп'ютерів: екран від 1200px і точний вказівник (миша/тачпад)
+  const [isSplitWidth, setIsSplitWidth] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia(SPLIT_MIN_WIDTH_QUERY).matches,
+  );
+  useEffect(() => {
+    const query = window.matchMedia(SPLIT_MIN_WIDTH_QUERY);
+    const update = () => setIsSplitWidth(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  const canSplit = isSplitWidth && !isCoarsePointer;
+  const isSplitActive = canSplit && isSplitEnabled;
+  const [isAddingFrame, setIsAddingFrame] = useState(false);
+  const [sourceOrder, setSourceOrder] = useState([]);
+
+  useEffect(() => {
+    const wideQuery = window.matchMedia(WIDE_LAYOUT_QUERY);
+    const updateLayout = () => setIsWideLayout(wideQuery.matches);
+
+    updateLayout();
+    wideQuery.addEventListener("change", updateLayout);
+
+    return () => wideQuery.removeEventListener("change", updateLayout);
+  }, []);
+
   const [miniPlayerPosition, setMiniPlayerPosition] = useState(() => {
     if (typeof window === "undefined") return { x: 24, y: 24 };
     return {
@@ -717,6 +1220,25 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [customFrames, setCustomFrames] = useState([]);
   const [newFrameTitle, setNewFrameTitle] = useState("");
   const [newFrameUrl, setNewFrameUrl] = useState("");
+
+  const orderedSources = useMemo(() => {
+    const all = [
+      ...BUILTIN_SOURCES,
+      ...customFrames.map((frame) => ({
+        id: frame.id,
+        title: frame.title,
+        subtitle: getFrameHost(frame.url),
+        Icon: FaGlobe,
+        bg: customFrameBg(frame.id),
+        favicon: getFrameFavicon(frame.url),
+        frame,
+      })),
+    ];
+    const byId = new Map(all.map((item) => [item.id, item]));
+    const ordered = sourceOrder.filter((id) => byId.has(id)).map((id) => byId.get(id));
+    const placed = new Set(ordered.map((item) => item.id));
+    return [...ordered, ...all.filter((item) => !placed.has(item.id))];
+  }, [customFrames, sourceOrder]);
 
   const [videoError, setVideoError] = useState(false);
   const turkeyVideoRef = useRef(null);
@@ -771,6 +1293,24 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     }
   };
 
+  const handleSetSecondProvider = async (id) => {
+    setSecondProvider(id);
+    try {
+      await localforage.setItem("climate_second_provider", id);
+    } catch (e) {
+      console.error("Error saving second provider:", e);
+    }
+  };
+
+  const handleToggleSplit = async (enabled) => {
+    setIsSplitEnabled(enabled);
+    try {
+      await localforage.setItem("climate_split_enabled", enabled);
+    } catch (e) {
+      console.error("Error saving split mode:", e);
+    }
+  };
+
   const handleActivateMap = async () => {
     setIsMapActive(true);
     toast.success("Карту увімкнено", { icon: "🗺️", duration: 1800 });
@@ -794,7 +1334,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const settingButtonTexts = useMemo(
     () => [
       "Налаштування Стихії",
-      "Додавання карти(фреймів)",
+      isWideLayout ? "Комбінації клавіш" : "Додавання карти(фреймів)",
       "Налаштування Стихії",
       "Закріпити локацію",
        "Налаштування Стихії",
@@ -804,7 +1344,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
        "Налаштування Стихії",
       "Повноекранний режим",
     ],
-    []
+    [isWideLayout]
   );
 
   const [textIndex, setTextIndex] = useState(0);
@@ -823,6 +1363,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         const savedUserFrames = await localforage.getItem("climate_custom_user_frames");
         const frames = Array.isArray(savedUserFrames) ? savedUserFrames : [];
         setCustomFrames(frames);
+        const savedOrder = await localforage.getItem("climate_source_order");
+        if (Array.isArray(savedOrder)) setSourceOrder(savedOrder);
         const knownProviders = [...BUILTIN_PROVIDERS, ...frames.map((f) => f.id)];
         const applyProvider = (id) => {
           if (id && knownProviders.includes(id)) setProvider(id);
@@ -830,6 +1372,11 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
         const savedProvider = await localforage.getItem("selected_climate_provider");
         applyProvider(savedProvider);
+
+        const savedSecond = await localforage.getItem("climate_second_provider");
+        if (savedSecond && knownProviders.includes(savedSecond)) setSecondProvider(savedSecond);
+        const savedSplit = await localforage.getItem("climate_split_enabled");
+        if (typeof savedSplit === "boolean") setIsSplitEnabled(savedSplit);
 
         const savedKeyboardShortcutMode = await localforage.getItem(
           "climate_keyboard_shortcut_mode",
@@ -885,6 +1432,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     if (provider === id) {
       handleSetProvider("ventusky");
     }
+    if (secondProvider === id) {
+      handleSetSecondProvider("windy");
+    }
   };
 
   const handleAddFrame = (e) => {
@@ -915,6 +1465,54 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     setProvider(newFrame.id);
     setNewFrameTitle("");
     setNewFrameUrl("");
+    setIsAddingFrame(false);
+  };
+
+  const handleCancelAddFrame = () => {
+    setIsAddingFrame(false);
+    setNewFrameTitle("");
+    setNewFrameUrl("");
+  };
+
+  const handleReorderSources = async (ids) => {
+    setSourceOrder(ids);
+    try {
+      await localforage.setItem("climate_source_order", ids);
+    } catch (err) {
+      console.error("Error saving source order:", err);
+    }
+  };
+
+  // Галочка на картці: додає джерело праворуч (максимум 2); повторна — повертає один фрейм
+  const handleToggleSplitSource = (id) => {
+    if (!isSplitActive) {
+      if (id === provider) return;
+      handleSetSecondProvider(id);
+      handleToggleSplit(true);
+    } else if (id === secondProvider) {
+      handleToggleSplit(false);
+    } else if (id === provider) {
+      handleSetProvider(secondProvider);
+      handleToggleSplit(false);
+    } else {
+      handleSetSecondProvider(id);
+    }
+    if (!isMapActive) handleActivateMap();
+  };
+
+  const handleSelectSource = (id) => {
+    // Клік по картці правого фрейму міняє фрейми місцями
+    if (isSplitActive && id === secondProvider) {
+      handleSetSecondProvider(provider);
+    }
+    handleSetProvider(id);
+    if (!isMapActive) handleActivateMap();
+  };
+
+  const handleConfirmDeleteFrame = (frame) => {
+    if (window.confirm(`Видалити «${frame.title}» з бічної панелі?`)) {
+      handleDeleteFrame(frame.id);
+    }
   };
 
 
@@ -1037,9 +1635,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (e.key === "Escape" && isControlsOpen && e.target.tagName !== "INPUT") {
+        setIsControlsOpen(false);
+        return;
+      }
       if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
 
-      if (e.shiftKey && e.ctrlKey) {
+      if (e.ctrlKey && e.altKey && !e.shiftKey && !e.metaKey) {
         switch (e.code) {
           case 'KeyM':
             e.preventDefault();
@@ -1059,9 +1661,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               handleOpenMiniPlayer();
             }
             break;
-          case 'KeyW': {
+          case 'KeyS': {
             e.preventDefault();
-            const allSources = ["ventusky", "windy", ...customFrames.map((f) => f.id)];
+            const allSources = orderedSources.map((item) => item.id);
             setProvider((current) => {
               const idx = allSources.indexOf(current);
               const nextIdx = (idx + 1) % allSources.length;
@@ -1069,10 +1671,15 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
             });
             break;
           }
-          case 'KeyL':
+          case 'KeyO':
             e.preventDefault();
             if (isPinned) handleUnpin();
             else handlePinLocation();
+            break;
+          case 'KeyD':
+            if (!canSplit) break;
+            e.preventDefault();
+            handleToggleSplit(!isSplitEnabled);
             break;
           case 'KeyK':
             e.preventDefault();
@@ -1084,7 +1691,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isMiniPlayerOpen, pipWindow, customFrames, isMapActive, isPinned, lat, lon, zoom, overlay, provider]);
+  }, [isMiniPlayerOpen, pipWindow, customFrames, orderedSources, isMapActive, isPinned, lat, lon, zoom, overlay, provider, isControlsOpen, canSplit, isSplitEnabled]);
 
   const handleMiniPlayerDragStart = (event) => {
     if (event.target.closest("button")) return;
@@ -1108,7 +1715,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     };
   };
 
-  const embedUrl = useMemo(() => {
+  const buildEmbedUrl = (provider) => {
     if (provider === "windy") {
       return `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=${zoom}&level=surface&overlay=${overlay}&menu=&message=true&marker=`;
     }
@@ -1125,6 +1732,10 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       return "https://alerts.in.ua/";
     }
 
+    if (provider === "ukrainealarm") {
+      return "https://map.ukrainealarm.com/";
+    }
+
     if (provider === "excalidraw") {
       return "https://excalidraw.com/";
     }
@@ -1133,8 +1744,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       return "https://www.saveecobot.com/maps";
     }
 
-    if (provider === "radarbox") {
-      return "https://www.radarbox.com/";
+    if (provider === "airtraffic") {
+      return `https://globe.theairtraffic.com/?lat=${lat}&lon=${lon}&zoom=${zoom}`;
+    }
+
+    if (provider === "deepstate") {
+      return "https://deepstatemap.live/";
     }
 
     const foundFrame = customFrames.find((f) => f.id === provider);
@@ -1147,11 +1762,24 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     if (overlay === "temp") vOverlay = "temperature";
     if (overlay === "clouds") vOverlay = "cloud-cover";
     return `https://www.ventusky.com/?p=${lat};${lon};${zoom}&l=${vOverlay}`;
-  }, [provider, lat, lon, zoom, overlay, customFrames]);
+  };
+
+  const embedUrl = useMemo(
+    () => buildEmbedUrl(provider),
+    [provider, lat, lon, zoom, overlay, customFrames],
+  );
+  const secondEmbedUrl = useMemo(
+    () => buildEmbedUrl(secondProvider),
+    [secondProvider, lat, lon, zoom, overlay, customFrames],
+  );
 
   useEffect(() => {
     setIsLoading(isOnline);
   }, [provider, lat, lon, zoom, overlay, isOnline]);
+
+  useEffect(() => {
+    setIsLoadingSecond(isOnline);
+  }, [secondProvider, lat, lon, zoom, overlay, isOnline, isSplitActive]);
 
   return (
     <OuterContainer>
@@ -1195,6 +1823,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         </AnimatedButtonText>
       </MobileSettingsButton>
 
+      <MapLayout>
       <MapWrapper
         ref={mapWrapperRef}
         $isFullscreen={isFullscreen}
@@ -1254,7 +1883,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                     {isMapActive ? "● Увімкнено" : "○ Вимкнено"}
                   </StatusBadge>
                 </Dov>
-                <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Shift + M</KeyboardShortcut>
+                <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + M</KeyboardShortcut>
               </MobileSetting>
 
               <MobileSetting
@@ -1270,7 +1899,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                     {isPinned ? "● Закріплено" : "○ Не закріплено"}
                   </StatusBadge>
                 </Dov>
-                <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Shift + L</KeyboardShortcut>
+                <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + O</KeyboardShortcut>
               </MobileSetting>
 
               <MobileSetting $isDarkMode={isDarkMode} type="button" onClick={() => toggleFullscreen()}>
@@ -1279,7 +1908,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   <strong>{isFullscreen ? "Згорнути карту" : "Відкрити на весь екран"}</strong>
                   <span>Розгорнути карту на весь екран пристрою або повернути звичайний вигляд.</span>
                 </Dov>
-                <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Shift + F</KeyboardShortcut>
+                <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + F</KeyboardShortcut>
               </MobileSetting>
 
               <MobileSetting $isDarkMode={isDarkMode} type="button" onClick={handleOpenMiniPlayer}>
@@ -1288,24 +1917,25 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   <strong>Міні-плеєр карти</strong>
                   <span>Винести карту в окреме плаваюче вікно для паралельної роботи.</span>
                 </Dov>
-                <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Shift + P</KeyboardShortcut>
+                <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + P</KeyboardShortcut>
               </MobileSetting>
 
-              {/* ── Джерело ── */}
+              {/* ── Джерело (на планшетах і ПК — у бічній панелі) ── */}
+              {!isWideLayout && (<>
               <SettingLabel $isDarkMode={isDarkMode}>Джерело карти</SettingLabel>
 
               <MobileSettingSelectGroup $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
                 <MobileSetting
                   $isDarkMode={isDarkMode}
-                  style={{ background: "none", border: "none", borderRadius: 0, margin: 0, padding: "10px 44px 10px 12px" }}
+                  style={{ background: "none", border: "none", borderRadius: 0, margin: 0, padding: "10px 12px", pointerEvents: "none" }}
                   type="button"
                 >
                   <FaMapLocationDot />
                   <Dov>
                     <strong>Джерело карти</strong>
-                    <span>Windy, Ventusky, Тривоги, Excalidraw, SaveEcoBot та RadarBox</span>
+                    <span>Windy, Ventusky, Тривоги, DeepState, авіарадар та інші</span>
                   </Dov>
-                  <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Shift + W</KeyboardShortcut>
+                  <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + S</KeyboardShortcut>
                 </MobileSetting>
                 <MobileSourceSelect
                   $isDarkMode={isDarkMode}
@@ -1314,10 +1944,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 >
                   <option value="ventusky">Ventusky</option>
                   <option value="windy">Windy</option>
-                  <option value="alerts-ua">Карта тривог України</option>
+                  <option value="alerts-ua">Карта тривог України (alerts.in.ua)</option>
+                  <option value="ukrainealarm">Повітряні цілі: шахеди, ракети (Ukraine Alarm)</option>
                   <option value="excalidraw">Онлайн-дошка (Excalidraw)</option>
                   <option value="saveecobot">Якість повітря (SaveEcoBot)</option>
-                  <option value="radarbox">Моніторинг польотів (RadarBox)</option>
+                  <option value="airtraffic">Авіарадар (TheAirTraffic)</option>
+                  <option value="deepstate">Карта подій (DeepState)</option>
                   {customFrames.map((frame) => (
                     <option key={frame.id} value={frame.id}>
                       {frame.title}
@@ -1380,6 +2012,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   </div>
                 )}
               </AddFrameForm>
+              </>)}
 
             </MobileSettingsPanel>
           </MobileSettingsOverlay>
@@ -1425,20 +2058,110 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 <p>Інтерактивні карти надано сервісами Windy, Ventusky, Карта тривог України і т.д. (містять файли cookie)</p>
                 <p>Кнопка «Налаштування стихії» відкриває безкоштовний доступ до перемикання мап, повноекранний режим, міні-плеєр та інші функції!</p>
             </Loader>
-            <StyledIframe
-              aria-label="Weather Map"
-              src={isMapActive && isOnline ? embedUrl : undefined}
-              $isLoading={isLoading}
-              $isReady={isMapActive}
-              onLoad={() => setIsLoading(false)}
-              allowFullScreen
-              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-              referrerPolicy="strict-origin-when-cross-origin"
-              loading="lazy"
-            />
+            <FramesGrid $split={isSplitActive}>
+              <FramePane>
+                <StyledIframe
+                  aria-label="Weather Map"
+                  src={isMapActive && isOnline ? embedUrl : undefined}
+                  $isLoading={isLoading}
+                  $isReady={isMapActive}
+                  onLoad={() => setIsLoading(false)}
+                  allowFullScreen
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  loading="lazy"
+                />
+              </FramePane>
+              {isSplitActive && (
+                <FramePane>
+                  <StyledIframe
+                    aria-label="Weather Map (другий фрейм)"
+                    src={isMapActive && isOnline ? secondEmbedUrl : undefined}
+                    $isLoading={isLoadingSecond}
+                    $isReady={isMapActive}
+                    onLoad={() => setIsLoadingSecond(false)}
+                    allowFullScreen
+                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    loading="lazy"
+                  />
+                </FramePane>
+              )}
+            </FramesGrid>
           </>
         )}
       </MapWrapper>
+
+      {isWideLayout && (
+        <SourcesSidebar $isDarkMode={isDarkMode} aria-label="Джерела карти" layoutScroll>
+          <SourcesScroll>
+            <Reorder.Group
+              axis="y"
+              as="div"
+              values={orderedSources.map((item) => item.id)}
+              onReorder={handleReorderSources}
+              style={{ display: "flex", flexDirection: "column", gap: "16px", margin: 0, padding: 0 }}
+            >
+              {orderedSources.map((item) => (
+                <SourceItem
+                  key={item.id}
+                  item={item}
+                  isActive={provider === item.id || (isSplitActive && secondProvider === item.id)}
+                  onSelect={handleSelectSource}
+                  onDelete={handleConfirmDeleteFrame}
+                  splitAvailable={canSplit}
+                  isSplitChecked={isSplitActive && (item.id === provider || item.id === secondProvider)}
+                  splitLocked={!isSplitActive && item.id === provider}
+                  onToggleSplit={handleToggleSplitSource}
+                />
+              ))}
+            </Reorder.Group>
+
+            {isAddingFrame ? (
+              <SidebarAddForm
+                $isDarkMode={isDarkMode}
+                onSubmit={handleAddFrame}
+                onKeyDown={(e) => e.key === "Escape" && handleCancelAddFrame()}
+              >
+                <FormInput
+                  $isDarkMode={isDarkMode}
+                  type="text"
+                  placeholder="Назва (напр. Радар)"
+                  value={newFrameTitle}
+                  onChange={(e) => setNewFrameTitle(e.target.value)}
+                  autoFocus
+                />
+                <FormInput
+                  $isDarkMode={isDarkMode}
+                  type="text"
+                  placeholder="URL або iframe код"
+                  value={newFrameUrl}
+                  onChange={(e) => setNewFrameUrl(e.target.value)}
+                  required
+                />
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <FormButton type="submit" style={{ flex: 1 }}>Додати</FormButton>
+                  <FormCancelButton $isDarkMode={isDarkMode} type="button" onClick={handleCancelAddFrame}>
+                    Скасувати
+                  </FormCancelButton>
+                </div>
+              </SidebarAddForm>
+            ) : (
+              <AddSourceTile
+                $isDarkMode={isDarkMode}
+                type="button"
+                aria-label="Додати власний фрейм"
+                title="Додати власний фрейм"
+                onClick={() => setIsAddingFrame(true)}
+              >
+                <FiPlus />
+                <span>Додати свій фрейм</span>
+              </AddSourceTile>
+            )}
+          </SourcesScroll>
+        </SourcesSidebar>
+      )}
+      </MapLayout>
 
       {pipWindow ? (
         createPortal(
