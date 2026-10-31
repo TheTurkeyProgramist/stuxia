@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Стихія: індик-хвіст як віяло погоди. Плоскі кольори, без градієнтів -->
+  <!-- Сонце -->
+  <g fill="#FFC23A">
+    <circle cx="350" cy="120" r="62"/>
+    <g stroke="#FFC23A" stroke-width="16" stroke-linecap="round">
+      <line x1="350" y1="22" x2="350" y2="40"/>
+      <line x1="430" y1="56" x2="418" y2="68"/>
+      <line x1="464" y1="120" x2="446" y2="120"/>
+      <line x1="270" y1="56" x2="282" y2="68"/>
+    </g>
+  </g>
+  <!-- Хвіст-віяло -->
+  <g transform="translate(240 330)" stroke="#14315C" stroke-width="10">
+    <ellipse transform="rotate(-82)" cx="0" cy="-128" rx="42" ry="104" fill="#2E86DE"/>
+    <ellipse transform="rotate(-58)" cx="0" cy="-134" rx="42" ry="108" fill="#F08A3C"/>
+    <ellipse transform="rotate(-33)" cx="0" cy="-138" rx="42" ry="110" fill="#2BB3A3"/>
+    <ellipse transform="rotate(-8)" cx="0" cy="-138" rx="42" ry="108" fill="#2E86DE"/>
+  </g>
+  <!-- Крапля на нижньому пері -->
+  <path transform="translate(96 304)" d="M0 -22 C0 -22 -14 -4 -14 6 A14 14 0 0 0 14 6 C14 -4 0 -22 0 -22 Z" fill="#E8F4FF"/>
+  <!-- Хмарка -->
+  <path d="M148 166 A26 26 0 0 1 194 148 A34 34 0 0 1 258 160 A24 24 0 0 1 254 208 L152 208 A21 21 0 0 1 148 166 Z"
+        fill="#E8F4FF" stroke="#14315C" stroke-width="10" stroke-linejoin="round"/>
+  <!-- Тулуб -->
+  <path d="M150 360 C150 286 214 252 286 262 C352 272 384 320 372 372 C360 424 300 446 240 440 C186 434 150 408 150 360 Z"
+        fill="#1F5FA8" stroke="#14315C" stroke-width="10"/>
+  <!-- Крило -->
+  <path d="M196 336 C236 300 300 304 326 334 C306 352 286 356 266 352 C282 368 262 392 226 392 C206 384 194 362 196 336 Z" fill="#E8F4FF" stroke="#14315C" stroke-width="10" stroke-linejoin="round"/>
+  <!-- Шия -->
+  <path d="M330 300 C346 262 344 226 356 200 L392 206 C394 244 384 292 362 326 Z" fill="#E07A2E" stroke="#14315C" stroke-width="10" stroke-linejoin="round"/>
+  <!-- Голова -->
+  <circle cx="382" cy="190" r="36" fill="#BFE3F5" stroke="#14315C" stroke-width="10"/>
+  <circle cx="392" cy="182" r="7" fill="#14315C"/>
+  <!-- Дзьоб -->
+  <path d="M414 186 L448 198 L414 208 Z" fill="#FFC23A" stroke="#14315C" stroke-width="8" stroke-linejoin="round"/>
+  <!-- Борідка -->
+  <path d="M410 210 C420 232 412 252 398 250 C388 236 394 220 400 212 Z" fill="#E2463F" stroke="#14315C" stroke-width="8" stroke-linejoin="round"/>
+  <!-- Лапи -->
+  <g stroke="#14315C" stroke-width="12" stroke-linecap="round" fill="none">
+    <path d="M236 438 L228 482 M212 486 L246 486"/>
+    <path d="M300 434 L306 480 M290 484 L324 484"/>
+  </g>
+</svg>

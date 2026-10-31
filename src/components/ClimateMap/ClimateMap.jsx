@@ -2,7 +2,8 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import styled, { keyframes, css } from "styled-components";
 import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket } from "react-icons/fa";
-import { FiPlay, FiPlus, FiX } from "react-icons/fi";
+import { FiCheck, FiPlay, FiPlus, FiX } from "react-icons/fi";
+import { Tooltip } from "../Header/Header.jsx";
 import { MdDragIndicator } from "react-icons/md";
 import { Reorder, motion, useDragControls } from "framer-motion";
 import climate from "../../photos/cursors/climate.webp";
@@ -154,7 +155,7 @@ const MobileSettingsOverlay = styled.div`
   position: absolute;
   inset: 0;
   z-index: 30;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
   background: ${(p) => p.$isDarkMode ? "rgba(2, 5, 12, 0.55)" : "rgba(0, 0, 0, 0.3)"};
   backdrop-filter: blur(14px);
@@ -208,9 +209,14 @@ const MobileSettingsHeading = styled.div`
 
   h2 {
     margin: 0;
+    padding: 4px 0;
     font-size: 17px;
     font-weight: 700;
+    line-height: 1.3;
     letter-spacing: 0.01em;
+  }
+  /* Градієнт на самому анімованому тексті: background-clip на h2 обрізав гліфи з transform */
+  h2 > span {
     background: linear-gradient(90deg, #ffb36c, #ffd49e);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -243,6 +249,10 @@ const SettingLabel = styled.div`
   padding: 0 2px;
   margin-top: 10px;
   margin-bottom: 2px;
+
+  @media (min-width: 1024px) {
+    display: ${(p) => (p.$hideOnDesktop ? "none" : "block")};
+  }
 `;
 
 const MobileSetting = styled.button`
@@ -673,6 +683,87 @@ const KeyboardSettingRow = styled.div`
   }
 `;
 
+const iconPopIn = keyframes`
+  0% { opacity: 0; transform: scale(0.5) rotate(-12deg); }
+  70% { opacity: 1; transform: scale(1.12) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+`;
+const iconKeyTap = keyframes`
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(4px) scaleY(0.92); }
+  60% { transform: translateY(-2px); }
+`;
+const iconChestShake = keyframes`
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-10deg); }
+  40% { transform: rotate(8deg); }
+  60% { transform: rotate(-5deg); }
+  80% { transform: rotate(3deg); }
+`;
+const iconPinDrop = keyframes`
+  0% { transform: translateY(0) rotate(0); }
+  35% { transform: translateY(-8px) rotate(-15deg); }
+  70% { transform: translateY(2px) rotate(4deg); }
+  100% { transform: translateY(0) rotate(0); }
+`;
+const iconExpand = keyframes`
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+`;
+const iconFloatOut = keyframes`
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(4px, -4px); }
+`;
+
+// На ПК 5 блоків налаштувань сіткою 3 + 2, іконка велика над заголовком; на телефоні — звичайний список.
+// Порядок дітей: 1 клавіші, 2 підпис «Карта», 3 скриня, 4 шпилька, 5 повний екран, 6 міні-плеєр
+const SettingsGrid = styled.div`
+  && > * > svg { transform-origin: center; }
+  && > :nth-child(1):hover > svg { animation: ${iconKeyTap} 0.5s ease; }
+  && > :nth-child(3):hover > svg { animation: ${iconChestShake} 0.6s ease; }
+  && > :nth-child(4):hover > svg { animation: ${iconPinDrop} 0.6s ease; transform-origin: bottom left; }
+  && > :nth-child(5):hover > svg { animation: ${iconExpand} 0.6s ease; }
+  && > :nth-child(6):hover > svg { animation: ${iconFloatOut} 0.6s ease; }
+
+  @media (min-width: 1024px) {
+    && > * > svg { animation: ${iconPopIn} 0.5s ease both; }
+    && > :nth-child(3) > svg { animation-delay: 0.06s; }
+    && > :nth-child(4) > svg { animation-delay: 0.12s; }
+    && > :nth-child(5) > svg { animation-delay: 0.18s; }
+    && > :nth-child(6) > svg { animation-delay: 0.24s; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    && > * > svg, && > *:hover > svg { animation: none; }
+  }
+
+  @media (min-width: 1024px) {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+
+    && > * {
+      grid-column: span 2;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      margin-top: 0;
+      padding: 22px 16px 16px;
+      text-align: center;
+    }
+    && > :nth-child(n + 5) { grid-column: span 3; }
+
+    && > * > svg { font-size: 46px; }
+    && ${Dov} { flex: 1 0 auto; align-items: center; }
+    && strong { font-size: 15px; }
+    && span { font-size: 11.5px; }
+    && ${StatusBadge} { align-self: center; }
+    && ${KeyboardShortcut}, && select { margin: auto 0 0; }
+  }
+`;
+
 const KbdModeSelect = styled.select`
   margin-left: auto;
   padding: 5px 10px;
@@ -740,13 +831,14 @@ const SourcesScroll = styled.div`
 const CardDelete = styled.button`
   position: absolute;
   top: 6px;
-  right: 38px;
+  right: 44px;
   z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 26px;
   height: 26px;
+  margin-top: 3px;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -769,46 +861,79 @@ const DragHandle = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: none;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.55);
   color: #fff;
-  font-size: 18px;
+  font-size: 22px;
   cursor: grab;
-  opacity: 0;
   touch-action: none;
-  transition: opacity 0.18s ease, background 0.18s ease;
+  transition: background 0.18s ease;
 
   &:hover { background: rgba(0, 0, 0, 0.8); }
   &:active { cursor: grabbing; }
-  &:focus-visible { opacity: 1; }
-  @media (hover: none) { opacity: 1; }
 `;
 
+// Вгорі між трикутником і ручкою (та кнопкою видалення, якщо вона є), щоб не закривати підпис
 const SplitCheck = styled.label`
   position: absolute;
-  right: 8px;
-  bottom: 8px;
+  top: 6px;
+  right: ${(p) => (p.$withDelete ? "76px" : "44px")};
   z-index: 3;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 8px 3px 5px;
-  border-radius: 999px;
+  justify-content: center;
+  height: 32px;
+  padding: 0 10px 0 8px;
+  box-sizing: border-box;
+  border-radius: 5px;
   background: rgba(0, 0, 0, 0.6);
   color: #fff;
   font-size: 11px;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
   user-select: none;
   transition: background 0.18s ease;
 
   &:hover { background: rgba(0, 0, 0, 0.82); }
-  input { margin: 0; width: 14px; height: 14px; cursor: pointer; accent-color: ${SIDEBAR_ACCENT}; }
+  /* Сам input розтягнутий на всю плашку — область дотику ≥ 32px; видимий квадрат малює SplitBox */
+  input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
   input:disabled { cursor: not-allowed; }
+  input:disabled ~ * { opacity: 0.55; }
+`;
+
+const SplitBox = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 12px;
+  color: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  input:checked + & {
+    background: ${SIDEBAR_ACCENT};
+    border-color: ${SIDEBAR_ACCENT};
+    color: #fff;
+  }
+  input:focus-visible + & { outline: 2px solid #fff; outline-offset: 2px; }
 `;
 
 const SourceCardWrap = styled(Reorder.Item)`
@@ -816,7 +941,7 @@ const SourceCardWrap = styled(Reorder.Item)`
   flex-shrink: 0;
   list-style: none;
 
-  &:hover ${CardDelete}, &:hover ${DragHandle} { opacity: 1; }
+  &:hover ${CardDelete} { opacity: 1; }
 `;
 
 const CardCorner = styled.span`
@@ -1034,7 +1159,7 @@ const BUILTIN_SOURCES = [
 const BUILTIN_PROVIDERS = BUILTIN_SOURCES.map((s) => s.id);
 
 // Картка джерела; перетягується лише за ручку, щоб не заважати прокрутці на дотик
-const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSplitChecked, splitLocked, onToggleSplit }) => {
+const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSplitChecked, splitLocked, onToggleSplit, isDarkMode }) => {
   const controls = useDragControls();
   const { id, title, subtitle, Icon, bg, frame, cover, favicon } = item;
   const [faviconFailed, setFaviconFailed] = useState(false);
@@ -1088,14 +1213,19 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSpli
         <MdDragIndicator />
       </DragHandle>
       {splitAvailable && (
-        <SplitCheck title="Показувати поруч у два фрейми">
-          <input
-            type="checkbox"
-            checked={isSplitChecked}
-            disabled={splitLocked}
-            onChange={() => onToggleSplit(id)}
-          />
-          2 фрейми
+        <SplitCheck $withDelete={!!frame}>
+          {/* Tooltip обгортає вміст, а не плашку: input лишається absolute відносно SplitCheck, підказка кріпиться до квадрата */}
+          <Tooltip content="Показувати поруч у два фрейми" isDarkMode={isDarkMode}>
+            <input
+              type="checkbox"
+              aria-label="Показувати поруч у два фрейми"
+              checked={isSplitChecked}
+              disabled={splitLocked}
+              onChange={() => onToggleSplit(id)}
+            />
+            <SplitBox aria-hidden="true"><FiCheck /></SplitBox>
+            <span style={{ marginLeft: 6 }}>2 фрейми</span>
+          </Tooltip>
         </SplitCheck>
       )}
       {frame && (
@@ -1839,16 +1969,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                       {settingButtonTexts[textIndex]}
                     </AnimatedButtonText>
                   </h2>
-                  <p>Керуйте картою та її джерелом</p>
                 </div>
                 <MobileSettingsClose $isDarkMode={isDarkMode} type="button" onClick={() => setIsControlsOpen(false)}>
                   ×
                 </MobileSettingsClose>
               </MobileSettingsHeading>
-
-              {/* ── Налаштування ── */}
-              <SettingLabel $isDarkMode={isDarkMode}>Налаштування</SettingLabel>
-
+              <SettingsGrid>
               <KeyboardSettingRow $isDarkMode={isDarkMode}>
                 <FaKeyboard />
                 <Dov>
@@ -1867,7 +1993,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               </KeyboardSettingRow>
 
               {/* ── Карта ── */}
-              <SettingLabel $isDarkMode={isDarkMode}>Карта</SettingLabel>
+              {/* На ПК підпис ховається, щоб блоки йшли однією сіткою 3 + 2 */}
+              <SettingLabel $isDarkMode={isDarkMode} $hideOnDesktop>Карта</SettingLabel>
 
               <MobileSetting
                 $isDarkMode={isDarkMode}
@@ -1879,6 +2006,11 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 <GiLockedChest />
                 <Dov>
                   <strong>{isMapActive ? "Деактивувати карту" : "Активувати карту"}</strong>
+                  <span>
+                    {isMapActive
+                      ? "Вимкнути взаємодію з картою, щоб вона не перехоплювала прокрутку сторінки."
+                      : "Увімкнути карту, щоб гортати, масштабувати й перемикати шари."}
+                  </span>
                   <StatusBadge $on={isMapActive}>
                     {isMapActive ? "● Увімкнено" : "○ Вимкнено"}
                   </StatusBadge>
@@ -1895,6 +2027,11 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 <BsFillPinAngleFill />
                 <Dov>
                   <strong>{isPinned ? "Відкріпити локацію" : "Закріпити локацію"}</strong>
+                  <span>
+                    {isPinned
+                      ? "Карта відкривається з закріпленою точкою, масштабом і шаром."
+                      : "Запам'ятати поточну точку, масштаб і шар — карта відкриватиметься саме тут."}
+                  </span>
                   <StatusBadge $on={isPinned}>
                     {isPinned ? "● Закріплено" : "○ Не закріплено"}
                   </StatusBadge>
@@ -1919,6 +2056,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 </Dov>
                 <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + P</KeyboardShortcut>
               </MobileSetting>
+              </SettingsGrid>
 
               {/* ── Джерело (на планшетах і ПК — у бічній панелі) ── */}
               {!isWideLayout && (<>
@@ -2113,6 +2251,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   isSplitChecked={isSplitActive && (item.id === provider || item.id === secondProvider)}
                   splitLocked={!isSplitActive && item.id === provider}
                   onToggleSplit={handleToggleSplitSource}
+                  isDarkMode={isDarkMode}
                 />
               ))}
             </Reorder.Group>
