@@ -21,6 +21,40 @@ const GROUP_META = {
   precip: { icon: <FaCloudRain />, color: "#14b8a6", example: (f) => `${f.precip(2.5)} · ${f.snow(10)}` },
 };
 
+// Формули відповідають коефіцієнтам у utils/units.js (базові одиниці: °C, м/с, гПа, км, м, мм, см)
+const CONVERSIONS = [
+  {
+    key: "temp",
+    title: "Температура",
+    lines: ["°F = °C × 9/5 + 32", "K = °C + 273,15"],
+    advice: "°C — найзручніша для повсякденного життя, нуль збігається з замерзанням води. °F має сенс лише якщо ви звикли до американської шкали. K потрібні майже виключно в науці.",
+  },
+  {
+    key: "wind",
+    title: "Швидкість вітру",
+    lines: ["км/год = м/с × 3,6", "миль/год = м/с × 2,237", "вузли = м/с × 1,944"],
+    advice: "м/с — стандарт метеорологів. км/год легше уявити в порівнянні з авто, вузли потрібні морякам і пілотам.",
+  },
+  {
+    key: "pressure",
+    title: "Атмосферний тиск",
+    lines: ["мм рт. ст. = гПа × 0,750", "кПа = гПа ÷ 10", "inHg = гПа × 0,02953"],
+    advice: "Норма — приблизно 1013 гПа, або 760 мм рт. ст. В Україні звична мм рт. ст., у прогнозах і на графіках — гПа. inHg потрібні лише для американських джерел.",
+  },
+  {
+    key: "distance",
+    title: "Відстань і висота",
+    lines: ["милі = км × 0,6214", "фути = м × 3,281"],
+    advice: "Міняйте на милі/фути тільки якщо звикли до них, наприклад під час подорожі до США чи Британії.",
+  },
+  {
+    key: "precip",
+    title: "Опади і сніг",
+    lines: ["дюйми (опади) = мм ÷ 25,4", "дюйми (сніг) = см ÷ 2,54"],
+    advice: "Мм краще для опадів: 1 мм = 1 літр води на кв. метр. Дюйми дають дрібні числа (0,04 in), тому їх складніше читати.",
+  },
+];
+
 const SYSTEMS = [
   { key: "metric", label: "Метрична", hint: "°C, м/с, гПа, км, мм", icon: <FaGlobeEurope />, units: METRIC_UNITS },
   { key: "imperial", label: "Імперська", hint: "°F, миль/год, inHg, милі, дюйми", icon: <FaFlagUsa />, units: IMPERIAL_UNITS },
@@ -36,7 +70,7 @@ const ModalOverlay = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px;
+  padding: 0;
 `;
 
 const ModalContent = styled.div`
@@ -44,15 +78,20 @@ const ModalContent = styled.div`
   color: ${(p) => (p.$isDarkMode ? "#fff" : "#111")};
   border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)")};
   border-radius: 14px;
-  width: 100%;
-  max-width: 760px;
-  max-height: 94vh;
+  box-sizing: border-box;
+  width: 95vw;
+  height: 95vh;
   overflow-y: auto;
   padding: 20px 22px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+  /* При фіксованій висоті flex-діти інакше стискаються й шапка з кнопкою зникає */
+  & > * {
+    flex-shrink: 0;
+  }
 
   @media (max-width: 600px) {
     padding: 16px;
@@ -63,6 +102,18 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: -20px;
+  z-index: 2;
+  margin: -20px -22px 0;
+  padding: 14px 22px;
+  background: inherit;
+
+  @media (max-width: 600px) {
+    top: -16px;
+    margin: -16px -16px 0;
+    padding: 12px 16px;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -133,6 +184,10 @@ const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+  /* Непарна остання картка розтягується на всю ширину */
+  & > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
   }
@@ -190,6 +245,53 @@ const OptionButton = styled.button`
   }
 `;
 
+const Formulas = styled.details`
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)")};
+  border-radius: 10px;
+  padding: 10px 12px;
+
+  summary {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .formula-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+    @media (max-width: 640px) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .formula-card {
+    border-left: 3px solid ${(p) => (p.$isDarkMode ? "#00eeff" : "#008cff")};
+    padding-left: 10px;
+    font-size: 13px;
+    line-height: 1.45;
+    &:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+  }
+  .formula-card strong {
+    display: block;
+    margin-bottom: 2px;
+  }
+  .formula-card code {
+    display: block;
+    font-family: Consolas, monospace;
+  }
+  .formula-card p {
+    margin: 6px 0 0;
+    opacity: 0.75;
+  }
+  .general {
+    margin: 12px 0 0;
+    font-size: 12px;
+    opacity: 0.7;
+  }
+`;
+
 const Footer = styled.div`
   display: flex;
   justify-content: space-between;
@@ -216,7 +318,42 @@ const ResetButton = styled.button`
   color: ${(p) => (p.$isDarkMode ? "#ffb36c" : "#333")};
 `;
 
-const UnitsModal = ({ units, onChange, onClose, isDarkMode }) => {
+const ScopeRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  & > ${SectionLabel} {
+    margin-bottom: 0;
+  }
+  .hint {
+    font-size: 12px;
+    opacity: 0.65;
+  }
+`;
+
+const AllCardsToggle = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid ${(p) => (p.$active ? "#00eeff" : p.$isDarkMode ? "#444" : "#ccc")};
+  background: ${(p) => (p.$active ? (p.$isDarkMode ? "rgba(0,238,255,0.12)" : "rgba(0,140,255,0.1)") : "transparent")};
+  input {
+    accent-color: #00eeff;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+  }
+`;
+
+const UnitsModal = ({ units, onChange, onClose, isDarkMode, allCards = true, onToggleAllCards }) => {
   const [forcedCustom, setForcedCustom] = useState(false);
   const system = forcedCustom ? "custom" : detectSystem(units);
   const fmt = makeFormatters(units);
@@ -253,7 +390,20 @@ const UnitsModal = ({ units, onChange, onClose, isDarkMode }) => {
         </Header>
 
         <div>
-          <SectionLabel>Система мір</SectionLabel>
+          <ScopeRow>
+            <SectionLabel>Система мір</SectionLabel>
+            {onToggleAllCards && (
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                <span className="hint">
+                  {allCards ? "Одиниці однакові для всіх карток" : "Одиниці діють лише для цієї картки"}
+                </span>
+                <AllCardsToggle $active={allCards} $isDarkMode={isDarkMode}>
+                  <input type="checkbox" checked={allCards} onChange={(e) => onToggleAllCards(e.target.checked)} />
+                  Для всіх карток
+                </AllCardsToggle>
+              </div>
+            )}
+          </ScopeRow>
           <SystemRow>
             {SYSTEMS.map((s) => (
               <SystemButton
@@ -303,6 +453,25 @@ const UnitsModal = ({ units, onChange, onClose, isDarkMode }) => {
             })}
           </Grid>
         </div>
+
+        <Formulas $isDarkMode={isDarkMode}>
+          <summary>Як переводити одиниці і чи варто</summary>
+          <div className="formula-list">
+            {CONVERSIONS.map((c) => (
+              <div className="formula-card" key={c.key}>
+                <strong>{c.title}</strong>
+                {c.lines.map((line) => (
+                  <code key={line}>{line}</code>
+                ))}
+                <p>{c.advice}</p>
+              </div>
+            ))}
+          </div>
+          <p className="general">
+            Дані завжди зберігаються в метричних одиницях, а перемикач лише перераховує числа для показу.
+            Точність не втрачається, тому змінюйте одиницю вільно: це нічого не ламає. Якщо вагаєтесь, залиште метричну систему.
+          </p>
+        </Formulas>
 
         <Footer>
           <Preview>

@@ -732,7 +732,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     } else {
       video.pause();
     }
-  }, [shouldShowLoader, videoError]);
+  }, [shouldShowLoader, videoError, isMiniPlayerOpen]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {

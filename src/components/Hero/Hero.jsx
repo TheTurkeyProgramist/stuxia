@@ -33,7 +33,7 @@ import {
 } from "react-icons/fi";
 import styled, { keyframes, css } from "styled-components";
 import { useSelector, useDispatch } from "react-redux";
-import { MdSettingsSuggest, MdMore, MdSearch, MdWallpaper, MdAutoAwesome } from "react-icons/md";
+import { MdSettingsSuggest, MdMore, MdSearch, MdWallpaper, MdAutoAwesome, MdClose } from "react-icons/md";
 import {
   addCustomDay,
   removeCustomDay,
@@ -48,7 +48,6 @@ import fadedPreview from "../../photos/fan-art/faded.webp?w=128&format=webp&qual
 import { DEFAULT_BGS } from "./defaultBgs";
 import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
 import News from "../News/News.jsx";
-import SearchModeModal from "./SearchModeModal.jsx";
 import React_lazy_Aihelp from "../Aihelp/Aihelp.jsx";
 import toast, { Toaster } from 'react-hot-toast';
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
@@ -189,11 +188,8 @@ const DelayedContent = styled.div`
       : "none"};
   animation-delay: ${(props) => (props.$start ? "1.5s" : "0s")};
 `;
-const panAnimation = keyframes`
-  0% { background-position-x: 0%; }
-  50% { background-position-x: 100%; }
-  100% { background-position-x: 0%; }
-`;
+// Тривалість плавної зміни слайдів (налаштування прибрано)
+const SLIDESHOW_TRANSITION = 1;
 
 const isVideoSource = (src) => {
   if (!src) return false;
@@ -250,12 +246,7 @@ const BgLayerStyled = styled.div`
     width 0.5s ease,
     height 0.5s ease,
     z-index 0s;
-  transform: translateZ(0)
-    scale(
-      ${(props) => (props.$zoom || 1) * (props.$rotationScale || 1)}
-    )
-    rotate(${(props) => props.$rotation || 0}deg);
-  transform-origin: ${(props) => props.$focalX}% ${(props) => props.$focalY}%;
+  transform: translateZ(0);
   filter: ${(props) => {
     const filters = [];
     if (props.$blur > 0) filters.push(`blur(${props.$blur}px)`);
@@ -263,14 +254,8 @@ const BgLayerStyled = styled.div`
     return filters.length ? filters.join(" ") : "none";
   }};
   z-index: ${(props) => (props.$isStickyBgMode ? "-10" : "-2")} !important;
-  will-change: opacity, transform;
+  will-change: opacity;
   backface-visibility: hidden;
-  animation: ${(props) =>
-    props.$panEnabled && props.$zoom > 1
-      ? css`
-          ${panAnimation} ${props.$panSpeed || 6}s infinite linear
-        `
-      : "none"};
 `;
 
 const AiModalBackdrop = styled.div`
@@ -288,18 +273,21 @@ const AiModalBackdrop = styled.div`
 `;
 
 const AiModalContainer = styled.div`
-  width: min(900px, calc(100vw - 16px));
+  width: calc(100vw - 32px);
+  height: calc(100vh - 32px);
   max-height: calc(100vh - 32px);
   display: flex;
   flex-direction: column;
   border-radius: 20px;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 24px 80px rgba(0,0,0,0.6);
   animation: ${fadeIn} 220ms ease-out;
 `;
 
 const AiModalBody = styled.div`
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   background: ${(p) => (p.$isDarkMode ? "#0e0e16" : "#f8f8fc")};
 `;
@@ -315,8 +303,9 @@ const BgLayer = React.memo((props) => {
     $focalY,
     $videoStart,
     $videoEnd,
-    $videoPlaybackSpeed,
+    $transition,
   } = props;
+  // { key: $image, url }
   const [blobUrl, setBlobUrl] = useState(null);
   const videoRef = useRef(null);
   const layerRef = useRef(null);
@@ -349,66 +338,48 @@ const BgLayer = React.memo((props) => {
   const shouldPlay = $active && inView && tabVisible;
 
   useEffect(() => {
-    if (!isVideo) {
-      setBlobUrl(null);
-      return;
-    }
+    if (!isVideo) return;
     if ($image instanceof Blob) {
       const objectUrl = URL.createObjectURL($image);
-      setBlobUrl(objectUrl);
+      setBlobUrl({ key: $image, url: objectUrl });
       return () => URL.revokeObjectURL(objectUrl);
-    } else if (typeof $image === "string" && $image) {
-      // Повертаємо кешований blob URL одразу, без повторного fetch
-      if (videoBlobCache.has($image)) {
-        setBlobUrl(videoBlobCache.get($image));
-        return;
-      }
-      let active = true;
-      fetch($image)
-        .then((res) => res.blob())
-        .then((blob) => {
-          if (!active) return;
-          const objectUrl = URL.createObjectURL(blob);
-          videoBlobCache.set($image, objectUrl);
-          setBlobUrl(objectUrl);
-        })
-        .catch(() => {
-          if (active) setBlobUrl(null);
-        });
-      return () => {
-        active = false;
-        // НЕ викликаємо revokeObjectURL тут — URL залишається в кеші для повторного використання
-      };
     }
+    // Кешований blob URL береться прямо під час рендеру, fetch не потрібен
+    if (typeof $image !== "string" || !$image || videoBlobCache.has($image)) return;
+    let active = true;
+    fetch($image)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        // НЕ відкликаємо — URL залишається в кеші для повторного використання
+        videoBlobCache.set($image, objectUrl);
+        if (active) setBlobUrl({ key: $image, url: objectUrl });
+      })
+      .catch(() => {
+        if (active) setBlobUrl({ key: $image, url: $image });
+      });
+    return () => {
+      active = false;
+    };
   }, [$image, isVideo]);
 
-  // Відкликаємо blobUrl для Blob-об'єктів при зміні (уникаємо витоку пам'яті)
-  const prevBlobUrlRef = useRef(null);
-  useEffect(() => {
-    // Тільки для Blob-об'єктів (не кешовані рядкові URL)
-    if (!($image instanceof Blob)) return;
-    const prev = prevBlobUrlRef.current;
-    if (prev && prev !== blobUrl) {
-      URL.revokeObjectURL(prev);
-    }
-    prevBlobUrlRef.current = blobUrl;
-  }, [blobUrl, $image]);
-
-  const url =
-    $image instanceof Blob
-      ? blobUrl
-      : typeof $image === "string"
-      ? blobUrl || $image
-      : "";
+  // blobUrl зберігає, для якого $image він створений: після зміни фону
+  // не підставляємо у <video> старе (або вже відкликане) посилання
+  const url = !isVideo
+    ? typeof $image === "string"
+      ? $image
+      : ""
+    : typeof $image === "string" && videoBlobCache.has($image)
+    ? videoBlobCache.get($image)
+    : blobUrl?.key === $image
+    ? blobUrl.url
+    : undefined;
 
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
 
     if (shouldPlay) {
-      if ($videoPlaybackSpeed && vid.playbackRate !== $videoPlaybackSpeed) {
-        vid.playbackRate = $videoPlaybackSpeed;
-      }
       if ($videoStart != null && vid.currentTime < $videoStart && vid.paused) {
         vid.currentTime = $videoStart;
       }
@@ -416,12 +387,47 @@ const BgLayer = React.memo((props) => {
         const p = vid.play();
         if (p !== undefined) p.catch(() => {});
       }
-    } else {
-      if (!vid.paused) {
+    } else if (!vid.paused) {
+      // Шар, що згасає, грає до кінця переходу — інакше кадр «замерзає»
+      const delay = inView && tabVisible ? ($transition || 0) * 1000 : 0;
+      const timer = setTimeout(() => {
         vid.pause();
-      }
+        // У відео 1–2 ключові кадри, тож продовження з середини після паузи
+        // змушує декодувати все від початку (підвисання при перемиканні).
+        // Неактивний слайд перемотуємо на старт — там ключовий кадр.
+        if (!$active) vid.currentTime = $videoStart ?? 0;
+      }, delay);
+      return () => clearTimeout(timer);
     }
-  }, [shouldPlay, $videoStart, $videoPlaybackSpeed, url]);
+  }, [shouldPlay, $active, $transition, $videoStart, url]);
+
+  // Якщо декодер завис (час не рухається), пробуємо play(), а потім
+  // перезавантажуємо джерело з того ж місця — інакше відео лишається стояти
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid || !shouldPlay || !url) return;
+    let lastTime = vid.currentTime;
+    let stuckTicks = 0;
+    const timer = setInterval(() => {
+      if (vid.seeking || vid.readyState === 0) return;
+      if (vid.currentTime !== lastTime) {
+        lastTime = vid.currentTime;
+        stuckTicks = 0;
+        return;
+      }
+      stuckTicks += 1;
+      if (stuckTicks === 1) {
+        vid.play()?.catch(() => {});
+      } else if (stuckTicks >= 3) {
+        stuckTicks = 0;
+        const resumeAt = vid.currentTime;
+        vid.load();
+        vid.currentTime = resumeAt;
+        vid.play()?.catch(() => {});
+      }
+    }, 1500);
+    return () => clearInterval(timer);
+  }, [shouldPlay, url]);
 
   const videoStart = $videoStart ?? 0;
   const videoEnd = $videoEnd ?? null; // null = play to natural end
@@ -432,7 +438,9 @@ const BgLayer = React.memo((props) => {
         <video
           ref={videoRef}
           src={url}
-          preload={$active ? "auto" : "none"}
+          // Відео вже в пам'яті (blob), тож наступний слайд готуємо заздалегідь,
+          // а не під час його появи
+          preload="auto"
           muted
           loop
           playsInline
@@ -441,9 +449,6 @@ const BgLayer = React.memo((props) => {
           onCanPlay={(e) => {
             if (shouldPlay) {
               const vid = e.target;
-              if ($videoPlaybackSpeed && vid.playbackRate !== $videoPlaybackSpeed) {
-                vid.playbackRate = $videoPlaybackSpeed;
-              }
               if (vid.paused) {
                 const p = vid.play();
                 if (p !== undefined) p.catch(() => {});
@@ -490,20 +495,6 @@ const BgLayer = React.memo((props) => {
   );
 });
 
-const Overlay = styled.div`
-  position: ${(props) => (props.$isStickyBgMode ? "fixed" : "absolute")} !important;
-  top: 0;
-  left: 0;
-  width: ${(props) => (props.$isStickyBgMode ? "100vw" : "100%")} !important;
-  height: ${(props) => (props.$isStickyBgMode ? "100vh" : "100%")} !important;
-  background: rgba(0, 0, 0, ${(props) => props.$opacity});
-  z-index: ${(props) => (props.$isStickyBgMode ? "-9" : "-1")} !important;
-  pointer-events: none;
-  transition:
-    background 0.5s ease,
-    width 0.5s ease,
-    height 0.5s ease;
-`;
 const HeroDecor = styled.div`
   display: flex;
   justify-content: center;
@@ -538,10 +529,10 @@ const HeroDate = styled.div`
   text-align: right;
   font-weight: 600;
   width: 100%;
-  min-height: 42px;
+  min-height: 34px;
   box-sizing: border-box;
   background: transparent;
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-bottom: 1px solid
     ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)")};
   position: relative;
@@ -553,7 +544,6 @@ const HeroDate = styled.div`
     font-size: 11px;
     gap: 8px;
     padding: 6px 9px;
-
   }
 `;
 
@@ -572,8 +562,8 @@ const TimezoneButton = styled.button`
   flex: 0 0 auto;
   border: none;
   gap: 3px;
-  border-radius: 6px;
-  padding: 0px 12px;
+  border-radius: 4px;
+  padding: 2px 5px;
   background: transparent;
   color: ${(props) => (props.$isDarkMode ? "#fff" : "#30343b")};
   cursor: pointer;
@@ -585,38 +575,13 @@ const TimezoneButton = styled.button`
       props.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)"};
   }
 `;
-const FestiveOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2000;
-  background: radial-gradient(
-    circle,
-    rgba(255, 215, 0, 0.1) 0%,
-    transparent 70%
-  );
-  border: 4px solid rgba(255, 215, 0, 0.15);
-  box-shadow: inset 0 0 50px rgba(255, 215, 0, 0.2);
-  opacity: ${(props) => (props.$active ? 1 : 0)};
-  transition: opacity 2s ease;
-
-  &::after {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    color: ${(props) => props.$color || "gold"};
-    font-size: 14px;
-    font-weight: 900;
-    text-shadow: 0 0 10px black;
-  }
-`;
 
 const SearchWrapper = styled.div`
   position: relative;
   display: flex;
   width: 100%;
   box-sizing: border-box;
-  padding: 12px;
+  padding: 3px 3px;
   flex-direction: column;
   align-items: center;
   z-index: 99;
@@ -638,6 +603,14 @@ const ModePicker = styled.div`
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 4px;
+
+  & > * {
+    display: block;
+    width: 100%;
+  }
 `;
 
 const modeIconEnter = keyframes`
@@ -647,9 +620,10 @@ const modeIconEnter = keyframes`
 
 const ModePreviewIcon = styled.span`
   display: grid;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 16px;
+  width: 22px;
+  height: 22px;
+  font-size: 18px;
+  flex: 0 0 22px;
   place-items: center;
   animation: ${modeIconEnter} 300ms ease both;
 `;
@@ -660,9 +634,9 @@ const ModePreviewText = styled.span`
 `;
 
 const ModeIconBtn = styled.button`
-  width: 176px;
+  width: 100%;
   box-sizing: border-box;
-  height: 19px;
+  height: 39px;
   border-radius: 6px;
   border: none;
   background: ${(props) =>
@@ -672,12 +646,111 @@ const ModeIconBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 12px;
-  padding: 0 4px;
+  gap: 8px;
+  font-size: 15px;
+  padding: 0 8px;
   flex-shrink: 0;
   transition: background 0.2s ease;
   &:hover { background: #353988; }
+`;
+
+const overlayIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const overlayOut = keyframes`
+  from { opacity: 1; }
+  to { opacity: 0; }
+`;
+
+const optionOut = keyframes`
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(24px); }
+`;
+
+const optionIn = keyframes`
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+`;
+
+const iconSpinIn = keyframes`
+  from { transform: rotate(-120deg) scale(0.4); opacity: 0; }
+  to { transform: rotate(0) scale(1); opacity: 1; }
+`;
+
+const ModeOverlay = styled.div`
+  && {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 4px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 43px;
+    z-index: 5;
+    padding: 0;
+    box-sizing: border-box;
+    border-radius: 10px;
+    background: ${(props) =>
+      props.$isDarkMode ? "rgb(18, 22, 29)" : "rgb(248, 250, 252)"};
+    animation: ${(props) =>
+      props.$closing
+        ? css`${overlayOut} 260ms ease-in both`
+        : css`${overlayIn} 280ms cubic-bezier(0.22, 1, 0.36, 1) both`};
+  }
+`;
+
+const ModeOptionBtn = styled(ModeIconBtn)`
+  flex: none;
+  width: 100%;
+  height: 39px;
+  font-size: 16px;
+
+  ${ModePreviewIcon} {
+    width: 24px;
+    height: 24px;
+    font-size: 20px;
+    flex: 0 0 24px;
+  }
+
+  animation: ${(props) =>
+    props.$closing
+      ? css`${optionOut} 200ms ease-in both`
+      : css`${optionIn} 320ms cubic-bezier(0.22, 1, 0.36, 1) both`};
+  animation-delay: ${(props) => props.$delay || "0ms"};
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 6px 18px rgba(53, 57, 136, 0.45);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  svg {
+    transition: transform 0.25s ease;
+  }
+
+  &:hover svg {
+    transform: scale(1.2) rotate(-6deg);
+  }
+`;
+
+const CancelModeBtn = styled(ModeIconBtn)`
+  height: 39px;
+  font-size: 16px;
+  &:hover {
+    background: #8a2b3a;
+  }
+
+  & > span:first-child {
+    animation: ${iconSpinIn} 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
 `;
 
 const CoordinatesContainer = styled.div`
@@ -696,7 +769,7 @@ const CoordinateInput = styled.div`
   min-width: 0;
   input {
     width: 100%;
-    height: 52px;
+    height: 46px;
     box-sizing: border-box;
     padding: 0 12px;
     font-family: var(--font-family);
@@ -731,7 +804,7 @@ const CoordinateSearchButton = styled.button`
   justify-content: center;
   gap: 7px;
   min-width: 96px;
-  height: 52px;
+  height: 46px;
   padding: 0 14px;
   border: none;
   border-radius: 8px;
@@ -756,8 +829,21 @@ const HeroFormater = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
   width: 100%;
   gap: 8px;
+
+  /* на вузьких екранах поля координат переносяться у 2 рядки (46+8+46),
+     тому обидва режими мають однакову мінімальну висоту */
+  @media (max-width: 503px) {
+    min-height: 148px;
+  }
+
+  /* накладка вибору режиму (2 кнопки + «Відмінити» + проміжки) має вміщатися
+     без зміни висоти блоку при відкритті */
+  @media (min-width: 504px) {
+    min-height: 125px;
+  }
 `;
 
 const SearchBorder = styled.svg`
@@ -801,12 +887,12 @@ const SearchContainer = styled.div`
 
 const HeroInput = styled.input`
   width: 100%;
-  height: 52px;
+  height: 46px;
   font-family: var(--font-family);
   font-weight: 500;
   font-size: 14px;
   color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#040404")};
-  padding: 0 12px;
+  padding: 0px 12px;
   background: ${(p) => (p.$isDarkMode ? "#10151c" : "#ffffff")};
   border-radius: 8px;
   border: 1px solid transparent;
@@ -820,31 +906,6 @@ const HeroInput = styled.input`
     color: ${(p) => (p.$isDarkMode ? "#f3efef" : "#000000")};
   }
 `;
-const ClearButton = styled.button`
-  position: absolute;
-  right: 2px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border-left: 3px solid black;
-  border-top: 1px solid black;
-  cursor: pointer;
-  font-size: 30px;
-  color: rgb(2, 2, 2);
-  background: rgb(183, 101, 255);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 31px;
-  width: 30px;
-  transition: all 0.2s;
-  &:hover {
-    font-weight: bold;
-  }
-  &:active {
-    transform: translateY(-50%) scale(0.9);
-  }
-`;
 const HeroInfo = styled.div`
   display: ${(props) => (props.$desktopOnly ? "none" : "block")};
   width: 100%;
@@ -856,6 +917,7 @@ const HeroInfo = styled.div`
 
   @media (min-width: 560px) {
     display: block;
+    height: 20px;
   }
 
   @media (max-width: 559px) {
@@ -1070,26 +1132,16 @@ const Hero = ({
   setHeroBg2,
   heroBg3,
   setHeroBg3,
-  heroBg4,
-  setHeroBg4,
   customHeroBgs = [],
   setCustomHeroBgs,
   heroBgMode,
   setHeroBgMode,
-  heroOverlayOpacity,
-  setHeroOverlayOpacity,
   bgRatings,
   setBgRatings,
   slideshowInterval,
   setSlideshowInterval,
-  slideshowTransition,
-  setSlideshowTransition,
   filterCategory,
   setFilterCategory,
-  heroBgZoom,
-  setHeroBgZoom,
-  heroBgRotation,
-  setHeroBgRotation,
   heroBgBlur,
   setHeroBgBlur,
   heroBgPixelation,
@@ -1100,14 +1152,6 @@ const Hero = ({
   setHeroBgFocal2,
   heroBgFocal3,
   setHeroBgFocal3,
-  heroBgFocal4,
-  setHeroBgFocal4,
-  heroBgPanEnabled,
-  setHeroBgPanEnabled,
-  heroBgPanSpeed,
-  setHeroBgPanSpeed,
-  videoPlaybackSpeed,
-  setVideoPlaybackSpeed,
   selectedTimezone,
   setSelectedTimezone,
   customHolidayName,
@@ -1148,6 +1192,8 @@ const Hero = ({
   const [searchMode, setSearchMode] = useState("city");
   const [searchModeOptionIndex, setSearchModeOptionIndex] = useState(0);
   const [isSearchModeModalOpen, setIsSearchModeModalOpen] = useState(false);
+  const [isModeClosing, setIsModeClosing] = useState(false);
+  const [pickerBaseMode, setPickerBaseMode] = useState("city");
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   const searchModePrompts = [
@@ -1175,14 +1221,96 @@ const Hero = ({
     return () => clearInterval(interval);
   }, [searchMode, searchModePrompts.length]);
 
-  const handleSearchModeSelect = (mode) => {
-    setIsSearchModeModalOpen(false);
+  const modeOptions = [
+    { id: "ai", label: "ШІ-асистент (Gemini)", Icon: MdAutoAwesome },
+    { id: "city", label: "За назвою міста", Icon: FaMountainCity },
+    { id: "coordinates", label: "Координати (шир/дов)", Icon: FaMapLocationDot },
+  ].filter(({ id }) => id !== pickerBaseMode);
 
+  const MODE_CLOSE_MS = 260;
+
+  const closeModePicker = (afterClose) => {
+    if (isModeClosing) return;
+    setIsModeClosing(true);
+    setTimeout(() => {
+      setIsSearchModeModalOpen(false);
+      setIsModeClosing(false);
+      afterClose?.();
+    }, MODE_CLOSE_MS);
+  };
+
+  const searchModePicker = isSearchModeModalOpen ? (
+    <>
+      <ModeOverlay $isDarkMode={isDarkMode} $closing={isModeClosing}>
+        {modeOptions.map(({ id, label, Icon }, index) => (
+          <ModeOptionBtn
+            key={id}
+            type="button"
+            $closing={isModeClosing}
+            $delay={`${(isModeClosing ? modeOptions.length - 1 - index : index) * 70}ms`}
+            onClick={() => handleSearchModeSelect(id)}
+            $isDarkMode={isDarkMode}
+          >
+            <ModePreviewIcon>
+              <Icon />
+            </ModePreviewIcon>
+            <ModePreviewText>{label}</ModePreviewText>
+          </ModeOptionBtn>
+        ))}
+      </ModeOverlay>
+      <ModePicker style={{ paddingTop: 0 }}>
+      <CancelModeBtn
+        type="button"
+        onClick={() => closeModePicker()}
+        aria-label="Відмінити вибір режиму пошуку"
+        $isDarkMode={isDarkMode}
+      >
+        <ModePreviewIcon>
+          <MdClose />
+        </ModePreviewIcon>
+        <ModePreviewText>Відмінити</ModePreviewText>
+      </CancelModeBtn>
+      </ModePicker>
+    </>
+  ) : (
+    <ModePicker>
+      <Tooltip
+        content="Натисніть, щоб відкрити вибір режиму пошуку"
+        isDarkMode={isDarkMode}
+      >
+        <ModeIconBtn
+          onClick={() => {
+            setPickerBaseMode(searchMode);
+            setIsSearchModeModalOpen(true);
+          }}
+          aria-label="Відкрити вибір режиму пошуку"
+          $isDarkMode={isDarkMode}
+        >
+          <ModePreviewIcon key={`${searchModeOptionIndex}-${rotatingSearchModeIcon}`}>
+            {rotatingSearchModeIcon === "coordinates" ? (
+              <FaMapLocationDot />
+            ) : rotatingSearchModeIcon === "ai" ? (
+              <MdAutoAwesome />
+            ) : (
+              <FaMountainCity />
+            )}
+          </ModePreviewIcon>
+          <ModePreviewText key={`${searchModeOptionIndex}-${rotatingSearchPrompt}`}>
+            {rotatingSearchPrompt}
+          </ModePreviewText>
+        </ModeIconBtn>
+      </Tooltip>
+    </ModePicker>
+  );
+
+  const handleSearchModeSelect = (mode) => {
     if (mode === "ai") {
-      setIsAiModalOpen(true);
+      closeModePicker(() => setIsAiModalOpen(true));
       return;
     }
 
+    // режим міняємо одразу: накладка ще закриває вміст, тож під час
+    // зникання не видно попередній режим
     setSearchMode(mode);
 
     if (mode === "city") {
@@ -1196,16 +1324,13 @@ const Hero = ({
     setShowList(false);
 
     if (mode !== "city") setShowCoordinateSuggestions(false);
+
+    closeModePicker();
   };
 
   // Блокування прокрутки при відкритій модалці
   useEffect(() => {
-    if (
-      isModalOpen ||
-      showTimezoneMenu ||
-      isSearchModeModalOpen ||
-      isAiModalOpen
-    ) {
+    if (isModalOpen || showTimezoneMenu || isAiModalOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -1213,24 +1338,23 @@ const Hero = ({
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isModalOpen, showTimezoneMenu, isSearchModeModalOpen, isAiModalOpen]);
+  }, [isModalOpen, showTimezoneMenu, isAiModalOpen]);
 
   // Закриття по Escape
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") {
         if (isAiModalOpen) { setIsAiModalOpen(false); return; }
-        if (isSearchModeModalOpen) return;
+        if (isSearchModeModalOpen) closeModePicker();
       }
     };
     document.addEventListener("keydown", handleEsc);
     return () => document.removeEventListener("keydown", handleEsc);
-  }, [isAiModalOpen, isSearchModeModalOpen]);
+  }, [isAiModalOpen, isSearchModeModalOpen, isModeClosing]);
 
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [activeLayer, setActiveLayer] = useState(1);
-  const rotationScale = 1;
   const [randomBgsList, setRandomBgsList] = useState([]);
   const [randomCurrentIndex, setRandomCurrentIndex] = useState(0);
   const allBgs = useMemo(
@@ -1263,8 +1387,6 @@ const Hero = ({
         setHeroBg2(src);
       } else if (targetLayer === 3) {
         setHeroBg3(src);
-      } else if (targetLayer === 4) {
-        setHeroBg4(src);
       } else {
         setHeroBg(src);
       }
@@ -1276,7 +1398,6 @@ const Hero = ({
       setHeroBg,
       setHeroBg2,
       setHeroBg3,
-      setHeroBg4,
     ],
   );
  useEffect(() => {
@@ -1290,18 +1411,6 @@ const Hero = ({
       setActiveLayer(1);
       const timer = setInterval(() => {
         setActiveLayer((prev) => (prev === 3 ? 1 : prev + 1));
-      }, slideshowInterval * 1000);
-      return () => clearInterval(timer);
-    } else if (
-      heroBgMode === "slideshow-4" &&
-      heroBg &&
-      heroBg2 &&
-      heroBg3 &&
-      heroBg4
-    ) {
-      setActiveLayer(1);
-      const timer = setInterval(() => {
-        setActiveLayer((prev) => (prev === 4 ? 1 : prev + 1));
       }, slideshowInterval * 1000);
       return () => clearInterval(timer);
     } else if (heroBgMode === "random") {
@@ -1366,16 +1475,10 @@ const Hero = ({
   const timezoneMenuRef = useRef(null);
 
   const resetBgSettings = () => {
-    setHeroOverlayOpacity(0.3);
-    setHeroBgZoom(1);
-    setHeroBgRotation(0);
     setHeroBgBlur(0);
     setHeroBgPixelation(0);
     setHeroBgFocal1({ x: 50, y: 50 });
     setHeroBgFocal2({ x: 50, y: 50 });
-    setHeroBgPanEnabled(false);
-    setHeroBgPanSpeed(6);
-    if (setVideoPlaybackSpeed) setVideoPlaybackSpeed(1);
   };
 
   const [coordinateSuggestions, setCoordinateSuggestions] = useState([]);
@@ -1704,19 +1807,13 @@ const Hero = ({
         $isStickyBgMode={isStickyBgMode}
         $image={heroBg}
         $active={heroBgMode === "static" || activeLayer === 1}
-        $transition={slideshowTransition}
-        $zoom={heroBgZoom}
-        $rotation={heroBgRotation}
-        $rotationScale={rotationScale}
+        $transition={SLIDESHOW_TRANSITION}
         $blur={heroBgBlur}
         $pixelation={heroBgPixelation}
         $focalX={heroBgFocal1?.x || 50}
         $focalY={heroBgFocal1?.y || 50}
-        $panEnabled={heroBgPanEnabled && heroBgZoom > 1}
-        $panSpeed={heroBgPanSpeed}
         $videoStart={allBgs.find((b) => b.src === heroBg)?.start}
         $videoEnd={allBgs.find((b) => b.src === heroBg)?.end}
-        $videoPlaybackSpeed={videoPlaybackSpeed}
       />
       <BgLayer
         $isStickyBgMode={isStickyBgMode}
@@ -1724,64 +1821,31 @@ const Hero = ({
         $active={
           (heroBgMode === "slideshow-2" ||
             heroBgMode === "slideshow-3" ||
-            heroBgMode === "slideshow-4" ||
             heroBgMode === "random") &&
           activeLayer === 2
         }
-        $transition={slideshowTransition}
-        $zoom={heroBgZoom}
-        $rotation={heroBgRotation}
-        $rotationScale={rotationScale}
+        $transition={SLIDESHOW_TRANSITION}
         $blur={heroBgBlur}
         $pixelation={heroBgPixelation}
         $focalX={heroBgFocal2?.x || 50}
         $focalY={heroBgFocal2?.y || 50}
-        $panEnabled={heroBgPanEnabled && heroBgZoom > 1}
-        $panSpeed={heroBgPanSpeed}
         $videoStart={allBgs.find((b) => b.src === heroBg2)?.start}
         $videoEnd={allBgs.find((b) => b.src === heroBg2)?.end}
-        $videoPlaybackSpeed={videoPlaybackSpeed}
       />
       <BgLayer
         $isStickyBgMode={isStickyBgMode}
         $image={heroBg3}
         $active={
-          (heroBgMode === "slideshow-3" || heroBgMode === "slideshow-4") &&
-          activeLayer === 3
+          heroBgMode === "slideshow-3" && activeLayer === 3
         }
-        $transition={slideshowTransition}
-        $zoom={heroBgZoom}
-        $rotation={heroBgRotation}
-        $rotationScale={rotationScale}
+        $transition={SLIDESHOW_TRANSITION}
         $blur={heroBgBlur}
         $pixelation={heroBgPixelation}
         $focalX={heroBgFocal3?.x || 50}
         $focalY={heroBgFocal3?.y || 50}
-        $panEnabled={heroBgPanEnabled && heroBgZoom > 1}
-        $panSpeed={heroBgPanSpeed}
         $videoStart={allBgs.find((b) => b.src === heroBg3)?.start}
         $videoEnd={allBgs.find((b) => b.src === heroBg3)?.end}
-        $videoPlaybackSpeed={videoPlaybackSpeed}
       />
-      <BgLayer
-        $isStickyBgMode={isStickyBgMode}
-        $image={heroBg4}
-        $active={heroBgMode === "slideshow-4" && activeLayer === 4}
-        $transition={slideshowTransition}
-        $zoom={heroBgZoom}
-        $rotation={heroBgRotation}
-        $rotationScale={rotationScale}
-        $blur={heroBgBlur}
-        $pixelation={heroBgPixelation}
-        $focalX={heroBgFocal4?.x || 50}
-        $focalY={heroBgFocal4?.y || 50}
-        $panEnabled={heroBgPanEnabled && heroBgZoom > 1}
-        $panSpeed={heroBgPanSpeed}
-        $videoStart={allBgs.find((b) => b.src === heroBg4)?.start}
-        $videoEnd={allBgs.find((b) => b.src === heroBg4)?.end}
-        $videoPlaybackSpeed={videoPlaybackSpeed}
-      />
-      <Overlay $opacity={heroOverlayOpacity} $isStickyBgMode={isStickyBgMode} />
       <ChangeBgButton
         ref={(el) => registerRef("changeBgButton", el)}
         onClick={() => setIsModalOpen(true)}
@@ -1813,31 +1877,6 @@ const Hero = ({
                   >
                     <MdSettingsSuggest size={18} /> Змінити часовий пояс?
                   </TimezoneButton>
-                  <ModePicker>
-                    <Tooltip
-                      content="Натисніть, щоб відкрити вибір режиму пошуку"
-                      isDarkMode={isDarkMode}
-                    >
-                      <ModeIconBtn
-                        onClick={() => setIsSearchModeModalOpen(true)}
-                        aria-label="Відкрити вибір режиму пошуку"
-                        $isDarkMode={isDarkMode}
-                      >
-                        <ModePreviewIcon key={`${searchModeOptionIndex}-${rotatingSearchModeIcon}`}>
-                          {rotatingSearchModeIcon === "coordinates" ? (
-                            <FaMapLocationDot />
-                          ) : rotatingSearchModeIcon === "ai" ? (
-                            <MdAutoAwesome />
-                          ) : (
-                            <FaMountainCity />
-                          )}
-                        </ModePreviewIcon>
-                        <ModePreviewText key={`${searchModeOptionIndex}-${rotatingSearchPrompt}`}>
-                          {rotatingSearchPrompt}
-                        </ModePreviewText>
-                      </ModeIconBtn>
-                    </Tooltip>
-                  </ModePicker>
                 </HeroControls>
                 <Tag $isDarkMode={isDarkMode} style={{ flex: 1, textAlign: "right" }}>
                   {heroDateString}
@@ -1976,18 +2015,10 @@ const Hero = ({
                 Ви заслуговуєте на багатофункціональний прогноз, де немає політики та реклами!
                 Гарної погоди!
               </HeroInfo>
+              {searchModePicker}
             </HeroFormater>
           ) : (
-            <div
-              style={{
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "5px",
-                position: "relative",
-              }}
-            >
+            <HeroFormater>
               <CoordinatesContainer style={{ alignItems: "flex-start" }}>
                 <CoordinateInput $isDarkMode={isDarkMode}>
                   <input
@@ -2055,6 +2086,7 @@ const Hero = ({
                   {nearbySearchStatus}
                 </div>
               )}
+              {searchModePicker}
 
               {showCoordinateSuggestions && (
                 <SuggestionsList
@@ -2120,12 +2152,11 @@ const Hero = ({
                   </button>
                 </SuggestionsList>
               )}
-            </div>
+            </HeroFormater>
           )}
           </SearchWrapper>
         </BrowserSearchPanel>
-        
-        <div style={{ marginTop: "30px", zIndex: 90 }}>
+        <div style={{ marginTop: "0px", zIndex: 90 }}>
           <News user={user} isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
         </div>
       </DelayedContent>
@@ -2139,39 +2170,23 @@ const Hero = ({
         heroBg={heroBg}
         heroBg2={heroBg2}
         heroBg3={heroBg3}
-        heroBg4={heroBg4}
         setHeroBg={setHeroBg}
         setHeroBg2={setHeroBg2}
         setHeroBg3={setHeroBg3}
-        setHeroBg4={setHeroBg4}
         customHeroBgs={customHeroBgs}
         setCustomHeroBgs={setCustomHeroBgs}
         heroBgMode={heroBgMode}
         setHeroBgMode={setHeroBgMode}
-        heroOverlayOpacity={heroOverlayOpacity}
-        setHeroOverlayOpacity={setHeroOverlayOpacity}
         bgRatings={bgRatings}
         setBgRatings={setBgRatings}
         slideshowInterval={slideshowInterval}
         setSlideshowInterval={setSlideshowInterval}
-        slideshowTransition={slideshowTransition}
-        setSlideshowTransition={setSlideshowTransition}
         filterCategory={filterCategory}
         setFilterCategory={setFilterCategory}
-        heroBgZoom={heroBgZoom}
-        setHeroBgZoom={setHeroBgZoom}
-        heroBgRotation={heroBgRotation}
-        setHeroBgRotation={setHeroBgRotation}
         heroBgBlur={heroBgBlur}
         setHeroBgBlur={setHeroBgBlur}
         heroBgPixelation={heroBgPixelation}
         setHeroBgPixelation={setHeroBgPixelation}
-        heroBgPanEnabled={heroBgPanEnabled}
-        setHeroBgPanEnabled={setHeroBgPanEnabled}
-        heroBgPanSpeed={heroBgPanSpeed}
-        setHeroBgPanSpeed={setHeroBgPanSpeed}
-        videoPlaybackSpeed={videoPlaybackSpeed}
-        setVideoPlaybackSpeed={setVideoPlaybackSpeed}
         activeLayer={activeLayer}
         setActiveLayer={setActiveLayer}
         randomBgsList={randomBgsList}
@@ -2183,14 +2198,6 @@ const Hero = ({
 
 
 
-
-      <SearchModeModal
-        isOpen={isSearchModeModalOpen}
-        isDarkMode={isDarkMode}
-        activeMode={searchMode}
-        onSelect={handleSearchModeSelect}
-        onClose={() => setIsSearchModeModalOpen(false)}
-      />
 
       {isAiModalOpen && createPortal(
         <AiModalBackdrop onClick={() => setIsAiModalOpen(false)}>

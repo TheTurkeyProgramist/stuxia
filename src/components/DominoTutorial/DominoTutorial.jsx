@@ -284,7 +284,6 @@ const DominoTutorial = ({ user }) => {
       setHighlightStyle({ display: 'none' });
       setPopoverStyle({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, isActive]);
 
   // Step 1: hide popover while typing, show after 5s idle

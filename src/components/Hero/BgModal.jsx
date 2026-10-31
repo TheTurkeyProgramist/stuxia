@@ -10,15 +10,10 @@ import {
   FiImage,
   FiPrinter,
   FiRefreshCw,
-  FiRotateCw,
   FiSearch,
   FiShuffle,
-  FiSun,
   FiUploadCloud,
-  FiVideo,
   FiX,
-  FiZap,
-  FiZoomIn,
 } from "react-icons/fi";
 import { DEFAULT_BGS } from "./defaultBgs";
 import village from "../../photos/fan-art/village.webp";
@@ -64,7 +59,7 @@ const handleDownloadBg = async (bg) => {
         }[src.type]
       : null;
   const ext = urlExtension || blobExtension || (isVid ? ".mp4" : ".webp");
-  const safeName = name.replace(/[\/\\?%*:|"<>]/g, "-").trim() || "background";
+  const safeName = name.replace(/[/\\?%*:|"<>]/g, "-").trim() || "background";
   const fileName = /\.(webp|png|jpe?g|gif|mp4|webm|ogg|mov)$/i.test(safeName)
     ? safeName
     : `${safeName}${ext}`;
@@ -303,8 +298,8 @@ const ModalConfigGrid = styled.div`
   grid-template-columns: 1fr;
   gap: 8px;
   align-items: stretch;
-  @media (min-width: 768px) { grid-template-columns: repeat(3, 1fr); }
-  @media (min-width: 1200px) { grid-template-columns: repeat(6, 1fr); }
+  @media (min-width: 768px) { grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 1200px) { grid-template-columns: repeat(4, 1fr); }
 `;
 
 const BgGrid = styled.div`
@@ -578,39 +573,23 @@ const BgModal = ({
   heroBg,
   heroBg2,
   heroBg3,
-  heroBg4,
   setHeroBg,
   setHeroBg2,
   setHeroBg3,
-  setHeroBg4,
   customHeroBgs = [],
   setCustomHeroBgs,
   heroBgMode,
   setHeroBgMode,
-  heroOverlayOpacity,
-  setHeroOverlayOpacity,
   bgRatings,
   setBgRatings,
   slideshowInterval,
   setSlideshowInterval,
-  slideshowTransition,
-  setSlideshowTransition,
   filterCategory,
   setFilterCategory,
-  heroBgZoom,
-  setHeroBgZoom,
-  heroBgRotation,
-  setHeroBgRotation,
   heroBgBlur,
   setHeroBgBlur,
   heroBgPixelation,
   setHeroBgPixelation,
-  heroBgPanEnabled,
-  setHeroBgPanEnabled,
-  heroBgPanSpeed,
-  setHeroBgPanSpeed,
-  videoPlaybackSpeed,
-  setVideoPlaybackSpeed,
   activeLayer,
   setActiveLayer,
   randomBgsList,
@@ -620,7 +599,7 @@ const BgModal = ({
   hills,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortType, setSortType] = useState("rating");
+  const [sortType, setSortType] = useState("az");
   const [visibleBgCount, setVisibleBgCount] = useState(300);
   const [pixabayQuery, setPixabayQuery] = useState("");
   const [pixabayResults, setPixabayResults] = useState([]);
@@ -656,13 +635,11 @@ const BgModal = ({
         setHeroBg2(src);
       } else if (targetLayer === 3) {
         setHeroBg3(src);
-      } else if (targetLayer === 4) {
-        setHeroBg4(src);
       } else {
         setHeroBg(src);
       }
     },
-    [activeLayer, heroBgMode, randomBgsList, setHeroBg, setHeroBg2, setHeroBg3, setHeroBg4, setRandomCurrentIndex],
+    [activeLayer, heroBgMode, randomBgsList, setHeroBg, setHeroBg2, setHeroBg3, setRandomCurrentIndex],
   );
 
   const handleRate = (src) => {
@@ -823,14 +800,11 @@ const BgModal = ({
     return matchesCategory && matchesSearch;
   });
 
-  const sortedBgs = [...filteredBgs].sort((a, b) => {
-    if (sortType === "az") return a.name.localeCompare(b.name);
-    if (sortType === "za") return b.name.localeCompare(a.name);
-    const rA = bgRatings[a.src] || 0;
-    const rB = bgRatings[b.src] || 0;
-    if (rA !== rB) return rB - rA;
-    return a.name.localeCompare(b.name);
-  });
+  const sortedBgs = [...filteredBgs].sort((a, b) =>
+    sortType === "za"
+      ? (b.name || "").localeCompare(a.name || "")
+      : (a.name || "").localeCompare(b.name || ""),
+  );
   const pagedBgs = sortedBgs.slice(0, visibleBgCount);
 
   if (!isOpen) return null;
@@ -873,7 +847,6 @@ const BgModal = ({
                 <option value="static">Статичний (1 фото)</option>
                 <option value="slideshow-2">Слайд-шоу (2 фото)</option>
                 <option value="slideshow-3">Слайд-шоу (3 фото)</option>
-                <option value="slideshow-4">Слайд-шоу (4 фото)</option>
                 <option value="random">Випадковий (усі фото)</option>
               </select>
               {heroBgMode === "random" && (
@@ -894,18 +867,12 @@ const BgModal = ({
               )}
             </div>
           </ConfigRow>
-          <ConfigRow>
-            <label><FiSun /> Затемнення: {(heroOverlayOpacity * 100).toFixed(0)}%</label>
-            <input type="range" min="0" max="0.8" step="0.05" value={heroOverlayOpacity} onChange={(e) => setHeroOverlayOpacity(parseFloat(e.target.value))} />
-          </ConfigRow>
-          <ConfigRow>
-            <label><FiZoomIn /> Наближення: {heroBgZoom.toFixed(2)}x</label>
-            <input type="range" min="1" max="2" step="0.01" value={heroBgZoom} onChange={(e) => setHeroBgZoom(parseFloat(e.target.value))} />
-          </ConfigRow>
-          <ConfigRow>
-            <label><FiRotateCw /> Розворот: {heroBgRotation}°</label>
-            <input type="range" min="-180" max="180" step="1" value={heroBgRotation} onChange={(e) => setHeroBgRotation(parseInt(e.target.value))} />
-          </ConfigRow>
+          {(heroBgMode === "slideshow-2" || heroBgMode === "slideshow-3" || heroBgMode === "random") && (
+            <ConfigRow>
+              <label><FiClock /> Інтервал: {Math.floor(slideshowInterval / 60)}хв{slideshowInterval % 60 > 0 ? ` ${slideshowInterval % 60}с` : ""}</label>
+              <input type="range" min="60" max="300" step="5" value={slideshowInterval} onChange={(e) => setSlideshowInterval(parseInt(e.target.value))} />
+            </ConfigRow>
+          )}
           <ConfigRow>
             <label><FiDroplet /> Розмиття: {heroBgBlur.toFixed(1)}px</label>
             <input type="range" min="0" max="20" step="0.5" value={heroBgBlur} onChange={(e) => setHeroBgBlur(parseFloat(e.target.value))} />
@@ -915,26 +882,6 @@ const BgModal = ({
             <input type="range" min="0" max="20" step="0.2" value={heroBgPixelation} onChange={(e) => setHeroBgPixelation(parseFloat(e.target.value))} />
           </ConfigRow>
         </ModalConfigGrid>
-
-        {(heroBgMode === "slideshow-2" || heroBgMode === "slideshow-3" || heroBgMode === "slideshow-4" || heroBgMode === "random") && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <ModalDivider />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
-              <ConfigRow>
-                <label><FiClock /> Інтервал: {slideshowInterval >= 60 ? `${Math.floor(slideshowInterval / 60)}хв ${slideshowInterval % 60 > 0 ? (slideshowInterval % 60) + "с" : ""}` : `${slideshowInterval}с`}</label>
-                <input type="range" min="4" max="300" step="1" value={slideshowInterval} onChange={(e) => setSlideshowInterval(parseInt(e.target.value))} />
-              </ConfigRow>
-              <ConfigRow>
-                <label><FiZap /> Перехід: {slideshowTransition}с</label>
-                <input type="range" min="0.5" max="1" step="0.1" value={slideshowTransition} onChange={(e) => setSlideshowTransition(parseFloat(e.target.value))} />
-              </ConfigRow>
-              <ConfigRow>
-                <label><FiVideo /> Швидкість відео: {videoPlaybackSpeed}x</label>
-                <input type="range" min="0.25" max="2" step="0.25" value={videoPlaybackSpeed} onChange={(e) => setVideoPlaybackSpeed(parseFloat(e.target.value))} />
-              </ConfigRow>
-            </div>
-          </div>
-        )}
 
         <ModalDivider />
         <ModalSectionTitle><FiImage /> Бібліотека зображень</ModalSectionTitle>
@@ -980,7 +927,6 @@ const BgModal = ({
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
               <label style={{ fontSize: "12px", color: "#ffc996", fontWeight: "600" }}>Сортувати:</label>
               <select value={sortType} onChange={(e) => setSortType(e.target.value)} style={{ background: "rgba(10, 14, 26, 0.95)", color: "#fff", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", fontSize: "12px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
-                <option value="rating">За рейтингом</option>
                 <option value="az">Назва А-Я</option>
                 <option value="za">Назва Я-А</option>
               </select>
@@ -1022,7 +968,7 @@ const BgModal = ({
                   </>
                 )}
                 {bg.author && (<TopOverlay><div style={{ fontWeight: "bold" }}>{bg.author}</div>{bg.source && <div>{bg.source}</div>}</TopOverlay>)}
-                <NameOverlay $hasSlots={heroBgMode === "slideshow-2" || heroBgMode === "slideshow-3" || heroBgMode === "slideshow-4"}>
+                <NameOverlay $hasSlots={heroBgMode === "slideshow-2" || heroBgMode === "slideshow-3"}>
                   {heroBgMode === "random" && qIndex !== -1 && (
                     <span style={{ color: qIndex === randomCurrentIndex ? "#6cffe4" : "#ffb36c", marginRight: "6px", fontWeight: "bold", textShadow: qIndex === randomCurrentIndex ? "0 0 8px #6cffe4" : "none" }}>#{qIndex + 1} {qIndex === randomCurrentIndex && "(Зараз)"}</span>
                   )}
@@ -1035,7 +981,6 @@ const BgModal = ({
                 )}
                 {heroBgMode === "slideshow-2" && (<SlotButtons><SlotBtn $active={heroBg === bg.src} onClick={() => handleSelectBg(bg.src, 1)}>Слот 1</SlotBtn><SlotBtn $active={heroBg2 === bg.src} onClick={() => handleSelectBg(bg.src, 2)}>Слот 2</SlotBtn></SlotButtons>)}
                 {heroBgMode === "slideshow-3" && (<SlotButtons><SlotBtn $active={heroBg === bg.src} onClick={() => handleSelectBg(bg.src, 1)}>Слот 1</SlotBtn><SlotBtn $active={heroBg2 === bg.src} onClick={() => handleSelectBg(bg.src, 2)}>Слот 2</SlotBtn><SlotBtn $active={heroBg3 === bg.src} onClick={() => handleSelectBg(bg.src, 3)}>Слот 3</SlotBtn></SlotButtons>)}
-                {heroBgMode === "slideshow-4" && (<SlotButtons><SlotBtn $active={heroBg === bg.src} onClick={() => handleSelectBg(bg.src, 1)}>Слот 1</SlotBtn><SlotBtn $active={heroBg2 === bg.src} onClick={() => handleSelectBg(bg.src, 2)}>Слот 2</SlotBtn><SlotBtn $active={heroBg3 === bg.src} onClick={() => handleSelectBg(bg.src, 3)}>Слот 3</SlotBtn><SlotBtn $active={heroBg4 === bg.src} onClick={() => handleSelectBg(bg.src, 4)}>Слот 4</SlotBtn></SlotButtons>)}
               </BgItem>
             );
           })}

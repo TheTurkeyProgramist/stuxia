@@ -35,7 +35,7 @@ import { GiTreeBeehive } from "react-icons/gi";
 import { PiNewspaperClippingFill } from "react-icons/pi";
 import { FaRss } from "react-icons/fa";
 import { MdOutlineReportOff } from "react-icons/md"; //Заглушити
-import { MdHelpOutline, MdBlock, MdSelectAll } from "react-icons/md";
+import { MdHelpOutline, MdBlock, MdSelectAll, MdClose } from "react-icons/md";
 import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
 import { FiPlus } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
@@ -298,7 +298,7 @@ const MobileCarousel = styled.div`
   overflow-x: auto;
   min-width: 0; 
   scroll-snap-type: x mandatory;
-  padding: 10px 22px 10px;
+  padding: 10px 0 10px;
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -438,15 +438,13 @@ const CarouselHintItem = styled.button`
   }
 `;
 const CarouselSlide = styled.div`
-  flex: 0 0 280px;
-  width: 280px;
-  flex: 0 0 280px;
-  width: 280px;
+  flex: 0 0 270px;
+  width: 270px;
   scroll-snap-align: center;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 12px;
+  gap: 1px;
   opacity: ${(props) => {
     if (props.$distanceFromCenter === 0) return 1;
     if (props.$distanceFromCenter === 1) return 0.9;
@@ -482,8 +480,8 @@ const CarouselSlide = styled.div`
 
 const MoreNewsButton = styled.button`
   display: block;
-  margin: 12px auto 0;
-  padding: 10px 22px;
+  margin: 0 auto 0;
+  padding: 6px 22px;
   border: 2px solid #ffaa00;
   border-radius: 6px;
   background: #000;
@@ -613,12 +611,12 @@ const NewBadge = styled.span`
 
 const CardActions = styled.div`
   position: absolute;
-  top: 3px;
-  left: 83%;
+  top: 4px;
+  right: 4px;
   display: flex;
   align-items: center;
   gap: 4px;
-  z-index: 7;
+  z-index: 9;
 `;
 
 const CardAction = styled.button`
@@ -686,36 +684,76 @@ const NewsSettingsBtn = styled(CardAction)`
 
 const NewsSettingsMenu = styled.div`
   position: absolute;
-  top: 39px;
-  left: -439%;
-  background: rgba(30, 30, 30, 0.97);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
+  inset: 0;
+  min-height: 145px;
+  padding-top: 48px;
+  box-sizing: border-box;
+  background: #1c1c1c;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  width: 450%;
-  height: 145px;
-  z-index: 20;
+  z-index: 8;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  clip-path: ${(props) => (props.$open ? "inset(0 0 0 0)" : "inset(0 0 100% 0)")};
+  visibility: ${(props) => (props.$open ? "visible" : "hidden")};
+  pointer-events: ${(props) => (props.$open ? "auto" : "none")};
+  /* visibility ховає меню лише після завершення закриття */
+  transition:
+    clip-path 0.35s ease,
+    visibility 0s linear ${(props) => (props.$open ? "0s" : "0.35s")};
+`;
+
+/* Шестерня й хрестик лежать одне на одному і плавно змінюють одне одного */
+const SettingsIconSwap = styled.span`
+  position: relative;
+  display: inline-flex;
+  width: 29px;
+  height: 29px;
+
+  & > svg {
+    position: absolute;
+    inset: 0;
+    font-size: 29px;
+    transition: transform 0.35s ease, opacity 0.35s ease;
+  }
+  & > svg:first-child {
+    opacity: ${(props) => (props.$open ? 0 : 1)};
+    transform: rotate(${(props) => (props.$open ? "-90deg" : "0deg")});
+  }
+  & > svg:last-child {
+    opacity: ${(props) => (props.$open ? 1 : 0)};
+    transform: rotate(${(props) => (props.$open ? "0deg" : "90deg")});
+  }
 `;
 
 const NewsSettingsItem = styled.button`
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 13px;
-  padding: 3px;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px;
   background: transparent;
   color: ${(props) => props.$color || "#fff"};
-  font-size: 13px;
-  text-align: left;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
   cursor: pointer;
   transition: background 0.15s;
 
-  &:last-child {
-    border-bottom: none;
+  svg {
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+
+  &:nth-child(even) {
+    border-left: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  /* Непарний останній пункт на всю ширину */
+  &:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   &:hover {
@@ -960,7 +998,7 @@ const NewsCard = ({
           position: "relative",
           display: "flex",
           flexDirection: "column",
-          height: showImage ? "190px" : "auto",
+          height: showImage ? "160px" : "auto",
           minHeight: "auto",
         }}
       >
@@ -985,10 +1023,15 @@ const NewsCard = ({
               setIsNewsSettingsOpen((v) => !v);
             }}
           >
-            <BiCog aria-hidden="true" style={{ fontSize: "29px" }} />
+            <SettingsIconSwap $open={isNewsSettingsOpen}>
+              <BiCog aria-hidden="true" />
+              <MdClose aria-hidden="true" />
+            </SettingsIconSwap>
           </NewsSettingsBtn>
-          {isNewsSettingsOpen && (
+        </CardActions>
+        {(
             <NewsSettingsMenu
+              $open={isNewsSettingsOpen}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1014,7 +1057,7 @@ const NewsCard = ({
                   setIsNewsSettingsOpen(false);
                 }}
               >
-                <FiPlus style={{fontSize: "57px"}} /> Прикріпити до ШІ
+                <FiPlus /> Прикріпити до ШІ
               </NewsSettingsItem>
               <NewsSettingsItem
                 onClick={() => {
@@ -1022,7 +1065,7 @@ const NewsCard = ({
                   setIsNewsSettingsOpen(false);
                 }}
               >
-                <TbStarsFilled size={34} /> ШІ Виклад
+                <TbStarsFilled /> ШІ Виклад
               </NewsSettingsItem>
               <NewsSettingsItem
                 onClick={() => {
@@ -1032,7 +1075,7 @@ const NewsCard = ({
                   setIsNewsSettingsOpen(false);
                 }}
               >
-                 <FaClapperboard size={34} /> Копіювати шлях
+                 <FaClapperboard /> Копіювати шлях
               </NewsSettingsItem>
               {!BUILTIN_SOURCE_NAMES.has(item.sourceName) && (
                 <NewsSettingsItem
@@ -1042,7 +1085,7 @@ const NewsCard = ({
                     setIsNewsSettingsOpen(false);
                   }}
                 >
-                  <MdReport size={34} /> Подати скаргу
+                  <MdReport /> Подати скаргу
                 </NewsSettingsItem>
               )}
               <NewsSettingsItem
@@ -1054,11 +1097,10 @@ const NewsCard = ({
                   setIsNewsSettingsOpen(false);
                 }}
               >
-                <MdOutlineReportOff size={34} /> Заглушити
+                <MdOutlineReportOff /> Заглушити
               </NewsSettingsItem>
             </NewsSettingsMenu>
           )}
-        </CardActions>
         {showImage && (
           <NewsImg
             src={imgSrc || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
@@ -1312,7 +1354,7 @@ const getSourceType = (url) => {
 
 const getYoutubeThumbnail = (videoUrl) => {
   if (!videoUrl) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = videoUrl.match(regExp);
   if (match && match[2].length === 11) {
     return `https://i.ytimg.com/vi/${match[2]}/hqdefault.jpg`;
@@ -1400,7 +1442,7 @@ const fetchWithProxyFallback = async (url) => {
   } catch (e) {
     console.warn("AllOrigins failed, trying corsproxy.io fallback...", e);
     const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
-    if (!res.ok) throw new Error("corsproxy.io error status: " + res.status);
+    if (!res.ok) throw new Error("corsproxy.io error status: " + res.status, { cause: e });
     const text = await res.text();
     return text;
   }
@@ -1445,7 +1487,7 @@ const cleanTelegramText = (html) => {
 };
 
 const fetchTelegramFeed = async (source) => {
-  let channelName = "";
+  let channelName;
   const url = source.url;
   
   if (url.startsWith("@")) {
@@ -2313,9 +2355,22 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     return filterSources.includes("all") || filterSources.includes(item.sourceName);
   });
 
-  const displayedItems = filteredItems
-    .slice(0, 45)
-    .map((item) => ({ ...item, isMuted: mutedNewsUrls.includes(item.link) }));
+  // Стрічка: лише остання новина від кожного джерела (items уже відсортовані за датою)
+  const seenSourceNames = new Set();
+  const latestPerSource = [];
+  const restItems = [];
+  filteredItems.forEach((item) => {
+    if (seenSourceNames.has(item.sourceName)) {
+      restItems.push(item);
+    } else {
+      seenSourceNames.add(item.sourceName);
+      latestPerSource.push(item);
+    }
+  });
+  const withMuted = (item) => ({ ...item, isMuted: mutedNewsUrls.includes(item.link) });
+  const displayedItems = latestPerSource.slice(0, 45).map(withMuted);
+  // «Більше новин»: 4 додаткові, яких немає у стрічці
+  const moreItems = restItems.slice(0, 4).map(withMuted);
   const infiniteItems =
     displayedItems.length > 0
       ? [...displayedItems, ...displayedItems, ...displayedItems]
@@ -2894,7 +2949,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             </motion.div>
           </AnimatePresence>
           <MoreNewsButton onClick={() => setShowMoreNews(true)}>
-            Більше новин
+            Більше новин, джерела над кнопкою
           </MoreNewsButton>
           <FilteredNewsCounter $isDarkMode={$isDarkMode}>
             За сьогодні відфільтровано {filteredNewsCount} небажаних новин.
@@ -2994,7 +3049,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                   <CloseButton onClick={() => setShowMoreNews(false)}>✕</CloseButton>
                 </div>
                 <MoreNewsGrid>
-                  {displayedItems.slice(0, 4).map((item) => (
+                  {moreItems.map((item) => (
                     <NewsCard
                       key={item.link}
                       item={item}

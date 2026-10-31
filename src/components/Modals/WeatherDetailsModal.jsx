@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import localforage from "localforage";
 import { DEFAULT_UNITS, makeFormatters } from "../../utils/units.js";
+import { loadCardUnits, isUnitsEventForCard } from "../../utils/unitsStorage.js";
 import styled from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import { getHourlyForecastDayGroups } from "../../utils/hourlyForecast";
@@ -290,16 +290,15 @@ const WeatherDetailsModal = ({ isOpen, onClose, card, isDarkMode }) => {
   const [selectedHourlyDay, setSelectedHourlyDay] = useState(0);
   const [units, setUnits] = useState(DEFAULT_UNITS);
 
+  const cardId = card?.id;
   useEffect(() => {
-    localforage.getItem("units_settings").then((saved) => {
-      if (saved) setUnits({ ...DEFAULT_UNITS, ...saved });
-    });
+    loadCardUnits(cardId).then(({ units: loaded }) => setUnits(loaded));
     const onUnits = (e) => {
-      if (e.detail) setUnits({ ...DEFAULT_UNITS, ...e.detail });
+      if (isUnitsEventForCard(e.detail, cardId)) setUnits({ ...DEFAULT_UNITS, ...e.detail.units });
     };
     window.addEventListener("unitsChanged", onUnits);
     return () => window.removeEventListener("unitsChanged", onUnits);
-  }, []);
+  }, [cardId]);
 
   if (!isOpen || !card) return null;
 

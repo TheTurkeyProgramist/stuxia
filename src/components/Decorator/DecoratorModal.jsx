@@ -459,7 +459,6 @@ const DecoratorModal = ({ targetElement, onClose }) => {
     if (elementId) {
       setEditedStyles(JSON.parse(JSON.stringify(getOverridesForElement(elementId))));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elementId]);
 
   useEffect(() => {

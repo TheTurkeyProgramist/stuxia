@@ -565,13 +565,12 @@ const LOADING_PHRASES = [
   "І що всіх тягне на турецькі серіали?",
   "«Дизель Шоу»: В Америці - Сірі, в Ізраїлі - Сара",
    "Чекаємо на «Aurora Hills: Chapter 3» та «Темрява та Полум'я 5»",
-  "У нас немає сторінки 404 :) Радіовишки, ліси, тумани, сирени...",
   "Порада: використайте Lively Wallpaper, щоб відсилковий відеофон був на робочому столі.",
   "Підтримайте, будь ласка, рекламою нас у соцмережах :)",
   "У вас через сім днів буде хороша погода - поганої ж не існує :)",
   "«Теорія неймовірності» (Макс Кідрук) має одну частину :(",
   "Кейт — складна за характером індичка.",
-  "Можливо, Доміно розмістив відсилки на «Динофроз» і «Dragon Village» через те, що індики схожі на драконів і динозаврів :)",
+  "Можливо, Доміно розмістив відсилки на «Динофроз» і «Dragon Village» через те, що індики схожі на драконів і динозаврів :)",
   "Хто ваш кумир? Зібров чи Винник?",
   "Багато змін клімату, мультиплікації, моди, життя :(",
   "Хто знає, той у нас шукає. Всі сайти так кажуть і ми :)",
@@ -587,6 +586,7 @@ const LOADING_PHRASES = [
   "Вверх - ти летиш! Вниз - ти падаєш! ",  
   "Чорний айсберг, потопив ......? ",  
   "Доміно тривожить Єллоустон", 
+  "Невже наш світ подібний на сюжет «Гри престолів»... :(", 
     "Обереш червону таблетку чи синю(фраза з Матриці...)", 
   "Хто придумав фразу? «Як тобі таке Ілон Маск»", 
   "Чи є листя у трави?", 
@@ -604,6 +604,27 @@ const LOADING_PHRASES = [
    "Вам приснився жах що ..е... і ....і. програли і...(Відсилка...)",  
   "Ти ж знаєш, що відсилки - це не просто картинки і відео, а ще й загадки та сюжети :)",
   "Ліків у нас немає, їх украв доктор Хаус. Але погода лікує від усього :)",
+  "Факт: блискавка в п'ять разів гарячіша за поверхню Сонця — близько 30 000 °C.",
+  "Факт: жодна сніжинка не схожа на іншу, але всі вони мають шість променів.",
+  "Факт: найнижча температура на Землі — −89,2 °C на станції «Восток» в Антарктиді.",
+  "Факт: у пустелі Атакама є місця, де дощу не було сотні років.",
+  "Факт: індики бачать кольори краще за людей і мають кут огляду майже 270°.",
+  "Факт: одна велика купчаста хмара може важити понад 500 тонн.",
+  "Факт: краплі дощу не схожі на сльози — вони сплюснуті, як булочки.",
+  "Факт: веселку можна побачити й уночі — це місячна веселка.",
+  "Факт: торнадо може мати швидкість вітру понад 480 км/год.",
+  "Факт: секвоя «Гіперіон» — найвище дерево у світі, понад 115 метрів.",
+  "Факт: восьминоги мають три серця і блакитну кров.",
+  "Факт: бамбук може вирости майже на метр за одну добу.",
+    "Факт: на острові Комодо живуть справжні дракони — велетенські ящірки, що полюють на оленів.",
+  "Факт: грім — це звук розширення повітря, нагрітого блискавкою.",
+  "Факт: за запахом дощу стоїть речовина геосмін, і люди відчувають її краще за акул кров.",
+  "Факт: мурахи ніколи не сплять так, як ми, — лише короткі дрімки по хвилині.",
+  "Факт: найбільший град важив майже кілограм (Бангладеш, 1986).",
+  "Факт: Амазонія виробляє власні дощі — дерева випаровують воду, що стає хмарами.",
+  "Факт: туман — це хмара, яка просто вирішила полежати на землі :)",
+  "Факт: колібрі — єдині птахи, що вміють літати задом наперед.",
+  "Факт: на Венері сніг металевий, а на Нептуні вітри досягають 2000 км/год.",
 ];
 
 const phraseFlyOut = keyframes`
@@ -677,6 +698,22 @@ const LoadingPhraseWrapper = styled.div`
 
 const SECTION_ORDER_STORAGE_KEY = "siteSectionsOrder";
 
+// Завантажені користувачем фони (фото/відео) живуть лише в IndexedDB,
+// у Firestore потрапляють тільки стандартні фони сайту
+const isUploadedBg = (src, customBgs = []) =>
+  src instanceof Blob ||
+  (typeof src === "string" &&
+    (src.startsWith("data:") ||
+      src.startsWith("blob:") ||
+      src.startsWith("[object ") ||
+      customBgs.some((bg) => bg?.src === src)));
+
+// Часта зміна фону-відео підвантажує декодер, тож не частіше ніж раз на хвилину
+const MIN_SLIDESHOW_INTERVAL = 60;
+// Режим «4 слоти» прибрано — старі збереження переводимо на 3 слоти
+const normalizeHeroBgMode = (mode) =>
+  mode === "slideshow-4" ? "slideshow-3" : mode;
+
 const mergeFanArtBackgrounds = (backgrounds, fanArtImages) => {
   const merged = Array.isArray(backgrounds) ? [...backgrounds] : [];
   const images = Array.isArray(fanArtImages) ? fanArtImages : [];
@@ -707,6 +744,46 @@ const mergeFanArtBackgrounds = (backgrounds, fanArtImages) => {
   });
 
   return merged;
+};
+
+// Монтуємо ClimateMap (відео + iframe) лише коли секція наближається до viewport.
+const LazyClimateMap = (props) => {
+  const placeholderRef = useRef(null);
+  const [isNearViewport, setIsNearViewport] = useState(false);
+
+  useEffect(() => {
+    if (isNearViewport) return;
+    const el = placeholderRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setIsNearViewport(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          observer.disconnect();
+          setIsNearViewport(true);
+        }
+      },
+      { rootMargin: "300px", threshold: 0 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isNearViewport]);
+
+  const placeholder = (
+    <div ref={placeholderRef} style={{ minHeight: "560px" }} />
+  );
+
+  if (!isNearViewport) return placeholder;
+
+  return (
+    <Suspense fallback={placeholder}>
+      <ClimateMap {...props} />
+    </Suspense>
+  );
 };
 
 const SectionContent = memo(
@@ -785,7 +862,7 @@ const SectionContent = memo(
     return (
       <div id={section.key}>
         {section.key === "map" && (
-          <ClimateMap isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
+          <LazyClimateMap isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
         )}
         {section.key === "prison" && <Prison />}
       </div>
@@ -821,24 +898,15 @@ const App = () => {
   const [customHeroBgs, setCustomHeroBgs] = useState([]);
   const [heroBg2, setHeroBg2] = useState(null);
   const [heroBg3, setHeroBg3] = useState(null);
-  const [heroBg4, setHeroBg4] = useState(null);
-  const [heroBgMode, setHeroBgMode] = useState("static"); // "static", "slideshow-2", "slideshow-4"
-  const [heroOverlayOpacity, setHeroOverlayOpacity] = useState(0.2);
+  const [heroBgMode, setHeroBgMode] = useState("static"); // "static", "slideshow-2", "slideshow-3", "random"
   const [bgRatings, setBgRatings] = useState({});
-  const [slideshowInterval, setSlideshowInterval] = useState(5);
-  const [slideshowTransition, setSlideshowTransition] = useState(0.8);
+  const [slideshowInterval, setSlideshowInterval] = useState(MIN_SLIDESHOW_INTERVAL);
   const [heroBgFilterCategory, setHeroBgFilterCategory] = useState("all");
-  const [heroBgZoom, setHeroBgZoom] = useState(1);
   const [heroBgBlur, setHeroBgBlur] = useState(0);
   const [heroBgPixelation, setHeroBgPixelation] = useState(0);
-  const [heroBgRotation, setHeroBgRotation] = useState(0);
   const [heroBgFocal1, setHeroBgFocal1] = useState({ x: 50, y: 50 });
   const [heroBgFocal2, setHeroBgFocal2] = useState({ x: 50, y: 50 });
   const [heroBgFocal3, setHeroBgFocal3] = useState({ x: 50, y: 50 });
-  const [heroBgFocal4, setHeroBgFocal4] = useState({ x: 50, y: 50 });
-  const [heroBgPanEnabled, setHeroBgPanEnabled] = useState(false);
-  const [heroBgPanSpeed, setHeroBgPanSpeed] = useState(6);
-  const [videoPlaybackSpeed, setVideoPlaybackSpeed] = useState(1);
 
   const [weatherCardLayout, setWeatherCardLayout] = useState([
     { key: "current", visible: true },
@@ -1007,8 +1075,6 @@ const App = () => {
         if (savedHeroBg2) setHeroBg2(savedHeroBg2);
         const savedHeroBg3 = await localforage.getItem("hero_background_3");
         if (savedHeroBg3) setHeroBg3(savedHeroBg3);
-        const savedHeroBg4 = await localforage.getItem("hero_background_4");
-        if (savedHeroBg4) setHeroBg4(savedHeroBg4);
         const savedCustomBgs = await localforage.getItem(
           "custom_hero_backgrounds",
         );
@@ -1021,23 +1087,16 @@ const App = () => {
         );
         if (mergedBackgrounds.length) setCustomHeroBgs(mergedBackgrounds);
         const savedMode = await localforage.getItem("hero_bg_mode");
-        if (savedMode) setHeroBgMode(savedMode);
+        if (savedMode) setHeroBgMode(normalizeHeroBgMode(savedMode));
         const savedInterval = await localforage.getItem(
           "hero_slideshow_interval",
         );
-        if (savedInterval !== null) setSlideshowInterval(savedInterval);
-        const savedTransition = await localforage.getItem(
-          "hero_slideshow_transition",
-        );
-        if (savedTransition !== null) setSlideshowTransition(savedTransition);
+        if (savedInterval !== null)
+          setSlideshowInterval(Math.max(MIN_SLIDESHOW_INTERVAL, savedInterval));
         const savedHeroFilter = await localforage.getItem(
           "hero_bg_filter_category",
         );
         if (savedHeroFilter) setHeroBgFilterCategory(savedHeroFilter);
-        const savedZoom = await localforage.getItem("hero_bg_zoom");
-        if (savedZoom !== null) setHeroBgZoom(savedZoom);
-        const savedRotation = await localforage.getItem("hero_bg_rotation");
-        if (savedRotation !== null) setHeroBgRotation(savedRotation);
         const savedBlur = await localforage.getItem("hero_bg_blur");
         if (savedBlur !== null) setHeroBgBlur(savedBlur);
         const savedPixelation = await localforage.getItem("hero_bg_pixelation");
@@ -1049,19 +1108,6 @@ const App = () => {
         if (savedFocal2) setHeroBgFocal2(savedFocal2);
         const savedFocal3 = await localforage.getItem("hero_bg_focal3");
         if (savedFocal3) setHeroBgFocal3(savedFocal3);
-        const savedFocal4 = await localforage.getItem("hero_bg_focal4");
-        if (savedFocal4) setHeroBgFocal4(savedFocal4);
-
-        const savedPanEnabled = await localforage.getItem(
-          "hero_bg_pan_enabled",
-        );
-        if (savedPanEnabled !== null) setHeroBgPanEnabled(savedPanEnabled);
-        const savedPanSpeed = await localforage.getItem("hero_bg_pan_speed");
-        if (savedPanSpeed !== null) setHeroBgPanSpeed(savedPanSpeed);
-        const savedVideoSpeed = await localforage.getItem(
-          "hero_video_playback_speed",
-        );
-        if (savedVideoSpeed !== null) setVideoPlaybackSpeed(savedVideoSpeed);
 
         const savedCustomHolidayName = await localforage.getItem(
           "custom_holiday_name",
@@ -1155,7 +1201,6 @@ const App = () => {
     import("./components/Aihelp/Aihelp.jsx"),
     import("./components/Modals/ShopModal.jsx"),
       import("./components/News/News.jsx"),
-      import("./components/ClimateMap/ClimateMap.jsx"),
       import("./components/Modals/Modal.jsx"),
       import("./components/Modals/UserSettingsModal.jsx"),
       import("./components/Modals/WeatherDetailsModal.jsx"),
@@ -1354,22 +1399,22 @@ const App = () => {
               if (s.isStickyBgMode !== undefined)
                 setIsStickyBgMode(s.isStickyBgMode);
               if (s.sectionThemes) setSectionThemes(s.sectionThemes);
-              if (s.heroBg) setHeroBg(s.heroBg);
-              if (s.heroBg2) setHeroBg2(s.heroBg2);
-              if (s.heroBg3) setHeroBg3(s.heroBg3);
-              if (s.heroBg4) setHeroBg4(s.heroBg4);
-              if (s.heroBgMode) setHeroBgMode(s.heroBgMode);
-              if (s.customHeroBgs) {
-                const savedFanArtImages = await localforage.getItem(
-                  "fanart_custom_images",
-                );
-                setCustomHeroBgs(
-                  mergeFanArtBackgrounds(s.customHeroBgs, savedFanArtImages),
-                );
+              // Завантажені фони (і старі записи з ними) з Firestore не беремо
+              if (s.heroBg && !isUploadedBg(s.heroBg)) setHeroBg(s.heroBg);
+              if (s.heroBg2 && !isUploadedBg(s.heroBg2)) setHeroBg2(s.heroBg2);
+              if (s.heroBg3 && !isUploadedBg(s.heroBg3)) setHeroBg3(s.heroBg3);
+              if (s.heroBgMode) setHeroBgMode(normalizeHeroBgMode(s.heroBgMode));
+              if (s.bgRatings) {
+                // Оцінки завантажених фонів зберігаються лише локально
+                setBgRatings((prev) => ({
+                  ...Object.fromEntries(
+                    Object.entries(prev || {}).filter(([src]) => isUploadedBg(src)),
+                  ),
+                  ...Object.fromEntries(
+                    Object.entries(s.bgRatings).filter(([src]) => !isUploadedBg(src)),
+                  ),
+                }));
               }
-              if (s.heroOverlayOpacity !== undefined)
-                setHeroOverlayOpacity(s.heroOverlayOpacity);
-              if (s.bgRatings) setBgRatings(s.bgRatings);
             }
           }
         } catch (e) {
@@ -1407,10 +1452,16 @@ const App = () => {
       localforage.setItem("isStickyBgMode", isStickyBgMode);
       localforage.setItem("sectionThemes", sectionThemes);
       localforage.setItem("isDarkMode", isDarkMode);
-      localforage.setItem("hero_video_playback_speed", videoPlaybackSpeed);
 
       if (userRef.current?.uid) {
         const userDocRef = doc(db, "config", userRef.current.uid);
+        const syncableBg = (src) =>
+          isUploadedBg(src, customHeroBgs) ? null : src;
+        const syncableRatings = Object.fromEntries(
+          Object.entries(bgRatings || {}).filter(
+            ([src]) => !isUploadedBg(src, customHeroBgs),
+          ),
+        );
         const settings = {
           isDarkMode,
           hiddenSections,
@@ -1418,16 +1469,17 @@ const App = () => {
           siteSections,
           isStickyBgMode,
           sectionThemes,
-          heroBg,
-          heroBg2,
-          heroBg3,
-          heroBg4,
+          heroBg: syncableBg(heroBg),
+          heroBg2: syncableBg(heroBg2),
+          heroBg3: syncableBg(heroBg3),
           heroBgMode,
-          customHeroBgs,
-          heroOverlayOpacity,
-          bgRatings,
+          bgRatings: syncableRatings,
         };
-        setDoc(userDocRef, { settings }, { merge: true }).catch(console.error);
+        try {
+          setDoc(userDocRef, { settings }, { merge: true }).catch(console.error);
+        } catch (e) {
+          console.error("Firestore settings sync failed:", e);
+        }
       }
     }
   }, [
@@ -1441,12 +1493,9 @@ const App = () => {
     heroBg,
     heroBg2,
     heroBg3,
-    heroBg4,
     heroBgMode,
     customHeroBgs,
-    heroOverlayOpacity,
     bgRatings,
-    videoPlaybackSpeed,
     isHydrated,
   ]);
 
@@ -1698,32 +1747,36 @@ const App = () => {
     }
   }, [bgMusicMode, bgMusicEnabled]);
 
+  // Фони можуть бути відео-Blob'ами (до 20мб), тож кожен пишемо окремо і лише
+  // коли змінився саме він — інакше кожне перемикання/слайдер перезаписував
+  // усі відео в IndexedDB, і відеофон підвисав.
+  useEffect(() => {
+    if (isHydrated) localforage.setItem("hero_background", heroBg);
+  }, [heroBg, isHydrated]);
+  useEffect(() => {
+    if (isHydrated) localforage.setItem("hero_background_2", heroBg2);
+  }, [heroBg2, isHydrated]);
+  useEffect(() => {
+    if (isHydrated) localforage.setItem("hero_background_3", heroBg3);
+  }, [heroBg3, isHydrated]);
+  useEffect(() => {
+    if (isHydrated) localforage.setItem("custom_hero_backgrounds", customHeroBgs);
+  }, [customHeroBgs, isHydrated]);
+
   useEffect(() => {
     if (isHydrated) {
       localforage.setItem("isDarkMode", isDarkMode);
       localforage.setItem("sectionThemes", sectionThemes);
       localforage.setItem("hiddenSections", hiddenSections);
-      localforage.setItem("hero_background", heroBg);
-      localforage.setItem("custom_hero_backgrounds", customHeroBgs);
-      localforage.setItem("hero_background_2", heroBg2);
-      localforage.setItem("hero_background_3", heroBg3);
-      localforage.setItem("hero_background_4", heroBg4);
       localforage.setItem("hero_bg_ratings", bgRatings);
       localforage.setItem("hero_bg_mode", heroBgMode);
-      localforage.setItem("hero_overlay_opacity", heroOverlayOpacity);
       localforage.setItem("hero_slideshow_interval", slideshowInterval);
-      localforage.setItem("hero_slideshow_transition", slideshowTransition);
       localforage.setItem("hero_bg_filter_category", heroBgFilterCategory);
-      localforage.setItem("hero_bg_zoom", heroBgZoom);
-      localforage.setItem("hero_bg_rotation", heroBgRotation);
       localforage.setItem("hero_bg_blur", heroBgBlur);
       localforage.setItem("hero_bg_pixelation", heroBgPixelation);
       localforage.setItem("hero_bg_focal1", heroBgFocal1);
       localforage.setItem("hero_bg_focal2", heroBgFocal2);
       localforage.setItem("hero_bg_focal3", heroBgFocal3);
-      localforage.setItem("hero_bg_focal4", heroBgFocal4);
-      localforage.setItem("hero_bg_pan_enabled", heroBgPanEnabled);
-      localforage.setItem("hero_bg_pan_speed", heroBgPanSpeed);
       localforage.setItem("custom_holiday_name", customHolidayName);
       localforage.setItem("selected_timezone", selectedTimezone);
       localforage.setItem("weather_card_layout", weatherCardLayout);
@@ -1731,27 +1784,15 @@ const App = () => {
       localforage.setItem("modal_loading_strategy", loadingStrategy);
     }
   }, [
-    heroBg,
-    heroBg2,
-    heroBg3,
-    heroBg4,
-    customHeroBgs,
     bgRatings,
     heroBgMode,
-    heroOverlayOpacity,
     slideshowInterval,
-    slideshowTransition,
     heroBgFilterCategory,
-    heroBgZoom,
-    heroBgRotation,
     heroBgBlur,
     heroBgPixelation,
     heroBgFocal1,
     heroBgFocal2,
     heroBgFocal3,
-    heroBgFocal4,
-    heroBgPanEnabled,
-    heroBgPanSpeed,
     isHydrated,
     isDarkMode,
     sectionThemes,
@@ -2059,7 +2100,7 @@ const App = () => {
                 const timestamp = new Date(t);
                 const dateStr = t.slice(0, 10);
                 const dayIdx = (d.daily?.time || []).indexOf(dateStr);
-                let hourIsDay = 1;
+                let hourIsDay;
                 if (dayIdx !== -1 && d.daily?.sunrise?.[dayIdx] && d.daily?.sunset?.[dayIdx]) {
                   hourIsDay = (t >= d.daily.sunrise[dayIdx] && t <= d.daily.sunset[dayIdx]) ? 1 : 0;
                 } else {
@@ -2661,26 +2702,16 @@ const App = () => {
           setHeroBg2={setHeroBg2}
           heroBg3={heroBg3}
           setHeroBg3={setHeroBg3} 
-          heroBg4={heroBg4}
-          setHeroBg4={setHeroBg4}
           customHeroBgs={customHeroBgs}
           setCustomHeroBgs={setCustomHeroBgs}
           heroBgMode={heroBgMode}
           setHeroBgMode={setHeroBgMode}
-          heroOverlayOpacity={heroOverlayOpacity}
-          setHeroOverlayOpacity={setHeroOverlayOpacity}
           bgRatings={bgRatings}
           setBgRatings={setBgRatings}
           slideshowInterval={slideshowInterval}
           setSlideshowInterval={setSlideshowInterval}
-          slideshowTransition={slideshowTransition}
-          setSlideshowTransition={setSlideshowTransition}
           filterCategory={heroBgFilterCategory}
           setFilterCategory={setHeroBgFilterCategory}
-          heroBgZoom={heroBgZoom}
-          setHeroBgZoom={setHeroBgZoom}
-          heroBgRotation={heroBgRotation}
-          setHeroBgRotation={setHeroBgRotation}
           heroBgBlur={heroBgBlur}
           setHeroBgBlur={setHeroBgBlur}
           heroBgPixelation={heroBgPixelation}
@@ -2691,14 +2722,6 @@ const App = () => {
           setHeroBgFocal2={setHeroBgFocal2}
           heroBgFocal3={heroBgFocal3}
           setHeroBgFocal3={setHeroBgFocal3}
-          heroBgFocal4={heroBgFocal4}
-          setHeroBgFocal4={setHeroBgFocal4}
-          heroBgPanEnabled={heroBgPanEnabled}
-          setHeroBgPanEnabled={setHeroBgPanEnabled}
-          heroBgPanSpeed={heroBgPanSpeed}
-          setHeroBgPanSpeed={setHeroBgPanSpeed}
-          videoPlaybackSpeed={videoPlaybackSpeed}
-          setVideoPlaybackSpeed={setVideoPlaybackSpeed}
           selectedTimezone={selectedTimezone}
           setSelectedTimezone={setSelectedTimezone}
           customHolidayName={customHolidayName}

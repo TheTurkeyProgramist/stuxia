@@ -8,8 +8,17 @@ import { hasBannedContent } from "../../utils/contentFilter";
 import { fetchFreeWebSearch } from "../../utils/freeWebSearch";
 import { MdAddPhotoAlternate } from "react-icons/md";
 import { FaMicrophoneAlt } from "react-icons/fa";
-import { IoCamera } from "react-icons/io5";
 import { GiTimeTrap } from "react-icons/gi";
+import {
+  TbLayoutSidebarLeftCollapse,
+  TbLayoutSidebarLeftExpand,
+  TbMessages,
+  TbGauge,
+  TbMessagePlus,
+  TbPlus,
+  TbRefresh,
+  TbX,
+} from "react-icons/tb";
 import toast, { Toaster } from "react-hot-toast";
 import { FaHandsHelping } from "react-icons/fa";
 import { TbWorldStar } from "react-icons/tb";
@@ -150,11 +159,12 @@ const GLOBAL_COOLDOWN_KEY = "gemini_global_cooldown_until";
 const AihelpDiv = styled.div`
   display: flex;
   flex-direction: column;
-  height: 560px;
+  height: 100%;
   width: 100%;
-  margin: 10px auto 0;
-  padding: 0 5px;
-  gap: 6px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 12px 18px 16px;
+  gap: 12px;
   z-index: 100;
   position: relative;
   overflow: hidden;
@@ -186,7 +196,7 @@ const DesktopLayout = styled.div`
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  gap: 6px;
+  gap: 10px;
   overflow: hidden;
 
   @media (min-width: 768px) {
@@ -201,13 +211,24 @@ const DesktopSidebar = styled.div`
   @media (min-width: 768px) {
     display: flex;
     flex-direction: column;
-    width: 200px;
+    width: ${(p) => (p.$collapsed ? "0" : "240px")};
     flex-shrink: 0;
     border-right: 1px solid
-      ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)")};
-    padding: 6px 8px 8px 0;
+      ${(p) =>
+        p.$collapsed
+          ? "transparent"
+          : p.$isDarkMode
+            ? "rgba(255,255,255,0.08)"
+            : "rgba(0,0,0,0.08)"};
+    padding: ${(p) => (p.$collapsed ? "6px 0 8px 0" : "6px 8px 8px 0")};
     gap: 6px;
     overflow: hidden;
+    opacity: ${(p) => (p.$collapsed ? 0 : 1)};
+    pointer-events: ${(p) => (p.$collapsed ? "none" : "auto")};
+    transition:
+      width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      padding 0.28s ease,
+      opacity 0.2s ease;
   }
 `;
 
@@ -294,7 +315,7 @@ const SidebarDeleteBtn = styled.button`
   font-size: 15px;
   cursor: pointer;
   padding: 2px;
-  border-radius: 4px;
+  border-radius: 5px;
   display: flex;
   align-items: center;
   opacity: 0;
@@ -311,10 +332,14 @@ const SidebarDeleteBtn = styled.button`
 `;
 
 const SidebarNewChatBtn = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
   flex-shrink: 0;
   width: 100%;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 5px;
   border: 1px dashed rgba(255, 149, 0, 0.5);
   background: rgba(255, 149, 0, 0.06);
   color: #ff9500;
@@ -346,7 +371,8 @@ const ChatMainArea = styled.div`
   overflow: hidden;
 
   @media (min-width: 768px) {
-    padding-left: 10px;
+    padding-left: ${(p) => (p.$sidebarCollapsed ? "0" : "10px")};
+    transition: padding 0.28s ease;
   }
 `;
 
@@ -360,54 +386,6 @@ const HeaderBar = styled.div`
   margin-bottom: 2px;
 `;
 
-const AihelpTitle = styled.div`
-  font-size: 18px;
-  text-align: center;
-  font-family: var(--font-family);
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#111111")};
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 7px;
-  transition: all 0.3s ease;
-  z-index: 100;
-  ${(props) =>
-    props.$isStickyBgMode
-      ? css`
-          background: ${props.$isDarkMode
-          ? "rgba(15, 15, 25, 0.75)"
-          : "rgba(255, 255, 255, 0.75)"};
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1px solid
-            ${props.$isDarkMode
-          ? "rgba(255, 165, 0, 0.25)"
-          : "rgba(255, 140, 0, 0.2)"};
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-        `
-      : css`
-          background: ${props.$isDarkMode
-          ? "rgba(255, 255, 255, 0.04)"
-          : "rgba(0, 0, 0, 0.04)"};
-          border: 1px solid
-            ${props.$isDarkMode ? "rgba(255,165,0,0.2)" : "rgba(255,140,0,0.15)"};
-        `}
-`;
-
-const TitleBadge = styled.span`
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #ff9500, #ff6b00);
-  color: #fff;
-  text-transform: uppercase;
-`;
-
 const ChatControlsGroup = styled.div`
   display: flex;
   align-items: center;
@@ -419,12 +397,15 @@ const ChatControlsGroup = styled.div`
 `;
 
 const ChatHeaderBtn = styled.button`
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
   background: ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.15)" : "rgba(255, 140, 0, 0.12)")};
   border: 1px solid rgba(255, 160, 0, 0.45);
   color: ${(p) => (p.$isDarkMode ? "#ffcf9e" : "#d96500")};
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 12px;
+  padding: 8px 16px;
+  border-radius: 5px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -438,13 +419,28 @@ const ChatHeaderBtn = styled.button`
   }
 `;
 
+const SidebarToggleBtn = styled(ChatHeaderBtn)`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  font-size: 16px;
+
+  @media (min-width: 768px) {
+    display: flex;
+  }
+`;
+
 const NewChatHeaderBtn = styled.button`
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
   background: linear-gradient(135deg, #ff9500, #ff6b00);
   border: none;
   color: #fff;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 12px;
+  padding: 8px 18px;
+  border-radius: 5px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -467,9 +463,9 @@ const CloseAiModalHeaderBtn = styled.button`
   background: ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)")};
   border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.15)")};
   color: ${(p) => (p.$isDarkMode ? "#fff" : "#111")};
-  width: 29px;
-  height: 29px;
-  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  border-radius: 5px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -490,7 +486,7 @@ const CloseAiModalHeaderBtn = styled.button`
 
 const SettingsPanel = styled.div`
   flex-shrink: 0;
-  padding: 8px 10px;
+  padding: 10px 16px;
   background: ${(p) =>
     p.$isStickyBgMode
       ? p.$isDarkMode
@@ -501,8 +497,8 @@ const SettingsPanel = styled.div`
         : "#fffbf0"};
   backdrop-filter: ${(p) => (p.$isStickyBgMode ? "blur(10px)" : "none")};
   -webkit-backdrop-filter: ${(p) => (p.$isStickyBgMode ? "blur(10px)" : "none")};
-  border: 1px solid rgba(255, 160, 0, 0.45);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 160, 0, 0.28);
+  border-radius: 14px;
   z-index: 100;
   position: relative;
   color: ${(p) => (p.$isDarkMode ? "white" : "black")};
@@ -512,7 +508,7 @@ const SettingsPanel = styled.div`
   transition:
     background 0.4s ease,
     backdrop-filter 0.4s ease;
-  box-shadow: 0 2px 12px rgba(255, 150, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
 `;
 
 const ProviderRow = styled.div`
@@ -544,9 +540,9 @@ const ProviderRow = styled.div`
   input[type="password"] {
     flex: 1;
     min-width: 200px;
-    padding: 7px 12px;
-    border-radius: 8px;
-    border: 1px solid ${(p) => (p.$hasError ? "#ff4d4d" : "rgba(255,160,0,0.4)")};
+    padding: 9px 14px;
+    border-radius: 10px;
+    border: 1px solid ${(p) => (p.$hasError ? "#ff4d4d" : "rgba(255,160,0,0.3)")};
     background: ${(p) =>
     p.$isDarkMode ? "rgba(30,30,40,0.7)" : "rgba(255,255,255,0.85)"};
     color: ${(p) => (p.$isDarkMode ? "white" : "black")};
@@ -577,9 +573,11 @@ const ChatHistory = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
+  gap: 10px;
   overflow-y: auto;
-  padding: 4px 2px;
+  padding: 8px max(6px, calc((100% - 960px) / 2));
   border-radius: 10px;
+  scroll-behavior: smooth;
   &::-webkit-scrollbar { width: 5px; }
   &::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, #ff9500, #ff6b00);
@@ -590,7 +588,7 @@ const ChatHistory = styled.div`
 
 const Message = styled.div`
   align-self: ${(p) => (p.$isBot ? "flex-start" : "flex-end")};
-  max-width: 82%;
+  max-width: 78%;
   background: ${(p) =>
     p.$isBot
       ? p.$isDarkMode
@@ -607,11 +605,11 @@ const Message = styled.div`
         ? "rgba(255,255,255,0.1)"
         : "rgba(0,0,0,0.1)"
       : "rgba(255,149,0,0.3)"};
-  padding: 8px 12px;
-  border-radius: ${(p) => (p.$isBot ? "4px 14px 14px 14px" : "14px 4px 14px 14px")};
+  padding: 10px 15px;
+  border-radius: ${(p) => (p.$isBot ? "4px 16px 16px 16px" : "16px 4px 16px 16px")};
   position: relative;
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 14px;
+  line-height: 1.6;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
   animation: ${fadeIn} 0.25s ease;
   pre {
@@ -632,7 +630,7 @@ const CopyButton = styled.button`
   color: inherit;
   cursor: pointer;
   font-size: 29px;
-  border-radius: 6px;
+  border-radius: 5px;
   opacity: 0;
   transition: opacity 0.2s, transform 0.2s;
   ${Message}:hover & { opacity: 1; }
@@ -656,7 +654,7 @@ const ErrorBox = styled.div`
 
 const RetryButton = styled.button`
   padding: 5px 14px;
-  border-radius: 999px;
+  border-radius: 5px;
   border: 1px solid rgba(255, 107, 107, 0.5);
   background: transparent;
   color: #ff6b6b;
@@ -695,9 +693,14 @@ const InputContainer = styled.div`
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
   border: 1.5px solid ${(p) =>
     p.$isDarkMode ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"};
-  border-radius: 12px;
+  border-radius: 16px;
   background: ${(p) =>
     p.$isDarkMode ? "rgba(10,10,18,0.88)" : "rgba(255,255,255,0.9)"};
   backdrop-filter: ${(p) => (p.$isStickyBgMode ? "blur(10px)" : "none")};
@@ -716,7 +719,7 @@ const InputQuickSettings = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 6px 12px 4px;
+  padding: 8px 14px 6px;
   flex-wrap: wrap;
   border-bottom: 1px dashed ${(p) =>
     p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"};
@@ -752,7 +755,7 @@ const QuickSelect = styled.select`
     p.$isDarkMode ? "rgba(255,165,0,0.12)" : "rgba(255,140,0,0.08)"};
   border: 1px solid
     ${(p) => (p.$isDarkMode ? "rgba(255,165,0,0.35)" : "rgba(255,140,0,0.3)")};
-  border-radius: 9px;
+  border-radius: 5px;
   padding: 3px 22px 3px 7px;
   font-size: 11px;
   font-weight: 600;
@@ -781,8 +784,8 @@ const TextArea = styled.textarea`
   box-sizing: border-box;
   border: none;
   background: transparent;
-  padding: 12px 14px;
-  border-radius: 12px 12px 0 0;
+  padding: 14px 16px;
+  border-radius: 16px 16px 0 0;
   color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.92)" : "#111")};
   font-size: 14px;
   outline: none;
@@ -826,7 +829,7 @@ const IconBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 5px;
   border: 1px solid transparent;
   background: transparent;
   color: ${(p) =>
@@ -866,7 +869,7 @@ const IconBtn = styled.button`
 const SendButton = styled.button`
   height: 32px;
   padding: 0 14px;
-  border-radius: 8px;
+  border-radius: 5px;
   border: none;
   background: ${(p) =>
     p.disabled
@@ -928,7 +931,7 @@ const RemoveFileBtn = styled.button`
   background: #e53e3e;
   color: white;
   border: none;
-  border-radius: 50%;
+  border-radius: 5px;
   width: 17px;
   height: 17px;
   font-size: 9px;
@@ -1070,7 +1073,7 @@ const PlayPauseBtn = styled.button`
   font-size: 20px;
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius: 5px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1114,7 +1117,7 @@ const SpeedRow = styled.div`
 
 const SpeedBtn = styled.button`
   border: 1px solid ${(p) => (p.$active ? "#ff9500" : "rgba(255,255,255,0.15)")};
-  border-radius: 999px;
+  border-radius: 5px;
   padding: 3px 10px;
   font-size: 12px;
   cursor: pointer;
@@ -1132,7 +1135,7 @@ const AudioHidden = styled.audio`
 
 const SetBgButton = styled.button`
   padding: 7px 18px;
-  border-radius: 999px;
+  border-radius: 5px;
   border: 1px solid rgba(255, 149, 0, 0.5);
   background: transparent;
   color: rgba(255, 255, 255, 0.8);
@@ -1194,13 +1197,16 @@ const AttachedChip = styled.div`
   }
 `;
 const LimitsButton = styled.button`
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
   background: rgba(255, 160, 0, 0.12);
   border: 1px solid rgba(255, 160, 0, 0.35);
   color: ${(p) => (p.$isDarkMode ? "#ffcf9e" : "#d96500")};
   font-size: 11px;
   font-weight: 700;
   padding: 4px 10px;
-  border-radius: 8px;
+  border-radius: 5px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1273,7 +1279,7 @@ const ModalCloseBtn = styled.button`
   font-size: 22px;
   cursor: pointer;
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: 5px;
   font-weight: 900;
   &:hover {
     color: #ff4d4d;
@@ -1428,7 +1434,7 @@ const DeleteChatBtn = styled.button`
   font-size: 26px;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 5px;
   transition: all 0.2s;
   display: flex;
   align-items: center;
@@ -1443,7 +1449,7 @@ const DeleteChatBtn = styled.button`
 const NewChatModalBtn = styled.button`
   width: 100%;
   padding: 10px;
-  border-radius: 10px;
+  border-radius: 5px;
   border: 1px dashed #ff9500;
   background: rgba(255, 149, 0, 0.08);
   color: #ff9500;
@@ -1556,21 +1562,22 @@ const EmptyChatWelcome = styled.div`
 `;
 
 const WelcomeTitle = styled.div`
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  background: linear-gradient(90deg, #ffb347, #ff7a00);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: #ff9500;
-`;
-
-const WelcomeSubtitle = styled.div`
-  font-size: 13px;
-  opacity: 0.75;
-  max-width: 400px;
+  max-width: 640px;
+  line-height: 1.3;
 `;
 
 const StarterQuestionsGrid = styled.div`
   width: 100%;
-  max-width: 460px;
-  margin-top: 6px;
+  max-width: 580px;
+  margin-top: 10px;
 `;
 
 const StarterCarouselViewport = styled.div`
@@ -1595,11 +1602,11 @@ const StarterQuestionCard = styled.button`
   padding: 8px 12px;
   box-sizing: border-box;
   transform: scale(${(p) => (p.$isCenter ? 1 : 0.94)});
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.3)" : "rgba(255, 140, 0, 0.25)")};
   background: ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.08)" : "rgba(255, 140, 0, 0.06)")};
   color: ${(p) => (p.$isDarkMode ? "#f0f0f0" : "#222")};
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
@@ -1806,7 +1813,7 @@ export const parseSuggestedQuestions = (text) => {
   const cleanText = text.replace(regex, "").trim();
   const rawQuestions = match[1]
     .split("\n")
-    .map((q) => q.replace(/^[•\-\*\d\.\s]+/, "").trim())
+    .map((q) => q.replace(/^[•\-*\d.\s]+/, "").trim())
     .filter((q) => q.length > 0)
     .slice(0, 3);
   return { cleanText, questions: rawQuestions };
@@ -1867,6 +1874,24 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
   const [responseStyle, setResponseStyle] = useState("friendly");
   const [suggestedQuestionsCount, setSuggestedQuestionsCount] = useState("2");
   const [isLimitsModalOpen, setIsLimitsModalOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("ai_help_sidebar_collapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("ai_help_sidebar_collapsed", next ? "1" : "0");
+      } catch {
+        /* localStorage недоступний */
+      }
+      return next;
+    });
+  };
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [attachedCards, setAttachedCards] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -1906,7 +1931,6 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
-  const [isCapturing, setIsCapturing] = useState(false);
   const [viewingFile, setViewingFile] = useState(null);
   const [mediaPlaying, setMediaPlaying] = useState(false);
   const [mediaProgress, setMediaProgress] = useState(0);
@@ -2119,71 +2143,6 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     if (dist < 150) container.scrollTop = container.scrollHeight;
   }, [streamingText]);
 
-  const captureScreen = async () => {
-    if (isCapturing || loading) return;
-    setIsCapturing(true);
-    setStatus("Роблю скріншот...");
-    try {
-      const html2canvas = (await import("html2canvas")).default;
-      const elem = document.getElementById("root") || document.documentElement || document.body;
-      const canvas = await html2canvas(elem, {
-        useCORS: true,
-        allowTaint: false,
-        scale: 0.8,
-        logging: false,
-        ignoreElements: (element) => {
-          const tag = element.tagName ? element.tagName.toLowerCase() : "";
-          return tag === "iframe" || tag === "video" || tag === "audio";
-        },
-      });
-
-      const blob = await new Promise((resolve) => {
-        try {
-          canvas.toBlob((b) => {
-            if (b) {
-              resolve(b);
-            } else {
-              try {
-                const dataUrl = canvas.toDataURL("image/png");
-                const arr = dataUrl.split(",");
-                const mime = arr[0].match(/:(.*?);/)[1];
-                const bstr = atob(arr[1]);
-                let n = bstr.length;
-                const u8arr = new Uint8Array(n);
-                while (n--) {
-                  u8arr[n] = bstr.charCodeAt(n);
-                }
-                resolve(new Blob([u8arr], { type: mime }));
-              } catch {
-                resolve(null);
-              }
-            }
-          }, "image/png");
-        } catch {
-          resolve(null);
-        }
-      });
-
-      if (!blob) throw new Error("Не вдалося створити blob зображення");
-
-      const file = new File([blob], `screenshot_${Date.now()}.png`, { type: "image/png" });
-      const url = URL.createObjectURL(file);
-      objectURLs.current.push(url);
-      setSelectedFiles((prev) => [...prev, { file, objectURL: url }]);
-      setTotalFilesSize((prev) => prev + blob.size);
-      setStatus("Скріншот додано — запитайте Gemini!");
-      toast.success("Скріншот сторінки додано!");
-      setTimeout(() => setStatus(""), 2500);
-    } catch (err) {
-      console.error("Screenshot capture failed:", err);
-      setStatus("Помилка скріншоту");
-      toast.error("Не вдалося зробити скріншот сторінки.");
-      setTimeout(() => setStatus(""), 2500);
-    } finally {
-      setIsCapturing(false);
-    }
-  };
-
   const handleVoiceInput = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -2231,7 +2190,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       const savedChats = await localforage.getItem("ai_help_chats_v2");
       const savedActiveId = await localforage.getItem("ai_help_active_chat_id");
 
-      let loadedChats = [];
+      let loadedChats;
       if (Array.isArray(savedChats) && savedChats.length > 0) {
         loadedChats = savedChats;
       } else {
@@ -2594,14 +2553,21 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
           },
         }}
       />
-
       <HeaderBar>
-        <AihelpTitle $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-Gemini
-        </AihelpTitle>
         <ChatControlsGroup>
+          <Tooltip content={isSidebarCollapsed ? "Показати список чатів" : "Згорнути список чатів"} isDarkMode={isDarkMode}>
+            <SidebarToggleBtn
+              type="button"
+              $isDarkMode={isDarkMode}
+              onClick={toggleSidebar}
+              aria-label={isSidebarCollapsed ? "Показати бічну панель" : "Згорнути бічну панель"}
+              aria-expanded={!isSidebarCollapsed}
+            >
+              {isSidebarCollapsed ? <TbLayoutSidebarLeftExpand /> : <TbLayoutSidebarLeftCollapse />}
+            </SidebarToggleBtn>
+          </Tooltip>
           {/* Show "Чати" button only on mobile where sidebar is hidden */}
-          <Tooltip content="Переглянути список чатів" isDarkMode={isDarkMode}>
+          <Tooltip content={`Список чатів (${chats.length}/10)`} isDarkMode={isDarkMode}>
             <ChatHeaderBtn
               type="button"
               $isDarkMode={isDarkMode}
@@ -2610,7 +2576,7 @@ Gemini
               style={{ display: undefined }}
               className="mobile-chats-btn"
             >
-              Чати ({chats.length}/10)
+              <TbMessages />
             </ChatHeaderBtn>
           </Tooltip>
           <Tooltip content="Переглянути приблизні ліміти" isDarkMode={isDarkMode}>
@@ -2620,7 +2586,7 @@ Gemini
               onClick={() => setIsLimitsModalOpen(true)}
               aria-label="Переглянути приблизні ліміти"
             >
-              Ліміти
+              <TbGauge />
             </LimitsButton>
           </Tooltip>
           <Tooltip content="Створити новий паралельний чат" isDarkMode={isDarkMode}>
@@ -2631,7 +2597,7 @@ Gemini
               disabled={chats.length >= 10}
               aria-label="Створити новий паралельний чат"
             >
-              Новий чат
+              <TbMessagePlus />
             </NewChatHeaderBtn>
           </Tooltip>
           {onClose && (
@@ -2642,7 +2608,7 @@ Gemini
                 onClick={onClose}
                 aria-label="Закрити ШІ-асистент"
               >
-                ✕
+                <TbX />
               </CloseAiModalHeaderBtn>
             </Tooltip>
           )}
@@ -2703,7 +2669,7 @@ Gemini
       {/* Desktop sidebar + chat main area layout */}
       <DesktopLayout>
         {/* Left sidebar — always visible on ≥768px */}
-        <DesktopSidebar $isDarkMode={isDarkMode}>
+        <DesktopSidebar $isDarkMode={isDarkMode} $collapsed={isSidebarCollapsed}>
           <SidebarTitle $isDarkMode={isDarkMode}>Чати ({chats.length}/10)</SidebarTitle>
           <SidebarChatsList>
             {chats.map((chat, idx) => {
@@ -2735,13 +2701,15 @@ Gemini
             type="button"
             onClick={handleCreateNewChat}
             disabled={chats.length >= 10}
+            title="Новий чат"
+            aria-label="Новий чат"
           >
-            + Новий чат
+            <TbPlus />
           </SidebarNewChatBtn>
         </DesktopSidebar>
 
         {/* Main chat area */}
-        <ChatMainArea>
+        <ChatMainArea $sidebarCollapsed={isSidebarCollapsed}>
           <ChatHistory ref={chatContainerRef}>
             {messages.length === 0 && (
               <EmptyChatWelcome $isDarkMode={isDarkMode}>
@@ -2826,7 +2794,7 @@ Gemini
             {error && (
               <ErrorBox>
                 {error}
-                <RetryButton onClick={() => handleAsk(lastPromptRef.current)}>Повторити</RetryButton>
+                <RetryButton type="button" title="Повторити" aria-label="Повторити" onClick={() => handleAsk(lastPromptRef.current)}><TbRefresh /></RetryButton>
               </ErrorBox>
             )}
             <div ref={chatEndRef} />

@@ -23,6 +23,8 @@ import {
   BiCoinStack,
   BiLink,
   BiRefresh,
+  BiTrendingUp,
+  BiPalette,
 } from "react-icons/bi";
 import { FiPlus } from "react-icons/fi";
 import {
@@ -33,6 +35,12 @@ import { getHourlyForecastDayGroups } from "../../utils/hourlyForecast";
 import { generateRuleBasedForecast, cleanAiText } from "../../utils/ruleBasedForecast";
 import { DEFAULT_BGS } from "../Hero/defaultBgs";
 import { getWindDirectionText } from "../../utils/windUtils";
+import { linearTrend } from "../../utils/chartTrend";
+import { DEFAULT_LINE_STYLES, DEFAULT_DIM, mergeLineStyles, lineStyleProps } from "../../utils/chartLineStyles";
+import ChartStyleModal from "../Modals/ChartStyleModal";
+import ForecastReportModal from "../Modals/ForecastReportModal";
+import CardSettingsModal from "../Modals/CardSettingsModal";
+import WeatherBgModal from "../Modals/WeatherBgModal";
 import {
   FaCalendarPlus,
   FaClock,
@@ -41,7 +49,6 @@ import {
   FaCalendarDays,
   FaMoon,
   FaPlantWilt,
-  FaGauge,
   FaCloud,
   FaUmbrella,
   FaShirt,
@@ -51,16 +58,16 @@ import {
   FaGaugeHigh,
 } from "react-icons/fa6";
 import CustomDatesModal from "../Modals/CustomDatesModal";
-import { createPortal } from "react-dom";
 import UnitsModal from "../Modals/UnitsModal";
-import { DEFAULT_UNITS, makeFormatters, tempLabel, windLabel, pressureLabel } from "../../utils/units.js";
+import { loadCardUnits, isUnitsEventForCard, cardUnitsKey, UNITS_GLOBAL_KEY, UNITS_USE_GLOBAL_KEY } from "../../utils/unitsStorage";
+import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, tempLabel, windLabel, pressureLabel } from "../../utils/units.js";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { PiThermometerFill } from "react-icons/pi"; //Нормальна температура
 import { BsThermometerSnow, BsThermometerSun, BsMoonStarsFill, BsClockHistory } from "react-icons/bs"; //Холодна температура / Ніч
 import { FaGlassWater, FaGlassWaterDroplet } from "react-icons/fa6"; //Вологість
 import { BiWind } from "react-icons/bi"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
-import { MdOutlineSpeed } from "react-icons/md"; //Тиск
+import { MdOutlineSpeed, MdClose, MdStraighten } from "react-icons/md"; //Тиск
 import { FaCloudDownloadAlt, FaCloudUploadAlt, FaSmog, FaSnowflake, FaSun, FaExclamationTriangle } from "react-icons/fa"; //Іконки
 import { GiSunRadiations, GiSnowing, GiWaterRecycling, GiIceCube } from "react-icons/gi";//Сонячна радіація
 import { LiaCloudSunSolid } from "react-icons/lia";
@@ -246,25 +253,13 @@ const expandDown = keyframes`
   }
 `;
 const menuSlideDown = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
 `;
 
 const menuSlideUp = keyframes`
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-  }
+  from { clip-path: inset(0 0 0 0); }
+  to { clip-path: inset(0 0 100% 0); }
 `;
 
 export const AihelpTitle = styled.div`
@@ -545,101 +540,6 @@ const CurrentWeatherBanne = styled.div`
   align-self: stretch;
 `;
 
-const BgModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 3000;
-  backdrop-filter: blur(5px);
-`;
-
-const BgModalContent = styled.div`
-  background: #1e1e1e56;
-  padding: 5px;
-  border-radius: 20px;
-  width: 95%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  border: 1px solid #ffb36c;
-  color: white;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #ffb36c;
-    border-radius: 10px;
-  }
-`;
-
-const BgGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 10px;
-`;
-
-const NameOverlay = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  text-align: center;
-  padding: 4px;
-  font-size: 10px;
-  opacity: 0;
-  transition: opacity 0.3s;
-`;
-
-const TopOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  text-align: center;
-  padding: 4px;
-  font-size: 10px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  display: flex;
-  flex-direction: column;
-`;
-
-const BgItem = styled.div`
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-  border: ${(props) => (props.$active ? "2px solid #ffb36c" : "2px solid transparent")};
-  transition: transform 0.2s;
-  &:hover {
-    transform: scale(1.05);
-    ${NameOverlay}, ${TopOverlay} {
-      opacity: 1;
-    }
-  }
-`;
-
-const BgSquare = styled.img`
-  width: 100%;
-  aspect-ratio: 3/2;
-  object-fit: cover;
-  display: block;
-`;
-
 const ChartScrollWrapper = styled.div`
   width: 100%;
   overflow-x: auto;
@@ -862,46 +762,6 @@ const ViewToggleButton = styled.button`
   box-shadow: ${(props) => (props.$active ? "0 2px 8px rgba(138, 43, 226, 0.4)" : "none")};
 `;
 
-const REPORT_ICONS = {
-  pressure_low: <MdOutlineSpeed />,
-  pressure_high: <MdOutlineSpeed />,
-  humidity: <FaDroplet />,
-  uvi: <GiSunRadiations />,
-  wind_warning: <BiWind />,
-  cloth: <FaShirt />,
-  umbrella: <FaUmbrella />,
-  car: <FaCar />,
-  sport: <FaPersonWalking />,
-};
-const REPORT_COLORS = {
-  pressure_low: "#4da6ff",
-  pressure_high: "#ff4d4d",
-  humidity: "#4da6ff",
-  uvi: "#ffd700",
-  wind_warning: "#ff9900",
-  cloth: "#ffb36c",
-  umbrella: "#14b8a6",
-  car: "#aaa",
-  sport: "#4ade80",
-};
-
-const ReportSection = ({ title, icon, color, children }) => (
-  <div style={{ borderLeft: `3px solid ${color}`, paddingLeft: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-    <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "15px", color }}>
-      <span style={{ display: "inline-flex", fontSize: "18px" }}>{icon}</span>
-      {title}
-    </div>
-    {children}
-  </div>
-);
-
-const ReportLine = ({ icon, color, children }) => (
-  <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-    <span style={{ display: "inline-flex", flexShrink: 0, marginTop: "3px", fontSize: "16px", color }}>{icon}</span>
-    <span>{children}</span>
-  </div>
-);
-
 const SettingsDropdownMenu = styled.div`
   position: absolute;
   top: calc(100% + 6px);
@@ -918,13 +778,21 @@ const SettingsDropdownMenu = styled.div`
   z-index: 200;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   transform-origin: top center;
-  animation: ${(props) => (props.$isClosing ? menuSlideUp : menuSlideDown)} 0.2s
-    ease-out forwards;
-  overflow: hidden;
+  animation: ${(props) => (props.$isClosing ? menuSlideUp : menuSlideDown)} 0.35s
+    ease forwards;
+  overflow-x: hidden;
+  overflow-y: auto;
   height: calc(522px - 100% - 6px);
-grid-template-columns: repeat(2, 1fr); 
+grid-template-columns: repeat(2, 1fr);
+  /* Перший ряд («Одиниці виміру») за висотою вмісту, решта ділять простір порівну */
+  grid-template-rows: auto;
+  grid-auto-rows: 1fr;
   & > :first-child {
-    grid-column: span 2; 
+    grid-column: span 2;
+  }
+  /* Останній пункт, що лишився сам у ряду, розтягується на всю ширину */
+  & > :last-child:nth-child(even) {
+    grid-column: 1 / -1;
   }
   @media (max-width: 767px) {
     height: min(70vh, 700px);
@@ -932,24 +800,51 @@ grid-template-columns: repeat(2, 1fr);
     overflow-y: auto;
   }
 `;
+/* Шестерня й хрестик лежать одне на одному і плавно змінюють одне одного */
+const SettingsIconSwap = styled.span`
+  position: relative;
+  display: inline-flex;
+  font-size: 28px;
+  width: 1em;
+  height: 1em;
+
+  & > svg {
+    position: absolute;
+    inset: 0;
+    width: 1em;
+    height: 1em;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  & > svg:first-child {
+    opacity: ${(props) => (props.$open ? 0 : 1)};
+    transform: rotate(${(props) => (props.$open ? "-90deg" : "0deg")});
+  }
+  & > svg:last-child {
+    opacity: ${(props) => (props.$open ? 1 : 0)};
+    transform: rotate(${(props) => (props.$open ? "0deg" : "90deg")});
+  }
+`;
 const SettingsDropdownItem = styled.button`
- text-align: left;
+ text-align: center;
  padding:8px 5px;
- display: inline-flex;
+ display: flex;
+ flex-direction: column;
  align-items: center;
+ justify-content: center;
   background: transparent;
   font-size: 16px;
  gap: 6px;
   color: ${(props) => (props.$isDarkMode ? "#020202" : "#f1eeee")};
 border: 1px solid ${(props) => (props.$isDarkMode ? "#020202" : "#f1eeee")};
   @media (min-width: 768px) {
-     padding:14px 30px;
-      gap: 14px;
+     padding:6px 20px;
+      gap: 4px;
   }
 svg {
-    font-size: 18px;
+    font-size: 24px;
+    flex-shrink: 0;
    @media (min-width: 768px) {
-    font-size: 29px;
+    font-size: 30px;
   }
 }
 `;
@@ -1007,6 +902,7 @@ const WeatherCardComponent = ({
   }, []);
   const defaultChartHeight = isNarrowScreen ? "250px" : "380px";
   const [units, setUnits] = useState(DEFAULT_UNITS);
+  const [unitsGlobal, setUnitsGlobal] = useState(true); // одиниці спільні для всіх карток
   const unit = units.temp; // "C", "K", "F"
   const fmt = makeFormatters(units);
   const [isUnitsModalOpen, setIsUnitsModalOpen] = useState(false);
@@ -1036,26 +932,42 @@ const WeatherCardComponent = ({
   const [hasGeminiKey, setHasGeminiKey] = useState(false);
 
   useEffect(() => {
-    localforage.getItem("units_settings").then(async (saved) => {
-      if (saved) {
-        setUnits({ ...DEFAULT_UNITS, ...saved });
-        return;
-      }
-      // міграція зі старого ключа лише для температури
-      const legacyTemp = await localforage.getItem("temp_unit");
-      if (legacyTemp) setUnits((prev) => ({ ...prev, temp: legacyTemp }));
+    loadCardUnits(card.id).then(({ useGlobal, units: loaded }) => {
+      setUnitsGlobal(useGlobal);
+      setUnits(loaded);
     });
     const handleUnitsChange = (e) => {
-      if (e.detail) setUnits({ ...DEFAULT_UNITS, ...e.detail });
+      const detail = e.detail;
+      if (!isUnitsEventForCard(detail, card.id)) return;
+      const next = { ...DEFAULT_UNITS, ...detail.units };
+      setUnits(next);
+      setUnitsGlobal(detail.useGlobal);
+      // Вимкнули "для всіх карток": кожна картка зберігає поточні одиниці як власні
+      if (!detail.useGlobal && detail.cardId === undefined) {
+        localforage.setItem(cardUnitsKey(card.id), next);
+      }
     };
     window.addEventListener("unitsChanged", handleUnitsChange);
     return () => window.removeEventListener("unitsChanged", handleUnitsChange);
-  }, []);
+  }, [card.id]);
 
   const changeUnits = (next) => {
-    setUnits(next);
-    localforage.setItem("units_settings", next);
-    window.dispatchEvent(new CustomEvent("unitsChanged", { detail: next }));
+    if (unitsGlobal) {
+      localforage.setItem(UNITS_GLOBAL_KEY, next);
+      window.dispatchEvent(new CustomEvent("unitsChanged", { detail: { units: next, useGlobal: true } }));
+      return;
+    }
+    localforage.setItem(cardUnitsKey(card.id), next);
+    window.dispatchEvent(
+      new CustomEvent("unitsChanged", { detail: { units: next, useGlobal: false, cardId: card.id } }),
+    );
+  };
+
+  // Увімкнення: одиниці цієї картки стають спільними для всіх
+  const toggleUnitsGlobal = (enabled) => {
+    localforage.setItem(UNITS_USE_GLOBAL_KEY, enabled);
+    if (enabled) localforage.setItem(UNITS_GLOBAL_KEY, units);
+    window.dispatchEvent(new CustomEvent("unitsChanged", { detail: { units, useGlobal: enabled } }));
   };
 
   const formatTemp = (tempVal) => {
@@ -1077,7 +989,7 @@ const WeatherCardComponent = ({
     setTimeout(() => {
       setIsDropdownOpen(false);
       setIsDropdownClosing(false);
-    }, 180);
+    }, 350);
   };
   const [isCustomDatesModalOpen, setIsCustomDatesModalOpen] = useState(false);
   const [newCustomDate, setNewCustomDate] = useState({ date: "", time: "", reason: "", duration: 1, durationUnit: "hours", targetCard: "all" });
@@ -1115,13 +1027,18 @@ const WeatherCardComponent = ({
   const [fullscreenChart, setFullscreenChart] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
   
-  // Легенда та видимість датасетів
-  const [datasetOpacity, setDatasetOpacity] = useState({
-    day: 1,
-    night: 1,
-    wind: 1,
+  // Легенда та видимість датасетів. Вимкнена лінія стає напівпрозорою,
+  // а рівень прозорості береться зі стилю лінії (dimOpacity)
+  const [hiddenSeries, setHiddenSeries] = useState({
+    day: false,
+    night: false,
+    wind: false,
   });
   const [legendFontSize, setLegendFontSize] = useState(12);
+  const [lineStyles, setLineStyles] = useState(DEFAULT_LINE_STYLES); // стиль кожної лінії окремо
+  const [globalLineStyles, setGlobalLineStyles] = useState(false); // спільні стилі для всіх карток
+  const [styleModalChart, setStyleModalChart] = useState(null); // "hourly" | "daily" | null
+  const [showDailyTrend, setShowDailyTrend] = useState(false);
   const [rightMetric, setRightMetric] = useState("wind"); // "wind" | "uv" | "precip"
   const RIGHT_METRICS = {
     wind: { label: "Вітер", axis: fmt.windAxis, color: "#0099ff", rgb: "0, 153, 255", icon: <BiWind /> },
@@ -1131,16 +1048,75 @@ const WeatherCardComponent = ({
   const rightMeta = RIGHT_METRICS[rightMetric];
 
   const toggleDatasetVisibility = (datasetKey) => {
-    setDatasetOpacity((prev) => ({
-      ...prev,
-      [datasetKey]: prev[datasetKey] === 1 ? 0.3 : 1,
-    }));
+    setHiddenSeries((prev) => ({ ...prev, [datasetKey]: !prev[datasetKey] }));
   };
+
+  // Ключ легенди → лінія у стилях графіка
+  const LEGEND_TO_LINE = {
+    hourly: { day: "temp", wind: "right" },
+    daily: { day: "day", night: "night", wind: "right" },
+  };
+  const seriesOpacity = (chartKey) =>
+    Object.fromEntries(
+      Object.entries(hiddenSeries).map(([key, hidden]) => {
+        const lineStyle = lineStyles[chartKey][LEGEND_TO_LINE[chartKey][key]];
+        return [key, hidden ? lineStyle?.dimOpacity ?? DEFAULT_DIM : 1];
+      }),
+    );
+  const hourlyOpacity = seriesOpacity("hourly");
+  const dailyOpacity = seriesOpacity("daily");
 
   const handleLegendSizeChange = async (newSize) => {
     const finalSize = Math.max(8, Math.min(20, newSize));
     setLegendFontSize(finalSize);
     await localforage.setItem(`legendFontSize_${card.id}`, finalSize);
+  };
+
+  const saveLineStyles = (next) => {
+    if (globalLineStyles) {
+      // Решта карток підхопить зміни через подію (як і одиниці виміру)
+      localforage.setItem("chartLineStyles_global", next);
+      window.dispatchEvent(new CustomEvent("chartLineStylesChanged", { detail: { useGlobal: true, styles: next } }));
+      return;
+    }
+    setLineStyles(next);
+    localforage.setItem(`chartLineStyles_${card.id}`, next);
+  };
+
+  // Увімкнення: стилі цієї картки стають спільними для всіх.
+  // Вимкнення: кожна картка зберігає поточні спільні стилі як власні.
+  const toggleGlobalLineStyles = (enabled) => {
+    localforage.setItem("chartLineStyles_useGlobal", enabled);
+    if (enabled) localforage.setItem("chartLineStyles_global", lineStyles);
+    window.dispatchEvent(new CustomEvent("chartLineStylesChanged", { detail: { useGlobal: enabled, styles: lineStyles } }));
+  };
+
+  const changeLineStyle = (chartKey, lineKey, patch) => {
+    saveLineStyles({
+      ...lineStyles,
+      [chartKey]: { ...lineStyles[chartKey], [lineKey]: { ...lineStyles[chartKey][lineKey], ...patch } },
+    });
+  };
+
+  // Застосувати до всіх ліній графіка (форму — лише звичайним лініям, не трендам)
+  const applyLineStyleToAll = (chartKey, patch) => {
+    const lines = Object.fromEntries(
+      Object.entries(lineStyles[chartKey]).map(([k, s]) => [
+        k,
+        { ...s, ...Object.fromEntries(Object.entries(patch).filter(([field]) => field in s)) },
+      ]),
+    );
+    saveLineStyles({ ...lineStyles, [chartKey]: lines });
+  };
+
+  const resetLineStyles = (chartKey) => {
+    saveLineStyles({ ...lineStyles, [chartKey]: DEFAULT_LINE_STYLES[chartKey] });
+  };
+
+  const toggleDailyTrend = () => {
+    const next = !showDailyTrend;
+    setShowDailyTrend(next);
+    localforage.setItem(`dailyTrend_${card.id}`, next);
   };
 
   useEffect(() => {
@@ -1346,6 +1322,38 @@ const WeatherCardComponent = ({
         flexShrink: 0,
       }}
     >
+      <Tooltip content="Стиль ліній графіка" isDarkMode={isDarkMode}>
+      <button
+        type="button"
+        onClick={() => setStyleModalChart(chartKey)}
+        aria-label="Стиль ліній графіка"
+        style={chartActionButtonStyle}
+      >
+        <BiPalette size={16} />
+      </button>
+      </Tooltip>
+      {chartKey === "daily" && (
+        <Tooltip content={showDailyTrend ? `Сховати лінію тренду. ${dailyTrendText}` : "Показати лінію тренду температури"} isDarkMode={isDarkMode}>
+        <button
+          type="button"
+          onClick={toggleDailyTrend}
+          aria-label={showDailyTrend ? "Сховати лінію тренду" : "Показати лінію тренду"}
+          aria-pressed={showDailyTrend}
+          style={{
+            ...chartActionButtonStyle,
+            width: "auto",
+            gap: "4px",
+            padding: "0 6px",
+            fontSize: "11px",
+            fontWeight: "bold",
+            background: showDailyTrend ? "rgba(0, 190, 235, 0.25)" : chartActionButtonStyle.background,
+          }}
+        >
+          <BiTrendingUp size={16} />
+          {showDailyTrend && dailyTrendBadge}
+        </button>
+        </Tooltip>
+      )}
       <Tooltip content={fullscreenChart === chartKey ? "Вийти з повного екрана" : "На весь екран"} isDarkMode={isDarkMode}>
       <button
         type="button"
@@ -1399,11 +1407,11 @@ const WeatherCardComponent = ({
             borderRadius: "4px",
             background: isDarkMode ? "#222" : "#fff",
             color: rightMeta.color,
-            opacity: datasetOpacity.wind,
+            opacity: hiddenSeries.wind ? 0.45 : 1,
             fontWeight: "bold",
           }}
         >
-          <Tooltip content={`Натисніть, щоб ${datasetOpacity.wind === 1 ? "сховати" : "показати"} шкалу графіка`} isDarkMode={isDarkMode}>
+          <Tooltip content={`Натисніть, щоб ${!hiddenSeries.wind ? "сховати" : "показати"} шкалу графіка`} isDarkMode={isDarkMode}>
             <button
               type="button"
               onClick={() => toggleDatasetVisibility("wind")}
@@ -1425,11 +1433,11 @@ const WeatherCardComponent = ({
           </select>
         </span>
       ) : (
-       <Tooltip key={item.key} content={`Натисніть, щоб ${datasetOpacity[item.key] === 1 ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`} isDarkMode={isDarkMode}>
+       <Tooltip key={item.key} content={`Натисніть, щоб ${!hiddenSeries[item.key] ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`} isDarkMode={isDarkMode}>
         <button
           type="button"
           onClick={() => toggleDatasetVisibility(item.key)}
-          aria-label={`Натисніть, щоб ${datasetOpacity[item.key] === 1 ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`}
+          aria-label={`Натисніть, щоб ${!hiddenSeries[item.key] ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -1440,7 +1448,7 @@ const WeatherCardComponent = ({
             background: isDarkMode ? "#222" : "#fff",
             color: item.color,
             cursor: "pointer",
-            opacity: datasetOpacity[item.key],
+            opacity: hiddenSeries[item.key] ? 0.45 : 1,
             fontSize: "inherit",
             fontWeight: "bold",
           }}
@@ -1519,6 +1527,30 @@ const WeatherCardComponent = ({
       }
     };
     loadLegendSize();
+  }, [card.id]);
+
+  useEffect(() => {
+    const loadChartStyle = async () => {
+      const useGlobal = (await localforage.getItem("chartLineStyles_useGlobal")) === true;
+      const savedStyles = await localforage.getItem(
+        useGlobal ? "chartLineStyles_global" : `chartLineStyles_${card.id}`,
+      );
+      setGlobalLineStyles(useGlobal);
+      setLineStyles(mergeLineStyles(savedStyles));
+      const savedTrend = await localforage.getItem(`dailyTrend_${card.id}`);
+      if (savedTrend !== null) setShowDailyTrend(savedTrend);
+    };
+    loadChartStyle();
+
+    const handleLineStylesChange = (e) => {
+      const { useGlobal, styles } = e.detail || {};
+      const merged = mergeLineStyles(styles);
+      setGlobalLineStyles(useGlobal);
+      setLineStyles(merged);
+      if (!useGlobal) localforage.setItem(`chartLineStyles_${card.id}`, merged);
+    };
+    window.addEventListener("chartLineStylesChanged", handleLineStylesChange);
+    return () => window.removeEventListener("chartLineStylesChanged", handleLineStylesChange);
   }, [card.id]);
 
   const handleChangeBackground = (newMode) => {
@@ -1924,10 +1956,9 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
       {
         label: `Температура (${tempSuffix})`,
         data: visibleHourly?.map((h) => toDisplayTemp(h.tempNum ?? 0)) || [],
-        fill: true,
-        backgroundColor: "rgba(255, 179, 108, 0.2)",
-        borderColor: "rgba(255, 179, 108, 1)",
-        pointRadius: 12,
+        backgroundColor: `rgba(255, 179, 108, ${hourlyOpacity.day * 0.2})`,
+        borderColor: `rgba(255, 179, 108, ${hourlyOpacity.day})`,
+        hidden: hourlyOpacity.day === 0,
         pointStyle: visibleHourly?.map((h) => {
           let danger = null;
           if ((h.tempNum ?? 0) > 30) danger = "#ff0000";
@@ -1937,27 +1968,27 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
             h.iconSymbol ?? h.iconPlaceholder ?? "☁️",
             24,
             danger,
-            datasetOpacity.day,
+            hourlyOpacity.day,
           );
         }),
-        tension: 0.4,
+        ...lineStyleProps(lineStyles.hourly.temp, { tension: 0.4, pointRadius: 12, fill: true }),
         yAxisID: "y",
       },
       rightMetric === "wind"
         ? {
             label: fmt.windAxis,
             data: visibleHourly?.map((h) => fmt.windValue(h.windNum ?? 0)) || [],
-            borderColor: "rgba(0, 190, 235, 1)",
-            backgroundColor: "rgba(0, 190, 235, 0.1)",
-            pointRadius: 6,
+            borderColor: `rgba(0, 190, 235, ${hourlyOpacity.wind})`,
+            backgroundColor: `rgba(0, 190, 235, ${hourlyOpacity.wind * 0.1})`,
+            hidden: hourlyOpacity.wind === 0,
             pointBackgroundColor:
               visibleHourly?.map((h) =>
-                (h.windNum ?? 0) > 10 ? "#ff6a00" : "rgba(0, 190, 235, 1)",
+                (h.windNum ?? 0) > 10 ? "#ff6a00" : `rgba(0, 190, 235, ${hourlyOpacity.wind})`,
               ) || [],
             pointStyle: visibleHourly?.map((h) =>
-              createDirectionArrowCanvas(h.wind_direction_10m, 18, datasetOpacity.wind),
+              createDirectionArrowCanvas(h.wind_direction_10m, 18, hourlyOpacity.wind),
             ) || [],
-            tension: 0.4,
+            ...lineStyleProps(lineStyles.hourly.right, { tension: 0.4, pointRadius: 6, fill: false }),
             yAxisID: "y1",
           }
         : {
@@ -1966,13 +1997,12 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
               visibleHourly?.map((h) =>
                 rightMetric === "uv" ? h.uv_index ?? 0 : h.precipitation_probability ?? 0,
               ) || [],
-            borderColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind})`,
-            backgroundColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind * 0.15})`,
-            fill: rightMetric === "precip",
+            borderColor: `rgba(${rightMeta.rgb}, ${hourlyOpacity.wind})`,
+            backgroundColor: `rgba(${rightMeta.rgb}, ${hourlyOpacity.wind * 0.15})`,
+            hidden: hourlyOpacity.wind === 0,
             pointStyle: "circle",
-            pointRadius: 4,
-            pointBackgroundColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind})`,
-            tension: 0.4,
+            pointBackgroundColor: `rgba(${rightMeta.rgb}, ${hourlyOpacity.wind})`,
+            ...lineStyleProps(lineStyles.hourly.right, { tension: 0.4, pointRadius: 4, fill: rightMetric === "precip" }),
             yAxisID: "y1",
           },
     ],
@@ -2153,17 +2183,50 @@ const HOLIDAYS_2027 = {
     }
     return null;
   };
+
+  // Лінія тренду (як в Excel) для денної та нічної температури за 16 днів
+  const dailyDayTemps = card.daily16?.map((d) => toDisplayTemp(parseInt(d.temp_day))) || [];
+  const dailyNightTemps = card.daily16?.map((d) => toDisplayTemp(parseInt(d.temp_night))) || [];
+  const dailyDayTrend = linearTrend(dailyDayTemps);
+  const dailyNightTrend = linearTrend(dailyNightTemps);
+  const fmtSlope = (trend) => {
+    if (!trend) return "—";
+    const v = Math.round(trend.slope * 10) / 10;
+    return `${v > 0 ? "+" : ""}${v}°`;
+  };
+  const dailyTrendText = `Тренд: день ${fmtSlope(dailyDayTrend)}/день, ніч ${fmtSlope(dailyNightTrend)}/день`;
+  const dailyTrendBadge = `${fmtSlope(dailyDayTrend)} / ${fmtSlope(dailyNightTrend)}`;
+  const trendDataset = (label, trend, rgb, opacity, style) => ({
+    label,
+    data: trend.data,
+    isTrend: true,
+    borderColor: `rgba(${rgb}, ${opacity * 0.9})`,
+    hidden: opacity === 0,
+    pointRadius: 0,
+    pointHoverRadius: 0,
+    fill: false,
+    tension: 0,
+    ...lineStyleProps(style),
+    yAxisID: "y",
+  });
+  const dailyTrendDatasets = showDailyTrend
+    ? [
+        dailyDayTrend && trendDataset("Тренд (день)", dailyDayTrend, "255, 179, 108", dailyOpacity.day, lineStyles.daily.trendDay),
+        dailyNightTrend && trendDataset("Тренд (ніч)", dailyNightTrend, "255, 20, 147", dailyOpacity.night, lineStyles.daily.trendNight),
+      ].filter(Boolean)
+    : [];
+
   const dailyChartData = {
     labels: card.daily16?.map((d) => `${d.date}\n${d.day}`) || [],
     datasets: [
       {
         label: `День (${tempSuffix})`,
-        data: card.daily16?.map((d) => toDisplayTemp(parseInt(d.temp_day))) || [],
-        borderColor: `rgba(255, 179, 108, ${datasetOpacity.day})`,
-        backgroundColor: `rgba(255, 179, 108, ${datasetOpacity.day * 0.5})`,
-        pointRadius: 12,
+        data: dailyDayTemps,
+        borderColor: `rgba(255, 179, 108, ${dailyOpacity.day})`,
+        backgroundColor: `rgba(255, 179, 108, ${dailyOpacity.day * 0.5})`,
+        hidden: dailyOpacity.day === 0,
         pointStyle: card.daily16?.map((d) =>
-          createIconCanvas(d.iconSymbol ?? d.iconPlaceholder, 24, null, datasetOpacity.day),
+          createIconCanvas(d.iconSymbol ?? d.iconPlaceholder, 24, null, dailyOpacity.day),
         ),
         pointBorderColor: card.daily16?.map((d) => {
           const dateType = getDateType(d.date, d.day, d.fullDate);
@@ -2174,35 +2237,35 @@ const HOLIDAYS_2027 = {
           const dateType = getDateType(d.date, d.day, d.fullDate);
           return dateType.color ? 3 : 2;
         }),
-        tension: 0.3,
+        ...lineStyleProps(lineStyles.daily.day, { tension: 0.3, pointRadius: 12, fill: false }),
         yAxisID: "y",
       },
       {
         label: `Ніч (${tempSuffix})`,
-        data: card.daily16?.map((d) => toDisplayTemp(parseInt(d.temp_night))) || [],
-        borderColor: `rgba(255, 20, 147, ${datasetOpacity.night})`,
-        backgroundColor: `rgba(255, 20, 147, ${datasetOpacity.night * 0.2})`,
+        data: dailyNightTemps,
+        borderColor: `rgba(255, 20, 147, ${dailyOpacity.night})`,
+        backgroundColor: `rgba(255, 20, 147, ${dailyOpacity.night * 0.2})`,
+        hidden: dailyOpacity.night === 0,
         pointStyle: "circle",
-        pointRadius: 4,
-        tension: 0.3,
+        ...lineStyleProps(lineStyles.daily.night, { tension: 0.3, pointRadius: 4, fill: false }),
         yAxisID: "y",
       },
       rightMetric === "wind"
         ? {
             label: fmt.windAxis,
             data: card.daily16?.map((d) => fmt.windValue(parseFloat(d.wind_speed) || 0)) || [],
-            borderColor: `rgba(0, 153, 255, ${datasetOpacity.wind})`,
-            backgroundColor: `rgba(0, 153, 255, ${datasetOpacity.wind * 0.2})`,
+            borderColor: `rgba(0, 153, 255, ${dailyOpacity.wind})`,
+            backgroundColor: `rgba(0, 153, 255, ${dailyOpacity.wind * 0.2})`,
+            hidden: dailyOpacity.wind === 0,
             pointStyle: card.daily16?.map((d) =>
-              createDirectionArrowCanvas(d.wind_direction_10m, 18, datasetOpacity.wind),
+              createDirectionArrowCanvas(d.wind_direction_10m, 18, dailyOpacity.wind),
             ),
-            pointRadius: 6,
             pointBorderColor: "#ffffff",
             pointBorderWidth: 1.5,
             pointBackgroundColor: card.daily16?.map((d) =>
               parseFloat(d.wind_speed) > 10 ? "#ff6a00" : "#0099ff",
             ),
-            tension: 0.3,
+            ...lineStyleProps(lineStyles.daily.right, { tension: 0.3, pointRadius: 6, fill: false }),
             yAxisID: "y1",
           }
         : {
@@ -2213,14 +2276,15 @@ const HOLIDAYS_2027 = {
                   ? parseFloat(d.uv_index) || 0
                   : parseFloat(d.precipitation_probability_max) || 0,
               ) || [],
-            borderColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind})`,
-            backgroundColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind * 0.2})`,
+            borderColor: `rgba(${rightMeta.rgb}, ${dailyOpacity.wind})`,
+            backgroundColor: `rgba(${rightMeta.rgb}, ${dailyOpacity.wind * 0.2})`,
+            hidden: dailyOpacity.wind === 0,
             pointStyle: "circle",
-            pointRadius: 4,
-            pointBackgroundColor: `rgba(${rightMeta.rgb}, ${datasetOpacity.wind})`,
-            tension: 0.3,
+            pointBackgroundColor: `rgba(${rightMeta.rgb}, ${dailyOpacity.wind})`,
+            ...lineStyleProps(lineStyles.daily.right, { tension: 0.3, pointRadius: 4, fill: false }),
             yAxisID: "y1",
           },
+      ...dailyTrendDatasets,
     ],
   };
 
@@ -2241,6 +2305,7 @@ const HOLIDAYS_2027 = {
         mode: "index",
         intersect: false,
         external: externalTooltipHandler,
+        filter: (item) => !item.dataset.isTrend, // лінії тренду не показуємо в підказці
         callbacks: {
           title: (items) => `⏰ Час: ${items[0].label}`,
           label: (context) => {
@@ -3135,7 +3200,10 @@ const HOLIDAYS_2027 = {
                   gap: "4px",
                 }}
               >
-                <BiCog/>
+                <SettingsIconSwap $open={isDropdownOpen && !isDropdownClosing}>
+                  <BiCog />
+                  <MdClose />
+                </SettingsIconSwap>
               </button>
               </Tooltip>
             </ActionButtons>
@@ -3145,54 +3213,18 @@ const HOLIDAYS_2027 = {
               $isDarkMode={isDarkMode}
               $isClosing={isDropdownClosing}
             >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "15px 30px",
-                    borderBottom: `1px solid ${isDarkMode ? "rgba(255, 255, 255, 0.98)" : "rgb(0, 0, 0)"}`,
-                  }}
+                <SettingsDropdownItem
+                  isDarkMode={isDarkMode}
+                  onClick={() => setIsUnitsModalOpen(true)}
+                  aria-label="Змінити одиниці виміру"
+                  style={{ padding: "4px 12px", gap: "0" }}
                 >
-                  <div style={{ display: "flex", gap: "6px" }}>
-                  <span style={{ fontSize: "15px", fontWeight: "bold", color: isDarkMode ? "#ccc" : "#444" }}>Одиниці:</span>
-                  <Tooltip content="Температура, вітер, тиск та інші одиниці виміру" isDarkMode={isDarkMode}>
-                    <button
-                      onClick={() => setIsUnitsModalOpen(true)}
-                      aria-label="Налаштувати одиниці виміру"
-                      style={{
-                        padding: "2px 15px",
-                        fontSize: "13px",
-                        borderRadius: "4px",
-                        border: "1px solid #00eeff",
-                        background: "transparent",
-                        color: isDarkMode ? "#fff" : "#000",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {tempLabel(units.temp)} · {windLabel(units.wind)} · {pressureLabel(units.pressure)}
-                    </button>
-                  </Tooltip>
-                  </div>
-                  <Tooltip content="Закрити меню" isDarkMode={isDarkMode}>
-                  <button
-                    onClick={handleCloseDropdown}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      color: isDarkMode ? "#ffb36c" : "#333",
-                      fontSize: "20px",
-                      cursor: "pointer",
-                      fontWeight: "900",
-                      padding: "4px",
-                      lineHeight: 1,
-                    }}
-                    aria-label="Закрити меню"
-                  >
-                    ✕
-                  </button>
-                  </Tooltip>
-                </div>
+                  <MdStraighten style={{ color: "#ffb36c" }} />
+                  <span>Одиниці виміру</span>
+                  <span style={{ fontSize: "12px", opacity: 0.65 }}>
+                    {tempLabel(units.temp)} · {windLabel(units.wind)} · {pressureLabel(units.pressure)}
+                  </span>
+                </SettingsDropdownItem>
                 {!isEditing && (
                   <SettingsDropdownItem
                     isDarkMode={isDarkMode}
@@ -3228,7 +3260,7 @@ const HOLIDAYS_2027 = {
                     onOpenDetails(cityImage || card.cityImage);
                   }}
                 >
-                  <BiLineChart /> Детальна погода
+                  <BiLineChart style={{ transform: "scale(1.12)" }} /> Детальна погода
                 </SettingsDropdownItem>
                 <div
                   style={{
@@ -3294,7 +3326,7 @@ const HOLIDAYS_2027 = {
                       transition: "all 0.2s ease",
                     }}
                   >
-                    <BiCurrentLocation  />{" "}
+                    <BiCurrentLocation style={{ transform: "scale(1.12)" }} />{" "}
                     {isLocationEnabled ? "GPS Увімк." : "GPS Вимк."}
                   </SettingsDropdownItem>
                 ) : (
@@ -3307,7 +3339,7 @@ const HOLIDAYS_2027 = {
                       color: "red",
                     }}
                   >
-                    <BiTrash/> Видалити
+                    <BiTrash style={{ transform: "scale(1.08)" }} /> Видалити
                   </SettingsDropdownItem>
                 )}
                 <SettingsDropdownItem
@@ -3326,14 +3358,14 @@ const HOLIDAYS_2027 = {
                     );
                   }}
                   style={{
-                    textAlign: "left",
+                    textAlign: "center",
                     background: hasGeminiKey
                       ? "linear-gradient(135deg, #5c1d3c, #62123d)"
                       : "rgba(120,120,120,0.3)",
                     cursor: hasGeminiKey ? "pointer" : "default",
                   }}
                 >
-                  <FiPlus/> Прикріпити до ШІ
+                  <FiPlus style={{ transform: "scale(1.2)" }} /> Прикріпити до ШІ
                 </SettingsDropdownItem>
               </SettingsDropdownMenu>
             )}
@@ -4351,8 +4383,8 @@ const HOLIDAYS_2027 = {
               <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
                 <div style={{ fontSize: "36px" }}>{card.current?.iconSymbol || <LiaCloudSunSolid />}</div>
                 <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
-                  <NameCardItem $active={activeTab === "current"}>Зараз: {card.current?.temp}</NameCardItem>
-                  <SubNameCardItem $active={activeTab === "current"}>Відчувається: {card.current.feels_like}</SubNameCardItem>
+                  <NameCardItem $active={activeTab === "current"}>Зараз: {formatTemp(card.current?.temp)}</NameCardItem>
+                  <SubNameCardItem $active={activeTab === "current"}>Відчувається: {formatTemp(card.current?.feels_like)}</SubNameCardItem>
                 </div>
               </div>
             </SideCardItem>
@@ -4407,150 +4439,15 @@ const HOLIDAYS_2027 = {
         </DesktopLayoutWrapper>
       </WeatherCard>
 
-      {isAiModalOpen && createPortal(
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.75)",
-            backdropFilter: "blur(4px)",
-            zIndex: 3000,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-          onClick={() => setIsAiModalOpen(false)}
-        >
-          <div
-            role="dialog"
-            aria-label="Повний звіт прогнозу"
-            style={{
-              background: isDarkMode ? "#1a1a2e" : "#fff",
-              border: `1px solid ${forecastMode === "rules" ? "rgba(0,238,255,0.6)" : "rgba(138,43,226,0.5)"}`,
-              borderRadius: "12px",
-              padding: "20px",
-              width: "95%",
-              maxWidth: "95vw",
-              maxHeight: "92vh",
-              overflowY: "auto",
-              color: isDarkMode ? "#efefff" : "#222",
-              fontSize: "14px",
-              lineHeight: 1.6,
-              whiteSpace: "pre-line",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontWeight: 800,
-                  color: forecastMode === "rules" ? "#00eeff" : "#b362ff",
-                  fontSize: "14px",
-                  letterSpacing: "1px",
-                }}
-              >
-                {forecastMode === "rules" ? <BiLineChart size={22} /> : <BiBrain size={22} />}
-                {forecastMode === "rules"
-                  ? "Смарт-прогноз (Офлайн / Правила) — повний звіт"
-                  : "Прогноз ШІ (Gemini) — повний текст"}
-              </span>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                {forecastMode === "rules" && (
-                  <button
-                    onClick={() => {
-                      if (ruleForecast?.fullText) {
-                        navigator.clipboard?.writeText(ruleForecast.fullText);
-                        setCopiedForecast(true);
-                        setTimeout(() => setCopiedForecast(false), 2000);
-                      }
-                    }}
-                    title="Скопіювати текст прогнозу"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      background: copiedForecast ? "rgba(0,255,150,0.2)" : "rgba(0,238,255,0.12)",
-                      border: `1px solid ${copiedForecast ? "#00ff96" : "rgba(0,238,255,0.5)"}`,
-                      color: copiedForecast ? "#00ff96" : "#00eeff",
-                      borderRadius: "6px",
-                      padding: "4px 8px",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <BiCheck size={16} />
-                    {copiedForecast ? "Скопійовано!" : "Скопіювати"}
-                  </button>
-                )}
-                <button
-                  onClick={() => setIsAiModalOpen(false)}
-                  aria-label="Закрити"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: forecastMode === "rules" ? "#00eeff" : "#b362ff",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    padding: "2px",
-                  }}
-                >
-                  <BiX size={30} />
-                </button>
-              </div>
-            </div>
-            {forecastMode === "rules" ? (
-              ruleForecast ? (
-                <div style={{ whiteSpace: "normal", display: "flex", flexDirection: "column", gap: "16px" }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 20px", opacity: 0.85 }}>
-                    <ReportLine icon={<BiCurrentLocation />} color="#00eeff">Прогноз для {ruleForecast.locationName}</ReportLine>
-                    <ReportLine icon={<FaClock />} color="#aaa">Час: {forecastTimeString || "зараз"}</ReportLine>
-                  </div>
-
-                  <ReportSection title="Добовий баланс" icon={<FaSun />} color="#ffb36c">
-                    <ReportLine icon={<PiThermometerFill />} color="#ffb36c">{ruleForecast.dayNight?.message}</ReportLine>
-                  </ReportSection>
-
-                  <ReportSection title="Погодинні зміни" icon={<BsClockHistory />} color="#00b7ff">
-                    <ReportLine icon={<FaCloudRain />} color="#14b8a6">{ruleForecast.hourlyData?.rainWindowText}</ReportLine>
-                    <ReportLine icon={<BsThermometerSun />} color="#ff9d3b">{ruleForecast.hourlyData?.peakTempText}</ReportLine>
-                    <ReportLine icon={<BiWind />} color="#00b7ff">{ruleForecast.hourlyData?.windTrendText}</ReportLine>
-                  </ReportSection>
-
-                  <ReportSection title="Тижневий тренд" icon={<FaCalendarDays />} color="#b362ff">
-                    <ReportLine icon={<BiLineChart />} color="#b362ff">{ruleForecast.weeklyData?.trendText}</ReportLine>
-                    <ReportLine icon={<FaCloud />} color="#aaa">{ruleForecast.weeklyData?.weekSummaryText}</ReportLine>
-                  </ReportSection>
-
-                  {ruleForecast.atmosphereNotes?.length > 0 && (
-                    <ReportSection title="Атмосферні фактори" icon={<FaGauge />} color="#4da6ff">
-                      {ruleForecast.atmosphereNotes.map((n, i) => (
-                        <ReportLine key={i} icon={REPORT_ICONS[n.type] || <FaExclamationTriangle />} color={REPORT_COLORS[n.type] || "#4da6ff"}>
-                          <b>{n.title}:</b> {n.text}
-                        </ReportLine>
-                      ))}
-                    </ReportSection>
-                  )}
-
-                  {ruleForecast.lifestyleAdvice?.length > 0 && (
-                    <ReportSection title="Рекомендації та гардероб" icon={<FaLightbulb />} color="#4ade80">
-                      {ruleForecast.lifestyleAdvice.map((a, i) => (
-                        <ReportLine key={i} icon={REPORT_ICONS[a.type] || <FaLightbulb />} color={REPORT_COLORS[a.type] || "#4ade80"}>
-                          <b>{a.title}</b> {a.text}
-                        </ReportLine>
-                      ))}
-                    </ReportSection>
-                  )}
-                </div>
-              ) : "Дані формуються..."
-            ) : cleanAiText(aiSummary)}
-          </div>
-        </div>,
-        document.body
+      {isAiModalOpen && (
+        <ForecastReportModal
+          forecastMode={forecastMode}
+          ruleForecast={ruleForecast}
+          aiSummary={aiSummary}
+          forecastTimeString={forecastTimeString}
+          isDarkMode={isDarkMode}
+          onClose={() => setIsAiModalOpen(false)}
+        />
       )}
 
 
@@ -4562,116 +4459,60 @@ const HOLIDAYS_2027 = {
         />
       )}
 
+      {styleModalChart && (
+        <ChartStyleModal
+          title={styleModalChart === "hourly" ? "Стиль ліній: погодинний графік" : "Стиль ліній: графік на 16 днів"}
+          lines={
+            styleModalChart === "hourly"
+              ? [
+                  { key: "temp", label: "Температура", color: "#ffb36c", icon: <BsThermometerSun /> },
+                  { key: "right", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon, autoFill: rightMetric === "precip" },
+                ]
+              : [
+                  { key: "day", label: "День", color: "#ffb36c", icon: <FaSun /> },
+                  { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
+                  { key: "right", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
+                  { key: "trendDay", label: "Тренд дня", color: "#ffb36c", icon: <BiTrendingUp />, trend: true },
+                  { key: "trendNight", label: "Тренд ночі", color: "#ff1493", icon: <BiTrendingUp />, trend: true },
+                ]
+          }
+          styles={lineStyles[styleModalChart]}
+          onChange={(lineKey, patch) => changeLineStyle(styleModalChart, lineKey, patch)}
+          onApplyAll={(patch) => applyLineStyleToAll(styleModalChart, patch)}
+          onReset={() => resetLineStyles(styleModalChart)}
+          allCards={globalLineStyles}
+          onToggleAllCards={toggleGlobalLineStyles}
+          isDarkMode={isDarkMode}
+          onClose={() => setStyleModalChart(null)}
+        />
+      )}
+
       {isUnitsModalOpen && (
         <UnitsModal
           units={units}
           onChange={changeUnits}
+          allCards={unitsGlobal}
+          onToggleAllCards={toggleUnitsGlobal}
           isDarkMode={isDarkMode}
           onClose={() => setIsUnitsModalOpen(false)}
         />
       )}
 
       {isCardSettingsOpen && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(0,0,0,0.6)",
-            zIndex: 1300,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-          onClick={() => setIsCardSettingsOpen(false)}
-        >
-          <div
-            ref={(el) => { if (card.isMain && registerRef) registerRef('weatherModal', el); }}
-            style={{
-              background: isDarkMode ? "#222" : "#fff",
-              borderRadius: "10px",
-              padding: "20px",
-              width: "90%",
-              maxWidth: "350px",
-              color: isDarkMode ? "#fff" : "#000",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ margin: "0 0 15px 0" }}>Налаштування картки</h3>
-            <p style={{ fontSize: "13px", color: isDarkMode ? "#aaa" : "#555", marginBottom: "15px" }}>
-              Картка тепер використовує вкладки: Зараз / Годинна / Місячна / ШІ.
-            </p>
-            <button
-              onClick={() => setIsCardSettingsOpen(false)}
-              style={{
-                width: "100%",
-                padding: "10px",
-                background: "#ffb36c",
-                color: "#000",
-                border: "none",
-                borderRadius: "5px",
-                fontWeight: "bold",
-                cursor: "pointer",
-              }}
-            >
-              Закрити
-            </button>
-          </div>
-        </div>
+        <CardSettingsModal
+          isDarkMode={isDarkMode}
+          onClose={() => setIsCardSettingsOpen(false)}
+          contentRef={(el) => { if (card.isMain && registerRef) registerRef('weatherModal', el); }}
+        />
       )}
 
       {isBgModalOpen && (
-        <BgModalOverlay onClick={() => setIsBgModalOpen(false)}>
-          <BgModalContent onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ margin: 0, color: "#ffb36c" }}>
-              Зміна фону: {card.locationName}
-            </h2>
-            <BgGrid>
-              <BgItem
-                $active={bgMode === "wiki"}
-                onClick={() => handleChangeBackground("wiki")}
-              >
-                <NameOverlay>Вікіпедія</NameOverlay>
-                <BgSquare src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Wikipedia-logo-v2.svg/150px-Wikipedia-logo-v2.svg.png" />
-              </BgItem>
-              {DEFAULT_BGS.filter((bg) => !bg.src.endsWith(".mp4")).map(
-                (bg, idx) => (
-                  <BgItem
-                    key={idx}
-                    $active={bgMode === bg.src}
-                    onClick={() => handleChangeBackground(bg.src)}
-                  >
-                    {bg.author && (
-                      <TopOverlay>
-                        <div style={{ fontWeight: "bold" }}>{bg.author}</div>
-                        {bg.source && <div>{bg.source}</div>}
-                      </TopOverlay>
-                    )}
-                    <NameOverlay>{bg.name}</NameOverlay>
-                    <BgSquare src={bg.src} />
-                  </BgItem>
-                ),
-              )}
-            </BgGrid>
-            <button
-              onClick={() => setIsBgModalOpen(false)}
-              style={{
-                padding: "8px",
-                background: "#ffb36c",
-                color: "black",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-                fontWeight: "bold",
-                marginTop: "10px",
-              }}
-            >
-              Закрити
-            </button>
-          </BgModalContent>
-        </BgModalOverlay>
+        <WeatherBgModal
+          locationName={card.locationName}
+          bgMode={bgMode}
+          onSelect={handleChangeBackground}
+          onClose={() => setIsBgModalOpen(false)}
+        />
       )}
     </div>
   );
