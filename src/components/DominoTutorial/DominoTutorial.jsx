@@ -59,6 +59,14 @@ const CornerPrompt = styled.div`
   animation: ${(p) => (p.$closing ? fadeOut : fadeIn)} 0.3s ease-out forwards;
   pointer-events: ${(p) => (p.$closing ? 'none' : 'auto')};
   box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+
+  /* На телефоні знизу бейдж закривав кнопку «Погода» — переносимо під шапку */
+  @media (max-width: 767px) {
+    top: calc(80px + env(safe-area-inset-top));
+    bottom: auto;
+    max-width: 200px;
+    padding: 10px 12px 8px;
+  }
 `;
 
 const CornerButton = styled.button`

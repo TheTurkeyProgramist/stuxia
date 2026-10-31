@@ -708,6 +708,17 @@ const LoadingPhraseWrapper = styled.div`
 
 const SECTION_ORDER_STORAGE_KEY = "siteSectionsOrder";
 
+// Збережені картки не повинні затирати ті, що вже встигли завантажитися (напр. Київ у нового відвідувача)
+const mergeSavedWeatherCards = (prev, savedCards) => {
+  const saved = sanitizeWeatherCards(savedCards);
+  if (saved.length === 0) return prev;
+  const savedIds = new Set(saved.map((c) => c.id));
+  return [
+    ...saved.map((s) => prev.find((p) => p.id === s.id) ?? s),
+    ...prev.filter((p) => !savedIds.has(p.id)),
+  ];
+};
+
 // Завантажені користувачем фони (фото/відео) живуть лише в IndexedDB,
 // у Firestore потрапляють тільки стандартні фони сайту
 const isUploadedBg = (src, customBgs = []) =>
@@ -1064,7 +1075,7 @@ const App = () => {
         if (savedLocationEnabled !== null) setIsLocationEnabled(savedLocationEnabled);
 
         const savedCards = await localforage.getItem("weather_cards");
-        if (savedCards) setWeatherCards(sanitizeWeatherCards(savedCards));
+        if (savedCards) setWeatherCards((prev) => mergeSavedWeatherCards(prev, savedCards));
 
         const savedHideUntil = await localforage.getItem(
           "hideDeleteModalUntil",
@@ -1440,8 +1451,7 @@ const App = () => {
       try {
         const savedCards = await localforage.getItem("weather_cards");
         if (savedCards) {
-          const sanitized = sanitizeWeatherCards(savedCards);
-          setWeatherCards(sanitized);
+          setWeatherCards((prev) => mergeSavedWeatherCards(prev, savedCards));
         }
       } catch (error) {
         console.error("weather_cards hydration failed:", error);
@@ -1932,7 +1942,7 @@ const App = () => {
           }
         }
 
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm,uv_index,precipitation_probability&hourly=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset&timezone=auto&past_days=1&forecast_days=16`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm,uv_index,precipitation_probability&hourly=temperature_2m,uv_index,precipitation_probability,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset&timezone=auto&past_days=1&forecast_days=16`;
         console.log("Fetching weather from URL:", url);
         // Кеш відповіді Open-Meteo: 10 хв на пару координат
         const cacheKey = `om_cache_${Number(targetLat).toFixed(2)},${Number(targetLon).toFixed(2)}`;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import styled, { keyframes, css } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,7 +25,8 @@ import ultraTurkeysThumb from "../../photos/thumbs/ultra-vip-turkeys.webp";
 import castleThumb from "../../photos/thumbs/castle.webp";
 import swampnineThumb from "../../photos/thumbs/swampnine.webp";
 import { DEFAULT_BGS } from "../Hero/defaultBgs.js";
-import NewsAiModal from "./NewsAiModal";
+// ШІ та markdown підвантажуються лише при відкритті модалки
+const NewsAiModal = lazy(() => import("./NewsAiModal"));
 import InfoModal from "../Modals/UserSearchModal.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { MdReport } from "react-icons/md"; //Поскаржитися
@@ -2155,7 +2156,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           return;
         }
         if (result.reason?.name === "AbortError") return;
-        sourceErrors.push(`${activeSources[i].name}: ${result.reason?.message}`);
+        // Технічний текст (напр. "Failed to fetch") лишаємо лише в консолі
+        sourceErrors.push(activeSources[i].name);
         console.warn(
           `Не вдалося завантажити новини з ${activeSources[i].name}:`,
           result.reason,
@@ -2166,7 +2168,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         if (isMounted.current) {
           setLoadError(
             sourceErrors.length > 0
-              ? `Не вдалося отримати новини. ${sourceErrors[0]}. Спробуйте оновити сторінку пізніше.`
+              ? `Не вдалося отримати новини (недоступно: ${sourceErrors.join(", ")}). Перевірте з'єднання або спробуйте оновити сторінку пізніше.`
               : "Зараз немає доступних новин. Спробуйте оновити сторінку пізніше.",
           );
           setHasError(true);
@@ -3000,13 +3002,15 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         </div>
       )}
 
-      {selectedNews && (
-        <NewsAiModal
-          isOpen={isAiModalOpen}
-          onClose={() => setIsAiModalOpen(false)}
-          newsItem={selectedNews}
-          isDarkMode={$isDarkMode}
-        />
+      {selectedNews && isAiModalOpen && (
+        <Suspense fallback={null}>
+          <NewsAiModal
+            isOpen={isAiModalOpen}
+            onClose={() => setIsAiModalOpen(false)}
+            newsItem={selectedNews}
+            isDarkMode={$isDarkMode}
+          />
+        </Suspense>
       )}
       {isHelpModalOpen && (
         <InfoModal

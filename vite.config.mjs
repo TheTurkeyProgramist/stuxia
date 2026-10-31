@@ -13,7 +13,7 @@ const SIZE_GROUPS = [
   ['CSS', /\.css$/i],
   ['Зображення', /\.(webp|png|jpe?g|gif|svg|ico|avif)$/i],
   ['Відео', /\.(webm|mp4)$/i],
-  ['Аудіо', /\.(mp3|ogg|wav)$/i],
+  ['Аудіо', /\.(mp3|ogg|opus|wav)$/i],
   ['Стиснені (.gz/.br)', /\.(gz|br)$/i],
 ];
 
@@ -174,10 +174,8 @@ export default defineConfig({
     if (/\/node_modules\/(react-icons|@floating-ui|@radix-ui)\//.test(id)) {
       return 'vendor-ui';
     }
-    // Markdown та парсери
-    if (/\/node_modules\/(react-markdown|unified|micromark|vfile|mdast-util-|unread|property-information|stylis)\//.test(id)) {
-      return 'vendor-markdown';
-    }
+    // Markdown окремо не виділяємо: Rolldown затягує в групу й залежності (React),
+    // і чанк ставав обов'язковим на старті. Без правила markdown іде разом з ліниво завантаженим ШІ.
     // Інтернаціоналізація (i18n)
     if (id.includes('i18next') || id.includes('react-i18next')) {
       return 'vendor-i18n';

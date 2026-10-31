@@ -48,7 +48,8 @@ import fadedPreview from "../../photos/fan-art/faded.webp?w=128&format=webp&qual
 import { DEFAULT_BGS } from "./defaultBgs";
 import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
 import News from "../News/News.jsx";
-import React_lazy_Aihelp from "../Aihelp/Aihelp.jsx";
+// ШІ-помічник (Gemini + markdown) вантажиться лише при відкритті модалки
+const React_lazy_Aihelp = React.lazy(() => import("../Aihelp/Aihelp.jsx"));
 import toast, { Toaster } from 'react-hot-toast';
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import turkeytwoPreview from "../../photos/vip-images/turkeys/turkeytwo.webp?w=128&format=webp&quality=50";
@@ -2203,11 +2204,13 @@ const Hero = ({
         <AiModalBackdrop onClick={() => setIsAiModalOpen(false)}>
           <AiModalContainer onClick={(e) => e.stopPropagation()}>
             <AiModalBody $isDarkMode={isDarkMode}>
-              <React_lazy_Aihelp
-                isDarkMode={isDarkMode}
-                isStickyBgMode={false}
-                onClose={() => setIsAiModalOpen(false)}
-              />
+              <React.Suspense fallback={null}>
+                <React_lazy_Aihelp
+                  isDarkMode={isDarkMode}
+                  isStickyBgMode={false}
+                  onClose={() => setIsAiModalOpen(false)}
+                />
+              </React.Suspense>
             </AiModalBody>
           </AiModalContainer>
         </AiModalBackdrop>,
