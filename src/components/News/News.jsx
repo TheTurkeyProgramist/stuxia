@@ -42,16 +42,7 @@ import { FiPlus } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
 import toast from "react-hot-toast";
 import { hasBannedContent, isNewsFilterEnabled } from "../../utils/contentFilter";
-import { auth, db, signInAnonymously } from "../../firebase";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  arrayUnion,
-  collection,
-  getDocs,
-} from "firebase/firestore";
+import { loadFirebase, listCollection } from "../../firebaseLazy";
 import {
   useFloating,
   autoUpdate,
@@ -2022,10 +2013,13 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             setBlockedSources(cachedBlocklist.blockedSources);
           }
         } else {
-        const [newsSnapshot, rssSnapshot] = await Promise.all([
-          getDocs(collection(db, "news_reports")),
-          getDocs(collection(db, "rss_reports")),
-        ]);
+        // REST без SDK, у формі як у getDocs (forEach + data()), щоб Firebase не вантажився всім
+        const [newsSnapshot, rssSnapshot] = (
+          await Promise.all([
+            listCollection("news_reports"),
+            listCollection("rss_reports"),
+          ])
+        ).map((docs) => docs.map((d) => ({ id: d.id, data: () => d.data })));
         const now = Date.now();
         const oneDay = 24 * 60 * 60 * 1000;
 
@@ -2656,6 +2650,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       return;
 
     try {
+      const { auth, db, signInAnonymously, doc, getDoc, setDoc, updateDoc, arrayUnion } =
+        await loadFirebase();
       const firebaseUser =
         auth.currentUser || (await signInAnonymously(auth)).user;
       const reportUid = user.uid || firebaseUser.uid;
@@ -2712,6 +2708,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 
     if (user?.syncMutedNews && user?.uid) {
       try {
+        const { db, doc, updateDoc } = await loadFirebase();
         await updateDoc(doc(db, "users", user.uid), { mutedNews: newMuted });
       } catch (err) {
         console.warn("Помилка збереження заглушеної новини в Firebase", err);
@@ -2729,6 +2726,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 
     if (user?.syncMutedNews && user?.uid) {
       try {
+        const { db, doc, updateDoc } = await loadFirebase();
         await updateDoc(doc(db, "users", user.uid), { mutedNews: newMuted });
       } catch (err) {
         console.warn("Помилка розглушення новини в Firebase", err);

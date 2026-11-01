@@ -117,7 +117,7 @@ export const UKRAINE_CITIES_40 = [
     fullName: "Рівне (Рівненська обл., Україна)",
     lat: 50.62,
     lon: 26.25,
-    aliases: ["рівне", "рівному", "rovno", "rivne"],
+    aliases: ["рівне", "рівному", "rivne", "rovno"],
   },
   {
     name: "Чернівці",
@@ -558,3 +558,12 @@ export const findCityInDatabase = (rawText) => {
 
   return null;
 };
+
+/**
+ * Латинський slug для сторінки міста: /pohoda/konotop/
+ */
+export const getCitySlug = (city) =>
+  (city.aliases.find((a) => /^[a-z][a-z -]*$/.test(a)) || "").replace(/\s+/g, "-");
+
+export const findCityBySlug = (slug) =>
+  UKRAINE_CITIES_40.find((city) => getCitySlug(city) === slug) || null;

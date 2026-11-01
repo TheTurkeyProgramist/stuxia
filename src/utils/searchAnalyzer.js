@@ -1,11 +1,29 @@
-import { findCityInDatabase } from "./citiesDatabase";
+import { findCityInDatabase, findCityBySlug } from "./citiesDatabase";
 
 /**
  * Аналізатор пошуку під капотом.
  * Аналізує URL query params (?q=погода+конотоп, ?city=конотоп, ?search=... тощо) та хеш.
  */
-export const analyzeSearchQuery = (searchString = "", hashString = "") => {
+export const analyzeSearchQuery = (searchString = "", hashString = "", pathname = "") => {
   try {
+    // Статичні сторінки міст для пошуковиків: /pohoda/konotop/
+    const pathMatch = pathname.match(/^\/pohoda\/([a-z-]+)\/?$/);
+    const slugCity = pathMatch && findCityBySlug(pathMatch[1]);
+    if (slugCity) {
+      return {
+        isSearchEntry: true,
+        query: slugCity.name,
+        cityName: slugCity.name,
+        cityData: {
+          id: `search-${slugCity.name.toLowerCase()}`,
+          name: slugCity.name,
+          fullName: slugCity.fullName,
+          lat: slugCity.lat,
+          lon: slugCity.lon,
+        },
+      };
+    }
+
     const searchParams = new URLSearchParams(searchString || window.location.search);
     
     // Перевіряємо різні поширені ключі пошуку

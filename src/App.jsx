@@ -18,8 +18,7 @@ import WeatherCardComponent, {
   AihelpTitle,
 } from "./components/Weather/Weather.jsx";
 import Maintenance from "./components/Maintenance.jsx";
-import { getMaintenanceStatus, db, auth, signOut } from "./firebase.js";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { getMaintenanceStatus, loadFirebase } from "./firebaseLazy.js";
 import fogBackground from "./photos/hero-header/fogtwo.webp";
 import userDefault from "./photos/hero-header/user.webp";
 import turkeys from "./photos/vip-images/turkeys/ultra-vip-turkeys.webp";
@@ -41,7 +40,7 @@ import { IoThunderstorm, IoRainy } from "react-icons/io5";
 import DecoratorOverlay from "./components/Decorator/DecoratorOverlay.jsx";
 import SiteContextMenu from "./components/SiteContextMenu.jsx";
 import { analyzeSearchQuery } from "./utils/searchAnalyzer.js";
-import { findCityInDatabase } from "./utils/citiesDatabase.js";
+import { findCityInDatabase, getCitySlug } from "./utils/citiesDatabase.js";
 import {
   useFloating,
   autoUpdate,
@@ -994,7 +993,8 @@ const App = () => {
   const [maintenanceEndTime, setMaintenanceEndTime] = useState(null);
   const [maintenanceMessage, setMaintenanceMessage] = useState(null);
 
-  // Перевіряємо стан техробіт без постійного Firestore listener.
+  // Перевіряємо стан техробіт без постійного Firestore listener (легкий REST-запит, без SDK).
+  // Перша перевірка — після показу погоди, щоб не конкурувати з нею за мережу.
   useEffect(() => {
     let isActive = true;
 
@@ -1008,10 +1008,11 @@ const App = () => {
       }
     };
 
-    refreshMaintenanceStatus();
+    const firstCheck = setTimeout(refreshMaintenanceStatus, 3000);
     document.addEventListener("visibilitychange", refreshMaintenanceStatus);
     return () => {
       isActive = false;
+      clearTimeout(firstCheck);
       document.removeEventListener("visibilitychange", refreshMaintenanceStatus);
     };
   }, []);
@@ -1348,12 +1349,12 @@ const App = () => {
           lat: c.lat,
           lon: c.lon,
         }));
-        const userDocRef = doc(db, "config", userRef.current.uid);
-        setDoc(
-          userDocRef,
-          { savedWeatherCards: metadata },
-          { merge: true },
-        ).catch(console.error);
+        const uid = userRef.current.uid;
+        loadFirebase()
+          .then(({ db, doc, setDoc }) =>
+            setDoc(doc(db, "config", uid), { savedWeatherCards: metadata }, { merge: true }),
+          )
+          .catch(console.error);
       }
     }
   }, [weatherCards, isHydrated]);
@@ -1362,6 +1363,7 @@ const App = () => {
     const syncFromFirestore = async () => {
       if (userRef.current?.uid && isHydrated) {
         try {
+          const { db, doc, getDoc, setDoc } = await loadFirebase();
           const userDocRef = doc(db, "config", userRef.current.uid);
           const userDoc = await getDoc(userDocRef);
           const cloudData = userDoc.exists() ? userDoc.data() : {};
@@ -1474,7 +1476,7 @@ const App = () => {
       localforage.setItem("isDarkMode", isDarkMode);
 
       if (userRef.current?.uid) {
-        const userDocRef = doc(db, "config", userRef.current.uid);
+        const uid = userRef.current.uid;
         const syncableBg = (src) =>
           isUploadedBg(src, customHeroBgs) ? null : src;
         const syncableRatings = Object.fromEntries(
@@ -1495,11 +1497,11 @@ const App = () => {
           heroBgMode,
           bgRatings: syncableRatings,
         };
-        try {
-          setDoc(userDocRef, { settings }, { merge: true }).catch(console.error);
-        } catch (e) {
-          console.error("Firestore settings sync failed:", e);
-        }
+        loadFirebase()
+          .then(({ db, doc, setDoc }) =>
+            setDoc(doc(db, "config", uid), { settings }, { merge: true }),
+          )
+          .catch((e) => console.error("Firestore settings sync failed:", e));
       }
     }
   }, [
@@ -1912,6 +1914,7 @@ const App = () => {
           // Незареєстровані користувачі не мають ліміту на 3 картки/тиждень
           if (userRef.current) {
             try {
+              const { db, doc, getDoc, setDoc } = await loadFirebase();
               const userDocRef = doc(db, "config", userRef.current.uid);
               const userDoc = await getDoc(userDocRef);
               let data = userDoc.exists() ? userDoc.data() : {};
@@ -2438,7 +2441,11 @@ const App = () => {
   // 1.5. Аналіз пошукового запиту під капотом ("погода конотоп" -> індекс 0 + автоскрол)
   useEffect(() => {
     if (!isHydrated) return;
-    const analysis = analyzeSearchQuery(window.location.search, window.location.hash);
+    const analysis = analyzeSearchQuery(
+      window.location.search,
+      window.location.hash,
+      window.location.pathname,
+    );
     if (analysis.isSearchEntry && analysis.cityName) {
       const city = analysis.cityData;
 
@@ -2455,9 +2462,13 @@ const App = () => {
       // Канонічне посилання та розширена мікророзмітка Schema.org для Google
       let canonical = document.querySelector('link[rel="canonical"]');
       if (canonical) {
+        // Для міст із бази — статична сторінка /pohoda/<slug>/ (її і індексує Google)
+        const dbCity = findCityInDatabase(analysis.cityName);
         canonical.setAttribute(
           "href",
-          `https://stuxia.com/?q=погода+${encodeURIComponent(analysis.cityName.toLowerCase())}`
+          dbCity
+            ? `https://stuxia.com/pohoda/${getCitySlug(dbCity)}/`
+            : `https://stuxia.com/?q=погода+${encodeURIComponent(analysis.cityName.toLowerCase())}`
         );
       }
 
@@ -2617,7 +2628,9 @@ const App = () => {
     return () => clearTimeout(removeTimer);
   }, [areInitialModulesReady, minimumLoaderTimePassed]);
   const handleLogout = () => {
-    signOut(auth).catch((err) => console.warn("Firebase signOut:", err));
+    loadFirebase()
+      .then(({ signOut, auth }) => signOut(auth))
+      .catch((err) => console.warn("Firebase signOut:", err));
     setUser(null);
     setCurrentAvatar(userDefault);
     localforage.removeItem("currentAvatar");

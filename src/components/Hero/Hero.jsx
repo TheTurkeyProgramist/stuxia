@@ -219,6 +219,24 @@ const shuffleArray = (array) => {
 
 
 
+// Зворотний геокодинг без ключа (OpenStreetMap Nominatim). Повертає [] якщо поруч немає населеного пункту
+const reverseGeocode = async (lat, lon) => {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=12&accept-language=uk`,
+  );
+  const data = await res.json();
+  const a = data?.address;
+  const name = a && (a.city || a.town || a.village || a.hamlet || a.municipality || data.name);
+  if (!name) return [];
+  return [{
+    name,
+    state: a.state || a.region,
+    country: (a.country_code || "").toUpperCase(),
+    lat: parseFloat(data.lat),
+    lon: parseFloat(data.lon),
+  }];
+};
+
 export const mergeCitySuggestions = (
   existingSuggestions = [],
   newSuggestions = [],
@@ -1488,7 +1506,6 @@ const Hero = ({
   const [isSearchingNearby, setIsSearchingNearby] = useState(false);
   const [nearbySearchStatus, setNearbySearchStatus] = useState("");
   const searchRef = useRef(null);
-  const API_KEY = "5104647d3e574f4a3f23c0aa092eb2b9";
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -1536,10 +1553,18 @@ const Hero = ({
 
     try {
       const response = await fetch(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(cleanValue)}&limit=${currentLimit}&appid=${API_KEY}`,
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleanValue)}&count=${currentLimit}&language=uk&format=json`,
       );
       const data = await response.json();
-      const apiResults = Array.isArray(data) ? data : [];
+      const apiResults = (Array.isArray(data?.results) ? data.results : []).map(
+        (r) => ({
+          name: r.name,
+          state: r.admin1,
+          country: r.country_code,
+          lat: r.latitude,
+          lon: r.longitude,
+        }),
+      );
       setHasMore(apiResults.length >= currentLimit);
       setSuggestions((prev) =>
         mergeCitySuggestions(append ? prev : localMatches, apiResults)
@@ -1574,7 +1599,12 @@ const Hero = ({
 
 
 
+  // Не даємо запустити два пошуки одночасно (подвійний клік/Enter) — інакше до Nominatim
+  // пішли б два запити разом. ref, а не state: змінюється миттєво, без чекання рендеру.
+  const coordSearchLockRef = useRef(false);
+
   const handleSelectByCoordinates = async () => {
+    if (coordSearchLockRef.current) return;
     const lat = parseFloat(latitude);
     const lon = parseFloat(longitude);
 
@@ -1602,14 +1632,12 @@ const Hero = ({
       isManual: true,
     };
 
+    coordSearchLockRef.current = true;
     try {
       setNearbySearchStatus("🔍 Шукаємо за вказаними координатами...");
-      const response = await fetch(
-        `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=10&appid=${API_KEY}`,
-      );
-      const data = await response.json();
+      const data = await reverseGeocode(lat, lon);
 
-      if (data && data.length > 0) {
+      if (data.length > 0) {
         setCoordinateSuggestions([currentPoint, ...data]);
         setShowCoordinateSuggestions(true);
         setNearbySearchStatus("");
@@ -1642,12 +1670,11 @@ const Hero = ({
           );
 
           try {
-            const tryRes = await fetch(
-              `https://api.openweathermap.org/geo/1.0/reverse?lat=${tryLat}&lon=${tryLon}&limit=4&appid=${API_KEY}`,
-            );
-            const tryData = await tryRes.json();
+            // Nominatim дозволяє не більше 1 запиту на секунду
+            await new Promise((r) => setTimeout(r, 1100));
+            const tryData = await reverseGeocode(tryLat, tryLon);
 
-            if (tryData && tryData.length > 0) {
+            if (tryData.length > 0) {
               setCoordinateSuggestions([currentPoint, ...tryData]);
               setNearbySearchStatus(`✅ Знайдено поруч (відхилення ~${delta}°)`);
               found = true;
@@ -1671,6 +1698,7 @@ const Hero = ({
       setShowCoordinateSuggestions(true);
       setNearbySearchStatus("❌ Помилка запиту. Спробуйте ще раз.");
     } finally {
+      coordSearchLockRef.current = false;
       setIsSearchingNearby(false);
     }
   };

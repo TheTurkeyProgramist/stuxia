@@ -1,0 +1,9 @@
+// Публічна конфігурація Firebase (без SDK) — щоб її можна було імпортувати, не тягнучи бібліотеку
+export const firebaseConfig = {
+  apiKey: "AIzaSyCeoo6qt8hLP23X648LVOnqP46WzDscqvk",
+  authDomain: "stuxia-5b535.firebaseapp.com",
+  projectId: "stuxia-5b535",
+  storageBucket: "stuxia-5b535.firebasestorage.app",
+  messagingSenderId: "801101038904",
+  appId: "1:801101038904:web:70d01ab63f631b74acadcd",
+};
