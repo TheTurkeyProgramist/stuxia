@@ -172,6 +172,14 @@ const TimeInfo = styled.span`
   color: ${(props) => props.$color};
 `;
 
+const LocalDate = styled.span`
+  margin-top: 2px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+`;
+
 const LocalTime = styled.span`
   font-size: 18px;
   font-variant-numeric: tabular-nums;
@@ -476,6 +484,13 @@ const getTimezoneInfo = (timezone, now) => {
     const localHour = Number(timeParts.find((part) => part.type === "hour")?.value);
     const localMinute = Number(timeParts.find((part) => part.type === "minute")?.value);
     const timeStr = `${String(localHour).padStart(2, "0")}:${String(localMinute).padStart(2, "0")}`;
+    // Дата в поясі картки: десь ще 31 жовтня, а десь уже 2 листопада
+    const dateStr = new Intl.DateTimeFormat("uk", {
+      weekday: "short",
+      day: "numeric",
+      month: "long",
+      timeZone: timezone.value,
+    }).format(now);
     const utcOffset = formatUtcOffset(timezone.value, now);
     const sunTimes = SunCalc.getTimes(now, timezone.lat, timezone.lon);
     const sunrise = sunTimes.sunrise.getTime();
@@ -498,6 +513,7 @@ const getTimezoneInfo = (timezone, now) => {
 
     return {
       timeStr,
+      dateStr,
       phase,
       utcOffset,
       clockTime: { hour: localHour, minute: localMinute },
@@ -550,7 +566,7 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone 
               key={timezone.value}
               type="button"
               $selected={isSelected}
-              aria-label={`${timezone.label}${info ? `, ${info.timeStr}` : ""}${
+              aria-label={`${timezone.label}${info ? `, ${info.timeStr}, ${info.dateStr}` : ""}${
                 info ? `, ${info.utcOffset}` : ""
               }${cities.length ? `. Інші міста: ${cities.join(", ")}` : ""}`}
               onClick={() => {
@@ -602,6 +618,7 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone 
                     </AnalogClock>
                     <LocalTime>{info.timeStr}</LocalTime>
                   </ClockReadout>
+                  <LocalDate>{info.dateStr}</LocalDate>
                 </TimeInfo>
               )}
               {info && phase && PhaseIcon && (
