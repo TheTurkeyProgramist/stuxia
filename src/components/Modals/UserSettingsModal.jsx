@@ -575,6 +575,23 @@ const UserSettingsModal = ({
     } catch {}
   };
 
+  const [isSiteContextMenuEnabled, setIsSiteContextMenuEnabled] = useState(() => {
+    try {
+      return localStorage.getItem("site_context_menu_enabled") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSiteContextMenu = () => {
+    const nextVal = !isSiteContextMenuEnabled;
+    setIsSiteContextMenuEnabled(nextVal);
+    try {
+      localStorage.setItem("site_context_menu_enabled", nextVal ? "true" : "false");
+      window.dispatchEvent(new Event("storage"));
+    } catch {}
+  };
+
   const [isNewsFilterOn, setIsNewsFilterOn] = useState(isNewsFilterEnabled);
 
   const toggleNewsFilter = () => {
@@ -1325,6 +1342,28 @@ const UserSettingsModal = ({
                           {isAdAntiHeaderEnabled ? "Увімкнуто" : "Вимкнуто"}
                         </ToggleStatusLabel>
                         <SwitchPill $checked={isAdAntiHeaderEnabled} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#60cdff"><FiList /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Контекстне меню Стихії</CardTitle>
+                        <CardDescription>
+                          {isSiteContextMenuEnabled
+                            ? "Права кнопка миші відкриває меню Стихії (копіювання, фото, режим читання)"
+                            : "Права кнопка миші відкриває звичайне меню браузера"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={toggleSiteContextMenu}>
+                        <ToggleStatusLabel $checked={isSiteContextMenuEnabled}>
+                          {isSiteContextMenuEnabled ? "Увімкнуто" : "Вимкнуто"}
+                        </ToggleStatusLabel>
+                        <SwitchPill $checked={isSiteContextMenuEnabled} />
                       </ToggleWrapper>
                     </CardControl>
                   </Card>

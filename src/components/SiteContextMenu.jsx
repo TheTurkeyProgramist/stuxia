@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import toast from "react-hot-toast";
@@ -10,17 +10,34 @@ import {
   FiEye,
   FiImage,
   FiMonitor,
-  FiPrinter,
   FiSearch,
   FiVideo,
   FiX,
 } from "react-icons/fi";
 import "./SiteContextMenu.css";
 
+const SITE_CONTEXT_MENU_KEY = "site_context_menu_enabled";
+
+const readEnabled = () => {
+  try {
+    return localStorage.getItem(SITE_CONTEXT_MENU_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+
 export default function SiteContextMenu({ children, isDarkMode }) {
+  // За замовчуванням вимкнено — показується звичайне меню браузера
+  const [isEnabled, setIsEnabled] = useState(readEnabled);
   const [selectedText, setSelectedText] = useState("");
   const [media, setMedia] = useState(null);
   const [reader, setReader] = useState(null);
+
+  useEffect(() => {
+    const syncEnabled = () => setIsEnabled(readEnabled());
+    window.addEventListener("storage", syncEnabled);
+    return () => window.removeEventListener("storage", syncEnabled);
+  }, []);
 
   const captureContext = (event) => {
     setSelectedText(window.getSelection()?.toString().trim() ?? "");
@@ -100,21 +117,6 @@ export default function SiteContextMenu({ children, isDarkMode }) {
     }
   };
 
-  const printImage = () => {
-    if (media?.kind !== "image") return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    printWindow.document.title = media.alt || "Фото";
-    const image = printWindow.document.createElement("img");
-    image.src = media.src;
-    image.alt = media.alt || "";
-    image.style.cssText = "display:block;max-width:100%;max-height:95vh;margin:auto;object-fit:contain";
-    image.onload = () => printWindow.print();
-    printWindow.document.body.style.cssText = "margin:0;padding:2vh;display:grid;place-items:center";
-    printWindow.document.body.appendChild(image);
-  };
-
   const openReader = () => {
     const content = document.querySelector("article, [role='article']") ?? document.querySelector("main") ?? document.body;
     const title = document.title || "Режим читання";
@@ -142,10 +144,10 @@ export default function SiteContextMenu({ children, isDarkMode }) {
 
   return (
     <ContextMenu.Root>
-      <ContextMenu.Trigger asChild>
+      <ContextMenu.Trigger asChild disabled={!isEnabled}>
         <div
           className="site-context-menu-scope"
-          onContextMenuCapture={captureContext}
+          onContextMenuCapture={isEnabled ? captureContext : undefined}
         >
           {children}
         </div>
@@ -196,16 +198,10 @@ export default function SiteContextMenu({ children, isDarkMode }) {
                 <span>{media.kind === "image" ? "Скачати фото" : "Скачати відео"}</span>
               </ContextMenu.Item>
               {media.kind === "image" && (
-                <>
-                  <ContextMenu.Item className="site-context-menu-item" onSelect={printImage}>
-                    <FiPrinter aria-hidden="true" />
-                    <span>Друкувати фото</span>
-                  </ContextMenu.Item>
-                  <ContextMenu.Item className="site-context-menu-item" onSelect={openLens}>
-                    <FiSearch aria-hidden="true" />
-                    <span>Шукати фото у Google Об'єктив</span>
-                  </ContextMenu.Item>
-                </>
+                <ContextMenu.Item className="site-context-menu-item" onSelect={openLens}>
+                  <FiSearch aria-hidden="true" />
+                  <span>Шукати фото у Google Об'єктив</span>
+                </ContextMenu.Item>
               )}
               <ContextMenu.Item className="site-context-menu-item" onSelect={openMedia}>
                 <FiExternalLink aria-hidden="true" />

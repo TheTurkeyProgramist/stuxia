@@ -8,7 +8,6 @@ import {
   FiDroplet,
   FiGrid,
   FiImage,
-  FiPrinter,
   FiRefreshCw,
   FiSearch,
   FiShuffle,
@@ -100,36 +99,6 @@ const handleDownloadBg = async (bg) => {
       toast.error("Не вдалося скачати файл", { id: toastId });
     }
   }
-};
-
-const handlePrintBg = (bg) => {
-  if (!bg?.src || isVideoSource(bg.src)) return;
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) {
-    toast.error("Дозвольте спливаюче вікно, щоб надрукувати зображення.");
-    return;
-  }
-  const image = printWindow.document.createElement("img");
-  const objectUrl = bg.src instanceof Blob ? URL.createObjectURL(bg.src) : null;
-  image.alt = bg.name || "Фон";
-  image.style.cssText = "display:block;max-width:100%;max-height:100vh;margin:auto;object-fit:contain";
-  image.onload = () => {
-    printWindow.onafterprint = () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-      printWindow.close();
-    };
-    printWindow.focus();
-    printWindow.print();
-  };
-  image.onerror = () => {
-    toast.error("Не вдалося відкрити зображення для друку.");
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
-    printWindow.close();
-  };
-  printWindow.document.title = bg.name || "Фон";
-  printWindow.document.body.style.margin = "0";
-  printWindow.document.body.appendChild(image);
-  image.src = objectUrl || bg.src;
 };
 
 const shuffleArray = (array) => {
@@ -954,11 +923,6 @@ const BgModal = ({
                     <Tooltip content="Скачати файл фону" isDarkMode={isDarkMode}>
                       <HeartIcon $color="#ffda79" aria-label="Скачати фон" title="Завантажити фон" onClick={(e) => { e.stopPropagation(); handleDownloadBg(bg); }}><FiDownload /></HeartIcon>
                     </Tooltip>
-                    {!isVideoSource(bg.src) && (
-                      <Tooltip content="Надрукувати фон" isDarkMode={isDarkMode}>
-                        <HeartIcon $color="#aef" aria-label="Надрукувати фон" title="Надрукувати фон" onClick={(e) => { e.stopPropagation(); handlePrintBg(bg); }}><FiPrinter /></HeartIcon>
-                      </Tooltip>
-                    )}
                   </div>
                 </RatingOverlay>
                 {isCustom(bg.src) && (

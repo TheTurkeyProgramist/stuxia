@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill } from "react-icons/bs";
@@ -6,6 +6,8 @@ import { FiSunrise, FiSunset } from "react-icons/fi";
 import * as SunCalc from "suncalc";
 import styled from "styled-components";
 import localforage from "localforage";
+import CityScene from "./CityScene.jsx";
+import { getNow, syncClock } from "../../utils/serverClock.js";
 
 const TimezoneMenu = styled.div`
   position: fixed;
@@ -105,6 +107,7 @@ const TimezoneOption = styled.button`
   border-radius: 10px;
   cursor: pointer;
   text-align: left;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
@@ -128,6 +131,8 @@ const TimezoneName = styled.span`
 `;
 
 const TimezoneDetails = styled.span`
+  position: relative;
+  z-index: 1;
   display: flex;
   min-width: 0;
   flex-direction: column;
@@ -138,7 +143,7 @@ const TimezoneDetails = styled.span`
 const UtcOffset = styled.span`
   padding: 2px 7px;
   color: #ffcf9d;
-  background: rgba(255, 179, 108, 0.12);
+  background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 179, 108, 0.25);
   border-radius: 10px;
   font-size: 11px;
@@ -148,6 +153,8 @@ const UtcOffset = styled.span`
 `;
 
 const TimeInfo = styled.span`
+  position: relative;
+  z-index: 1;
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
@@ -181,6 +188,7 @@ const PhaseIndicator = styled.span`
   position: absolute;
   right: 14px;
   bottom: 14px;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -190,48 +198,37 @@ const PhaseIndicator = styled.span`
 
 const CitiesTooltip = styled.span`
   position: absolute;
-  left: 50%;
-  top: calc(100% + 8px);
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
   z-index: 30;
-  display: none;
-  width: max-content;
-  max-width: min(300px, calc(100vw - 40px));
+  display: block;
   padding: 10px 12px;
   color: #fff;
-  background: rgba(18, 18, 18, 0.98);
+  background: rgba(18, 18, 18, 0.88);
   border: 1px solid rgba(255, 179, 108, 0.75);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  transform: translateX(-50%);
+  backdrop-filter: blur(4px);
   white-space: normal;
   pointer-events: none;
   font-size: 12px;
   line-height: 1.6;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 
   ${TimezoneOption}:hover &,
   ${TimezoneOption}:focus-visible & {
-    display: block;
+    opacity: 1;
+    transform: translateY(0);
   }
 
-  @media (min-width: 769px) {
-    ${TimezoneOption}:nth-child(n + 4) & {
-      top: auto;
-      bottom: calc(100% + 8px);
-    }
-  }
-
-  @media (min-width: 481px) and (max-width: 768px) {
-    ${TimezoneOption}:nth-child(n + 3) & {
-      top: auto;
-      bottom: calc(100% + 8px);
-    }
-  }
-
-  @media (max-width: 480px) {
-    ${TimezoneOption}:nth-child(n + 2) & {
-      top: auto;
-      bottom: calc(100% + 8px);
-    }
+  @media (prefers-reduced-motion: reduce) {
+    transform: none;
+    transition: opacity 0.25s ease;
   }
 `;
 
@@ -508,29 +505,26 @@ const PHASES = {
 };
 
 const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone }) => {
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState(getNow);
 
   useEffect(() => {
     if (!isOpen) return undefined;
 
-    const intervalId = window.setInterval(() => setNow(new Date()), 60_000);
+    setNow(getNow());
+    syncClock().then(() => setNow(getNow()));
+    const intervalId = window.setInterval(() => setNow(getNow()), 60_000);
     return () => window.clearInterval(intervalId);
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  // Hero перемальовується щосекунди (годинник), а картки достатньо оновлювати
+  // раз на хвилину — інакше ререндери 27 сцен смикають анімації.
+  const onCloseRef = useRef(onClose);
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
-  return createPortal(
-    <TimezoneMenu>
-      <TimezoneMenuHeader>
-        <TimezoneMenuCloseBtn
-          type="button"
-          onClick={onClose}
-          aria-label="Закрити список часових поясів"
-        >
-          ×
-        </TimezoneMenuCloseBtn>
-        <TimezoneMenuTitle>Часовий пояс</TimezoneMenuTitle>
-      </TimezoneMenuHeader>
+  const grid = useMemo(
+    () => (
       <TimezoneGrid>
         {TIMEZONES.map((timezone) => {
           const isSelected =
@@ -552,9 +546,10 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone 
               onClick={() => {
                 setSelectedTimezone(timezone.value);
                 localforage.setItem("selected_timezone", timezone.value);
-                onClose();
+                onCloseRef.current();
               }}
             >
+              <CityScene timezone={timezone} now={now} />
               <TimezoneDetails>
                 <TimezoneName>{timezone.label}</TimezoneName>
                 {info && <UtcOffset>{info.utcOffset}</UtcOffset>}
@@ -625,6 +620,25 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone 
           );
         })}
       </TimezoneGrid>
+    ),
+    [now, selectedTimezone, setSelectedTimezone],
+  );
+
+  if (!isOpen) return null;
+
+  return createPortal(
+    <TimezoneMenu>
+      <TimezoneMenuHeader>
+        <TimezoneMenuCloseBtn
+          type="button"
+          onClick={onClose}
+          aria-label="Закрити список часових поясів"
+        >
+          ×
+        </TimezoneMenuCloseBtn>
+        <TimezoneMenuTitle>Часовий пояс</TimezoneMenuTitle>
+      </TimezoneMenuHeader>
+      {grid}
     </TimezoneMenu>,
     document.body,
   );

@@ -63,6 +63,7 @@ import { BsMoonStarsFill } from "react-icons/bs";
 import { FaCloudMoonRain, FaCloudMoon } from "react-icons/fa";
 import { LiaCloudSunRainSolid, LiaCloudMoonRainSolid, LiaCloudSunSolid } from "react-icons/lia";
 import { stripSecrets } from "./utils/passwordHash";
+import { getNow, syncClock } from "./utils/serverClock";
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
 const Tooltipso = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
@@ -2612,7 +2613,8 @@ const App = () => {
 
   useEffect(() => {
     const fadeTimer = setTimeout(() => setMinimumLoaderTimePassed(true), 3500);
-    const clockTimer = setInterval(() => setNow(new Date()), 1000);
+    syncClock().then(() => setNow(getNow()));
+    const clockTimer = setInterval(() => setNow(getNow()), 1000);
 
     return () => {
       clearTimeout(fadeTimer);

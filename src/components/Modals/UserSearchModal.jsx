@@ -589,36 +589,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
     if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   };
 
-  const handlePrintImage = (imgSrc) => {
-    const frame = document.createElement("iframe");
-    frame.style.cssText =
-      "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
-    const cleanup = () => setTimeout(() => frame.remove(), 1000);
-    frame.onload = () => {
-      const win = frame.contentWindow;
-      const img = win.document.querySelector("img");
-      const doPrint = () => {
-        try {
-          win.focus();
-          win.print();
-        } finally {
-          cleanup();
-        }
-      };
-      if (img.complete) doPrint();
-      else {
-        img.onload = doPrint;
-        img.onerror = cleanup;
-      }
-    };
-    const safeSrc = new URL(imgSrc, window.location.href).href.replace(
-      /"/g,
-      "&quot;",
-    );
-    frame.srcdoc = `<!doctype html><html><head><title>Друк</title><style>@page{margin:0}body{margin:0;text-align:center}img{max-width:100%;max-height:100vh}</style></head><body><img src="${safeSrc}" /></body></html>`;
-    document.body.appendChild(frame);
-  };
-
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") handleClose();
@@ -871,11 +841,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                 >
                   Скачати
                 </AnswerActionButton>
-                <AnswerActionButton
-                  onClick={() => handlePrintImage(selectedFaq.image)}
-                >
-                  Друкувати
-                </AnswerActionButton>
               </FaqAnswerActions>
             )}
           </FaqAnswerModal>
@@ -894,14 +859,6 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
               }}
             >
               Скачати
-            </ActionButton>
-            <ActionButton
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrintImage(previewImage);
-              }}
-            >
-               Друкувати
             </ActionButton>
           </ImagePreviewActions>
           <PreviewImage

@@ -19,7 +19,6 @@ import {
   FiDroplet,
   FiGrid,
   FiImage,
-  FiPrinter,
   FiRefreshCw,
   FiRotateCw,
   FiSearch,

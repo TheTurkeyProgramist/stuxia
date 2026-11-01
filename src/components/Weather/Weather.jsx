@@ -15,7 +15,6 @@ import {
   BiTrash,
   BiFullscreen,
   BiDownload,
-  BiPrinter,
   BiCheck,
   BiX,
   BiTable,
@@ -1272,9 +1271,6 @@ const WeatherCardComponent = ({
     return canvas;
   };
 
-  const escapeHtml = (str) =>
-    String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-
   const downloadChartScreenshot = async (chartKey, panelRef) => {
     const canvas = await captureFullChart(chartKey, panelRef);
     if (!canvas) return;
@@ -1282,34 +1278,6 @@ const WeatherCardComponent = ({
     link.download = `${card.locationName}-${chartKey}-chart.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
-  };
-
-  const printChart = async (chartKey, panelRef) => {
-    const canvas = await captureFullChart(chartKey, panelRef);
-    if (!canvas) return;
-    const imageUrl = canvas.toDataURL("image/png");
-    // Використовуємо прихований iframe замість window.open (уникаємо блокування popup)
-    let iframe = document.getElementById("chart-print-iframe");
-    if (!iframe) {
-      iframe = document.createElement("iframe");
-      iframe.id = "chart-print-iframe";
-      iframe.style.position = "fixed";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "none";
-      iframe.style.top = "-9999px";
-      iframe.style.left = "-9999px";
-      document.body.appendChild(iframe);
-    }
-    const doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write(`
-      <html><head><title>${escapeHtml(card.locationName)} - ${escapeHtml(chartKey)}</title>
-      <style>body{margin:0;text-align:center} img{max-width:100%}</style>
-      </head>
-      <body><img src="${imageUrl}" onload="window.focus();window.print();" /></body></html>
-    `);
-    doc.close();
   };
 
   const renderChartActions = (chartKey, panelRef) => (
@@ -1371,16 +1339,6 @@ const WeatherCardComponent = ({
         style={chartActionButtonStyle}
       >
         <BiDownload size={16} />
-      </button>
-      </Tooltip>
-      <Tooltip content="Друкувати скріншот повноекранного графіка" isDarkMode={isDarkMode}>
-      <button
-        type="button"
-        onClick={() => printChart(chartKey, panelRef)}
-        aria-label="Друкувати скріншот повноекранного графіка"
-        style={chartActionButtonStyle}
-      >
-        <BiPrinter size={16} />
       </button>
       </Tooltip>
     </div>

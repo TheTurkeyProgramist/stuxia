@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getHourlyForecastDayGroups } from "../../utils/hourlyForecast";
 import { getWindDirectionText } from "../../utils/windUtils";
 import * as SunCalc from "suncalc";
-import { FaCloudMoonRain, FaCloudMoon, FaSun, FaDownload, FaPrint, FaTimes } from "react-icons/fa";
+import { FaCloudMoonRain, FaCloudMoon, FaSun, FaDownload, FaTimes } from "react-icons/fa";
 import { LiaCloudSunRainSolid, LiaCloudMoonRainSolid } from "react-icons/lia";
 import { BsMoonStarsFill } from "react-icons/bs";
 
@@ -427,20 +427,6 @@ const WeatherDetailsModal = ({ isOpen, onClose, card, isDarkMode }) => {
                     }}
                   >
                     <FaDownload size={12} /> Завантажити фото
-                  </ActionBtn>
-                  <ActionBtn
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const win = window.open("");
-                      win.document.write(
-                        `<img src="${card.cityImage}" style="width:100%"/>`
-                      );
-                      win.setTimeout(() => win.print(), 500);
-                    }}
-                  >
-                    <FaPrint size={12} /> Друк
                   </ActionBtn>
                 </>
               )}
