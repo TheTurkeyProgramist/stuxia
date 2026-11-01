@@ -77,8 +77,11 @@ const TimezoneGrid = styled.div`
   gap: 12px;
   padding: 16px;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1199px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 768px) {
     gap: 10px;
     padding: 12px;
   }
@@ -119,6 +122,13 @@ const TimezoneOption = styled.button`
     border-color: #ffb36c;
     outline: none;
     transform: translateY(-1px);
+  }
+
+  /* У дві колонки непарна остання картка тягнеться на всю ширину */
+  @media (max-width: 1199px) {
+    &:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
   }
 
 `;

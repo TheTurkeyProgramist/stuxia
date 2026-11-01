@@ -308,6 +308,31 @@ const SceneRoot = styled.span`
   }
 
   /* Анімовані деталі всередині SVG міст (класи ставить генератор) */
+  .wave {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: city-scene-wave 3.5s ease-in-out infinite alternate;
+  }
+
+  /* Дерева на вітрі хитаються від основи стовбура */
+  .sway {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: city-scene-sway 4s ease-in-out infinite alternate;
+  }
+
+  /* Злива чи заметіль уночі — вітер сильніший */
+  &[data-phase="night"][data-climate="rain"] .sway,
+  &[data-phase="night"][data-climate="snow"] .sway {
+    animation-name: city-scene-sway-strong;
+    animation-duration: 1.6s;
+  }
+
+  /* Сніговий клімат — вода крижана, хвилі стоять */
+  &[data-climate="snow"] .wave {
+    animation: none;
+  }
+
   .anim-wheel {
     transform-box: view-box;
     transform-origin: 310px 112px;
@@ -318,6 +343,35 @@ const SceneRoot = styled.span`
     transform-box: fill-box;
     transform-origin: center;
     animation: city-scene-spin 60s linear infinite reverse;
+  }
+
+  @keyframes city-scene-wave {
+    from {
+      transform: translateX(-6px) scaleX(0.8);
+      opacity: 0.5;
+    }
+    to {
+      transform: translateX(6px) scaleX(1.15);
+      opacity: 1;
+    }
+  }
+
+  @keyframes city-scene-sway {
+    from {
+      transform: rotate(-2deg);
+    }
+    to {
+      transform: rotate(2.5deg);
+    }
+  }
+
+  @keyframes city-scene-sway-strong {
+    from {
+      transform: rotate(-3deg);
+    }
+    to {
+      transform: rotate(6deg);
+    }
   }
 
   @keyframes city-scene-spin {
@@ -344,6 +398,8 @@ const SceneRoot = styled.span`
   @media (prefers-reduced-motion: reduce) {
     .stars circle,
     .fx,
+    .wave,
+    .sway,
     .anim-wheel,
     .anim-cabin {
       animation: none;
