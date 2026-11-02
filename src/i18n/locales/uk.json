@@ -1,0 +1,113 @@
+{
+  "hero": {
+    "language": "Мова"
+  },
+  "common": {
+    "close": "Закрити"
+  },
+  "settings": {
+    "language": {
+      "title": "Мова сайту",
+      "searchPlaceholder": "Пошук мови...",
+      "noResults": "Нічого не знайдено",
+      "rtlNote": "Арабська та перська пишуться справа наліво — сайт автоматично змінює напрямок тексту.",
+      "regions": {
+        "europeNorthAmerica": "Європа та Північна Америка",
+        "asiaMiddleEast": "Азія та Близький Схід",
+        "africa": "Африка",
+        "latinAmerica": "Латинська Америка"
+      }
+    }
+  },
+  "climateMap": {
+    "title": "Кліматична мапа",
+    "sources": {
+      "ventuskySubtitle": "Прогноз погоди",
+      "windySubtitle": "Вітер і шари",
+      "alertsTitle": "Тривоги",
+      "alertsSubtitle": "Карта тривог України",
+      "airTargetsTitle": "Повітряні цілі",
+      "airTargetsSubtitle": "Шахеди, ракети (орієнтовно)",
+      "excalidrawSubtitle": "Онлайн-дошка",
+      "saveEcoBotSubtitle": "Якість повітря",
+      "airTrafficTitle": "Авіарадар",
+      "deepStateSubtitle": "Карта подій в Україні"
+    },
+    "options": {
+      "alerts": "Карта тривог України (alerts.in.ua)",
+      "airTargets": "Повітряні цілі: шахеди, ракети (Ukraine Alarm)",
+      "excalidraw": "Онлайн-дошка (Excalidraw)",
+      "saveEcoBot": "Якість повітря (SaveEcoBot)",
+      "airTraffic": "Авіарадар (TheAirTraffic)",
+      "deepState": "Карта подій (DeepState)"
+    },
+    "dragItem": "Перетягнути {{title}}",
+    "dragHint": "Перетягнути, щоб змінити порядок",
+    "splitTooltip": "Показувати поруч у два фрейми",
+    "splitLabel": "2 фрейми",
+    "deleteItem": "Видалити {{title}}",
+    "delete": "Видалити",
+    "customWidget": "Власний віджет",
+    "mapEnabled": "Карту увімкнено",
+    "mapDisabled": "Карту вимкнено",
+    "settingsTitle": "Налаштування Стихії",
+    "rotating": {
+      "shortcuts": "Комбінації клавіш",
+      "addFrames": "Додавання карти(фреймів)",
+      "pinLocation": "Закріпити локацію",
+      "mapsAndFeatures": "Карти та безліч функцій",
+      "miniPlayer": "Міні-плеєр карти",
+      "fullscreen": "Повноекранний режим"
+    },
+    "invalidUrl": "Будь ласка, введіть коректне посилання (https://...)",
+    "confirmDeleteFrame": "Видалити «{{title}}» з бічної панелі?",
+    "locationPinned": "Локацію закріплено! Завантажиться при наступному вході.",
+    "pinError": "Помилка при закріпленні локації.",
+    "locationUnpinned": "Закріплення локації знято.",
+    "shortcuts": "Комбінації клавіш",
+    "shortcutsDesc": "Показувати підказки клавіш поруч з діями?",
+    "shortcutsNone": "Без",
+    "shortcutsAuto": "Авто",
+    "shortcutsAlways": "Так",
+    "mapLabel": "Карта",
+    "activateMap": "Активувати карту",
+    "deactivateMap": "Деактивувати карту",
+    "activateMapDesc": "Увімкнути карту, щоб гортати, масштабувати й перемикати шари.",
+    "deactivateMapDesc": "Вимкнути взаємодію з картою, щоб вона не перехоплювала прокрутку сторінки.",
+    "statusOn": "Увімкнено",
+    "statusOff": "Вимкнено",
+    "pinLocation": "Закріпити локацію",
+    "unpinLocation": "Відкріпити локацію",
+    "pinLocationDesc": "Запам'ятати поточну точку, масштаб і шар — карта відкриватиметься саме тут.",
+    "unpinLocationDesc": "Карта відкривається з закріпленою точкою, масштабом і шаром.",
+    "statusPinned": "Закріплено",
+    "statusUnpinned": "Не закріплено",
+    "openFullscreen": "Відкрити на весь екран",
+    "collapseMap": "Згорнути карту",
+    "fullscreenDesc": "Розгорнути карту на весь екран пристрою або повернути звичайний вигляд.",
+    "miniPlayer": "Міні-плеєр карти",
+    "miniPlayerDesc": "Винести карту в окреме плаваюче вікно для паралельної роботи.",
+    "mapSource": "Джерело карти",
+    "mapSourceDesc": "Windy, Ventusky, Тривоги, DeepState, авіарадар та інші",
+    "sourcesAria": "Джерела карти",
+    "customFrame": "Власний фрейм / віджет",
+    "titlePlaceholder": "Назва (напр. Радар, Вебкамера...)",
+    "titlePlaceholderShort": "Назва (напр. Радар)",
+    "urlPlaceholder": "URL або iframe код (https://...)",
+    "urlPlaceholderShort": "URL або iframe код",
+    "add": "Додати",
+    "cancel": "Скасувати",
+    "saved": "Збережені:",
+    "addOwnFrame": "Додати власний фрейм",
+    "addYourFrame": "Додати свій фрейм",
+    "closeMiniPlayerHint": "Закрийте міні-плеєр щоб повернути карту",
+    "checkInternet": "Перевірте інтернет-з'єднання для користування картою",
+    "clickToActivate": "Натисніть на карту для активації",
+    "loading": "Завантаження...",
+    "credits": "Інтерактивні карти надано сервісами Windy, Ventusky, Карта тривог України і т.д. (містять файли cookie)",
+    "settingsHint": "Кнопка «Налаштування Стихії» відкриває безкоштовний доступ до перемикання мап, повноекранний режим, міні-плеєр та інші функції!",
+    "secondFrame": "другий фрейм",
+    "miniMapTitle": "Міні-карта • подвійний клік — назад",
+    "collapse": "Згорнути"
+  }
+}

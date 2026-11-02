@@ -1,0 +1,113 @@
+{
+  "hero": {
+    "language": "语言"
+  },
+  "common": {
+    "close": "关闭"
+  },
+  "settings": {
+    "language": {
+      "title": "网站语言",
+      "searchPlaceholder": "搜索语言...",
+      "noResults": "未找到结果",
+      "rtlNote": "阿拉伯语和波斯语从右向左书写——网站会自动切换文字方向。",
+      "regions": {
+        "europeNorthAmerica": "欧洲和北美",
+        "asiaMiddleEast": "亚洲和中东",
+        "africa": "非洲",
+        "latinAmerica": "拉丁美洲"
+      }
+    }
+  },
+  "climateMap": {
+    "title": "气候地图",
+    "sources": {
+      "ventuskySubtitle": "天气预报",
+      "windySubtitle": "风和图层",
+      "alertsTitle": "警报",
+      "alertsSubtitle": "乌克兰空袭警报地图",
+      "airTargetsTitle": "空中目标",
+      "airTargetsSubtitle": "无人机、导弹（大致）",
+      "excalidrawSubtitle": "在线白板",
+      "saveEcoBotSubtitle": "空气质量",
+      "airTrafficTitle": "航班雷达",
+      "deepStateSubtitle": "乌克兰事件地图"
+    },
+    "options": {
+      "alerts": "乌克兰警报地图 (alerts.in.ua)",
+      "airTargets": "空中目标：无人机、导弹 (Ukraine Alarm)",
+      "excalidraw": "在线白板 (Excalidraw)",
+      "saveEcoBot": "空气质量 (SaveEcoBot)",
+      "airTraffic": "航班雷达 (TheAirTraffic)",
+      "deepState": "事件地图 (DeepState)"
+    },
+    "dragItem": "拖动 {{title}}",
+    "dragHint": "拖动以调整顺序",
+    "splitTooltip": "在两个框架中并排显示",
+    "splitLabel": "2 个框架",
+    "deleteItem": "删除 {{title}}",
+    "delete": "删除",
+    "customWidget": "自定义小组件",
+    "mapEnabled": "地图已启用",
+    "mapDisabled": "地图已停用",
+    "settingsTitle": "元素设置",
+    "rotating": {
+      "shortcuts": "键盘快捷键",
+      "addFrames": "添加地图（框架）",
+      "pinLocation": "固定位置",
+      "mapsAndFeatures": "地图和众多功能",
+      "miniPlayer": "地图迷你播放器",
+      "fullscreen": "全屏模式"
+    },
+    "invalidUrl": "请输入有效链接 (https://...)",
+    "confirmDeleteFrame": "从侧边栏移除“{{title}}”？",
+    "locationPinned": "位置已固定！下次访问时将自动加载。",
+    "pinError": "固定位置时出错。",
+    "locationUnpinned": "已取消固定位置。",
+    "shortcuts": "键盘快捷键",
+    "shortcutsDesc": "在操作旁显示快捷键提示？",
+    "shortcutsNone": "关",
+    "shortcutsAuto": "自动",
+    "shortcutsAlways": "开",
+    "mapLabel": "地图",
+    "activateMap": "启用地图",
+    "deactivateMap": "停用地图",
+    "activateMapDesc": "启用地图以拖动、缩放和切换图层。",
+    "deactivateMapDesc": "停用地图交互，避免其拦截页面滚动。",
+    "statusOn": "已启用",
+    "statusOff": "已停用",
+    "pinLocation": "固定位置",
+    "unpinLocation": "取消固定",
+    "pinLocationDesc": "记住当前位置、缩放和图层——地图将在此处打开。",
+    "unpinLocationDesc": "地图以固定的位置、缩放和图层打开。",
+    "statusPinned": "已固定",
+    "statusUnpinned": "未固定",
+    "openFullscreen": "全屏打开",
+    "collapseMap": "收起地图",
+    "fullscreenDesc": "将地图扩展到全屏或恢复普通视图。",
+    "miniPlayer": "地图迷你播放器",
+    "miniPlayerDesc": "将地图移至独立的浮动窗口，便于同时处理其他工作。",
+    "mapSource": "地图来源",
+    "mapSourceDesc": "Windy、Ventusky、航班雷达、在线白板等",
+    "sourcesAria": "地图来源",
+    "customFrame": "自定义框架 / 小组件",
+    "titlePlaceholder": "名称（如：雷达、摄像头...）",
+    "titlePlaceholderShort": "名称（如：雷达）",
+    "urlPlaceholder": "URL 或 iframe 代码 (https://...)",
+    "urlPlaceholderShort": "URL 或 iframe 代码",
+    "add": "添加",
+    "cancel": "取消",
+    "saved": "已保存：",
+    "addOwnFrame": "添加自定义框架",
+    "addYourFrame": "添加你的框架",
+    "closeMiniPlayerHint": "关闭迷你播放器以恢复地图",
+    "checkInternet": "请检查网络连接以使用地图",
+    "clickToActivate": "点击地图以启用",
+    "loading": "加载中...",
+    "credits": "交互式地图由 Windy、Ventusky 等服务提供（使用 Cookie）",
+    "settingsHint": "“元素设置”按钮可免费使用切换地图、全屏模式、迷你播放器等功能！",
+    "secondFrame": "第二个框架",
+    "miniMapTitle": "迷你地图 • 双击返回",
+    "collapse": "收起"
+  }
+}

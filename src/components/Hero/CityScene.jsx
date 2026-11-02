@@ -1,6 +1,7 @@
 import React, { memo, useLayoutEffect, useMemo, useRef } from "react";
 import * as SunCalc from "suncalc";
 import styled from "styled-components";
+import { Lanterns } from "./SceneParticles.jsx";
 
 // SVG-мальки міст: небо прозоре, кольори суші змішуються з --shade на --night,
 // вікна мають клас "win" ("win off" — вночі не світиться).
@@ -43,22 +44,22 @@ const DOWNPOUR_TILE = tile(
   40,
   "<g stroke='#c9dcff' stroke-width='1.4' stroke-linecap='round' opacity='.85'><path d='M6 0l-4 16M26 8l-4 16M16 22l-4 16M36 26l-4 16M30 -10l-4 16'/></g>",
 );
-const SNOW_TILE = tile(
+export const SNOW_TILE = tile(
   80,
   80,
   "<g fill='#fff' opacity='.9'><circle cx='10' cy='12' r='2'/><circle cx='50' cy='6' r='1.4'/><circle cx='34' cy='34' r='2.4'/><circle cx='68' cy='42' r='1.6'/><circle cx='18' cy='58' r='1.5'/><circle cx='56' cy='70' r='2.1'/></g>",
 );
-const BLIZZARD_TILE = tile(
+export const BLIZZARD_TILE = tile(
   60,
   60,
   "<g fill='#fff' opacity='.95'><circle cx='6' cy='8' r='1.6'/><circle cx='30' cy='4' r='1.2'/><circle cx='48' cy='18' r='1.8'/><circle cx='20' cy='28' r='1.3'/><circle cx='40' cy='40' r='1.6'/><circle cx='8' cy='48' r='1.2'/><circle cx='54' cy='54' r='1.4'/></g><g stroke='#fff' stroke-width='1' opacity='.55' stroke-linecap='round'><path d='M12 18l8 -6M36 30l8 -6M24 50l8 -6'/></g>",
 );
-const HEAT_TILE = tile(
+export const HEAT_TILE = tile(
   120,
   60,
   "<g fill='none' stroke='#fff' stroke-width='3' opacity='.14' stroke-linecap='round'><path d='M0 15q15 -6 30 0t30 0t30 0t30 0'/><path d='M0 45q15 -6 30 0t30 0t30 0t30 0'/></g>",
 );
-const FOG_TILE = tile(
+export const FOG_TILE = tile(
   400,
   220,
   "<defs><radialGradient id='f'><stop offset='0' stop-color='#e8ecf0' stop-opacity='.85'/><stop offset='1' stop-color='#e8ecf0' stop-opacity='0'/></radialGradient></defs><g fill='url(#f)'><ellipse cx='110' cy='150' rx='105' ry='32'/><ellipse cx='290' cy='132' rx='105' ry='28'/><ellipse cx='200' cy='186' rx='195' ry='36'/></g>",
@@ -293,6 +294,15 @@ const SceneRoot = styled.span`
     opacity: 0.55;
   }
 
+  /* Китайські ліхтарики злітають лише вночі (display: none зупиняє анімацію вдень) */
+  .lanterns {
+    display: none;
+  }
+
+  &[data-phase="night"] .lanterns {
+    display: block;
+  }
+
   /* Спека: вдень далекий план трохи «пливе» */
   &[data-climate="heat"][data-phase="day"] .city-layer {
     filter: var(--heat-filter);
@@ -525,6 +535,7 @@ const CityScene = ({ timezone, now }) => {
         </g>
       </svg>
       {cityMarkup && <CityLayer className="city-layer" dangerouslySetInnerHTML={cityHtml} />}
+      {slug === "asia_shanghai" && <Lanterns className="lanterns" />}
       {climate === "heat" && <span className="fx fx-heat" />}
       {climate === "rain" && (
         <>

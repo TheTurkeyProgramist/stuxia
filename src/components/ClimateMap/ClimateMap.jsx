@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import styled, { keyframes, css } from "styled-components";
 import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket } from "react-icons/fa";
 import { FiCheck, FiPlay, FiPlus, FiX } from "react-icons/fi";
@@ -1146,20 +1147,24 @@ const FormCancelButton = styled(FormButton)`
 `;
 
 const BUILTIN_SOURCES = [
-  { id: "ventusky", title: "Ventusky", subtitle: "Прогноз погоди", Icon: FaCloudSun, bg: "linear-gradient(135deg, #1e3c72, #2a8bd8)", cover: coverVentusky },
-  { id: "windy", title: "Windy", subtitle: "Вітер і шари", Icon: FaWind, bg: "linear-gradient(135deg, #3b1d8f, #1fa2b8)", cover: coverWindy },
-  { id: "alerts-ua", title: "Тривоги", subtitle: "Карта тривог України", Icon: FaBell, bg: "linear-gradient(135deg, #5c1010, #d63333)", cover: coverAlerts },
-  { id: "ukrainealarm", title: "Повітряні цілі", subtitle: "Шахеди, ракети (орієнтовно)", Icon: FaRocket, bg: "linear-gradient(135deg, #3a0d0d, #b8451f)", cover: coverAirTargets },
-  { id: "excalidraw", title: "Excalidraw", subtitle: "Онлайн-дошка", Icon: FaPencilAlt, bg: "linear-gradient(135deg, #4b3fc4, #9d93f5)", cover: coverExcalidraw },
-  { id: "saveecobot", title: "SaveEcoBot", subtitle: "Якість повітря", Icon: FaLeaf, bg: "linear-gradient(135deg, #0f6b5f, #7cbf1e)", cover: coverSaveEcoBot },
-  { id: "airtraffic", title: "Авіарадар", subtitle: "TheAirTraffic (ADS-B)", Icon: FaPlane, bg: "linear-gradient(135deg, #0b2545, #d98a0b)", cover: coverAirTraffic },
-  { id: "deepstate", title: "DeepState", subtitle: "Карта подій в Україні", Icon: FaMapMarkedAlt, bg: "linear-gradient(135deg, #1b2a3a, #3d6b4f)", cover: coverDeepState },
+  { id: "ventusky", title: "Ventusky", subtitleKey: "climateMap.sources.ventuskySubtitle", Icon: FaCloudSun, bg: "linear-gradient(135deg, #1e3c72, #2a8bd8)", cover: coverVentusky },
+  { id: "windy", title: "Windy", subtitleKey: "climateMap.sources.windySubtitle", Icon: FaWind, bg: "linear-gradient(135deg, #3b1d8f, #1fa2b8)", cover: coverWindy },
+  { id: "alerts-ua", titleKey: "climateMap.sources.alertsTitle", subtitleKey: "climateMap.sources.alertsSubtitle", Icon: FaBell, bg: "linear-gradient(135deg, #5c1010, #d63333)", cover: coverAlerts },
+  { id: "ukrainealarm", titleKey: "climateMap.sources.airTargetsTitle", subtitleKey: "climateMap.sources.airTargetsSubtitle", Icon: FaRocket, bg: "linear-gradient(135deg, #3a0d0d, #b8451f)", cover: coverAirTargets },
+  { id: "excalidraw", title: "Excalidraw", subtitleKey: "climateMap.sources.excalidrawSubtitle", Icon: FaPencilAlt, bg: "linear-gradient(135deg, #4b3fc4, #9d93f5)", cover: coverExcalidraw },
+  { id: "saveecobot", title: "SaveEcoBot", subtitleKey: "climateMap.sources.saveEcoBotSubtitle", Icon: FaLeaf, bg: "linear-gradient(135deg, #0f6b5f, #7cbf1e)", cover: coverSaveEcoBot },
+  { id: "airtraffic", titleKey: "climateMap.sources.airTrafficTitle", subtitle: "TheAirTraffic (ADS-B)", Icon: FaPlane, bg: "linear-gradient(135deg, #0b2545, #d98a0b)", cover: coverAirTraffic },
+  { id: "deepstate", title: "DeepState", subtitleKey: "climateMap.sources.deepStateSubtitle", Icon: FaMapMarkedAlt, bg: "linear-gradient(135deg, #1b2a3a, #3d6b4f)", cover: coverDeepState },
 ];
 
 const BUILTIN_PROVIDERS = BUILTIN_SOURCES.map((s) => s.id);
 
+// Джерела лише для України: на інших мовах сайту їх не показуємо
+const UKRAINE_ONLY_SOURCES = new Set(["alerts-ua", "ukrainealarm", "saveecobot", "deepstate"]);
+
 // Картка джерела; перетягується лише за ручку, щоб не заважати прокрутці на дотик
 const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSplitChecked, splitLocked, onToggleSplit, isDarkMode }) => {
+  const { t } = useTranslation();
   const controls = useDragControls();
   const { id, title, subtitle, Icon, bg, frame, cover, favicon } = item;
   const [faviconFailed, setFaviconFailed] = useState(false);
@@ -1206,8 +1211,8 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSpli
       </SourceCard>
       <DragHandle
         type="button"
-        aria-label={`Перетягнути ${title}`}
-        title="Перетягнути, щоб змінити порядок"
+        aria-label={t("climateMap.dragItem", { title })}
+        title={t("climateMap.dragHint")}
         onPointerDown={(e) => controls.start(e)}
       >
         <MdDragIndicator />
@@ -1215,24 +1220,24 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSpli
       {splitAvailable && (
         <SplitCheck $withDelete={!!frame}>
           {/* Tooltip обгортає вміст, а не плашку: input лишається absolute відносно SplitCheck, підказка кріпиться до квадрата */}
-          <Tooltip content="Показувати поруч у два фрейми" isDarkMode={isDarkMode}>
+          <Tooltip content={t("climateMap.splitTooltip")} isDarkMode={isDarkMode}>
             <input
               type="checkbox"
-              aria-label="Показувати поруч у два фрейми"
+              aria-label={t("climateMap.splitTooltip")}
               checked={isSplitChecked}
               disabled={splitLocked}
               onChange={() => onToggleSplit(id)}
             />
             <SplitBox aria-hidden="true"><FiCheck /></SplitBox>
-            <span style={{ marginLeft: 6 }}>2 фрейми</span>
+            <span style={{ marginLeft: 6 }}>{t("climateMap.splitLabel")}</span>
           </Tooltip>
         </SplitCheck>
       )}
       {frame && (
         <CardDelete
           type="button"
-          aria-label={`Видалити ${title}`}
-          title="Видалити"
+          aria-label={t("climateMap.deleteItem", { title })}
+          title={t("climateMap.delete")}
           onClick={() => onDelete(frame)}
         >
           <FiX />
@@ -1261,11 +1266,13 @@ const getFrameHost = (url) => {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
   } catch {
-    return "Власний віджет";
+    return null;
   }
 };
 
 const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
+  const { t, i18n } = useTranslation();
+  const isUkrainian = (i18n.resolvedLanguage || i18n.language) === "uk";
   const [lat, setLat] = useState(48.379);
   const [lon, setLon] = useState(31.165);
   const [zoom, setZoom] = useState(5);
@@ -1353,11 +1360,15 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
   const orderedSources = useMemo(() => {
     const all = [
-      ...BUILTIN_SOURCES,
+      ...BUILTIN_SOURCES.filter((s) => isUkrainian || !UKRAINE_ONLY_SOURCES.has(s.id)).map((s) => ({
+        ...s,
+        title: s.titleKey ? t(s.titleKey) : s.title,
+        subtitle: s.subtitleKey ? t(s.subtitleKey) : s.subtitle,
+      })),
       ...customFrames.map((frame) => ({
         id: frame.id,
         title: frame.title,
-        subtitle: getFrameHost(frame.url),
+        subtitle: getFrameHost(frame.url) || t("climateMap.customWidget"),
         Icon: FaGlobe,
         bg: customFrameBg(frame.id),
         favicon: getFrameFavicon(frame.url),
@@ -1368,7 +1379,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     const ordered = sourceOrder.filter((id) => byId.has(id)).map((id) => byId.get(id));
     const placed = new Set(ordered.map((item) => item.id));
     return [...ordered, ...all.filter((item) => !placed.has(item.id))];
-  }, [customFrames, sourceOrder]);
+  }, [customFrames, sourceOrder, t, isUkrainian]);
 
   const [videoError, setVideoError] = useState(false);
   const turkeyVideoRef = useRef(null);
@@ -1423,6 +1434,16 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     }
   };
 
+  // Не українською — українські джерела підміняємо Ventusky/Windy лише на екрані;
+  // збережений вибір не чіпаємо, тож після повернення на українську він відновиться
+  useEffect(() => {
+    if (isUkrainian) return;
+    if (UKRAINE_ONLY_SOURCES.has(provider)) setProvider("ventusky");
+    if (UKRAINE_ONLY_SOURCES.has(secondProvider)) {
+      setSecondProvider(provider === "windy" ? "ventusky" : "windy");
+    }
+  }, [isUkrainian, provider, secondProvider]);
+
   const handleSetSecondProvider = async (id) => {
     setSecondProvider(id);
     try {
@@ -1443,7 +1464,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
   const handleActivateMap = async () => {
     setIsMapActive(true);
-    toast.success("Карту увімкнено", { icon: "🗺️", duration: 1800 });
+    toast.success(t("climateMap.mapEnabled"), { icon: "🗺️", duration: 1800 });
     try {
       await localforage.setItem("map_last_unlocked_time", Date.now());
     } catch (e) {
@@ -1453,7 +1474,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
   const handleDeactivateMap = async () => {
     setIsMapActive(false);
-    toast("Карту вимкнено", { icon: "🔒", duration: 1800 });
+    toast(t("climateMap.mapDisabled"), { icon: "🔒", duration: 1800 });
     try {
       await localforage.removeItem("map_last_unlocked_time");
     } catch (e) {
@@ -1461,21 +1482,21 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     }
   };
 
-  const settingButtonTexts = useMemo(
-    () => [
-      "Налаштування Стихії",
-      isWideLayout ? "Комбінації клавіш" : "Додавання карти(фреймів)",
-      "Налаштування Стихії",
-      "Закріпити локацію",
-       "Налаштування Стихії",
-      "Карти та безліч функцій",
-      "Налаштування Стихії",
-      "Міні-плеєр карти",
-       "Налаштування Стихії",
-      "Повноекранний режим",
-    ],
-    [isWideLayout]
-  );
+  const settingButtonTexts = useMemo(() => {
+    const settingsTitle = t("climateMap.settingsTitle");
+    return [
+      settingsTitle,
+      t(isWideLayout ? "climateMap.rotating.shortcuts" : "climateMap.rotating.addFrames"),
+      settingsTitle,
+      t("climateMap.rotating.pinLocation"),
+      settingsTitle,
+      t("climateMap.rotating.mapsAndFeatures"),
+      settingsTitle,
+      t("climateMap.rotating.miniPlayer"),
+      settingsTitle,
+      t("climateMap.rotating.fullscreen"),
+    ];
+  }, [isWideLayout, t]);
 
   const [textIndex, setTextIndex] = useState(0);
 
@@ -1578,11 +1599,11 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     }
 
     if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
-      toast.error("Будь ласка, введіть коректне посилання (https://...)");
+      toast.error(t("climateMap.invalidUrl"));
       return;
     }
 
-    const title = newFrameTitle.trim() || "Власний віджет";
+    const title = newFrameTitle.trim() || t("climateMap.customWidget");
 
     const newFrame = {
       id: "custom-" + Date.now(),
@@ -1640,7 +1661,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   };
 
   const handleConfirmDeleteFrame = (frame) => {
-    if (window.confirm(`Видалити «${frame.title}» з бічної панелі?`)) {
+    if (window.confirm(t("climateMap.confirmDeleteFrame", { title: frame.title }))) {
       handleDeleteFrame(frame.id);
     }
   };
@@ -1659,10 +1680,10 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       });
       await localforage.setItem("selected_climate_provider", provider);
       setIsPinned(true);
-      toast.success("Локацію закріплено! Завантажиться при наступному вході.", { duration: 3000, icon: "📍" });
+      toast.success(t("climateMap.locationPinned"), { duration: 3000, icon: "📍" });
     } catch (error) {
       console.error("Error pinning location:", error);
-      toast.error("Помилка при закріпленні локації.");
+      toast.error(t("climateMap.pinError"));
     }
   };
 
@@ -1671,7 +1692,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     try {
       await localforage.removeItem("pinned_map_location");
       setIsPinned(false);
-      toast("Закріплення локації знято.", { icon: "📌", duration: 2000 });
+      toast(t("climateMap.locationUnpinned"), { icon: "📌", duration: 2000 });
     } catch (error) {
       console.error("Error unpinning location:", error);
     }
@@ -1914,7 +1935,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   return (
     <OuterContainer>
       <AihelpTitle $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-        Кліматична мапа
+        {t("climateMap.title")}
       </AihelpTitle>
 
       <Toaster
@@ -1978,23 +1999,23 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               <KeyboardSettingRow $isDarkMode={isDarkMode}>
                 <FaKeyboard />
                 <Dov>
-                  <strong>Комбінації клавіш</strong>
-                  <span>Показувати підказки клавіш поруч з діями?</span>
+                  <strong>{t("climateMap.shortcuts")}</strong>
+                  <span>{t("climateMap.shortcutsDesc")}</span>
                 </Dov>
                 <KbdModeSelect
                   $isDarkMode={isDarkMode}
                   value={keyboardShortcutMode}
                   onChange={handleKeyboardShortcutModeChange}
                 >
-                  <option value="none">Без</option>
-                  <option value="auto">Авто</option>
-                  <option value="always">Так</option>
+                  <option value="none">{t("climateMap.shortcutsNone")}</option>
+                  <option value="auto">{t("climateMap.shortcutsAuto")}</option>
+                  <option value="always">{t("climateMap.shortcutsAlways")}</option>
                 </KbdModeSelect>
               </KeyboardSettingRow>
 
               {/* ── Карта ── */}
               {/* На ПК підпис ховається, щоб блоки йшли однією сіткою 3 + 2 */}
-              <SettingLabel $isDarkMode={isDarkMode} $hideOnDesktop>Карта</SettingLabel>
+              <SettingLabel $isDarkMode={isDarkMode} $hideOnDesktop>{t("climateMap.mapLabel")}</SettingLabel>
 
               <MobileSetting
                 $isDarkMode={isDarkMode}
@@ -2005,14 +2026,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               >
                 <GiLockedChest />
                 <Dov>
-                  <strong>{isMapActive ? "Деактивувати карту" : "Активувати карту"}</strong>
+                  <strong>{t(isMapActive ? "climateMap.deactivateMap" : "climateMap.activateMap")}</strong>
                   <span>
-                    {isMapActive
-                      ? "Вимкнути взаємодію з картою, щоб вона не перехоплювала прокрутку сторінки."
-                      : "Увімкнути карту, щоб гортати, масштабувати й перемикати шари."}
+                    {t(isMapActive ? "climateMap.deactivateMapDesc" : "climateMap.activateMapDesc")}
                   </span>
                   <StatusBadge $on={isMapActive}>
-                    {isMapActive ? "● Увімкнено" : "○ Вимкнено"}
+                    {isMapActive ? `● ${t("climateMap.statusOn")}` : `○ ${t("climateMap.statusOff")}`}
                   </StatusBadge>
                 </Dov>
                 <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + M</KeyboardShortcut>
@@ -2026,14 +2045,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               >
                 <BsFillPinAngleFill />
                 <Dov>
-                  <strong>{isPinned ? "Відкріпити локацію" : "Закріпити локацію"}</strong>
+                  <strong>{t(isPinned ? "climateMap.unpinLocation" : "climateMap.pinLocation")}</strong>
                   <span>
-                    {isPinned
-                      ? "Карта відкривається з закріпленою точкою, масштабом і шаром."
-                      : "Запам'ятати поточну точку, масштаб і шар — карта відкриватиметься саме тут."}
+                    {t(isPinned ? "climateMap.unpinLocationDesc" : "climateMap.pinLocationDesc")}
                   </span>
                   <StatusBadge $on={isPinned}>
-                    {isPinned ? "● Закріплено" : "○ Не закріплено"}
+                    {isPinned ? `● ${t("climateMap.statusPinned")}` : `○ ${t("climateMap.statusUnpinned")}`}
                   </StatusBadge>
                 </Dov>
                 <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + O</KeyboardShortcut>
@@ -2042,8 +2059,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               <MobileSetting $isDarkMode={isDarkMode} type="button" onClick={() => toggleFullscreen()}>
                 <LuFullscreen />
                 <Dov>
-                  <strong>{isFullscreen ? "Згорнути карту" : "Відкрити на весь екран"}</strong>
-                  <span>Розгорнути карту на весь екран пристрою або повернути звичайний вигляд.</span>
+                  <strong>{t(isFullscreen ? "climateMap.collapseMap" : "climateMap.openFullscreen")}</strong>
+                  <span>{t("climateMap.fullscreenDesc")}</span>
                 </Dov>
                 <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + F</KeyboardShortcut>
               </MobileSetting>
@@ -2051,8 +2068,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               <MobileSetting $isDarkMode={isDarkMode} type="button" onClick={handleOpenMiniPlayer}>
                 <CgMiniPlayer />
                 <Dov>
-                  <strong>Міні-плеєр карти</strong>
-                  <span>Винести карту в окреме плаваюче вікно для паралельної роботи.</span>
+                  <strong>{t("climateMap.miniPlayer")}</strong>
+                  <span>{t("climateMap.miniPlayerDesc")}</span>
                 </Dov>
                 <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + P</KeyboardShortcut>
               </MobileSetting>
@@ -2060,7 +2077,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
               {/* ── Джерело (на планшетах і ПК — у бічній панелі) ── */}
               {!isWideLayout && (<>
-              <SettingLabel $isDarkMode={isDarkMode}>Джерело карти</SettingLabel>
+              <SettingLabel $isDarkMode={isDarkMode}>{t("climateMap.mapSource")}</SettingLabel>
 
               <MobileSettingSelectGroup $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
                 <MobileSetting
@@ -2070,8 +2087,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 >
                   <FaMapLocationDot />
                   <Dov>
-                    <strong>Джерело карти</strong>
-                    <span>Windy, Ventusky, Тривоги, DeepState, авіарадар та інші</span>
+                    <strong>{t("climateMap.mapSource")}</strong>
+                    <span>{t("climateMap.mapSourceDesc")}</span>
                   </Dov>
                   <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + S</KeyboardShortcut>
                 </MobileSetting>
@@ -2082,12 +2099,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 >
                   <option value="ventusky">Ventusky</option>
                   <option value="windy">Windy</option>
-                  <option value="alerts-ua">Карта тривог України (alerts.in.ua)</option>
-                  <option value="ukrainealarm">Повітряні цілі: шахеди, ракети (Ukraine Alarm)</option>
-                  <option value="excalidraw">Онлайн-дошка (Excalidraw)</option>
-                  <option value="saveecobot">Якість повітря (SaveEcoBot)</option>
-                  <option value="airtraffic">Авіарадар (TheAirTraffic)</option>
-                  <option value="deepstate">Карта подій (DeepState)</option>
+                  {isUkrainian && <option value="alerts-ua">{t("climateMap.options.alerts")}</option>}
+                  {isUkrainian && <option value="ukrainealarm">{t("climateMap.options.airTargets")}</option>}
+                  <option value="excalidraw">{t("climateMap.options.excalidraw")}</option>
+                  {isUkrainian && <option value="saveecobot">{t("climateMap.options.saveEcoBot")}</option>}
+                  <option value="airtraffic">{t("climateMap.options.airTraffic")}</option>
+                  {isUkrainian && <option value="deepstate">{t("climateMap.options.deepState")}</option>}
                   {customFrames.map((frame) => (
                     <option key={frame.id} value={frame.id}>
                       {frame.title}
@@ -2097,13 +2114,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               </MobileSettingSelectGroup>
 
               {/* ── Власні фрейми ── */}
-              <SettingLabel $isDarkMode={isDarkMode}>Власний фрейм / віджет</SettingLabel>
+              <SettingLabel $isDarkMode={isDarkMode}>{t("climateMap.customFrame")}</SettingLabel>
 
               <AddFrameForm $isDarkMode={isDarkMode} onSubmit={handleAddFrame} onClick={(e) => e.stopPropagation()}>
                 <FormInput
                   $isDarkMode={isDarkMode}
                   type="text"
-                  placeholder="Назва (напр. Радар, Вебкамера...)"
+                  placeholder={t("climateMap.titlePlaceholder")}
                   value={newFrameTitle}
                   onChange={(e) => setNewFrameTitle(e.target.value)}
                 />
@@ -2111,7 +2128,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   <FormInput
                     $isDarkMode={isDarkMode}
                     type="text"
-                    placeholder="URL або iframe код (https://...)"
+                    placeholder={t("climateMap.urlPlaceholder")}
                     value={newFrameUrl}
                     onChange={(e) => setNewFrameUrl(e.target.value)}
                     style={{ width: "100%", paddingRight: "88px" }}
@@ -2127,13 +2144,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                       padding: "6px 14px",
                     }}
                   >
-                    Додати
+                    {t("climateMap.add")}
                   </FormButton>
                 </InputContainer>
 
                 {customFrames.length > 0 && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <span style={{ fontSize: "10px", color: isDarkMode ? "rgba(255,255,255,0.35)" : "rgba(100,50,0,0.45)", letterSpacing: "0.05em", textTransform: "uppercase" }}>Збережені:</span>
+                    <span style={{ fontSize: "10px", color: isDarkMode ? "rgba(255,255,255,0.35)" : "rgba(100,50,0,0.45)", letterSpacing: "0.05em", textTransform: "uppercase" }}>{t("climateMap.saved")}</span>
                     {customFrames.map((frame) => (
                       <div key={frame.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)", padding: "6px 10px", borderRadius: "7px", border: isDarkMode ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(0,0,0,0.08)" }}>
                         <span style={{ fontSize: "12px", color: isDarkMode ? "rgba(255,255,255,0.8)" : "rgba(30,10,0,0.8)" }}>{frame.title}</span>
@@ -2141,7 +2158,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                           type="button"
                           onClick={() => handleDeleteFrame(frame.id)}
                           style={{ background: "transparent", border: "none", color: "rgba(255,80,80,0.7)", cursor: "pointer", fontSize: "13px", padding: "2px 4px", borderRadius: "4px" }}
-                          title="Видалити"
+                          title={t("climateMap.delete")}
                         >
                           🗑️
                         </button>
@@ -2158,7 +2175,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
         {isMiniPlayerOpen ? (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#222', color: 'rgba(255,255,255,0.6)', zIndex: 5, padding: '20px', textAlign: 'center' }}>
-            Закрийте міні-плеєр щоб повернути карту
+            {t("climateMap.closeMiniPlayerHint")}
           </div>
         ) : (
           <>
@@ -2188,13 +2205,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 )}
                 <p style={{ fontSize: "16px" }}>
                   {!isOnline
-                    ? "Перевірте інтернет-з'єднання для користування картою"
+                    ? t("climateMap.checkInternet")
                     : !isMapActive
-                      ? "Натисніть на карту для активації"
-                      : "Завантаження..."}
+                      ? t("climateMap.clickToActivate")
+                      : t("climateMap.loading")}
                 </p>
-                <p>Інтерактивні карти надано сервісами Windy, Ventusky, Карта тривог України і т.д. (містять файли cookie)</p>
-                <p>Кнопка «Налаштування стихії» відкриває безкоштовний доступ до перемикання мап, повноекранний режим, міні-плеєр та інші функції!</p>
+                <p>{t("climateMap.credits")}</p>
+                <p>{t("climateMap.settingsHint")}</p>
             </Loader>
             <FramesGrid $split={isSplitActive}>
               <FramePane>
@@ -2213,7 +2230,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               {isSplitActive && (
                 <FramePane>
                   <StyledIframe
-                    aria-label="Weather Map (другий фрейм)"
+                    aria-label={`Weather Map (${t("climateMap.secondFrame")})`}
                     src={isMapActive && isOnline ? secondEmbedUrl : undefined}
                     $isLoading={isLoadingSecond}
                     $isReady={isMapActive}
@@ -2231,7 +2248,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       </MapWrapper>
 
       {isWideLayout && (
-        <SourcesSidebar $isDarkMode={isDarkMode} aria-label="Джерела карти" layoutScroll>
+        <SourcesSidebar $isDarkMode={isDarkMode} aria-label={t("climateMap.sourcesAria")} layoutScroll>
           <SourcesScroll>
             <Reorder.Group
               axis="y"
@@ -2265,7 +2282,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 <FormInput
                   $isDarkMode={isDarkMode}
                   type="text"
-                  placeholder="Назва (напр. Радар)"
+                  placeholder={t("climateMap.titlePlaceholderShort")}
                   value={newFrameTitle}
                   onChange={(e) => setNewFrameTitle(e.target.value)}
                   autoFocus
@@ -2273,15 +2290,15 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 <FormInput
                   $isDarkMode={isDarkMode}
                   type="text"
-                  placeholder="URL або iframe код"
+                  placeholder={t("climateMap.urlPlaceholderShort")}
                   value={newFrameUrl}
                   onChange={(e) => setNewFrameUrl(e.target.value)}
                   required
                 />
                 <div style={{ display: "flex", gap: "6px" }}>
-                  <FormButton type="submit" style={{ flex: 1 }}>Додати</FormButton>
+                  <FormButton type="submit" style={{ flex: 1 }}>{t("climateMap.add")}</FormButton>
                   <FormCancelButton $isDarkMode={isDarkMode} type="button" onClick={handleCancelAddFrame}>
-                    Скасувати
+                    {t("climateMap.cancel")}
                   </FormCancelButton>
                 </div>
               </SidebarAddForm>
@@ -2289,12 +2306,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               <AddSourceTile
                 $isDarkMode={isDarkMode}
                 type="button"
-                aria-label="Додати власний фрейм"
-                title="Додати власний фрейм"
+                aria-label={t("climateMap.addOwnFrame")}
+                title={t("climateMap.addOwnFrame")}
                 onClick={() => setIsAddingFrame(true)}
               >
                 <FiPlus />
-                <span>Додати свій фрейм</span>
+                <span>{t("climateMap.addYourFrame")}</span>
               </AddSourceTile>
             )}
           </SourcesScroll>
@@ -2330,7 +2347,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         >
           <MiniPlayerHeader style={{ touchAction: "none" }} onPointerDown={handleMiniPlayerDragStart}>
             <MiniHeaderTitle>
-              Міні-карта • подвійний клік — назад
+              {t("climateMap.miniMapTitle")}
             </MiniHeaderTitle>
             <MiniHeaderButtons>
               <ActionButton
@@ -2339,7 +2356,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   toggleFullscreen(miniPlayerRef);
                 }}
               >
-                {isFullscreen ? "Згорнути" : "⛶"}
+                {isFullscreen ? t("climateMap.collapse") : "⛶"}
               </ActionButton>
               <ActionButton
                 onClick={(e) => {
@@ -2355,7 +2372,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
           <MiniPlayerBody>
             {isLoading && (
               <Loader>
-                <p>Завантаження...</p>
+                <p>{t("climateMap.loading")}</p>
               </Loader>
             )}
             <StyledIframe

@@ -1,0 +1,113 @@
+{
+  "hero": {
+    "language": "Langue"
+  },
+  "common": {
+    "close": "Fermer"
+  },
+  "settings": {
+    "language": {
+      "title": "Langue du site",
+      "searchPlaceholder": "Rechercher une langue...",
+      "noResults": "Aucun résultat",
+      "rtlNote": "L'arabe et le persan s'écrivent de droite à gauche — le site change automatiquement le sens du texte.",
+      "regions": {
+        "europeNorthAmerica": "Europe et Amérique du Nord",
+        "asiaMiddleEast": "Asie et Moyen-Orient",
+        "africa": "Afrique",
+        "latinAmerica": "Amérique latine"
+      }
+    }
+  },
+  "climateMap": {
+    "title": "Carte climatique",
+    "sources": {
+      "ventuskySubtitle": "Prévisions météo",
+      "windySubtitle": "Vent et calques",
+      "alertsTitle": "Alertes",
+      "alertsSubtitle": "Carte des alertes aériennes en Ukraine",
+      "airTargetsTitle": "Cibles aériennes",
+      "airTargetsSubtitle": "Drones, missiles (approximatif)",
+      "excalidrawSubtitle": "Tableau blanc en ligne",
+      "saveEcoBotSubtitle": "Qualité de l'air",
+      "airTrafficTitle": "Radar aérien",
+      "deepStateSubtitle": "Carte des événements en Ukraine"
+    },
+    "options": {
+      "alerts": "Carte des alertes en Ukraine (alerts.in.ua)",
+      "airTargets": "Cibles aériennes : drones, missiles (Ukraine Alarm)",
+      "excalidraw": "Tableau blanc en ligne (Excalidraw)",
+      "saveEcoBot": "Qualité de l'air (SaveEcoBot)",
+      "airTraffic": "Radar aérien (TheAirTraffic)",
+      "deepState": "Carte des événements (DeepState)"
+    },
+    "dragItem": "Déplacer {{title}}",
+    "dragHint": "Faites glisser pour réorganiser",
+    "splitTooltip": "Afficher côte à côte dans deux cadres",
+    "splitLabel": "2 cadres",
+    "deleteItem": "Supprimer {{title}}",
+    "delete": "Supprimer",
+    "customWidget": "Widget personnalisé",
+    "mapEnabled": "Carte activée",
+    "mapDisabled": "Carte désactivée",
+    "settingsTitle": "Réglages des Éléments",
+    "rotating": {
+      "shortcuts": "Raccourcis clavier",
+      "addFrames": "Ajout de cartes (cadres)",
+      "pinLocation": "Épingler le lieu",
+      "mapsAndFeatures": "Cartes et plein de fonctions",
+      "miniPlayer": "Mini-lecteur de carte",
+      "fullscreen": "Mode plein écran"
+    },
+    "invalidUrl": "Veuillez saisir un lien valide (https://...)",
+    "confirmDeleteFrame": "Retirer « {{title}} » du panneau latéral ?",
+    "locationPinned": "Lieu épinglé ! Il sera chargé lors de votre prochaine visite.",
+    "pinError": "Erreur lors de l'épinglage du lieu.",
+    "locationUnpinned": "Lieu désépinglé.",
+    "shortcuts": "Raccourcis clavier",
+    "shortcutsDesc": "Afficher les raccourcis à côté des actions ?",
+    "shortcutsNone": "Non",
+    "shortcutsAuto": "Auto",
+    "shortcutsAlways": "Oui",
+    "mapLabel": "Carte",
+    "activateMap": "Activer la carte",
+    "deactivateMap": "Désactiver la carte",
+    "activateMapDesc": "Activer la carte pour la déplacer, zoomer et changer de calque.",
+    "deactivateMapDesc": "Désactiver l'interaction pour que la carte ne bloque pas le défilement de la page.",
+    "statusOn": "Activée",
+    "statusOff": "Désactivée",
+    "pinLocation": "Épingler le lieu",
+    "unpinLocation": "Désépingler le lieu",
+    "pinLocationDesc": "Mémoriser le point, le zoom et le calque actuels — la carte s'ouvrira ici.",
+    "unpinLocationDesc": "La carte s'ouvre avec le point, le zoom et le calque épinglés.",
+    "statusPinned": "Épinglé",
+    "statusUnpinned": "Non épinglé",
+    "openFullscreen": "Ouvrir en plein écran",
+    "collapseMap": "Réduire la carte",
+    "fullscreenDesc": "Agrandir la carte en plein écran ou revenir à l'affichage normal.",
+    "miniPlayer": "Mini-lecteur de carte",
+    "miniPlayerDesc": "Placer la carte dans une fenêtre flottante pour travailler en parallèle.",
+    "mapSource": "Source de la carte",
+    "mapSourceDesc": "Windy, Ventusky, radar aérien, tableau blanc en ligne et plus",
+    "sourcesAria": "Sources de la carte",
+    "customFrame": "Cadre / widget personnalisé",
+    "titlePlaceholder": "Nom (ex. Radar, Webcam...)",
+    "titlePlaceholderShort": "Nom (ex. Radar)",
+    "urlPlaceholder": "URL ou code iframe (https://...)",
+    "urlPlaceholderShort": "URL ou code iframe",
+    "add": "Ajouter",
+    "cancel": "Annuler",
+    "saved": "Enregistrés :",
+    "addOwnFrame": "Ajouter un cadre personnalisé",
+    "addYourFrame": "Ajouter votre cadre",
+    "closeMiniPlayerHint": "Fermez le mini-lecteur pour récupérer la carte",
+    "checkInternet": "Vérifiez votre connexion Internet pour utiliser la carte",
+    "clickToActivate": "Cliquez sur la carte pour l'activer",
+    "loading": "Chargement...",
+    "credits": "Cartes interactives fournies par Windy, Ventusky, etc. (utilisent des cookies)",
+    "settingsHint": "Le bouton « Réglages des Éléments » donne un accès gratuit au changement de carte, au plein écran, au mini-lecteur et à d'autres fonctions !",
+    "secondFrame": "second cadre",
+    "miniMapTitle": "Mini-carte • double-clic — retour",
+    "collapse": "Réduire"
+  }
+}

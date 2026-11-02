@@ -1,0 +1,113 @@
+{
+  "hero": {
+    "language": "Idioma"
+  },
+  "common": {
+    "close": "Cerrar"
+  },
+  "settings": {
+    "language": {
+      "title": "Idioma del sitio",
+      "searchPlaceholder": "Buscar idioma...",
+      "noResults": "No se encontró nada",
+      "rtlNote": "El árabe y el persa se escriben de derecha a izquierda — el sitio cambia la dirección del texto automáticamente.",
+      "regions": {
+        "europeNorthAmerica": "Europa y Norteamérica",
+        "asiaMiddleEast": "Asia y Oriente Medio",
+        "africa": "África",
+        "latinAmerica": "América Latina"
+      }
+    }
+  },
+  "climateMap": {
+    "title": "Mapa climático",
+    "sources": {
+      "ventuskySubtitle": "Pronóstico del tiempo",
+      "windySubtitle": "Viento y capas",
+      "alertsTitle": "Alertas",
+      "alertsSubtitle": "Mapa de alertas aéreas de Ucrania",
+      "airTargetsTitle": "Objetivos aéreos",
+      "airTargetsSubtitle": "Drones, misiles (aproximado)",
+      "excalidrawSubtitle": "Pizarra en línea",
+      "saveEcoBotSubtitle": "Calidad del aire",
+      "airTrafficTitle": "Radar aéreo",
+      "deepStateSubtitle": "Mapa de eventos en Ucrania"
+    },
+    "options": {
+      "alerts": "Mapa de alertas de Ucrania (alerts.in.ua)",
+      "airTargets": "Objetivos aéreos: drones, misiles (Ukraine Alarm)",
+      "excalidraw": "Pizarra en línea (Excalidraw)",
+      "saveEcoBot": "Calidad del aire (SaveEcoBot)",
+      "airTraffic": "Radar aéreo (TheAirTraffic)",
+      "deepState": "Mapa de eventos (DeepState)"
+    },
+    "dragItem": "Arrastrar {{title}}",
+    "dragHint": "Arrastra para cambiar el orden",
+    "splitTooltip": "Mostrar lado a lado en dos marcos",
+    "splitLabel": "2 marcos",
+    "deleteItem": "Eliminar {{title}}",
+    "delete": "Eliminar",
+    "customWidget": "Widget propio",
+    "mapEnabled": "Mapa activado",
+    "mapDisabled": "Mapa desactivado",
+    "settingsTitle": "Ajustes de Elementos",
+    "rotating": {
+      "shortcuts": "Atajos de teclado",
+      "addFrames": "Añadir mapas (marcos)",
+      "pinLocation": "Fijar ubicación",
+      "mapsAndFeatures": "Mapas y muchas funciones",
+      "miniPlayer": "Minirreproductor del mapa",
+      "fullscreen": "Pantalla completa"
+    },
+    "invalidUrl": "Introduce un enlace válido (https://...)",
+    "confirmDeleteFrame": "¿Quitar «{{title}}» del panel lateral?",
+    "locationPinned": "¡Ubicación fijada! Se cargará en tu próxima visita.",
+    "pinError": "Error al fijar la ubicación.",
+    "locationUnpinned": "Ubicación desfijada.",
+    "shortcuts": "Atajos de teclado",
+    "shortcutsDesc": "¿Mostrar atajos junto a las acciones?",
+    "shortcutsNone": "No",
+    "shortcutsAuto": "Auto",
+    "shortcutsAlways": "Sí",
+    "mapLabel": "Mapa",
+    "activateMap": "Activar mapa",
+    "deactivateMap": "Desactivar mapa",
+    "activateMapDesc": "Activa el mapa para desplazarte, hacer zoom y cambiar capas.",
+    "deactivateMapDesc": "Desactiva la interacción para que el mapa no capture el desplazamiento de la página.",
+    "statusOn": "Activado",
+    "statusOff": "Desactivado",
+    "pinLocation": "Fijar ubicación",
+    "unpinLocation": "Desfijar ubicación",
+    "pinLocationDesc": "Recordar el punto, el zoom y la capa actuales — el mapa se abrirá aquí.",
+    "unpinLocationDesc": "El mapa se abre con el punto, el zoom y la capa fijados.",
+    "statusPinned": "Fijada",
+    "statusUnpinned": "No fijada",
+    "openFullscreen": "Abrir en pantalla completa",
+    "collapseMap": "Contraer mapa",
+    "fullscreenDesc": "Ampliar el mapa a toda la pantalla o volver a la vista normal.",
+    "miniPlayer": "Minirreproductor del mapa",
+    "miniPlayerDesc": "Mover el mapa a una ventana flotante para trabajar en paralelo.",
+    "mapSource": "Fuente del mapa",
+    "mapSourceDesc": "Windy, Ventusky, radar aéreo, pizarra en línea y más",
+    "sourcesAria": "Fuentes del mapa",
+    "customFrame": "Marco / widget propio",
+    "titlePlaceholder": "Nombre (p. ej. Radar, Cámara web...)",
+    "titlePlaceholderShort": "Nombre (p. ej. Radar)",
+    "urlPlaceholder": "URL o código iframe (https://...)",
+    "urlPlaceholderShort": "URL o código iframe",
+    "add": "Añadir",
+    "cancel": "Cancelar",
+    "saved": "Guardados:",
+    "addOwnFrame": "Añadir marco propio",
+    "addYourFrame": "Añade tu marco",
+    "closeMiniPlayerHint": "Cierra el minirreproductor para recuperar el mapa",
+    "checkInternet": "Comprueba tu conexión a Internet para usar el mapa",
+    "clickToActivate": "Haz clic en el mapa para activarlo",
+    "loading": "Cargando...",
+    "credits": "Mapas interactivos proporcionados por Windy, Ventusky, etc. (usan cookies)",
+    "settingsHint": "¡El botón «Ajustes de Elementos» da acceso gratuito al cambio de mapas, pantalla completa, minirreproductor y otras funciones!",
+    "secondFrame": "segundo marco",
+    "miniMapTitle": "Minimapa • doble clic — volver",
+    "collapse": "Contraer"
+  }
+}

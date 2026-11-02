@@ -1,0 +1,113 @@
+{
+  "hero": {
+    "language": "Limbă"
+  },
+  "common": {
+    "close": "Închide"
+  },
+  "settings": {
+    "language": {
+      "title": "Limba site-ului",
+      "searchPlaceholder": "Caută limba...",
+      "noResults": "Nu s-a găsit nimic",
+      "rtlNote": "Araba și persana se scriu de la dreapta la stânga — site-ul schimbă automat direcția textului.",
+      "regions": {
+        "europeNorthAmerica": "Europa și America de Nord",
+        "asiaMiddleEast": "Asia și Orientul Mijlociu",
+        "africa": "Africa",
+        "latinAmerica": "America Latină"
+      }
+    }
+  },
+  "climateMap": {
+    "title": "Hartă climatică",
+    "sources": {
+      "ventuskySubtitle": "Prognoza meteo",
+      "windySubtitle": "Vânt și straturi",
+      "alertsTitle": "Alerte",
+      "alertsSubtitle": "Harta alertelor aeriene din Ucraina",
+      "airTargetsTitle": "Ținte aeriene",
+      "airTargetsSubtitle": "Drone, rachete (aproximativ)",
+      "excalidrawSubtitle": "Tablă online",
+      "saveEcoBotSubtitle": "Calitatea aerului",
+      "airTrafficTitle": "Radar aerian",
+      "deepStateSubtitle": "Harta evenimentelor din Ucraina"
+    },
+    "options": {
+      "alerts": "Harta alertelor din Ucraina (alerts.in.ua)",
+      "airTargets": "Ținte aeriene: drone, rachete (Ukraine Alarm)",
+      "excalidraw": "Tablă online (Excalidraw)",
+      "saveEcoBot": "Calitatea aerului (SaveEcoBot)",
+      "airTraffic": "Radar aerian (TheAirTraffic)",
+      "deepState": "Harta evenimentelor (DeepState)"
+    },
+    "dragItem": "Trage {{title}}",
+    "dragHint": "Trage pentru a schimba ordinea",
+    "splitTooltip": "Afișează alăturat în două cadre",
+    "splitLabel": "2 cadre",
+    "deleteItem": "Șterge {{title}}",
+    "delete": "Șterge",
+    "customWidget": "Widget propriu",
+    "mapEnabled": "Hartă activată",
+    "mapDisabled": "Hartă dezactivată",
+    "settingsTitle": "Setări Elemente",
+    "rotating": {
+      "shortcuts": "Comenzi rapide",
+      "addFrames": "Adăugare hărți (cadre)",
+      "pinLocation": "Fixează locația",
+      "mapsAndFeatures": "Hărți și multe funcții",
+      "miniPlayer": "Mini-player hartă",
+      "fullscreen": "Ecran complet"
+    },
+    "invalidUrl": "Introdu un link valid (https://...)",
+    "confirmDeleteFrame": "Elimini „{{title}}” din panoul lateral?",
+    "locationPinned": "Locație fixată! Se va încărca la următoarea vizită.",
+    "pinError": "Eroare la fixarea locației.",
+    "locationUnpinned": "Locația a fost eliberată.",
+    "shortcuts": "Comenzi rapide",
+    "shortcutsDesc": "Afișezi comenzile rapide lângă acțiuni?",
+    "shortcutsNone": "Nu",
+    "shortcutsAuto": "Auto",
+    "shortcutsAlways": "Da",
+    "mapLabel": "Hartă",
+    "activateMap": "Activează harta",
+    "deactivateMap": "Dezactivează harta",
+    "activateMapDesc": "Activează harta pentru a o deplasa, a face zoom și a schimba straturile.",
+    "deactivateMapDesc": "Dezactivează interacțiunea ca harta să nu blocheze derularea paginii.",
+    "statusOn": "Activată",
+    "statusOff": "Dezactivată",
+    "pinLocation": "Fixează locația",
+    "unpinLocation": "Eliberează locația",
+    "pinLocationDesc": "Memorează punctul, zoomul și stratul curent — harta se va deschide chiar aici.",
+    "unpinLocationDesc": "Harta se deschide cu punctul, zoomul și stratul fixate.",
+    "statusPinned": "Fixată",
+    "statusUnpinned": "Nefixată",
+    "openFullscreen": "Deschide pe tot ecranul",
+    "collapseMap": "Restrânge harta",
+    "fullscreenDesc": "Extinde harta pe tot ecranul sau revino la vizualizarea normală.",
+    "miniPlayer": "Mini-player hartă",
+    "miniPlayerDesc": "Mută harta într-o fereastră plutitoare pentru lucru în paralel.",
+    "mapSource": "Sursa hărții",
+    "mapSourceDesc": "Windy, Ventusky, radar aerian, tablă online și altele",
+    "sourcesAria": "Surse hartă",
+    "customFrame": "Cadru / widget propriu",
+    "titlePlaceholder": "Nume (ex. Radar, Cameră web...)",
+    "titlePlaceholderShort": "Nume (ex. Radar)",
+    "urlPlaceholder": "URL sau cod iframe (https://...)",
+    "urlPlaceholderShort": "URL sau cod iframe",
+    "add": "Adaugă",
+    "cancel": "Anulează",
+    "saved": "Salvate:",
+    "addOwnFrame": "Adaugă un cadru propriu",
+    "addYourFrame": "Adaugă cadrul tău",
+    "closeMiniPlayerHint": "Închide mini-playerul pentru a readuce harta",
+    "checkInternet": "Verifică conexiunea la internet pentru a folosi harta",
+    "clickToActivate": "Apasă pe hartă pentru a o activa",
+    "loading": "Se încarcă...",
+    "credits": "Hărțile interactive sunt oferite de Windy, Ventusky etc. (folosesc cookie-uri)",
+    "settingsHint": "Butonul „Setări Elemente” oferă acces gratuit la schimbarea hărților, ecran complet, mini-player și alte funcții!",
+    "secondFrame": "al doilea cadru",
+    "miniMapTitle": "Mini-hartă • dublu clic — înapoi",
+    "collapse": "Restrânge"
+  }
+}

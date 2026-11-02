@@ -87,6 +87,14 @@ import {
   FloatingArrow,         
 } from "@floating-ui/react";
 
+// Кеш canvas-іконок для точок графіків: картка рендериться щосекунди, і без кешу
+// десятки іконок (з емодзі) малювались заново, а графік бачив «нові» дані
+const chartCanvasCache = new Map();
+const rememberChartCanvas = (key, canvas) => {
+  if (chartCanvasCache.size > 400) chartCanvasCache.clear();
+  chartCanvasCache.set(key, canvas);
+};
+
 const LazyLineChart = lazy(() => import("./WeatherLineChart.jsx"));
 const Line = (props) => (
   <Suspense fallback={null}>
@@ -1820,7 +1828,12 @@ const WeatherCardComponent = ({
       else if (typeName === "FaCloudMoonRain" || typeName === "LiaCloudMoonRainSolid") iconStr = "🌧️";
       else iconStr = "☁️";
     }
+    // Однакові іконки не малюємо заново: той самий canvas — і графік не бачить змін
+    const cacheKey = `icon|${iconStr}|${size}|${dangerColor}|${opacity}`;
+    const cached = chartCanvasCache.get(cacheKey);
+    if (cached) return cached;
     const canvas = document.createElement("canvas");
+    rememberChartCanvas(cacheKey, canvas);
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext("2d");
@@ -1845,8 +1858,14 @@ const WeatherCardComponent = ({
     return canvas;
   };
 const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
+  // Стрілки знімаються з кроком 45°, тож варіантів мало — кешуємо
+  const snapped = Math.round(((((Number(degrees) || 0) % 360) + 360) % 360) / 45) * 45;
+  const cacheKey = `arrow|${snapped}|${size}|${opacity}`;
+  const cached = chartCanvasCache.get(cacheKey);
+  if (cached) return cached;
   const canvas = document.createElement("canvas");
-  
+  rememberChartCanvas(cacheKey, canvas);
+
   // 1. Збільшуємо розмір полотна Canvas, щоб затемнення вміщалося і не обрізалося
   const padding = 12; // Запас для затемнення
   const canvasSize = size + padding;

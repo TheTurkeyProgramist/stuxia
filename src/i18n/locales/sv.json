@@ -1,0 +1,113 @@
+{
+  "hero": {
+    "language": "Språk"
+  },
+  "common": {
+    "close": "Stäng"
+  },
+  "settings": {
+    "language": {
+      "title": "Webbplatsens språk",
+      "searchPlaceholder": "Sök språk...",
+      "noResults": "Inget hittades",
+      "rtlNote": "Arabiska och persiska skrivs från höger till vänster — webbplatsen byter textriktning automatiskt.",
+      "regions": {
+        "europeNorthAmerica": "Europa och Nordamerika",
+        "asiaMiddleEast": "Asien och Mellanöstern",
+        "africa": "Afrika",
+        "latinAmerica": "Latinamerika"
+      }
+    }
+  },
+  "climateMap": {
+    "title": "Klimatkarta",
+    "sources": {
+      "ventuskySubtitle": "Väderprognos",
+      "windySubtitle": "Vind och lager",
+      "alertsTitle": "Larm",
+      "alertsSubtitle": "Karta över flyglarm i Ukraina",
+      "airTargetsTitle": "Luftmål",
+      "airTargetsSubtitle": "Drönare, robotar (ungefärligt)",
+      "excalidrawSubtitle": "Online-whiteboard",
+      "saveEcoBotSubtitle": "Luftkvalitet",
+      "airTrafficTitle": "Flygradar",
+      "deepStateSubtitle": "Karta över händelser i Ukraina"
+    },
+    "options": {
+      "alerts": "Karta över larm i Ukraina (alerts.in.ua)",
+      "airTargets": "Luftmål: drönare, robotar (Ukraine Alarm)",
+      "excalidraw": "Online-whiteboard (Excalidraw)",
+      "saveEcoBot": "Luftkvalitet (SaveEcoBot)",
+      "airTraffic": "Flygradar (TheAirTraffic)",
+      "deepState": "Händelsekarta (DeepState)"
+    },
+    "dragItem": "Dra {{title}}",
+    "dragHint": "Dra för att ändra ordning",
+    "splitTooltip": "Visa sida vid sida i två ramar",
+    "splitLabel": "2 ramar",
+    "deleteItem": "Ta bort {{title}}",
+    "delete": "Ta bort",
+    "customWidget": "Egen widget",
+    "mapEnabled": "Kartan aktiverad",
+    "mapDisabled": "Kartan inaktiverad",
+    "settingsTitle": "Element-inställningar",
+    "rotating": {
+      "shortcuts": "Kortkommandon",
+      "addFrames": "Lägga till kartor (ramar)",
+      "pinLocation": "Fäst plats",
+      "mapsAndFeatures": "Kartor och massor av funktioner",
+      "miniPlayer": "Kartans minispelare",
+      "fullscreen": "Helskärmsläge"
+    },
+    "invalidUrl": "Ange en giltig länk (https://...)",
+    "confirmDeleteFrame": "Ta bort ”{{title}}” från sidopanelen?",
+    "locationPinned": "Platsen fäst! Den laddas vid nästa besök.",
+    "pinError": "Fel vid fästning av plats.",
+    "locationUnpinned": "Platsen lossad.",
+    "shortcuts": "Kortkommandon",
+    "shortcutsDesc": "Visa kortkommandon bredvid åtgärder?",
+    "shortcutsNone": "Av",
+    "shortcutsAuto": "Auto",
+    "shortcutsAlways": "På",
+    "mapLabel": "Karta",
+    "activateMap": "Aktivera kartan",
+    "deactivateMap": "Inaktivera kartan",
+    "activateMapDesc": "Aktivera kartan för att panorera, zooma och byta lager.",
+    "deactivateMapDesc": "Stäng av interaktion så att kartan inte fångar sidans rullning.",
+    "statusOn": "På",
+    "statusOff": "Av",
+    "pinLocation": "Fäst plats",
+    "unpinLocation": "Lossa plats",
+    "pinLocationDesc": "Kom ihåg aktuell punkt, zoom och lager — kartan öppnas just här.",
+    "unpinLocationDesc": "Kartan öppnas med fäst punkt, zoom och lager.",
+    "statusPinned": "Fäst",
+    "statusUnpinned": "Inte fäst",
+    "openFullscreen": "Öppna i helskärm",
+    "collapseMap": "Minimera kartan",
+    "fullscreenDesc": "Visa kartan i helskärm eller återgå till normal vy.",
+    "miniPlayer": "Kartans minispelare",
+    "miniPlayerDesc": "Flytta kartan till ett flytande fönster för att arbeta parallellt.",
+    "mapSource": "Kartkälla",
+    "mapSourceDesc": "Windy, Ventusky, flygradar, online-whiteboard och mer",
+    "sourcesAria": "Kartkällor",
+    "customFrame": "Egen ram / widget",
+    "titlePlaceholder": "Namn (t.ex. Radar, Webbkamera...)",
+    "titlePlaceholderShort": "Namn (t.ex. Radar)",
+    "urlPlaceholder": "URL eller iframe-kod (https://...)",
+    "urlPlaceholderShort": "URL eller iframe-kod",
+    "add": "Lägg till",
+    "cancel": "Avbryt",
+    "saved": "Sparade:",
+    "addOwnFrame": "Lägg till egen ram",
+    "addYourFrame": "Lägg till din ram",
+    "closeMiniPlayerHint": "Stäng minispelaren för att få tillbaka kartan",
+    "checkInternet": "Kontrollera internetanslutningen för att använda kartan",
+    "clickToActivate": "Klicka på kartan för att aktivera den",
+    "loading": "Laddar...",
+    "credits": "Interaktiva kartor tillhandahålls av Windy, Ventusky m.fl. (använder cookies)",
+    "settingsHint": "Knappen ”Element-inställningar” ger gratis tillgång till kartbyte, helskärm, minispelare och andra funktioner!",
+    "secondFrame": "andra ramen",
+    "miniMapTitle": "Minikarta • dubbelklick — tillbaka",
+    "collapse": "Minimera"
+  }
+}

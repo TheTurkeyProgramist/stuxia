@@ -1,34 +1,19 @@
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
+import uk from './locales/uk.json';
 
-export const RTL_LANGUAGES = new Set(['ar', 'fa', 'ur']);
+export const RTL_LANGUAGES = new Set(['ar', 'fa']);
 
 export const SPECIAL_FONT_LANGUAGES = {
-  am: 'Noto Sans Ethiopic',
   ar: 'Noto Sans Arabic',
-  bn: 'Noto Sans Bengali',
   fa: 'Noto Sans Arabic',
-  gu: 'Noto Sans Gujarati',
-  hi: 'Noto Sans Devanagari',
-  km: 'Noto Sans Khmer',
-  kn: 'Noto Sans Kannada',
-  ml: 'Noto Sans Malayalam',
-  mr: 'Noto Sans Devanagari',
-  my: 'Noto Sans Myanmar',
-  si: 'Noto Sans Sinhala',
-  ta: 'Noto Sans Tamil',
-  te: 'Noto Sans Telugu',
-  th: 'Noto Sans Thai',
-  ur: 'Noto Nastaliq Urdu',
   zh: 'Noto Sans SC',
 };
 
-export const TALL_SCRIPT_LANGUAGES = new Set([
-  'am', 'bn', 'gu', 'hi', 'km', 'kn', 'ml', 'mr', 'my', 'si', 'ta', 'te', 'th',
-]);
+export const TALL_SCRIPT_LANGUAGES = new Set([]);
 
-export const NO_SPACE_LANGUAGES = new Set(['ja', 'th', 'zh']);
+export const NO_SPACE_LANGUAGES = new Set(['ja', 'zh']);
 
 export const INTL_LOCALE_MAP = {
   zh: 'zh-CN',
@@ -37,19 +22,32 @@ export const INTL_LOCALE_MAP = {
 };
 
 const supportedLanguages = [
-  'uk', 'en', 'de', 'fr', 'es', 'it', 'pl', 'ro', 'nl', 'pt', 'el', 'cs',
-  'hu', 'ru', 'zh', 'hi', 'ar', 'bn', 'ur', 'id', 'ja', 'mr', 'te', 'tr',
-  'ta', 'vi', 'tl', 'ko', 'fa', 'th', 'gu', 'kn', 'ml', 'my', 'uz', 'kk',
-  'az', 'km', 'si', 'sw', 'ha', 'yo', 'ig', 'am', 'zu', 'so', 'mg', 'sn',
-  'xh', 'qu',
+  'uk', 'en', 'be', 'de', 'fr', 'es', 'it', 'pl', 'ro', 'nl', 'pt', 'el',
+  'cs', 'hu', 'sv', 'fi', 'bg', 'lt', 'zh', 'ar', 'ja', 'tr', 'ko', 'fa',
+  'so', 'qu',
 ];
 
+// Українська вшита в бандл (fallback), решта мов вантажиться окремим чанком лише при виборі
+const lazyLocalesBackend = {
+  type: 'backend',
+  read(lng, _ns, callback) {
+    import(`./locales/${lng}.json`)
+      .then((mod) => callback(null, mod.default))
+      .catch((err) => callback(err, null));
+  },
+};
+
 i18n
+  .use(lazyLocalesBackend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
+    resources: { uk: { translation: uk } },
+    partialBundledLanguages: true,
     fallbackLng: 'uk',
     supportedLngs: supportedLanguages,
+    load: 'languageOnly',
+    react: { useSuspense: false },
     interpolation: { escapeValue: false },
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],

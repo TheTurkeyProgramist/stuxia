@@ -30,7 +30,6 @@ const NewsAiModal = lazy(() => import("./NewsAiModal"));
 import InfoModal from "../Modals/UserSearchModal.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { MdReport } from "react-icons/md"; //Поскаржитися
-import { FaClapperboard } from "react-icons/fa6";
 import { FaYoutube } from "react-icons/fa6";
 import { GiTreeBeehive } from "react-icons/gi";
 import { PiNewspaperClippingFill } from "react-icons/pi";
@@ -38,7 +37,7 @@ import { FaRss } from "react-icons/fa";
 import { MdOutlineReportOff } from "react-icons/md"; //Заглушити
 import { MdHelpOutline, MdBlock, MdSelectAll, MdClose } from "react-icons/md";
 import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiLink } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
 import toast from "react-hot-toast";
 import { hasBannedContent, isNewsFilterEnabled } from "../../utils/contentFilter";
@@ -1017,20 +1016,22 @@ const NewsCard = ({
           {item.sourceName}
         </SourceFlag>
         <CardActions aria-label="Дії з новиною">
-          <NewsSettingsBtn
-            aria-label="Налаштування картки новини"
-            title="Налаштування"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsNewsSettingsOpen((v) => !v);
-            }}
-          >
-            <SettingsIconSwap $open={isNewsSettingsOpen}>
-              <BiCog aria-hidden="true" />
-              <MdClose aria-hidden="true" />
-            </SettingsIconSwap>
-          </NewsSettingsBtn>
+          <Tooltip content={isNewsSettingsOpen ? "Закрити налаштування" : "Налаштування"} isDarkMode={$isDarkMode}>
+            <NewsSettingsBtn
+              aria-label="Налаштування картки новини"
+              aria-expanded={isNewsSettingsOpen}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsNewsSettingsOpen((v) => !v);
+              }}
+            >
+              <SettingsIconSwap $open={isNewsSettingsOpen}>
+                <BiCog aria-hidden="true" />
+                <MdClose aria-hidden="true" />
+              </SettingsIconSwap>
+            </NewsSettingsBtn>
+          </Tooltip>
         </CardActions>
         {(
             <NewsSettingsMenu
@@ -1069,16 +1070,6 @@ const NewsCard = ({
                 }}
               >
                 <TbStarsFilled /> ШІ Виклад
-              </NewsSettingsItem>
-              <NewsSettingsItem
-                onClick={() => {
-                  navigator.clipboard.writeText(item.link).then(() => {
-                    toast.success("Посилання скопійовано!");
-                  });
-                  setIsNewsSettingsOpen(false);
-                }}
-              >
-                 <FaClapperboard /> Копіювати шлях
               </NewsSettingsItem>
               {!BUILTIN_SOURCE_NAMES.has(item.sourceName) && (
                 <NewsSettingsItem
@@ -1120,20 +1111,37 @@ const NewsCard = ({
         {(showTitle || showDescription) && (
           <CardContent $isDarkMode={$isDarkMode} $overlay={showImage}>
             {showTitle && (
-              <h2
-                style={{
-                  margin: "0 0 8px 0",
-                  fontSize: "16px",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  fontWeight: "700",
-                      WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  lineHeight: "1.3",
-                }}
-              >
-                {item.title}
-              </h2>
+              <TitleRow>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "16px",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    fontWeight: "700",
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    lineHeight: "1.3",
+                  }}
+                >
+                  {item.title}
+                </h2>
+                <Tooltip content="Копіювати шлях" isDarkMode={$isDarkMode}>
+                  <CopyLinkBtn
+                    type="button"
+                    aria-label="Копіювати шлях до новини"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(item.link).then(() => {
+                        toast.success("Посилання скопійовано!");
+                      });
+                    }}
+                  >
+                    <FiLink aria-hidden="true" />
+                  </CopyLinkBtn>
+                </Tooltip>
+              </TitleRow>
             )}
             {showDescription && (
               <p
@@ -1157,6 +1165,41 @@ const NewsCard = ({
     </Card>
   );
 };
+const TitleRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 8px;
+`;
+
+const CopyLinkBtn = styled.button`
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    background: rgba(0, 172, 185, 0.35);
+    transform: scale(1.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #00acb9;
+    outline-offset: 2px;
+  }
+`;
+
 const CardContent = styled.div`
   padding: 8px;
   font-family: var(--font-family);

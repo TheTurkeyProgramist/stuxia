@@ -1,0 +1,113 @@
+{
+  "hero": {
+    "language": "Luqadda"
+  },
+  "common": {
+    "close": "Xir"
+  },
+  "settings": {
+    "language": {
+      "title": "Luqadda bogga",
+      "searchPlaceholder": "Raadi luqad...",
+      "noResults": "Waxba lama helin",
+      "rtlNote": "Carabiga iyo Faarisiga waxaa laga qoraa midig ilaa bidix — bogga ayaa si toos ah u beddela jihada qoraalka.",
+      "regions": {
+        "europeNorthAmerica": "Yurub iyo Waqooyiga Ameerika",
+        "asiaMiddleEast": "Aasiya iyo Bariga Dhexe",
+        "africa": "Afrika",
+        "latinAmerica": "Laatiin Ameerika"
+      }
+    }
+  },
+  "climateMap": {
+    "title": "Khariidadda cimilada",
+    "sources": {
+      "ventuskySubtitle": "Saadaasha hawada",
+      "windySubtitle": "Dabaysha iyo lakabyada",
+      "alertsTitle": "Digniinaha",
+      "alertsSubtitle": "Khariidadda digniinaha cirka ee Ukraine",
+      "airTargetsTitle": "Bartilmaameedyada cirka",
+      "airTargetsSubtitle": "Diyaaradaha aan duuliye lahayn, gantaalaha (qiyaas)",
+      "excalidrawSubtitle": "Sabuurad online ah",
+      "saveEcoBotSubtitle": "Tayada hawada",
+      "airTrafficTitle": "Raadaarka duulimaadka",
+      "deepStateSubtitle": "Khariidadda dhacdooyinka Ukraine"
+    },
+    "options": {
+      "alerts": "Khariidadda digniinaha Ukraine (alerts.in.ua)",
+      "airTargets": "Bartilmaameedyada cirka: diyaarado aan duuliye lahayn, gantaalo (Ukraine Alarm)",
+      "excalidraw": "Sabuurad online ah (Excalidraw)",
+      "saveEcoBot": "Tayada hawada (SaveEcoBot)",
+      "airTraffic": "Raadaarka duulimaadka (TheAirTraffic)",
+      "deepState": "Khariidadda dhacdooyinka (DeepState)"
+    },
+    "dragItem": "Jiid {{title}}",
+    "dragHint": "Jiid si aad u beddesho kala horreynta",
+    "splitTooltip": "Ku muuji dhinac dhinac laba qaab",
+    "splitLabel": "2 qaab",
+    "deleteItem": "Tirtir {{title}}",
+    "delete": "Tirtir",
+    "customWidget": "Widget gaar ah",
+    "mapEnabled": "Khariidadda waa la shiday",
+    "mapDisabled": "Khariidadda waa la demiyay",
+    "settingsTitle": "Dejinta Curiyeyaasha",
+    "rotating": {
+      "shortcuts": "Furayaasha gaaban",
+      "addFrames": "Ku darista khariidado (qaabab)",
+      "pinLocation": "Ku dhaji goobta",
+      "mapsAndFeatures": "Khariidado iyo astaamo badan",
+      "miniPlayer": "Ciyaaryahanka yar ee khariidadda",
+      "fullscreen": "Shaashad buuxda"
+    },
+    "invalidUrl": "Fadlan geli xiriir sax ah (https://...)",
+    "confirmDeleteFrame": "Ka saar «{{title}}» guddiga dhinaca?",
+    "locationPinned": "Goobta waa la dhejiyay! Waxay soo degi doontaa booqashadaada xigta.",
+    "pinError": "Khalad ayaa dhacay markii goobta la dhejinayay.",
+    "locationUnpinned": "Dhejinta goobta waa laga qaaday.",
+    "shortcuts": "Furayaasha gaaban",
+    "shortcutsDesc": "Ma la muujiyaa tilmaamaha furayaasha ficillada agtooda?",
+    "shortcutsNone": "Maya",
+    "shortcutsAuto": "Toos",
+    "shortcutsAlways": "Haa",
+    "mapLabel": "Khariidad",
+    "activateMap": "Shid khariidadda",
+    "deactivateMap": "Dami khariidadda",
+    "activateMapDesc": "Shid khariidadda si aad u dhaqaajiso, u weyneyso oo aad u beddesho lakabyada.",
+    "deactivateMapDesc": "Dami isdhexgalka si khariidaddu aanay u qabsan rogrogga bogga.",
+    "statusOn": "Shidan",
+    "statusOff": "Dansan",
+    "pinLocation": "Ku dhaji goobta",
+    "unpinLocation": "Ka qaad dhejinta",
+    "pinLocationDesc": "Xusuuso barta, weyneynta iyo lakabka hadda — khariidaddu halkan ayay ka furmi doontaa.",
+    "unpinLocationDesc": "Khariidaddu waxay ku furmaysaa barta, weyneynta iyo lakabka la dhejiyay.",
+    "statusPinned": "La dhejiyay",
+    "statusUnpinned": "Lama dhejin",
+    "openFullscreen": "Ku fur shaashad buuxda",
+    "collapseMap": "Yaree khariidadda",
+    "fullscreenDesc": "Ku ballaari khariidadda shaashadda oo dhan ama ku noqo muuqaalka caadiga ah.",
+    "miniPlayer": "Ciyaaryahanka yar ee khariidadda",
+    "miniPlayerDesc": "U wareeji khariidadda daaqad sabbaynaysa oo gaar ah si aad isku mar u shaqeyso.",
+    "mapSource": "Isha khariidadda",
+    "mapSourceDesc": "Windy, Ventusky, raadaarka duulimaadka, sabuurad online ah iyo kuwo kale",
+    "sourcesAria": "Ilaha khariidadda",
+    "customFrame": "Qaab / widget gaar ah",
+    "titlePlaceholder": "Magac (tusaale Raadaar, Kaamirad...)",
+    "titlePlaceholderShort": "Magac (tusaale Raadaar)",
+    "urlPlaceholder": "URL ama koodka iframe (https://...)",
+    "urlPlaceholderShort": "URL ama koodka iframe",
+    "add": "Ku dar",
+    "cancel": "Jooji",
+    "saved": "La keydiyay:",
+    "addOwnFrame": "Ku dar qaab gaar ah",
+    "addYourFrame": "Ku dar qaabkaaga",
+    "closeMiniPlayerHint": "Xir ciyaaryahanka yar si khariidaddu u soo noqoto",
+    "checkInternet": "Hubi isku xirka internetka si aad u isticmaasho khariidadda",
+    "clickToActivate": "Guji khariidadda si aad u shido",
+    "loading": "Waa la soo dejinayaa...",
+    "credits": "Khariidadaha isdhexgalka waxaa bixiya Windy, Ventusky iyo kuwo kale (waxay isticmaalaan cookies)",
+    "settingsHint": "Badhanka «Dejinta Curiyeyaasha» wuxuu si bilaash ah kuu siinayaa beddelka khariidadaha, shaashad buuxda, ciyaaryahanka yar iyo astaamo kale!",
+    "secondFrame": "qaabka labaad",
+    "miniMapTitle": "Khariidad yar • laba-guji — dib u noqo",
+    "collapse": "Yaree"
+  }
+}

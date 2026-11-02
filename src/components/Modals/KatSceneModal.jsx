@@ -27,7 +27,7 @@ const MUSIC_CREDITS = [
   { title: "Болотна крамниця, Звуки індиків і ще кілька", author: "Авторська робота" },
 ];
 // 3. Галерея зображень
-const GALLERY_IMAGES = DEFAULT_BGS.filter(bg => bg.src && !bg.src.endsWith('.mp4'));
+const GALLERY_IMAGES = DEFAULT_BGS.filter(bg => /\.(webp|jpe?g|png|gif)(\?.*)?$/i.test(bg.src || ""));
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: scale(1.02); }

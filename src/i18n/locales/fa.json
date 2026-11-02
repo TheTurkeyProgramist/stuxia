@@ -1,0 +1,113 @@
+{
+  "hero": {
+    "language": "زبان"
+  },
+  "common": {
+    "close": "بستن"
+  },
+  "settings": {
+    "language": {
+      "title": "زبان سایت",
+      "searchPlaceholder": "جستجوی زبان...",
+      "noResults": "چیزی پیدا نشد",
+      "rtlNote": "عربی و فارسی از راست به چپ نوشته می‌شوند — سایت جهت متن را به‌طور خودکار تغییر می‌دهد.",
+      "regions": {
+        "europeNorthAmerica": "اروپا و آمریکای شمالی",
+        "asiaMiddleEast": "آسیا و خاورمیانه",
+        "africa": "آفریقا",
+        "latinAmerica": "آمریکای لاتین"
+      }
+    }
+  },
+  "climateMap": {
+    "title": "نقشهٔ اقلیمی",
+    "sources": {
+      "ventuskySubtitle": "پیش‌بینی هوا",
+      "windySubtitle": "باد و لایه‌ها",
+      "alertsTitle": "هشدارها",
+      "alertsSubtitle": "نقشهٔ هشدارهای هوایی اوکراین",
+      "airTargetsTitle": "اهداف هوایی",
+      "airTargetsSubtitle": "پهپادها، موشک‌ها (تقریبی)",
+      "excalidrawSubtitle": "تختهٔ آنلاین",
+      "saveEcoBotSubtitle": "کیفیت هوا",
+      "airTrafficTitle": "رادار پرواز",
+      "deepStateSubtitle": "نقشهٔ رویدادهای اوکراین"
+    },
+    "options": {
+      "alerts": "نقشهٔ هشدارهای اوکراین (alerts.in.ua)",
+      "airTargets": "اهداف هوایی: پهپادها، موشک‌ها (Ukraine Alarm)",
+      "excalidraw": "تختهٔ آنلاین (Excalidraw)",
+      "saveEcoBot": "کیفیت هوا (SaveEcoBot)",
+      "airTraffic": "رادار پرواز (TheAirTraffic)",
+      "deepState": "نقشهٔ رویدادها (DeepState)"
+    },
+    "dragItem": "کشیدن {{title}}",
+    "dragHint": "برای تغییر ترتیب بکشید",
+    "splitTooltip": "نمایش کنار هم در دو قاب",
+    "splitLabel": "۲ قاب",
+    "deleteItem": "حذف {{title}}",
+    "delete": "حذف",
+    "customWidget": "ویجت سفارشی",
+    "mapEnabled": "نقشه فعال شد",
+    "mapDisabled": "نقشه غیرفعال شد",
+    "settingsTitle": "تنظیمات عناصر",
+    "rotating": {
+      "shortcuts": "میان‌برهای صفحه‌کلید",
+      "addFrames": "افزودن نقشه (قاب)",
+      "pinLocation": "سنجاق کردن مکان",
+      "mapsAndFeatures": "نقشه‌ها و امکانات فراوان",
+      "miniPlayer": "پخش‌کنندهٔ کوچک نقشه",
+      "fullscreen": "حالت تمام‌صفحه"
+    },
+    "invalidUrl": "لطفاً یک پیوند معتبر وارد کنید (https://...)",
+    "confirmDeleteFrame": "«{{title}}» از نوار کناری حذف شود؟",
+    "locationPinned": "مکان سنجاق شد! در بازدید بعدی بارگیری می‌شود.",
+    "pinError": "خطا در سنجاق کردن مکان.",
+    "locationUnpinned": "سنجاق مکان برداشته شد.",
+    "shortcuts": "میان‌برهای صفحه‌کلید",
+    "shortcutsDesc": "راهنمای کلیدها کنار عملیات نمایش داده شود؟",
+    "shortcutsNone": "خیر",
+    "shortcutsAuto": "خودکار",
+    "shortcutsAlways": "بله",
+    "mapLabel": "نقشه",
+    "activateMap": "فعال کردن نقشه",
+    "deactivateMap": "غیرفعال کردن نقشه",
+    "activateMapDesc": "نقشه را فعال کنید تا جابه‌جا، بزرگ‌نمایی و لایه‌ها را عوض کنید.",
+    "deactivateMapDesc": "تعامل با نقشه را خاموش کنید تا پیمایش صفحه را نگیرد.",
+    "statusOn": "فعال",
+    "statusOff": "غیرفعال",
+    "pinLocation": "سنجاق کردن مکان",
+    "unpinLocation": "برداشتن سنجاق",
+    "pinLocationDesc": "نقطه، بزرگ‌نمایی و لایهٔ فعلی به خاطر سپرده می‌شود — نقشه دقیقاً همین‌جا باز می‌شود.",
+    "unpinLocationDesc": "نقشه با نقطه، بزرگ‌نمایی و لایهٔ سنجاق‌شده باز می‌شود.",
+    "statusPinned": "سنجاق‌شده",
+    "statusUnpinned": "سنجاق‌نشده",
+    "openFullscreen": "باز کردن تمام‌صفحه",
+    "collapseMap": "کوچک کردن نقشه",
+    "fullscreenDesc": "نقشه را تمام‌صفحه کنید یا به نمای عادی برگردید.",
+    "miniPlayer": "پخش‌کنندهٔ کوچک نقشه",
+    "miniPlayerDesc": "نقشه را به یک پنجرهٔ شناور جداگانه ببرید تا هم‌زمان کار کنید.",
+    "mapSource": "منبع نقشه",
+    "mapSourceDesc": "Windy، Ventusky، رادار پرواز، تختهٔ آنلاین و دیگران",
+    "sourcesAria": "منابع نقشه",
+    "customFrame": "قاب / ویجت سفارشی",
+    "titlePlaceholder": "نام (مثلاً رادار، وب‌کم...)",
+    "titlePlaceholderShort": "نام (مثلاً رادار)",
+    "urlPlaceholder": "URL یا کد iframe (https://...)",
+    "urlPlaceholderShort": "URL یا کد iframe",
+    "add": "افزودن",
+    "cancel": "لغو",
+    "saved": "ذخیره‌شده‌ها:",
+    "addOwnFrame": "افزودن قاب سفارشی",
+    "addYourFrame": "قاب خود را اضافه کنید",
+    "closeMiniPlayerHint": "برای بازگرداندن نقشه، پخش‌کنندهٔ کوچک را ببندید",
+    "checkInternet": "برای استفاده از نقشه اتصال اینترنت را بررسی کنید",
+    "clickToActivate": "برای فعال‌سازی روی نقشه کلیک کنید",
+    "loading": "در حال بارگذاری...",
+    "credits": "نقشه‌های تعاملی توسط Windy، Ventusky و دیگران ارائه می‌شوند (از کوکی استفاده می‌کنند)",
+    "settingsHint": "دکمهٔ «تنظیمات عناصر» دسترسی رایگان به تغییر نقشه، تمام‌صفحه، پخش‌کنندهٔ کوچک و امکانات دیگر می‌دهد!",
+    "secondFrame": "قاب دوم",
+    "miniMapTitle": "نقشهٔ کوچک • دوبار کلیک — بازگشت",
+    "collapse": "کوچک کردن"
+  }
+}

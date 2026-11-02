@@ -1,0 +1,113 @@
+{
+  "hero": {
+    "language": "Language"
+  },
+  "common": {
+    "close": "Close"
+  },
+  "settings": {
+    "language": {
+      "title": "Site language",
+      "searchPlaceholder": "Search language...",
+      "noResults": "Nothing found",
+      "rtlNote": "Arabic and Persian are written right to left — the site switches text direction automatically.",
+      "regions": {
+        "europeNorthAmerica": "Europe & North America",
+        "asiaMiddleEast": "Asia & Middle East",
+        "africa": "Africa",
+        "latinAmerica": "Latin America"
+      }
+    }
+  },
+  "climateMap": {
+    "title": "Climate map",
+    "sources": {
+      "ventuskySubtitle": "Weather forecast",
+      "windySubtitle": "Wind and layers",
+      "alertsTitle": "Alerts",
+      "alertsSubtitle": "Ukraine air raid alert map",
+      "airTargetsTitle": "Air targets",
+      "airTargetsSubtitle": "Drones, missiles (approximate)",
+      "excalidrawSubtitle": "Online whiteboard",
+      "saveEcoBotSubtitle": "Air quality",
+      "airTrafficTitle": "Flight radar",
+      "deepStateSubtitle": "Map of events in Ukraine"
+    },
+    "options": {
+      "alerts": "Ukraine air raid alert map (alerts.in.ua)",
+      "airTargets": "Air targets: drones, missiles (Ukraine Alarm)",
+      "excalidraw": "Online whiteboard (Excalidraw)",
+      "saveEcoBot": "Air quality (SaveEcoBot)",
+      "airTraffic": "Flight radar (TheAirTraffic)",
+      "deepState": "Map of events (DeepState)"
+    },
+    "dragItem": "Drag {{title}}",
+    "dragHint": "Drag to reorder",
+    "splitTooltip": "Show side by side in two frames",
+    "splitLabel": "2 frames",
+    "deleteItem": "Delete {{title}}",
+    "delete": "Delete",
+    "customWidget": "Custom widget",
+    "mapEnabled": "Map enabled",
+    "mapDisabled": "Map disabled",
+    "settingsTitle": "Elements settings",
+    "rotating": {
+      "shortcuts": "Keyboard shortcuts",
+      "addFrames": "Adding maps (frames)",
+      "pinLocation": "Pin location",
+      "mapsAndFeatures": "Maps and lots of features",
+      "miniPlayer": "Map mini player",
+      "fullscreen": "Fullscreen mode"
+    },
+    "invalidUrl": "Please enter a valid link (https://...)",
+    "confirmDeleteFrame": "Remove “{{title}}” from the sidebar?",
+    "locationPinned": "Location pinned! It will load on your next visit.",
+    "pinError": "Failed to pin location.",
+    "locationUnpinned": "Location unpinned.",
+    "shortcuts": "Keyboard shortcuts",
+    "shortcutsDesc": "Show key hints next to actions?",
+    "shortcutsNone": "Off",
+    "shortcutsAuto": "Auto",
+    "shortcutsAlways": "On",
+    "mapLabel": "Map",
+    "activateMap": "Activate map",
+    "deactivateMap": "Deactivate map",
+    "activateMapDesc": "Enable the map to pan, zoom and switch layers.",
+    "deactivateMapDesc": "Disable map interaction so it doesn't capture page scrolling.",
+    "statusOn": "On",
+    "statusOff": "Off",
+    "pinLocation": "Pin location",
+    "unpinLocation": "Unpin location",
+    "pinLocationDesc": "Remember the current point, zoom and layer — the map will open right here.",
+    "unpinLocationDesc": "The map opens with the pinned point, zoom and layer.",
+    "statusPinned": "Pinned",
+    "statusUnpinned": "Not pinned",
+    "openFullscreen": "Open fullscreen",
+    "collapseMap": "Collapse map",
+    "fullscreenDesc": "Expand the map to your device's full screen or return to the normal view.",
+    "miniPlayer": "Map mini player",
+    "miniPlayerDesc": "Move the map into a separate floating window to work in parallel.",
+    "mapSource": "Map source",
+    "mapSourceDesc": "Windy, Ventusky, flight radar, online whiteboard and more",
+    "sourcesAria": "Map sources",
+    "customFrame": "Custom frame / widget",
+    "titlePlaceholder": "Name (e.g. Radar, Webcam...)",
+    "titlePlaceholderShort": "Name (e.g. Radar)",
+    "urlPlaceholder": "URL or iframe code (https://...)",
+    "urlPlaceholderShort": "URL or iframe code",
+    "add": "Add",
+    "cancel": "Cancel",
+    "saved": "Saved:",
+    "addOwnFrame": "Add a custom frame",
+    "addYourFrame": "Add your frame",
+    "closeMiniPlayerHint": "Close the mini player to bring the map back",
+    "checkInternet": "Check your internet connection to use the map",
+    "clickToActivate": "Click the map to activate it",
+    "loading": "Loading...",
+    "credits": "Interactive maps are provided by Windy, Ventusky and others (they use cookies)",
+    "settingsHint": "The “Elements settings” button gives free access to map switching, fullscreen mode, mini player and other features!",
+    "secondFrame": "second frame",
+    "miniMapTitle": "Mini map • double-click to return",
+    "collapse": "Collapse"
+  }
+}

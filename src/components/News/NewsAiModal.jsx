@@ -7,7 +7,12 @@ import ReactMarkdown from "react-markdown";
 import { RiDeleteBack2Fill } from "react-icons/ri";
 import { FaMicrophoneAlt } from "react-icons/fa";
 import { FaLightbulb } from "react-icons/fa";
-import { FiSend } from "react-icons/fi";
+import { FiSend, FiAlignLeft, FiGlobe } from "react-icons/fi";
+import { HiSparkles } from "react-icons/hi2";
+import { IoClose } from "react-icons/io5";
+import { MdVerified } from "react-icons/md";
+import { FaCircleInfo } from "react-icons/fa6";
+import { Tooltip } from "../Tooltip/Tooltip";
 import { fetchFreeWebSearch } from "../../utils/freeWebSearch";
 import reader from "../../photos/cursors/reader.webp";
 import { GiSpikedDragonHead, GiTimeBomb } from "react-icons/gi";
@@ -216,38 +221,86 @@ const CloseBtn = styled.button`
 `;
 
 const ControlsBar = styled.div`
-  padding: 6px;
+  padding: 8px 10px;
   border-bottom: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)")};
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 3px;
+  gap: 8px 14px;
   position: relative;
   z-index: 10;
 `;
 
-const QuickSettings = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  width: 100%;
-`;
-
-const QuickGroup = styled.label`
+const QuickGroup = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
+  opacity: 0.95;
+
+  > svg {
+    color: #ff8a3d;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
 `;
 
-const QuickSelect = styled.select`
-  padding: 5px 8px;
-  border: 1px solid rgba(255, 179, 108, 0.45);
-  border-radius: 8px;
-  background: ${(p) => (p.$isDarkMode ? "#1c1d22" : "#fff")};
-  color: inherit;
+const Segmented = styled.div`
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: 999px;
+  background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)")};
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)")};
+`;
+
+const SegmentButton = styled.button`
+  border: none;
+  border-radius: 999px;
+  padding: 4px 10px;
   font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: ${(p) => (p.$active ? "#1a1208" : "inherit")};
+  background: ${(p) => (p.$active ? "linear-gradient(135deg, #ffb36c 0%, #ff8a3d 100%)" : "transparent")};
+  box-shadow: ${(p) => (p.$active ? "0 2px 8px rgba(255, 138, 61, 0.35)" : "none")};
+  transition: background 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background: ${(p) => (p.$active ? "linear-gradient(135deg, #ffb36c 0%, #ff8a3d 100%)" : "rgba(255, 179, 108, 0.15)")};
+  }
+
+  small {
+    opacity: 0.7;
+    font-weight: 500;
+    margin-left: 3px;
+  }
+`;
+
+const ToggleChip = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: ${(p) => (p.$active ? "#ff8a3d" : "inherit")};
+  background: ${(p) => (p.$active ? "rgba(255, 138, 61, 0.14)" : "transparent")};
+  border: 1px solid ${(p) => (p.$active ? "rgba(255, 138, 61, 0.6)" : p.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)")};
+  opacity: ${(p) => (p.$active ? 1 : 0.7)};
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 1;
+    border-color: rgba(255, 138, 61, 0.6);
+  }
+
+  svg {
+    font-size: 13px;
+  }
 `;
 
 const InputShell = styled.div`
@@ -322,11 +375,11 @@ const starterQuestions = [
     text: "Які можуть бути наслідки?",
   },
   {
-    icon: <FaLightbulb aria-hidden="true" />,
+    icon: <MdVerified aria-hidden="true" />,
     text: "Які джерела підтверджують цю новину?",
   },
   {
-    icon: <GiSpikedDragonHead aria-hidden="true" />,
+    icon: <FaCircleInfo aria-hidden="true" />,
     text: "Що важливо знати про цю подію?",
   },
 ];
@@ -397,10 +450,25 @@ const StarterQuestionsCarousel = ({ isDarkMode, onAsk }) => {
     if (isPaused) return undefined;
 
     const timer = setInterval(() => {
-      setPosition((current) => current + 1);
+      // Не виходимо за дубльовані картки, навіть якщо transitionend не спрацював
+      setPosition((current) => Math.min(current + 1, starterQuestions.length));
     }, 3000);
     return () => clearInterval(timer);
   }, [isPaused]);
+
+  // Повернення на початок по таймеру: transitionend не приходить у фоновій вкладці,
+  // через що позиція росла без кінця і картки зникали
+  useEffect(() => {
+    if (position < starterQuestions.length) return undefined;
+    const resetTimer = setTimeout(() => {
+      setIsResetting(true);
+      setPosition(0);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setIsResetting(false));
+      });
+    }, 700);
+    return () => clearTimeout(resetTimer);
+  }, [position]);
 
   return (
     <StarterCarouselViewport
@@ -419,15 +487,6 @@ const StarterQuestionsCarousel = ({ isDarkMode, onAsk }) => {
       <StarterCarouselTrack
         $position={position}
         $isResetting={isResetting}
-        onTransitionEnd={(event) => {
-          if (event.propertyName === "transform" && position === starterQuestions.length) {
-            setIsResetting(true);
-            setPosition(0);
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => setIsResetting(false));
-            });
-          }
-        }}
       >
         {[...starterQuestions, ...starterQuestions].map(({ icon, text }, index) => {
           const isVisible = index >= position && index < position + 3;
@@ -558,12 +617,6 @@ const getResponseLengthInstruction = (value) => {
   return "Відповідай нормально, збалансовано за обсягом.";
 };
 
-const getResponseStyleInstruction = (value) => {
-  if (value === "scientific") return "Використовуй науковий, точний стиль.";
-  if (value === "standard") return "Використовуй нейтральний стандартний стиль.";
-  return "Використовуй дружній, простий стиль.";
-};
-
 const parseSuggestedQuestions = (text) => {
   const regex = /\[РЕКОМЕНДОВАНІ_ПИТАННЯ\]([\s\S]*?)\[\/РЕКОМЕНДОВАНІ_ПИТАННЯ\]/;
   const match = text.match(regex);
@@ -578,7 +631,6 @@ const parseSuggestedQuestions = (text) => {
 
 export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
   const [responseLength, setResponseLength] = useState("normal");
-  const [responseStyle, setResponseStyle] = useState("friendly");
   const [suggestedQuestionsCount, setSuggestedQuestionsCount] = useState("0");
   const [googleSearchEnabled, setGoogleSearchEnabled] = useState(true);
   const [messages, setMessages] = useState([]);
@@ -736,7 +788,6 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
         : "Не додавай блок рекомендованих питань.";
       const systemInstructions = `Ти — ШІ-помічник для аналізу новин і живої дискусії.
 ${getResponseLengthInstruction(responseLength)}
-${getResponseStyleInstruction(responseStyle)}
 Відповідай українською, якщо користувач не пише іншою мовою. Розрізняй підтверджені факти, твердження джерела та власні висновки; не вигадуй деталей, яких немає в новині чи наданому контексті.
 Не підтакуй автоматично, не використовуй лестощів і не хвали користувача без конкретної підстави. Оцінюй твердження за доказами; якщо не погоджуєшся, спокійно поясни чому. Відокремлюй факти, припущення й оцінки та визнавай невизначеність.
 Тримай стриманий, нейтральний і предметний тон без порожніх вступів і надмірної емоційності. Враховуй попередні репліки, пояснюй ключову логіку й за потреби став одне конкретне запитання, що допоможе перевірити припущення або обдумати тему. Не додавай запитання механічно.
@@ -793,58 +844,76 @@ ${webContext}
       <ModalContent $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
         <Header $isDarkMode={isDarkMode}>
           <TitleGroup>
+            <HiSparkles style={{ color: "#ff8a3d", fontSize: 18 }} />
             <h3>ШІ Виклад новини</h3>
           </TitleGroup>
-          <CloseBtn $isDarkMode={isDarkMode} onClick={onClose} title="Закрити">
-            ✕
-          </CloseBtn>
+          <Tooltip content="Закрити" isDarkMode={isDarkMode}>
+            <CloseBtn $isDarkMode={isDarkMode} onClick={onClose} aria-label="Закрити">
+              <IoClose />
+            </CloseBtn>
+          </Tooltip>
         </Header>
 
         <ControlsBar $isDarkMode={isDarkMode}>
-          <QuickSettings>
-            <QuickGroup>
-              Обсяг:
-              <QuickSelect $isDarkMode={isDarkMode} value={responseLength} onChange={(e) => setResponseLength(e.target.value)}>
-                <option value="concise">Менше</option>
-                <option value="normal">Нормально</option>
-                <option value="detailed">Більше</option>
-              </QuickSelect>
-            </QuickGroup>
-            <QuickGroup>
-              Стиль:
-              <QuickSelect $isDarkMode={isDarkMode} value={responseStyle} onChange={(e) => setResponseStyle(e.target.value)}>
-                <option value="friendly">Дружньо</option>
-                <option value="standard">Стандартно</option>
-                <option value="scientific">Науково</option>
-              </QuickSelect>
-            </QuickGroup>
-            <QuickGroup>
-              Пропозиції:
-              <QuickSelect
-                $isDarkMode={isDarkMode}
-                value={suggestedQuestionsCount}
-                onChange={async (e) => {
-                  setSuggestedQuestionsCount(e.target.value);
-                  await localforage.setItem("gemini_suggested_questions_count", e.target.value);
-                }}
-              >
-                <option value="0">0 (5 с)</option>
-                <option value="1">1 (10 с)</option>
-                <option value="2">2 (15 с)</option>
-              </QuickSelect>
-            </QuickGroup>
-            <QuickGroup>
-              <input
-                type="checkbox"
-                checked={googleSearchEnabled}
-                onChange={async (e) => {
-                  setGoogleSearchEnabled(e.target.checked);
-                  await localforage.setItem("gemini_google_search_enabled", e.target.checked);
-                }}
-              />
-              Інтернет-пошук
-            </QuickGroup>
-          </QuickSettings>
+          <QuickGroup>
+            <Tooltip content="Обсяг відповіді" isDarkMode={isDarkMode}>
+              <FiAlignLeft />
+            </Tooltip>
+            <Segmented $isDarkMode={isDarkMode} role="group" aria-label="Обсяг відповіді">
+              {[
+                ["concise", "Менше"],
+                ["normal", "Нормально"],
+                ["detailed", "Більше"],
+              ].map(([value, label]) => (
+                <SegmentButton key={value} type="button" $active={responseLength === value} onClick={() => setResponseLength(value)}>
+                  {label}
+                </SegmentButton>
+              ))}
+            </Segmented>
+          </QuickGroup>
+          <QuickGroup>
+            <Tooltip content="Кількість запропонованих питань (затримка між запитами)" isDarkMode={isDarkMode}>
+              <FaLightbulb />
+            </Tooltip>
+            <Segmented
+              $isDarkMode={isDarkMode}
+              role="group"
+              aria-label="Кількість запропонованих питань (затримка між запитами)"
+            >
+              {[
+                ["0", "5 с"],
+                ["1", "10 с"],
+                ["2", "15 с"],
+              ].map(([value, delay]) => (
+                <SegmentButton
+                  key={value}
+                  type="button"
+                  $active={suggestedQuestionsCount === value}
+                  onClick={async () => {
+                    setSuggestedQuestionsCount(value);
+                    await localforage.setItem("gemini_suggested_questions_count", value);
+                  }}
+                >
+                  {value}
+                  <small>{delay}</small>
+                </SegmentButton>
+              ))}
+            </Segmented>
+          </QuickGroup>
+          <ToggleChip
+            type="button"
+            $isDarkMode={isDarkMode}
+            $active={googleSearchEnabled}
+            aria-pressed={googleSearchEnabled}
+            onClick={async () => {
+              const next = !googleSearchEnabled;
+              setGoogleSearchEnabled(next);
+              await localforage.setItem("gemini_google_search_enabled", next);
+            }}
+          >
+            <FiGlobe />
+            Інтернет-пошук
+          </ToggleChip>
         </ControlsBar>
 
         <Body $isDarkMode={isDarkMode}>
@@ -909,29 +978,35 @@ ${webContext}
               {cooldownSeconds > 0 && ` Перезарядка: ${cooldownSeconds} с`}
             </InputMeta>
             <InputActions>
-              <InputIconButton
-                type="button"
-                onClick={handleVoiceInput}
-                title={isListening ? "Зупинити голосовий ввід" : "Голосовий ввід"}
-              >
-                {isListening ? <span aria-hidden="true">■</span> : <FaMicrophoneAlt />}
-              </InputIconButton>
-              <InputIconButton
-                type="button"
-                onClick={handleClearChat}
-                title="Очистити чат"
-              >
-                <RiDeleteBack2Fill />
-              </InputIconButton>
-              <InputIconButton
-                type="button"
-                $primary
-                onClick={() => handleSend()}
-                disabled={loading || cooldownSeconds > 0 || !input.trim()}
-                title={cooldownSeconds > 0 ? `Перезарядка: ${cooldownSeconds} с` : "Надіслати"}
-              >
-                <FiSend />
-              </InputIconButton>
+              <Tooltip content={isListening ? "Зупинити голосовий ввід" : "Голосовий ввід"} placement="top" isDarkMode={isDarkMode}>
+                <InputIconButton
+                  type="button"
+                  onClick={handleVoiceInput}
+                  aria-label={isListening ? "Зупинити голосовий ввід" : "Голосовий ввід"}
+                >
+                  {isListening ? <span aria-hidden="true">■</span> : <FaMicrophoneAlt />}
+                </InputIconButton>
+              </Tooltip>
+              <Tooltip content="Очистити чат" placement="top" isDarkMode={isDarkMode}>
+                <InputIconButton
+                  type="button"
+                  onClick={handleClearChat}
+                  aria-label="Очистити чат"
+                >
+                  <RiDeleteBack2Fill />
+                </InputIconButton>
+              </Tooltip>
+              <Tooltip content={cooldownSeconds > 0 ? `Перезарядка: ${cooldownSeconds} с` : "Надіслати"} placement="top" isDarkMode={isDarkMode}>
+                <InputIconButton
+                  type="button"
+                  $primary
+                  onClick={() => handleSend()}
+                  disabled={loading || cooldownSeconds > 0 || !input.trim()}
+                  aria-label={cooldownSeconds > 0 ? `Перезарядка: ${cooldownSeconds} с` : "Надіслати"}
+                >
+                  <FiSend />
+                </InputIconButton>
+              </Tooltip>
             </InputActions>
           </InputShell>
         </InputArea>

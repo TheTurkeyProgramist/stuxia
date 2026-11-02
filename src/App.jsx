@@ -64,6 +64,7 @@ import { FaCloudMoonRain, FaCloudMoon } from "react-icons/fa";
 import { LiaCloudSunRainSolid, LiaCloudMoonRainSolid, LiaCloudSunSolid } from "react-icons/lia";
 import { stripSecrets } from "./utils/passwordHash";
 import { getNow, syncClock } from "./utils/serverClock";
+import { useLanguageEffect } from "./i18n/useI18nHelpers.js";
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
 const Tooltipso = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
@@ -892,6 +893,7 @@ const SectionContent = memo(
 );
 
 const App = () => {
+  useLanguageEffect();
   const [isLoading, setIsLoading] = useState(true);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [areInitialModulesReady, setAreInitialModulesReady] = useState(false);

@@ -32,7 +32,8 @@ import {
 } from "react-icons/fi";
 import styled, { keyframes, css } from "styled-components";
 import { useSelector, useDispatch } from "react-redux";
-import { MdSettingsSuggest, MdMore, MdSearch, MdWallpaper, MdAutoAwesome, MdClose } from "react-icons/md";
+import { MdSettingsSuggest, MdMore, MdSearch, MdWallpaper, MdAutoAwesome, MdClose, MdTranslate } from "react-icons/md";
+import { useTranslation } from "react-i18next";
 import {
   addCustomDay,
   removeCustomDay,
@@ -71,6 +72,8 @@ import {
 } from "@floating-ui/react";
 import TimezoneModal from "./TimezoneModal.jsx";
 import BgModal from "./BgModal.jsx";
+import LanguageModal from "../Modals/LanguageModal.jsx";
+import { usePageActive } from "../../utils/pageActivity.js";
 const CHANGE_BG_PREVIEW_IMAGES = [
   villagePreview,
   fadedPreview,
@@ -329,11 +332,10 @@ const BgLayer = React.memo((props) => {
   const layerRef = useRef(null);
   const isVideo = isVideoSource($image);
   const [inView, setInView] = useState(true);
-  const [tabVisible, setTabVisible] = useState(
-    typeof document === "undefined" || !document.hidden,
-  );
+  // Вкладка видима, вікно у фокусі й екран не перекриває модалка
+  const pageActive = usePageActive();
 
-  // Не декодуємо відео, коли Hero поза екраном або вкладка прихована
+  // Не декодуємо відео, коли Hero поза екраном
   useEffect(() => {
     if (!isVideo) return;
     const el = layerRef.current;
@@ -345,15 +347,10 @@ const BgLayer = React.memo((props) => {
       );
       observer.observe(el);
     }
-    const onVisibility = () => setTabVisible(!document.hidden);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      observer?.disconnect();
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
+    return () => observer?.disconnect();
   }, [isVideo]);
 
-  const shouldPlay = $active && inView && tabVisible;
+  const shouldPlay = $active && inView && pageActive;
 
   useEffect(() => {
     if (!isVideo) return;
@@ -407,7 +404,7 @@ const BgLayer = React.memo((props) => {
       }
     } else if (!vid.paused) {
       // Шар, що згасає, грає до кінця переходу — інакше кадр «замерзає»
-      const delay = inView && tabVisible ? ($transition || 0) * 1000 : 0;
+      const delay = inView && pageActive ? ($transition || 0) * 1000 : 0;
       const timer = setTimeout(() => {
         vid.pause();
         // У відео 1–2 ключові кадри, тож продовження з середини після паузи
@@ -451,7 +448,7 @@ const BgLayer = React.memo((props) => {
   const videoEnd = $videoEnd ?? null; // null = play to natural end
 
   return (
-    <BgLayerStyled ref={layerRef} {...props}>
+    <BgLayerStyled ref={layerRef} data-page-bg="" {...props}>
       {isVideo ? (
         <video
           ref={videoRef}
@@ -1206,6 +1203,11 @@ const Hero = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [showTimezoneMenu, setShowTimezoneMenu] = useState(false);
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+  const { t, i18n } = useTranslation();
+  // «Language (Мова)»: англійське слово для всіх + назва мовою сайту в дужках
+  const languageButtonText =
+    i18n.resolvedLanguage === "en" ? "Language" : `Language (${t("hero.language")})`;
   const [hasMore, setHasMore] = useState(true);
   const [searchMode, setSearchMode] = useState("city");
   const [searchModeOptionIndex, setSearchModeOptionIndex] = useState(0);
@@ -1905,6 +1907,13 @@ const Hero = ({
                   >
                     <MdSettingsSuggest size={18} /> Змінити часовий пояс?
                   </TimezoneButton>
+                  <TimezoneButton
+                    onClick={() => setIsLanguageModalOpen(true)}
+                    aria-label={languageButtonText}
+                    $isDarkMode={isDarkMode}
+                  >
+                    <MdTranslate size={18} /> {languageButtonText}
+                  </TimezoneButton>
                 </HeroControls>
                 <Tag $isDarkMode={isDarkMode} style={{ flex: 1, textAlign: "right" }}>
                   {heroDateString}
@@ -2222,6 +2231,10 @@ const Hero = ({
         randomCurrentIndex={randomCurrentIndex}
         setRandomCurrentIndex={setRandomCurrentIndex}
         hills={hills}
+      />
+      <LanguageModal
+        isOpen={isLanguageModalOpen}
+        onClose={() => setIsLanguageModalOpen(false)}
       />
 
 

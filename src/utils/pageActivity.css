@@ -1,0 +1,8 @@
+/* Поки відкрита модалка, сторінка під нею «засинає»: анімації поза модалкою на паузі.
+   SVG-анімації працюють на головному потоці й щокадру перераховували стилі —
+   через це лагала прокрутка в модалках. Модалку позначає pageActivity.js. */
+html[data-overlay-open] body *:not([data-active-overlay], [data-active-overlay] *),
+html[data-overlay-open] body *:not([data-active-overlay], [data-active-overlay] *)::before,
+html[data-overlay-open] body *:not([data-active-overlay], [data-active-overlay] *)::after {
+  animation-play-state: paused !important;
+}

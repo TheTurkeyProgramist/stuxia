@@ -1,0 +1,113 @@
+{
+  "hero": {
+    "language": "言語"
+  },
+  "common": {
+    "close": "閉じる"
+  },
+  "settings": {
+    "language": {
+      "title": "サイトの言語",
+      "searchPlaceholder": "言語を検索...",
+      "noResults": "見つかりませんでした",
+      "rtlNote": "アラビア語とペルシア語は右から左に書かれます。サイトは文字の向きを自動で切り替えます。",
+      "regions": {
+        "europeNorthAmerica": "ヨーロッパ・北米",
+        "asiaMiddleEast": "アジア・中東",
+        "africa": "アフリカ",
+        "latinAmerica": "ラテンアメリカ"
+      }
+    }
+  },
+  "climateMap": {
+    "title": "気候マップ",
+    "sources": {
+      "ventuskySubtitle": "天気予報",
+      "windySubtitle": "風とレイヤー",
+      "alertsTitle": "警報",
+      "alertsSubtitle": "ウクライナ空襲警報マップ",
+      "airTargetsTitle": "空中目標",
+      "airTargetsSubtitle": "ドローン、ミサイル（概算）",
+      "excalidrawSubtitle": "オンラインホワイトボード",
+      "saveEcoBotSubtitle": "大気質",
+      "airTrafficTitle": "フライトレーダー",
+      "deepStateSubtitle": "ウクライナの出来事マップ"
+    },
+    "options": {
+      "alerts": "ウクライナ警報マップ (alerts.in.ua)",
+      "airTargets": "空中目標：ドローン、ミサイル (Ukraine Alarm)",
+      "excalidraw": "オンラインホワイトボード (Excalidraw)",
+      "saveEcoBot": "大気質 (SaveEcoBot)",
+      "airTraffic": "フライトレーダー (TheAirTraffic)",
+      "deepState": "出来事マップ (DeepState)"
+    },
+    "dragItem": "{{title}} をドラッグ",
+    "dragHint": "ドラッグして並べ替え",
+    "splitTooltip": "2つのフレームで並べて表示",
+    "splitLabel": "2フレーム",
+    "deleteItem": "{{title}} を削除",
+    "delete": "削除",
+    "customWidget": "カスタムウィジェット",
+    "mapEnabled": "マップを有効にしました",
+    "mapDisabled": "マップを無効にしました",
+    "settingsTitle": "エレメント設定",
+    "rotating": {
+      "shortcuts": "キーボードショートカット",
+      "addFrames": "マップ（フレーム）の追加",
+      "pinLocation": "位置を固定",
+      "mapsAndFeatures": "マップと多彩な機能",
+      "miniPlayer": "マップのミニプレーヤー",
+      "fullscreen": "全画面モード"
+    },
+    "invalidUrl": "有効なリンクを入力してください (https://...)",
+    "confirmDeleteFrame": "「{{title}}」をサイドバーから削除しますか？",
+    "locationPinned": "位置を固定しました！次回アクセス時に読み込まれます。",
+    "pinError": "位置の固定中にエラーが発生しました。",
+    "locationUnpinned": "位置の固定を解除しました。",
+    "shortcuts": "キーボードショートカット",
+    "shortcutsDesc": "操作の横にショートカットを表示しますか？",
+    "shortcutsNone": "オフ",
+    "shortcutsAuto": "自動",
+    "shortcutsAlways": "オン",
+    "mapLabel": "マップ",
+    "activateMap": "マップを有効にする",
+    "deactivateMap": "マップを無効にする",
+    "activateMapDesc": "マップを有効にして、移動・拡大縮小・レイヤー切替を行います。",
+    "deactivateMapDesc": "ページのスクロールを妨げないよう、マップの操作を無効にします。",
+    "statusOn": "有効",
+    "statusOff": "無効",
+    "pinLocation": "位置を固定",
+    "unpinLocation": "固定を解除",
+    "pinLocationDesc": "現在の地点・ズーム・レイヤーを記憶し、次回もここでマップを開きます。",
+    "unpinLocationDesc": "固定した地点・ズーム・レイヤーでマップが開きます。",
+    "statusPinned": "固定済み",
+    "statusUnpinned": "未固定",
+    "openFullscreen": "全画面で開く",
+    "collapseMap": "マップを縮小",
+    "fullscreenDesc": "マップを全画面に広げるか、通常表示に戻します。",
+    "miniPlayer": "マップのミニプレーヤー",
+    "miniPlayerDesc": "マップを別のフローティングウィンドウに移し、並行作業できます。",
+    "mapSource": "マップのソース",
+    "mapSourceDesc": "Windy、Ventusky、フライトレーダー、オンラインホワイトボードなど",
+    "sourcesAria": "マップのソース",
+    "customFrame": "カスタムフレーム / ウィジェット",
+    "titlePlaceholder": "名前（例：レーダー、ウェブカメラ...）",
+    "titlePlaceholderShort": "名前（例：レーダー）",
+    "urlPlaceholder": "URL または iframe コード (https://...)",
+    "urlPlaceholderShort": "URL または iframe コード",
+    "add": "追加",
+    "cancel": "キャンセル",
+    "saved": "保存済み：",
+    "addOwnFrame": "カスタムフレームを追加",
+    "addYourFrame": "フレームを追加",
+    "closeMiniPlayerHint": "ミニプレーヤーを閉じるとマップが戻ります",
+    "checkInternet": "マップを使うにはインターネット接続を確認してください",
+    "clickToActivate": "マップをクリックして有効にします",
+    "loading": "読み込み中...",
+    "credits": "インタラクティブマップは Windy、Ventusky などが提供しています（Cookie を使用）",
+    "settingsHint": "「エレメント設定」ボタンから、マップ切替・全画面・ミニプレーヤーなどの機能を無料で使えます！",
+    "secondFrame": "2つ目のフレーム",
+    "miniMapTitle": "ミニマップ • ダブルクリックで戻る",
+    "collapse": "縮小"
+  }
+}

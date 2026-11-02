@@ -109,7 +109,7 @@ const WeatherBgModal = ({ locationName, bgMode, onSelect, onClose }) => (
           <NameOverlay>Вікіпедія</NameOverlay>
           <BgSquare src={WIKI_LOGO} />
         </BgItem>
-        {DEFAULT_BGS.filter((bg) => !bg.src.endsWith(".mp4")).map((bg, idx) => (
+        {DEFAULT_BGS.filter((bg) => /\.(webp|jpe?g|png|gif)(\?.*)?$/i.test(bg.src || "")).map((bg, idx) => (
           <BgItem key={idx} $active={bgMode === bg.src} onClick={() => onSelect(bg.src)}>
             {bg.author && (
               <TopOverlay>
