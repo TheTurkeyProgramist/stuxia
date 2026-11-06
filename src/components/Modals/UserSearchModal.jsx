@@ -5,7 +5,7 @@ import rawFaqData from "./faqData.json";
 import hills from "../../media/backgrounds/scenes/foggy-forest.webp";
 import texts from "../../media/backgrounds/scenes/egyptian-hieroglyphs.webp";
 import logofix from "../../media/brand/logo.webp";
-import { FiSearch, FiX } from "react-icons/fi";
+import { FiSearch, FiX, FiDownload } from "react-icons/fi";
 import info from "../../media/ui/information-sign.webp";
 import one from "../../media/drawings/two-brothers.webp";
 import two from "../../media/drawings/emperor-nitseron.webp";
@@ -286,17 +286,55 @@ const ActionButton = styled.button`
   }
 `;
 
+// Круглі кнопки-іконки у правому верхньому куті відповіді (скачати, закрити)
 const AnswerActionButton = styled.button`
-  background: #8a2be2;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 2px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(10, 16, 22, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: ${({ $variant }) => ($variant === "download" ? "#ffda79" : "#ffffff")};
+  font-size: 19px;
   cursor: pointer;
-  font-size: 12px;
-  transition: background 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+
+  svg {
+    transition: transform 0.25s ease;
+  }
+
   &:hover {
-    background: #a25be2;
+    transform: translateY(-1px);
+    border-color: ${({ $variant }) => ($variant === "close" ? "#ff8a8a" : "#ffda79")};
+    background: ${({ $variant }) =>
+      $variant === "close" ? "rgba(220, 60, 60, 0.85)" : "rgba(255, 218, 121, 0.2)"};
+    color: #ffffff;
+  }
+
+  &:hover svg {
+    transform: ${({ $variant }) => ($variant === "close" ? "rotate(90deg)" : "translateY(1px)")};
+  }
+
+  &:focus-visible {
+    outline: 2px solid #ffd001;
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    svg {
+      transition: none;
+    }
   }
 `;
 
@@ -307,16 +345,18 @@ const FaqAnswerOverlay = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 0;
   background: rgba(0, 0, 0, 0.72);
 `;
 
 const FaqAnswerModal = styled.div`
   position: relative;
-  width: min(900px, 100%);
+  box-sizing: border-box;
+  width: 95%;
+  max-width: none;
   max-height: 85vh;
   overflow-y: auto;
-  padding: 28px;
+  padding: 28px clamp(16px, 3vw, 32px);
   border-radius: 14px;
   color: #fff;
   background-color: #17252b;
@@ -330,11 +370,14 @@ const FaqAnswerModal = styled.div`
 `;
 
 const FaqAnswerTitle = styled.h2`
-  margin: 0 42px 18px 0;
+  margin: 0 ${({ $actions }) => ($actions > 1 ? "100px" : "52px")} 18px 0;
   font-size: 22px;
 `;
 
 const FaqAnswerText = styled.div`
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
   font-size: 15px;
   font-weight: 600;
   line-height: 1.6;
@@ -342,10 +385,12 @@ const FaqAnswerText = styled.div`
 `;
 
 const FaqAnswerActions = styled.div`
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
-  margin-top: 22px;
 `;
 
 const ImagePreviewOverlay = styled.div`
@@ -545,6 +590,22 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
   const [isClosing, setIsClosing] = useState(false);
   const customDays = useSelector((state) => state.calendar?.customDays || []);
   const [selectedFaq, setSelectedFaq] = useState(null);
+
+  // Закриваємо по кліку на підкладку лише якщо і натискання, і відпускання
+  // миші були саме на ній. Інакше виділення тексту, що «з'їхало» за край
+  // вікна, закривало модалку разом із виділенням.
+  // Окремий прапорець для кожної підкладки: mousedown спливає до батьківських
+  const backdropPressRef = useRef({});
+  const backdropProps = (key, onBackdropClick) => ({
+    onMouseDown: (e) => {
+      backdropPressRef.current[key] = e.target === e.currentTarget;
+    },
+    onClick: (e) => {
+      const startedOnBackdrop = backdropPressRef.current[key] === true;
+      backdropPressRef.current[key] = false;
+      if (e.target === e.currentTarget && startedOnBackdrop) onBackdropClick();
+    },
+  });
   const [searchQuery, setSearchQuery] = useState("");
 
   const [previewImage, setPreviewImage] = useState(null);
@@ -727,7 +788,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
     });
 
   return (
-    <Overlay $isClosing={isClosing} onClick={handleClose}>
+    <Overlay $isClosing={isClosing} {...backdropProps("main", handleClose)}>
       <Content $isDarkMode={isDarkMode} $isClosing={isClosing} onClick={(e) => e.stopPropagation()}>
         <Conten $isDarkMode={isDarkMode}>
           <CloseBtn onClick={handleClose}>Зрозуміло!</CloseBtn>
@@ -824,25 +885,35 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
         </ScrollArea>
       </Content>
       {selectedFaq && (
-        <FaqAnswerOverlay onClick={() => setSelectedFaq(null)}>
+        <FaqAnswerOverlay {...backdropProps("answer", () => setSelectedFaq(null))}>
           <FaqAnswerModal
             $backgroundImage={selectedFaq.image}
             onClick={(e) => e.stopPropagation()}
           >
-            <PreviewCloseBtn onClick={() => setSelectedFaq(null)}>
-              &times;
-            </PreviewCloseBtn>
-            <FaqAnswerTitle>{selectedFaq.q}</FaqAnswerTitle>
-            <FaqAnswerText>{renderAnswerBlocks(selectedFaq)}</FaqAnswerText>
-            {selectedFaq.image && (
-              <FaqAnswerActions>
+            <FaqAnswerActions>
+              {selectedFaq.image && (
                 <AnswerActionButton
+                  type="button"
+                  $variant="download"
+                  aria-label="Скачати зображення"
+                  title="Скачати зображення"
                   onClick={() => handleDownloadImage(selectedFaq.image)}
                 >
-                  Скачати
+                  <FiDownload aria-hidden="true" />
                 </AnswerActionButton>
-              </FaqAnswerActions>
-            )}
+              )}
+              <AnswerActionButton
+                type="button"
+                $variant="close"
+                aria-label="Закрити"
+                title="Закрити (Esc)"
+                onClick={() => setSelectedFaq(null)}
+              >
+                <FiX aria-hidden="true" />
+              </AnswerActionButton>
+            </FaqAnswerActions>
+            <FaqAnswerTitle $actions={selectedFaq.image ? 2 : 1}>{selectedFaq.q}</FaqAnswerTitle>
+            <FaqAnswerText>{renderAnswerBlocks(selectedFaq)}</FaqAnswerText>
           </FaqAnswerModal>
         </FaqAnswerOverlay>
       )}

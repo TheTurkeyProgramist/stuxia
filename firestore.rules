@@ -1,0 +1,183 @@
+rules_version = '2';
+
+// Правила безпеки Firestore для «Стихії».
+// Ліміти тут перевіряє сервер Google, тож обійти їх з браузера чи скриптом не можна.
+// Доба рахується за UTC (request.time), час запису ставить сервер (serverTimestamp()).
+//
+// Добові ліміти на акаунт (поля в config/{uid}):
+//   settings          → settingsSyncCount / settingsSyncAt  — 100
+//   savedWeatherCards → cardsSyncCount    / cardsSyncAt     — 100
+//   mutedNews         → muteSyncCount     / muteSyncAt      — 30
+//   додавання карток  → cardAdditionsCount / cardAdditionsAt — 40
+//   скарги на новини  → reportCount       / reportAt        — 20
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Допоміжні функції ──────────────────────────────────────────────
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Справжній акаунт (Google, email), не анонімний вхід
+    function realAccount() {
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    // Поля, які змінює цей запис
+    function changedKeys() {
+      return resource == null
+        ? request.resource.data.keys().toSet()
+        : request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // Добовий лічильник. Якщо запис чіпає дані групи (dataKey) або сам лічильник:
+    //  • час (atKey) дорівнює часу сервера;
+    //  • лічильник — ціле від 1 до limit;
+    //  • у межах тієї ж доби (UTC) лічильник лише росте.
+    // Так за добу неможливо зробити більше limit записів цієї групи.
+    function counterOk(keys, dataKey, countKey, atKey, limit) {
+      let after = request.resource.data;
+      return !keys.hasAny([dataKey, countKey, atKey]) || (
+        atKey in after
+        && after[atKey] == request.time
+        && countKey in after
+        && after[countKey] is int
+        && after[countKey] >= 1
+        && after[countKey] <= limit
+        && (
+          resource == null
+          || !(atKey in resource.data)
+          || !(resource.data[atKey] is timestamp)
+          || resource.data[atKey].date() != request.time.date()
+          || !(countKey in resource.data)
+          || !(resource.data[countKey] is int)
+          || after[countKey] > resource.data[countKey]
+        )
+      );
+    }
+
+    // Рядок або null обмеженої довжини (адреси фонів)
+    function shortStringOrNull(map, key, maxLen) {
+      return !(key in map)
+        || map[key] == null
+        || (map[key] is string && map[key].size() <= maxLen);
+    }
+
+    function settingsOk() {
+      let s = request.resource.data.settings;
+      let before = resource == null ? {} : resource.data.get('settings', {});
+      return s is map
+        // Нові/змінені ключі — лише відомі (старі ключі в документі не заважають)
+        && s.diff(before).affectedKeys().hasOnly([
+          'isDarkMode', 'hiddenSections', 'weatherCardLayout', 'siteSections',
+          'isStickyBgMode', 'sectionThemes', 'heroBg', 'heroBg2', 'heroBg3',
+          'heroBgMode', 'bgRatings'
+        ])
+        && (!('hiddenSections' in s) || (s.hiddenSections is list && s.hiddenSections.size() <= 50))
+        && (!('siteSections' in s) || (s.siteSections is list && s.siteSections.size() <= 50))
+        && (!('sectionThemes' in s) || (s.sectionThemes is map && s.sectionThemes.size() <= 50))
+        && (!('bgRatings' in s) || (s.bgRatings is map && s.bgRatings.size() <= 2000))
+        && shortStringOrNull(s, 'heroBg', 2048)
+        && shortStringOrNull(s, 'heroBg2', 2048)
+        && shortStringOrNull(s, 'heroBg3', 2048)
+        && shortStringOrNull(s, 'heroBgMode', 32);
+    }
+
+    function configWriteOk() {
+      let keys = changedKeys();
+      let d = request.resource.data;
+      return keys.hasOnly([
+          'settings', 'settingsSyncCount', 'settingsSyncAt',
+          'savedWeatherCards', 'cardsSyncCount', 'cardsSyncAt',
+          'mutedNews', 'muteSyncCount', 'muteSyncAt',
+          'cardAdditionsCount', 'cardAdditionsAt',
+          'reportCount', 'reportAt'
+        ])
+        && counterOk(keys, 'settings', 'settingsSyncCount', 'settingsSyncAt', 100)
+        && counterOk(keys, 'savedWeatherCards', 'cardsSyncCount', 'cardsSyncAt', 100)
+        && counterOk(keys, 'mutedNews', 'muteSyncCount', 'muteSyncAt', 30)
+        && counterOk(keys, 'cardAdditionsCount', 'cardAdditionsCount', 'cardAdditionsAt', 40)
+        && counterOk(keys, 'reportCount', 'reportCount', 'reportAt', 20)
+        && (!keys.hasAny(['settings']) || settingsOk())
+        && (!keys.hasAny(['savedWeatherCards'])
+            || (d.savedWeatherCards is list && d.savedWeatherCards.size() <= 9))
+        && (!keys.hasAny(['mutedNews'])
+            || (d.mutedNews is list && d.mutedNews.size() <= 1000));
+    }
+
+    // Скарга: додається/оновлюється рівно один запис — свій uid з часом сервера,
+    // не частіше ніж раз на 24 год. Разом зі скаргою в тій самій транзакції
+    // має зрости лічильник скарг у config/{uid} (ліміт 20 на добу).
+    function reporterOk() {
+      let before = resource == null ? {} : resource.data.get('reporters', {});
+      let after = request.resource.data.reporters;
+      let me = request.auth.uid;
+      return after is map
+        && after.diff(before).affectedKeys() == [me].toSet()
+        && after[me] == request.time
+        && (!(me in before) || before[me] < request.time - duration.value(24, 'h'));
+    }
+
+    function reportCounted() {
+      return getAfter(/databases/$(database)/documents/config/$(request.auth.uid))
+        .data.get('reportAt', null) == request.time;
+    }
+
+    // ── Колекції ───────────────────────────────────────────────────────
+
+    // Глобальна конфігурація (техроботи) — змінюється лише з консолі Firebase
+    match /config/global {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Дані акаунта: читає й пише лише власник; видаляти не можна
+    // (інакше «видалив і створив заново» обнуляло б лічильники)
+    match /config/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid) && uid != 'global' && configWriteOk();
+      allow delete: if false;
+    }
+
+    // Колишнє місце заглушених новин — тепер вони в config/{uid}
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // Клієнт сюди не пише
+    match /global/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /news_reports/{newsId} {
+      allow read: if true;
+      allow create, update: if realAccount()
+        && changedKeys().hasOnly(['reporters'])
+        && reporterOk()
+        && reportCounted();
+      allow delete: if false;
+    }
+
+    match /rss_reports/{sourceId} {
+      allow read: if true;
+      allow create, update: if realAccount()
+        && changedKeys().hasOnly(['reporters', 'name'])
+        && reporterOk()
+        && reportCounted()
+        // Назву джерела можна задати лише один раз
+        && (!changedKeys().hasAny(['name'])
+            || ((resource == null || !('name' in resource.data))
+                && request.resource.data.name is string
+                && request.resource.data.name.size() <= 100));
+      allow delete: if false;
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import styled, { keyframes } from "styled-components";
 import localforage from "localforage";
 import toast from "react-hot-toast";
@@ -490,8 +491,16 @@ const FullscreenViewer = ({ bg, onClose, onDownload }) => {
   const srcUrl = bg.src instanceof Blob ? blobUrl : bg.src;
   const btnStyle = { background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "8px", width: "40px", height: "40px", color: "#fff", fontSize: "20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
 
-  return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+  // Портал у body: вікно модалки має transform (анімація появи) і прокрутку,
+  // тож position: fixed усередині нього рахувався б від модалки, а не від екрана
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={bg.name ? `Перегляд фону: ${bg.name}` : "Перегляд фону"}
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "#000", zIndex: 300000, display: "flex", alignItems: "center", justifyContent: "center" }}
+    >
       {srcUrl && (isVideoSource(bg.src) ? (
         <video src={srcUrl} autoPlay muted loop playsInline onClick={(e) => e.stopPropagation()} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
       ) : (
@@ -501,7 +510,8 @@ const FullscreenViewer = ({ bg, onClose, onDownload }) => {
         <button onClick={(e) => { e.stopPropagation(); onDownload(bg); }} style={btnStyle} aria-label="Скачати"><FiDownload /></button>
         <button onClick={onClose} style={btnStyle} aria-label="Закрити"><FiX /></button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
@@ -519,18 +529,45 @@ const VideoThumbnail = React.memo(({ bg, onClick }) => {
     }
   }, [bg?.src]);
 
-  const srcUrl =
+  const baseUrl =
     bg?.src instanceof Blob
       ? blobUrl
       : typeof bg?.src === "string"
       ? bg.src
       : undefined;
 
+  // Перший кадр як прев'ю: щойно картка в полі зору, вантажимо лише метадані
+  // й початок відео (#t=0.1), щоб замість сірого квадрата був кадр.
+  // Повне відео, як і раніше, вантажиться лише при наведенні.
+  const [isNearView, setIsNearView] = useState(false);
+  React.useEffect(() => {
+    const el = videoRef.current;
+    if (!el || isNearView) return undefined;
+    if (typeof IntersectionObserver === "undefined") {
+      setIsNearView(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsNearView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isNearView]);
+
+  const PREVIEW_TIME = 0.1;
+  const srcUrl = baseUrl && isNearView ? `${baseUrl}#t=${PREVIEW_TIME}` : undefined;
+
   return (
     <video
       ref={videoRef}
       src={srcUrl}
-      preload="none"
+      preload={isNearView ? "metadata" : "none"}
       muted
       playsInline
       style={{
@@ -541,7 +578,8 @@ const VideoThumbnail = React.memo(({ bg, onClick }) => {
         background: "#111",
       }}
       onMouseEnter={() => {
-        if (videoRef.current) {
+        if (!isNearView) setIsNearView(true);
+        if (videoRef.current && srcUrl) {
           if (videoRef.current.preload !== "auto") {
             videoRef.current.preload = "auto";
           }
@@ -552,7 +590,8 @@ const VideoThumbnail = React.memo(({ bg, onClick }) => {
       onMouseLeave={() => {
         if (videoRef.current) {
           videoRef.current.pause();
-          videoRef.current.currentTime = 0;
+          // Повертаємось до кадру-прев'ю, а не до порожнього початку
+          videoRef.current.currentTime = PREVIEW_TIME;
         }
       }}
       onClick={onClick}

@@ -43,6 +43,22 @@ import toast from "react-hot-toast";
 import { hasBannedContent, isNewsFilterEnabled } from "../../utils/contentFilter";
 import { loadFirebase, listCollection } from "../../firebaseLazy";
 import {
+  CLOUD_LIMITS,
+  usedTodayFromCloud,
+  writeWithDailyCounter,
+} from "../../utils/cloudCounter";
+import {
+  MUTE_SYNC_DAILY_LIMIT,
+  MUTE_PENDING_KEY,
+  MUTE_COUNTER_KEY,
+  getTodayKey,
+  addPendingOp,
+  applyPending,
+  countForToday,
+  toDayKey,
+  MUTED_NEWS_MAX,
+} from "../../utils/muteSync";
+import {
   useFloating,
   autoUpdate,
   offset,
@@ -722,6 +738,14 @@ const SettingsIconSwap = styled.span`
   }
 `;
 
+// Лічильник синхронізації заглушених новин (ліміт на добу)
+const MuteSyncHint = styled.span`
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: ${(p) => (p.$exhausted ? "#ffb36c" : "rgba(255, 255, 255, 0.6)")};
+`;
+
 const NewsSettingsItem = styled.button`
   display: flex;
   flex-direction: column;
@@ -855,6 +879,7 @@ const NewsCard = ({
   onReportClick,
   onMuteClick,
   onUnmuteClick,
+  muteSyncInfo,
 }) => {
   const cardRef = useRef(null);
   const [isVisible, setIsVisible] = useState(item.isNew);
@@ -982,6 +1007,16 @@ const NewsCard = ({
           >
             Розглушити
           </button>
+          {muteSyncInfo && (
+            <MuteSyncHint
+              $exhausted={muteSyncInfo.used >= muteSyncInfo.limit}
+              style={{ marginTop: "8px", background: "rgba(0,0,0,0.35)", padding: "3px 8px", borderRadius: "999px" }}
+            >
+              {muteSyncInfo.used >= muteSyncInfo.limit
+                ? `Ліміт ${muteSyncInfo.limit}/${muteSyncInfo.limit} — зміни лише на цьому пристрої`
+                : `Синхронізація: ${muteSyncInfo.used}/${muteSyncInfo.limit} за добу`}
+            </MuteSyncHint>
+          )}
         </BlockOverlay>
       </Card>
     );
@@ -1092,6 +1127,13 @@ const NewsCard = ({
                 }}
               >
                 <MdOutlineReportOff /> Заглушити
+                {muteSyncInfo && (
+                  <MuteSyncHint $exhausted={muteSyncInfo.used >= muteSyncInfo.limit}>
+                    {muteSyncInfo.used >= muteSyncInfo.limit
+                      ? "Лише на цьому пристрої"
+                      : `Синхронізація ${muteSyncInfo.used}/${muteSyncInfo.limit}`}
+                  </MuteSyncHint>
+                )}
               </NewsSettingsItem>
             </NewsSettingsMenu>
           )}
@@ -1379,6 +1421,38 @@ const FilteredNewsCounter = styled.p`
   line-height: 1.4;
   text-align: center;
 `;
+
+// ── Скарги ───────────────────────────────────────────────────────────────
+// Новий формат: reporters: { uid: час сервера } (Timestamp у SDK, ISO-рядок у REST).
+// Старий формат: reports: [{ uid, timestamp }] — враховуємо, доки не застаріє.
+const REPORT_WINDOW_MS = 24 * 60 * 60 * 1000;
+const reportTimeMs = (value) => {
+  if (!value) return 0;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (typeof value === "number") return value;
+  if (typeof value === "object" && "timestamp" in value) return Number(value.timestamp) || 0;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+// Скільки різних акаунтів поскаржилось за останню добу
+const countRecentReports = (data, now = Date.now()) => {
+  if (!data) return 0;
+  const uids = new Set();
+  Object.entries(data.reporters || {}).forEach(([uid, ts]) => {
+    if (now - reportTimeMs(ts) < REPORT_WINDOW_MS) uids.add(uid);
+  });
+  (data.reports || []).forEach((r, idx) => {
+    if (now - reportTimeMs(r) < REPORT_WINDOW_MS) uids.add(r?.uid || `legacy-${idx}`);
+  });
+  return uids.size;
+};
+const reportedWithinDay = (data, uid, now = Date.now()) => {
+  if (!data) return false;
+  if (data.reporters?.[uid] && now - reportTimeMs(data.reporters[uid]) < REPORT_WINDOW_MS) return true;
+  return (data.reports || []).some(
+    (r) => r?.uid === uid && now - reportTimeMs(r) < REPORT_WINDOW_MS,
+  );
+};
 
 const getLocalDateKey = () => {
   const date = new Date();
@@ -1933,6 +2007,16 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   const [blockedSources, setBlockedSources] = useState([]);
   const [showBlacklist, setShowBlacklist] = useState(false);
   const [mutedNewsUrls, setMutedNewsUrls] = useState([]);
+  const mutedNewsRef = useRef([]);
+  mutedNewsRef.current = mutedNewsUrls;
+  const syncMutedEnabled = Boolean(user?.syncMutedNews && user?.uid);
+  const [muteSyncUsed, setMuteSyncUsed] = useState(0);
+  const muteSyncUsedRef = useRef(0);
+  muteSyncUsedRef.current = muteSyncUsed;
+  const muteSyncDayRef = useRef(null); // доба (UTC), до якої належить лічильник
+  const muteSyncInfo = syncMutedEnabled
+    ? { used: muteSyncUsed, limit: MUTE_SYNC_DAILY_LIMIT }
+    : null;
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // 1. Стан розмонтування для Memory Leak Protection
@@ -1974,20 +2058,49 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     loadFilteredNewsCount();
   }, []);
 
+  // Заглушені новини: повний список завжди лежить на пристрої (muted_news_urls).
+  // Якщо синхронізацію увімкнено — беремо хмарний список з config/{uid} і
+  // накладаємо на нього локальні дії, що не вмістились у добовий ліміт.
   useEffect(() => {
+    let cancelled = false;
     const initMutedNews = async () => {
-      if (user?.syncMutedNews && user?.mutedNews) {
-        setMutedNewsUrls(user.mutedNews);
-      } else {
-        try {
-          const localMuted =
-            (await localforage.getItem("muted_news_urls")) || [];
-          setMutedNewsUrls(localMuted);
-        } catch (err) {}
+      let localMuted = [];
+      try {
+        localMuted = (await localforage.getItem("muted_news_urls")) || [];
+      } catch (err) {}
+      if (!cancelled) setMutedNewsUrls(localMuted);
+
+      if (!syncMutedEnabled) return;
+      try {
+        const [pending, localCounter] = await Promise.all([
+          localforage.getItem(MUTE_PENDING_KEY),
+          localforage.getItem(MUTE_COUNTER_KEY),
+        ]);
+        const { db, doc, getDoc } = await loadFirebase();
+        const snap = await getDoc(doc(db, "config", user.uid));
+        const cloud = snap.exists() ? snap.data() : {};
+        const cloudCount = countForToday(
+          { date: toDayKey(cloud.muteSyncAt), count: cloud.muteSyncCount },
+          user.uid,
+        );
+        const used = Math.max(cloudCount, countForToday(localCounter, user.uid));
+        if (cancelled) return;
+        muteSyncDayRef.current = getTodayKey();
+        setMuteSyncUsed(used);
+        if (Array.isArray(cloud.mutedNews)) {
+          const merged = applyPending(cloud.mutedNews, pending);
+          setMutedNewsUrls(merged);
+          localforage.setItem("muted_news_urls", merged).catch(() => {});
+        }
+      } catch (err) {
+        console.warn("Не вдалося завантажити заглушені новини з хмари", err);
       }
     };
     initMutedNews();
-  }, [user?.syncMutedNews, user?.mutedNews]);
+    return () => {
+      cancelled = true;
+    };
+  }, [syncMutedEnabled, user?.uid]);
 
   useEffect(() => {
     if (user?.newsAutoScroll !== true) return;
@@ -2064,27 +2177,16 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           ])
         ).map((docs) => docs.map((d) => ({ id: d.id, data: () => d.data })));
         const now = Date.now();
-        const oneDay = 24 * 60 * 60 * 1000;
 
+        // Рахуємо різні акаунти за останню добу (новий і старий формат скарг)
         newsSnapshot.forEach((docSnap) => {
-          if (
-            (docSnap.data().reports || []).filter((ts) => {
-              const time = typeof ts === "object" ? ts.timestamp : ts;
-              return now - time < oneDay;
-            }).length >= 10
-          )
-            bNews.push(docSnap.id);
+          if (countRecentReports(docSnap.data(), now) >= 10) bNews.push(docSnap.id);
         });
 
         const blockedSourcesArr = [];
         rssSnapshot.forEach((docSnap) => {
           const data = docSnap.data();
-          if (
-            (data.reports || []).filter((ts) => {
-              const time = typeof ts === "object" ? ts.timestamp : ts;
-              return now - time < oneDay;
-            }).length >= 20
-          ) {
+          if (countRecentReports(data, now) >= 20) {
             if (UNBLOCKABLE_SOURCE_URLS.has(decodeURIComponent(docSnap.id)))
               return;
             blockedSourcesArr.push({
@@ -2693,45 +2795,67 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       return;
 
     try {
-      const { auth, db, signInAnonymously, doc, getDoc, setDoc, updateDoc, arrayUnion } =
-        await loadFirebase();
-      const firebaseUser =
-        auth.currentUser || (await signInAnonymously(auth)).user;
-      const reportUid = user.uid || firebaseUser.uid;
+      const { auth, db, doc, getDoc, writeBatch, serverTimestamp } = await loadFirebase();
+      if (typeof auth.authStateReady === "function") await auth.authStateReady();
+      const firebaseUser = auth.currentUser;
+      // Скарги лише від справжніх акаунтів: анонімні входи сервер відхиляє
+      if (!firebaseUser || firebaseUser.isAnonymous) {
+        alert("Щоб поскаржитися, увійдіть в акаунт ще раз.");
+        return;
+      }
+      const reportUid = firebaseUser.uid;
       const newsId = encodeURIComponent(item.link);
       const sourceId = encodeURIComponent(item.sourceUrl);
-      const now = Date.now();
-      const newReport = { uid: reportUid, timestamp: now };
 
+      // Одна скарга від акаунта на добу. Формат: reporters: { uid: час сервера } —
+      // так один акаунт не може «накидати» кілька голосів (правила Firestore)
       const newsRef = doc(db, "news_reports", newsId);
-      const newsDoc = await getDoc(newsRef);
-      if (newsDoc.exists()) {
-        const reports = newsDoc.data().reports || [];
-        const userReportedRecently = reports.some(
-          (r) => r.uid === reportUid && now - r.timestamp < 24 * 60 * 60 * 1000,
-        );
-        if (userReportedRecently) {
-          alert("Ви вже скаржилися на цю новину сьогодні.");
-          return;
-        }
-        await updateDoc(newsRef, { reports: arrayUnion(newReport) });
-      } else {
-        await setDoc(newsRef, { reports: [newReport] });
+      const rssRef = doc(db, "rss_reports", sourceId);
+      const configRef = doc(db, "config", reportUid);
+      const [newsDoc, rssDoc, configDoc] = await Promise.all([
+        getDoc(newsRef),
+        getDoc(rssRef),
+        getDoc(configRef),
+      ]);
+      if (reportedWithinDay(newsDoc.exists() ? newsDoc.data() : null, reportUid)) {
+        alert("Ви вже скаржилися на цю новину сьогодні.");
+        return;
+      }
+      // Добовий ліміт скарг на акаунт (перевіряють і правила Firestore)
+      const reportsUsed = usedTodayFromCloud(
+        configDoc.exists() ? configDoc.data() : {},
+        CLOUD_LIMITS.reports,
+      );
+      if (reportsUsed >= CLOUD_LIMITS.reports.limit) {
+        alert(`Можна подати не більше ${CLOUD_LIMITS.reports.limit} скарг на добу.`);
+        return;
       }
 
-      const rssRef = doc(db, "rss_reports", sourceId);
-      const rssDoc = await getDoc(rssRef);
-      if (rssDoc.exists()) {
-        const reports = rssDoc.data().reports || [];
-        const userReportedRecently = reports.some(
-          (r) => r.uid === reportUid && now - r.timestamp < 24 * 60 * 60 * 1000,
+      // Скарга й лічильник — однією транзакцією: правила перевіряють, що
+      // разом зі скаргою лічильник у config/{uid} збільшився
+      const batch = writeBatch(db);
+      batch.set(newsRef, { reporters: { [reportUid]: serverTimestamp() } }, { merge: true });
+      const rssData = rssDoc.exists() ? rssDoc.data() : null;
+      if (!reportedWithinDay(rssData, reportUid)) {
+        batch.set(
+          rssRef,
+          {
+            reporters: { [reportUid]: serverTimestamp() },
+            // Назву джерела записуємо лише один раз, при першій скарзі
+            ...(rssData?.name ? {} : { name: String(item.sourceName || "Джерело").slice(0, 100) }),
+          },
+          { merge: true },
         );
-        if (!userReportedRecently) {
-          await updateDoc(rssRef, { reports: arrayUnion(newReport) });
-        }
-      } else {
-        await setDoc(rssRef, { reports: [newReport], name: item.sourceName });
       }
+      batch.set(
+        configRef,
+        {
+          [CLOUD_LIMITS.reports.countKey]: reportsUsed + 1,
+          [CLOUD_LIMITS.reports.atKey]: serverTimestamp(),
+        },
+        { merge: true },
+      );
+      await batch.commit();
 
       alert("Скаргу прийнято. Дякуємо!");
       getData(true, true);
@@ -2741,44 +2865,77 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     }
   };
 
+  // Заглушити / розглушити: обидві дії рахуються в добовий ліміт синхронізації
+  const applyMuteChange = async (link, op) => {
+    const current = mutedNewsRef.current;
+    const newMuted = (
+      op === "mute"
+        ? [...new Set([...current, link])]
+        : current.filter((l) => l !== link)
+    ).slice(-MUTED_NEWS_MAX); // найстаріші відкидаємо (ліміт і в правилах Firestore)
+    mutedNewsRef.current = newMuted;
+    setMutedNewsUrls(newMuted);
+    try {
+      await localforage.setItem("muted_news_urls", newMuted);
+    } catch (err) {}
+
+    if (!syncMutedEnabled) return;
+
+    const savePending = async () => {
+      try {
+        const pending = await localforage.getItem(MUTE_PENDING_KEY);
+        await localforage.setItem(MUTE_PENDING_KEY, addPendingOp(pending, link, op));
+      } catch (err) {}
+    };
+
+    // Лічильник у форматі хелпера; нова доба (UTC) — з нуля
+    const counterRef = {
+      current: { date: muteSyncDayRef.current, count: muteSyncUsedRef.current },
+    };
+    try {
+      // Пишемо повний список — разом з ним підтягуються й дії, що були понад ліміт
+      const result = await writeWithDailyCounter({
+        uid: user.uid,
+        data: { mutedNews: newMuted },
+        limitConfig: CLOUD_LIMITS.mute,
+        counterRef,
+        storageKey: MUTE_COUNTER_KEY,
+      });
+      if (result.ok) {
+        await localforage.removeItem(MUTE_PENDING_KEY);
+        if (result.count === MUTE_SYNC_DAILY_LIMIT) {
+          toast(
+            `Використано всі ${MUTE_SYNC_DAILY_LIMIT} синхронізацій на сьогодні. Далі зміни зберігатимуться лише на цьому пристрої.`,
+            { id: "mute-sync-limit", duration: 4500 },
+          );
+        }
+      } else {
+        await savePending();
+        toast(
+          `Ліміт синхронізації вичерпано (${MUTE_SYNC_DAILY_LIMIT}/${MUTE_SYNC_DAILY_LIMIT} за добу). Зміну збережено лише на цьому пристрої.`,
+          { id: "mute-sync-limit", duration: 4500 },
+        );
+      }
+    } catch (err) {
+      console.warn("Помилка синхронізації заглушених новин", err);
+      await savePending();
+    } finally {
+      muteSyncDayRef.current = counterRef.current.date;
+      muteSyncUsedRef.current = counterRef.current.count;
+      setMuteSyncUsed(counterRef.current.count);
+    }
+  };
+
   const handleMute = async (item, e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    const newMuted = [...mutedNewsUrls, item.link];
-    setMutedNewsUrls(newMuted);
-
-    if (user?.syncMutedNews && user?.uid) {
-      try {
-        const { db, doc, updateDoc } = await loadFirebase();
-        await updateDoc(doc(db, "users", user.uid), { mutedNews: newMuted });
-      } catch (err) {
-        console.warn("Помилка збереження заглушеної новини в Firebase", err);
-      }
-    } else {
-      try {
-        await localforage.setItem("muted_news_urls", newMuted);
-      } catch (err) {}
-    }
+    await applyMuteChange(item.link, "mute");
   };
 
   const handleUnmute = async (item) => {
-    const newMuted = mutedNewsUrls.filter((link) => link !== item.link);
-    setMutedNewsUrls(newMuted);
-
-    if (user?.syncMutedNews && user?.uid) {
-      try {
-        const { db, doc, updateDoc } = await loadFirebase();
-        await updateDoc(doc(db, "users", user.uid), { mutedNews: newMuted });
-      } catch (err) {
-        console.warn("Помилка розглушення новини в Firebase", err);
-      }
-    } else {
-      try {
-        await localforage.setItem("muted_news_urls", newMuted);
-      } catch (err) {}
-    }
+    await applyMuteChange(item.link, "unmute");
   };
 
   const handleRemoveSource = async (urlToRemove) => {
@@ -3008,6 +3165,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           onReportClick={handleReport}
           onMuteClick={handleMute}
           onUnmuteClick={handleUnmute}
+          muteSyncInfo={muteSyncInfo}
         />
       </CarouselSlide>
     ))}
@@ -3057,7 +3215,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         <InfoModal
           isOpen={isHelpModalOpen}
           onClose={() => setIsHelpModalOpen(false)}
-          initialFaqQuestion="Навчання по управлінню новинами"
+          initialFaqQuestion="Новини: покроковий посібник"
         />
       )}
       {showBlacklist && (
@@ -3144,6 +3302,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                       onReportClick={handleReport}
                       onMuteClick={handleMute}
                       onUnmuteClick={handleUnmute}
+                      muteSyncInfo={muteSyncInfo}
                     />
                   ))}
                 </MoreNewsGrid>

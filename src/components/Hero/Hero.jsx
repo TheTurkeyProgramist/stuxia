@@ -8,7 +8,8 @@ import React, {
 import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { createPortal } from "react-dom";
-import { FaMountainCity } from "react-icons/fa6";
+import { FaMountainCity, FaTemperatureArrowUp } from "react-icons/fa6";
+import { FaSnowflake, FaWind } from "react-icons/fa";
 import { FaMapLocationDot } from "react-icons/fa6";
 import planes from "../../media/third-party/services/planes.webp";
 import castle from "../../media/backgrounds/scenes/turkey-in-dragon-museum.webp"
@@ -447,9 +448,20 @@ const BgLayer = React.memo((props) => {
   const videoStart = $videoStart ?? 0;
   const videoEnd = $videoEnd ?? null; // null = play to natural end
 
+  // Заглушка: якщо фон не завантажився (файл перейменовано, старий шлях зі
+  // збереження чи синхронізації), показуємо стандартний «Туманний ліс»
+  const [failedSrc, setFailedSrc] = useState(null);
+  const hasFailed = Boolean(url) && failedSrc === url;
+  const markFailed = () => {
+    if (url && failedSrc !== url) {
+      console.warn("Фон не завантажився, показуємо заглушку:", url);
+      setFailedSrc(url);
+    }
+  };
+
   return (
     <BgLayerStyled ref={layerRef} data-page-bg="" {...props}>
-      {isVideo ? (
+      {isVideo && !hasFailed ? (
         <video
           ref={videoRef}
           src={url}
@@ -461,6 +473,7 @@ const BgLayer = React.memo((props) => {
           playsInline
           disablePictureInPicture
           disableRemotePlayback
+          onError={markFailed}
           onCanPlay={(e) => {
             if (shouldPlay) {
               const vid = e.target;
@@ -487,11 +500,15 @@ const BgLayer = React.memo((props) => {
         />
       ) : (
         <img
-          src={url || hills}
+          src={hasFailed || !url ? hills : url}
           alt="Геройський фон"
           fetchPriority={$active ? "high" : "low"}
           loading={$active ? "eager" : "lazy"}
           decoding="async"
+          onError={() => {
+            // Не зациклюємось, якщо раптом не вантажиться і сама заглушка
+            if (!hasFailed && url && url !== hills) markFailed();
+          }}
           onLoad={(e) => {
             // Одразу декодуємо картинку, щоб текстура була готова для GPU
             // до першого показу (без підвисання при зміні фону).
@@ -988,6 +1005,68 @@ const SuggestionItem = styled.button`
     color: white;
   }
 `;
+
+const SuggestionRow = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+`;
+
+const SuggestionText = styled.span`
+  min-width: 0;
+  flex: 1;
+`;
+
+// Мітка небезпечної погоди в підказці: червона — сьогодні, помаранчева — найближчі 2 дні
+const DangerBadge = styled.span`
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 52%;
+  margin-right: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: ${(p) => (p.$level === "now" ? "#fff" : "#1a0800")};
+  background: ${(p) =>
+    p.$level === "now"
+      ? "linear-gradient(135deg, #e5484d, #a8202a)"
+      : "linear-gradient(135deg, #ffca91, #ff9d48)"};
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+
+  svg {
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+`;
+
+const DANGER_DAY_LABELS = ["Сьогодні", "Завтра", "Післязавтра"];
+const DANGER_REASON_ICONS = {
+  heat: FaTemperatureArrowUp,
+  frost: FaSnowflake,
+  wind: FaWind,
+  uv: FaSun,
+};
+const formatDangerReason = ({ type, value }) => {
+  if (type === "heat") return `спека до ${value}°C`;
+  if (type === "frost") return `мороз до ${String(value).replace("-", "−")}°C`;
+  if (type === "wind") return `вітер ${value} м/с`;
+  return `УФ-індекс ${value}`;
+};
 
 // Панель над підказками: ліміти карток, скільки міст уже додано й кнопка «Готово»
 const AddedBar = styled.div`
@@ -1764,6 +1843,53 @@ const Hero = ({
 
   const getCityKey = (city) => `${city.lat.toFixed(3)},${city.lon.toFixed(3)}`;
 
+  // Мітки небезпеки для підказок: перевіряємо лише нові міста одним запитом, кеш 10 хв
+  const [dangerByKey, setDangerByKey] = useState({});
+  const dangerCacheRef = useRef(new Map());
+  useEffect(() => {
+    if (!showList || typeof checkWeatherDanger !== "function" || suggestions.length === 0) return;
+    const now = Date.now();
+    const DANGER_TTL = 10 * 60 * 1000;
+    const missing = suggestions.filter((city) => {
+      const cached = dangerCacheRef.current.get(getCityKey(city));
+      return !cached || now - cached.at > DANGER_TTL;
+    });
+    if (missing.length === 0) return;
+
+    // Позначаємо як «у роботі», щоб паралельні ефекти не дублювали запит
+    missing.forEach((city) =>
+      dangerCacheRef.current.set(getCityKey(city), { at: now, value: null }),
+    );
+    checkWeatherDanger(missing.map(({ lat, lon }) => ({ lat, lon })))
+      .then((results) => {
+        const updates = {};
+        missing.forEach((city, idx) => {
+          const key = getCityKey(city);
+          const value = results?.[idx] ?? null;
+          dangerCacheRef.current.set(key, { at: Date.now(), value });
+          updates[key] = value;
+        });
+        setDangerByKey((prev) => ({ ...prev, ...updates }));
+      })
+      .catch(() => {});
+  }, [suggestions, showList, checkWeatherDanger]);
+
+  const renderDangerBadge = (city) => {
+    const danger = dangerByKey[getCityKey(city)];
+    if (!danger?.reasons?.length) return null;
+    const [mainReason, ...rest] = danger.reasons;
+    const Icon = DANGER_REASON_ICONS[mainReason.type] || FaWind;
+    const day = DANGER_DAY_LABELS[danger.dayIndex] || "Найближчі дні";
+    const fullText = `${day}: ${danger.reasons.map(formatDangerReason).join(", ")}`;
+    return (
+      <DangerBadge $level={danger.level} title={fullText} aria-label={`Небезпечна погода. ${fullText}`}>
+        <Icon aria-hidden="true" />
+        {day}: {formatDangerReason(mainReason)}
+        {rest.length > 0 && ` +${rest.length}`}
+      </DangerBadge>
+    );
+  };
+
   // Список не закривається: можна додати кілька міст поспіль, потім натиснути «Готово»
   const handleSelect = async (city) => {
     const key = getCityKey(city);
@@ -2109,13 +2235,18 @@ const Hero = ({
                         }}
                         onClick={() => handleSelect(city)}
                       >
-                        {addedCityKeys.includes(getCityKey(city)) && "✓ "}
-                         {city.name}
-                        {city.state ? `, ${city.state}` : ""} ({city.country})
-                        <br />
-                        <span style={{ fontSize: "0.85em", color: "#fffcfc" }}>
-                          Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°
-                        </span>
+                        <SuggestionRow>
+                          <SuggestionText>
+                            {addedCityKeys.includes(getCityKey(city)) && "✓ "}
+                            {city.name}
+                            {city.state ? `, ${city.state}` : ""} ({city.country})
+                            <br />
+                            <span style={{ fontSize: "0.85em", color: "#fffcfc" }}>
+                              Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°
+                            </span>
+                          </SuggestionText>
+                          {renderDangerBadge(city)}
+                        </SuggestionRow>
                       </SuggestionItem>
                     ))}
 

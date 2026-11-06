@@ -84,6 +84,7 @@ import filterExampleImg from "../../media/backgrounds/scenes/mountains.webp";
 import { useDecorator } from "../Decorator/DecoratorContext.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { isNewsFilterEnabled, setNewsFilterEnabled } from "../../utils/contentFilter";
+import { MUTE_SYNC_DAILY_LIMIT } from "../../utils/muteSync";
 
 // Keyframe Animations
 const fadeIn = keyframes`
@@ -1723,7 +1724,11 @@ const UserSettingsModal = ({
                         <CardIconBox><FiGlobe /></CardIconBox>
                         <CardInfo>
                           <CardTitle>Синхронізація заглушених новин</CardTitle>
-                          <CardDescription>Синхронізувати приховані новини між усіма пристроями</CardDescription>
+                          <CardDescription>
+                            Синхронізувати приховані новини між усіма пристроями. Не більше {MUTE_SYNC_DAILY_LIMIT} дій на добу —
+                            «Заглушити» і «Розглушити» рахуються обидві. Те, що понад ліміт, зберігається лише на цьому пристрої
+                            й підтягнеться в хмару з наступною синхронізацією.
+                          </CardDescription>
                         </CardInfo>
                       </CardLeft>
                       <CardControl>

@@ -67,6 +67,22 @@ import { stripSecrets } from "./utils/passwordHash";
 import { getNow, syncClock } from "./utils/serverClock";
 import { useLanguageEffect } from "./i18n/useI18nHelpers.js";
 import toast from "react-hot-toast";
+import {
+  SETTINGS_SYNC_DAILY_LIMIT,
+  SETTINGS_SYNC_COUNTER_KEY,
+  SETTINGS_SYNC_PENDING_KEY,
+  SETTINGS_SYNC_DEBOUNCE_MS,
+  getTodayKey,
+  countForToday,
+  toDayKey,
+  stableStringify,
+  toFirestoreSafe,
+} from "./utils/settingsSync";
+import {
+  CLOUD_LIMITS,
+  usedTodayFromCloud,
+  writeWithDailyCounter,
+} from "./utils/cloudCounter";
 import { MotionConfig } from "framer-motion";
 import { useAnimationsDisabled, setAnimationsDisabled } from "./utils/animationsPref";
 import { aggregateHourlyByDay } from "./utils/dailyAggregates";
@@ -1601,6 +1617,11 @@ const App = () => {
     return () => clearTimeout(timer);
   }, [hasInteracted]);
   const [siteSections, setSiteSections] = useState([...DEFAULT_SITE_SECTIONS]);
+  const lastSavedCardsKeyRef = useRef(null);
+  // uid, для якого хмарні дані (config/{uid}) уже прочитано після входу
+  const cloudSettingsLoadedForRef = useRef(null);
+  // pushCardsToCloud оголошено нижче — беремо через ref, щоб не міняти порядок хуків
+  const pushCardsToCloudRef = useRef(null);
   useEffect(() => {
     if (isHydrated) {
       const cleanWeatherCards = sanitizeWeatherCards(weatherCards);
@@ -1608,50 +1629,156 @@ const App = () => {
         console.error("weather_cards persistence failed:", err);
       });
       if (userRef.current?.uid) {
-        const metadata = cleanWeatherCards.map((c) => ({
-          id: c.id,
-          isMain: c.isMain,
-          locationName: c.locationName,
-          lat: c.lat,
-          lon: c.lon,
-        }));
+        const metadata = toFirestoreSafe(
+          cleanWeatherCards.slice(0, MAX_CUSTOM_WEATHER_CARDS + 1).map((c) => ({
+            id: c.id,
+            isMain: c.isMain,
+            locationName: c.locationName,
+            lat: c.lat,
+            lon: c.lon,
+          })),
+        );
         const uid = userRef.current.uid;
-        loadFirebase()
-          .then(({ db, doc, setDoc }) =>
-            setDoc(doc(db, "config", uid), { savedWeatherCards: metadata }, { merge: true }),
-          )
-          .catch(console.error);
+        // Пишемо лише коли змінився сам список (назви, координати, порядок),
+        // а не після кожного щогодинного оновлення погоди
+        const metadataKey = `${uid}|${stableStringify(metadata)}`;
+        // Поки не прочитали хмару — не затираємо картки з інших пристроїв
+        if (
+          metadataKey !== lastSavedCardsKeyRef.current &&
+          cloudSettingsLoadedForRef.current === uid
+        ) {
+          lastSavedCardsKeyRef.current = metadataKey;
+          pushCardsToCloudRef.current?.(uid, metadata);
+        }
       }
     }
   }, [weatherCards, isHydrated]);
+
+  // ── Синхронізація налаштувань з акаунтом: до 100 записів на добу ──
+  const settingsSyncRef = useRef({ date: null, count: 0 }); // використано сьогодні
+  const lastSyncedSettingsRef = useRef(null); // стабільний JSON того, що вже в хмарі
+  const latestSettingsRef = useRef(null); // поточні налаштування для відправки
+  const settingsSyncTimerRef = useRef(null);
+  const settingsLimitToastDateRef = useRef(null);
+
+  const pushSettingsToCloud = useCallback(async () => {
+    const uid = userRef.current?.uid;
+    const settings = latestSettingsRef.current;
+    if (!uid || !settings) return;
+    // Поки не прочитали хмарні налаштування — не затираємо їх локальними
+    if (cloudSettingsLoadedForRef.current !== uid) return;
+
+    const json = stableStringify(settings);
+    if (json === lastSyncedSettingsRef.current) {
+      localforage.removeItem(SETTINGS_SYNC_PENDING_KEY).catch(() => {});
+      return;
+    }
+
+    const today = getTodayKey();
+    const markPending = () =>
+      localforage
+        .setItem(SETTINGS_SYNC_PENDING_KEY, { uid, date: today })
+        .catch(() => {});
+
+    try {
+      const result = await writeWithDailyCounter({
+        uid,
+        data: { settings },
+        limitConfig: CLOUD_LIMITS.settings,
+        counterRef: settingsSyncRef,
+        storageKey: SETTINGS_SYNC_COUNTER_KEY,
+      });
+      if (result.ok) {
+        lastSyncedSettingsRef.current = json;
+        localforage.removeItem(SETTINGS_SYNC_PENDING_KEY).catch(() => {});
+        return;
+      }
+      // Ліміт вичерпано — зміни лишаються на пристрої до наступної доби
+      markPending();
+      if (settingsLimitToastDateRef.current !== today) {
+        settingsLimitToastDateRef.current = today;
+        toast(
+          `Ліміт синхронізації налаштувань (${SETTINGS_SYNC_DAILY_LIMIT} на добу) вичерпано. Зміни збережено на цьому пристрої, в акаунт вони потраплять завтра.`,
+          { id: "settings-sync-limit", duration: 5000 },
+        );
+      }
+    } catch (e) {
+      console.error("Firestore settings sync failed:", e);
+      markPending();
+    }
+  }, []);
+
+  // ── Синхронізація списку карток погоди: до 100 записів на добу ──
+  const cardsSyncRef = useRef({ date: null, count: 0 });
+  const pushCardsToCloud = useCallback(async (uid, metadata) => {
+    try {
+      const result = await writeWithDailyCounter({
+        uid,
+        data: { savedWeatherCards: metadata },
+        limitConfig: CLOUD_LIMITS.cards,
+        counterRef: cardsSyncRef,
+      });
+      if (!result.ok) {
+        // Картки й так збережені на пристрої; в акаунт підуть з наступною зміною
+        lastSavedCardsKeyRef.current = null;
+        console.warn("Ліміт синхронізації карток погоди на сьогодні вичерпано");
+      }
+    } catch (e) {
+      lastSavedCardsKeyRef.current = null;
+      console.error("Firestore cards sync failed:", e);
+    }
+  }, []);
+  pushCardsToCloudRef.current = pushCardsToCloud;
 
   useEffect(() => {
     const syncFromFirestore = async () => {
       if (userRef.current?.uid && isHydrated) {
         try {
-          const { db, doc, getDoc, setDoc } = await loadFirebase();
+          const { db, doc, getDoc } = await loadFirebase();
           const userDocRef = doc(db, "config", userRef.current.uid);
           const userDoc = await getDoc(userDocRef);
           const cloudData = userDoc.exists() ? userDoc.data() : {};
-          const todayKey = new Date().toISOString().split("T")[0];
           setDailyCardAdditions(
-            cloudData.cardAdditionsDate === todayKey ? cloudData.cardAdditionsCount || 0 : 0,
+            toDayKey(cloudData.cardAdditionsAt) === getTodayKey()
+              ? cloudData.cardAdditionsCount || 0
+              : 0,
           );
+
+          // Лічильник синхронізації налаштувань: беремо більший з хмари й пристрою
+          const syncUid = userRef.current.uid;
+          const [localSettingsCounter, settingsPending] = await Promise.all([
+            localforage.getItem(SETTINGS_SYNC_COUNTER_KEY).catch(() => null),
+            localforage.getItem(SETTINGS_SYNC_PENDING_KEY).catch(() => null),
+          ]);
+          settingsSyncRef.current = {
+            date: getTodayKey(),
+            count: Math.max(
+              usedTodayFromCloud(cloudData, CLOUD_LIMITS.settings),
+              countForToday(localSettingsCounter, syncUid),
+            ),
+          };
+          cardsSyncRef.current = {
+            date: getTodayKey(),
+            count: usedTodayFromCloud(cloudData, CLOUD_LIMITS.cards),
+          };
+          // На пристрої є зміни, що не вмістились у ліміт, — вони новіші за хмарні
+          const hasPendingSettings = settingsPending?.uid === syncUid;
           if (!cloudData.savedWeatherCards && weatherCardsRef.current.length) {
             // Перший вхід: у хмарі ще немає карток — вивантажуємо локальні.
-            setDoc(
-              userDocRef,
-              {
-                savedWeatherCards: weatherCardsRef.current.map((c) => ({
-                  id: c.id,
-                  isMain: c.isMain,
-                  locationName: c.locationName,
-                  lat: c.lat,
-                  lon: c.lon,
-                })),
-              },
-              { merge: true },
-            ).catch(console.error);
+            pushCardsToCloud(
+              syncUid,
+              toFirestoreSafe(
+                weatherCardsRef.current
+                  .slice(0, MAX_CUSTOM_WEATHER_CARDS + 1)
+                  .map((c) => ({
+                    id: c.id,
+                    isMain: c.isMain,
+                    locationName: c.locationName,
+                    lat: c.lat,
+                    lon: c.lon,
+                  })),
+              ),
+            );
           }
           if (userDoc.exists()) {
             const data = userDoc.data();
@@ -1679,6 +1806,10 @@ const App = () => {
               });
             }
             if (data.settings) {
+              // Запам'ятовуємо, що вже лежить у хмарі, щоб не перезаписувати те саме
+              lastSyncedSettingsRef.current = stableStringify(data.settings);
+            }
+            if (data.settings && !hasPendingSettings) {
               const s = data.settings;
               if (s.isDarkMode !== undefined) setIsDarkMode(s.isDarkMode);
               if (s.hiddenSections) setHiddenSections(s.hiddenSections);
@@ -1709,6 +1840,13 @@ const App = () => {
                 }));
               }
             }
+          }
+
+          // Хмару прочитано — тепер можна відправляти зміни. Якщо на пристрої
+          // лишились невідправлені зміни (або в хмарі ще нічого немає), шлемо їх.
+          cloudSettingsLoadedForRef.current = syncUid;
+          if (hasPendingSettings || !cloudData.settings) {
+            pushSettingsToCloud();
           }
         } catch (e) {
           console.error("Error syncing from Firestore:", e);
@@ -1761,17 +1899,22 @@ const App = () => {
           siteSections,
           isStickyBgMode,
           sectionThemes,
-          heroBg: syncableBg(heroBg),
-          heroBg2: syncableBg(heroBg2),
           heroBg3: syncableBg(heroBg3),
           heroBgMode,
           bgRatings: syncableRatings,
         };
-        loadFirebase()
-          .then(({ db, doc, setDoc }) =>
-            setDoc(doc(db, "config", uid), { settings }, { merge: true }),
-          )
-          .catch((e) => console.error("Firestore settings sync failed:", e));
+        // У випадковому режимі фон міняється сам кожні кілька секунд —
+        // таку зміну не синхронізуємо (лишаємо в хмарі останній обраний вручну)
+        if (heroBgMode !== "random") {
+          settings.heroBg = syncableBg(heroBg);
+          settings.heroBg2 = syncableBg(heroBg2);
+        }
+        latestSettingsRef.current = toFirestoreSafe(settings);
+        // Кілька швидких змін поспіль — один запис (і одна позиція в добовому ліміті)
+        clearTimeout(settingsSyncTimerRef.current);
+        settingsSyncTimerRef.current = setTimeout(() => {
+          if (userRef.current?.uid === uid) pushSettingsToCloud();
+        }, SETTINGS_SYNC_DEBOUNCE_MS);
       }
     }
   }, [
@@ -2173,43 +2316,43 @@ const App = () => {
           // Незареєстровані користувачі не мають ліміту на 3 картки/тиждень
           if (userRef.current) {
             try {
-              const { db, doc, getDoc, setDoc } = await loadFirebase();
-              const userDocRef = doc(db, "config", userRef.current.uid);
-              const userDoc = await getDoc(userDocRef);
-              let data = userDoc.exists() ? userDoc.data() : {};
+              const { db, doc, getDoc } = await loadFirebase();
+              const uid = userRef.current.uid;
+              const userDoc = await getDoc(doc(db, "config", uid));
+              // Доба за UTC, як у правилах Firestore (час запису ставить сервер)
+              const counterRef = {
+                current: {
+                  date: getTodayKey(),
+                  count: usedTodayFromCloud(
+                    userDoc.exists() ? userDoc.data() : {},
+                    CLOUD_LIMITS.cardAdditions,
+                  ),
+                },
+              };
 
-              const today = new Date().toISOString().split("T")[0];
-              if (data.cardAdditionsDate !== today) {
-                data.cardAdditionsCount = 0;
-                data.cardAdditionsDate = today;
-              }
-
-              setDailyCardAdditions(data.cardAdditionsCount);
-              if (data.cardAdditionsCount >= MAX_DAILY_CARD_ADDITIONS) {
+              setDailyCardAdditions(counterRef.current.count);
+              const result = await writeWithDailyCounter({
+                uid,
+                data: {},
+                limitConfig: CLOUD_LIMITS.cardAdditions,
+                counterRef,
+              });
+              setDailyCardAdditions(counterRef.current.count);
+              if (!result.ok) {
                 alert(`Ви досягли ліміту в ${MAX_DAILY_CARD_ADDITIONS} карток на добу.`);
                 return false;
               }
-
-              data.cardAdditionsCount += 1;
-              setDailyCardAdditions(data.cardAdditionsCount);
-              await setDoc(
-                userDocRef,
-                {
-                  cardAdditionsCount: data.cardAdditionsCount,
-                  cardAdditionsDate: data.cardAdditionsDate,
-                },
-                { merge: true },
-              );
             } catch (e) {
               console.error("Помилка перевірки ліміту Firestore:", e);
             }
           }
         }
 
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm,uv_index,precipitation_probability&hourly=temperature_2m,uv_index,precipitation_probability,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset,wind_gusts_10m_max,apparent_temperature_max,apparent_temperature_min,snowfall_sum&timezone=auto&past_days=1&forecast_days=16`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm,uv_index,precipitation_probability&hourly=temperature_2m,uv_index,precipitation_probability,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset,wind_gusts_10m_max,apparent_temperature_max,apparent_temperature_min,snowfall_sum&wind_speed_unit=ms&timezone=auto&past_days=1&forecast_days=16`;
         console.log("Fetching weather from URL:", url);
         // Кеш відповіді Open-Meteo: 10 хв на пару координат
-        const cacheKey = `om_cache_${Number(targetLat).toFixed(2)},${Number(targetLon).toFixed(2)}`;
+        // v2: вітер у м/с (раніше API віддавав км/год)
+        const cacheKey = `om_cache_v2_${Number(targetLat).toFixed(2)},${Number(targetLon).toFixed(2)}`;
         let d = null;
         try {
           const cached = await localforage.getItem(cacheKey);
@@ -2348,6 +2491,7 @@ const App = () => {
           const newCardData = {
             id: id,
             isMain: isMain,
+            windUnit: "ms",
             // Київ за замовчуванням, коли GPS вимкнено або недоступний — картка покаже підказку
             isFallbackLocation: isMain && !!cityData?.isFallback,
             locationName:
@@ -2514,7 +2658,7 @@ const App = () => {
           const endDate = new Date(today);
           endDate.setDate(endDate.getDate() + 210);
           const fmt = (d) => d.toISOString().split("T")[0];
-          const seasonalUrl = `https://seasonal-api.open-meteo.com/v1/seasonal?latitude=${targetLat}&longitude=${targetLon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&start_date=${fmt(today)}&end_date=${fmt(endDate)}`;
+          const seasonalUrl = `https://seasonal-api.open-meteo.com/v1/seasonal?latitude=${targetLat}&longitude=${targetLon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&wind_speed_unit=ms&start_date=${fmt(today)}&end_date=${fmt(endDate)}`;
           const seasonalRes = await axios.get(seasonalUrl, { timeout: 8000 });
           const sd = seasonalRes.data;
           if (sd?.daily?.time?.length) {
@@ -2563,58 +2707,59 @@ const App = () => {
     [],
   );
 
-  const checkWeatherDanger = useCallback(async (lat, lon) => {
+  // Мітки небезпеки для підказок пошуку: один запит на всі точки, вітер у м/с.
+  // Повертає масив тієї ж довжини: { level: "now" | "soon", dayIndex, reasons } або null.
+  const checkWeatherDanger = useCallback(async (points) => {
+    if (!Array.isArray(points) || points.length === 0) return [];
     try {
+      const lats = points.map((p) => Number(p.lat).toFixed(4)).join(",");
+      const lons = points.map((p) => Number(p.lon).toFixed(4)).join(",");
       const res = await axios.get(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max&timezone=auto&forecast_days=3`,
-        { timeout: 8000 }
+        `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=temperature_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max&wind_speed_unit=ms&timezone=auto&forecast_days=3`,
+        { timeout: 8000 },
       );
-      const { current, daily } = res.data || {};
-      if (!current || !daily) {
-        console.warn("Weather danger check: Missing data", {
-          hasCurrent: !!current,
-          hasDaily: !!daily,
-        });
+      // Для однієї точки Open-Meteo віддає об'єкт, для кількох — масив
+      const list = Array.isArray(res.data) ? res.data : [res.data];
+
+      const getReasons = (tMax, tMin, wind, uv) => {
+        const reasons = [];
+        if (tMax > 30) reasons.push({ type: "heat", value: Math.round(tMax) });
+        if (tMin < -30) reasons.push({ type: "frost", value: Math.round(tMin) });
+        if (wind > 10) reasons.push({ type: "wind", value: Math.round(wind) });
+        if (uv > 7) reasons.push({ type: "uv", value: Math.round(uv) });
+        return reasons;
+      };
+
+      return points.map((_, idx) => {
+        const { current, daily } = list[idx] || {};
+        if (!current || !daily) return null;
+
+        // Сьогодні: денні макс./мін. температури, вітер зараз, макс. УФ за день
+        const todayReasons = getReasons(
+          daily.temperature_2m_max?.[0] ?? current.temperature_2m ?? 0,
+          daily.temperature_2m_min?.[0] ?? current.temperature_2m ?? 0,
+          current.wind_speed_10m ?? 0,
+          daily.uv_index_max?.[0] ?? 0,
+        );
+        if (todayReasons.length > 0) {
+          return { level: "now", dayIndex: 0, reasons: todayReasons };
+        }
+
+        // Найближчі 2 дні після сьогодні
+        for (let i = 1; i < (daily.time?.length ?? 0); i++) {
+          const reasons = getReasons(
+            daily.temperature_2m_max?.[i] ?? 0,
+            daily.temperature_2m_min?.[i] ?? 0,
+            daily.wind_speed_10m_max?.[i] ?? 0,
+            daily.uv_index_max?.[i] ?? 0,
+          );
+          if (reasons.length > 0) return { level: "soon", dayIndex: i, reasons };
+        }
         return null;
-      }
-
-      const windSpeed = current.wind_speed_10m ?? 0;
-      const currentTemp = current.temperature_2m ?? 0;
-      const uvIndex = daily?.uv_index_max?.[0] ?? 0;
-
-      // Логування для діагностики
-      console.log("Weather danger check data:", {
-        windSpeed,
-        currentTemp,
-        uvIndex,
-        hasUvData: !!daily.uv_index_max,
       });
-
-      const isExtreme = (tMax, tMin, wind, uv) =>
-        tMax > 30 || tMin < -30 || wind > 10 || uv > 7;
-
-      // Пріоритет червоному: небезпечно прямо зараз
-      const tMax = daily?.temperature_2m_max?.[0] ?? currentTemp;
-      const tMin = daily?.temperature_2m_min?.[0] ?? currentTemp;
-
-      if (isExtreme(tMax, tMin, windSpeed, uvIndex)) {
-        return "red";
-      }
-
-      // Оранжевий: небезпека протягом найближчих 3-х днів
-      const futureDanger = daily?.time?.some((_, i) =>
-        isExtreme(
-          daily.temperature_2m_max?.[i],
-          daily.temperature_2m_min?.[i],
-          daily.wind_speed_10m_max?.[i] || 0,
-          daily.uv_index_max?.[i] || 0,
-        ),
-      );
-
-      return futureDanger ? "orange" : null;
     } catch (error) {
       console.error("Weather danger check error:", error);
-      return null;
+      return points.map(() => null);
     }
   }, []);
 
@@ -2795,7 +2940,8 @@ const App = () => {
 
     weatherCards.forEach((card) => {
       const firstDayDate = card.daily16?.[0]?.fullDate;
-      if (firstDayDate !== yesterdayStr) {
+      // Картки, збережені до виправлення одиниць вітру (км/год), оновлюємо одразу
+      if (firstDayDate !== yesterdayStr || card.windUnit !== "ms") {
         handleRefreshCard(card);
       }
     });
