@@ -14,6 +14,8 @@ import { FaSun } from "react-icons/fa";
 import { MdSettingsSuggest, MdMore, MdWallpaper } from "react-icons/md";
 import { FaBookOpen } from "react-icons/fa6";
 import { IoColorPalette } from "react-icons/io5";
+import NetworkBadge, { useNetworkStatus, NETWORK_LABELS } from "./NetworkBadge.jsx";
+import { ACCENT_COLORS, AccentSwatches, useAccentColor, getAccentLabel } from "./AccentColorPicker.jsx";
 import bell from "../../mp3/modals/bell.mp3";
 import conimg from "../../mp3/modals/concierge.mp3";
 import userDefault from "../../media/ui/user-placeholder.webp";
@@ -248,6 +250,7 @@ const ProfileButtonWrap = styled.div`
 `;
 
 const ProfileButton = styled.button`
+  position: relative;
   display: flex;
   align-items: center;
   background: ${(props) =>
@@ -372,37 +375,52 @@ const FilterButton = styled.button`
 `;
 
 // ── Theme Picker Modal ─────────────────────────────────────────────────────
+const themePickerIn = keyframes`
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+`;
+
 const ThemePickerModal = styled.div`
   position: absolute;
   top: 42px;
   left: 0;
   z-index: 2100;
   background: ${(props) =>
-    props.$isDarkMode ? "rgba(14, 14, 14, 0.97)" : "rgba(255, 255, 255, 0.97)"};
-  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)")};
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
-  border-radius: 14px;
-  padding: 10px 12px;
-  color: ${(props) => (props.$isDarkMode ? "#fff" : "#111")};
-  min-width: 210px;
+    props.$isDarkMode
+      ? "linear-gradient(160deg, rgba(34, 36, 44, 0.96) 0%, rgba(18, 19, 24, 0.97) 100%)"
+      : "rgba(255, 255, 255, 0.97)"};
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)")};
+  box-shadow: ${(props) =>
+    props.$isDarkMode
+      ? "0 18px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)"
+      : "0 14px 32px rgba(0,0,0,0.18)"};
+  border-radius: 16px;
+  padding: 14px;
+  color: ${(props) => (props.$isDarkMode ? "#e8eaf0" : "#111")};
+  min-width: 232px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   outline: none;
+  animation: ${themePickerIn} 0.16s ease-out;
 `;
 
 const ThemePickerSection = styled.div`
-  font-size: 10px;
+  font-size: 16px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  opacity: 0.5;
-  margin-bottom: 2px;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
 `;
 
 const ThemeBaseRow = styled.div`
   display: flex;
-  gap: 6px;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)")};
+  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)")};
 `;
 
 const ThemeBaseBtn = styled.button`
@@ -410,68 +428,115 @@ const ThemeBaseBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  border: 2px solid ${(props) => (props.$active ? "#00afce" : "transparent")};
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: 1px solid transparent;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  transition: border-color 0.15s, transform 0.1s;
-  background: ${(props) => props.$bg};
-  color: ${(props) => props.$color};
-  &:hover { transform: translateY(-1px); }
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, border-color 0.18s;
+  background: transparent;
+  color: ${(props) => (props.$isDarkMode ? "rgba(232,234,240,0.6)" : "rgba(17,17,17,0.6)")};
+
+  svg {
+    font-size: 14px;
+    color: ${(props) => props.$iconColor};
+    opacity: ${(props) => (props.$active ? 1 : 0.7)};
+    transition: opacity 0.18s;
+  }
+
+  ${(props) =>
+    props.$active &&
+    css`
+      color: ${props.$isDarkMode ? "#fff" : "#111"};
+      background: ${props.$isDarkMode ? "rgba(255,255,255,0.1)" : "#fff"};
+      border-color: ${props.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)"};
+      box-shadow: 0 0 0 1px ${props.$accent}55, 0 4px 12px ${props.$isDarkMode ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.1)"};
+    `}
+
+  &:hover {
+    color: ${(props) => (props.$isDarkMode ? "#fff" : "#111")};
+    svg { opacity: 1; }
+  }
   &:focus-visible {
     outline: 2px solid #00afce;
     outline-offset: 2px;
   }
 `;
 
-const AccentRow = styled.div`
+const AccentFooter = styled.div`
   display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)")};
+  font-size: 11px;
+  opacity: 0.7;
 `;
 
-const AccentDot = styled.button`
-  width: 22px;
-  height: 22px;
+const AccentChip = styled.span`
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  border: 2px solid ${(props) => (props.$active ? "#fff" : "transparent")};
-  outline: 2px solid ${(props) => (props.$active ? props.$color : "transparent")};
-  background: ${(props) => props.$color};
-  cursor: pointer;
-  transition: transform 0.1s, outline 0.12s;
-  flex-shrink: 0;
-  &:hover { transform: scale(1.2); }
-  &:focus-visible {
-    outline: 2px solid #00afce;
-    outline-offset: 3px;
-    transform: scale(1.2);
-  }
-`;
-
-const AccentPreviewBar = styled.div`
-  height: 3px;
-  border-radius: 2px;
   background: ${(props) => props.$color || "transparent"};
-  opacity: ${(props) => (props.$color ? 0.6 : 0)};
-  transition: background 0.2s;
+  box-shadow: ${(props) => (props.$color ? `0 0 8px ${props.$color}` : "none")};
+  border: ${(props) => (props.$color ? "none" : "1px dashed currentColor")};
 `;
 
+// Рендер вмісту модалки вибору теми (спільний для десктопу та мобільного)
+const ThemePickerContent = ({ isDarkMode, accentColor, onPickTheme, onPickAccent }) => {
+  const ring = accentColor || "#00afce";
+  return (
+    <>
+      <ThemePickerSection>Базова тема</ThemePickerSection>
+      <ThemeBaseRow $isDarkMode={isDarkMode}>
+        <ThemeBaseBtn
+          $isDarkMode={isDarkMode}
+          $active={!isDarkMode}
+          $accent={ring}
+          $iconColor="#FFB020"
+          aria-pressed={!isDarkMode}
+          onClick={() => onPickTheme(false)}
+        >
+          <FaSun /> Світла
+        </ThemeBaseBtn>
+        <ThemeBaseBtn
+          $isDarkMode={isDarkMode}
+          $active={isDarkMode}
+          $accent={ring}
+          $iconColor="#9DB8FF"
+          aria-pressed={isDarkMode}
+          onClick={() => onPickTheme(true)}
+        >
+          <BsMoonStarsFill /> Темна
+        </ThemeBaseBtn>
+      </ThemeBaseRow>
 
-// 7 кольорів веселки + 8й "без накладення"
-const ACCENT_COLORS = [
-  { id: "none",   label: "Без накладення",  color: null,      hex: null },
-  { id: "red",    label: "Червоний",         color: "#FF3B30", hex: "#FF3B30" },
-  { id: "orange", label: "Оранжевий",        color: "#FF9500", hex: "#FF9500" },
-  { id: "yellow", label: "Жовтий",           color: "#FFD60A", hex: "#FFD60A" },
-  { id: "green",  label: "Зелений",          color: "#30D158", hex: "#30D158" },
-  { id: "cyan",   label: "Блакитний",        color: "#00C7BE", hex: "#00C7BE" },
-  { id: "blue",   label: "Синій",            color: "#0A84FF", hex: "#0A84FF" },
-  { id: "violet", label: "Фіолетовий",       color: "#BF5AF2", hex: "#BF5AF2" },
-  { id: "pink",   label: "Рожевий",          color: "#FF375F", hex: "#FF375F" },
-];
+      <ThemePickerSection>Акцентний колір</ThemePickerSection>
+      <AccentSwatches
+        isDarkMode={isDarkMode}
+        accentColor={accentColor}
+        onPick={onPickAccent}
+        wrapItem={(ac, node) => (
+          <Tooltip key={ac.id} content={ac.label} isDarkMode={isDarkMode} placement="top">
+            {node}
+          </Tooltip>
+        )}
+      />
+
+      <AccentFooter $isDarkMode={isDarkMode}>
+        <AccentChip $color={accentColor} />
+        {accentColor ? `Акцент: ${getAccentLabel(accentColor)}` : "Без накладення кольору"}
+      </AccentFooter>
+    </>
+  );
+};
+
+
+
 
 export const Tooltip = ({
   content,
@@ -582,11 +647,12 @@ const Header = ({
   const [showUltra, setShowUltra] = useState(false);
   const [showVisualSettings, setShowVisualSettings] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
-  const [accentColor, setAccentColor] = useState(null); // null = без накладення
+  const [accentColor, setAccentColor] = useAccentColor(); // null = без накладення
   const themePickerRef = useRef(null);
   const themePickerBtnRef = useRef(null);
   const avatarSource = user?.photoURL || user?.avatar || currentAvatar || userDefault;
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const networkStatus = useNetworkStatus();
 
   // Helper to play sound effects with current volume
   // Оголошено ТУТ — до useEffect-ів, щоб вони могли її викликати
@@ -854,52 +920,12 @@ const Header = ({
                 tabIndex={-1}
                 onKeyDown={handleModalKeyDown}
               >
-                {/* Базова тема */}
-                <ThemePickerSection>Базова тема</ThemePickerSection>
-                <ThemeBaseRow>
-                  <ThemeBaseBtn
-                    $bg="#ffffff"
-                    $color="#111"
-                    $active={!isDarkMode}
-                    onClick={() => { if (isDarkMode) { playSfx(bell); toggleTheme(); } }}
-                  >
-                    ☀️ Світла
-                  </ThemeBaseBtn>
-                  <ThemeBaseBtn
-                    $bg="#111111"
-                    $color="#fff"
-                    $active={isDarkMode}
-                    onClick={() => { if (!isDarkMode) { playSfx(bell); toggleTheme(); } }}
-                  >
-                    🌙 Темна
-                  </ThemeBaseBtn>
-                </ThemeBaseRow>
-
-                {/* Акцентний колір */}
-                <ThemePickerSection>Акцентний колір</ThemePickerSection>
-                <AccentRow>
-                  {ACCENT_COLORS.map((ac) => (
-                    <Tooltip key={ac.id} content={ac.label} isDarkMode={isDarkMode} placement="top">
-                      <AccentDot
-                        $color={ac.color || (isDarkMode ? "#555" : "#ccc")}
-                        $active={accentColor === ac.color}
-                        onClick={() => { playSfx(relax); setAccentColor(ac.color); }}
-                        title={ac.label}
-                        style={ac.id === "none" ? {
-                          background: "linear-gradient(135deg,#ccc 40%,#fff 60%)",
-                          border: "2px solid #aaa",
-                        } : {}}
-                      />
-                    </Tooltip>
-                  ))}
-                </AccentRow>
-                {/* Смуга-превью акценту */}
-                <AccentPreviewBar $color={accentColor} />
-                <div style={{ fontSize: 10, opacity: 0.45, textAlign: "center" }}>
-                  {accentColor
-                    ? `Акцент: ${ACCENT_COLORS.find(a => a.color === accentColor)?.label}`
-                    : "Без накладення кольору"}
-                </div>
+                <ThemePickerContent
+                  isDarkMode={isDarkMode}
+                  accentColor={accentColor}
+                  onPickTheme={(dark) => { if (dark !== isDarkMode) { playSfx(bell); toggleTheme(); } }}
+                  onPickAccent={(c) => { playSfx(relax); setAccentColor(c); }}
+                />
               </ThemePickerModal>
             )}
           </div>
@@ -978,18 +1004,19 @@ const Header = ({
           </Tooltip>
 
         <ProfileButtonWrap>
-          <Tooltip content="Ваш профіль" isDarkMode={isDarkMode}>
+          <Tooltip content={`Ваш профіль · ${NETWORK_LABELS[networkStatus]}`} isDarkMode={isDarkMode}>
           <ProfileButton
             id="header-profile-button"
             $isDarkMode={isDarkMode}
             onClick={() => setIsProfileModalOpen((prev) => !prev)}
-            aria-label="Профіль користувача"
+            aria-label={`Профіль користувача. ${NETWORK_LABELS[networkStatus]}`}
           >
             <RecoveringAvatar
               src={avatarSource}
               $bColor={user.borderColor}
               style={{ width: "33px", height: "33px" }}
             />
+            <NetworkBadge status={networkStatus} isDarkMode={isDarkMode} />
           </ProfileButton>
          </Tooltip>
           {isProfileModalOpen && (
@@ -1052,39 +1079,12 @@ const Header = ({
               tabIndex={-1}
               onKeyDown={handleModalKeyDown}
             >
-              <ThemePickerSection>Базова тема</ThemePickerSection>
-              <ThemeBaseRow>
-                <ThemeBaseBtn $bg="#ffffff" $color="#111" $active={!isDarkMode}
-                  onClick={() => { if (isDarkMode) { playSfx(bell); toggleTheme(); } }}>
-                  ☀️ Світла
-                </ThemeBaseBtn>
-                <ThemeBaseBtn $bg="#111111" $color="#fff" $active={isDarkMode}
-                  onClick={() => { if (!isDarkMode) { playSfx(bell); toggleTheme(); } }}>
-                  🌙 Темна
-                </ThemeBaseBtn>
-              </ThemeBaseRow>
-              <ThemePickerSection>Акцентний колір</ThemePickerSection>
-              <AccentRow>
-                {ACCENT_COLORS.map((ac) => (
-                  <Tooltip key={ac.id} content={ac.label} isDarkMode={isDarkMode} placement="top">
-                    <AccentDot
-                      $color={ac.color || (isDarkMode ? "#555" : "#ccc")}
-                      $active={accentColor === ac.color}
-                      onClick={() => { playSfx(relax); setAccentColor(ac.color); }}
-                      style={ac.id === "none" ? {
-                        background: "linear-gradient(135deg,#ccc 40%,#fff 60%)",
-                        border: "2px solid #aaa",
-                      } : {}}
-                    />
-                  </Tooltip>
-                ))}
-              </AccentRow>
-              <AccentPreviewBar $color={accentColor} />
-              <div style={{ fontSize: 10, opacity: 0.45, textAlign: "center" }}>
-                {accentColor
-                  ? `Акцент: ${ACCENT_COLORS.find(a => a.color === accentColor)?.label}`
-                  : "Без накладення кольору"}
-              </div>
+              <ThemePickerContent
+                isDarkMode={isDarkMode}
+                accentColor={accentColor}
+                onPickTheme={(dark) => { if (dark !== isDarkMode) { playSfx(bell); toggleTheme(); } }}
+                onPickAccent={(c) => { playSfx(relax); setAccentColor(c); }}
+              />
             </ThemePickerModal>
           )}
         </div>

@@ -162,7 +162,7 @@ const HeroDiv = styled.div`
 const HeroDecors = styled.div`
   display: block;
   width: 212px;
-  margin-top: 75px;
+  margin-top: 35px;
   height: 78px;
   background-image: url(${(props) => props.$image});
   background-size: cover;
@@ -176,6 +176,18 @@ const HeroDecors = styled.div`
           ${slideUpHero} 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards
         `
       : "none"};
+
+  /* на вузьких екранах по центру напис ховається під кнопкою «Змінити фон?»,
+     тож переносимо його у вільний правий куток */
+  @media (max-width: 560px) {
+    align-self: flex-end;
+    margin-right: 8px;
+  }
+
+  @media (max-width: 380px) {
+    width: 160px;
+    height: 59px;
+  }
 `;
 const DelayedContent = styled.div`
   display: flex;
@@ -683,7 +695,14 @@ const ModeIconBtn = styled.button`
   padding: 0 8px;
   flex-shrink: 0;
   transition: background 0.2s ease;
-  &:hover { background: #353988; }
+  &:hover {
+    background: ${(props) => (props.$isDarkMode ? "#353988" : "#ffcc00")};
+  }
+`;
+
+// Кнопка «Language (Мова)» під кнопкою вибору режиму пошуку
+const LanguageBtn = styled(ModeIconBtn)`
+  margin-top: 4px;
 `;
 
 const overlayIn = keyframes`
@@ -1126,7 +1145,7 @@ const ChangeBgButton = styled.button`
   left: 4px;
   background: rgba(0, 0, 0, 0.4);
   color: white;
-  width: 148px;
+  width: 128px;
   height: 70px;
   border-radius: 5px;
   cursor: pointer;
@@ -1148,7 +1167,7 @@ const ChangeBgPreviewGroup = styled.span`
 `;
 
 const ChangeBgPreview = styled.img`
-  width: 67px;
+  width: 116px;
   height: 35px;
   object-fit: cover;
   border-radius: 3px;
@@ -1315,7 +1334,7 @@ const Hero = ({
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setBackgroundPreviewPair((pair) => (pair === 0 ? 1 : 0));
+      setBackgroundPreviewPair((index) => (index + 1) % CHANGE_BG_PREVIEW_IMAGES.length);
     }, 2400);
     return () => clearInterval(interval);
   }, []);
@@ -1501,10 +1520,8 @@ const Hero = ({
     () => [...DEFAULT_BGS, ...(customHeroBgs || [])],
     [customHeroBgs],
   );
-  const currentBgPreviewImages = CHANGE_BG_PREVIEW_IMAGES.slice(
-    backgroundPreviewPair * 2,
-    backgroundPreviewPair * 2 + 2,
-  );
+  // Одне прев'ю фону, що по черзі змінюється
+  const currentBgPreviewImages = [CHANGE_BG_PREVIEW_IMAGES[backgroundPreviewPair]];
 
   const handleSelectBg = useCallback(
     (src, targetLayer = 1) => {
@@ -2096,13 +2113,6 @@ const Hero = ({
                   >
                     <MdSettingsSuggest size={18} /> Змінити часовий пояс?
                   </TimezoneButton>
-                  <TimezoneButton
-                    onClick={() => setIsLanguageModalOpen(true)}
-                    aria-label={languageButtonText}
-                    $isDarkMode={isDarkMode}
-                  >
-                    <MdTranslate size={18} /> {languageButtonText}
-                  </TimezoneButton>
                 </HeroControls>
                 <Tag $isDarkMode={isDarkMode} style={{ flex: 1, textAlign: "right" }}>
                   {heroDateString}
@@ -2405,6 +2415,17 @@ const Hero = ({
               )}
             </HeroFormater>
           )}
+          <LanguageBtn
+            type="button"
+            onClick={() => setIsLanguageModalOpen(true)}
+            aria-label={languageButtonText}
+            $isDarkMode={isDarkMode}
+          >
+            <ModePreviewIcon>
+              <MdTranslate />
+            </ModePreviewIcon>
+            <ModePreviewText>{languageButtonText}</ModePreviewText>
+          </LanguageBtn>
           </SearchWrapper>
         </BrowserSearchPanel>
         <div style={{ marginTop: "0px", zIndex: 90 }}>

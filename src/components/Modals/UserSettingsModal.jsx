@@ -58,6 +58,7 @@ import {
 } from "react-icons/fi";
 import { TbAutomation, TbMenuOrder } from "react-icons/tb";
 import { GiPalette } from "react-icons/gi";
+import { ACCENT_COLORS, AccentSwatches, useAccentColor, getAccentLabel } from "../Header/AccentColorPicker.jsx";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { FaSun as FaSunIcon, FaEye, FaEyeSlash } from "react-icons/fa";
 import {
@@ -603,6 +604,7 @@ const UserSettingsModal = ({
   const isGuest = !user;
   const dispatch = useDispatch();
   const tutorial = useTutorial();
+  const [accentColor, setAccentColor] = useAccentColor();
   const [activeTab, setActiveTab] = useState("personalization");
   const [isClosing, setIsClosing] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
@@ -1779,7 +1781,7 @@ const UserSettingsModal = ({
               {activeTab === "modes" && (
                 <CardGroup>
                   <SectionHeaderTitle><FiZap /> Режими сайту та застосунки</SectionHeaderTitle>
-                  <SectionDescription>Тема, швидкість завантаження, режим Декоратора, навчання та застосунки для пристроїв</SectionDescription>
+                  <SectionDescription>Тема, акцентний колір, швидкість завантаження, режим Декоратора, навчання та застосунки для пристроїв</SectionDescription>
 
                   {/* Restart tutorial */}
                   <Card>
@@ -1818,6 +1820,25 @@ const UserSettingsModal = ({
                       </WinButton>
                     </CardControl>
                   </Card>
+
+                  {/* Accent color */}
+                  <CardExpanded>
+                    <CardLeft>
+                      <CardIconBox $color={accentColor || "#60cdff"}><GiPalette /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Акцентний колір шапки</CardTitle>
+                        <CardDescription>
+                          {accentColor ? `Акцент: ${getAccentLabel(accentColor)}` : "Без накладення кольору"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <AccentSwatches
+                      isDarkMode
+                      accentColor={accentColor}
+                      onPick={setAccentColor}
+                      columns={ACCENT_COLORS.length}
+                    />
+                  </CardExpanded>
 
                   {/* Sticky BG */}
                   <Card>
