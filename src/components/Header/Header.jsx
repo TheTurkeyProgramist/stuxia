@@ -16,8 +16,8 @@ import { FaBookOpen } from "react-icons/fa6";
 import { IoColorPalette } from "react-icons/io5";
 import bell from "../../mp3/modals/bell.mp3";
 import conimg from "../../mp3/modals/concierge.mp3";
-import userDefault from "../../photos/hero-header/user.webp";
-import { useVisualFilters } from "./useVisualFilters";
+import userDefault from "../../media/ui/user-placeholder.webp";
+import { useVisualFilters, presetName, selectFilter, CUSTOM_PRESET_ICON as CustomPresetIcon } from "./useVisualFilters";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 // import AntiHeaderAd from "./AntiHeaderAd";
 import {
@@ -794,7 +794,7 @@ const Header = ({
   // 12. Кнопки фільтрів у панелі вигляду
   const handleFilterClick = (filterId) => {
     playSfx(relax);
-    setVisualConfig((prev) => ({ ...prev, filterType: filterId }));
+    setVisualConfig((prev) => selectFilter(prev, filterId));
   };
 
   // 13. Пресети стилів
@@ -1234,7 +1234,7 @@ const Header = ({
               }}
               onClick={() => handlePresetClick(preset.config)}
             >
-              {preset.label}
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}><preset.icon /> {preset.label}</span>
             </button>
           ))}
           {customPresets.map((preset) => (
@@ -1254,7 +1254,7 @@ const Header = ({
               }}
               onClick={() => handlePresetClick(preset.config)}
             >
-              {preset.label}
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}><CustomPresetIcon /> {presetName(preset)}</span>
             </button>
           ))}
         </div>

@@ -17,6 +17,10 @@
         "africa": "Afrika",
         "latinAmerica": "Latinamerika"
       }
+    },
+    "decor": {
+      "label": "Dekor",
+      "title": "Landsbilder och vädereffekter (stäng av för att spara prestanda)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Helskärmsläge"
     },
     "invalidUrl": "Ange en giltig länk (https://...)",
+    "frameBlocked": "{{host}} tillåter inte visning i en ram och kan därför inte läggas till.",
+    "frameChecking": "Kontrollerar…",
     "confirmDeleteFrame": "Ta bort ”{{title}}” från sidopanelen?",
     "locationPinned": "Platsen fäst! Den laddas vid nästa besök.",
     "pinError": "Fel vid fästning av plats.",
@@ -90,6 +96,9 @@
     "mapSource": "Kartkälla",
     "mapSourceDesc": "Windy, Ventusky, flygradar, online-whiteboard och mer",
     "sourcesAria": "Kartkällor",
+    "searchSources": "Sök kartor och ramar",
+    "noSourcesFound": "Inget hittades",
+    "clearSearch": "Rensa sökning",
     "customFrame": "Egen ram / widget",
     "titlePlaceholder": "Namn (t.ex. Radar, Webbkamera...)",
     "titlePlaceholderShort": "Namn (t.ex. Radar)",

@@ -1,18 +1,16 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
-import { BiLineChart, BiBrain, BiCheck, BiX, BiCurrentLocation, BiWind } from "react-icons/bi";
+import { BiLineChart, BiCheck, BiX, BiCurrentLocation, BiWind } from "react-icons/bi";
 import { FaClock, FaCloudRain, FaCalendarDays, FaCloud, FaGauge, FaLightbulb } from "react-icons/fa6";
 import { FaSun, FaExclamationTriangle } from "react-icons/fa";
 import { PiThermometerFill } from "react-icons/pi";
 import { BsThermometerSun, BsClockHistory } from "react-icons/bs";
-import { cleanAiText } from "../../utils/ruleBasedForecast";
 import { REPORT_ICONS, REPORT_COLORS, ReportSection, ReportLine } from "../Weather/ForecastReport.jsx";
 
-// Повний звіт прогнозу: смарт-прогноз (правила) або текст Gemini
-const ForecastReportModal = ({ forecastMode, ruleForecast, aiSummary, forecastTimeString, isDarkMode, onClose }) => {
+// Повний звіт смарт-прогнозу (експертні правила)
+const ForecastReportModal = ({ ruleForecast, forecastTimeString, isDarkMode, onClose }) => {
   const [copied, setCopied] = useState(false);
-  const isRules = forecastMode === "rules";
-  const accent = isRules ? "#00eeff" : "#b362ff";
+  const accent = "#00eeff";
 
   const copyText = () => {
     if (!ruleForecast?.fullText) return;
@@ -39,8 +37,8 @@ const ForecastReportModal = ({ forecastMode, ruleForecast, aiSummary, forecastTi
         role="dialog"
         aria-label="Повний звіт прогнозу"
         style={{
-          background: isDarkMode ? "#1a1a2e" : "#fff",
-          border: `1px solid ${isRules ? "rgba(0,238,255,0.6)" : "rgba(138,43,226,0.5)"}`,
+          background: isDarkMode ? "#0b0b0b" : "#fff",
+          border: "1px solid rgba(0,238,255,0.6)",
           borderRadius: "12px",
           padding: "20px",
           width: "95%",
@@ -67,12 +65,11 @@ const ForecastReportModal = ({ forecastMode, ruleForecast, aiSummary, forecastTi
               letterSpacing: "1px",
             }}
           >
-            {isRules ? <BiLineChart size={22} /> : <BiBrain size={22} />}
-            {isRules ? "Смарт-прогноз (Офлайн / Правила) — повний звіт" : "Прогноз ШІ (Gemini) — повний текст"}
+            <BiLineChart size={22} />
+            Смарт-прогноз (Офлайн / Правила) — повний звіт
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            {isRules && (
-              <button
+            <button
                 onClick={copyText}
                 title="Скопіювати текст прогнозу"
                 style={{
@@ -92,7 +89,6 @@ const ForecastReportModal = ({ forecastMode, ruleForecast, aiSummary, forecastTi
                 <BiCheck size={16} />
                 {copied ? "Скопійовано!" : "Скопіювати"}
               </button>
-            )}
             <button
               onClick={onClose}
               aria-label="Закрити"
@@ -109,11 +105,10 @@ const ForecastReportModal = ({ forecastMode, ruleForecast, aiSummary, forecastTi
             </button>
           </div>
         </div>
-        {isRules ? (
-          ruleForecast ? (
+        {ruleForecast ? (
             <div style={{ whiteSpace: "normal", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 20px", opacity: 0.85 }}>
-                <ReportLine icon={<BiCurrentLocation />} color="#00eeff">Прогноз для {ruleForecast.locationName}</ReportLine>
+                <ReportLine icon={<BiCurrentLocation />} color="#00eeff">Прогноз для {ruleForecast.locationNameGenitive || ruleForecast.locationName}</ReportLine>
                 <ReportLine icon={<FaClock />} color="#aaa">Час: {forecastTimeString || "зараз"}</ReportLine>
               </div>
 
@@ -152,8 +147,7 @@ const ForecastReportModal = ({ forecastMode, ruleForecast, aiSummary, forecastTi
                 </ReportSection>
               )}
             </div>
-          ) : "Дані формуються..."
-        ) : cleanAiText(aiSummary)}
+          ) : "Дані формуються..."}
       </div>
     </div>,
     document.body

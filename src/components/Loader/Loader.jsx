@@ -5,7 +5,7 @@ import { SiBun, SiGithub, SiCloudflare, SiVercel, SiHostinger } from "react-icon
 import { TbBrandVite } from "react-icons/tb";
 import { IoLogoFirebase } from "react-icons/io5";
 import { SiPixabay } from "react-icons/si";
-import loadtwo from "../../photos/hero-header/fogtwo.webp";
+import loadtwo from "../../media/backgrounds/scenes/foggy-forest-loader.webp";
 import { TbBrandWindy } from "react-icons/tb";
 import { RiGeminiFill } from "react-icons/ri";
 const DOTS_CONFIG = [
@@ -68,11 +68,26 @@ const ImageContainer = styled.div`
   animation: ${expandEntrance} 0.8s ease-out forwards;
 
   img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: opacity 0.8s ease-in-out;
     opacity: ${(props) => (props.$active ? 1 : 0)};
+  }
+
+  /* Розмитий фон у барвах зображення — заповнює порожні місця */
+  .loader-bg-blur {
+    filter: blur(28px) saturate(1.3) brightness(0.8);
+    transform: scale(1.2);
+  }
+
+  /* На вузьких екранах зображення вписується по ширині */
+  @media (max-width: 480px) {
+    .loader-bg-main {
+      object-fit: contain;
+    }
   }
 `;
 
@@ -211,7 +226,8 @@ export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
       </TopRightContainer>
 
       <ImageContainer $active>
-        <img src={loadtwo} alt="Loading..." />
+        <img className="loader-bg-blur" src={loadtwo} alt="" aria-hidden="true" />
+        <img className="loader-bg-main" src={loadtwo} alt="Loading..." />
       </ImageContainer>
 
       <UIOverlay>

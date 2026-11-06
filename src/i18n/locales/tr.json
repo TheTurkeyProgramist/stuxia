@@ -17,6 +17,10 @@
         "africa": "Afrika",
         "latinAmerica": "Latin Amerika"
       }
+    },
+    "decor": {
+      "label": "Dekor",
+      "title": "Ülke çizimleri ve hava efektleri (performans için kapatın)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Tam ekran modu"
     },
     "invalidUrl": "Lütfen geçerli bir bağlantı girin (https://...)",
+    "frameBlocked": "{{host}} bir çerçeve içinde gösterilmeye izin vermiyor, bu yüzden eklenemiyor.",
+    "frameChecking": "Kontrol ediliyor…",
     "confirmDeleteFrame": "“{{title}}” yan panelden kaldırılsın mı?",
     "locationPinned": "Konum sabitlendi! Bir sonraki ziyaretinizde yüklenecek.",
     "pinError": "Konum sabitlenirken hata oluştu.",
@@ -90,6 +96,9 @@
     "mapSource": "Harita kaynağı",
     "mapSourceDesc": "Windy, Ventusky, uçuş radarı, çevrimiçi tahta ve diğerleri",
     "sourcesAria": "Harita kaynakları",
+    "searchSources": "Harita ve çerçeve ara",
+    "noSourcesFound": "Hiçbir şey bulunamadı",
+    "clearSearch": "Aramayı temizle",
     "customFrame": "Özel çerçeve / widget",
     "titlePlaceholder": "Ad (ör. Radar, Web kamerası...)",
     "titlePlaceholderShort": "Ad (ör. Radar)",

@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import ultra from "../../photos/hero-header/fogtwo.webp";
+import ultra from "../../media/backgrounds/scenes/foggy-forest-loader.webp";
 import theoryAudio from "../../mp3/silent.opus";
 import { DEFAULT_BGS } from "../Hero/defaultBgs.js";
 
@@ -20,11 +20,9 @@ const CAPTIONS = [
 // 2. Музичні титри (список саундтреків з авторами)
 const MUSIC_CREDITS = [
   { title: "Динофроз", author: "Mondo TV" },
-  { title: "No No No, Monody, Unity, Hunger", author: "TheFatRat" },
-  { title: "Dragonora, Asium, Factorium", author: "SayGames - MyLittleUniverse (Estoty)" },
-  { title: "Electrodynamix, Clubstep, Theory of Everything, Theory of Everything II", author: "DJ-Nate" },
-  { title: "Fingerbang (Fingerdash), Deadlocked", author: "Geometry Dash" },
-  { title: "Болотна крамниця, Звуки індиків і ще кілька", author: "Авторська робота" },
+  { title: "Monody, Unity, Hunger", author: "TheFatRat" },
+  { title: "Theory of Everything, Theory of Everything II", author: "DJ-Nate" },
+  { title: "Звуки інтерфейсу", author: "Авторська робота" },
 ];
 // 3. Галерея зображень
 const GALLERY_IMAGES = DEFAULT_BGS.filter(bg => /\.(webp|jpe?g|png|gif)(\?.*)?$/i.test(bg.src || ""));

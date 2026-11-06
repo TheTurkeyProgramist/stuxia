@@ -17,6 +17,10 @@
         "africa": "Afrika",
         "latinAmerica": "Lateinamerika"
       }
+    },
+    "decor": {
+      "label": "Deko",
+      "title": "Länderbilder und Wettereffekte (zum Sparen von Leistung ausschalten)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Vollbildmodus"
     },
     "invalidUrl": "Bitte gib einen gültigen Link ein (https://...)",
+    "frameBlocked": "{{host}} erlaubt keine Anzeige in einem Frame und kann daher nicht hinzugefügt werden.",
+    "frameChecking": "Wird geprüft…",
     "confirmDeleteFrame": "„{{title}}“ aus der Seitenleiste entfernen?",
     "locationPinned": "Standort angeheftet! Er wird beim nächsten Besuch geladen.",
     "pinError": "Fehler beim Anheften des Standorts.",
@@ -90,6 +96,9 @@
     "mapSource": "Kartenquelle",
     "mapSourceDesc": "Windy, Ventusky, Flugradar, Online-Whiteboard und mehr",
     "sourcesAria": "Kartenquellen",
+    "searchSources": "Karten und Frames suchen",
+    "noSourcesFound": "Nichts gefunden",
+    "clearSearch": "Suche löschen",
     "customFrame": "Eigener Frame / Widget",
     "titlePlaceholder": "Name (z. B. Radar, Webcam...)",
     "titlePlaceholderShort": "Name (z. B. Radar)",

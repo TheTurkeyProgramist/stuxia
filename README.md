@@ -91,3 +91,37 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+---
+
+---
+
+## Ліцензія / License
+
+### Українською
+
+Код «Стихії» відкритий за ліцензією **[GNU AGPL-3.0](LICENSE)**.
+
+- ✅ Код можна вільно використовувати, змінювати й поширювати.
+- 🔓 **Ваш проєкт теж має лишатися відкритим.** Якщо ви використовуєте цей код, похідний проєкт треба відкрити за AGPL-3.0, навіть якщо це лише сайт чи сервіс, а не програма для завантаження.
+- ✅ Зберігайте файли `LICENSE` і `NOTICE` та посилання на цей репозиторій.
+- ❌ Назва **«Стихія» / Stuxia**, логотип та індики **Кейт** і **Доміно** під ліцензію **не підпадають**, усі права на них застережено. У форках їх треба прибрати або замінити.
+- 🖼️ **Медіафайли інших авторів.** Частина зображень, музики та артів (наприклад, з Pixabay і Unsplash, обкладинки треків, фан-арти) створена не мною й належить їхнім авторам. Я не претендую на права на них. Якщо ви автор і хочете, щоб авторство вказали інакше або файл прибрали, напишіть мені.
+
+🙏 **Прохання:** будь ласка, напишіть мені, якщо використовуєте мої розробки. Це не обов'язок, але мені буде дуже приємно знати. Відкрийте [issue на GitHub](https://github.com/TheTurkeyProgramist/stuxia/issues) або напишіть на пошту **theturkeystudio@gmail.com**.
+
+Деталі: [LICENSE](LICENSE) (повний текст), [NOTICE](NOTICE) (застережені матеріали та сторонні компоненти).
+
+### English
+
+Stuxia's code is open source under the **[GNU AGPL-3.0](LICENSE)**.
+
+- ✅ You may freely use, modify and distribute the code.
+- 🔓 **Your project must stay open too.** If you use this code, your derived project must also be released under AGPL-3.0, even if it is only a website or online service.
+- ✅ Keep the `LICENSE` and `NOTICE` files and a link to this repository.
+- ❌ The **Stuxia / «Стихія»** name, logo and the turkeys **Kate** and **Domino** are **not** covered by the license. All rights to them are reserved, and forks must remove or replace them.
+- 🖼️ **Third-party media.** Some images, music and artwork (for example from Pixabay and Unsplash, track covers, fan art) were not made by me and belong to their respective owners. I don't claim ownership of them. If you're the owner and want them credited differently or removed, please contact me.
+
+🙏 **A request:** please let me know if you use my work. It's not required, but I'd love to hear about it. Open a [GitHub issue](https://github.com/TheTurkeyProgramist/stuxia/issues) or email **theturkeystudio@gmail.com**.
+
+Details: [LICENSE](LICENSE) (full text), [NOTICE](NOTICE) (reserved materials and third-party components).

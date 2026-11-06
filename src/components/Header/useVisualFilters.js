@@ -1,43 +1,81 @@
 import { useState, useEffect, useCallback } from "react";
 import localforage from "localforage";
+import { FiFilm, FiMoon, FiRadio, FiDroplet, FiBookOpen, FiCamera, FiStar } from "react-icons/fi";
 
+// intensity — сила, з якою фільтр вмикається (на 50% більшість ефектів на темному сайті ледь помітні)
 export const FILTERS = [
-  { id: "none", label: "Вимкнено" },
-  { id: "grayscale", label: "Дальтонізм" },
-  { id: "sepia", label: "Сепія" },
-  { id: "invert", label: "Негатив" },
-  { id: "matrix", label: "Пікселізація" },
-  { id: "uv", label: "УФ-Лампа" },
-  { id: "contrast", label: "Контраст" },
-  { id: "saturate", label: "Насиченість" },
-  { id: "blur", label: "Розмиття" },
-  { id: "hue", label: "Веселка" },
-  { id: "chaos", label: "Хаос" },
-  { id: "ultrachaos", label: "Ультрахаос" },
+  { id: "none", label: "Вимкнено", intensity: 50 },
+  { id: "grayscale", label: "Дальтонізм", intensity: 100 },
+  { id: "sepia", label: "Сепія", intensity: 90 },
+  { id: "invert", label: "Негатив", intensity: 100 },
+  { id: "matrix", label: "Пікселізація", intensity: 60 },
+  { id: "uv", label: "УФ-Лампа", intensity: 70 },
+  { id: "contrast", label: "Контраст", intensity: 75 },
+  { id: "saturate", label: "Насиченість", intensity: 85 },
+  { id: "blur", label: "Розмиття", intensity: 25 },
+  { id: "hue", label: "Веселка", intensity: 50 },
+  { id: "warm", label: "Теплі тони", intensity: 80 },
+  { id: "noir", label: "Нуар", intensity: 60 },
+  { id: "chaos", label: "Хаос", intensity: 50 },
+  { id: "ultrachaos", label: "Ультрахаос", intensity: 50 },
 ];
+
+// Вибір фільтра з кнопки: одразу з його силою за замовчуванням
+export const selectFilter = (prev, id) => {
+  const next = { ...prev, filterType: id, filterIntensity: FILTERS.find((f) => f.id === id)?.intensity ?? 50 };
+  delete next.combo;
+  return next;
+};
 
 export const PRESETS = [
   {
     id: "cinema",
-    label: "🎬 Кіно",
+    label: "Кіно",
+    icon: FiFilm,
     config: { darkIntensity: 15, filterType: "sepia", filterIntensity: 20 },
   },
   {
     id: "night",
-    label: "🌙 Ніч",
+    label: "Ніч",
+    icon: FiMoon,
     config: { darkIntensity: 70, filterType: "none", filterIntensity: 50 },
   },
   {
     id: "retro",
-    label: "📻 Ретро",
+    label: "Ретро",
+    icon: FiRadio,
     config: { darkIntensity: 5, filterType: "grayscale", filterIntensity: 80 },
   },
   {
     id: "acid",
-    label: "🌈 Кислота",
+    label: "Кислота",
+    icon: FiDroplet,
     config: { darkIntensity: 0, filterType: "hue", filterIntensity: 60 },
   },
+  {
+    id: "reading",
+    label: "Читання",
+    icon: FiBookOpen,
+    config: { darkIntensity: 20, filterType: "warm", filterIntensity: 60 },
+  },
+  {
+    id: "oldphoto",
+    label: "Старе фото",
+    icon: FiCamera,
+    config: { darkIntensity: 10, filterType: "combo", combo: ["sepia", "contrast"], filterIntensity: 60 },
+  },
 ];
+
+export const CUSTOM_PRESET_ICON = FiStar;
+export const MAX_CUSTOM_PRESETS = 6;
+
+// Фільтри, які можна поєднувати у власному пресеті (без анімованих)
+export const COMBINABLE_FILTERS = FILTERS.filter(
+  (f) => !["none", "hue", "chaos", "ultrachaos"].includes(f.id),
+);
+
+// Старі власні пресети зберігались з префіксом "✨ "
+export const presetName = (preset) => (preset?.label || "").replace(/^✨\s*/, "");
 
 const DEFAULT_CONFIG = {
   darkIntensity: 0,
@@ -48,24 +86,27 @@ const DEFAULT_CONFIG = {
 // Впровадження CSS анімацій для спеціальних ефектів
 if (typeof document !== "undefined") {
   const style = document.createElement("style");
-  style.id = "visual-filters-animations";
+  style.id = "visual-filters-animations-v2";
   style.innerHTML = `
     @keyframes ultrachaos-anim {
-      0% { filter: brightness(var(--v-bright)) contrast(var(--v-contrast-min)) saturate(var(--v-saturate-min)) hue-rotate(0deg); }
-      50% { filter: brightness(var(--v-bright)) contrast(var(--v-contrast-max)) saturate(var(--v-saturate-max)) hue-rotate(180deg) blur(var(--v-blur-max)); }
-      100% { filter: brightness(var(--v-bright)) contrast(var(--v-contrast-min)) saturate(var(--v-saturate-min)) hue-rotate(360deg); }
+      0% { backdrop-filter: brightness(var(--v-bright)) contrast(var(--v-contrast-min)) saturate(var(--v-saturate-min)) hue-rotate(0deg); }
+      50% { backdrop-filter: brightness(var(--v-bright)) contrast(var(--v-contrast-max)) saturate(var(--v-saturate-max)) hue-rotate(180deg) blur(var(--v-blur-max)); }
+      100% { backdrop-filter: brightness(var(--v-bright)) contrast(var(--v-contrast-min)) saturate(var(--v-saturate-min)) hue-rotate(360deg); }
     }
     @keyframes rainbow-anim {
-      0% { filter: brightness(var(--v-bright)) hue-rotate(0deg); }
-      100% { filter: brightness(var(--v-bright)) hue-rotate(360deg); }
+      0% { backdrop-filter: brightness(var(--v-bright)) hue-rotate(0deg); }
+      100% { backdrop-filter: brightness(var(--v-bright)) hue-rotate(360deg); }
     }
+
   `;
   if (!document.getElementById(style.id)) {
     document.head.appendChild(style);
   }
 
-  const pixelFilterSvg = document.getElementById("visual-filters-pixelate");
-  if (!pixelFilterSvg) {
+  // Старий фільтр (після гарячого оновлення чи з попередньої версії) прибираємо —
+  // інакше лишалась би його стара структура, а setPixelSize не знаходив би кроків
+  document.getElementById("visual-filters-pixelate")?.ownerSVGElement?.remove();
+  {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("aria-hidden", "true");
     svg.setAttribute("width", "0");
@@ -101,99 +142,156 @@ if (typeof document !== "undefined") {
     sourceComposite.setAttribute("in2", "tiles");
     sourceComposite.setAttribute("operator", "in");
 
+    // Розтягує кожну точку-зразок на весь блок — без цього лишалась сітка точок
+    const dilate = document.createElementNS("http://www.w3.org/2000/svg", "feMorphology");
+    dilate.setAttribute("operator", "dilate");
+    dilate.setAttribute("radius", "0");
+
     filter.appendChild(flood);
     filter.appendChild(composite);
     filter.appendChild(tile);
     filter.appendChild(sourceComposite);
+    filter.appendChild(dilate);
     svg.appendChild(filter);
     document.body.appendChild(svg);
   }
 }
 
+// Блоки як у Minecraft: що більша сила, то більші блоки (0 → 3px, 100 → 23px).
+// Розмір непарний, щоб точка-зразок стояла в центрі блоку й dilate рівно його заповнював
+const setPixelSize = (filterIntensity) => {
+  const radius = Math.round(1 + filterIntensity / 10);
+  const pixelSize = radius * 2 + 1;
+  const flood = document.querySelector("#visual-filters-pixelate feFlood");
+  const block = document.querySelector("#visual-filters-pixelate feComposite");
+  const dilate = document.querySelector("#visual-filters-pixelate feMorphology");
+  if (!flood || !block || !dilate) return;
+  flood.setAttribute("x", String(radius));
+  flood.setAttribute("y", String(radius));
+  block.setAttribute("width", String(pixelSize));
+  block.setAttribute("height", String(pixelSize));
+  dilate.setAttribute("radius", String(radius));
+};
+
+// url() у backdrop-filter підтримують не всі браузери — без нього весь фільтр став би невалідним
+const supportsBackdropUrl = () =>
+  typeof CSS !== "undefined" && CSS.supports?.("backdrop-filter", "url(#visual-filters-pixelate)");
+
+const filterPart = (type, intensity) => {
+  switch (type) {
+    case "grayscale": return `grayscale(${intensity}%)`;
+    case "sepia": return `sepia(${intensity}%)`;
+    // біля 50% invert дає суцільний сірий, тому середину пропускаємо
+    case "invert": return `invert(${intensity <= 50 ? intensity * 0.6 : 70 + (intensity - 50) * 0.6}%)`;
+    case "matrix":
+      setPixelSize(intensity);
+      // contrast після SVG-фільтра в Chrome перетворює темні блоки на чорні — лишаємо його лише як запасний варіант
+      return supportsBackdropUrl()
+        ? "url(#visual-filters-pixelate)"
+        : `contrast(${110 + intensity * 0.7}%) saturate(${100 + intensity * 0.8}%)`;
+    case "uv": return `hue-rotate(280deg) saturate(${100 + intensity}%)`;
+    case "contrast": return `contrast(${intensity * 2}%)`;
+    case "saturate": return `saturate(${intensity * 2}%)`;
+    case "blur": return `blur(${intensity / 10}px)`;
+    case "warm": return `sepia(${intensity * 0.6}%) saturate(${100 + intensity * 0.6}%) hue-rotate(-${intensity * 0.15}deg)`;
+    case "noir": return `grayscale(100%) contrast(${100 + intensity * 1.5}%) brightness(${100 - intensity * 0.2}%)`;
+    default: return "";
+  }
+};
+
+// Статичний CSS filter для прикладу в модалці (на вузьких екранах сторінку за модалкою не видно)
+export const getPreviewFilter = (config) => {
+  if (!config) return "none";
+  const brightness = 100 - (config.darkIntensity || 0) * 0.6;
+  const { filterType, filterIntensity = 50 } = config;
+  if (filterType === "hue") return `brightness(${brightness}%) hue-rotate(180deg)`;
+  if (filterType === "ultrachaos") {
+    return `brightness(${brightness}%) contrast(${100 + filterIntensity * 2}%) saturate(${100 + filterIntensity * 5}%) hue-rotate(180deg)`;
+  }
+  // Хаос щосекунди міняє фільтр — у прикладі показуємо один із можливих
+  if (filterType === "chaos") return `brightness(${brightness}%) ${filterPart("uv", filterIntensity)}`;
+  const types = filterType === "combo" ? (config.combo || []) : [filterType];
+  return [`brightness(${brightness}%)`, ...types.map((t) => filterPart(t, filterIntensity)).filter(Boolean)].join(" ");
+};
+
+const getFilterLayer = () => {
+  let layer = document.getElementById("visual-filters-layer");
+  if (!layer) {
+    layer = document.createElement("div");
+    layer.id = "visual-filters-layer";
+    layer.setAttribute("aria-hidden", "true");
+    Object.assign(layer.style, {
+      position: "fixed",
+      inset: "0",
+      zIndex: "1899",
+      pointerEvents: "none",
+      transition: "backdrop-filter 0.4s ease-in-out, -webkit-backdrop-filter 0.4s ease-in-out",
+    });
+    document.body.appendChild(layer);
+  }
+  return layer;
+};
+
+const setLayerFilter = (layer, value) => {
+  layer.style.backdropFilter = value;
+  layer.style.webkitBackdropFilter = value;
+};
+
 export const applyFilterEffect = (config) => {
   if (!config) return;
-  document.documentElement.style.transition = "filter 0.4s ease-in-out";
+  const layer = getFilterLayer();
+  // раніше фільтри вішались на <html> і чіпали хедер з налаштуваннями
+  document.documentElement.style.filter = "";
+  document.documentElement.style.animation = "";
+
   const brightness = 100 - (config.darkIntensity || 0) * 0.6;
-  let filters = `brightness(${brightness}%)`;
   const { filterType, filterIntensity = 50 } = config;
+  layer.style.animation = "none";
+  layer.style.display = "";
 
   // Обробка спеціальних анімованих фільтрів
   if (filterType === "ultrachaos") {
-    // Dynamic values based on filterIntensity (0 to 100)
-    const contrastMin = 100 + filterIntensity * 0.6; // e.g. 130% at intensity 50
-    const contrastMax = 100 + filterIntensity * 2;   // e.g. 200% at intensity 50
-    const saturateMin = 100 + filterIntensity * 1.6; // e.g. 180% at intensity 50
-    const saturateMax = 100 + filterIntensity * 5;   // e.g. 350% at intensity 50
-    const blurMax = filterIntensity / 50;            // e.g. 1px at intensity 50
+    const contrastMin = 100 + filterIntensity * 0.6;
+    const contrastMax = 100 + filterIntensity * 2;
+    const saturateMin = 100 + filterIntensity * 1.6;
+    const saturateMax = 100 + filterIntensity * 5;
+    const blurMax = filterIntensity / 50;
 
-    document.documentElement.style.setProperty("--v-bright", `${brightness}%`);
-    document.documentElement.style.setProperty("--v-contrast-min", `${contrastMin}%`);
-    document.documentElement.style.setProperty("--v-contrast-max", `${contrastMax}%`);
-    document.documentElement.style.setProperty("--v-saturate-min", `${saturateMin}%`);
-    document.documentElement.style.setProperty("--v-saturate-max", `${saturateMax}%`);
-    document.documentElement.style.setProperty("--v-blur-max", `${blurMax}px`);
-
-    document.documentElement.style.animation = "ultrachaos-anim 4s infinite linear";
+    layer.style.setProperty("--v-bright", `${brightness}%`);
+    layer.style.setProperty("--v-contrast-min", `${contrastMin}%`);
+    layer.style.setProperty("--v-contrast-max", `${contrastMax}%`);
+    layer.style.setProperty("--v-saturate-min", `${saturateMin}%`);
+    layer.style.setProperty("--v-saturate-max", `${saturateMax}%`);
+    layer.style.setProperty("--v-blur-max", `${blurMax}px`);
+    // Статичний кадр на випадок, коли анімація вимкнена — інакше лишався б попередній фільтр
+    setLayerFilter(layer, `brightness(${brightness}%) contrast(${contrastMax}%) saturate(${saturateMax}%) hue-rotate(180deg)`);
+    layer.style.animation = "ultrachaos-anim 4s infinite linear";
     return;
   }
 
   if (filterType === "hue") {
-    document.documentElement.style.setProperty("--v-bright", `${brightness}%`);
-    // Speed of rainbow rotation depends on intensity (intensity 0-100)
-    // At intensity 50 -> 4 seconds. Higher intensity -> faster (e.g. 200 / intensity).
+    layer.style.setProperty("--v-bright", `${brightness}%`);
+    // Чим більша інтенсивність, тим швидше обертання (50 → 4 с)
     const duration = filterIntensity > 0 ? (200 / filterIntensity) : 0;
-    if (duration > 0) {
-      document.documentElement.style.animation = `rainbow-anim ${duration}s infinite linear`;
-    } else {
-      document.documentElement.style.animation = "none";
-      document.documentElement.style.filter = `brightness(${brightness}%) hue-rotate(0deg)`;
-    }
+    // Статичний кадр на випадок, коли анімація вимкнена — інакше лишався б попередній фільтр
+    setLayerFilter(layer, duration > 0 ? `brightness(${brightness}%) hue-rotate(180deg)` : `brightness(${brightness}%)`);
+    if (duration > 0) layer.style.animation = `rainbow-anim ${duration}s infinite linear`;
     return;
   }
 
-  document.documentElement.style.animation = "none";
-
-  if (filterType === "grayscale") {
-    filters += ` grayscale(${filterIntensity}%)`;
-  } else if (filterType === "sepia") {
-    filters += ` sepia(${filterIntensity}%)`;
-  } else if (filterType === "invert") {
-    const offset = filterIntensity - 50;
-    if (offset > 0) {
-      filters += ` invert(${offset * 2}%)`;
-    } else if (offset < 0) {
-      const boost = 1 + Math.abs(offset) / 50;
-      filters += ` contrast(${boost * 100}%) saturate(${boost * 100}%)`;
-    }
-  } else if (filterType === "matrix") {
-    const pixelSize = Math.max(2, Math.round(10 - filterIntensity / 12));
-    const filterSvg = document.getElementById("visual-filters-pixelate");
-    if (filterSvg) {
-      const svgFilter = filterSvg.querySelector("filter");
-      if (svgFilter) {
-        const block = svgFilter.querySelector("feComposite");
-        if (block) {
-          block.setAttribute("width", String(pixelSize));
-          block.setAttribute("height", String(pixelSize));
-        }
-      }
-    }
-
-    filters += ` brightness(${brightness}%) url(#visual-filters-pixelate) contrast(${110 + filterIntensity * 0.7}%) saturate(${100 + filterIntensity * 0.8}%)`;
-  } else if (filterType === "uv") {
-    filters += ` hue-rotate(280deg) saturate(${100 + filterIntensity}%)`;
-  } else if (filterType === "contrast") {
-    filters += ` contrast(${filterIntensity * 2}%)`;
-  } else if (filterType === "saturate") {
-    filters += ` saturate(${filterIntensity * 2}%)`;
-  } else if (filterType === "blur") {
-    filters += ` blur(${filterIntensity / 10}px)`;
-  } else if (filterType === "hue") {
-    filters += ` hue-rotate(${filterIntensity * 3.6}deg)`;
+  const types = filterType === "combo" ? (config.combo || []) : [filterType];
+  const parts = types.map((t) => filterPart(t, filterIntensity)).filter(Boolean);
+  if (brightness === 100 && parts.length === 0) {
+    setLayerFilter(layer, "");
+    layer.style.display = "none";
+    return;
   }
-
-  document.documentElement.style.filter = filters;
+  setLayerFilter(layer, [`brightness(${brightness}%)`, ...parts].join(" "));
 };
+
+const SYNC_EVENT = "visual-filters-sync";
+const broadcast = (key, value) =>
+  queueMicrotask(() => window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: { key, value } })));
 
 export const useVisualFilters = (user) => {
   const [visualConfig, setVisualConfigState] = useState(DEFAULT_CONFIG);
@@ -215,6 +313,16 @@ export const useVisualFilters = (user) => {
       if (saved) setCustomPresets(saved);
       else setCustomPresets([]);
     });
+  }, [storageKey, presetsKey]);
+
+  // Хук використовують і хедер, і налаштування — тримаємо їх у синхроні
+  useEffect(() => {
+    const onSync = (e) => {
+      if (e.detail.key === storageKey) setVisualConfigState(e.detail.value);
+      if (e.detail.key === presetsKey) setCustomPresets(e.detail.value);
+    };
+    window.addEventListener(SYNC_EVENT, onSync);
+    return () => window.removeEventListener(SYNC_EVENT, onSync);
   }, [storageKey, presetsKey]);
 
   useEffect(() => {
@@ -249,6 +357,7 @@ export const useVisualFilters = (user) => {
       setVisualConfigState((prev) => {
         const next = typeof updater === "function" ? updater(prev) : updater;
         localforage.setItem(storageKey, next);
+        broadcast(storageKey, next);
         return next;
       });
     },
@@ -265,12 +374,14 @@ export const useVisualFilters = (user) => {
       if (!name.trim()) return;
       const newPreset = {
         id: `custom_${Date.now()}`,
-        label: `✨ ${name}`,
+        label: name.trim(),
         config: { ...visualConfig },
       };
       setCustomPresets((prev) => {
+        if (prev.length >= MAX_CUSTOM_PRESETS) return prev;
         const next = [...prev, newPreset];
         localforage.setItem(presetsKey, next);
+        broadcast(presetsKey, next);
         return next;
       });
     },
@@ -282,6 +393,7 @@ export const useVisualFilters = (user) => {
       setCustomPresets((prev) => {
         const next = prev.filter((p) => p.id !== id);
         localforage.setItem(presetsKey, next);
+        broadcast(presetsKey, next);
         return next;
       });
     },
@@ -293,9 +405,10 @@ export const useVisualFilters = (user) => {
       if (!newName.trim()) return;
       setCustomPresets((prev) => {
         const next = prev.map((p) =>
-          p.id === id ? { ...p, label: `✨ ${newName}` } : p,
+          p.id === id ? { ...p, label: newName.trim() } : p,
         );
         localforage.setItem(presetsKey, next);
+        broadcast(presetsKey, next);
         return next;
       });
     },
@@ -306,6 +419,7 @@ export const useVisualFilters = (user) => {
     (newPresets) => {
       setCustomPresets(newPresets);
       localforage.setItem(presetsKey, newPresets);
+      broadcast(presetsKey, newPresets);
     },
     [presetsKey],
   );

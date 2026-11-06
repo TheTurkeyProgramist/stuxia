@@ -8,6 +8,7 @@ import {
   FiDroplet,
   FiGrid,
   FiImage,
+  FiMaximize2,
   FiRefreshCw,
   FiSearch,
   FiShuffle,
@@ -15,8 +16,8 @@ import {
   FiX,
 } from "react-icons/fi";
 import { DEFAULT_BGS } from "./defaultBgs";
-import village from "../../photos/fan-art/village.webp";
-import faded from "../../photos/fan-art/faded.webp";
+import village from "../../media/third-party/games/dragon-village-3.webp";
+import faded from "../../media/backgrounds/scenes/resort.webp";
 import { Tooltip } from "./Hero.jsx";
 
 const isVideoSource = (src) => {
@@ -468,6 +469,42 @@ const LoadMoreButton = styled.button`
   &:hover { background: ${(props) => (props.isDarkMode ? "#220150" : "#ffcc00")}; }
 `;
 
+const FullscreenViewer = ({ bg, onClose, onDownload }) => {
+  const [blobUrl, setBlobUrl] = useState(null);
+
+  React.useEffect(() => {
+    if (bg.src instanceof Blob) {
+      const url = URL.createObjectURL(bg.src);
+      setBlobUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setBlobUrl(null);
+  }, [bg.src]);
+
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const srcUrl = bg.src instanceof Blob ? blobUrl : bg.src;
+  const btnStyle = { background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "8px", width: "40px", height: "40px", color: "#fff", fontSize: "20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "#000", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {srcUrl && (isVideoSource(bg.src) ? (
+        <video src={srcUrl} autoPlay muted loop playsInline onClick={(e) => e.stopPropagation()} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+      ) : (
+        <img src={srcUrl} alt={bg.name} onClick={(e) => e.stopPropagation()} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+      ))}
+      <div style={{ position: "absolute", top: "12px", right: "12px", display: "flex", gap: "8px" }}>
+        <button onClick={(e) => { e.stopPropagation(); onDownload(bg); }} style={btnStyle} aria-label="Скачати"><FiDownload /></button>
+        <button onClick={onClose} style={btnStyle} aria-label="Закрити"><FiX /></button>
+      </div>
+    </div>
+  );
+};
+
 const VideoThumbnail = React.memo(({ bg, onClick }) => {
   const videoRef = useRef(null);
   const [blobUrl, setBlobUrl] = useState(null);
@@ -574,8 +611,8 @@ const BgModal = ({
   const [pixabayResults, setPixabayResults] = useState([]);
   const [pixabayStatus, setPixabayStatus] = useState("idle");
   const [pixabayPage, setPixabayPage] = useState(1);
-  const [descriptionModal, setDescriptionModal] = useState(null);
-  const MAX_DAILY_HERO_CARDS = 1000;
+  const [fullscreenBg, setFullscreenBg] = useState(null);
+  const MAX_DAILY_HERO_CARDS = 50;
   const fileInputRef = useRef(null);
 
   const allBgs = useMemo(
@@ -915,11 +952,9 @@ const BgModal = ({
                     {rating === 2 ? "💛" : rating === 1 ? "❤️" : "🤍"}
                   </HeartIcon>
                   <div style={{ display: "flex", gap: "4px" }}>
-                    {bg.description && (
-                      <Tooltip content="Детальний опис картини" isDarkMode={isDarkMode}>
-                        <HeartIcon $color="#aef" aria-label="Детальний опис картини" onClick={(e) => { e.stopPropagation(); setDescriptionModal({ name: bg.name, text: bg.description, src: bg.src, author: bg.author, source: bg.source }); }}>❓</HeartIcon>
-                      </Tooltip>
-                    )}
+                    <Tooltip content="На весь екран" isDarkMode={isDarkMode}>
+                      <HeartIcon $color="#aef" aria-label="Відкрити на весь екран" onClick={(e) => { e.stopPropagation(); setFullscreenBg(bg); }}><FiMaximize2 /></HeartIcon>
+                    </Tooltip>
                     <Tooltip content="Скачати файл фону" isDarkMode={isDarkMode}>
                       <HeartIcon $color="#ffda79" aria-label="Скачати фон" title="Завантажити фон" onClick={(e) => { e.stopPropagation(); handleDownloadBg(bg); }}><FiDownload /></HeartIcon>
                     </Tooltip>
@@ -962,33 +997,8 @@ const BgModal = ({
           <input type="file" ref={fileInputRef} hidden accept="image/*,video/*" onChange={(e) => { handleFileUpload(e.target.files[0]); e.target.value = ""; }} />
         </DropZone>
 
-        {descriptionModal && (
-          <div onClick={() => setDescriptionModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "5px" }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ background: "#111", border: "2px solid #ffb36c", borderRadius: "14px", width: "90%", maxWidth: "900px", height: "80vh", maxHeight: "650px", color: "#fff", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 20px 50px rgba(0,0,0,0.9)" }}>
-              {isVideoSource(descriptionModal.src) ? (
-                <video src={descriptionModal.src} preload="metadata" autoPlay muted loop playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }} />
-              ) : (
-                <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${descriptionModal.src})`, backgroundSize: "cover", backgroundPosition: "center", zIndex: 1 }} />
-              )}
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.85) 100%)", zIndex: 2 }} />
-              <div style={{ position: "relative", zIndex: 3, display: "flex", flexDirection: "column", height: "100%", boxSizing: "border-box", padding: "10px", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%" }}>
-                  <h3 style={{ color: "#ffb36c", margin: 0, fontSize: "20px", fontWeight: "bold", textShadow: "0 2px 4px rgba(0,0,0,0.9)" }}>{descriptionModal.name}</h3>
-                  <button onClick={() => setDescriptionModal(null)} style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "5px", width: "30px", height: "30px", color: "#fff", fontSize: "30px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,0,0,0.7)"; e.currentTarget.style.borderColor = "red"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(0,0,0,0.6)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}>×</button>
-                </div>
-                <div style={{ flex: 1, overflowY: "auto", margin: "5px 0", paddingRight: "5px" }}>
-                  <p style={{ lineHeight: 1.8, whiteSpace: "pre-wrap", fontSize: "15px", margin: 0, textShadow: "0 2px 10px rgba(0,0,0,0.95)", color: "#f5f5f5", borderRadius: "8px", backdropFilter: "blur(2px)" }}>{descriptionModal.text}</p>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "8px" }}>
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <div style={{ background: "rgba(0, 0, 0, 0.75)", padding: "8px 12px", borderRadius: "8px", fontSize: "13px", border: "1px solid rgba(255, 179, 108, 0.4)", color: "#ffb36c", fontWeight: "bold", textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>Автор: {descriptionModal.author || "Невідомий"}</div>
-                    {descriptionModal.source && <div style={{ background: "rgba(0, 0, 0, 0.75)", padding: "8px 12px", borderRadius: "8px", fontSize: "13px", border: "1px solid rgba(255, 179, 108, 0.4)", color: "#ffb36c", fontWeight: "bold", textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>Джерело: {descriptionModal.source}</div>}
-                  </div>
-                  <button onClick={() => handleDownloadBg(descriptionModal)} style={{ background: "linear-gradient(135deg, #ffb36c 0%, #ff8c2b 100%)", color: "#000", border: "none", borderRadius: "8px", padding: "8px 16px", fontSize: "13px", fontWeight: "bold", cursor: "pointer", boxShadow: "0 2px 8px rgba(255, 179, 108, 0.4)", display: "flex", alignItems: "center", gap: "6px", transition: "transform 0.15s ease" }} onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")} onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}>  <FiDownload /> Скачати {isVideoSource(descriptionModal.src) ? "відео" : "картинку"}</button>
-                </div>
-              </div>
-            </div>
-          </div>
+        {fullscreenBg && (
+          <FullscreenViewer bg={fullscreenBg} onClose={() => setFullscreenBg(null)} onDownload={handleDownloadBg} />
         )}
       </ModalContent>
     </ModalOverlay>

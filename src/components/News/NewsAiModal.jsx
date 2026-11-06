@@ -14,12 +14,12 @@ import { MdVerified } from "react-icons/md";
 import { FaCircleInfo } from "react-icons/fa6";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { fetchFreeWebSearch } from "../../utils/freeWebSearch";
-import reader from "../../photos/cursors/reader.webp";
+import reader from "../../media/characters/domino-reading.webp";
 import { GiSpikedDragonHead, GiTimeBomb } from "react-icons/gi";
-import readerfour from "../../photos/cursors/readerfour.webp";
-import readertwo from "../../photos/cursors/readertwo.webp";
-import readerthree from "../../photos/cursors/readerthree.webp";
-import readerVideo from "../../photos/cursors/reader-nobg-small.webm";
+import readerfour from "../../media/characters/domino-reading-4.webp";
+import readertwo from "../../media/characters/domino-reading-2.webp";
+import readerthree from "../../media/characters/domino-reading-3.webp";
+import readerVideo from "../../media/characters/kate-and-domino.webm";
 
 const frames = [
   reader,

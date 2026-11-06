@@ -2,14 +2,13 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspens
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
-import daynight from "../../photos/thumbs/sunnight.webp";
-import daysthunders from "../../photos/thumbs/daysthunders.webp";
+import daynight from "../../media/thumbs/day-night-clock.webp";
+import daysthunders from "../../media/thumbs/night-river-burnt-tree.webp";
 import localforage from "localforage";
 import {
   BiCog,
   BiEdit,
   BiImageAlt,
-  BiBrain,
   BiLineChart,
   BiCurrentLocation,
   BiTrash,
@@ -19,11 +18,10 @@ import {
   BiX,
   BiTable,
   BiGridAlt,
-  BiCoinStack,
-  BiLink,
-  BiRefresh,
   BiTrendingUp,
   BiPalette,
+  BiChevronDown,
+  BiLowVision,
 } from "react-icons/bi";
 import { FiPlus } from "react-icons/fi";
 import {
@@ -31,7 +29,7 @@ import {
   addCustomDay,
 } from "../../features/counter/Counter.js";
 import { getHourlyForecastDetailGroups } from "../../utils/hourlyForecast";
-import { generateRuleBasedForecast, cleanAiText } from "../../utils/ruleBasedForecast";
+import { generateRuleBasedForecast } from "../../utils/ruleBasedForecast";
 import { DEFAULT_BGS } from "../Hero/defaultBgs";
 import { getWindDirectionText } from "../../utils/windUtils";
 import { linearTrend } from "../../utils/chartTrend";
@@ -53,16 +51,20 @@ import {
   FaShirt,
   FaCar,
   FaPersonWalking,
+  FaHouse,
   FaLightbulb,
   FaGaugeHigh,
 } from "react-icons/fa6";
 import CustomDatesModal from "../Modals/CustomDatesModal";
 import UnitsModal from "../Modals/UnitsModal";
 import { loadCardUnits, isUnitsEventForCard, cardUnitsKey, UNITS_GLOBAL_KEY, UNITS_USE_GLOBAL_KEY } from "../../utils/unitsStorage";
-import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, tempLabel, windLabel, pressureLabel } from "../../utils/units.js";
+import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, tempLabel, windLabel, pressureLabel, visibilityLabel, convertVisibility } from "../../utils/units.js";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { PiThermometerFill } from "react-icons/pi"; //Нормальна температура
-import { BsThermometerSnow, BsThermometerSun, BsMoonStarsFill, BsClockHistory } from "react-icons/bs"; //Холодна температура / Ніч
+import { BsThermometerSnow, BsThermometerSun, BsMoonStarsFill, BsClockHistory, BsHourglassSplit, BsBuildings, BsCompass, BsStars } from "react-icons/bs"; //Холодна температура / Ніч / Астрономія
+import { formatClock, getTwilightData, getDayLength, getMoonDetails, getDayLengthDiff, getScaleProgress } from "../../utils/astro";
+import { isFoggy } from "../../utils/dailyAggregates";
+import { AnimWind, AnimSpin, AnimHourglass, AnimTwinkle, AnimCompass, MoonPhaseIcon, AstroScale } from "./BlockAstroIcons.jsx";
 import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, CloudWithTrend, getCloudTrend, getSnowStyle } from "./AnimatedWeatherIcons.jsx"; //Анімовані іконки
 import { WeatherIcon, stripEmoji } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
 import { BiWind } from "react-icons/bi"; //Пориви Вітру
@@ -359,8 +361,9 @@ const CurrentWeatherBanner = styled.div`
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: transparent;
   @media (min-width: 768px) {
-    height: 600px;
-    min-height: 600px;
+    /* Заповнює рівно доступну висоту вкладки, без прокрутки */
+    height: 100%;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -401,10 +404,35 @@ const MainBannerArea = styled.div`
     props.$image
       ? `linear-gradient(rgba(10, 10, 10, 0.55), rgba(10, 10, 10, 0.55)), url(${props.$image}) center/cover no-repeat`
       : "transparent"};
+  /* Телефон: однакова висота для всіх карток і вкладок */
+  @media (max-width: 767px) {
+    height: 620px;
+  }
   @media (min-width: 768px) {
     height: 542px;
     padding: 0;
     overflow: hidden;
+  }
+`;
+
+/* Вміст вкладки займає решту висоти картки; на телефоні зайве прокручується всередині */
+const TabContentArea = styled.div`
+  display: flex;
+  flex-direction: column;
+  @media (max-width: 767px) {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    /* Активна вкладка розтягується на всю висоту і не стискається */
+    & > * {
+      flex: 1 0 auto;
+    }
+  }
+  /* Планшет і комп'ютер: вміст вкладки не обрізається, а прокручується вертикально */
+  @media (min-width: 768px) {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
   }
 `;
 
@@ -465,6 +493,9 @@ const DesktopTwoRowIndicators = styled.div`
   height: 84%;
   padding: 1px;
   box-sizing: border-box;
+  @media (max-width: 767px) {
+    height: 100%;
+  }
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -579,8 +610,9 @@ const chartActionButtonStyle = {
 };
 
 const AiSummaryBox = styled(motion.div)`
-  background: ${(props) => (props.$isDarkMode ? "rgba(30, 20, 42, 0.88)" : "rgba(255, 255, 255, 0.92)")};
-  border: 2px solid rgba(138, 43, 226, 0.35);
+  /* Під тему: темна — чорний фон, світла — білий; рамка нейтральна */
+  background: ${(props) => (props.$isDarkMode ? "rgba(0, 0, 0, 0.88)" : "rgba(255, 255, 255, 0.92)")};
+  border: 2px solid ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.12)")};
   padding: 14px;
   font-size: 15px;
   line-height: 1.6;
@@ -591,32 +623,53 @@ const AiSummaryBox = styled(motion.div)`
   box-sizing: border-box;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 
+  /* Телефон: без власної прокрутки — прокручується вся вкладка */
   @media (max-width: 767px) {
-    padding: 10px;
+    padding: 0 3px 3px;
+    height: auto;
+    overflow: visible;
   }
 `;
 
-
-const SummaryText = styled.div`
-  display: -webkit-box;
-  -webkit-line-clamp: ${(props) => (props.$isExpanded ? "none" : "5")};
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  font-size: 15px;
-  line-height: 1.5;
-  white-space: pre-line;
+/* Верхня панель «Смарт» */
+const SmartTopBar = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid
+    ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.1)")};
+  @media (max-width: 767px) {
+    margin-bottom: 10px;
+    padding-top: 8px;
+  }
 `;
 
-const ShowMoreBtn = styled.button`
-  background: none;
-  border: none;
-  color: #8a2be2;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 6px 0 0 0;
-  text-decoration: underline;
+/* Кнопки «Скопіювати» / «Повний звіт»; «Повний звіт» лише на планшеті й комп'ютері */
+const SmartTopActions = styled.div`
+  display: flex;
+  gap: 6px;
+  @media (max-width: 767px) {
+    .smart-full-report {
+      display: none;
+    }
+  }
 `;
+
+/* Стрілка розгортання розділу «Смарт» на телефоні */
+const RuleChevron = styled(BiChevronDown)`
+  margin-left: auto;
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  transform: rotate(${(props) => (props.$open ? "180deg" : "0deg")});
+`;
+
+
+
 
 const ModePillButton = styled.button`
   display: inline-flex;
@@ -671,7 +724,7 @@ const RuleBadge = styled.span`
 
 const RuleSectionCard = styled.div`
   background: ${(props) =>
-    props.$isDarkMode ? "rgba(25, 20, 35, 0.65)" : "rgba(245, 248, 252, 0.85)"};
+    props.$isDarkMode ? "rgba(255, 255, 255, 0.06)" : "rgba(245, 248, 252, 0.85)"};
   border: 1px solid ${(props) =>
     props.$isDarkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)"};
   border-left: 3.5px solid ${(props) => props.$accent || "#00eeff"};
@@ -681,6 +734,10 @@ const RuleSectionCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
+  @media (max-width: 767px) {
+    padding: 6px 8px;
+    margin-bottom: 0;
+  }
 `;
 
 const RuleSectionHeader = styled.div`
@@ -690,6 +747,17 @@ const RuleSectionHeader = styled.div`
   font-size: 12px;
   font-weight: 700;
   color: ${(props) => (props.$isDarkMode ? "#fff" : "#111")};
+  @media (max-width: 767px) {
+    font-size: 12px;
+    line-height: 1.25;
+    gap: 8px;
+    user-select: none;
+    /* Іконка розділу більша, текст компактніший */
+    & > svg:first-child {
+      font-size: 20px !important;
+      flex-shrink: 0;
+    }
+  }
 `;
 
 const RuleSectionBody = styled.div`
@@ -697,51 +765,13 @@ const RuleSectionBody = styled.div`
   line-height: 1.5;
   color: ${(props) => (props.$isDarkMode ? "#ddd" : "#333")};
   white-space: pre-line;
-`;
-
-const PromptEditor = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 6px;
-  background: ${(props) => (props.$isDarkMode ? "rgba(20, 15, 30, 0.75)" : "rgba(245, 240, 255, 0.85)")};
-  padding: 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(138, 43, 226, 0.3);
-
   @media (max-width: 767px) {
-    padding: 10px;
-    gap: 8px;
-  }
-`;
-
-const PromptTextarea = styled.textarea`
-  width: 100%;
-  height: 90px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1.5px solid #8a2be2;
-  font-size: 13px;
-  font-family: inherit;
-  line-height: 1.4;
-  background: ${(props) => (props.$isDarkMode ? "#151520" : "#ffffff")};
-  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
-  resize: vertical;
-  box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
-
-  &:focus {
-    outline: none;
-    border-color: #a855f7;
-    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
-  }
-
-  @media (max-width: 767px) {
-    height: 70px;
     font-size: 12px;
-    padding: 8px;
+    line-height: 1.4;
   }
 `;
+
+
 
 const ViewToggleGroup = styled.div`
   display: inline-flex;
@@ -801,9 +831,13 @@ grid-template-columns: repeat(2, 1fr);
     grid-column: 1 / -1;
   }
   @media (max-width: 767px) {
-    height: min(70vh, 700px);
-    grid-template-columns: repeat(1, 1fr); 
+    /* Висота за вмістом, щоб усі пункти було видно; прокрутка лише на дуже низьких екранах */
+    height: auto;
+    max-height: 90vh;
+    grid-template-columns: repeat(2, 1fr);
     overflow-y: auto;
+    /* Рядки за висотою вмісту, щоб пояснення не обрізались */
+    grid-auto-rows: auto;
   }
 `;
 /* Шестерня й хрестик лежать одне на одному і плавно змінюють одне одного */
@@ -842,6 +876,12 @@ const SettingsDropdownItem = styled.button`
  gap: 6px;
   color: ${(props) => (props.$isDarkMode ? "#020202" : "#f1eeee")};
 border: 1px solid ${(props) => (props.$isDarkMode ? "#020202" : "#f1eeee")};
+  @media (max-width: 767px) {
+    padding: 6px 4px;
+    gap: 3px;
+    font-size: 14px;
+    line-height: 1.2;
+  }
   @media (min-width: 768px) {
      padding:6px 20px;
       gap: 4px;
@@ -849,10 +889,103 @@ border: 1px solid ${(props) => (props.$isDarkMode ? "#020202" : "#f1eeee")};
 svg {
     font-size: 24px;
     flex-shrink: 0;
+   @media (max-width: 767px) {
+    font-size: 20px;
+  }
    @media (min-width: 768px) {
     font-size: 30px;
   }
 }
+`;
+// Фон картки погоди за замовчуванням
+const DEFAULT_CARD_BG =
+  DEFAULT_BGS.find((bg) => bg.name === "Туманний ліс")?.src || DEFAULT_BGS[0].src;
+
+/* Дрібне пояснення під назвою пункту налаштувань */
+const SettingsItemHint = styled.span`
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 400;
+  opacity: 0.65;
+  @media (max-width: 767px) {
+    font-size: 10px;
+  }
+  @media (min-width: 768px) {
+    font-size: 12px;
+  }
+`;
+/* Підказка під назвою головної картки, коли показано Київ замість GPS-локації */
+const LocationHintText = styled.p`
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #fcfcfc;
+  opacity: 0.85;
+  svg {
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+`;
+const LocationHint = () => (
+  <LocationHintText>
+    Натисніть <BiCog aria-label="шестерню" /> для своєї локації
+  </LocationHintText>
+);
+/* Плитки блокового режиму (годинний / 16 днів) */
+const BlockStatGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  /* Планшет і комп'ютер: плитки по 4 в ряд; неповний останній ряд розтягується на всю ширину */
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    & > :last-child:nth-child(4n + 1) {
+      grid-column: 1 / -1;
+    }
+    & > :nth-last-child(2):nth-child(4n + 1),
+    & > :last-child:nth-child(4n + 2) {
+      grid-column: span 2;
+    }
+    & > :last-child:nth-child(4n + 3) {
+      grid-column: span 2;
+    }
+  }
+`;
+const BlockStatTile = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 5px 4px;
+  box-sizing: border-box;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  svg {
+    font-size: 22px;
+    flex-shrink: 0;
+    margin-bottom: 2px;
+  }
+`;
+const BlockStatLabel = styled.div`
+  font-size: 10px;
+  line-height: 1.2;
+  opacity: 0.75;
+`;
+const BlockStatValue = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  /* 4 плитки в ряд — значення трохи менші, щоб вміщались */
+  @media (min-width: 768px) {
+    font-size: 12px;
+  }
 `;
 const WeatherCardComponent = ({
   user,
@@ -872,7 +1005,6 @@ const WeatherCardComponent = ({
   customHolidayName,
   currentTimeString,
   layout,
-  onOpenDetails,
 }) => {
   const dispatch = useDispatch();
   const { registerRef } = useTutorial?.() || { registerRef: () => {} };
@@ -880,21 +1012,7 @@ const WeatherCardComponent = ({
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(card.locationName);
   const [selectedDay, setSelectedDay] = useState(null);
-  const [forecastMode, setForecastMode] = useState("rules"); // "rules" (експертні правила) або "ai" (Gemini)
   const [copiedForecast, setCopiedForecast] = useState(false);
-  const [aiSummary, setAiSummary] = useState("");
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [isAiEnabled, setIsAiEnabled] = useState(true);
-  const [customAiPrompt, setCustomAiPrompt] = useState("");
-  const [responseLength, setResponseLength] = useState("extensive");
-  const [aiStyle, setAiStyle] = useState("friendly");
-  const [useAiSynergy, setUseAiSynergy] = useState(true); // Синергія ШІ з експертними правилами
-  const [aiTokenUsage, setAiTokenUsage] = useState(null); // Витрачені кредити / токени ШІ
-  const [isEditingPrompt, setIsEditingPrompt] = useState(false);
-  const [savedCustomAiPrompt, setSavedCustomAiPrompt] = useState("");
-  const [aiPromptChangedAt, setAiPromptChangedAt] = useState(0);
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
-  const [hasOverflow, setHasOverflow] = useState(false);
   const [selectedHourlyDay, setSelectedHourlyDay] = useState(0);
   const [hourlyViewMode, setHourlyViewMode] = useState("charts");
   const [dailyViewMode, setDailyViewMode] = useState("charts");
@@ -907,6 +1025,31 @@ const WeatherCardComponent = ({
     return () => window.removeEventListener("resize", onResize);
   }, []);
   const defaultChartHeight = isNarrowScreen ? "250px" : "380px";
+  // Розділи «Смарт» на телефоні згортаються; спочатку відкритий лише перший
+  const [openRuleSections, setOpenRuleSections] = useState(["dayNight"]);
+  const isRuleSectionOpen = (key) => !isNarrowScreen || openRuleSections.includes(key);
+  const toggleRuleSection = (key) =>
+    setOpenRuleSections((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  const ruleHeaderProps = (key) =>
+    isNarrowScreen
+      ? {
+          role: "button",
+          tabIndex: 0,
+          "aria-expanded": isRuleSectionOpen(key),
+          onClick: () => toggleRuleSection(key),
+          onKeyDown: (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggleRuleSection(key);
+            }
+          },
+          style: { cursor: "pointer" },
+        }
+      : {};
+  const renderRuleChevron = (key) =>
+    isNarrowScreen ? <RuleChevron $open={isRuleSectionOpen(key)} /> : null;
   const [units, setUnits] = useState(DEFAULT_UNITS);
   const [unitsGlobal, setUnitsGlobal] = useState(true); // одиниці спільні для всіх карток
   const unit = units.temp; // "C", "K", "F"
@@ -930,8 +1073,29 @@ const WeatherCardComponent = ({
     return generateRuleBasedForecast(card, { unit, currentTimeString: forecastTimeString });
   }, [card, unit, forecastTimeString]);
 
+  // Минулий день (вчора) у 16-денному прогнозі показується лише з чекбоксом
+  const [showPastDay, setShowPastDay] = useState(false);
+  const now = new Date();
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const isPastDay = (d) => Boolean(d?.fullDate) && d.fullDate < todayIso;
+  const dailyList = useMemo(() => {
+    const all = card.daily16 || card.daily || [];
+    return showPastDay ? all : all.filter((d) => !(d?.fullDate && d.fullDate < todayIso));
+  }, [card.daily16, card.daily, showPastDay, todayIso]);
+
+  // Астрономія для блоків 16-денного прогнозу (рахується лише при зміні даних картки)
+  const dailyAstro = useMemo(
+    () =>
+      dailyList.map((d) => ({
+        twilight: getTwilightData(d.fullDate, card.lat, card.lon),
+        moon: getMoonDetails(d.fullDate, card.lat, card.lon),
+        dayDiff: getDayLengthDiff(d.fullDate, card.lat, card.lon),
+      })),
+    [dailyList, card.lat, card.lon],
+  );
+
   const [cityImage, setCityImage] = useState(card.cityImage || "");
-  const [bgMode, setBgMode] = useState("wiki");
+  const [bgMode, setBgMode] = useState(DEFAULT_CARD_BG);
   const [isBgModalOpen, setIsBgModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDropdownClosing, setIsDropdownClosing] = useState(false);
@@ -1024,7 +1188,6 @@ const WeatherCardComponent = ({
     { key: "hourly", visible: true },
     { key: "daily", visible: true },
   ]);
-  const summaryRef = useRef(null);
   const hourlyChartPanelRef = useRef(null);
   const hourlyChartInstanceRef = useRef(null);
   const dailyChartRef = useRef(null);
@@ -1045,13 +1208,49 @@ const WeatherCardComponent = ({
   const [globalLineStyles, setGlobalLineStyles] = useState(false); // спільні стилі для всіх карток
   const [styleModalChart, setStyleModalChart] = useState(null); // "hourly" | "daily" | null
   const [showDailyTrend, setShowDailyTrend] = useState(false);
-  const [rightMetric, setRightMetric] = useState("wind"); // "wind" | "uv" | "precip"
+  const [rightMetric, setRightMetric] = useState("wind"); // "wind" | "uv" | "precip" | "clouds" | "visibility"
   const RIGHT_METRICS = {
     wind: { label: "Вітер", axis: fmt.windAxis, color: "#0099ff", rgb: "0, 153, 255", icon: <BiWind /> },
     uv: { label: "УФ-індекс", axis: "УФ-індекс", color: "#a855f7", rgb: "168, 85, 247", icon: <FaSun /> },
     precip: { label: "Опади", axis: "Опади (%)", color: "#14b8a6", rgb: "20, 184, 166", icon: <FaCloudRain /> },
+    clouds: { label: "Хмарність", axis: "Хмарність (%)", color: "#9ca3af", rgb: "156, 163, 175", icon: <FaCloud /> },
+    visibility: {
+      label: "Видимість",
+      axis: `Видимість (${visibilityLabel(units.distance)})`,
+      color: "#7dd3fc",
+      rgb: "125, 211, 252",
+      icon: <BiLowVision />,
+    },
   };
   const rightMeta = RIGHT_METRICS[rightMetric];
+  const isPercentMetric = rightMetric === "precip" || rightMetric === "clouds";
+  // Значення правої осі (крім вітру) для години (daily=false) або дня (daily=true)
+  const rightValue = (item, daily) => {
+    switch (rightMetric) {
+      case "uv":
+        return parseFloat(item.uv_index) || 0;
+      case "precip":
+        return parseFloat(daily ? item.precipitation_probability_max : item.precipitation_probability) || 0;
+      case "clouds": {
+        const v = daily ? item.cloud_cover_mean : item.cloud_cover;
+        return v == null ? null : v;
+      }
+      case "visibility": {
+        const m = daily ? item.visibility_min : item.visibility;
+        return m == null ? null : Math.round(convertVisibility(m / 1000, units.distance) * 10) / 10;
+      }
+      default:
+        return 0;
+    }
+  };
+  // Підказка графіка для правої осі (крім вітру)
+  const rightTooltip = (value) => {
+    if (rightMetric === "uv") return `УФ-індекс: ${(value || 0).toFixed(1)}`;
+    if (rightMetric === "precip") return `Ймовірність опадів: ${Math.round(value || 0)}%`;
+    if (rightMetric === "clouds") return `Хмарність: ${Math.round(value || 0)}%`;
+    if (rightMetric === "visibility") return `Видимість: ${value ?? "—"} ${visibilityLabel(units.distance)}`;
+    return "";
+  };
 
   const toggleDatasetVisibility = (datasetKey) => {
     setHiddenSeries((prev) => ({ ...prev, [datasetKey]: !prev[datasetKey] }));
@@ -1477,7 +1676,8 @@ const WeatherCardComponent = ({
   useEffect(() => {
     const loadBgMode = async () => {
       const savedBg = await localforage.getItem(`bgMode_${card.id}`);
-      if (savedBg) {
+      // Старе значення "wiki" (фото з Вікіпедії) більше не підтримується
+      if (savedBg && savedBg !== "wiki") {
         setBgMode(savedBg);
       }
     };
@@ -1534,277 +1734,13 @@ const WeatherCardComponent = ({
   };
 
   useEffect(() => {
-    let isMounted = true;
-
-    const searchCityImage = async () => {
-      if (bgMode !== "wiki") {
-        if (isMounted) {
-          setCityImage(bgMode);
-        }
-        return;
-      }
-
-      const getFallback = () =>
-        DEFAULT_BGS.find((bg) => bg.name === "Туманний ліс")?.src ||
-        DEFAULT_BGS[0].src;
-
-      let query = (card.locationName || card.name || "").trim();
-
-      if (query === "Ваша локація" && card.lat && card.lon) {
-        try {
-          const geoRes = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${card.lat}&lon=${card.lon}&format=json&accept-language=uk`,
-          );
-          const geoData = await geoRes.json();
-          query =
-            geoData.address?.city ||
-            geoData.address?.town ||
-            geoData.address?.village ||
-            geoData.address?.state ||
-            query;
-        } catch (e) {
-          console.warn("Reverse geocoding failed", e);
-        }
-      }
-
-      if (!query || query === "Ваша локація") {
-        if (isMounted) {
-          setCityImage(getFallback());
-        }
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          `https://uk.wikipedia.org/w/api.php?action=query&prop=pageimages&titles=${encodeURIComponent(query)}&pithumbsize=1000&format=json&origin=*`,
-        );
-        const data = await response.json();
-        const page = Object.values(data?.query?.pages || {}).find(
-          (entry) => entry.thumbnail?.source,
-        );
-        const imageUrl = page?.thumbnail?.source;
-
-        if (imageUrl && isMounted) {
-          setCityImage(imageUrl);
-        } else if (isMounted) {
-          setCityImage(getFallback());
-        }
-      } catch (error) {
-        console.warn("City image lookup failed:", error);
-        if (isMounted) {
-          setCityImage(getFallback());
-        }
-      }
-    };
-
-    searchCityImage();
-    return () => {
-      isMounted = false;
-    };
-  }, [card.locationName, card.lat, card.lon, card.name, bgMode]);
+    setCityImage(bgMode);
+  }, [bgMode]);
 
   useEffect(() => {
     return () => {};
   }, []);
 
-  useEffect(() => {
-    setIsSummaryExpanded(false);
-    setHasOverflow(false);
-  }, [aiSummary]);
-
-  useEffect(() => {
-    if (summaryRef.current && aiSummary && !isSummaryExpanded) {
-      const isOverflowing =
-        summaryRef.current.scrollHeight > summaryRef.current.clientHeight;
-      if (isOverflowing) setHasOverflow(true);
-    }
-  }, [aiSummary, isSummaryExpanded]);
-
-  useEffect(() => {
-    const loadAiSetting = async () => {
-      const saved = await localforage.getItem(`ai_enabled_${card.id}`);
-      if (saved !== null) setIsAiEnabled(saved);
-      const savedPrompt = await localforage.getItem(
-        `ai_custom_prompt_${card.id}`,
-      );
-      if (savedPrompt) {
-        setCustomAiPrompt(savedPrompt);
-        setSavedCustomAiPrompt(savedPrompt);
-      }
-      const savedPromptChangedAt = await localforage.getItem(
-        `ai_custom_prompt_changed_at_${card.id}`,
-      );
-      if (savedPromptChangedAt) setAiPromptChangedAt(savedPromptChangedAt);
-      const savedLength = await localforage.getItem(
-        `ai_response_length_${card.id}`,
-      );
-      if (savedLength) setResponseLength(savedLength);
-      const savedStyle = await localforage.getItem(`ai_style_${card.id}`);
-      if (savedStyle) setAiStyle(savedStyle);
-      const savedSynergy = await localforage.getItem(`ai_synergy_${card.id}`);
-      if (savedSynergy !== null) setUseAiSynergy(savedSynergy);
-      const savedTokens = await localforage.getItem(`ai_token_usage_${card.id}`);
-      if (savedTokens) setAiTokenUsage(savedTokens);
-    };
-    loadAiSetting();
-  }, [card.id]);
-
-  const generateWeatherSummary = useCallback(async () => {
-    if (isAiLoading) return;
-    const key = await localforage.getItem("gemini_api_key");
-    if (!key) {
-      setAiSummary("Потрібен ключ ШІ (Gemini API) для роботи цієї функції.");
-      return;
-    }
-
-    setIsAiLoading(true);
-    try {
-      const cleanedKey = (key || "").trim().replace(/^["']|["']$/g, "");
-      const { GoogleGenerativeAI } = await import("@google/generative-ai");
-      const genAI = new GoogleGenerativeAI(cleanedKey);
-
-      const current = card.current;
-      const daily = card.daily16 || [];
-      const hourly = card.hourly || [];
-
-      const shortTermForecast = hourly
-        .slice(0, 5)
-        .map(
-          (h) =>
-            `${h.time}: ${h.temp}, вітер ${h.windNum}м/с, ${h.iconPlaceholder}`,
-        )
-        .join("; ");
-
-      const detailedInstruction =
-        "Склади розгорнутий, багатий деталями та структурований прогноз погоди (щонайменше 3-4 докладні абзаци). Уникай коротких однорядкових відповідей! Детально проаналізуй температурний режим доби, поведінку хмарності та опадів (зокрема у другій половині дня та ввечері), вітер, тиск, тенденцію на найближчі дні та дай практичні життєві поради щодо одягу та планів.";
-
-      const styleInstruction =
-        aiStyle === "scientific"
-          ? "використовуй науковий стиль"
-          : aiStyle === "sarcastic"
-            ? "додай дрібку сарказму та іронії"
-            : "використовуй дружній та теплий тон";
-
-      const formattingRules =
-        "\n\nСУВОРІ ОБОВ'ЯЗКОВІ ПРАВИЛА ОФОРМЛЕННЯ:\n" +
-        "1. Категорично заборонено використовувати капслок (Caps Lock / слова повністю великими літерами, такі як 'КРИТИЧНІ ПОПЕРЕДЖЕННЯ' чи 'ПОРИВИ ВІТРУ'). Усі заголовки та підзаголовки пиши виключно звичайним регістром речення (наприклад: 'Критичні застереження:', 'Пориви вітру:').\n" +
-        "2. Категорично заборонено використовувати зірочки '*' (жодних **подвійних зірочок для виділення жирним**, маркованих списків із зірочками чи знаків множення). Замість зірочок формуй зв'язні абзаци або за потреби використовуй тире '—'.\n" +
-        "3. Категорично заборонено використовувати емодзі у тексті (жодних значків ⚠️, 🌧️ тощо), замість них використовуй тільки чистий текст.";
-
-      const synergyContext = useAiSynergy && ruleForecast
-        ? `\n\n[ЕКСПЕРТНІ ОФЛАЙН-РОЗРАХУНКИ ДЛЯ СИНЕРГІЇ]:\n- Виявлені патерни: ${ruleForecast.allBadges?.join(", ") || "немає"}\n- Добовий хід (день/ніч): ${ruleForecast.dayNight?.message || ""}\n- Опади та піки доби: ${ruleForecast.hourlyData?.rainWindowText || ""} ${ruleForecast.hourlyData?.peakTempText || ""} ${ruleForecast.hourlyData?.windTrendText || ""}\n- Тижнева динаміка: ${ruleForecast.weeklyData?.trendText || ""} ${ruleForecast.weeklyData?.weekSummaryText || ""}\nІнструкція синергії: Гармонійно синтезуй ці точні обчислені дані та патерни у свій розгорнутий художній прогноз у вибраному стилі. Не скорочуй відповідь, опиши все повно та цікаво.`
-        : "";
-
-      const systemInstructions = customAiPrompt.trim()
-        ? `Ти метеоролог-асистент. ${styleInstruction}. Виконуй цю інструкцію: ${customAiPrompt}. ${detailedInstruction} Критичні попередження (якщо є) виводь на самому початку звичайним регістром. Використовуй абзаци для розбиття тексту. Відповідь надай українською мовою.${synergyContext}${formattingRules}`
-        : `Ти метеоролог-асистент. ${detailedInstruction} ${styleInstruction}. Згадай про комфортний одяг. Критичні застереження та попередження (температура, вітер, ожеледиця, УФ), якщо вони є, розміщуй на самому початку звичайним регістром. Використовуй абзаци для зручності читання. Відповідь виключно українською мовою.${synergyContext}${formattingRules}`;
-
-      const promptText = `${systemInstructions}\n\nМісто: ${card.locationName}. Поточний час на сайті: ${currentTimeString}.\n\nПоточні показники: ${current.temp}, ${current.description}, вологість ${current.humidity}, вітер ${current.wind_speed}.\nНайближчі години: ${shortTermForecast}.\nПрогноз на дні: завтра ${daily[1]?.temp_day || "н/д"}, післязавтра ${daily[2]?.temp_day || "н/д"}.\nТенденція на 2 тижні: 1-й тиждень ~${daily[7]?.temp_day || "н/д"}, 2-й тиждень ~${daily[14]?.temp_day || "н/д"}.`;
-
-      const candidateModels = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.0-flash"];
-      let result = null;
-      let lastErr = null;
-
-      for (const modelName of candidateModels) {
-        try {
-          const model = genAI.getGenerativeModel({ model: modelName });
-          result = await model.generateContent(promptText);
-          if (result) break;
-        } catch (mErr) {
-          lastErr = mErr;
-          console.warn(`Weather summary model ${modelName} failed, trying next...`, mErr);
-        }
-      }
-
-      if (!result) throw lastErr || new Error("Не вдалося отримати прогноз від Gemini");
-
-      const response = await result.response;
-      const rawText = response.text().trim();
-      const text = cleanAiText(rawText);
-
-      const usage = response.usageMetadata || result.usageMetadata || null;
-      const promptTokens = usage?.promptTokenCount || 0;
-      const candidateTokens = usage?.candidatesTokenCount || 0;
-      const totalTokens = usage?.totalTokenCount || (promptTokens + candidateTokens);
-
-      const tokenInfo = {
-        promptTokens,
-        candidateTokens,
-        totalTokens,
-        timestamp: Date.now(),
-      };
-      setAiTokenUsage(tokenInfo);
-      await localforage.setItem(`ai_token_usage_${card.id}`, tokenInfo);
-
-      setAiSummary(text);
-      await localforage.setItem(`ai_weather_summary_${card.id}`, {
-        text,
-        timestamp: Date.now(),
-        tokenInfo,
-      });
-    } catch (e) {
-      console.error("Gemini Weather Error:", e);
-    } finally {
-      setIsAiLoading(false);
-    }
-  }, [
-    card,
-    isAiLoading,
-    customAiPrompt,
-    responseLength,
-    aiStyle,
-    useAiSynergy,
-    ruleForecast,
-    currentTimeString,
-  ]);
-
-  const checkAndUpdate = useCallback(async () => {
-    const saved = await localforage.getItem(`ai_weather_summary_${card.id}`);
-    const now = Date.now();
-    const TWO_HOURS = 2 * 60 * 60 * 1000; // 7,200,000 мс
-
-    // Оновлюємо лише якщо даних немає або пройшло більше 2 годин з останнього запиту
-    const needsUpdate = !saved || now - saved.timestamp > TWO_HOURS;
-
-    if (needsUpdate) {
-      generateWeatherSummary();
-    } else {
-      setAiSummary(cleanAiText(saved.text));
-      if (saved.tokenInfo) setAiTokenUsage(saved.tokenInfo);
-    }
-  }, [card.id, generateWeatherSummary]);
-
-  const handleAiToggle = async () => {
-    const newVal = !isAiEnabled;
-    setIsAiEnabled(newVal);
-    await localforage.setItem(`ai_enabled_${card.id}`, newVal);
-  };
-
-  const handleForecastModeChange = async (mode) => {
-    setForecastMode(mode);
-    await localforage.setItem(`forecast_mode_${card.id}`, mode);
-    if (mode === "ai" && !aiSummary && isAiEnabled) {
-      checkAndUpdate();
-    }
-  };
-
-  const handleAiTabClick = () => {
-    setActiveTab("ai");
-    if (forecastMode === "ai" && isAiEnabled) {
-      checkAndUpdate();
-    }
-  };
-
-  useEffect(() => {
-    const handleKeyChange = (e) => {
-      const newKey = e.detail;
-      if (!newKey) {
-        setAiSummary("Потрібен ключ ШІ (Gemini API) для роботи цієї функції.");
-      }
-    };
-    window.addEventListener("geminiKeyChanged", handleKeyChange);
-    return () => window.removeEventListener("geminiKeyChanged", handleKeyChange);
-  }, []);
 
 
   const [isEditingReason, setIsEditingReason] = useState(false);
@@ -1919,8 +1855,13 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
   const hourlyDayGroups = getHourlyForecastDetailGroups(card.hourly || []);
   const visibleHourly = hourlyDayGroups[selectedHourlyDay]?.items || [];
   const hourlyChartAvailable = hourlyDayGroups[selectedHourlyDay]?.chartAvailable !== false;
+  // Графіки на телефонах заблоковані — показуємо блоки
+  const canShowHourlyChart = hourlyChartAvailable && !isNarrowScreen;
   const effectiveHourlyViewMode =
-    hourlyViewMode === "charts" && !hourlyChartAvailable ? "blocks" : hourlyViewMode;
+    hourlyViewMode === "charts" && !canShowHourlyChart ? "blocks" : hourlyViewMode;
+  const effectiveDailyViewMode =
+    dailyViewMode === "charts" && isNarrowScreen ? "blocks" : dailyViewMode;
+  const chartBlockedTitle = "Графіки недоступні на телефоні";
   const hourlyChartWidth = Math.max(873, (visibleHourly?.length || 24) * 35);
   const tempSuffix = unit === "F" ? "°F" : unit === "K" ? "K" : "°C";
   const toDisplayTemp = (c) => {
@@ -1973,9 +1914,7 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
         : {
             label: rightMeta.axis,
             data:
-              visibleHourly?.map((h) =>
-                rightMetric === "uv" ? h.uv_index ?? 0 : h.precipitation_probability ?? 0,
-              ) || [],
+              visibleHourly?.map((h) => rightValue(h, false)) || [],
             borderColor: `rgba(${rightMeta.rgb}, ${hourlyOpacity.wind})`,
             backgroundColor: `rgba(${rightMeta.rgb}, ${hourlyOpacity.wind * 0.15})`,
             hidden: hourlyOpacity.wind === 0,
@@ -2164,8 +2103,8 @@ const HOLIDAYS_2027 = {
   };
 
   // Лінія тренду (як в Excel) для денної та нічної температури за 16 днів
-  const dailyDayTemps = card.daily16?.map((d) => toDisplayTemp(parseInt(d.temp_day))) || [];
-  const dailyNightTemps = card.daily16?.map((d) => toDisplayTemp(parseInt(d.temp_night))) || [];
+  const dailyDayTemps = dailyList?.map((d) => toDisplayTemp(parseInt(d.temp_day))) || [];
+  const dailyNightTemps = dailyList?.map((d) => toDisplayTemp(parseInt(d.temp_night))) || [];
   const dailyDayTrend = linearTrend(dailyDayTemps);
   const dailyNightTrend = linearTrend(dailyNightTemps);
   const fmtSlope = (trend) => {
@@ -2196,7 +2135,7 @@ const HOLIDAYS_2027 = {
     : [];
 
   const dailyChartData = {
-    labels: card.daily16?.map((d) => `${d.date}\n${d.day}`) || [],
+    labels: dailyList?.map((d) => `${d.date}\n${d.day}`) || [],
     datasets: [
       {
         label: `День (${tempSuffix})`,
@@ -2204,15 +2143,15 @@ const HOLIDAYS_2027 = {
         borderColor: `rgba(255, 179, 108, ${dailyOpacity.day})`,
         backgroundColor: `rgba(255, 179, 108, ${dailyOpacity.day * 0.5})`,
         hidden: dailyOpacity.day === 0,
-        pointStyle: card.daily16?.map((d) =>
+        pointStyle: dailyList?.map((d) =>
           createIconCanvas(d.iconSymbol ?? d.iconPlaceholder, 24, null, dailyOpacity.day),
         ),
-        pointBorderColor: card.daily16?.map((d) => {
+        pointBorderColor: dailyList?.map((d) => {
           const dateType = getDateType(d.date, d.day, d.fullDate);
           const color = dateType.color || "#ffb36c";
           return color;
         }),
-        pointBorderWidth: card.daily16?.map((d) => {
+        pointBorderWidth: dailyList?.map((d) => {
           const dateType = getDateType(d.date, d.day, d.fullDate);
           return dateType.color ? 3 : 2;
         }),
@@ -2232,16 +2171,16 @@ const HOLIDAYS_2027 = {
       rightMetric === "wind"
         ? {
             label: fmt.windAxis,
-            data: card.daily16?.map((d) => fmt.windValue(parseFloat(d.wind_speed) || 0)) || [],
+            data: dailyList?.map((d) => fmt.windValue(parseFloat(d.wind_speed) || 0)) || [],
             borderColor: `rgba(0, 153, 255, ${dailyOpacity.wind})`,
             backgroundColor: `rgba(0, 153, 255, ${dailyOpacity.wind * 0.2})`,
             hidden: dailyOpacity.wind === 0,
-            pointStyle: card.daily16?.map((d) =>
+            pointStyle: dailyList?.map((d) =>
               createDirectionArrowCanvas(d.wind_direction_10m, 18, dailyOpacity.wind),
             ),
             pointBorderColor: "#ffffff",
             pointBorderWidth: 1.5,
-            pointBackgroundColor: card.daily16?.map((d) =>
+            pointBackgroundColor: dailyList?.map((d) =>
               parseFloat(d.wind_speed) > 10 ? "#ff6a00" : "#0099ff",
             ),
             ...lineStyleProps(lineStyles.daily.right, { tension: 0.3, pointRadius: 6, fill: false }),
@@ -2250,11 +2189,7 @@ const HOLIDAYS_2027 = {
         : {
             label: rightMeta.axis,
             data:
-              card.daily16?.map((d) =>
-                rightMetric === "uv"
-                  ? parseFloat(d.uv_index) || 0
-                  : parseFloat(d.precipitation_probability_max) || 0,
-              ) || [],
+              dailyList?.map((d) => rightValue(d, true)) || [],
             borderColor: `rgba(${rightMeta.rgb}, ${dailyOpacity.wind})`,
             backgroundColor: `rgba(${rightMeta.rgb}, ${dailyOpacity.wind * 0.2})`,
             hidden: dailyOpacity.wind === 0,
@@ -2301,10 +2236,8 @@ const HOLIDAYS_2027 = {
                 label += ` ⚠️ ${dangers.join(", ")}`;
               }
               return label;
-            } else if (context.datasetIndex === 1 && rightMetric === "uv") {
-              return ` УФ-індекс: ${(context.parsed.y || 0).toFixed(1)}`;
-            } else if (context.datasetIndex === 1 && rightMetric === "precip") {
-              return ` Ймовірність опадів: ${Math.round(context.parsed.y || 0)}%`;
+            } else if (context.datasetIndex === 1 && rightMetric !== "wind") {
+              return ` ${rightTooltip(context.parsed.y)}`;
             } else if (context.datasetIndex === 1) {
               const wind = visibleHourly?.[context.dataIndex]?.windNum ?? 0;
               let label = ` Вітер: ${fmt.wind(wind)}`;
@@ -2344,7 +2277,7 @@ const HOLIDAYS_2027 = {
         display: true,
         position: "right",
         beginAtZero: true,
-        ...(rightMetric === "precip" ? { max: 100 } : {}),
+        ...(isPercentMetric ? { max: 100 } : {}),
         title: {
           display: true,
           text: rightMeta.axis,
@@ -2374,7 +2307,7 @@ const HOLIDAYS_2027 = {
         external: externalTooltipHandler,
         callbacks: {
           title: (items) => {
-            const daily = card.daily16?.[items[0].dataIndex];
+            const daily = dailyList?.[items[0].dataIndex];
             if (!daily) return items[0].label;
             const dateType = getDateType(daily.date, daily.day, daily.fullDate);
             const holidayMsg = getHolidayMessage(
@@ -2390,15 +2323,13 @@ const HOLIDAYS_2027 = {
             const isNight = context.datasetIndex === 1;
             const isWind = context.datasetIndex === 2;
             if (isDay) {
-              return `☀️ День: ${formatTemp(parseInt(card.daily16?.[context.dataIndex]?.temp_day))}`;
+              return `☀️ День: ${formatTemp(parseInt(dailyList?.[context.dataIndex]?.temp_day))}`;
             } else if (isNight) {
-              return `🌙 Ніч: ${formatTemp(parseInt(card.daily16?.[context.dataIndex]?.temp_night))}`;
-            } else if (isWind && rightMetric === "uv") {
-              return `☀️ УФ-індекс: ${(context.parsed.y || 0).toFixed(1)}`;
-            } else if (isWind && rightMetric === "precip") {
-              return `🌧️ Ймовірність опадів: ${Math.round(context.parsed.y || 0)}%`;
+              return `🌙 Ніч: ${formatTemp(parseInt(dailyList?.[context.dataIndex]?.temp_night))}`;
+            } else if (isWind && rightMetric !== "wind") {
+              return rightTooltip(context.parsed.y);
             } else if (isWind) {
-              const daily = card.daily16?.[context.dataIndex];
+              const daily = dailyList?.[context.dataIndex];
               const direction = daily?.wind_direction_10m || 0;
               return `🌬️ Вітер: ${fmt.wind(parseFloat(daily?.wind_speed) || 0)} | ${getWindDirectionLabel(direction)} (${Math.round(direction)}°)`;
             }
@@ -2407,7 +2338,7 @@ const HOLIDAYS_2027 = {
           afterBody: (contextItems) => {
             if (contextItems.length === 0) return "";
             const firstContext = contextItems[0];
-            const daily = card.daily16?.[firstContext.dataIndex];
+            const daily = dailyList?.[firstContext.dataIndex];
             if (!daily) return "";
             const desc = daily.description || getWeatherDescription(daily.weather_code) || stripEmoji(daily.iconPlaceholder) || "—";
             return `Стан погоди: ${desc}`;
@@ -2432,7 +2363,7 @@ const HOLIDAYS_2027 = {
         display: true,
         position: "right",
         beginAtZero: true,
-        ...(rightMetric === "precip" ? { max: 100 } : {}),
+        ...(isPercentMetric ? { max: 100 } : {}),
         title: {
           display: true,
           text: rightMeta.axis,
@@ -2446,19 +2377,19 @@ const HOLIDAYS_2027 = {
         ticks: {
           ...chartOptions.scales.x.ticks,
           color: (ctx) => {
-            if (!card.daily16 || ctx.index >= card.daily16.length) {
+            if (!dailyList || ctx.index >= dailyList.length) {
               return "#fff";
             }
-            const daily = card.daily16[ctx.index];
+            const daily = dailyList[ctx.index];
             const dateType = getDateType(daily.date, daily.day, daily.fullDate);
             return dateType.color || "#fff";
           },
           font: {
             ...chartOptions.scales.x.ticks.font,
             weight: (ctx) => {
-              if (!card.daily16 || ctx.index >= card.daily16.length)
+              if (!dailyList || ctx.index >= dailyList.length)
                 return "normal";
-              const daily = card.daily16[ctx.index];
+              const daily = dailyList[ctx.index];
               const dateType = getDateType(
                 daily.date,
                 daily.day,
@@ -2473,7 +2404,7 @@ const HOLIDAYS_2027 = {
     onClick: (event, elements) => {
       if (elements.length > 0) {
         const index = elements[0].index;
-        const daily = card.daily16[index];
+        const daily = dailyList[index];
         const dateType = getDateType(daily.date, daily.day, daily.fullDate);
         if (dateType.type === "holiday" || dateType.type === "birthday") {
           setSelectedDay(daily);
@@ -2597,16 +2528,12 @@ const HOLIDAYS_2027 = {
         setActiveTab((prev) => {
           const order = ["current", "hourly", "daily", "ai"];
           const nextIndex = (order.indexOf(prev) + 1) % order.length;
-          const next = order[nextIndex];
-          if (next === "ai" && forecastMode === "ai" && !aiSummary && isAiEnabled) {
-            checkAndUpdate();
-          }
-          return next;
+          return order[nextIndex];
         });
       }
     }, 6500);
     return () => clearInterval(interval);
-  }, [isBannerHovered, aiSummary, isAiEnabled, forecastMode, checkAndUpdate]);
+  }, [isBannerHovered]);
 
   const renderHourlyTable = () => {
     if (!visibleHourly || visibleHourly.length === 0) {
@@ -2689,6 +2616,24 @@ const HOLIDAYS_2027 = {
     );
   };
 
+  // Значення з % (дані можуть уже містити знак %)
+  const formatPercent = (val) =>
+    val === undefined || val === null || val === "" ? "—" : `${String(val).replace(/%/g, "")}%`;
+
+  // Сітка плиток у блоковому режимі — як плитки вкладки «Зараз»
+  const renderBlockStats = (stats) => (
+    <BlockStatGrid>
+      {stats.map(({ icon, label, value, sub }) => (
+        <BlockStatTile key={label}>
+          {icon}
+          <BlockStatLabel>{label}</BlockStatLabel>
+          <BlockStatValue>{value}</BlockStatValue>
+          {sub && <BlockStatLabel>{sub}</BlockStatLabel>}
+        </BlockStatTile>
+      ))}
+    </BlockStatGrid>
+  );
+
   const renderHourlyBlocks = () => {
     if (!visibleHourly || visibleHourly.length === 0) {
       return (
@@ -2699,8 +2644,8 @@ const HOLIDAYS_2027 = {
     }
 
     return (
-      <div style={{ marginTop: "12px", width: "100%", overflowX: "auto" }}>
-        <div style={{ display: "flex", gap: "10px", paddingBottom: "10px", minWidth: "min-content" }}>
+      <div style={{ marginTop: "6px", width: "100%", overflowX: "auto" }}>
+        <div style={{ display: "flex", gap: "10px", paddingBottom: "2px", minWidth: isNarrowScreen ? "min-content" : undefined }}>
           {visibleHourly.map((item, idx) => {
             const windDeg = item.wind_direction_10m || 0;
             const windText = getWindDirectionText(windDeg);
@@ -2711,15 +2656,17 @@ const HOLIDAYS_2027 = {
               <div
                 key={idx}
                 style={{
-                  flex: "0 0 200px",
+                  // Планшет і комп'ютер: блок у 1.6 раза ширший за третину області (~1.9 блока видно)
+                  flex: isNarrowScreen ? "0 0 200px" : "0 0 calc((100% - 20px) / 3 * 1.6)",
+                  boxSizing: "border-box",
                   background: isDarkMode ? "rgba(20, 20, 30, 0.92)" : "rgba(255, 255, 255, 0.95)",
                   backdropFilter: "blur(8px)",
                   border: isDarkMode ? "1px solid rgba(0, 238, 255, 0.3)" : "1px solid rgba(0, 140, 255, 0.3)",
                   borderRadius: "10px",
-                  padding: "10px",
+                  padding: "8px",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "6px",
+                  gap: "4px",
                   color: isDarkMode ? "#fff" : "#1a1a1a",
                   boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
                   fontSize: "11px",
@@ -2736,9 +2683,9 @@ const HOLIDAYS_2027 = {
                   </span>
                 </div>
 
-                <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "6px", padding: "6px" }}>
+                <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
                   {!isPolarNight && (
-                    <div style={{ fontWeight: "700", color: "#ff9d3b" }}>
+                    <div style={{ fontWeight: "800", fontSize: "14px", color: "#ff9d3b" }}>
                       Температура: {formatTemp(item.tempNum ?? item.temp)}
                     </div>
                   )}
@@ -2759,18 +2706,19 @@ const HOLIDAYS_2027 = {
                   )}
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><BiWind style={{ color: "#00eeff" }} /> Вітер:</strong> {fmt.wind(item.windNum ?? item.wind_speed ?? item.windSpeed ?? 0)} ({windText})</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaDroplet style={{ color: "#4da6ff" }} /> Вологість:</strong> {item.humidity ?? card.current?.humidity ?? "—"}%</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><GiGrassMushroom style={{ color: "#00ffcc" }} /> Точка роси:</strong> {item.dew_point_2m !== undefined ? formatTemp(item.dew_point_2m) : "—"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaCloudRain style={{ color: "#3399ff" }} /> Опади:</strong> {fmt.precip(item.precipitation ?? 0)}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaSnowflake style={{ color: "#80d4ff" }} /> Сніг:</strong> {fmt.snow(item.snowfall ?? 0)}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><GiIceCube style={{ color: "#00cdff" }} /> Ґрунт:</strong> {item.soil_temperature_0cm !== undefined ? formatTemp(item.soil_temperature_0cm) : "—"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><PiThermometerFill style={{ color: "#ff9d3b" }} /> Рівень 0°C:</strong> {item.freezing_level_height !== undefined ? fmt.height(item.freezing_level_height) : "—"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><GiWaterRecycling style={{ color: "#00eeff" }} /> Випаровування:</strong> {item.evapotranspiration !== undefined ? fmt.precip(item.evapotranspiration, 2) : "—"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><MdOutlineSpeed style={{ color: "#ffb36c" }} /> Тиск:</strong> {fmt.pressure(item.pressure_msl ?? item.pressure ?? card.current?.pressure)}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaCloud style={{ color: "#aaa" }} /> Хмари:</strong> {item.cloud_cover ?? card.current?.cloud_cover ?? "—"}%</div>
-                </div>
+                {renderBlockStats([
+                  { icon: <AnimWind><BiWind style={{ color: "#00eeff" }} /></AnimWind>, label: "Вітер", value: fmt.wind(item.windNum ?? item.wind_speed ?? item.windSpeed ?? 0), sub: windText },
+                  { icon: <AnimWind><BiWind style={{ color: "#ff9900" }} /></AnimWind>, label: "Пориви", value: item.wind_gusts_10m ? fmt.wind(item.wind_gusts_10m) : "—" },
+                  { icon: <FaDroplet style={{ color: "#4da6ff" }} />, label: "Вологість", value: formatPercent(item.relative_humidity_2m ?? item.humidity) },
+                  { icon: <GiGrassMushroom style={{ color: "#00ffcc" }} />, label: "Точка роси", value: item.dew_point_2m !== undefined ? formatTemp(item.dew_point_2m) : "—" },
+                  { icon: <FaCloudRain style={{ color: "#3399ff" }} />, label: "Опади", value: fmt.precip(item.precipitation ?? 0) },
+                  { icon: <FaSnowflake style={{ color: "#80d4ff" }} />, label: "Сніговий покрив", value: fmt.snow((item.snow_depth ?? 0) * 100) },
+                  { icon: <GiIceCube style={{ color: "#00cdff" }} />, label: "Ґрунт", value: item.soil_temperature_0cm !== undefined ? formatTemp(item.soil_temperature_0cm) : "—" },
+                  { icon: <PiThermometerFill style={{ color: "#ff9d3b" }} />, label: "Рівень 0°C", value: item.freezing_level_height !== undefined ? fmt.height(item.freezing_level_height) : "—" },
+                  { icon: <GiWaterRecycling style={{ color: "#00eeff" }} />, label: "Випаровування", value: item.evapotranspiration !== undefined ? fmt.precip(item.evapotranspiration, 2) : "—" },
+                  { icon: <MdOutlineSpeed style={{ color: "#ffb36c" }} />, label: "Тиск", value: fmt.pressure(item.pressure_msl ?? item.pressure ?? card.current?.pressure) },
+                  { icon: <FaCloud style={{ color: "#aaa" }} />, label: "Хмари", value: formatPercent(item.cloud_cover ?? card.current?.cloud_cover) },
+                ])}
               </div>
             );
           })}
@@ -2780,7 +2728,7 @@ const HOLIDAYS_2027 = {
   };
 
   const renderDailyBlocks = () => {
-    const list = card.daily16 || card.daily || [];
+    const list = dailyList;
     if (!list || list.length === 0) {
       return (
         <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
@@ -2790,8 +2738,8 @@ const HOLIDAYS_2027 = {
     }
 
     return (
-      <div style={{ marginTop: "12px", width: "100%", overflowX: "auto" }}>
-        <div style={{ display: "flex", gap: "10px", paddingBottom: "10px", minWidth: "min-content" }}>
+      <div style={{ marginTop: "6px", width: "100%", overflowX: "auto" }}>
+        <div style={{ display: "flex", gap: "10px", paddingBottom: "2px", minWidth: isNarrowScreen ? "min-content" : undefined }}>
           {list.map((d, idx) => {
             const dateType = getDateType(d.date, d.day, d.fullDate);
             const windDeg = d.wind_direction_10m || 0;
@@ -2799,71 +2747,156 @@ const HOLIDAYS_2027 = {
             const isPolarNight = d.isPolarNight || card.current?.isPolarNight;
             const isPolarDay = d.isPolarDay || card.current?.isPolarDay;
             const isPolarEndDay = d.isPolarEndDay;
+            const { twilight, moon, dayDiff } = dailyAstro[idx] || {};
+            const sunScale = getScaleProgress(d.sunrise, d.sunset);
+            const moonScale = getScaleProgress(moon?.riseDate, moon?.setDate);
+            const rainChance = Number(d.precipitation_probability_max ?? d.pop);
 
             return (
               <div
                 key={idx}
                 style={{
-                  flex: "0 0 210px",
+                  // Планшет і комп'ютер: блок у 1.6 раза ширший за третину області (~1.9 блока видно)
+                  flex: isNarrowScreen ? "0 0 210px" : "0 0 calc((100% - 20px) / 3 * 1.6)",
+                  // Минулий день (вчора) — повністю чорно-білий
+                  filter: isPastDay(d) ? "grayscale(1)" : "none",
+                  boxSizing: "border-box",
                   background: isDarkMode ? "rgba(25, 25, 38, 0.92)" : "rgba(255, 255, 255, 0.95)",
                   backdropFilter: "blur(8px)",
                   border: dateType.color ? `2px solid ${dateType.color}` : isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid rgba(0,0,0,0.1)",
                   borderRadius: "12px",
-                  padding: "10px",
+                  padding: "8px",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "6px",
+                  gap: "4px",
                   color: isDarkMode ? "#fff" : "#1a1a1a",
                   boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
                   fontSize: "11px",
                 }}
               >
-                <div style={{ fontSize: "13px", fontWeight: "bold", textAlign: "center", color: dateType.color || "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
-                  <FaCalendarDays /> {d.date} {d.day}
+                {/* Дата й опис погоди — в один ряд */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", alignItems: "center", gap: "6px" }}>
+                  <div style={{ fontSize: "13px", fontWeight: "bold", color: dateType.color || "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
+                    <FaCalendarDays /> {d.date} {d.day}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", minWidth: 0 }}>
+                    <span style={{ fontSize: "26px", flexShrink: 0 }}><WeatherIcon item={d} /></span>
+                    <span style={{ fontSize: "11px", fontWeight: "600" }}>
+                      {d.description || getWeatherDescription(d.weather_code) || stripEmoji(d.iconPlaceholder) || "Погода"}
+                    </span>
+                  </div>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "26px" }}><WeatherIcon item={d} /></span>
-                  <span style={{ fontSize: "11px", fontWeight: "600" }}>
-                    {d.description || getWeatherDescription(d.weather_code) || stripEmoji(d.iconPlaceholder) || "Погода"}
-                  </span>
-                </div>
-
-                <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "6px", padding: "6px", display: "flex", flexDirection: "column", gap: "2px" }}>
+                {/* День і ніч — в один ряд; полярні примітки на всю ширину */}
+                <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px", display: "flex", flexWrap: "wrap", justifyContent: "space-around", alignItems: "center", gap: "2px 8px", fontSize: "13px" }}>
                   {!isPolarNight && (
                     <div style={{ fontWeight: "800", color: "#ff9d3b", display: "flex", alignItems: "center", gap: "4px" }}>
                       <FaSun /> День: {formatTemp(d.temp_day || d.temp)}
+                      {d.feels_like_max != null && (
+                        <span style={{ fontSize: "10px", fontWeight: 600, opacity: 0.8 }}>
+                          (відч. {formatTemp(Math.round(d.feels_like_max))})
+                        </span>
+                      )}
                     </div>
                   )}
                   {!isPolarDay && (
                     <div style={{ fontWeight: "700", color: "#ff3399", display: "flex", alignItems: "center", gap: "4px" }}>
                       <BsMoonStarsFill /> Ніч: {formatTemp(d.temp_night || d.nightTemp)}
+                      {d.feels_like_min != null && (
+                        <span style={{ fontSize: "10px", fontWeight: 600, opacity: 0.8 }}>
+                          (відч. {formatTemp(Math.round(d.feels_like_min))})
+                        </span>
+                      )}
                     </div>
                   )}
                   {isPolarNight && (
-                    <div style={{ fontSize: "10px", color: "#4da6ff", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <div style={{ flexBasis: "100%", justifyContent: "center", fontSize: "10px", color: "#4da6ff", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
                       <BsMoonStarsFill /> Полярна ніч (день не показується)
                     </div>
                   )}
                   {isPolarDay && (
-                    <div style={{ fontSize: "10px", color: "#ffd700", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <div style={{ flexBasis: "100%", justifyContent: "center", fontSize: "10px", color: "#ffd700", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
                       <FaSun /> Полярний день (ніч не показується)
                     </div>
                   )}
                   {isPolarEndDay && (
-                    <div style={{ fontSize: "10px", color: "#00eeff", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
+                    <div style={{ flexBasis: "100%", justifyContent: "center", fontSize: "10px", color: "#00eeff", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
                       <FaExclamationTriangle /> Закінчення полярного періоду
                     </div>
                   )}
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><BiWind style={{ color: "#00eeff" }} /> Вітер:</strong> {fmt.wind(d.wind_speed ?? 0)} ({windText})</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaSun style={{ color: "#ffd700" }} /> УФ-індекс:</strong> {d.uv_index ?? "—"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaDroplet style={{ color: "#4da6ff" }} /> Ймовірність опадів:</strong> {d.pop !== undefined ? `${d.pop}%` : "—"}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><FaCloudRain style={{ color: "#3399ff" }} /> Дощ:</strong> {fmt.precip(d.rain ?? 0)}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><strong><GiWaterRecycling style={{ color: "#00eeff" }} /> Випаровування:</strong> {d.evapotranspiration !== undefined ? fmt.precip(d.evapotranspiration, 2) : "—"}</div>
-                </div>
+                {renderBlockStats([
+                  {
+                    icon: <AnimWind><BiWind style={{ color: "#00eeff" }} /></AnimWind>,
+                    label: "Вітер",
+                    value: fmt.wind(d.wind_speed ?? 0),
+                    sub: (
+                      <>
+                        {windText}
+                        {d.wind_gusts_max != null && (
+                          <div style={{ color: "#ff9900", fontWeight: 600, opacity: 1 }}>Пориви: {fmt.wind(d.wind_gusts_max)}</div>
+                        )}
+                      </>
+                    ),
+                  },
+                  { icon: <AnimSpin><FaSun style={{ color: "#ffd700" }} /></AnimSpin>, label: "УФ-індекс", value: d.uv_index ?? "—" },
+                  {
+                    // Чим вища ймовірність опадів, тим насиченіша крапля
+                    icon: <FaDroplet style={{ color: "#4da6ff", opacity: isNaN(rainChance) ? 0.4 : 0.2 + 0.8 * Math.min(rainChance, 100) / 100 }} />,
+                    label: "Ймовірність опадів",
+                    value: formatPercent(d.precipitation_probability_max ?? d.pop),
+                  },
+                  { icon: <FaCloudRain style={{ color: "#3399ff" }} />, label: "Дощ", value: fmt.precip(d.rain_sum ?? d.rain ?? 0) },
+                  { icon: <FaSnowflake style={{ color: "#80d4ff" }} />, label: "Сніг", value: d.snowfall_sum != null ? fmt.snow(d.snowfall_sum) : "—" },
+                  { icon: <FaCloud style={{ color: "#c3cfdc" }} />, label: "Хмарність", value: formatPercent(d.cloud_cover_mean) },
+                  {
+                    // Найгірша видимість за день; менше 1 км або код «туман» — це туман
+                    icon: (
+                      <span style={{ display: "inline-flex", color: isFoggy(d.visibility_min, d.weather_code) ? "#ff9900" : "#9fb3c8" }}>
+                        <VisibilityFog />
+                      </span>
+                    ),
+                    label: isFoggy(d.visibility_min, d.weather_code) ? "Туман, видимість" : "Видимість",
+                    value: d.visibility_min != null ? fmt.visibility(d.visibility_min / 1000) : "—",
+                  },
+                  { icon: <GiWaterRecycling style={{ color: "#00eeff" }} />, label: "Випаровування", value: d.evapotranspiration !== undefined ? fmt.precip(d.evapotranspiration, 2) : "—" },
+                  { icon: <BsBuildings style={{ color: "#ffb36c" }} />, label: "Цивільні сутінки", value: twilight ? `${twilight.civilDawn} — ${twilight.civilDusk}` : "—" },
+                  { icon: <AnimCompass><BsCompass style={{ color: "#be90d4" }} /></AnimCompass>, label: "Навігаційні сутінки", value: twilight ? `${twilight.nauticalDawn} — ${twilight.nauticalDusk}` : "—" },
+                  { icon: <AnimTwinkle><BsStars style={{ color: "#a855f7" }} /></AnimTwinkle>, label: "Астрономічні сутінки", value: twilight ? `${twilight.astroDawn} — ${twilight.astroDusk}` : "—" },
+                ])}
+                <AstroScale
+                  icon={<AnimHourglass><BsHourglassSplit style={{ color: "#3498db" }} /></AnimHourglass>}
+                  title={`Тривалість дня: ${getDayLength(d.sunrise, d.sunset)}`}
+                  riseLabel={formatClock(d.sunrise)}
+                  setLabel={formatClock(d.sunset)}
+                  progress={sunScale.progress}
+                  isActive={sunScale.isActive}
+                  color="#ffd700"
+                  footer={
+                    dayDiff === null || dayDiff === undefined
+                      ? null
+                      : dayDiff === 0
+                        ? "Тривалість дня як учора"
+                        : `День на ${Math.abs(dayDiff)} хв ${dayDiff > 0 ? "довший" : "коротший"}, ніж учора`
+                  }
+                />
+                {moon && (
+                  <AstroScale
+                    icon={<MoonPhaseIcon phase={moon.phase} />}
+                    title={`${moon.name}: ${(moon.fraction * 100).toFixed(1).replace(".", ",")}%`}
+                    riseLabel={moon.rise}
+                    setLabel={moon.set}
+                    progress={moonScale.progress}
+                    isActive={moonScale.isActive}
+                    color="#9fb3c8"
+                    footer={
+                      moon.nextPhase
+                        ? `${moon.nextPhase.name} — ${moon.nextPhase.date.toLocaleDateString("uk", { day: "numeric", month: "long" })}`
+                        : null
+                    }
+                  />
+                )}
               </div>
             );
           })}
@@ -2872,7 +2905,7 @@ const HOLIDAYS_2027 = {
     );
   };
   const renderDailyTable = () => {
-    const list = card.daily16 || card.daily || [];
+    const list = dailyList;
     if (!list || list.length === 0) {
       return (
         <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
@@ -2884,7 +2917,7 @@ const HOLIDAYS_2027 = {
       <div style={{ marginTop: "12px", width: "100%", overflowX: "auto" }}>
         <div style={{ display: "flex", gap: "5px", minWidth: "min-content" }}>
           {list.map((d, idx) => {
-            const isPast = idx < 2 || d.isPast;
+            const isPast = isPastDay(d) || d.isPast;
             const dateType = getDateType(d.date, d.day, d.fullDate);
             const isWeekend = d.day === "Сб" || d.day === "Нд" || dateType.type === "weekend";
             const windDeg = d.wind_direction_10m || 0;
@@ -2959,7 +2992,7 @@ const HOLIDAYS_2027 = {
                   textAlign: "center",
                   color: isDarkMode ? "#fff" : "#1a1a1a",
                   boxShadow: "0 4px 14px rgba(0,0,0,0.12)",
-                  filter: isPast ? "grayscale(85%)" : "none",
+                  filter: isPast ? "grayscale(100%)" : "none",
                   opacity: isPast ? 0.75 : 1,
                   transition: "all 0.2s ease",
                 }}
@@ -3145,6 +3178,7 @@ const HOLIDAYS_2027 = {
                 </h3>
               </Tooltip>
             )}
+            {card.isMain && card.isFallbackLocation && <LocationHint />}
             <p style={{ fontSize: "10px", color: "#fcfcfc" }}>
               Широта: {card.lat?.toFixed(2)}, Довгота: {card.lon?.toFixed(2)}
             </p>
@@ -3213,6 +3247,7 @@ const HOLIDAYS_2027 = {
                     }}
                   >
                     <BiEdit/> Змінити назву
+                    <SettingsItemHint>Своя назва для цієї картки</SettingsItemHint>
                   </SettingsDropdownItem>
                 )}
                 <SettingsDropdownItem
@@ -3223,6 +3258,7 @@ const HOLIDAYS_2027 = {
                     }}
                   >
                     <BiImageAlt  /> Змінити фон
+                    <SettingsItemHint>Картинка позаду погоди</SettingsItemHint>
                   </SettingsDropdownItem>
                 <SettingsDropdownItem
                   isDarkMode={isDarkMode}
@@ -3232,20 +3268,16 @@ const HOLIDAYS_2027 = {
                   }}
                 >
                   <FaCalendarPlus /> Встановити дати
-                </SettingsDropdownItem>
-                <SettingsDropdownItem
-                  isDarkMode={isDarkMode}
-                  onClick={() => {
-                    onOpenDetails(cityImage || card.cityImage);
-                  }}
-                >
-                  <BiLineChart style={{ transform: "scale(1.12)" }} /> Детальна погода
+                  <SettingsItemHint>Свої свята й події в прогнозі</SettingsItemHint>
                 </SettingsDropdownItem>
                 <div
                   style={{
                     display: "flex",
+                    flexDirection: "column",
                     justifyContent: "space-between",
+                    gap: "4px",
                     padding: "6px",
+                    minWidth: 0,
                   borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.98)' : 'rgb(0, 0, 0)'}`,
                  }}
                 >
@@ -3307,6 +3339,11 @@ const HOLIDAYS_2027 = {
                   >
                     <BiCurrentLocation style={{ transform: "scale(1.12)" }} />{" "}
                     {isLocationEnabled ? "GPS Увімк." : "GPS Вимк."}
+                    <SettingsItemHint>
+                      {isLocationEnabled
+                        ? "Погода там, де ви зараз"
+                        : "Увімкніть, щоб бачити свою локацію"}
+                    </SettingsItemHint>
                   </SettingsDropdownItem>
                 ) : (
                   <SettingsDropdownItem
@@ -3319,6 +3356,7 @@ const HOLIDAYS_2027 = {
                     }}
                   >
                     <BiTrash style={{ transform: "scale(1.08)" }} /> Видалити
+                    <SettingsItemHint>Прибрати цю картку</SettingsItemHint>
                   </SettingsDropdownItem>
                 )}
                 <SettingsDropdownItem
@@ -3345,6 +3383,9 @@ const HOLIDAYS_2027 = {
                   }}
                 >
                   <FiPlus style={{ transform: "scale(1.2)" }} /> Прикріпити до ШІ
+                  <SettingsItemHint>
+                    {hasGeminiKey ? "Запитати ШІ про цю погоду" : "Потрібен ключ Gemini"}
+                  </SettingsItemHint>
                 </SettingsDropdownItem>
               </SettingsDropdownMenu>
             )}
@@ -3360,7 +3401,7 @@ const HOLIDAYS_2027 = {
             <button
               key={tab.key}
               onClick={() =>
-                tab.key === "ai" ? handleAiTabClick() : setActiveTab(tab.key)
+                setActiveTab(tab.key)
               }
               style={{
                 padding: "4px 2px",
@@ -3379,7 +3420,7 @@ const HOLIDAYS_2027 = {
           ))}
         </MobileTabBar>
 
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <TabContentArea>
 
           {activeTab === "current" && (
             <CurrentWeatherBanner
@@ -3402,7 +3443,7 @@ const HOLIDAYS_2027 = {
   </IndicatorCard>
 
   <IndicatorCard aria-label="Температура / Відчувається як">
-    <IconBox $color={parseFloat(card.current.temp) < 5 ? "#4da6ff" : parseFloat(card.current.temp) > 25 ? "#ff4d4d" : "inherit"}>
+    <IconBox $color={parseFloat(card.current.temp) < 5 ? "#4da6ff" : parseFloat(card.current.temp) > 25 ? "#ff4d4d" : "#ffb36c"}>
       <TempThermometer
         temp={card.current.temp}
         mercuryColor={parseFloat(card.current.temp) < 5 ? "#4da6ff" : parseFloat(card.current.temp) > 25 ? "#ff4d4d" : "#ff9d3b"}
@@ -3415,14 +3456,14 @@ const HOLIDAYS_2027 = {
   </IndicatorCard>
 
   <IndicatorCard aria-label="Відносна вологість">
-    <IconBox>
+    <IconBox $color="#a8d8ff">
       <HumidityGlass humidity={card.current.humidity} />
     </IconBox>
     <TextContent $mt="10px">Вологість: {card.current.humidity ?? "—"}</TextContent>
   </IndicatorCard>
 
   <IndicatorCard aria-label={`Вітер: ${card.current.wind_speed}, Напрямок: ${card.current.wind_direction_10m}° (${getWindDirectionText(card.current.wind_direction_10m)}), Пориви: ${card.current.wind_gusts_10m} м/с`}>
-    <IconBox $size="28px" $rotate={Math.round((card.current.wind_direction_10m || 0) / 45) * 45 % 360}>⬇</IconBox>
+    <IconBox $size="28px" $color="#00eeff" $rotate={Math.round((card.current.wind_direction_10m || 0) / 45) * 45 % 360}>⬇</IconBox>
     <TextContent $mt="-5px">
       Швидкість вітру: {fmt.wind(card.current.windNum ?? card.current.wind_speed)}
       <SubText>{card.current.wind_direction_10m}° {getWindDirectionText(card.current.wind_direction_10m)}</SubText>
@@ -3434,20 +3475,20 @@ const HOLIDAYS_2027 = {
 
   <Tooltip content="Точка роси (температура, при якій утворюється роса)" isDarkMode={isDarkMode}>
     <IndicatorCard aria-label="Точка роси (температура, при якій утворюється роса)">
-      <IconBox><GiGrassMushroom /></IconBox>
+      <IconBox $color="#00ffcc"><GiGrassMushroom /></IconBox>
       <TextContent>Точка роси: {formatTemp(card.current.dew_point_2m)}</TextContent>
     </IndicatorCard>
   </Tooltip>
 
   <IndicatorCard aria-label="Атмосферний тиск" $pad="10px">
-    <IconBox $color={parseFloat(card.current.pressure) < 1000 ? "#4da6ff" : parseFloat(card.current.pressure) > 1020 ? "#ff4d4d" : "inherit"}>
+    <IconBox $color={parseFloat(card.current.pressure) < 1000 ? "#4da6ff" : parseFloat(card.current.pressure) > 1020 ? "#ff4d4d" : "#ffb36c"}>
       <PressureGauge pressure={card.current.pressure} />
     </IconBox>
     <TextContent>Атмосферний тиск: {fmt.pressure(card.current.pressure)}</TextContent>
   </IndicatorCard>
 
   <IndicatorCard aria-label="Хмарність">
-    <IconBox>
+    <IconBox $color="#c3cfdc">
       <CloudWithTrend cloudCover={card.current.cloud_cover} trend={getCloudTrend(card.current.cloud_cover, card.hourly)} />
     </IconBox>
     <TextContent $size="11px">Хмарність: {card.current.cloud_cover}%</TextContent>
@@ -3456,7 +3497,7 @@ const HOLIDAYS_2027 = {
   <IndicatorCard aria-label="Видимість" $pad="0px">
     <IconBox 
       $opacity={Math.min(1, Math.max(0.3, (card.current.visibility || 10000) / 10000))}
-      $color={(card.current.visibility || 10000) < 2000 ? "#ff4d4d" : "inherit"}
+      $color={(card.current.visibility || 10000) < 2000 ? "#ff4d4d" : "#9fb3c8"}
     >
       <VisibilityFog />
     </IconBox>
@@ -3464,7 +3505,7 @@ const HOLIDAYS_2027 = {
   </IndicatorCard>
 
   <IndicatorCard aria-label="УФ-індекс / Сонячна радіація" $pad="10px">
-    <IconBox $color={(card.current.uv_index || 0) > 5 ? "#ff4d4d" : (card.current.uv_index || 0) > 2 ? "#ffd700" : "inherit"}>
+    <IconBox $color={(card.current.uv_index || 0) > 5 ? "#ff4d4d" : (card.current.uv_index || 0) > 2 ? "#ff9900" : "#ffd700"}>
       <UvSun uv={card.current.uv_index} />
     </IconBox>
     <TextContent $size="10px">УФ-індекс: {card.current.uv_index ?? 0}</TextContent>
@@ -3483,7 +3524,7 @@ const HOLIDAYS_2027 = {
 
   <Tooltip content="Температура ґрунту (0 см) та рівень 0°C ізотерми (висота замерзання)" isDarkMode={isDarkMode}>
     <IndicatorCard aria-label="Замерзання та температура ґрунту">
-      <IconBox $color={card.current.soil_temperature_0cm <= 0 ? "#4da6ff" : "inherit"}>
+      <IconBox $color={card.current.soil_temperature_0cm <= 0 ? "#4da6ff" : "#00cdff"}>
         <GiIceCube />
       </IconBox>
       <TextContent $size="10px">
@@ -3528,10 +3569,16 @@ const HOLIDAYS_2027 = {
                     <ViewToggleButton
                       $active={effectiveHourlyViewMode === "charts"}
                       $isDarkMode={isDarkMode}
-                      onClick={() => hourlyChartAvailable && setHourlyViewMode("charts")}
-                      disabled={!hourlyChartAvailable}
-                      style={!hourlyChartAvailable ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
-                      title={hourlyChartAvailable ? "Графіки" : "Графік доступний лише на перші 72 год"}
+                      onClick={() => canShowHourlyChart && setHourlyViewMode("charts")}
+                      disabled={!canShowHourlyChart}
+                      style={!canShowHourlyChart ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
+                      title={
+                        isNarrowScreen
+                          ? chartBlockedTitle
+                          : hourlyChartAvailable
+                            ? "Графіки"
+                            : "Графік доступний лише на перші 72 год"
+                      }
                     >
                       <BiLineChart size={18} />
                     </ViewToggleButton>
@@ -3672,21 +3719,32 @@ const HOLIDAYS_2027 = {
           {activeTab === "daily" && (
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "8px" }}>
-                <h4 style={{ margin: 0, fontSize: "14px" }}>
-                  Прогноз на 16 днів (включаючи 2 минулі дні)
-                </h4>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                  <h4 style={{ margin: 0, fontSize: "14px" }}>Прогноз на 16 днів</h4>
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none", opacity: 0.9 }}>
+                    <input
+                      type="checkbox"
+                      checked={showPastDay}
+                      onChange={(e) => setShowPastDay(e.target.checked)}
+                      style={{ cursor: "pointer", accentColor: "#00eeff" }}
+                    />
+                    Показати вчора
+                  </label>
+                </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <ViewToggleGroup $isDarkMode={isDarkMode}>
                     <ViewToggleButton
-                      $active={dailyViewMode === "charts"}
+                      $active={effectiveDailyViewMode === "charts"}
                       $isDarkMode={isDarkMode}
-                      onClick={() => setDailyViewMode("charts")}
-                      title="Графіки"
+                      onClick={() => !isNarrowScreen && setDailyViewMode("charts")}
+                      disabled={isNarrowScreen}
+                      style={isNarrowScreen ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
+                      title={isNarrowScreen ? chartBlockedTitle : "Графіки"}
                     >
                       <BiLineChart size={18} />
                     </ViewToggleButton>
                     <ViewToggleButton
-                      $active={dailyViewMode === "table"}
+                      $active={effectiveDailyViewMode === "table"}
                       $isDarkMode={isDarkMode}
                       onClick={() => setDailyViewMode("table")}
                       title="Таблиця"
@@ -3694,7 +3752,7 @@ const HOLIDAYS_2027 = {
                       <BiTable size={18} />
                     </ViewToggleButton>
                     <ViewToggleButton
-                      $active={dailyViewMode === "blocks"}
+                      $active={effectiveDailyViewMode === "blocks"}
                       $isDarkMode={isDarkMode}
                       onClick={() => setDailyViewMode("blocks")}
                       title="Блоки"
@@ -3705,7 +3763,7 @@ const HOLIDAYS_2027 = {
                 </div>
               </div>
 
-              {dailyViewMode === "charts" ? (
+              {effectiveDailyViewMode === "charts" ? (
                 <>
                   <div style={{
                     position: "sticky",
@@ -3804,7 +3862,7 @@ const HOLIDAYS_2027 = {
                     </div>
                   </div>
                 </>
-              ) : dailyViewMode === "table" ? (
+              ) : effectiveDailyViewMode === "table" ? (
                 renderDailyTable()
               ) : (
                 renderDailyBlocks()
@@ -3812,24 +3870,10 @@ const HOLIDAYS_2027 = {
             </div>
           )}
 
-          {/* Смарт-прогноз (Правила) та ШІ (Gemini) */}
+          {/* Смарт-прогноз (експертні правила) */}
           {activeTab === "ai" && (
             <AiSummaryBox $isDarkMode={isDarkMode} layout>
-              {/* Перемикач режимів: 1-й спосіб (Експертні правила без ШІ) та 2-й спосіб (Gemini AI) */}
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "8px",
-                  marginBottom: "12px",
-                  paddingBottom: "8px",
-                  borderBottom: isDarkMode
-                    ? "1px solid rgba(255, 255, 255, 0.12)"
-                    : "1px solid rgba(0, 0, 0, 0.1)",
-                }}
-              >
+              <SmartTopBar $isDarkMode={isDarkMode}>
                 <div
                   style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "12px", fontWeight: 700, color: isDarkMode ? "#00eeff" : "#0066aa" }}
                   title="Аналіз на базі умов, збігів та фізичних параметрів без ШІ та інтернету"
@@ -3838,8 +3882,7 @@ const HOLIDAYS_2027 = {
                   <span>Системні повідомлення</span>
                 </div>
 
-                {forecastMode === "rules" && (
-                  <div style={{ display: "flex", gap: "6px" }}>
+                <SmartTopActions>
                     <button
                       onClick={() => {
                         if (ruleForecast?.fullText) {
@@ -3880,6 +3923,7 @@ const HOLIDAYS_2027 = {
                       <span>{copiedForecast ? "Скопійовано!" : "Скопіювати"}</span>
                     </button>
                     <button
+                      className="smart-full-report"
                       onClick={() => setIsAiModalOpen(true)}
                       style={{
                         background: "rgba(0, 238, 255, 0.15)",
@@ -3895,13 +3939,11 @@ const HOLIDAYS_2027 = {
                     >
                       Повний звіт
                     </button>
-                  </div>
-                )}
-              </div>
+                  </SmartTopActions>
+              </SmartTopBar>
 
-              {/* РЕЖИМ 1: Експертні правила без ШІ */}
-              {forecastMode === "rules" ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {/* Експертні правила без ШІ */}
+                <div style={{ display: "flex", flexDirection: "column", gap: isNarrowScreen ? "4px" : "10px" }}>
                   {/* Головний статус та бейджі збігів */}
                   <div>
                     <div
@@ -3934,21 +3976,26 @@ const HOLIDAYS_2027 = {
 
                   {/* 1. Блок: Добовий хід (день / ніч) */}
                   <RuleSectionCard $isDarkMode={isDarkMode} $accent="#ffb300">
-                    <RuleSectionHeader $isDarkMode={isDarkMode}>
+                    <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("dayNight")}>
                       <BsMoonStarsFill style={{ color: "#facc15", fontSize: "14px" }} />
                       <span>Добовий контраст (день vs ніч)</span>
+                      {renderRuleChevron("dayNight")}
                     </RuleSectionHeader>
-                    <RuleSectionBody $isDarkMode={isDarkMode}>
-                      {ruleForecast?.dayNight?.message}
-                    </RuleSectionBody>
+                    {isRuleSectionOpen("dayNight") && (
+                      <RuleSectionBody $isDarkMode={isDarkMode}>
+                        {ruleForecast?.dayNight?.message}
+                      </RuleSectionBody>
+                    )}
                   </RuleSectionCard>
 
                   {/* 2. Блок: Погодинні події, опади у 2-й половині дня, пік тепла */}
                   <RuleSectionCard $isDarkMode={isDarkMode} $accent="#00bfff">
-                    <RuleSectionHeader $isDarkMode={isDarkMode}>
+                    <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("hourly")}>
                       <BsClockHistory style={{ color: "#00bfff", fontSize: "14px" }} />
                       <span>Динаміка доби (опади, пік тепла, вітер)</span>
+                      {renderRuleChevron("hourly")}
                     </RuleSectionHeader>
+                    {isRuleSectionOpen("hourly") && (
                     <RuleSectionBody $isDarkMode={isDarkMode}>
                       <div style={{ display: "flex", gap: "6px", alignItems: "flex-start" }}>
                         <FaCloudRain style={{ color: "#38bdf8", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
@@ -3963,29 +4010,35 @@ const HOLIDAYS_2027 = {
                         <span>{ruleForecast?.hourlyData?.windTrendText}</span>
                       </div>
                     </RuleSectionBody>
+                    )}
                   </RuleSectionCard>
 
                   {/* 3. Блок: Тижневий тренд (різкий підйом або спад) */}
                   <RuleSectionCard $isDarkMode={isDarkMode} $accent="#a855f7">
-                    <RuleSectionHeader $isDarkMode={isDarkMode}>
+                    <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("weekly")}>
                       <BiLineChart style={{ color: "#a855f7", fontSize: "14px" }} />
                       <span>Тижневий тренд та динаміка</span>
+                      {renderRuleChevron("weekly")}
                     </RuleSectionHeader>
-                    <RuleSectionBody $isDarkMode={isDarkMode}>
-                      <div>{ruleForecast?.weeklyData?.trendText}</div>
-                      <div style={{ marginTop: "4px", opacity: 0.9 }}>
-                        {ruleForecast?.weeklyData?.weekSummaryText}
-                      </div>
-                    </RuleSectionBody>
+                    {isRuleSectionOpen("weekly") && (
+                      <RuleSectionBody $isDarkMode={isDarkMode}>
+                        <div>{ruleForecast?.weeklyData?.trendText}</div>
+                        <div style={{ marginTop: "4px", opacity: 0.9 }}>
+                          {ruleForecast?.weeklyData?.weekSummaryText}
+                        </div>
+                      </RuleSectionBody>
+                    )}
                   </RuleSectionCard>
 
                   {/* 4. Блок: Рекомендації та гардероб */}
                   {ruleForecast?.lifestyleAdvice && ruleForecast.lifestyleAdvice.length > 0 && (
                     <RuleSectionCard $isDarkMode={isDarkMode} $accent="#10b981">
-                      <RuleSectionHeader $isDarkMode={isDarkMode}>
+                      <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("advice")}>
                         <FaLightbulb style={{ color: "#10b981", fontSize: "14px" }} />
                         <span>Поради та гардероб</span>
+                        {renderRuleChevron("advice")}
                       </RuleSectionHeader>
+                      {isRuleSectionOpen("advice") && (
                       <RuleSectionBody $isDarkMode={isDarkMode}>
                         {ruleForecast.lifestyleAdvice.map((adv, aIdx) => {
                           if (adv.type === "wind_warning") {
@@ -4036,6 +4089,21 @@ const HOLIDAYS_2027 = {
                               {adv.type === "sport" && (
                                 <FaPersonWalking style={{ color: "#10b981", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
                               )}
+                              {adv.type === "home" && (
+                                <FaHouse style={{ color: "#a3a3a3", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                              )}
+                              {adv.type === "ice" && (
+                                <GiIceCube style={{ color: "#7dd3fc", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                              )}
+                              {adv.type === "snow" && (
+                                <FaSnowflake style={{ color: "#80d4ff", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                              )}
+                              {adv.type === "frost" && (
+                                <BsThermometerSnow style={{ color: "#4da6ff", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                              )}
+                              {adv.type === "fog" && (
+                                <BiLowVision style={{ color: "#9fb3c8", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                              )}
                               <div>
                                 <strong>{adv.title}:</strong> {adv.text}
                               </div>
@@ -4043,16 +4111,19 @@ const HOLIDAYS_2027 = {
                           );
                         })}
                       </RuleSectionBody>
+                      )}
                     </RuleSectionCard>
                   )}
 
                   {/* 5. Блок: Атмосфера та самопочуття */}
                   {ruleForecast?.atmosphereNotes && ruleForecast.atmosphereNotes.length > 0 && (
                     <RuleSectionCard $isDarkMode={isDarkMode} $accent="#ec4899">
-                      <RuleSectionHeader $isDarkMode={isDarkMode}>
+                      <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("atmosphere")}>
                         <FaGaugeHigh style={{ color: "#ec4899", fontSize: "14px" }} />
                         <span>Атмосферний тиск та фактори</span>
+                        {renderRuleChevron("atmosphere")}
                       </RuleSectionHeader>
+                      {isRuleSectionOpen("atmosphere") && (
                       <RuleSectionBody $isDarkMode={isDarkMode}>
                         {ruleForecast.atmosphereNotes.map((note, nIdx) => (
                           <div
@@ -4079,283 +4150,14 @@ const HOLIDAYS_2027 = {
                           </div>
                         ))}
                       </RuleSectionBody>
+                      )}
                     </RuleSectionCard>
                   )}
                 </div>
-              ) : (
-                /* РЕЖИМ 2: ШІ (Gemini AI) */
-                <>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "8px",
-                      flexWrap: "wrap",
-                      gap: "6px",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                      <span
-                        className="ai-header-text"
-                        style={{
-                          fontWeight: 800,
-                          color: isDarkMode ? "#fff" : "#000",
-                          fontSize: "16px",
-                          letterSpacing: "1px",
-                        }}
-                      >
-                        Прогноз ШІ (Gemini)
-                      </span>
-                      <button
-                        onClick={async () => {
-                          const nextVal = !useAiSynergy;
-                          setUseAiSynergy(nextVal);
-                          await localforage.setItem(`ai_synergy_${card.id}`, nextVal);
-                        }}
-                        style={{
-                          background: useAiSynergy
-                            ? (isDarkMode ? "rgba(0, 238, 255, 0.15)" : "rgba(0, 180, 220, 0.15)")
-                            : "transparent",
-                          border: `1px solid ${useAiSynergy ? "#00eeff" : "rgba(150, 150, 150, 0.4)"}`,
-                          borderRadius: "12px",
-                          cursor: "pointer",
-                          fontSize: "10px",
-                          fontWeight: 700,
-                          color: useAiSynergy ? (isDarkMode ? "#00eeff" : "#007a99") : (isDarkMode ? "#888" : "#666"),
-                          padding: "2px 8px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          transition: "all 0.2s",
-                        }}
-                        title="Увімкнути / вимкнути синергію (передачу точних розрахунків правил у модель ШІ)"
-                      >
-                        <BiLink style={{ fontSize: "12px" }} />
-                        <span>{useAiSynergy ? "Синергія: УВІМКНЕНО" : "Синергія: вимкнено"}</span>
-                      </button>
-                    </div>
-                    <button
-                      onClick={() => generateWeatherSummary()}
-                      disabled={isAiLoading}
-                      style={{
-                        background: "rgba(138, 43, 226, 0.25)",
-                        border: "1px solid rgba(138, 43, 226, 0.6)",
-                        borderRadius: "6px",
-                        cursor: isAiLoading ? "not-allowed" : "pointer",
-                        fontWeight: 600,
-                        fontSize: "11px",
-                        color: isDarkMode ? "#fff" : "#000",
-                        padding: "4px 8px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      <BiRefresh style={{ fontSize: "14px" }} />
-                      <span>{isAiLoading ? "Генерація..." : "Згенерувати знову"}</span>
-                    </button>
-                  </div>
-
-                  {/* Показ витрачених токенів / кредитів ШІ */}
-                  {aiTokenUsage && aiTokenUsage.totalTokens > 0 && (
-                    <div
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        padding: "4px 10px",
-                        borderRadius: "6px",
-                        background: isDarkMode ? "rgba(255, 215, 0, 0.12)" : "rgba(255, 180, 0, 0.15)",
-                        border: `1px solid ${isDarkMode ? "rgba(255, 215, 0, 0.4)" : "rgba(255, 180, 0, 0.4)"}`,
-                        color: isDarkMode ? "#ffd700" : "#b45309",
-                        marginBottom: "8px",
-                        width: "fit-content",
-                      }}
-                      title="Використані токени Gemini API (вхідні + вихідні)"
-                    >
-                      <BiCoinStack style={{ fontSize: "15px" }} />
-                      <span>
-                        Витрачено кредитів: <strong>{aiTokenUsage.totalTokens} токенів</strong> (вхід: {aiTokenUsage.promptTokens}, відповідь: {aiTokenUsage.candidateTokens})
-                      </span>
-                    </div>
-                  )}
-
-                  {isEditingPrompt ? (
-                    <PromptEditor $isDarkMode={isDarkMode}>
-                      <label style={{ fontSize: "11px", fontWeight: "bold" }}>
-                        Своя інструкція до прогнозу:
-                      </label>
-                      <PromptTextarea
-                        $isDarkMode={isDarkMode}
-                        value={customAiPrompt}
-                        onChange={(e) => setCustomAiPrompt(e.target.value)}
-                        placeholder="Наприклад: Дай поради для рибалки на основі вітру та тиску..."
-                      />
-                      <div
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          gap: "10px",
-                          marginTop: "6px",
-                        }}
-                      >
-                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                            <span style={{ fontSize: "14px", fontWeight: "600" }}>Стиль:</span>
-                            <select
-                              value={aiStyle}
-                              onChange={(e) => setAiStyle(e.target.value)}
-                              style={{
-                                fontSize: "12px",
-                                padding: "6px 10px",
-                                borderRadius: "6px",
-                                background: isDarkMode ? "#252535" : "#fff",
-                                color: isDarkMode ? "#fff" : "#000",
-                                border: "1px solid rgba(138, 43, 226, 0.5)",
-                                cursor: "pointer",
-                              }}
-                            >
-                              <option value="friendly">Дружній</option>
-                              <option value="scientific">Науковий</option>
-                              <option value="sarcastic">Саркастичний</option>
-                            </select>
-                          </div>
-                          <label
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: 600,
-                              color: useAiSynergy ? "#00eeff" : isDarkMode ? "#aaa" : "#555",
-                              background: useAiSynergy
-                                ? (isDarkMode ? "rgba(0, 238, 255, 0.12)" : "rgba(0, 180, 220, 0.15)")
-                                : "transparent",
-                              padding: "6px 10px",
-                              borderRadius: "6px",
-                              border: `1px solid ${useAiSynergy ? "rgba(0, 238, 255, 0.4)" : "rgba(128, 128, 128, 0.2)"}`,
-                              marginTop: "auto",
-                              userSelect: "none",
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={useAiSynergy}
-                              onChange={(e) => setUseAiSynergy(e.target.checked)}
-                              style={{ cursor: "pointer", accentColor: "#00eeff" }}
-                            />
-                            <BiLink style={{ fontSize: "14px" }} />
-                            <span>Синергія (збагатити даними правил)</span>
-                          </label>
-                        </div>
-                        <button
-                          onClick={async () => {
-                            const nextPrompt = customAiPrompt.trim();
-                            const previousPrompt = savedCustomAiPrompt.trim();
-                            const promptWasChanged = nextPrompt !== previousPrompt;
-                            const now = Date.now();
-                            const DAY_MS = 24 * 60 * 60 * 1000;
-
-                            if (
-                              promptWasChanged &&
-                              aiPromptChangedAt &&
-                              now - aiPromptChangedAt < DAY_MS
-                            ) {
-                              const hoursLeft = Math.ceil(
-                                (DAY_MS - (now - aiPromptChangedAt)) / (60 * 60 * 1000),
-                              );
-                              alert(`Промпт можна змінити знову через ${hoursLeft} год.`);
-                              return;
-                            }
-
-                            await localforage.setItem(`ai_custom_prompt_${card.id}`, customAiPrompt);
-                            await localforage.setItem(`ai_response_length_${card.id}`, "extensive");
-                            await localforage.setItem(`ai_style_${card.id}`, aiStyle);
-                            await localforage.setItem(`ai_synergy_${card.id}`, useAiSynergy);
-                            if (promptWasChanged) {
-                              await localforage.setItem(
-                                `ai_custom_prompt_changed_at_${card.id}`,
-                                now,
-                              );
-                              setSavedCustomAiPrompt(customAiPrompt);
-                              setAiPromptChangedAt(now);
-                            }
-                            setIsEditingPrompt(false);
-                            generateWeatherSummary();
-                          }}
-                          style={{
-                            background: "linear-gradient(135deg, #8a2be2, #a855f7)",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "8px",
-                            padding: "8px 16px",
-                            fontSize: "12px",
-                            cursor: "pointer",
-                            fontWeight: "bold",
-                            boxShadow: "0 3px 10px rgba(138, 43, 226, 0.35)",
-                            marginTop: "auto",
-                          }}
-                        >
-                          Зберегти та оновити
-                        </button>
-                      </div>
-                    </PromptEditor>
-                  ) : isAiLoading ? (
-                    <div style={{ color: "#b362ff", padding: "10px 0", fontSize: "12px" }}>
-                      Генерація прогнозу ШІ...
-                    </div>
-                  ) : aiSummary ? (
-                    <>
-                      {useAiSynergy && (
-                        <div
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            fontSize: "11px",
-                            fontWeight: 600,
-                            color: isDarkMode ? "#00eeff" : "#007a99",
-                            background: isDarkMode ? "rgba(0, 238, 255, 0.1)" : "rgba(0, 180, 220, 0.12)",
-                            border: `1px solid ${isDarkMode ? "rgba(0, 238, 255, 0.35)" : "rgba(0, 180, 220, 0.35)"}`,
-                            borderRadius: "10px",
-                            padding: "2px 8px",
-                            marginBottom: "8px",
-                          }}
-                        >
-                          <BiLink style={{ fontSize: "12px" }} />
-                          <span>Синергія:</span>
-                          <span style={{ opacity: 0.9 }}>збагачено розрахунками офлайн-правил</span>
-                        </div>
-                      )}
-                      <motion.div layout transition={{ duration: 0.3 }}>
-                        <SummaryText ref={summaryRef} $isExpanded={false}>
-                          {cleanAiText(aiSummary)}
-                        </SummaryText>
-                      </motion.div>
-                      {hasOverflow && (
-                        <ShowMoreBtn onClick={() => setIsAiModalOpen(true)}>
-                          Читати далі...
-                        </ShowMoreBtn>
-                      )}
-                    </>
-                  ) : (
-                    <div style={{ color: isDarkMode ? "#aaa" : "#555", padding: "8px 0", fontSize: "12px" }}>
-                      ШІ-аналіз недоступний. Ви можете відредагувати умову промпту вище та натиснути "Зберегти та оновити".
-                    </div>
-                  )}
-                </>
-              )}
             </AiSummaryBox>
           )}
 
-        </div>
+        </TabContentArea>
           </MainBannerArea>
 
           <SideCardsColumn>
@@ -4403,18 +4205,18 @@ const HOLIDAYS_2027 = {
             <SideCardItem
               $active={activeTab === "ai"}
               $bgImg="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300&auto=format&fit=crop"
-              onClick={() => handleAiTabClick()}
+              onClick={() => setActiveTab("ai")}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
-                <div style={{ fontSize: "36px", color: forecastMode === "rules" ? "#00eeff" : "#a855f7" }}>
-                  {forecastMode === "rules" ? <BiLineChart /> : <BiBrain />}
+                <div style={{ fontSize: "36px", color: "#00eeff" }}>
+                  <BiLineChart />
                 </div>
                 <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
                   <NameCardItem $active={activeTab === "ai"}>
-                    {forecastMode === "rules" ? "Смарт-прогноз" : "ШІ Прогноз"}
+                    Смарт-прогноз
                   </NameCardItem>
                   <SubNameCardItem $active={activeTab === "ai"}>
-                    {forecastMode === "rules" ? "Експертні правила" : "Gemini AI"}
+                    Експертні правила
                   </SubNameCardItem>
                 </div>
               </div>
@@ -4425,9 +4227,7 @@ const HOLIDAYS_2027 = {
 
       {isAiModalOpen && (
         <ForecastReportModal
-          forecastMode={forecastMode}
           ruleForecast={ruleForecast}
-          aiSummary={aiSummary}
           forecastTimeString={forecastTimeString}
           isDarkMode={isDarkMode}
           onClose={() => setIsAiModalOpen(false)}

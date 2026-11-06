@@ -17,6 +17,10 @@
         "africa": "أفريقيا",
         "latinAmerica": "أمريكا اللاتينية"
       }
+    },
+    "decor": {
+      "label": "الزخرفة",
+      "title": "رسوم الدول وتأثيرات الطقس (أوقفها لتوفير الأداء)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "وضع ملء الشاشة"
     },
     "invalidUrl": "يرجى إدخال رابط صالح (https://...)",
+    "frameBlocked": "الموقع {{host}} لا يسمح بعرضه داخل إطار، لذا لا يمكن إضافته.",
+    "frameChecking": "جارٍ التحقق…",
     "confirmDeleteFrame": "إزالة «{{title}}» من الشريط الجانبي؟",
     "locationPinned": "تم تثبيت الموقع! سيُحمَّل في زيارتك القادمة.",
     "pinError": "حدث خطأ أثناء تثبيت الموقع.",
@@ -90,6 +96,9 @@
     "mapSource": "مصدر الخريطة",
     "mapSourceDesc": "Windy وVentusky ورادار الطيران والسبورة عبر الإنترنت وغيرها",
     "sourcesAria": "مصادر الخريطة",
+    "searchSources": "البحث في الخرائط والإطارات",
+    "noSourcesFound": "لم يتم العثور على شيء",
+    "clearSearch": "مسح البحث",
     "customFrame": "إطار / أداة مخصصة",
     "titlePlaceholder": "الاسم (مثل: رادار، كاميرا ويب...)",
     "titlePlaceholderShort": "الاسم (مثل: رادار)",

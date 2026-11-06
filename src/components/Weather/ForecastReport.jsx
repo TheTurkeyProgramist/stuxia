@@ -1,8 +1,9 @@
 import React from "react";
-import { FaDroplet, FaUmbrella, FaShirt, FaCar, FaPersonWalking } from "react-icons/fa6";
-import { BiWind } from "react-icons/bi";
+import { FaDroplet, FaUmbrella, FaShirt, FaCar, FaPersonWalking, FaHouse, FaSnowflake } from "react-icons/fa6";
+import { BiWind, BiLowVision } from "react-icons/bi";
 import { MdOutlineSpeed } from "react-icons/md";
-import { GiSunRadiations } from "react-icons/gi";
+import { GiSunRadiations, GiIceCube } from "react-icons/gi";
+import { BsThermometerSnow } from "react-icons/bs";
 
 // Елементи звіту смарт-прогнозу (секції, рядки з іконками) для модалки повного звіту
 
@@ -16,6 +17,11 @@ export const REPORT_ICONS = {
   umbrella: <FaUmbrella />,
   car: <FaCar />,
   sport: <FaPersonWalking />,
+  home: <FaHouse />,
+  ice: <GiIceCube />,
+  snow: <FaSnowflake />,
+  frost: <BsThermometerSnow />,
+  fog: <BiLowVision />,
 };
 
 export const REPORT_COLORS = {
@@ -28,6 +34,11 @@ export const REPORT_COLORS = {
   umbrella: "#14b8a6",
   car: "#aaa",
   sport: "#4ade80",
+  home: "#a3a3a3",
+  ice: "#7dd3fc",
+  snow: "#80d4ff",
+  frost: "#4da6ff",
+  fog: "#9fb3c8",
 };
 
 export const ReportSection = ({ title, icon, color, children }) => (

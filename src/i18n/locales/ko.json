@@ -17,6 +17,10 @@
         "africa": "아프리카",
         "latinAmerica": "라틴 아메리카"
       }
+    },
+    "decor": {
+      "label": "장식",
+      "title": "국가 그림과 날씨 효과 (성능을 아끼려면 끄세요)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "전체 화면 모드"
     },
     "invalidUrl": "올바른 링크를 입력하세요 (https://...)",
+    "frameBlocked": "{{host}}은(는) 프레임 안에서 표시를 허용하지 않아 추가할 수 없습니다.",
+    "frameChecking": "확인 중…",
     "confirmDeleteFrame": "사이드바에서 \"{{title}}\"을(를) 제거할까요?",
     "locationPinned": "위치가 고정되었습니다! 다음 방문 시 불러옵니다.",
     "pinError": "위치를 고정하는 중 오류가 발생했습니다.",
@@ -90,6 +96,9 @@
     "mapSource": "지도 소스",
     "mapSourceDesc": "Windy, Ventusky, 항공 레이더, 온라인 화이트보드 등",
     "sourcesAria": "지도 소스",
+    "searchSources": "지도 및 프레임 검색",
+    "noSourcesFound": "결과 없음",
+    "clearSearch": "검색 지우기",
     "customFrame": "사용자 프레임 / 위젯",
     "titlePlaceholder": "이름 (예: 레이더, 웹캠...)",
     "titlePlaceholderShort": "이름 (예: 레이더)",

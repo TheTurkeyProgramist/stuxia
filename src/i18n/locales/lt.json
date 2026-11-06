@@ -17,6 +17,10 @@
         "africa": "Afrika",
         "latinAmerica": "Lotynų Amerika"
       }
+    },
+    "decor": {
+      "label": "Dekoras",
+      "title": "Šalių iliustracijos ir orų efektai (išjunkite, kad taupytumėte našumą)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Viso ekrano režimas"
     },
     "invalidUrl": "Įveskite teisingą nuorodą (https://...)",
+    "frameBlocked": "Svetainė {{host}} neleidžia rodyti rėmelyje, todėl jos pridėti negalima.",
+    "frameChecking": "Tikrinama…",
     "confirmDeleteFrame": "Pašalinti „{{title}}“ iš šoninio skydelio?",
     "locationPinned": "Vieta prisegta! Ji bus įkelta kito apsilankymo metu.",
     "pinError": "Klaida prisegant vietą.",
@@ -90,6 +96,9 @@
     "mapSource": "Žemėlapio šaltinis",
     "mapSourceDesc": "Windy, Ventusky, skrydžių radaras, internetinė lenta ir kiti",
     "sourcesAria": "Žemėlapio šaltiniai",
+    "searchSources": "Ieškoti žemėlapių ir rėmelių",
+    "noSourcesFound": "Nieko nerasta",
+    "clearSearch": "Išvalyti paiešką",
     "customFrame": "Savas rėmelis / valdiklis",
     "titlePlaceholder": "Pavadinimas (pvz. Radaras, Kamera...)",
     "titlePlaceholderShort": "Pavadinimas (pvz. Radaras)",

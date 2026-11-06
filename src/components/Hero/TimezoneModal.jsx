@@ -7,6 +7,8 @@ import * as SunCalc from "suncalc";
 import styled from "styled-components";
 import localforage from "localforage";
 import CityScene from "./CityScene.jsx";
+import DecorToggle from "../Modals/DecorToggle.jsx";
+import { useSceneDecor } from "../../utils/sceneDecor.js";
 import { getNow, syncClock } from "../../utils/serverClock.js";
 
 const TimezoneMenu = styled.div`
@@ -100,7 +102,7 @@ const TimezoneOption = styled.button`
   grid-template-rows: auto 1fr auto;
   align-items: start;
   min-width: 0;
-  min-height: 220px;
+  min-height: ${(props) => (props.$decor ? "220px" : "110px")};
   padding: 9px;
   color: ${(props) => (props.$selected ? "#ffb36c" : "#fff")};
   background: ${(props) =>
@@ -532,6 +534,7 @@ const PHASES = {
 
 const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone }) => {
   const [now, setNow] = useState(getNow);
+  const decorEnabled = useSceneDecor();
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -566,6 +569,7 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone 
               key={timezone.value}
               type="button"
               $selected={isSelected}
+              $decor={decorEnabled}
               aria-label={`${timezone.label}${info ? `, ${info.timeStr}, ${info.dateStr}` : ""}${
                 info ? `, ${info.utcOffset}` : ""
               }${cities.length ? `. Інші міста: ${cities.join(", ")}` : ""}`}
@@ -575,7 +579,7 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone 
                 onCloseRef.current();
               }}
             >
-              <CityScene timezone={timezone} now={now} />
+              {decorEnabled && <CityScene timezone={timezone} now={now} />}
               <TimezoneDetails>
                 <TimezoneName>{timezone.label}</TimezoneName>
                 {info && <UtcOffset>{info.utcOffset}</UtcOffset>}
@@ -664,6 +668,11 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone 
           ×
         </TimezoneMenuCloseBtn>
         <TimezoneMenuTitle>Часовий пояс</TimezoneMenuTitle>
+        <DecorToggle
+          label="Декор"
+          title="Малюнки міст і погодні ефекти (вимкніть для економії продуктивності)"
+          accent="#ffb36c"
+        />
       </TimezoneMenuHeader>
       {grid}
     </TimezoneMenu>,

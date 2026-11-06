@@ -1,7 +1,21 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useTutorial } from './TutorialContext.jsx';
-import castle from '../../photos/vip-modal/castle.webp';
+import dominoVideo from '../../media/characters/kate-and-domino.webm';
+
+const ACCENT = '#ffb36c';
+const TOTAL_STEPS = 8;
+
+// Safari не вміє прозорість у WebM (VP9 alpha) — там індик був би на чорному тлі, тож показуємо емодзі
+const canPlayAlphaWebm = (() => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  const isSafari = /safari/i.test(ua) && !/chrome|chromium|crios|edg|android/i.test(ua);
+  return !isSafari;
+})();
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: scale(0.9); }
@@ -13,202 +27,256 @@ const fadeOut = keyframes`
   to { opacity: 0; transform: scale(0.9); }
 `;
 
-const Overlay = styled.div`
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.17);
-  z-index: 10000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 15px;
+const bob = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 `;
 
-const ModalBox = styled.div`
-  border: 2px solid #fff;
-  border-radius: 12px;
-  padding: 24px 20px;
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${castle}) no-repeat center center;
-  background-size: cover;
-  text-align: center;
-  color: #fff;
-  animation: ${fadeIn} 0.3s ease-out;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+const pulse = keyframes`
+  0%, 100% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.62), 0 0 0 0 rgba(255,179,108,0.55); }
+  50% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.62), 0 0 0 8px rgba(255,179,108,0); }
+`;
 
-  @media (min-width: 768px) {
-    max-width: 580px;
-    padding: 40px 35px;
-    border-radius: 16px;
-    border-width: 3px;
-  }
+const panelSurface = `
+  background: linear-gradient(160deg, rgba(28, 20, 12, 0.95) 0%, rgba(10, 10, 16, 0.97) 100%);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 179, 108, 0.55);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);
+  color: #fff;
+`;
+
+const primaryButton = `
+  background: linear-gradient(135deg, #ffca91, #ff9d48);
+  color: #1a0800;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+  &:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+  &:disabled { opacity: 0.55; cursor: default; }
+  &:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 `;
 
 const CornerPrompt = styled.div`
+  ${panelSurface}
   position: fixed;
   bottom: 70px;
-  right: 10px;
-  max-width: 240px;
-  padding: 12px 14px 10px;
-  border: 2px solid #fff;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
+  right: 12px;
+  width: 260px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 16px;
   z-index: 10000;
   animation: ${(p) => (p.$closing ? fadeOut : fadeIn)} 0.3s ease-out forwards;
   pointer-events: ${(p) => (p.$closing ? 'none' : 'auto')};
-  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
 
   /* На телефоні знизу бейдж закривав кнопку «Погода» — переносимо під шапку */
   @media (max-width: 767px) {
     top: calc(80px + env(safe-area-inset-top));
     bottom: auto;
-    max-width: 200px;
-    padding: 10px 12px 8px;
+    width: 220px;
+    padding: 10px 12px;
   }
 `;
 
-const CornerButton = styled.button`
-  width: 100%;
-  background: transparent;
-  color: #fff;
-  border: 1px solid #fff;
-  border-radius: 6px;
-  padding: 8px 12px;
+const CornerHead = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-right: 22px;
+`;
+
+const CornerTitle = styled.div`
   font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  &:hover { background: rgba(255,255,255,0.25); }
+  font-weight: 700;
+  line-height: 1.3;
+  span { display: block; font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.65); }
+`;
+
+const CornerButton = styled.button`
+  ${primaryButton}
+  width: 100%;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 14px;
 `;
 
 const CornerHint = styled.div`
   margin-top: 8px;
   font-size: 11px;
   line-height: 1.35;
-  color: #ccc;
+  color: rgba(255,255,255,0.6);
 `;
 
 const CornerClose = styled.button`
   position: absolute;
-  top: -14px;
-  right: -14px;
-  width: 30px;
-  height: 30px;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #000;
-  border: 2px solid #fff;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 50%;
-  color: #fff;
-  font-size: 22px;
+  color: rgba(255,255,255,0.8);
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
-  &:hover { color: #fff; }
+  transition: background 0.15s ease;
+  &:hover { background: rgba(255,255,255,0.2); color: #fff; }
 `;
 
-const ModalTitle = styled.h2`
-  margin-top: 0;
-  font-size: 22px;
-  margin-bottom: 12px;
+// Маленький Доміно: кадр відео 16:9 з великими прозорими полями — обрізаємо до самого індика
+const MascotFrame = styled.div`
+  flex-shrink: 0;
+  width: ${(p) => p.$size}px;
+  height: ${(p) => p.$size}px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  background: radial-gradient(circle at 50% 60%, rgba(255,179,108,0.35) 0%, rgba(255,179,108,0.08) 70%);
+  border: 1px solid rgba(255,179,108,0.45);
+  animation: ${bob} 2.6s ease-in-out infinite;
 
-  @media (min-width: 768px) {
-    font-size: 32px;
-    margin-bottom: 18px;
+  video {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 170%;
+    transform: translate(-50%, -50%);
+    image-rendering: pixelated;
+    pointer-events: none;
   }
+
+  @media (prefers-reduced-motion: reduce) { animation: none; }
 `;
 
-const ModalText = styled.p`
-  font-size: 15px;
-  line-height: 1.5;
-  margin-bottom: 24px;
-  color: #f0f0f0;
-
-  @media (min-width: 768px) {
-    font-size: 19px;
-    margin-bottom: 30px;
-  }
-`;
-
-const ButtonRow = styled.div`
+const MascotFallback = styled.span`
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  width: 100%;
-`;
-
-const Button = styled.button`
-  background: transparent;
-  color: #fff;
-  border: 1px solid #fff;
-  padding: 12px 20px;
-  width: 100%;
-  max-width: 450px;
-  font-size: 13px;
-  cursor: pointer;
-  border-radius: 6px;
-  font-weight: 500;
-  transition: all 0.2s ease-in-out;
-  &:hover {
-    background: rgba(255,255,255,0.25);
-    transform: translateY(-1px);
-  }
-  @media (min-width: 768px) {
-    font-size: 16px;
-    padding: 14px 24px;
-    border-width: 2px;
-    border-radius: 8px;
-  }
+  justify-content: center;
+  font-size: ${(p) => Math.round(p.$size * 0.5)}px;
 `;
 
 const PopoverContainer = styled.div`
+  ${panelSurface}
   position: fixed;
-  background: #000;
-  color: #fff;
-  border: 2px solid #ffb36c;
-  padding: 15px;
-  border-radius: 8px;
-  max-width: 300px;
+  width: min(320px, calc(100vw - 20px));
+  box-sizing: border-box;
+  padding: 14px 14px 12px;
+  border-radius: 16px;
   z-index: 10002;
-  box-shadow: 0 0 20px rgba(0,0,0,0.8);
   pointer-events: auto;
+  transition: opacity 0.3s ease, top 0.3s ease, left 0.3s ease;
+`;
+
+const PopoverHead = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+`;
+
+const PopoverMeta = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const PopoverName = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${ACCENT};
+`;
+
+const StepLabel = styled.div`
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  margin: 2px 0 6px;
+`;
+
+const Progress = styled.div`
+  display: flex;
+  gap: 3px;
+`;
+
+const ProgressDot = styled.span`
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: ${(p) => (p.$done ? ACCENT : 'rgba(255,255,255,0.15)')};
+  transition: background 0.3s ease;
+`;
+
+const PopoverText = styled.div`
+  white-space: pre-wrap;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #f3eee8;
+`;
+
+const PopoverActions = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: center;
+  justify-content: space-between;
 `;
 
 const NextButton = styled.button`
-  margin-top: 10px;
-  background: #ffb36c;
-  color: #000;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
+  ${primaryButton}
+  padding: 7px 16px;
+  border-radius: 9px;
+  font-size: 13px;
 `;
 
 const SkipAllButton = styled.button`
-  margin-top: 10px;
   background: transparent;
-  color: #999;
-  border: 1px solid #555;
-  padding: 4px 8px;
-  border-radius: 4px;
+  color: rgba(255,255,255,0.6);
+  border: none;
+  padding: 6px 4px;
   cursor: pointer;
-  font-size: 11px;
-  &:hover { color: #fff; border-color: #fff; }
+  font-size: 12px;
+  &:hover { color: #fff; text-decoration: underline; }
 `;
 
 const HighlightOutline = styled.div`
   position: fixed;
-  border: 3px dashed #ffb36c;
-  border-radius: 6px;
+  border: 2px solid ${ACCENT};
+  border-radius: 12px;
   pointer-events: none;
   z-index: 10001;
   transition: top 0.3s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease;
-  box-shadow: 0 0 0 9999px rgba(0,0,0,0.65);
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.62);
+  animation: ${pulse} 1.8s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) { animation: none; }
 `;
+
+const DominoMascot = ({ size }) => {
+  const [failed, setFailed] = useState(!canPlayAlphaWebm);
+  return (
+    <MascotFrame $size={size} aria-hidden="true">
+      {failed ? (
+        <MascotFallback $size={size}>🦃</MascotFallback>
+      ) : (
+        <video
+          src={dominoVideo}
+          autoPlay={!prefersReducedMotion()}
+          loop
+          muted
+          playsInline
+          preload="auto"
+          onError={() => setFailed(true)}
+        />
+      )}
+    </MascotFrame>
+  );
+};
 
 const DominoTutorial = ({ user }) => {
   const {
@@ -250,8 +318,8 @@ const DominoTutorial = ({ user }) => {
     const height = Math.min(rect.height + 10, window.innerHeight - top - 2);
     setHighlightStyle({ top, left, width, height });
 
-    const popW = 300;
-    const popH = 220;
+    const popW = Math.min(320, window.innerWidth - 20);
+    const popH = 250;
     let popTop = rect.bottom + 15;
     let popLeft = rect.left;
     if (popTop + popH > window.innerHeight) popTop = rect.top - popH - 10;
@@ -279,7 +347,11 @@ const DominoTutorial = ({ user }) => {
     if (stepData.onEnter) stepData.onEnter();
     if (stepData.autoAction) stepData.autoAction();
 
-    const targetEl = stepData.targetName ? refs.current[stepData.targetName] : null;
+    const targetEl = stepData.targetName
+      ? refs.current[stepData.targetName]
+      : stepData.targetId
+        ? document.getElementById(stepData.targetId)
+        : null;
     currentTargetRef.current = targetEl;
 
     if (targetEl) {
@@ -339,7 +411,7 @@ const DominoTutorial = ({ user }) => {
     {
       step: 1,
       targetName: 'heroInput',
-      text: 'Привіт! Давай дізнаємось погоду: введи назву свого міста та обери потрібну точку у випадаючому списку.',
+      text: 'Привіт, я Доміно! Давай дізнаємось погоду: введи назву свого міста та обери потрібну точку у списку. Можна натиснути кілька міст поспіль.',
     },
     {
       step: 2,
@@ -365,12 +437,13 @@ const DominoTutorial = ({ user }) => {
     {
       step: 4,
       targetName: 'weatherModal',
-      text: 'Тут налаштовуються деталі прогнозу, важливі дати, фони та порядок карток.\n\n• Ліміт: до 8 карток одночасно (до 1000 створень на добу).'
+      text: 'Тут налаштовуються деталі прогнозу, важливі дати, фони та порядок карток.\n\n• До 8 карток плюс GPS-картка (понад 5 — навантаження на пристрій).\n• До 40 нових карток на добу.'
     },
     {
       step: 5,
-      targetName: null,
-      text: 'Нижче ти знайдеш кліматичну карту Windy.com, чат із Gemini та інструменти для роботи із зображеннями (Стихії, Pixabay...).',
+      // Секція карт у App має id="map" — спускаємось до неї й підсвічуємо
+      targetId: 'map',
+      text: 'Тут усі карти в одному місці: Windy і Ventusky для погоди, мапа тривог, DeepState та інші.\n\n• Обирай джерело в списку карт.\n• Додавай власні фрейми — сайти, які дозволяють вбудовування (ми перевіримо це за тебе).\n• На комп’ютері та планшеті (горизонтально) можна відкрити дві карти поруч.',
       onEnter: () => {
         window.dispatchEvent(new CustomEvent('domino-close-weather-settings'));
       }
@@ -388,7 +461,7 @@ const DominoTutorial = ({ user }) => {
     {
       step: 8,
       targetName: null,
-      text: user ? 'Дякуємо, що ти з нами! Насолоджуйся сайтом.' : 'Увійди, щоб отримати повний доступ. І пам\u2019ятай: не жартуй з Ніцероном! :)',
+      text: user ? 'Дякуємо, що ти з нами! Насолоджуйся сайтом.' : 'Увійди, щоб отримати повний доступ. І пам’ятай: не жартуй з Ніцероном! :)',
       isLast: true,
     }
   ];
@@ -424,14 +497,21 @@ const DominoTutorial = ({ user }) => {
   const handleSkipAll = useCallback(() => {
     if (skipDisabled) return;
     window.dispatchEvent(new CustomEvent('domino-close-weather-settings'));
-    jumpToStep(8);
+    jumpToStep(TOTAL_STEPS);
   }, [skipDisabled, jumpToStep]);
 
   if (promptMounted || showInitialModal) {
     return (
-      <CornerPrompt $closing={!showInitialModal}>
+      <CornerPrompt $closing={!showInitialModal} role="dialog" aria-label="Навчання від Доміно">
         <CornerClose onClick={skipTutorial} aria-label="Закрити">×</CornerClose>
-        <CornerButton onClick={startTutorial}>Отримати навчання!</CornerButton>
+        <CornerHead>
+          <DominoMascot size={52} />
+          <CornerTitle>
+            Я Доміно!
+            <span>Покажу сайт за хвилину</span>
+          </CornerTitle>
+        </CornerHead>
+        <CornerButton onClick={startTutorial}>Почати навчання</CornerButton>
         <CornerHint>Запустити знову можна в Параметрах → Режими сайту</CornerHint>
       </CornerPrompt>
     );
@@ -446,20 +526,35 @@ const DominoTutorial = ({ user }) => {
   return (
     <>
       {showHighlight && <HighlightOutline style={highlightStyle} />}
-      <PopoverContainer style={{ ...popoverStyle, opacity: popoverVisible ? 1 : 0, pointerEvents: popoverVisible ? 'auto' : 'none', transition: 'opacity 0.3s ease' }}>
-        <div style={{ fontSize: '12px', color: '#ccc', marginBottom: '5px' }}>Крок {currentStep}/8 (Доміно)</div>
-        <div style={{ whiteSpace: 'pre-wrap' }}>{currentStepData.text}</div>
+      <PopoverContainer
+        role="dialog"
+        aria-live="polite"
+        style={{ ...popoverStyle, opacity: popoverVisible ? 1 : 0, pointerEvents: popoverVisible ? 'auto' : 'none' }}
+      >
+        <PopoverHead>
+          <DominoMascot size={48} />
+          <PopoverMeta>
+            <PopoverName>Доміно</PopoverName>
+            <StepLabel>Крок {currentStep} з {TOTAL_STEPS}</StepLabel>
+            <Progress aria-hidden="true">
+              {Array.from({ length: TOTAL_STEPS }, (_, i) => (
+                <ProgressDot key={i} $done={i < currentStep} />
+              ))}
+            </Progress>
+          </PopoverMeta>
+        </PopoverHead>
+        <PopoverText>{currentStepData.text}</PopoverText>
         {!currentStepData.noSkip && (
-          <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <PopoverActions>
+            {showSkipToEnd ? (
+              <SkipAllButton onClick={handleSkipAll} title={`Пропустити до кроку ${TOTAL_STEPS}`}>
+                До кінця →
+              </SkipAllButton>
+            ) : <span />}
             <NextButton onClick={handleSkip} disabled={skipDisabled}>
               {currentStepData.isLast ? 'Завершити' : 'Пропустити'}
             </NextButton>
-            {showSkipToEnd && (
-              <SkipAllButton onClick={handleSkipAll} title="Пропустити до кроку 8">
-                До кінця →
-              </SkipAllButton>
-            )}
-          </div>
+          </PopoverActions>
         )}
       </PopoverContainer>
     </>

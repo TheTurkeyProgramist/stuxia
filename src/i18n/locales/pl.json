@@ -17,6 +17,10 @@
         "africa": "Afryka",
         "latinAmerica": "Ameryka Łacińska"
       }
+    },
+    "decor": {
+      "label": "Dekoracje",
+      "title": "Ilustracje krajów i efekty pogodowe (wyłącz, aby oszczędzać wydajność)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Tryb pełnoekranowy"
     },
     "invalidUrl": "Wpisz poprawny link (https://...)",
+    "frameBlocked": "Strona {{host}} nie pozwala na wyświetlanie w ramce, więc nie można jej dodać.",
+    "frameChecking": "Sprawdzanie…",
     "confirmDeleteFrame": "Usunąć „{{title}}” z panelu bocznego?",
     "locationPinned": "Lokalizacja przypięta! Załaduje się przy następnej wizycie.",
     "pinError": "Błąd podczas przypinania lokalizacji.",
@@ -90,6 +96,9 @@
     "mapSource": "Źródło mapy",
     "mapSourceDesc": "Windy, Ventusky, radar lotniczy, tablica online i inne",
     "sourcesAria": "Źródła mapy",
+    "searchSources": "Szukaj map i ramek",
+    "noSourcesFound": "Nic nie znaleziono",
+    "clearSearch": "Wyczyść wyszukiwanie",
     "customFrame": "Własna ramka / widżet",
     "titlePlaceholder": "Nazwa (np. Radar, Kamera...)",
     "titlePlaceholderShort": "Nazwa (np. Radar)",

@@ -113,7 +113,8 @@ export const getSnowStyle = (snowCm) => {
   const opacity = 0.3 + 0.7 * Math.min(cm / 10, 1);
   const t = Math.min(1, Math.max(0, (cm - 30) / 50));
   const g = Math.round(255 + (77 - 255) * t);
-  return { opacity, color: t === 0 ? "inherit" : `rgb(255, ${g}, ${g})` };
+  // Звичайний сніг — блакитний (як у блоковому режимі), дуже глибокий — червоніє
+  return { opacity, color: t === 0 ? "#80d4ff" : `rgb(255, ${g}, ${g})` };
 };
 
 const uvRotate = keyframes`

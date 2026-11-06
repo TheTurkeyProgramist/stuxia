@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { SiRedragon, SiDungeonsanddragons } from "react-icons/si";
 import { GiSpikedDragonHead } from "react-icons/gi";
-import shop from '../../photos/vip-modal/castle.webp';
+import shop from '../../media/backgrounds/scenes/turkey-in-dragon-museum.webp';
 
 const CLOSE_DURATION_MS = 500;
 

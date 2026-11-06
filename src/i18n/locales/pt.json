@@ -17,6 +17,10 @@
         "africa": "África",
         "latinAmerica": "América Latina"
       }
+    },
+    "decor": {
+      "label": "Decoração",
+      "title": "Ilustrações dos países e efeitos do tempo (desative para economizar desempenho)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Tela cheia"
     },
     "invalidUrl": "Insira um link válido (https://...)",
+    "frameBlocked": "{{host}} não permite ser exibido num frame, por isso não pode ser adicionado.",
+    "frameChecking": "A verificar…",
     "confirmDeleteFrame": "Remover “{{title}}” do painel lateral?",
     "locationPinned": "Local fixado! Será carregado na sua próxima visita.",
     "pinError": "Erro ao fixar o local.",
@@ -90,6 +96,9 @@
     "mapSource": "Fonte do mapa",
     "mapSourceDesc": "Windy, Ventusky, radar aéreo, quadro online e outros",
     "sourcesAria": "Fontes do mapa",
+    "searchSources": "Pesquisar mapas e quadros",
+    "noSourcesFound": "Nada encontrado",
+    "clearSearch": "Limpar pesquisa",
     "customFrame": "Quadro / widget próprio",
     "titlePlaceholder": "Nome (ex. Radar, Webcam...)",
     "titlePlaceholderShort": "Nome (ex. Radar)",

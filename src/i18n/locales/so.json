@@ -17,6 +17,10 @@
         "africa": "Afrika",
         "latinAmerica": "Laatiin Ameerika"
       }
+    },
+    "decor": {
+      "label": "Qurxin",
+      "title": "Sawirada dalalka iyo saamaynta cimilada (dami si aad u badbaadiso waxqabadka)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Shaashad buuxda"
     },
     "invalidUrl": "Fadlan geli xiriir sax ah (https://...)",
+    "frameBlocked": "{{host}} ma oggola in lagu muujiyo frame gudihiis, sidaa darteed lama dari karo.",
+    "frameChecking": "Waa la hubinayaa…",
     "confirmDeleteFrame": "Ka saar «{{title}}» guddiga dhinaca?",
     "locationPinned": "Goobta waa la dhejiyay! Waxay soo degi doontaa booqashadaada xigta.",
     "pinError": "Khalad ayaa dhacay markii goobta la dhejinayay.",
@@ -90,6 +96,9 @@
     "mapSource": "Isha khariidadda",
     "mapSourceDesc": "Windy, Ventusky, raadaarka duulimaadka, sabuurad online ah iyo kuwo kale",
     "sourcesAria": "Ilaha khariidadda",
+    "searchSources": "Raadi khariidado iyo qaab-dhismeedyo",
+    "noSourcesFound": "Waxba lama helin",
+    "clearSearch": "Tirtir raadinta",
     "customFrame": "Qaab / widget gaar ah",
     "titlePlaceholder": "Magac (tusaale Raadaar, Kaamirad...)",
     "titlePlaceholderShort": "Magac (tusaale Raadaar)",

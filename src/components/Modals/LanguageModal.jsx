@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { MdClose, MdTranslate } from 'react-icons/md';
 import LanguagePicker from './LanguagePicker.jsx';
+import DecorToggle from './DecorToggle.jsx';
 
 const Backdrop = styled.div`
   position: fixed;
@@ -93,6 +94,7 @@ const LanguageModal = ({ isOpen, onClose }) => {
         <Header>
           <MdTranslate size={20} />
           <h2>{t('settings.language.title')}</h2>
+          <DecorToggle label={t('settings.decor.label')} title={t('settings.decor.title')} />
           <CloseButton type="button" onClick={onClose} aria-label={t('common.close')}>
             <MdClose size={20} />
           </CloseButton>

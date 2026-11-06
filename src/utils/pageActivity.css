@@ -6,3 +6,7 @@ html[data-overlay-open] body *:not([data-active-overlay], [data-active-overlay] 
 html[data-overlay-open] body *:not([data-active-overlay], [data-active-overlay] *)::after {
   animation-play-state: paused !important;
 }
+/* Шар візуальних фільтрів не «засинає»: на вкладці фільтрів результат видно під модалкою */
+html[data-overlay-open] #visual-filters-layer {
+  animation-play-state: running !important;
+}

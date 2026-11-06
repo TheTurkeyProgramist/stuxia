@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
-import sirenhead from "../photos/vip-images/sirenhead/sirenhead.webp";
+import sirenhead from "../media/fan-art/siren-head.webp";
 
 /* ─── анімації ──────────────────────────────────────────────── */
 const scanline = keyframes`

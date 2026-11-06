@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import avatarPlaceholder from "../../mp4/avatar.webp";
+import avatarPlaceholder from "../../media/characters/domino-avatar.webp";
 import { createPortal } from "react-dom";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
@@ -8,6 +8,7 @@ import KatSceneModal from "./KatSceneModal";
 import { auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import localforage from "localforage";
+import { useAnimationsDisabled, setAnimationsDisabled } from "../../utils/animationsPref";
 import { GoogleAuthProvider, linkWithPopup, unlink, verifyBeforeUpdateEmail, reauthenticateWithPopup } from "firebase/auth";
 import {
   FiUser,
@@ -47,6 +48,13 @@ import {
   FiSliders as FiSlidersIcon,
   FiRotateCcw,
   FiPlus,
+  FiEdit2,
+  FiHome,
+  FiCloud,
+  FiMap,
+  FiColumns,
+  FiMaximize2,
+  FiImage,
 } from "react-icons/fi";
 import { TbAutomation, TbMenuOrder } from "react-icons/tb";
 import { GiPalette } from "react-icons/gi";
@@ -61,7 +69,18 @@ import {
 } from "../../utils/bgMusicCatalog";
 import songAiKnowledge from "../MusicPhoto/songAiKnowledge.json";
 import { assetMap } from "../MusicPhoto/MusicPhoto.assets";
-import { FILTERS, PRESETS, useVisualFilters } from "../Header/useVisualFilters";
+import {
+  FILTERS,
+  PRESETS,
+  COMBINABLE_FILTERS,
+  CUSTOM_PRESET_ICON as FiPresetStar,
+  MAX_CUSTOM_PRESETS,
+  presetName,
+  selectFilter,
+  getPreviewFilter,
+  useVisualFilters,
+} from "../Header/useVisualFilters";
+import filterExampleImg from "../../media/backgrounds/scenes/mountains.webp";
 import { useDecorator } from "../Decorator/DecoratorContext.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { isNewsFilterEnabled, setNewsFilterEnabled } from "../../utils/contentFilter";
@@ -95,6 +114,14 @@ const appearScale = keyframes`
 
 // ── Styled Components ────────────────────────────────────────────────────────
 
+// Ширина вікна в режимі перегляду — у відсотках від ширини екрана, але не вужче за FILTERS_PREVIEW_MIN_PX
+const FILTERS_PREVIEW_DEFAULT_WIDTH = 64;
+const FILTERS_PREVIEW_MIN_WIDTH = 64;
+const FILTERS_PREVIEW_MAX_WIDTH = 100;
+const FILTERS_PREVIEW_MIN_PX = 640;
+// З цієї ширини екрана вікно зсувається праворуч; на вужчих — приклад-картинка в модалці
+const FILTERS_PREVIEW_BREAKPOINT = 768;
+
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0; left: 0;
@@ -103,6 +130,17 @@ const ModalOverlay = styled.div`
   background: rgba(0, 0, 0, 0.7);
   display: flex; justify-content: center; align-items: center;
   z-index: 100001;
+  transition: background 0.3s ease, backdrop-filter 0.3s ease;
+  /* На вкладці фільтрів сторінку не затемнюємо, щоб було видно результат.
+     На вужчих екранах сторінку за вікном не видно — там приклад-картинка в самій модалці */
+  ${(p) => p.$preview && css`
+    @media (min-width: ${FILTERS_PREVIEW_BREAKPOINT}px) {
+      background: transparent;
+      backdrop-filter: none;
+      justify-content: flex-end;
+      padding-right: 2.5%;
+    }
+  `}
   animation: ${(p) => (p.$isClosing ? fadeOut : fadeIn)} 0.25s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 `;
 
@@ -119,6 +157,12 @@ const ModalWindow = styled.div`
   border-radius: 12px;
   width: 95%;
   height: 88vh; max-height: 850px;
+  transition: width 0.3s ease;
+  ${(p) => p.$preview && css`
+    @media (min-width: ${FILTERS_PREVIEW_BREAKPOINT}px) {
+      width: max(${FILTERS_PREVIEW_MIN_PX}px, ${p.$previewWidth}%);
+    }
+  `}
   display: flex; flex-direction: column;
   box-shadow: 0 24px 60px rgba(0,0,0,0.7), 0 0 1px rgba(255,255,255,0.2);
   overflow: hidden;
@@ -243,6 +287,30 @@ const SectionHeaderTitle = styled.h3`
   margin: 0 0 12px 0; display: flex; align-items: center; gap: 10px;
 `;
 
+const SectionDescription = styled.p`
+  font-size: 13px; color: #a0a0a0; line-height: 1.5;
+  margin: -8px 0 10px 0;
+`;
+
+const MusicSettingsWrap = styled.div`
+  display: flex; flex-direction: column; gap: 8px;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+  ${({ $off }) => $off && css`filter: grayscale(1); opacity: 0.55;`}
+`;
+
+const MAX_CUSTOM_TRACKS = 7;
+const MAX_CUSTOM_MB = 20;
+const MAX_CUSTOM_MIN = 8;
+
+const SECTION_ICONS = { hero: <FiHome />, weather: <FiCloud />, map: <FiMap /> };
+
+const SubSectionTitle = styled.h4`
+  font-size: 13px; font-weight: 600; color: #a0a0a0;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  margin: 14px 0 2px 2px; display: flex; align-items: center; gap: 8px;
+  ${SectionHeaderTitle} + &, ${SectionDescription} + & { margin-top: 0; }
+`;
+
 const CardGroup = styled.div`display: flex; flex-direction: column; gap: 8px;`;
 
 const Card = styled.div`
@@ -257,6 +325,24 @@ const Card = styled.div`
 
 const CardExpanded = styled(Card)`
   flex-direction: column; align-items: stretch; gap: 12px;
+`;
+
+// Показується лише на широких екранах, де працює перегляд поруч зі сторінкою
+const WideScreenOnly = styled.div`
+  display: contents;
+  @media (max-width: ${FILTERS_PREVIEW_BREAKPOINT - 1}px) { display: none; }
+`;
+
+const FilterExampleCard = styled(CardExpanded)`
+  @media (min-width: ${FILTERS_PREVIEW_BREAKPOINT}px) { display: none; }
+`;
+
+const FilterExampleImage = styled.img`
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+  transition: filter 0.4s ease-in-out;
 `;
 
 const CardLeft = styled.div`
@@ -459,6 +545,7 @@ const FilterCardBtn = styled.button`
   border: 1px solid ${(p) => (p.$active ? "#60cdff" : "rgba(255,255,255,0.1)")};
   border-radius: 6px; padding: 8px 10px; font-size: 12px; font-weight: 500;
   cursor: pointer; transition: all 0.15s ease; text-align: center;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   &:hover { background: rgba(96,205,255,0.1); border-color: rgba(96,205,255,0.3); color: #ffffff; }
 `;
 
@@ -487,7 +574,6 @@ const UserSettingsModal = ({
   // Site sections props
   siteSections = [],
   moveSiteSection = () => {},
-  resetSiteSections = () => {},
   sectionThemes = {},
   hiddenSections = [],
   onToggleSectionVisibility = () => {},
@@ -500,7 +586,6 @@ const UserSettingsModal = ({
   onToggleStickyBg = () => {},
   // bg music props from App.jsx
   bgMusicEnabled, setBgMusicEnabled,
-  autoMuteBgMusic, setAutoMuteBgMusic,
   bgMusicSource, setBgMusicSource,
   bgMusicVolume, setBgMusicVolume,
   bgMusicSpeed = 1, setBgMusicSpeed = () => {},
@@ -510,6 +595,7 @@ const UserSettingsModal = ({
   libraryBgSettings = {}, setLibraryBgSettings = () => {},
   activeBgTrackId, setActiveBgTrackId = () => {},
   onResetBgPosition = () => {},
+  onSkipBgTrack = () => {},
   sfxVolume = 0.2, setSfxVolume = () => {},
   bgAudioRef, bgAudioRef2,
 }) => {
@@ -538,12 +624,28 @@ const UserSettingsModal = ({
   const {
     visualConfig,
     setVisualConfig,
-    onResetFilters,
+    resetFilters: onResetFilters,
     customPresets = [],
-    onSavePreset,
-    onDeletePreset,
-    onUpdatePresetName,
+    saveCustomPreset: onSavePreset,
+    deleteCustomPreset: onDeletePreset,
+    updateCustomPresetName: onUpdatePresetName,
   } = useVisualFilters(user);
+
+  // Активні фільтри комбінації: або список combo, або один звичайний фільтр
+  const comboIds = visualConfig.filterType === "combo"
+    ? (visualConfig.combo || [])
+    : COMBINABLE_FILTERS.some((f) => f.id === visualConfig.filterType) ? [visualConfig.filterType] : [];
+
+  const toggleComboFilter = (id) => {
+    const next = comboIds.includes(id) ? comboIds.filter((x) => x !== id) : [...comboIds, id];
+    setVisualConfig((p) => {
+      const rest = { ...p };
+      delete rest.combo;
+      if (next.length === 0) return { ...rest, filterType: "none" };
+      if (next.length === 1) return { ...rest, filterType: next[0] };
+      return { ...rest, filterType: "combo", combo: next };
+    });
+  };
 
   const [newPresetName, setNewPresetName] = useState("");
 
@@ -557,6 +659,8 @@ const UserSettingsModal = ({
     }
     try { return localStorage.getItem("saved_google_avatar") || null; } catch { return null; }
   });
+
+  const animationsDisabled = useAnimationsDisabled();
 
   const [isAdAntiHeaderEnabled, setIsAdAntiHeaderEnabled] = useState(() => {
     try {
@@ -590,6 +694,35 @@ const UserSettingsModal = ({
       localStorage.setItem("site_context_menu_enabled", nextVal ? "true" : "false");
       window.dispatchEvent(new Event("storage"));
     } catch {}
+  };
+
+  // Вкладка фільтрів: вікно зсувається праворуч і вужчає, щоб було видно сторінку
+  const [isFiltersPreviewOn, setIsFiltersPreviewOn] = useState(() => {
+    try {
+      return localStorage.getItem("settings_filters_preview") !== "false";
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleFiltersPreview = () => {
+    const nextVal = !isFiltersPreviewOn;
+    setIsFiltersPreviewOn(nextVal);
+    try { localStorage.setItem("settings_filters_preview", nextVal ? "true" : "false"); } catch {}
+  };
+
+  const [filtersPreviewWidth, setFiltersPreviewWidth] = useState(() => {
+    try {
+      const saved = Number(localStorage.getItem("settings_filters_preview_percent"));
+      return saved >= FILTERS_PREVIEW_MIN_WIDTH && saved <= FILTERS_PREVIEW_MAX_WIDTH ? saved : FILTERS_PREVIEW_DEFAULT_WIDTH;
+    } catch {
+      return FILTERS_PREVIEW_DEFAULT_WIDTH;
+    }
+  });
+
+  const changeFiltersPreviewWidth = (width) => {
+    setFiltersPreviewWidth(width);
+    try { localStorage.setItem("settings_filters_preview_percent", String(width)); } catch {}
   };
 
   const [isNewsFilterOn, setIsNewsFilterOn] = useState(isNewsFilterEnabled);
@@ -1035,6 +1168,8 @@ const UserSettingsModal = ({
     }
   };
 
+  const customTracks = useMemo(() => (customBgTracks || []).filter((t) => t?.file), [customBgTracks]);
+
   const libraryTracks = useMemo(() => {
     let tracks = songAiKnowledge.map((s) => {
       const file = assetMap[s.audio];
@@ -1043,8 +1178,27 @@ const UserSettingsModal = ({
     });
     if (libSearch) tracks = tracks.filter((t) => t.name.toLowerCase().includes(libSearch.toLowerCase()));
     const deduped = tracks.filter((t) => !BASE_BG_TRACKS.some((b) => b.id === t.id));
-    return [...BASE_BG_TRACKS.map((t) => ({ id: t.id, name: t.name, file: t.file, image: null, isBase: true, downloaded: true, softDeleted: false, available: true })), ...deduped].slice(0, 28);
-  }, [libSearch, downloadedTracks, softDeletedIds, bgMusicSource]);
+    const custom = customTracks
+      .map((t, i) => ({ id: `custom-${i}`, customIdx: i, name: t.name, file: t.file, image: null, isCustom: true, available: true, hidden: t.enabled === false }))
+      .filter((t) => !libSearch || t.name.toLowerCase().includes(libSearch.toLowerCase()));
+    const withHidden = (t) => ({ ...t, hidden: libraryBgSettings[t.id]?.enabled === false });
+    return [
+      ...BASE_BG_TRACKS.map((t) => withHidden({ id: t.id, name: t.name, file: t.file, image: null, isBase: true, downloaded: true, softDeleted: false, available: true })),
+      ...custom,
+      ...deduped.map(withHidden),
+    ].slice(0, 28 + custom.length);
+  }, [libSearch, downloadedTracks, softDeletedIds, bgMusicSource, customTracks, libraryBgSettings]);
+
+  // Око в режимі «Порядок»: приховати трек з черги; якщо він грає — одразу наступний
+  const toggleTrackHidden = (track, isActive) => {
+    const hide = !track.hidden;
+    if (track.isCustom) {
+      setCustomBgTracks(customTracks.map((t, i) => (i === track.customIdx ? { ...t, enabled: !hide } : t)));
+    } else {
+      setLibraryBgSettings((prev) => ({ ...prev, [track.id]: { ...prev[track.id], enabled: !hide } }));
+    }
+    if (hide && isActive) onSkipBgTrack();
+  };
 
   const formatTime = (s) => {
     if (!s || isNaN(s)) return "0:00";
@@ -1053,21 +1207,21 @@ const UserSettingsModal = ({
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    e.target.value = "";
     if (!file || activeSlotRef.current === null) return;
-    if (file.size > 15 * 1024 * 1024) { alert("Файл занадто великий! Максимум 15 МБ."); return; }
+    if (file.size > MAX_CUSTOM_MB * 1024 * 1024) { alert(`Файл занадто великий! Максимум ${MAX_CUSTOM_MB} МБ.`); return; }
     const audio = new Audio(URL.createObjectURL(file));
     audio.onloadedmetadata = () => {
-      if (audio.duration > 300) { alert("Мелодія занадто довга! Максимум 5 хвилин."); URL.revokeObjectURL(audio.src); return; }
-      const updated = Array.from({ length: 7 }, (_, i) => (customBgTracks || [])[i] || null);
-      updated[activeSlotRef.current] = { name: file.name.split(".")[0].substring(0, 30), file, repeats: 1, enabled: true };
-      setCustomBgTracks(updated); setBgMusicSource(file); setActiveBgTrackId(null);
+      if (audio.duration > MAX_CUSTOM_MIN * 60) { alert(`Мелодія занадто довга! Максимум ${MAX_CUSTOM_MIN} хвилин.`); URL.revokeObjectURL(audio.src); return; }
+      const updated = [...customTracks];
+      updated[Math.min(activeSlotRef.current, updated.length)] = { name: file.name.split(".")[0].substring(0, 30), file, repeats: 1, enabled: true };
+      setCustomBgTracks(updated.slice(0, MAX_CUSTOM_TRACKS)); setBgMusicSource(file); setActiveBgTrackId(null);
       URL.revokeObjectURL(audio.src);
     };
   };
 
   const handleRemoveCustomTrack = (idx) => {
-    const updated = Array.from({ length: 7 }, (_, i) => (customBgTracks || [])[i] || null);
-    updated[idx] = null; setCustomBgTracks(updated);
+    setCustomBgTracks(customTracks.filter((_, i) => i !== idx));
   };
 
   const seek = (e) => {
@@ -1086,15 +1240,15 @@ const UserSettingsModal = ({
 
   // ── Nav config ───────────────────────────────────────────────────────────
   const navItems = [
-    { key: "dateTime", icon: <FiClock />, label: "Час та дата" },
-    { key: "security", icon: <FiShield />, label: "Безпека", locked: isGuest },
     { key: "personalization", icon: <FiSliders />, label: "Персоналізація" },
-    { key: "siteSections", icon: <FiCompass />, label: "Секції сайту" },
-    { key: "modes", icon: <FiZap />, label: "Режими сайту" },
+    { key: "security", icon: <FiShield />, label: "Безпека", locked: isGuest },
+    { key: "siteSections", icon: <FiCompass />, label: "Секції та новини" },
+    { key: "modes", icon: <FiZap />, label: "Режими та застосунки" },
     { key: "filters", icon: <FiEye />, label: "Візуальні фільтри" },
     { key: "bgMusic", icon: <FiMusic />, label: "Фонова музика" },
-    { key: "news", icon: <FiGlobe />, label: "Новини" },
   ];
+
+  const isFiltersPreview = activeTab === "filters" && isFiltersPreviewOn;
 
   return createPortal(
     <>
@@ -1103,8 +1257,13 @@ const UserSettingsModal = ({
           <KatSceneModal onClose={() => setShowKatScene(false)} />
         </NestedModalPortal>
       )}
-      <ModalOverlay $isClosing={isClosing} onClick={finishClosing}>
-        <ModalWindow $isClosing={isClosing} onClick={(e) => e.stopPropagation()}>
+      <ModalOverlay $isClosing={isClosing} $preview={isFiltersPreview} onClick={finishClosing}>
+        <ModalWindow
+          $isClosing={isClosing}
+          $preview={isFiltersPreview}
+          $previewWidth={filtersPreviewWidth}
+          onClick={(e) => e.stopPropagation()}
+        >
 
           {/* ── Header ─────────────────────────────────────────────────── */}
           <WindowHeader>
@@ -1158,65 +1317,11 @@ const UserSettingsModal = ({
 
             <MainContent>
 
-              {/* ── DATE & TIME TAB ─────────────────────────────────── */}
-              {activeTab === "dateTime" && (
-                <CardGroup>
-                  <SectionHeaderTitle><FiClock /> Час та дата</SectionHeaderTitle>
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox><FiClock /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Відображення секунд</CardTitle>
-                        <CardDescription>Показувати секунди (17:23:17)</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <ToggleWrapper onClick={() => updateLivePreview({ showSeconds: !formData.showSeconds })}>
-                        <ToggleStatusLabel $checked={formData.showSeconds}>{formData.showSeconds ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
-                        <SwitchPill $checked={formData.showSeconds} />
-                      </ToggleWrapper>
-                    </CardControl>
-                  </Card>
-
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox><FiClock /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Формат часу</CardTitle>
-                        <CardDescription>24-годинний або 12-годинний (AM/PM)</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <WinSelect value={formData.hour12 ? "12" : "24"} onChange={(e) => updateLivePreview({ hour12: e.target.value === "12" })}>
-                        <option value="24">24-годинний</option>
-                        <option value="12">12-годинний (AM/PM)</option>
-                      </WinSelect>
-                    </CardControl>
-                  </Card>
-
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox><FiCalendar /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Режим відображення</CardTitle>
-                        <CardDescription>Час, дата або обидва разом</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <WinSelect value={formData.dateDisplayMode} onChange={(e) => updateLivePreview({ dateDisplayMode: e.target.value })}>
-                        <option value="both">Час та Дата разом</option>
-                        <option value="time">Тільки Час</option>
-                        <option value="date">Тільки Дата</option>
-                      </WinSelect>
-                    </CardControl>
-                  </Card>
-                </CardGroup>
-              )}
-
               {/* ── SECURITY TAB ────────────────────────────────────── */}
               {activeTab === "security" && !isGuest && (
                 <CardGroup>
                   <SectionHeaderTitle><FiShield /> Безпека та переприв'язка акаунту</SectionHeaderTitle>
+                  <SectionDescription>Прив'язка Google-акаунту, зміна пошти та пароля для входу в профіль</SectionDescription>
 
                   {/* Account Relinking & Binding Controls */}
                   <CardExpanded>
@@ -1322,6 +1427,83 @@ const UserSettingsModal = ({
               {activeTab === "personalization" && (
                 <CardGroup>
                   <SectionHeaderTitle><FiSliders /> Персоналізація та інтерфейс</SectionHeaderTitle>
+                  <SectionDescription>Формат часу й дати, анімації, підказки, шрифт, жести та дзеркальність сайту</SectionDescription>
+
+                  <SubSectionTitle><FiClock /> Час та дата</SubSectionTitle>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiClock /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Відображення секунд</CardTitle>
+                        <CardDescription>Показувати секунди (17:23:17)</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={() => updateLivePreview({ showSeconds: !formData.showSeconds })}>
+                        <ToggleStatusLabel $checked={formData.showSeconds}>{formData.showSeconds ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <SwitchPill $checked={formData.showSeconds} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiClock /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Формат часу</CardTitle>
+                        <CardDescription>24-годинний або 12-годинний (AM/PM)</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinSelect value={formData.hour12 ? "12" : "24"} onChange={(e) => updateLivePreview({ hour12: e.target.value === "12" })}>
+                        <option value="24">24-годинний</option>
+                        <option value="12">12-годинний (AM/PM)</option>
+                      </WinSelect>
+                    </CardControl>
+                  </Card>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiCalendar /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Режим відображення</CardTitle>
+                        <CardDescription>Час, дата або обидва разом</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinSelect value={formData.dateDisplayMode} onChange={(e) => updateLivePreview({ dateDisplayMode: e.target.value })}>
+                        <option value="both">Час та Дата разом</option>
+                        <option value="time">Тільки Час</option>
+                        <option value="date">Тільки Дата</option>
+                      </WinSelect>
+                    </CardControl>
+                  </Card>
+
+                  <SubSectionTitle><FiSliders /> Інтерфейс</SubSectionTitle>
+
+                  {/* Вимкнути анімації */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#60cdff"><FiZap /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Вимкнути анімації</CardTitle>
+                        <CardDescription>
+                          {animationsDisabled
+                            ? "Анімації та плавні переходи вимкнено — сайт легший для слабких пристроїв"
+                            : "Іконки, переходи й ефекти анімовані"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={() => setAnimationsDisabled(!animationsDisabled)}>
+                        <ToggleStatusLabel $checked={animationsDisabled}>
+                          {animationsDisabled ? "Вимкнено" : "Увімкнено"}
+                        </ToggleStatusLabel>
+                        <SwitchPill $checked={animationsDisabled} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
 
                   {/* AntiHeader Ad Toggle */}
                   <Card>
@@ -1365,90 +1547,6 @@ const UserSettingsModal = ({
                         </ToggleStatusLabel>
                         <SwitchPill $checked={isSiteContextMenuEnabled} />
                       </ToggleWrapper>
-                    </CardControl>
-                  </Card>
-
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox><FiDownload /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Версія для Windows</CardTitle>
-                        <CardDescription>Завантажити застосунок Stuxia для комп'ютера</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <WinButton
-                        as="a"
-                        $primary
-                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/download/v1.0.0/stuxia_1.0.0_x64-setup.exe"
-                      >
-                        <FiDownload /> Завантажити
-                      </WinButton>
-                    </CardControl>
-                  </Card>
-
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox><FiSmartphone /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Версія для Android</CardTitle>
-                        <CardDescription>APK для встановлення на Android-пристрої</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <WinButton
-                        as="a"
-                        $primary
-                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Android.apk"
-                      >
-                        <FiDownload /> Завантажити APK
-                      </WinButton>
-                    </CardControl>
-                  </Card>
-
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox><FiDownload /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Версія для Linux</CardTitle>
-                        <CardDescription>AppImage для більшості дистрибутивів або DEB для Debian/Ubuntu</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <WinButton
-                        as="a"
-                        $primary
-                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Linux.AppImage"
-                      >
-                        <FiDownload /> AppImage
-                      </WinButton>
-                      <WinButton
-                        as="a"
-                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Linux.deb"
-                      >
-                        <FiDownload /> DEB
-                      </WinButton>
-                    </CardControl>
-                  </Card>
-
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox><FiSmartphone /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>На iPhone та iPad</CardTitle>
-                        <CardDescription>Відкрийте сайт у Safari, натисніть «Поділитися» → «На початковий екран»</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <WinButton
-                        as="a"
-                        $primary
-                        href="https://stuxia.com"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <FiGlobe /> Відкрити сайт
-                      </WinButton>
                     </CardControl>
                   </Card>
 
@@ -1547,7 +1645,8 @@ const UserSettingsModal = ({
               {/* ── SITE SECTIONS TAB ─────────────────────────────────── */}
               {activeTab === "siteSections" && (
                 <CardGroup>
-                  <SectionHeaderTitle><FiCompass /> Навігація та секції сайту</SectionHeaderTitle>
+                  <SectionHeaderTitle><FiCompass /> Секції сайту та новини</SectionHeaderTitle>
+                  <SectionDescription>Порядок, видимість і тема кожної секції, а також фільтр та вигляд новин</SectionDescription>
 
                   {siteSections && siteSections.map((sec, idx) => {
                     const isHidden = hiddenSections?.includes(sec.key);
@@ -1557,7 +1656,7 @@ const UserSettingsModal = ({
                       <CardExpanded key={sec.key}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
                           <CardLeft>
-                            <CardIconBox $color="#60cdff"><FiLayers /></CardIconBox>
+                            <CardIconBox $color="#60cdff">{SECTION_ICONS[sec.key] || <FiLayers />}</CardIconBox>
                             <CardInfo>
                               <CardTitle>{sec.label}</CardTitle>
                             </CardInfo>
@@ -1598,40 +1697,84 @@ const UserSettingsModal = ({
                     <WinButton onClick={onResetSectionThemes} style={{ flex: 1 }}>
                       Скинути теми секцій
                     </WinButton>
-                    <WinButton $danger onClick={resetSiteSections} style={{ flex: 1 }}>
-                      Скинути порядок секцій
-                    </WinButton>
                   </div>
+
+                  <SubSectionTitle><FiGlobe /> Новини</SubSectionTitle>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiShield /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Фільтр новин</CardTitle>
+                        <CardDescription>Приховує новини про війну, політику, кримінал та інший небажаний контент. Зміни діють після оновлення новин</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={toggleNewsFilter}>
+                        <ToggleStatusLabel $checked={isNewsFilterOn}>{isNewsFilterOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <SwitchPill $checked={isNewsFilterOn} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  {!isGuest ? (
+                    <Card>
+                      <CardLeft>
+                        <CardIconBox><FiGlobe /></CardIconBox>
+                        <CardInfo>
+                          <CardTitle>Синхронізація заглушених новин</CardTitle>
+                          <CardDescription>Синхронізувати приховані новини між усіма пристроями</CardDescription>
+                        </CardInfo>
+                      </CardLeft>
+                      <CardControl>
+                        <ToggleWrapper onClick={() => updateLivePreview({ syncMutedNews: !formData.syncMutedNews })}>
+                          <ToggleStatusLabel $checked={formData.syncMutedNews}>{formData.syncMutedNews ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                          <SwitchPill $checked={formData.syncMutedNews} />
+                        </ToggleWrapper>
+                      </CardControl>
+                    </Card>
+                  ) : (
+                    <Card style={{ opacity: 0.45 }}>
+                      <CardLeft>
+                        <CardIconBox><FiGlobe /></CardIconBox>
+                        <CardInfo>
+                          <CardTitle>Синхронізація заглушених новин</CardTitle>
+                          <CardDescription>🔒 Доступно тільки для зареєстрованих користувачів</CardDescription>
+                        </CardInfo>
+                      </CardLeft>
+                    </Card>
+                  )}
+
+                  <CardExpanded>
+                    <CardLeft>
+                      <CardIconBox><FiGlobe /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Видимість елементів новин</CardTitle>
+                        <CardDescription>Увімкніть або вимкніть частини новинних карток</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
+                      {newsLayout.filter((b) => b.key !== "image").map((block) => (
+                        <div key={block.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <span style={{ fontSize: "13px", color: "#e0e0e0" }}>
+                            {block.key === "title" ? "Заголовок новини" : "Опис новини"}
+                          </span>
+                          <ToggleWrapper onClick={() => toggleNewsBlockVisibility(block.key)}>
+                            <ToggleStatusLabel $checked={block.visible}>{block.visible ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                            <SwitchPill $checked={block.visible} />
+                          </ToggleWrapper>
+                        </div>
+                      ))}
+                    </div>
+                  </CardExpanded>
                 </CardGroup>
               )}
 
               {/* ── MODES & LOADING TAB ───────────────────────────────── */}
               {activeTab === "modes" && (
                 <CardGroup>
-                  <SectionHeaderTitle><FiZap /> Режими та швидкість сайту</SectionHeaderTitle>
-
-                  {/* AntiHeader Ad Toggle */}
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox $color="#60cdff"><FiInfo /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Реклама та підказки в хедері</CardTitle>
-                        <CardDescription>
-                          {isAdAntiHeaderEnabled
-                            ? "Автоматичний показ Анти-хедера з порадами та клавішами"
-                            : "Анти-хедер повністю вимкнено"}
-                        </CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <ToggleWrapper onClick={toggleAdAntiHeader}>
-                        <ToggleStatusLabel $checked={isAdAntiHeaderEnabled}>
-                          {isAdAntiHeaderEnabled ? "Увімкнуто" : "Вимкнуто"}
-                        </ToggleStatusLabel>
-                        <SwitchPill $checked={isAdAntiHeaderEnabled} />
-                      </ToggleWrapper>
-                    </CardControl>
-                  </Card>
+                  <SectionHeaderTitle><FiZap /> Режими сайту та застосунки</SectionHeaderTitle>
+                  <SectionDescription>Тема, швидкість завантаження, режим Декоратора, навчання та застосунки для пристроїв</SectionDescription>
 
                   {/* Restart tutorial */}
                   <Card>
@@ -1787,6 +1930,92 @@ const UserSettingsModal = ({
                       )}
                     </div>
                   </CardExpanded>
+
+                  <SubSectionTitle><FiDownload /> Застосунки Стихії</SubSectionTitle>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiDownload /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Версія для Windows</CardTitle>
+                        <CardDescription>Завантажити застосунок Stuxia для комп'ютера</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinButton
+                        as="a"
+                        $primary
+                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/download/v1.0.0/stuxia_1.0.0_x64-setup.exe"
+                      >
+                        <FiDownload /> Завантажити
+                      </WinButton>
+                    </CardControl>
+                  </Card>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiSmartphone /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Версія для Android</CardTitle>
+                        <CardDescription>APK для встановлення на Android-пристрої</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinButton
+                        as="a"
+                        $primary
+                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Android.apk"
+                      >
+                        <FiDownload /> Завантажити APK
+                      </WinButton>
+                    </CardControl>
+                  </Card>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiDownload /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Версія для Linux</CardTitle>
+                        <CardDescription>AppImage для більшості дистрибутивів або DEB для Debian/Ubuntu</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinButton
+                        as="a"
+                        $primary
+                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Linux.AppImage"
+                      >
+                        <FiDownload /> AppImage
+                      </WinButton>
+                      <WinButton
+                        as="a"
+                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Linux.deb"
+                      >
+                        <FiDownload /> DEB
+                      </WinButton>
+                    </CardControl>
+                  </Card>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox><FiSmartphone /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>На iPhone та iPad</CardTitle>
+                        <CardDescription>Відкрийте сайт у Safari, натисніть «Поділитися» → «На початковий екран»</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinButton
+                        as="a"
+                        $primary
+                        href="https://stuxia.com"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <FiGlobe /> Відкрити сайт
+                      </WinButton>
+                    </CardControl>
+                  </Card>
                 </CardGroup>
               )}
 
@@ -1794,6 +2023,57 @@ const UserSettingsModal = ({
               {activeTab === "filters" && (
                 <CardGroup>
                   <SectionHeaderTitle><FiEye /> Візуальні фільтри та пресети</SectionHeaderTitle>
+                  <SectionDescription>
+                    Затемнення, кольорові фільтри для зору та збереження власних пресетів.
+                    {isFiltersPreviewOn && <WideScreenOnly as="span"> Результат видно на сторінці ліворуч</WideScreenOnly>}
+                  </SectionDescription>
+
+                  {/* Side-by-side preview */}
+                  <WideScreenOnly>
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#ffb36c"><FiColumns /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Перегляд поруч зі сторінкою</CardTitle>
+                        <CardDescription>
+                          {isFiltersPreviewOn
+                            ? "На цій вкладці вікно зсувається праворуч і не затемнює сайт (на широкому екрані)"
+                            : "Вікно налаштувань звичайного розміру, сторінка затемнена"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={toggleFiltersPreview}>
+                        <ToggleStatusLabel $checked={isFiltersPreviewOn}>
+                          {isFiltersPreviewOn ? "Увімкнуто" : "Вимкнуто"}
+                        </ToggleStatusLabel>
+                        <SwitchPill $checked={isFiltersPreviewOn} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  {isFiltersPreviewOn && (
+                    <Card>
+                      <CardLeft>
+                        <CardIconBox $color="#ffb36c"><FiMaximize2 /></CardIconBox>
+                        <CardInfo>
+                          <CardTitle>Ширина вікна в режимі перегляду</CardTitle>
+                          <CardDescription>{filtersPreviewWidth}% ширини екрана</CardDescription>
+                        </CardInfo>
+                      </CardLeft>
+                      <CardControl style={{ minWidth: "180px" }}>
+                        <ProgressBar
+                          type="range"
+                          min={FILTERS_PREVIEW_MIN_WIDTH}
+                          max={FILTERS_PREVIEW_MAX_WIDTH}
+                          step="4"
+                          value={filtersPreviewWidth}
+                          onChange={(e) => changeFiltersPreviewWidth(Number(e.target.value))}
+                        />
+                      </CardControl>
+                    </Card>
+                  )}
+                  </WideScreenOnly>
 
                   {/* Dark intensity slider */}
                   <Card>
@@ -1827,7 +2107,7 @@ const UserSettingsModal = ({
                         <FilterCardBtn
                           key={f.id}
                           $active={visualConfig.filterType === f.id}
-                          onClick={() => setVisualConfig((p) => ({ ...p, filterType: f.id }))}
+                          onClick={() => setVisualConfig((p) => selectFilter(p, f.id))}
                         >
                           {f.label}
                         </FilterCardBtn>
@@ -1855,35 +2135,76 @@ const UserSettingsModal = ({
                     </Card>
                   )}
 
+                  {/* Example image: on narrow screens the page behind the modal isn't visible */}
+                  <FilterExampleCard>
+                    <CardLeft>
+                      <CardIconBox $color="#ffb36c"><FiImage /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Приклад</CardTitle>
+                        <CardDescription>Так фільтр виглядатиме на сторінці</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <FilterExampleImage
+                      src={filterExampleImg}
+                      alt="Приклад візуального фільтра"
+                      loading="lazy"
+                      style={{ filter: getPreviewFilter(visualConfig) }}
+                    />
+                  </FilterExampleCard>
+
+                  {/* Combo builder */}
+                  <CardExpanded>
+                    <CardLeft>
+                      <CardIconBox $color="#ffb36c"><FiLayers /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Комбінація фільтрів</CardTitle>
+                        <CardDescription>
+                          {comboIds.length > 1
+                            ? `Разом діють: ${comboIds.map((id) => FILTERS.find((f) => f.id === id)?.label).join(" + ")}`
+                            : "Позначте кілька фільтрів, щоб вони діяли разом, і збережіть як власний пресет"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <FilterGrid style={{ marginTop: "4px" }}>
+                      {COMBINABLE_FILTERS.map((f) => (
+                        <FilterCardBtn key={f.id} $active={comboIds.includes(f.id)} onClick={() => toggleComboFilter(f.id)}>
+                          {comboIds.includes(f.id) ? <FiCheck /> : <FiPlus />} {f.label}
+                        </FilterCardBtn>
+                      ))}
+                    </FilterGrid>
+                  </CardExpanded>
+
                   {/* Presets Manager */}
                   <CardExpanded>
                     <CardLeft>
                       <CardIconBox $color="#ffb36c"><FiZap /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Швидкі стилі та пресети</CardTitle>
-                        <CardDescription>Готові комбінації та створення власних</CardDescription>
+                        <CardDescription>
+                          Готові стилі та власні пресети ({customPresets.length}/{MAX_CUSTOM_PRESETS}). Хедер і налаштування фільтри не змінюють — тут їх завжди можна вимкнути
+                        </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <PresetGrid style={{ marginTop: "4px" }}>
                       {PRESETS.map((p) => (
                         <FilterCardBtn key={p.id} onClick={() => setVisualConfig(p.config)}>
-                          {p.label}
+                          <p.icon /> {p.label}
                         </FilterCardBtn>
                       ))}
                       {customPresets.map((p) => (
                         <CustomPresetCard key={p.id}>
                           <FilterCardBtn style={{ border: "none", flex: 1, padding: "2px" }} onClick={() => setVisualConfig(p.config)}>
-                            {p.label}
+                            <FiPresetStar /> {presetName(p)}
                           </FilterCardBtn>
                           <IconBtn
                             onClick={() => {
-                              const n = window.prompt("Нова назва пресета:", p.label.replace("✨ ", ""));
+                              const n = window.prompt("Нова назва пресета:", presetName(p));
                               if (n) onUpdatePresetName(p.id, n);
                             }}
                             title="Перейменувати"
                             style={{ width: 22, height: 22, fontSize: 10 }}
                           >
-                            ✎
+                            <FiEdit2 />
                           </IconBtn>
                           <IconBtn
                             $danger
@@ -1891,7 +2212,7 @@ const UserSettingsModal = ({
                             title="Видалити"
                             style={{ width: 22, height: 22, fontSize: 10 }}
                           >
-                            ×
+                            <FiX />
                           </IconBtn>
                         </CustomPresetCard>
                       ))}
@@ -1899,12 +2220,14 @@ const UserSettingsModal = ({
 
                     <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
                       <WinInput
-                        placeholder="Назва нового пресета..."
+                        placeholder={customPresets.length >= MAX_CUSTOM_PRESETS ? "Досягнуто ліміт — видаліть пресет" : "Назва нового пресета..."}
                         value={newPresetName}
                         onChange={(e) => setNewPresetName(e.target.value)}
                         maxLength={15}
+                        disabled={customPresets.length >= MAX_CUSTOM_PRESETS}
                       />
                       <WinButton
+                        disabled={customPresets.length >= MAX_CUSTOM_PRESETS || !newPresetName.trim()}
                         onClick={() => {
                           if (newPresetName.trim()) {
                             onSavePreset(newPresetName);
@@ -1927,6 +2250,7 @@ const UserSettingsModal = ({
               {activeTab === "bgMusic" && (
                 <CardGroup>
                   <SectionHeaderTitle><FiMusic /> Фонова музика</SectionHeaderTitle>
+                  <SectionDescription>Гучність, швидкість і режим відтворення, бібліотека треків та власні файли</SectionDescription>
 
                   {/* Main toggle */}
                   <Card>
@@ -1945,241 +2269,155 @@ const UserSettingsModal = ({
                     </CardControl>
                   </Card>
 
-                  {/* Auto-mute */}
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox $color="#a78bfa"><TbAutomation style={{ fontSize: "18px" }} /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Авто-заглушення</CardTitle>
-                        <CardDescription>Зменшувати гучність фонової музики під час відтворення відео/треку</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <ToggleWrapper onClick={() => setAutoMuteBgMusic(!autoMuteBgMusic)}>
-                        <ToggleStatusLabel $checked={autoMuteBgMusic}>{autoMuteBgMusic ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
-                        <SwitchPill $checked={autoMuteBgMusic} />
-                      </ToggleWrapper>
-                    </CardControl>
-                  </Card>
-
-                  {/* Volume + Speed + Mode */}
-                  <CardExpanded>
-                    <CardLeft>
-                      <CardIconBox $color="#a78bfa"><FiVolume2 /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Гучність та швидкість</CardTitle>
-                        <CardDescription>Налаштування відтворення фону та звукових ефектів</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "4px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <span style={{ fontSize: "12px", color: "#a0a0a0", minWidth: "90px" }}>Гучність: {Math.round(bgMusicVolume * 100)}%</span>
-                        <ProgressBar type="range" min="0" max="1" step="0.01" value={bgMusicVolume}
-                          onChange={(e) => setBgMusicVolume(parseFloat(e.target.value))} style={{ flex: 1 }} />
+                  <MusicSettingsWrap $off={!bgMusicEnabled}>
+                    {/* Volume + Speed + Mode */}
+                    <CardExpanded>
+                      <CardLeft>
+                        <CardIconBox $color="#a78bfa"><FiVolume2 /></CardIconBox>
+                        <CardInfo>
+                          <CardTitle>Гучність та швидкість</CardTitle>
+                          <CardDescription>Налаштування відтворення фону та звукових ефектів</CardDescription>
+                        </CardInfo>
+                      </CardLeft>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "4px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <span style={{ fontSize: "12px", color: "#a0a0a0", minWidth: "90px" }}>Гучність: {Math.round(bgMusicVolume * 100)}%</span>
+                          <ProgressBar type="range" min="0" max="1" step="0.01" value={bgMusicVolume}
+                            onChange={(e) => setBgMusicVolume(parseFloat(e.target.value))} style={{ flex: 1 }} />
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <span style={{ fontSize: "12px", color: "#a0a0a0", minWidth: "90px" }}>Швидкість: {bgMusicSpeed}x</span>
+                          <ProgressBar type="range" min="0.5" max="2" step="0.05" value={bgMusicSpeed}
+                            onChange={(e) => applySpeedChange(parseFloat(e.target.value))} style={{ flex: 1 }} />
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <span style={{ fontSize: "12px", color: "#a0a0a0", minWidth: "90px" }}>Гучність SFX: {Math.round(sfxVolume * 100)}%</span>
+                          <ProgressBar type="range" min="0" max="1" step="0.01" value={sfxVolume}
+                            onChange={(e) => setSfxVolume(parseFloat(e.target.value))} style={{ flex: 1 }} />
+                        </div>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <span style={{ fontSize: "12px", color: "#a0a0a0", minWidth: "90px" }}>Швидкість: {bgMusicSpeed}x</span>
-                        <ProgressBar type="range" min="0.5" max="2" step="0.05" value={bgMusicSpeed}
-                          onChange={(e) => applySpeedChange(parseFloat(e.target.value))} style={{ flex: 1 }} />
-                        <div style={{ display: "flex", gap: "4px" }}>
-                          {[0.75, 1, 1.25, 1.5, 2].map((s) => (
-                            <WinButton
-                              key={s}
-                              onClick={() => applySpeedChange(s)}
-                              style={{
-                                padding: "2px 6px", fontSize: "11px",
-                                background: bgMusicSpeed === s ? "rgba(96,205,255,0.2)" : undefined,
-                                borderColor: bgMusicSpeed === s ? "#60cdff" : undefined,
-                              }}
-                            >
-                              {s}x
+                    </CardExpanded>
+
+                    {/* Seek bar + mode */}
+                    <CardExpanded>
+                      <CardLeft>
+                        <CardIconBox $color="#a78bfa"><TbMenuOrder style={{ fontSize: "18px" }} /></CardIconBox>
+                        <CardInfo>
+                          <CardTitle>Режим відтворення</CardTitle>
+                          <CardDescription>Позиція: {formatTime(currentTime)} / {formatTime(duration)}</CardDescription>
+                        </CardInfo>
+                      </CardLeft>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
+                        <ProgressBar type="range" min="0" max={duration || 100} step="0.1" value={currentTime} onChange={seek} />
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                          {["loop", "order"].map((m) => (
+                            <WinButton key={m} onClick={() => setBgMusicMode(m)}
+                              style={{ background: bgMusicMode === m ? "rgba(96,205,255,0.15)" : undefined, borderColor: bgMusicMode === m ? "#60cdff" : undefined }}>
+                              <FiRepeat /> {m === "loop" ? "Повтор" : "Порядок"}
                             </WinButton>
                           ))}
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <span style={{ fontSize: "12px", color: "#a0a0a0", minWidth: "90px" }}>Гучність SFX: {Math.round(sfxVolume * 100)}%</span>
-                        <ProgressBar type="range" min="0" max="1" step="0.01" value={sfxVolume}
-                          onChange={(e) => setSfxVolume(parseFloat(e.target.value))} style={{ flex: 1 }} />
-                      </div>
-                    </div>
-                  </CardExpanded>
-
-                  {/* Seek bar + mode */}
-                  <CardExpanded>
-                    <CardLeft>
-                      <CardIconBox $color="#a78bfa"><TbMenuOrder style={{ fontSize: "18px" }} /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Режим відтворення</CardTitle>
-                        <CardDescription>Позиція: {formatTime(currentTime)} / {formatTime(duration)}</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
-                      <ProgressBar type="range" min="0" max={duration || 100} step="0.1" value={currentTime} onChange={seek} />
-                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                        {["loop", "order"].map((m) => (
-                          <WinButton key={m} onClick={() => setBgMusicMode(m)}
-                            style={{ background: bgMusicMode === m ? "rgba(96,205,255,0.15)" : undefined, borderColor: bgMusicMode === m ? "#60cdff" : undefined }}>
-                            <FiRepeat /> {m === "loop" ? "Повтор" : "Порядок"}
+                          <WinButton onClick={() => setBgMusicShuffle(!bgMusicShuffle)}
+                            style={{ background: bgMusicShuffle ? "rgba(167,139,250,0.15)" : undefined, borderColor: bgMusicShuffle ? "#a78bfa" : undefined }}>
+                            <FiShuffle /> Перемішати
                           </WinButton>
-                        ))}
-                        <WinButton onClick={() => setBgMusicShuffle(!bgMusicShuffle)}
-                          style={{ background: bgMusicShuffle ? "rgba(167,139,250,0.15)" : undefined, borderColor: bgMusicShuffle ? "#a78bfa" : undefined }}>
-                          <FiShuffle /> Перемішати
-                        </WinButton>
-                        <WinButton onClick={onResetBgPosition}>Скинути позицію</WinButton>
-                      </div>
-                    </div>
-                  </CardExpanded>
-
-                  {/* Sub-tabs: Library | Custom */}
-                  <div style={{ display: "flex", gap: "4px", padding: "4px 0" }}>
-                    {["library", "custom"].map((t) => (
-                      <WinButton key={t} onClick={() => setMusicTab(t)}
-                        style={{ background: musicTab === t ? "rgba(96,205,255,0.15)" : undefined, borderColor: musicTab === t ? "#60cdff" : undefined }}>
-                        {t === "library" ? <><FiList /> Бібліотека</> : <><FiUpload /> Власні треки</>}
-                      </WinButton>
-                    ))}
-                  </div>
-
-                  {musicTab === "library" && (
-                    <CardExpanded>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                        <FiSearch style={{ color: "#a0a0a0" }} />
-                        <WinInput placeholder="Пошук треку..." value={libSearch} onChange={(e) => setLibSearch(e.target.value)} style={{ maxWidth: "280px" }} />
-                      </div>
-                      <MusicScrollList>
-                        {libraryTracks.map((track) => {
-                          const isActive = bgMusicSource === track.file || activeBgTrackId === track.id;
-                          const prog = downloadProgress[track.id];
-                          const isLoading = prog !== undefined && prog < 100;
-                          return (
-                            <TrackRow key={track.id} $active={isActive} onClick={() => handleCachedDownload(track)}>
-                              {track.image
-                                ? <TrackImg src={track.image} alt={track.name} />
-                                : <div style={{ width: 32, height: 32, background: "rgba(167,139,250,0.1)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}><FiMusic style={{ color: "#a78bfa", fontSize: "14px" }} /></div>
-                              }
-                              <TrackInfo>
-                                <TrackName>{track.name}</TrackName>
-                                <TrackStatus>
-                                  {isLoading ? `Завантаження ${prog}%...` : track.available ? "✓ Доступний" : "↓ Клікніть для завантаження"}
-                                </TrackStatus>
-                              </TrackInfo>
-                              {isActive && <Equalizer />}
-                            </TrackRow>
-                          );
-                        })}
-                      </MusicScrollList>
-                    </CardExpanded>
-                  )}
-
-                  {musicTab === "custom" && (
-                    <CardExpanded>
-                      <CardLeft>
-                        <CardIconBox $color="#a78bfa"><FiUpload /></CardIconBox>
-                        <CardInfo>
-                          <CardTitle>Власні треки (до 7 слотів)</CardTitle>
-                          <CardDescription>MP3/WAV до 15 МБ та 5 хвилин</CardDescription>
-                        </CardInfo>
-                      </CardLeft>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
-                        {Array.from({ length: 7 }, (_, i) => (customBgTracks || [])[i] || null).map((track, i) => (
-                          <CustomSlotCard key={i} $hasFile={!!track?.file}>
-                            {track?.file
-                              ? <div style={{ width: 28, height: 28, background: "rgba(96,205,255,0.1)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}><FiMusic style={{ color: "#60cdff", fontSize: "13px" }} /></div>
-                              : <div style={{ width: 28, height: 28, background: "rgba(255,255,255,0.04)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#555", fontSize: "12px" }}>{i + 1}</span></div>
-                            }
-                            <SlotName>{track?.name || <span style={{ color: "#555" }}>Порожній слот {i + 1}</span>}</SlotName>
-                            <SlotActions>
-                              <IconBtn onClick={() => { activeSlotRef.current = i; fileInputRef.current.click(); }} title="Завантажити">
-                                <FiUpload />
-                              </IconBtn>
-                              {track?.file && (
-                                <IconBtn $danger onClick={() => handleRemoveCustomTrack(i)} title="Видалити"><FiTrash2 /></IconBtn>
-                              )}
-                            </SlotActions>
-                          </CustomSlotCard>
-                        ))}
-                      </div>
-                      <input ref={fileInputRef} type="file" accept="audio/*" style={{ display: "none" }} onChange={handleFileChange} />
-                    </CardExpanded>
-                  )}
-                </CardGroup>
-              )}
-
-              {/* ── NEWS TAB ────────────────────────────────────────── */}
-              {activeTab === "news" && (
-                <CardGroup>
-                  <SectionHeaderTitle><FiGlobe /> Налаштування новин</SectionHeaderTitle>
-
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox><FiShield /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Фільтр новин</CardTitle>
-                        <CardDescription>Приховує новини про війну, політику, кримінал та інший небажаний контент. Зміни діють після оновлення новин</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <ToggleWrapper onClick={toggleNewsFilter}>
-                        <ToggleStatusLabel $checked={isNewsFilterOn}>{isNewsFilterOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
-                        <SwitchPill $checked={isNewsFilterOn} />
-                      </ToggleWrapper>
-                    </CardControl>
-                  </Card>
-
-                  {!isGuest ? (
-                    <Card>
-                      <CardLeft>
-                        <CardIconBox><FiGlobe /></CardIconBox>
-                        <CardInfo>
-                          <CardTitle>Синхронізація заглушених новин</CardTitle>
-                          <CardDescription>Синхронізувати приховані новини між усіма пристроями</CardDescription>
-                        </CardInfo>
-                      </CardLeft>
-                      <CardControl>
-                        <ToggleWrapper onClick={() => updateLivePreview({ syncMutedNews: !formData.syncMutedNews })}>
-                          <ToggleStatusLabel $checked={formData.syncMutedNews}>{formData.syncMutedNews ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
-                          <SwitchPill $checked={formData.syncMutedNews} />
-                        </ToggleWrapper>
-                      </CardControl>
-                    </Card>
-                  ) : (
-                    <Card style={{ opacity: 0.45 }}>
-                      <CardLeft>
-                        <CardIconBox><FiGlobe /></CardIconBox>
-                        <CardInfo>
-                          <CardTitle>Синхронізація заглушених новин</CardTitle>
-                          <CardDescription>🔒 Доступно тільки для зареєстрованих користувачів</CardDescription>
-                        </CardInfo>
-                      </CardLeft>
-                    </Card>
-                  )}
-
-                  <CardExpanded>
-                    <CardLeft>
-                      <CardIconBox><FiGlobe /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Видимість елементів новин</CardTitle>
-                        <CardDescription>Увімкніть або вимкніть частини новинних карток</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
-                      {newsLayout.filter((b) => b.key !== "image").map((block) => (
-                        <div key={block.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                          <span style={{ fontSize: "13px", color: "#e0e0e0" }}>
-                            {block.key === "title" ? "Заголовок новини" : "Опис новини"}
-                          </span>
-                          <ToggleWrapper onClick={() => toggleNewsBlockVisibility(block.key)}>
-                            <ToggleStatusLabel $checked={block.visible}>{block.visible ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
-                            <SwitchPill $checked={block.visible} />
-                          </ToggleWrapper>
+                          <WinButton onClick={onResetBgPosition}>Скинути позицію</WinButton>
                         </div>
+                      </div>
+                    </CardExpanded>
+
+                    {/* Sub-tabs: Library | Custom */}
+                    <div style={{ display: "flex", gap: "4px", padding: "4px 0" }}>
+                      {["library", "custom"].map((t) => (
+                        <WinButton key={t} onClick={() => setMusicTab(t)}
+                          style={{ background: musicTab === t ? "rgba(96,205,255,0.15)" : undefined, borderColor: musicTab === t ? "#60cdff" : undefined }}>
+                          {t === "library" ? <><FiList /> Бібліотека</> : <><FiUpload /> Власні треки</>}
+                        </WinButton>
                       ))}
                     </div>
-                  </CardExpanded>
+
+                    {musicTab === "library" && (
+                      <CardExpanded>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                          <FiSearch style={{ color: "#a0a0a0" }} />
+                          <WinInput placeholder="Пошук треку..." value={libSearch} onChange={(e) => setLibSearch(e.target.value)} style={{ maxWidth: "280px" }} />
+                        </div>
+                        <MusicScrollList>
+                          {libraryTracks.map((track) => {
+                            const isActive = bgMusicSource === track.file || (!track.isCustom && activeBgTrackId === track.id);
+                            const prog = downloadProgress[track.id];
+                            const isLoading = prog !== undefined && prog < 100;
+                            return (
+                              <TrackRow
+                                key={track.id}
+                                $active={isActive}
+                                style={track.hidden && bgMusicMode === "order" ? { opacity: 0.45 } : undefined}
+                                onClick={() => track.isCustom
+                                  ? (setBgMusicSource(track.file), setActiveBgTrackId(null))
+                                  : handleCachedDownload(track)}
+                              >
+                                {track.image
+                                  ? <TrackImg src={track.image} alt={track.name} />
+                                  : <div style={{ width: 32, height: 32, background: track.isCustom ? "rgba(96,205,255,0.1)" : "rgba(167,139,250,0.1)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                      {track.isCustom ? <FiUpload style={{ color: "#60cdff", fontSize: "14px" }} /> : <FiMusic style={{ color: "#a78bfa", fontSize: "14px" }} />}
+                                    </div>
+                                }
+                                <TrackInfo>
+                                  <TrackName>{track.name}</TrackName>
+                                  <TrackStatus>
+                                    {track.isCustom ? "Власний трек" : isLoading ? `Завантаження ${prog}%...` : track.available ? "✓ Доступний" : "↓ Клікніть для завантаження"}
+                                  </TrackStatus>
+                                </TrackInfo>
+                                {isActive && <Equalizer />}
+                                {bgMusicMode === "order" && (
+                                  <IconBtn
+                                    onClick={(e) => { e.stopPropagation(); toggleTrackHidden(track, isActive); }}
+                                    title={track.hidden ? "Повернути в чергу" : "Пропускати в режимі «Порядок»"}
+                                  >
+                                    {track.hidden ? <FaEyeSlash style={{ color: "#ff6b6b" }} /> : <FaEye style={{ color: "#60cdff" }} />}
+                                  </IconBtn>
+                                )}
+                              </TrackRow>
+                            );
+                          })}
+                        </MusicScrollList>
+                      </CardExpanded>
+                    )}
+
+                    {musicTab === "custom" && (
+                      <CardExpanded>
+                        <CardLeft>
+                          <CardIconBox $color="#a78bfa"><FiUpload /></CardIconBox>
+                          <CardInfo>
+                            <CardTitle>Власні треки ({customTracks.length}/{MAX_CUSTOM_TRACKS})</CardTitle>
+                            <CardDescription>MP3/WAV/OPUS (рекомендовано) до {MAX_CUSTOM_MB} МБ та {MAX_CUSTOM_MIN} хвилин. Додані треки з'являються в бібліотеці</CardDescription>
+                          </CardInfo>
+                        </CardLeft>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
+                          {(customTracks.length < MAX_CUSTOM_TRACKS ? [...customTracks, null] : customTracks).map((track, i) => (
+                            <CustomSlotCard key={i} $hasFile={!!track?.file}>
+                              {track?.file
+                                ? <div style={{ width: 28, height: 28, background: "rgba(96,205,255,0.1)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}><FiMusic style={{ color: "#60cdff", fontSize: "13px" }} /></div>
+                                : <div style={{ width: 28, height: 28, background: "rgba(255,255,255,0.04)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#555", fontSize: "12px" }}>{i + 1}</span></div>
+                              }
+                              <SlotName>{track?.name || <span style={{ color: "#555" }}>Додати трек</span>}</SlotName>
+                              <SlotActions>
+                                <IconBtn onClick={() => { activeSlotRef.current = i; fileInputRef.current.click(); }} title="Завантажити">
+                                  <FiUpload />
+                                </IconBtn>
+                                {track?.file && (
+                                  <IconBtn $danger onClick={() => handleRemoveCustomTrack(i)} title="Видалити"><FiTrash2 /></IconBtn>
+                                )}
+                              </SlotActions>
+                            </CustomSlotCard>
+                          ))}
+                        </div>
+                        <input ref={fileInputRef} type="file" accept="audio/*" style={{ display: "none" }} onChange={handleFileChange} />
+                      </CardExpanded>
+                    )}
+                  </MusicSettingsWrap>
                 </CardGroup>
               )}
+
 
             </MainContent>
           </WindowBody>

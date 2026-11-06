@@ -19,16 +19,17 @@ import WeatherCardComponent, {
 } from "./components/Weather/Weather.jsx";
 import Maintenance from "./components/Maintenance.jsx";
 import { getMaintenanceStatus, loadFirebase } from "./firebaseLazy.js";
-import fogBackground from "./photos/hero-header/fogtwo.webp";
-import userDefault from "./photos/hero-header/user.webp";
-import turkeys from "./photos/vip-images/turkeys/ultra-vip-turkeys.webp";
+import fogBackground from "./media/backgrounds/scenes/foggy-forest-loader.webp";
+import userDefault from "./media/ui/user-placeholder.webp";
+import turkeys from "./media/turkeys/kate.webp";
 // Ресурси для фонового завантаження кат-сцени
-import startImage from "./photos/hero-header/fogtwo.webp";
+import startImage from "./media/backgrounds/scenes/foggy-forest-loader.webp";
 import {
   assetMap,
   songAiKnowledge,
 } from "./components/MusicPhoto/MusicPhoto.assets.jsx";
 import { DEFAULT_SITE_SECTIONS } from "./components/Header/Menu.jsx";
+import { BASE_BG_TRACKS } from "./utils/bgMusicCatalog";
 import axios from "axios";
 import "./App.css";
 import Header from "./components/Header/Header.jsx";
@@ -65,7 +66,18 @@ import { LiaCloudSunRainSolid, LiaCloudMoonRainSolid, LiaCloudSunSolid } from "r
 import { stripSecrets } from "./utils/passwordHash";
 import { getNow, syncClock } from "./utils/serverClock";
 import { useLanguageEffect } from "./i18n/useI18nHelpers.js";
+import toast from "react-hot-toast";
+import { MotionConfig } from "framer-motion";
+import { useAnimationsDisabled, setAnimationsDisabled } from "./utils/animationsPref";
+import { aggregateHourlyByDay } from "./utils/dailyAggregates";
+import { FaPlay, FaPause } from "react-icons/fa";
+import { FaMagnifyingGlass } from "react-icons/fa6";
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
+// Ліміти карток погоди: власні картки (без GPS) і нові створення на добу (лічильник у Firestore)
+const MAX_CUSTOM_WEATHER_CARDS = 8;
+// Понад цю кількість — попередження про навантаження на пристрій
+const SOFT_CUSTOM_WEATHER_CARDS = 5;
+const MAX_DAILY_CARD_ADDITIONS = 40;
 const Tooltipso = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
@@ -171,9 +183,6 @@ const Modal = lazy(() => import("./components/Modals/Modal.jsx"));
 const UserSettingsModal = lazy(
   () => import("./components/Modals/UserSettingsModal.jsx"),
 );
-const WeatherDetailsModal = lazy(
-  () => import("./components/Modals/WeatherDetailsModal.jsx"),
-);
 const TermsModal = lazy(
   () => import("./components/Modals/UserSearchModal.jsx"),
 );
@@ -188,6 +197,10 @@ const GlobalFilterLock = createGlobalStyle`
       .App {
         filter: none !important;
         backdrop-filter: none !important;
+      }
+      /* Візуальні фільтри тепер живуть на окремому шарі (useVisualFilters) */
+      #visual-filters-layer {
+        display: none !important;
       }
     `}
 `;
@@ -326,6 +339,7 @@ const WeatherCardsContainer = styled.div`
   }
 `;
 
+/* Номери карток стоять під картками, а не поверх них */
 const CarouselNav = styled.div`
   position: relative;
   display: flex;
@@ -333,20 +347,16 @@ const CarouselNav = styled.div`
   gap: 6px;
   flex-wrap: wrap;
   z-index: 9000;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 28px;
-  pointer-events: none;
-
-  & > button {
-    pointer-events: auto;
-  }
+  margin-top: 8px;
 `;
 const CarouselSideButton = styled.button`
   position: absolute;
   top: 50%;
   ${(props) => (props.$direction === "previous" ? "left: 42px;" : "right: 42px;")}
+  /* Телефон: стрілки майже біля країв екрана (зліва запас під 3D-грань, що виступає на 10px) */
+  @media (max-width: 767px) {
+    ${(props) => (props.$direction === "previous" ? "left: 12px;" : "right: 4px;")}
+  }
   width: 44px;
   height: 44px;
   display: inline-flex;
@@ -461,9 +471,197 @@ const WeatherCarouselWrapper = styled.div`
   isolation: isolate;
 `;
 
-const WeatherCarousel = ({ children }) => {
+const CityJumpWrapper = styled.div`
+  position: relative;
+  width: min(420px, calc(100% - 16px));
+  margin: 0 auto 10px;
+  z-index: 9500;
+`;
+
+/* Ряд «кнопка анімацій + заголовок Погода» справа над картками */
+const WeatherTitleRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 4px;
+  & > * {
+    margin-left: 0 !important;
+    margin-bottom: 0 !important;
+  }
+`;
+
+/* Кнопка «Анімації» поруч із «Погода»: та сама висота, заокруглення й z-index, щоб не провалювалась у липкому режимі */
+const AnimationsToggleButton = styled.button`
+  position: relative;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 10px;
+  border: 2px solid ${(props) => (props.$off ? "#888" : "rgba(0, 255, 229, 0.6)")};
+  background: ${(props) => (props.$isDarkMode ? "rgba(0, 0, 0, 0.93)" : "rgb(255, 255, 255)")};
+  color: ${(props) =>
+    props.$off ? (props.$isDarkMode ? "#bbb" : "#555") : props.$isDarkMode ? "#00ffe5" : "#006b61"};
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: 0 0 12px rgba(0, 255, 229, 0.4);
+  }
+`;
+
+const WeatherAnimationsToggle = ({ isDarkMode }) => {
+  const animationsDisabled = useAnimationsDisabled();
+  return (
+    <AnimationsToggleButton
+      type="button"
+      $off={animationsDisabled}
+      $isDarkMode={isDarkMode}
+      aria-pressed={animationsDisabled}
+      onClick={() => setAnimationsDisabled(!animationsDisabled)}
+    >
+      {animationsDisabled ? <FaPlay /> : <FaPause />}
+      {animationsDisabled ? "Увімкнути анімації" : "Вимкнути анімації"}
+    </AnimationsToggleButton>
+  );
+};
+
+const CityJumpToggle = styled.button`
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+
+  /* Лупа й стрілка не стискаються, текст обрізається трьома крапками */
+  & > svg,
+  & > span:last-child {
+    flex-shrink: 0;
+  }
+  & > span:first-of-type {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+  }
+  border-radius: 8px;
+  border: 2px solid #00ffe5;
+  background: ${(props) => (props.$isDarkMode ? "#000" : "#fff")};
+  color: ${(props) => (props.$isDarkMode ? "#00ffe5" : "#006b61")};
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 255, 229, 0.25);
+
+  & > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    box-shadow: 0 0 16px rgba(0, 255, 229, 0.5);
+  }
+`;
+
+const CityJumpDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  padding: 8px;
+  border-radius: 8px;
+  border: 2px solid #00ffe5;
+  background: ${(props) => (props.$isDarkMode ? "#0a0a0a" : "#fff")};
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+`;
+
+const CityJumpInput = styled.input`
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(0, 255, 229, 0.6);
+  background: ${(props) => (props.$isDarkMode ? "#000" : "#f5f8fc")};
+  color: ${(props) => (props.$isDarkMode ? "#00ffe5" : "#000")};
+  font-size: 14px;
+  outline: none;
+
+  &:focus {
+    border-color: #00ffe5;
+  }
+`;
+
+const CityJumpList = styled.ul`
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+`;
+
+const CityJumpItem = styled.li`
+  & > button {
+    width: 100%;
+    text-align: left;
+    padding: 7px 10px;
+    border: none;
+    border-radius: 6px;
+    background: ${(props) => (props.$active ? "#fc7a00" : "transparent")};
+    color: ${(props) => (props.$active ? "#000" : props.$isDarkMode ? "#e6fffc" : "#111")};
+    font-size: 14px;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  & > button:hover {
+    background: ${(props) => (props.$active ? "#fdd9b6" : "rgba(0, 255, 229, 0.2)")};
+  }
+`;
+
+const CityJumpEmpty = styled.div`
+  padding: 7px 10px;
+  font-size: 13px;
+  opacity: 0.7;
+  color: ${(props) => (props.$isDarkMode ? "#e6fffc" : "#111")};
+`;
+
+// Скільки карток ліворуч і праворуч від видимої тримати змонтованими
+const CAROUSEL_MOUNT_RADIUS = 1;
+
+const WeatherCarousel = ({ children, labels = [], isDarkMode }) => {
   const scrollRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [cityQuery, setCityQuery] = useState("");
+  const [isCityJumpOpen, setIsCityJumpOpen] = useState(false);
+  const cityJumpRef = useRef(null);
+
+  useEffect(() => {
+    if (!isCityJumpOpen) return undefined;
+    const handleOutside = (e) => {
+      if (cityJumpRef.current && !cityJumpRef.current.contains(e.target)) {
+        setIsCityJumpOpen(false);
+      }
+    };
+    const handleEscape = (e) => {
+      if (e.key === "Escape") setIsCityJumpOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isCityJumpOpen]);
 
   const childrenArray = React.Children.toArray(children);
   const childCount = childrenArray.length;
@@ -516,9 +714,78 @@ const WeatherCarousel = ({ children }) => {
     };
   }, [childCount]);
 
+  const jumpTo = (index) => {
+    setActiveIndex(index);
+    scrollToIndex(index);
+    setIsCityJumpOpen(false);
+    setCityQuery("");
+  };
+
+  const normalizedQuery = cityQuery.trim().toLowerCase();
+  const matchingCities = labels
+    .map((label, index) => ({ label: label || `Картка ${index + 1}`, index }))
+    .filter(({ label }) => !normalizedQuery || label.toLowerCase().includes(normalizedQuery));
+
   return (
     <WeatherCarouselWrapper>
-      <WeatherCardsContainer ref={scrollRef}>{children}</WeatherCardsContainer>
+      {childCount > 1 && (
+        <CityJumpWrapper ref={cityJumpRef}>
+          <CityJumpToggle
+            type="button"
+            $isDarkMode={isDarkMode}
+            aria-expanded={isCityJumpOpen}
+            onClick={() => setIsCityJumpOpen((open) => !open)}
+          >
+            <FaMagnifyingGlass aria-hidden="true" />
+            <span>Натисніть, щоб знайти створене місто</span>
+            <span aria-hidden="true">{isCityJumpOpen ? "▲" : "▼"}</span>
+          </CityJumpToggle>
+          {isCityJumpOpen && (
+            <CityJumpDropdown $isDarkMode={isDarkMode}>
+              <CityJumpInput
+                type="search"
+                autoFocus
+                $isDarkMode={isDarkMode}
+                value={cityQuery}
+                placeholder="Назва міста..."
+                aria-label="Пошук серед створених карток"
+                onChange={(e) => setCityQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && matchingCities.length > 0) {
+                    jumpTo(matchingCities[0].index);
+                  }
+                }}
+              />
+              <CityJumpList>
+                {matchingCities.map(({ label, index }) => (
+                  <CityJumpItem
+                    key={`city-jump-${index}`}
+                    $active={index === activeIndex}
+                    $isDarkMode={isDarkMode}
+                  >
+                    <button type="button" title={label} onClick={() => jumpTo(index)}>
+                      {index + 1}. {label}
+                    </button>
+                  </CityJumpItem>
+                ))}
+              </CityJumpList>
+              {matchingCities.length === 0 && (
+                <CityJumpEmpty $isDarkMode={isDarkMode}>Такого міста немає серед карток</CityJumpEmpty>
+              )}
+            </CityJumpDropdown>
+          )}
+        </CityJumpWrapper>
+      )}
+      <WeatherCardsContainer ref={scrollRef}>
+        {/* Монтуємо лише видиму картку та сусідні; далекі — порожні заглушки тієї ж ширини, щоб не тримати їх у пам'яті */}
+        {childrenArray.map((child, i) =>
+          Math.abs(i - activeIndex) <= CAROUSEL_MOUNT_RADIUS ? (
+            child
+          ) : (
+            <div key={child.key} aria-hidden="true" />
+          ),
+        )}
+      </WeatherCardsContainer>
       {childCount > 1 && (
         <CarouselNav>
           {Array.from({ length: childCount }, (_, i) => (
@@ -824,21 +1091,25 @@ const SectionContent = memo(
     weatherCards,
     weatherCardLayout,
     heroDateString,
-    setIsWeatherDetailsOpen,
-    setSelectedWeatherCard,
   }) => {
     if (!section) return null;
 
     if (section.key === "weather") {
       return (
         <div id="weather">
-          <AihelpTitle
-            $isStickyBgMode={isStickyBgMode}
-            $isDarkMode={isDarkMode}
+          <WeatherTitleRow>
+            <WeatherAnimationsToggle isDarkMode={isDarkMode} />
+            <AihelpTitle
+              $isStickyBgMode={isStickyBgMode}
+              $isDarkMode={isDarkMode}
+            >
+              Погода
+            </AihelpTitle>
+          </WeatherTitleRow>
+          <WeatherCarousel
+            isDarkMode={isDarkMode}
+            labels={weatherCards.map((card) => card.locationName)}
           >
-            Погода
-          </AihelpTitle>
-          <WeatherCarousel>
             {weatherCards.map((card, index) => {
               const isExtremeTemp =
                 card.current.tempNum > 30 || card.current.tempNum < -30;
@@ -864,13 +1135,6 @@ const SectionContent = memo(
                     setIsLocationEnabled={setIsLocationEnabled}
                     customHolidayName={customHolidayName}
                     layout={weatherCardLayout}
-                    onOpenDetails={(cityImage) => {
-                      setSelectedWeatherCard({
-                        ...card,
-                        cityImage: cityImage || card.cityImage,
-                      });
-                      setIsWeatherDetailsOpen(true);
-                    }}
                     currentTimeString={heroDateString}
                   />
                 </div>
@@ -957,7 +1221,7 @@ const App = () => {
   const [bgMusicMode, setBgMusicMode] = useState("loop"); // 'loop' або 'order'
   const [bgMusicShuffle, setBgMusicShuffle] = useState(false);
   const [activeBgTrackId, setActiveBgTrackId] = useState(23); // ID для індиків за замовчуванням
-  const [, setTrackRepeatCounter] = useState(0);
+  const [trackRepeatCounter, setTrackRepeatCounter] = useState(0);
   const [bgMusicVolume, setBgMusicVolume] = useState(0.2);
   const [sfxVolume, setSfxVolume] = useState(0.2);
   const [loadingStrategy, setLoadingStrategy] = useState("eager"); // eager, lazy, delayed
@@ -966,8 +1230,6 @@ const App = () => {
   const [libraryBgSettings, setLibraryBgSettings] = useState({}); // {trackId: {repeats, enabled}}
   const [lockFiltersInFs, setLockFiltersInFs] = useState(false);
   const [isFsActive, setIsFsActive] = useState(false);
-  const [isWeatherDetailsOpen, setIsWeatherDetailsOpen] = useState(false);
-  const [selectedWeatherCard, setSelectedWeatherCard] = useState(null);
 
   // Функція для розрахунку секунд до початку наступної години
   const calculateSecondsUntilNextHour = useCallback(() => {
@@ -1228,7 +1490,6 @@ const App = () => {
       import("./components/News/News.jsx"),
       import("./components/Modals/Modal.jsx"),
       import("./components/Modals/UserSettingsModal.jsx"),
-      import("./components/Modals/WeatherDetailsModal.jsx"),
       import("./components/Modals/UserSearchModal.jsx"),
     ]);
   }, []);
@@ -1322,6 +1583,8 @@ const App = () => {
 
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [weatherCards, setWeatherCards] = useState([]);
+  // Скільки карток створено сьогодні (лише для акаунта; лічильник живе у Firestore)
+  const [dailyCardAdditions, setDailyCardAdditions] = useState(0);
 
   const [hideDeleteModalUntil, setHideDeleteModalUntil] = useState(0);
   useEffect(() => {
@@ -1370,6 +1633,10 @@ const App = () => {
           const userDocRef = doc(db, "config", userRef.current.uid);
           const userDoc = await getDoc(userDocRef);
           const cloudData = userDoc.exists() ? userDoc.data() : {};
+          const todayKey = new Date().toISOString().split("T")[0];
+          setDailyCardAdditions(
+            cloudData.cardAdditionsDate === todayKey ? cloudData.cardAdditionsCount || 0 : 0,
+          );
           if (!cloudData.savedWeatherCards && weatherCardsRef.current.length) {
             // Перший вхід: у хмарі ще немає карток — вивантажуємо локальні.
             setDoc(
@@ -1662,6 +1929,41 @@ const App = () => {
     bgPositionApplied.current = false;
   }, []);
 
+  // Наступний не прихований трек у порядку бібліотеки: базові → власні → треки сайту
+  const skipToNextBgTrack = useCallback(() => {
+    const libPool = [
+      ...BASE_BG_TRACKS.map((t) => ({ id: t.id, file: t.file })),
+      ...songAiKnowledge
+        .filter((s) => !BASE_BG_TRACKS.some((b) => b.id === s.id))
+        .map((s) => ({ id: s.id, file: assetMap[s.audio] || s.audio })),
+    ].filter((t) => libraryBgSettings[t.id]?.enabled !== false);
+
+    const customPool = (customBgTracks || []).filter(
+      (t) => t && t.file && t.enabled !== false,
+    );
+
+    const fullPool = [
+      ...libPool.filter((t) => BASE_BG_TRACKS.some((b) => b.id === t.id)).map((t) => ({ ...t, isCustom: false })),
+      ...customPool.map((t) => ({ id: null, file: t.file, isCustom: true })),
+      ...libPool.filter((t) => !BASE_BG_TRACKS.some((b) => b.id === t.id)).map((t) => ({ ...t, isCustom: false })),
+    ];
+    if (fullPool.length === 0) return;
+
+    const others = fullPool.filter((t) => t.file !== bgMusicSource);
+    let next;
+    if (bgMusicShuffle) {
+      next = others.length > 0
+        ? others[Math.floor(Math.random() * others.length)]
+        : fullPool[0];
+    } else {
+      const currentIndex = fullPool.findIndex((t) => t.file === bgMusicSource);
+      next = fullPool[(currentIndex + 1) % fullPool.length];
+    }
+    setTrackRepeatCounter(0);
+    setBgMusicSource(next.file);
+    setActiveBgTrackId(next.isCustom ? null : next.id);
+  }, [customBgTracks, libraryBgSettings, bgMusicSource, bgMusicShuffle]);
+
   const handleBgMusicEnded = useCallback(() => {
     const a1 = bgAudioRef.current;
     const a2 = bgAudioRef2.current;
@@ -1691,74 +1993,25 @@ const App = () => {
       maxRepeats = libraryBgSettings[activeBgTrackId]?.repeats || 1;
     }
 
-    setTrackRepeatCounter((prev) => {
-      const nextCount = prev + 1;
-      if (nextCount < maxRepeats) {
-        activeAudio.currentTime = 0;
-        activeAudio.play().catch(() => {});
-        return nextCount;
-      } else {
-        // Шукаємо наступний доступний трек (enabled: true) в режимі "order"
-        if (bgMusicMode === "order") {
-          const libPool = songAiKnowledge
-            .map((s) => ({
-              id: s.id,
-              file: assetMap[s.audio] || s.audio,
-              enabled: libraryBgSettings[s.id]?.enabled !== false,
-            }))
-            .filter((t) => t.enabled);
-
-          const customPool = (customBgTracks || []).filter(
-            (t) => t && t.enabled !== false,
-          );
-
-          const fullPool = [
-            ...libPool.map((t) => ({
-              id: t.id,
-              file: t.file,
-              isCustom: false,
-            })),
-            ...customPool.map((t) => ({
-              id: t.id,
-              file: t.file,
-              isCustom: true,
-            })),
-          ];
-
-          if (fullPool.length > 0) {
-            const currentIndex = fullPool.findIndex(
-              (t) => t.file === bgMusicSource,
-            );
-
-            if (bgMusicShuffle) {
-              const otherTracks = fullPool.filter(
-                (t) => t.file !== bgMusicSource,
-              );
-              const next =
-                otherTracks.length > 0
-                  ? otherTracks[Math.floor(Math.random() * otherTracks.length)]
-                  : fullPool[0];
-              setBgMusicSource(next.file);
-              setActiveBgTrackId(next.isCustom ? null : next.id);
-            } else {
-              const nextIdx = (currentIndex + 1) % fullPool.length;
-              const next = fullPool[nextIdx];
-              setBgMusicSource(next.file);
-              setActiveBgTrackId(next.isCustom ? null : next.id);
-            }
-          }
-        }
-        return 0;
-      }
-    });
+    const nextCount = trackRepeatCounter + 1;
+    if (nextCount < maxRepeats) {
+      activeAudio.currentTime = 0;
+      activeAudio.play().catch(() => {});
+      setTrackRepeatCounter(nextCount);
+    } else if (bgMusicMode === "order") {
+      skipToNextBgTrack();
+    } else {
+      setTrackRepeatCounter(0);
+    }
   }, [
+    trackRepeatCounter,
     bgMusicMode,
     bgMusicSource,
     customBgTracks,
-    bgMusicShuffle,
     activeBgTrackId,
     libraryBgSettings,
     currentAudioUrl,
+    skipToNextBgTrack,
   ]);
 
   // При зміні режиму перезапускаємо трек, щоб новий режим застосувався відразу
@@ -1909,9 +2162,12 @@ const App = () => {
           const customCardsCount = weatherCardsRef.current.filter(
             (card) => !card.isMain,
           ).length;
-          if (customCardsCount >= 4) {
-            alert("Можна мати не більше 4 власних карток погоди плюс поточну GPS-картку.");
-            return;
+          if (customCardsCount >= MAX_CUSTOM_WEATHER_CARDS) {
+            alert(`Можна мати не більше ${MAX_CUSTOM_WEATHER_CARDS} власних карток погоди плюс поточну GPS-картку.`);
+            return false;
+          }
+          if (customCardsCount >= SOFT_CUSTOM_WEATHER_CARDS) {
+            toast(`Більше ${SOFT_CUSTOM_WEATHER_CARDS} карток спричиняє навантаження на пристрій.`, { icon: "⚠️", duration: 4000 });
           }
 
           // Незареєстровані користувачі не мають ліміту на 3 картки/тиждень
@@ -1928,12 +2184,14 @@ const App = () => {
                 data.cardAdditionsDate = today;
               }
 
-              if (data.cardAdditionsCount >= 10) {
-                alert("Ви досягли ліміту в 10 карток на добу.");
-                return;
+              setDailyCardAdditions(data.cardAdditionsCount);
+              if (data.cardAdditionsCount >= MAX_DAILY_CARD_ADDITIONS) {
+                alert(`Ви досягли ліміту в ${MAX_DAILY_CARD_ADDITIONS} карток на добу.`);
+                return false;
               }
 
               data.cardAdditionsCount += 1;
+              setDailyCardAdditions(data.cardAdditionsCount);
               await setDoc(
                 userDocRef,
                 {
@@ -1948,7 +2206,7 @@ const App = () => {
           }
         }
 
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm,uv_index,precipitation_probability&hourly=temperature_2m,uv_index,precipitation_probability,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset&timezone=auto&past_days=1&forecast_days=16`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm,uv_index,precipitation_probability&hourly=temperature_2m,uv_index,precipitation_probability,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset,wind_gusts_10m_max,apparent_temperature_max,apparent_temperature_min,snowfall_sum&timezone=auto&past_days=1&forecast_days=16`;
         console.log("Fetching weather from URL:", url);
         // Кеш відповіді Open-Meteo: 10 хв на пару координат
         const cacheKey = `om_cache_${Number(targetLat).toFixed(2)},${Number(targetLon).toFixed(2)}`;
@@ -2085,13 +2343,19 @@ const App = () => {
             uvIndexDaily: d.daily?.uv_index_max?.slice(0, 3),
           });
 
+          const hourlyByDay = aggregateHourlyByDay(d.hourly);
+
           const newCardData = {
             id: id,
             isMain: isMain,
+            // Київ за замовчуванням, коли GPS вимкнено або недоступний — картка покаже підказку
+            isFallbackLocation: isMain && !!cityData?.isFallback,
             locationName:
               isMain && !cityData?.fullName
                 ? "Ваша локація"
-                : existingCard
+                : isMain && cityData?.isFallback
+                  ? displayName
+                  : existingCard
                   ? existingCard.locationName
                   : displayName,
             lat: targetLat,
@@ -2200,6 +2464,13 @@ const App = () => {
               evapotranspiration: d.daily.et0_fao_evapotranspiration?.[i] ?? 0,
               sunrise: d.daily.sunrise?.[i] ?? null,
               sunset: d.daily.sunset?.[i] ?? null,
+              wind_gusts_max: d.daily.wind_gusts_10m_max?.[i] ?? null,
+              feels_like_max: d.daily.apparent_temperature_max?.[i] ?? null,
+              feels_like_min: d.daily.apparent_temperature_min?.[i] ?? null,
+              snowfall_sum: d.daily.snowfall_sum?.[i] ?? null,
+              // Середня хмарність і найгірша видимість за день — з погодинних даних
+              cloud_cover_mean: hourlyByDay[t]?.cloudCoverMean ?? null,
+              visibility_min: hourlyByDay[t]?.visibilityMin ?? null,
               weather_code: d.daily.weather_code[i] ?? 0,
               is_day: 1,
               iconPlaceholder: getWeatherIcon(d.daily.weather_code[i] ?? 0, 1),
@@ -2231,7 +2502,7 @@ const App = () => {
           } else {
             return existingCard
               ? prev.map((c) => (c.id === id ? newCardData : c))
-              : prev.length >= 8
+              : prev.filter((c) => !c.isMain).length >= MAX_CUSTOM_WEATHER_CARDS
                 ? prev
                 : [...prev, newCardData];
           }
@@ -2351,9 +2622,9 @@ const App = () => {
     if (!isLocationEnabled) {
       fetchWeather(
         {
-          fullName:
-            "Київ(Увімкн. у налаштуваннях GPS, щоб бачити вашу локацію)",
+          fullName: "Київ",
           id: "main-card",
+          isFallback: true,
         },
         true,
         50.45,
@@ -2370,9 +2641,9 @@ const App = () => {
         console.warn("Geolocation failed on mobile device:", err);
         fetchWeather(
           {
-            fullName:
-              "Київ(Увімкн. у налаштуваннях GPS, щоб бачити вашу локацію)",
+            fullName: "Київ",
             id: "main-card",
+            isFallback: true,
           },
           true,
           50.45,
@@ -2409,9 +2680,9 @@ const App = () => {
     } else {
       fetchWeather(
         {
-          fullName:
-            "Київ(Увімкн. у налаштуваннях GPS, щоб бачити вашу локацію)",
+          fullName: "Київ",
           id: "main-card",
+          isFallback: true,
         },
         true,
         50.45,
@@ -2579,16 +2850,23 @@ const App = () => {
   const handleDeleteCard = useCallback((id) => {
     setWeatherCards((prev) => prev.filter((card) => card.id !== id));
   }, []);
+  // Міста з Hero додаються строго по черзі: перевірка ліміту й лічильник у Firestore
+  // мають бачити результат попереднього додавання (швидкі кліки по кількох підказках)
+  const addCityQueueRef = useRef(Promise.resolve());
   const handleAddCityFromHero = useCallback(
     (cityObj) => {
-      const customCardsCount = weatherCardsRef.current.filter(
-        (card) => !card.isMain,
-      ).length;
-      if (customCardsCount >= 4) {
-        alert("Можна мати не більше 4 власних карток погоди плюс поточну GPS-картку.");
-        return;
-      }
-      fetchWeather(cityObj, false);
+      const task = addCityQueueRef.current.then(async () => {
+        const customCardsCount = weatherCardsRef.current.filter(
+          (card) => !card.isMain,
+        ).length;
+        if (customCardsCount >= MAX_CUSTOM_WEATHER_CARDS) {
+          alert(`Можна мати не більше ${MAX_CUSTOM_WEATHER_CARDS} власних карток погоди плюс поточну GPS-картку.`);
+          return false;
+        }
+        return (await fetchWeather(cityObj, false)) !== false;
+      });
+      addCityQueueRef.current = task.catch(() => {});
+      return task;
     },
     [fetchWeather],
   );
@@ -2735,6 +3013,13 @@ const App = () => {
         <Hero
           heroDateString={heroDateString}
           onAddCity={handleAddCityFromHero}
+          cardLimits={{
+            custom: weatherCards.filter((c) => !c.isMain).length,
+            maxCustom: MAX_CUSTOM_WEATHER_CARDS,
+            // Денний ліміт рахується лише для акаунта
+            daily: user ? dailyCardAdditions : null,
+            maxDaily: MAX_DAILY_CARD_ADDITIONS,
+          }}
           startAnimation={!isLoading}
           user={user}
           isDarkMode={isDarkMode}
@@ -2796,8 +3081,6 @@ const App = () => {
                   customHolidayName={customHolidayName}
                   isStickyBgMode={isStickyBgMode}
                   weatherCardLayout={weatherCardLayout}
-                  setIsWeatherDetailsOpen={setIsWeatherDetailsOpen}
-                  setSelectedWeatherCard={setSelectedWeatherCard}
                   heroDateString={heroDateString}
                 />
               </StyledSectionContainer>
@@ -2919,6 +3202,7 @@ const App = () => {
                 activeBgTrackId={activeBgTrackId}
                 setActiveBgTrackId={setActiveBgTrackId}
                 onResetBgPosition={handleResetBgPosition}
+                onSkipBgTrack={skipToNextBgTrack}
                 sfxVolume={sfxVolume}
                 setSfxVolume={setSfxVolume}
                 bgAudioRef={bgAudioRef}
@@ -2971,12 +3255,6 @@ const App = () => {
               onClose={() => setIsAuthorsDirectoryOpen(false)}
             />
 
-            <WeatherDetailsModal
-              isOpen={isWeatherDetailsOpen}
-              onClose={() => setIsWeatherDetailsOpen(false)}
-              card={selectedWeatherCard}
-              isDarkMode={isDarkMode}
-            />
           </Suspense>
           {showUpdateTimer && (
             <TooltipS content="Налаштування вигляду" isDarkMode={isDarkMode}>
@@ -3008,9 +3286,13 @@ import DominoTutorial from "./components/DominoTutorial/DominoTutorial";
 import { TutorialProvider } from "./components/DominoTutorial/TutorialContext.jsx";
 
 export default function AppWrapper() {
+  // «Вимкнути анімації» з налаштувань: CSS гасить animationsPref.css, framer-motion — MotionConfig
+  const animationsDisabled = useAnimationsDisabled();
   return (
-    <TutorialProvider>
-      <App />
-    </TutorialProvider>
+    <MotionConfig reducedMotion={animationsDisabled ? "always" : "user"}>
+      <TutorialProvider>
+        <App />
+      </TutorialProvider>
+    </MotionConfig>
   );
 }

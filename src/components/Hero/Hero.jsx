@@ -10,8 +10,8 @@ import { BsMoonStarsFill } from "react-icons/bs";
 import { createPortal } from "react-dom";
 import { FaMountainCity } from "react-icons/fa6";
 import { FaMapLocationDot } from "react-icons/fa6";
-import planes from "../../photos/programs/youtub/planes.webp";
-import castle from "../../photos/vip-modal/castle.webp"
+import planes from "../../media/third-party/services/planes.webp";
+import castle from "../../media/backgrounds/scenes/turkey-in-dragon-museum.webp"
 import { GiPalette } from "react-icons/gi";
 import {
   FiClock,
@@ -39,12 +39,12 @@ import {
   removeCustomDay,
 } from "../../features/counter/Counter.js";
 import localforage from "localforage";
-import hills from "../../photos/hero-header/fog.webp";
-import herotext from "../../photos/hero-header/herotext.webp";
-import village from "../../photos/fan-art/village.webp"
-import villagePreview from "../../photos/fan-art/village.webp?w=128&format=webp&quality=50";
-import faded from "../../photos/fan-art/faded.webp";
-import fadedPreview from "../../photos/fan-art/faded.webp?w=128&format=webp&quality=50";
+import hills from "../../media/backgrounds/scenes/foggy-forest.webp";
+import herotext from "../../media/brand/wordmark-stykhiia.webp";
+import village from "../../media/third-party/games/dragon-village-3.webp"
+import villagePreview from "../../media/third-party/games/dragon-village-3.webp?w=128&format=webp&quality=50";
+import faded from "../../media/backgrounds/scenes/resort.webp";
+import fadedPreview from "../../media/backgrounds/scenes/resort.webp?w=128&format=webp&quality=50";
 import { DEFAULT_BGS } from "./defaultBgs";
 import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
 import News from "../News/News.jsx";
@@ -52,8 +52,8 @@ import News from "../News/News.jsx";
 const React_lazy_Aihelp = React.lazy(() => import("../Aihelp/Aihelp.jsx"));
 import toast, { Toaster } from 'react-hot-toast';
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
-import turkeytwoPreview from "../../photos/vip-images/turkeys/turkeytwo.webp?w=128&format=webp&quality=50";
-import niceronePreview from "../../photos/vip-images/dinofroz/nicerone.webp?w=128&format=webp&quality=50";
+import turkeytwoPreview from "../../media/turkeys/small-but-confident.webp?w=128&format=webp&quality=50";
+import niceronePreview from "../../media/third-party/dinofroz/nitseron-alt.webp?w=128&format=webp&quality=50";
 import {
   useFloating,
   autoUpdate,
@@ -977,13 +977,46 @@ const SuggestionItem = styled.button`
   padding: 2px;
   border-top: 1px solid #eee;
   font-size: 14px;
-  cursor: pointer;
+  cursor: ${(props) => (props.$added ? "default" : "pointer")};
   transition: all 0.2s;
   color: ${(props) => (props.isDarkMode ? "#050505fb" : "#f4f2f2")};
+  ${(props) => props.$added && css`
+    background: rgba(74, 222, 128, 0.25);
+  `}
   &:hover {
-    background: skyblue;
+    background: ${(props) => (props.$added ? "rgba(74, 222, 128, 0.25)" : "skyblue")};
     color: white;
   }
+`;
+
+// Панель над підказками: ліміти карток, скільки міст уже додано й кнопка «Готово»
+const AddedBar = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f4f2f2;
+  background: rgba(0, 0, 0, 0.85);
+  border-bottom: 1px solid rgba(255, 179, 108, 0.6);
+`;
+
+const DoneButton = styled.button`
+  padding: 4px 12px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #ffca91, #ff9d48);
+  color: #1a0800;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
 `;
 
 
@@ -1137,6 +1170,7 @@ const Hero = ({
   isStickyBgMode,
   heroDateString,
   onAddCity,
+  cardLimits,
   startAnimation,
   user,
   isDarkMode,
@@ -1191,6 +1225,13 @@ const Hero = ({
   const [suggestions, setSuggestions] = useState([]);
   const [limit, setLimit] = useState(3);
   const [showList, setShowList] = useState(false);
+  // Міста, додані з поточного списку підказок (ключ — координати); ref захищає від подвійного кліку
+  const [addedCityKeys, setAddedCityKeys] = useState([]);
+  const addedCityKeysRef = useRef(new Set());
+  const resetAddedCities = () => {
+    addedCityKeysRef.current = new Set();
+    setAddedCityKeys([]);
+  };
   const [backgroundPreviewPair, setBackgroundPreviewPair] = useState(0);
 
   useEffect(() => {
@@ -1518,6 +1559,7 @@ const Hero = ({
         return;
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowList(false);
+        resetAddedCities();
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -1720,19 +1762,40 @@ const Hero = ({
     setCoordinateSuggestions([]);
   };
 
-  const handleSelect = (city) => {
+  const getCityKey = (city) => `${city.lat.toFixed(3)},${city.lon.toFixed(3)}`;
+
+  // Список не закривається: можна додати кілька міст поспіль, потім натиснути «Готово»
+  const handleSelect = async (city) => {
+    const key = getCityKey(city);
+    if (addedCityKeysRef.current.has(key)) return;
+    addedCityKeysRef.current.add(key);
+    setAddedCityKeys((prev) => [...prev, key]);
+
     const cityObj = {
       name: city.name,
       fullName: `${city.name}${city.state ? `, ${city.state}` : ""} (${city.country})`,
       lat: city.lat,
       lon: city.lon,
     };
-    onAddCity(cityObj);
     window.dispatchEvent(new CustomEvent('domino-next-step-auto'));
-    
+
+    let added = false;
+    try {
+      added = await onAddCity(cityObj);
+    } catch (err) {
+      console.error("Не вдалося додати місто:", err);
+    }
+    if (added === false) {
+      addedCityKeysRef.current.delete(key);
+      setAddedCityKeys((prev) => prev.filter((k) => k !== key));
+    }
+  };
+
+  const handleFinishAdding = () => {
     setInputValue("");
     setSuggestions([]);
     setShowList(false);
+    resetAddedCities();
   };
 
   const handleAddDay = () => {
@@ -2014,9 +2077,28 @@ const Hero = ({
                 </SearchBorder>
                 {showList && suggestions.length > 0 && (
                   <SuggestionsList>
+                    {cardLimits && (
+                      <AddedBar>
+                        <span>
+                          {addedCityKeys.length > 0 && `Додано: ${addedCityKeys.length} · `}
+                          Карток: {cardLimits.custom}/{cardLimits.maxCustom}
+                          {cardLimits.daily !== null && ` · Сьогодні: ${cardLimits.daily}/${cardLimits.maxDaily}`}
+                        </span>
+                        {addedCityKeys.length > 0 && (
+                          <DoneButton
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={handleFinishAdding}
+                          >
+                            Готово
+                          </DoneButton>
+                        )}
+                      </AddedBar>
+                    )}
                     {suggestions.map((city, index) => (
                       <SuggestionItem
                         key={`${city.lat}-${city.lon}-${index}`}
+                        $added={addedCityKeys.includes(getCityKey(city))}
                         onMouseDown={(e) => {
                           e.preventDefault();
                           handleSelect(city);
@@ -2027,6 +2109,7 @@ const Hero = ({
                         }}
                         onClick={() => handleSelect(city)}
                       >
+                        {addedCityKeys.includes(getCityKey(city)) && "✓ "}
                          {city.name}
                         {city.state ? `, ${city.state}` : ""} ({city.country})
                         <br />

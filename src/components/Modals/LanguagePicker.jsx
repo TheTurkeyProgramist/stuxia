@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { FiSearch, FiCheck } from 'react-icons/fi';
 import LanguageScene from './LanguageScene.jsx';
+import { useSceneDecor } from '../../utils/sceneDecor.js';
 import { ALL_LANGUAGES, isRTL } from '../../i18n/useI18nHelpers';
 import '../../../src/i18n/i18n.css';
 
@@ -100,10 +101,10 @@ const LangCard = styled.button`
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  min-height: 200px;
+  min-height: ${(p) => (p.$decor ? '200px' : '64px')};
   /* Картки поза екраном браузер не малює зовсім — прокрутка легша */
   content-visibility: auto;
-  contain-intrinsic-size: auto 200px;
+  contain-intrinsic-size: auto ${(p) => (p.$decor ? '200px' : '64px')};
   padding: 9px 10px;
   border-radius: 10px;
   cursor: pointer;
@@ -196,6 +197,7 @@ const InfoNote = styled.div`
  */
 const LanguagePicker = () => {
   const { t, i18n } = useTranslation();
+  const decorEnabled = useSceneDecor();
   const [search, setSearch] = useState('');
 
   const currentLang = i18n.language?.split('-')[0] || 'uk';
@@ -253,10 +255,11 @@ const LanguagePicker = () => {
             <LangCard
               key={lang.code}
               $active={isActive}
+              $decor={decorEnabled}
               onClick={() => handleSelectLanguage(lang.code)}
               title={lang.code === 'en' ? lang.nativeName : `${lang.nativeName} (${lang.name})`}
             >
-              <LanguageScene code={lang.code} />
+              {decorEnabled && <LanguageScene code={lang.code} />}
               {isActive && (
                 <ActiveCheck>
                   <FiCheck />

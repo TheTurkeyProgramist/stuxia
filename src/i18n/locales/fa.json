@@ -17,6 +17,10 @@
         "africa": "آفریقا",
         "latinAmerica": "آمریکای لاتین"
       }
+    },
+    "decor": {
+      "label": "تزئینات",
+      "title": "تصاویر کشورها و جلوه‌های آب‌وهوا (برای صرفه‌جویی در کارایی خاموش کنید)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "حالت تمام‌صفحه"
     },
     "invalidUrl": "لطفاً یک پیوند معتبر وارد کنید (https://...)",
+    "frameBlocked": "سایت {{host}} اجازه نمایش در فریم را نمی‌دهد، بنابراین افزوده نمی‌شود.",
+    "frameChecking": "در حال بررسی…",
     "confirmDeleteFrame": "«{{title}}» از نوار کناری حذف شود؟",
     "locationPinned": "مکان سنجاق شد! در بازدید بعدی بارگیری می‌شود.",
     "pinError": "خطا در سنجاق کردن مکان.",
@@ -90,6 +96,9 @@
     "mapSource": "منبع نقشه",
     "mapSourceDesc": "Windy، Ventusky، رادار پرواز، تختهٔ آنلاین و دیگران",
     "sourcesAria": "منابع نقشه",
+    "searchSources": "جستجوی نقشه‌ها و فریم‌ها",
+    "noSourcesFound": "چیزی یافت نشد",
+    "clearSearch": "پاک کردن جستجو",
     "customFrame": "قاب / ویجت سفارشی",
     "titlePlaceholder": "نام (مثلاً رادار، وب‌کم...)",
     "titlePlaceholderShort": "نام (مثلاً رادار)",

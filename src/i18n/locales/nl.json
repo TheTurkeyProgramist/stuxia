@@ -17,6 +17,10 @@
         "africa": "Afrika",
         "latinAmerica": "Latijns-Amerika"
       }
+    },
+    "decor": {
+      "label": "Decoratie",
+      "title": "Landillustraties en weereffecten (uitschakelen om prestaties te sparen)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Volledig scherm"
     },
     "invalidUrl": "Voer een geldige link in (https://...)",
+    "frameBlocked": "{{host}} staat weergave in een frame niet toe en kan dus niet worden toegevoegd.",
+    "frameChecking": "Controleren…",
     "confirmDeleteFrame": "„{{title}}” uit de zijbalk verwijderen?",
     "locationPinned": "Locatie vastgezet! Wordt bij je volgende bezoek geladen.",
     "pinError": "Fout bij het vastzetten van de locatie.",
@@ -90,6 +96,9 @@
     "mapSource": "Kaartbron",
     "mapSourceDesc": "Windy, Ventusky, vluchtradar, online whiteboard en meer",
     "sourcesAria": "Kaartbronnen",
+    "searchSources": "Kaarten en frames zoeken",
+    "noSourcesFound": "Niets gevonden",
+    "clearSearch": "Zoekopdracht wissen",
     "customFrame": "Eigen frame / widget",
     "titlePlaceholder": "Naam (bijv. Radar, Webcam...)",
     "titlePlaceholderShort": "Naam (bijv. Radar)",

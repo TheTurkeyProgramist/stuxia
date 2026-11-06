@@ -17,6 +17,10 @@
         "africa": "Africa",
         "latinAmerica": "America Latină"
       }
+    },
+    "decor": {
+      "label": "Decor",
+      "title": "Ilustrații ale țărilor și efecte meteo (dezactivează pentru a economisi performanța)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Ecran complet"
     },
     "invalidUrl": "Introdu un link valid (https://...)",
+    "frameBlocked": "{{host}} nu permite afișarea într-un cadru, așa că nu poate fi adăugat.",
+    "frameChecking": "Se verifică…",
     "confirmDeleteFrame": "Elimini „{{title}}” din panoul lateral?",
     "locationPinned": "Locație fixată! Se va încărca la următoarea vizită.",
     "pinError": "Eroare la fixarea locației.",
@@ -90,6 +96,9 @@
     "mapSource": "Sursa hărții",
     "mapSourceDesc": "Windy, Ventusky, radar aerian, tablă online și altele",
     "sourcesAria": "Surse hartă",
+    "searchSources": "Caută hărți și cadre",
+    "noSourcesFound": "Nu s-a găsit nimic",
+    "clearSearch": "Șterge căutarea",
     "customFrame": "Cadru / widget propriu",
     "titlePlaceholder": "Nume (ex. Radar, Cameră web...)",
     "titlePlaceholderShort": "Nume (ex. Radar)",

@@ -17,6 +17,10 @@
         "africa": "Afrika",
         "latinAmerica": "Latin Amerika"
       }
+    },
+    "decor": {
+      "label": "Sumaqchay",
+      "title": "Suyukunap siq'inkuna, pacha ruwaykunapas (wañuchiy usqhaylla kananpaq)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Hunt'a pantalla"
     },
     "invalidUrl": "Allin enlaceta qillqay (https://...)",
+    "frameBlocked": "{{host}} mana frame ukhupi rikuchikuyta saqinchu, chayrayku mana yapayta atikunchu.",
+    "frameChecking": "Qhawachkan…",
     "confirmDeleteFrame": "«{{title}}» kinray panelmanta qichunki?",
     "locationPinned": "Maypi kasqan takyachisqa! Hamuq kutipi kargakunqa.",
     "pinError": "Pantay maypi kasqanta takyachispa.",
@@ -90,6 +96,9 @@
     "mapSource": "Mapap pukyun",
     "mapSourceDesc": "Windy, Ventusky, phawaq radar, online pizarra, hukkunapas",
     "sourcesAria": "Mapap pukyunkuna",
+    "searchSources": "Mapakunata, frame-kunata maskay",
+    "noSourcesFound": "Manam imapas tarikunchu",
+    "clearSearch": "Maskayta pichay",
     "customFrame": "Kikin marco / widget",
     "titlePlaceholder": "Suti (kayhina Radar, Webcam...)",
     "titlePlaceholderShort": "Suti (kayhina Radar)",

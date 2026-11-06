@@ -1,0 +1,164 @@
+Stuxia / Стихія
+Copyright (C) 2026 Dmytro (TheTurkeyProgramist)
+https://github.com/TheTurkeyProgramist/stuxia
+Contact / Контакт: theturkeystudio@gmail.com
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version. See LICENSE.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+for more details.
+
+Ця програма — вільне програмне забезпечення: ви можете поширювати та/або
+змінювати її на умовах GNU Affero General Public License версії 3 або (на
+ваш вибір) будь-якої пізнішої версії, опублікованої Free Software
+Foundation. Див. LICENSE. Програма надається БЕЗ БУДЬ-ЯКИХ ГАРАНТІЙ.
+
+Похідні проєкти, зокрема сайти та сервіси, що працюють через мережу, також
+мають бути відкриті за AGPL-3.0.
+
+-------------------------------------------------------------------------------
+Reserved Materials (AGPL-3.0, section 7(e)) / Застережені матеріали
+-------------------------------------------------------------------------------
+
+The AGPL-3.0 license covers the source code only. The following are NOT
+licensed under it. All rights reserved:
+
+AGPL-3.0 поширюється лише на вихідний код. Наведене нижче під неї НЕ
+підпадає. Усі права застережено:
+
+  - The names "Stuxia", "Стихія", "Stykhiia"
+    Назви «Стихія», «Stuxia», «Stykhiia»
+  - The project's own logo and app icon
+    Власний логотип та іконка застосунку
+  - The turkey characters "Kate" ("Кейт") and "Domino" ("Доміно"):
+    names, images, animations, cursors, videos
+    Індики «Кейт» і «Доміно»: імена, зображення, анімації, курсори, відео
+  - Other images, videos, audio and design assets created by the Author
+    personally
+    Інші зображення, відео, аудіо та дизайн, які Автор створив особисто
+
+Forks and derived works must remove or replace these materials, use a
+different name, and must not imply endorsement by the Author.
+Форки та похідні роботи мають вилучити або замінити ці матеріали,
+використовувати іншу назву й не видавати себе за проєкт Автора чи
+схвалений ним.
+
+-------------------------------------------------------------------------------
+Third-party media / Медіафайли інших авторів
+-------------------------------------------------------------------------------
+
+Some images, photos, artwork, music and other media in this project were
+NOT created by the Author and belong to their respective owners, for
+example: images from Pixabay and Unsplash, music tracks and their cover
+art, and fan art. The Author does not claim ownership of them. They are
+not licensed under AGPL-3.0 and are not covered by the reservation above;
+they are used under their owners' own terms, non-commercially, as a
+tribute by a fan. Credits are shown in the app where available.
+
+Credits / Подяки (all rights belong to their owners / усі права належать
+власникам):
+
+  src/media/third-party/films/pennywise-it-2017.webp
+    Pennywise / Пеннівайз — "It" (2017), Warner Bros. / New Line Cinema.
+    Based on the novel by Stephen King. / За романом Стівена Кінга.
+
+  src/media/fan-art/siren-head.webp
+    Siren Head character created by Trevor Henderson. The image itself is
+    fan art made by the Author; no rights to the character are claimed.
+    Персонаж «Сиреноголовий» створений Тревором Хендерсоном. Саме
+    зображення — фан-арт Автора; на персонажа Автор прав не заявляє.
+
+  src/media/third-party/films/mia-and-me.webp
+    "Mia and Me" / «Мія та я» — Studio 100 Media, Lucky Punch,
+    March Entertainment.
+
+  src/media/third-party/dinofroz/ (images and video clips /
+  зображення й відеофрагменти), src/mp3/dinofroz.opus
+    "Dinofroz" / «Динофроз» (images, video clips, soundtrack / зображення,
+    відеофрагменти, саундтрек) — Mondo TV (Orlando Corradi /
+    Орландо Корраді).
+
+  src/media/third-party/games/dragon-village-3.webp
+    "Dragon Village 3" — highbrow (South Korea / Південна Корея).
+
+  src/media/third-party/music/ (Monody, Unity, Hunger covers / обкладинки)
+    Cover art of "Monody", "Unity" and "Hunger" by TheFatRat.
+    Обкладинки пісень «Monody», «Unity» і «Hunger» — TheFatRat.
+
+  src/mp3/  (music / музика; except silent.opus and modals/ /
+  окрім silent.opus і папки modals/)
+    "Monody", "Unity", "Hunger" — TheFatRat
+      (thefatrat-monody.opus, unity.opus, thefatrat-hunger.opus)
+    "Theory of Everything", "Theory of Everything II" — DJ-Nate
+      (theory-of-everything.opus, theory-of-everything-ll.opus)
+    Dinofroz soundtrack / саундтрек «Динофроз» — Mondo TV (dinofroz.opus)
+    All tracks belong to their authors and are used non-commercially.
+    Усі треки належать їхнім авторам і використовуються некомерційно.
+
+  src/media/third-party/youtube/, src/media/thumbs/slivkishow-cookie-flight.webp
+    SlivkiShow (YouTube channel / YouTube-канал).
+
+  src/media/third-party/films/agent-smith-matrix.webp
+    Agent Smith / Агент Сміт — "The Matrix" (1999), Warner Bros.
+
+  src/media/third-party/films/titanic.webp
+    "Titanic" (1997) — Paramount Pictures & 20th Century Fox.
+
+  src/media/_unused/logos/
+    Logos are trademarks of their respective owners.
+    Логотипи є торговельними марками їхніх власників.
+
+  src/media/third-party/services/
+    Logos and screenshots of third-party apps and services (Windy, Ventusky,
+    SaveEcoBot, DeepState and others) belong to their respective owners,
+    except the Author's own YouTube channel image.
+    Логотипи та скриншоти сторонніх застосунків і сервісів (Windy, Ventusky,
+    SaveEcoBot, DeepState та інших) належать їхнім власникам, окрім
+    зображення власного YouTube-каналу Автора.
+
+  Other backgrounds credited in the app / Інші фони, підписані в застосунку:
+    "The Day After Tomorrow" / «Післязавтра» — 20th Century Fox;
+    "The Ring" / «Дзвінок» — DreamWorks;
+    "Aurora Hills" — NovaSoft Interactive.
+
+  Images from Pixabay are used under the Pixabay Content License; images
+  from Unsplash under the Unsplash License.
+  Зображення з Pixabay використано за Pixabay Content License, з Unsplash —
+  за Unsplash License.
+
+  Some backgrounds were generated with AI (Google Gemini); they are marked
+  in the app. / Частину фонів згенеровано ШІ (Google Gemini); у застосунку
+  їх позначено.
+
+If you are the owner of any of this content and want it credited
+differently or removed, please contact theturkeystudio@gmail.com and it
+will be fixed.
+
+Частина зображень, фото, артів, музики та інших медіафайлів у проєкті
+створена НЕ Автором і належить їхнім власникам, наприклад: зображення з
+Pixabay та Unsplash, музичні треки та їхні обкладинки, фан-арти. Автор не
+претендує на права на них. Вони не підпадають під AGPL-3.0 і не належать до
+застережених матеріалів вище; вони використовуються на умовах їхніх
+власників, некомерційно, як данина поваги від фаната. Там, де можливо,
+авторство вказано в застосунку.
+
+Якщо ви власник такого контенту й хочете, щоб авторство вказали інакше або
+файл прибрали, напишіть на theturkeystudio@gmail.com, і це буде
+виправлено.
+
+-------------------------------------------------------------------------------
+Third-party software / Стороннє програмне забезпечення
+-------------------------------------------------------------------------------
+
+This project uses third-party open-source packages (see package.json and
+bun.lock). Each package is distributed under its own license, which can be
+found in its folder in node_modules/ or in its source repository.
+
+Проєкт використовує сторонні пакети з відкритим кодом (див. package.json і
+bun.lock). Кожен пакет поширюється за власною ліцензією, яку можна знайти в
+його папці в node_modules/ або в його репозиторії.

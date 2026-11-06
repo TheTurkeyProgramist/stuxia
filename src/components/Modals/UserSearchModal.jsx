@@ -2,19 +2,19 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSelector } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
 import rawFaqData from "./faqData.json";
-import hills from "../../photos/hero-header/fog.webp";
-import texts from "../../photos/vip-modal/texts.webp";
-import logofix from "../../photos/hero-header/logo.webp";
+import hills from "../../media/backgrounds/scenes/foggy-forest.webp";
+import texts from "../../media/backgrounds/scenes/egyptian-hieroglyphs.webp";
+import logofix from "../../media/brand/logo.webp";
 import { FiSearch, FiX } from "react-icons/fi";
-import info from "../../photos/hero-header/what.webp";
-import one from "../../photos/hero-header/my/myone.webp";
-import two from "../../photos/hero-header/my/mytwo.webp";
-import might from "../../photos/hero-header/my/might.webp";
-import finance from "../../photos/fan-art/finance.webp";
-import newsImage from "../../photos/cursors/daysthunders.webp";
-import aiHelp from "../../photos/cursors/reader.webp";
-import climate from "../../photos/cursors/climate.webp";
-import registration from "../../photos/hero-header/user.webp";
+import info from "../../media/ui/information-sign.webp";
+import one from "../../media/drawings/two-brothers.webp";
+import two from "../../media/drawings/emperor-nitseron.webp";
+import might from "../../media/drawings/two-brothers.webp";
+import finance from "../../media/backgrounds/scenes/turkey-in-dragon-museum.webp";
+import newsImage from "../../media/backgrounds/scenes/night-river-burnt-tree.webp";
+import aiHelp from "../../media/characters/domino-reading.webp";
+import climate from "../../media/third-party/services/ventusky-map.webp";
+import registration from "../../media/ui/user-placeholder.webp";
 import {
   useFloating,
   autoUpdate,

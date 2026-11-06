@@ -17,6 +17,10 @@
         "africa": "Afrika",
         "latinAmerica": "Latinská Amerika"
       }
+    },
+    "decor": {
+      "label": "Dekorace",
+      "title": "Ilustrace zemí a efekty počasí (vypněte pro úsporu výkonu)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Režim celé obrazovky"
     },
     "invalidUrl": "Zadejte platný odkaz (https://...)",
+    "frameBlocked": "Web {{host}} nepovoluje zobrazení v rámu, proto ho nelze přidat.",
+    "frameChecking": "Kontrola…",
     "confirmDeleteFrame": "Odebrat „{{title}}“ z postranního panelu?",
     "locationPinned": "Poloha připnuta! Načte se při příští návštěvě.",
     "pinError": "Chyba při připínání polohy.",
@@ -90,6 +96,9 @@
     "mapSource": "Zdroj mapy",
     "mapSourceDesc": "Windy, Ventusky, letecký radar, online tabule a další",
     "sourcesAria": "Zdroje mapy",
+    "searchSources": "Hledat mapy a rámce",
+    "noSourcesFound": "Nic nenalezeno",
+    "clearSearch": "Vymazat hledání",
     "customFrame": "Vlastní rám / widget",
     "titlePlaceholder": "Název (např. Radar, Webkamera...)",
     "titlePlaceholderShort": "Název (např. Radar)",

@@ -17,6 +17,10 @@
         "africa": "アフリカ",
         "latinAmerica": "ラテンアメリカ"
       }
+    },
+    "decor": {
+      "label": "装飾",
+      "title": "国のイラストと天気エフェクト（オフにすると動作が軽くなります）"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "全画面モード"
     },
     "invalidUrl": "有効なリンクを入力してください (https://...)",
+    "frameBlocked": "{{host}} はフレーム内での表示を許可していないため、追加できません。",
+    "frameChecking": "確認中…",
     "confirmDeleteFrame": "「{{title}}」をサイドバーから削除しますか？",
     "locationPinned": "位置を固定しました！次回アクセス時に読み込まれます。",
     "pinError": "位置の固定中にエラーが発生しました。",
@@ -90,6 +96,9 @@
     "mapSource": "マップのソース",
     "mapSourceDesc": "Windy、Ventusky、フライトレーダー、オンラインホワイトボードなど",
     "sourcesAria": "マップのソース",
+    "searchSources": "マップとフレームを検索",
+    "noSourcesFound": "見つかりませんでした",
+    "clearSearch": "検索をクリア",
     "customFrame": "カスタムフレーム / ウィジェット",
     "titlePlaceholder": "名前（例：レーダー、ウェブカメラ...）",
     "titlePlaceholderShort": "名前（例：レーダー）",

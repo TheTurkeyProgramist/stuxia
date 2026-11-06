@@ -3,27 +3,27 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import styled, { keyframes, css } from "styled-components";
 import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket } from "react-icons/fa";
-import { FiCheck, FiPlay, FiPlus, FiX } from "react-icons/fi";
+import { FiCheck, FiPlay, FiPlus, FiSearch, FiX } from "react-icons/fi";
 import { Tooltip } from "../Header/Header.jsx";
 import { MdDragIndicator } from "react-icons/md";
 import { Reorder, motion, useDragControls } from "framer-motion";
-import climate from "../../photos/cursors/climate.webp";
+import climate from "../../media/third-party/services/ventusky-map.webp";
 import localforage from "localforage";
 import { BsFillPinAngleFill } from "react-icons/bs";
 import { FaMapLocationDot } from "react-icons/fa6";
 import { LuFullscreen } from "react-icons/lu";
 import { CgMiniPlayer } from "react-icons/cg";
 import { GiLockedChest } from "react-icons/gi";
-import turkey from "../../photos/cursors/turkey-compressed-small.webm";
+import turkey from "../../media/characters/kate-and-domino.webm";
 import toast, { Toaster } from "react-hot-toast";
-import coverVentusky from "../../photos/programs/youtub/ventusky.webp";
-import coverWindy from "../../photos/programs/youtub/windy.webp";
-import coverAlerts from "../../photos/programs/youtub/alertone.webp";
-import coverAirTargets from "../../photos/programs/youtub/alerttwo.webp";
-import coverExcalidraw from "../../photos/programs/youtub/desk.webp";
-import coverSaveEcoBot from "../../photos/programs/youtub/saveecobot.webp";
-import coverAirTraffic from "../../photos/programs/youtub/airplane.webp";
-import coverDeepState from "../../photos/programs/youtub/deepstate.webp";
+import coverVentusky from "../../media/third-party/services/ventusky.webp";
+import coverWindy from "../../media/third-party/services/windy.webp";
+import coverAlerts from "../../media/third-party/services/air-alerts.webp";
+import coverAirTargets from "../../media/third-party/services/air-targets.webp";
+import coverExcalidraw from "../../media/third-party/services/excalidraw.webp";
+import coverSaveEcoBot from "../../media/third-party/services/saveecobot.webp";
+import coverAirTraffic from "../../media/third-party/services/air-traffic.webp";
+import coverDeepState from "../../media/third-party/services/deepstate.webp";
 // Ctrl + Alt + M: Активувати/деактивувати мапу
 // Ctrl + Alt + F: Відкрити на весь екран
 // Ctrl + Alt + P: Відкрити/закрити міні-плеєр
@@ -390,7 +390,7 @@ const StyledIframe = styled.iframe`
 
 const FramesGrid = styled.div`
   position: absolute;
-  inset: 0;
+  inset: 0 0 ${(p) => p.$bottomInset || 0}px 0;
   display: grid;
   grid-template-columns: ${(p) => (p.$split ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)")};
   gap: ${(p) => (p.$split ? "2px" : "0")};
@@ -527,6 +527,10 @@ const MiniPlayerHeader = styled.div`
 `;
 
 const MiniHeaderTitle = styled.div`
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: white;
   font-size: 13px;
   font-weight: 600;
@@ -631,23 +635,103 @@ const MobileSettingSelectGroup = styled.div`
   overflow: hidden;
 `;
 
-const MobileSourceSelect = styled.select`
-  width: 100%;
-  padding: 10px 14px;
-  border: none;
+// Слайдер джерел для телефонів замість випадаючого списку: гортається пальцем, картки прилипають
+const MobileSourceSlider = styled.div`
+  position: relative;
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px 12px;
   border-top: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)"};
-  background: ${(p) => p.$isDarkMode ? "rgba(10,18,36,0.8)" : "rgba(255,248,235,0.95)"};
-  color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.85)" : "#3a1800"};
-  font-size: 13px;
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-  appearance: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 12px;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+`;
 
-  option {
-    background: ${(p) => p.$isDarkMode ? "#0d1525" : "#fff8eb"};
-    color: ${(p) => p.$isDarkMode ? "white" : "#1a0800"};
+// Пошук джерел (вбудованих і власних фреймів) — у налаштуваннях і в бічній панелі
+const SourceSearch = styled.label`
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+
+  svg {
+    position: absolute;
+    left: 12px;
+    font-size: 15px;
+    color: ${(p) => p.$isDarkMode ? "rgba(255,179,108,0.7)" : "rgba(160,80,0,0.6)"};
+    pointer-events: none;
   }
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 34px 9px 36px;
+    border-radius: 10px;
+    border: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"};
+    background: ${(p) => p.$isDarkMode ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.85)"};
+    color: ${(p) => p.$isDarkMode ? "white" : "#1a0800"};
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.18s;
+    &::placeholder { color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.35)" : "rgba(100,50,0,0.4)"}; }
+    &:focus { border-color: rgba(255, 179, 108, 0.6); }
+    &::-webkit-search-cancel-button { display: none; }
+  }
+
+  button {
+    position: absolute;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.6)" : "rgba(30,10,0,0.55)"};
+    cursor: pointer;
+    svg { position: static; font-size: 15px; color: inherit; }
+    &:hover { background: rgba(255, 179, 108, 0.15); }
+  }
+`;
+
+const SourcesEmpty = styled.p`
+  margin: 0;
+  padding: 14px 4px;
+  flex: 1 0 100%;
+  text-align: center;
+  font-size: 12px;
+  color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.45)" : "rgba(100,50,0,0.55)"};
+`;
+
+const MobileSourceSlide = styled.div`
+  flex: 0 0 min(72%, 260px);
+  scroll-snap-align: start;
+`;
+
+// Ряд джерел унизу карти в повноекранному режимі: бічна панель тоді поза екраном.
+// Без прилипання — інакше прокрутка коліщатком дрібними кроками відскакує назад
+const FULLSCREEN_STRIP_HEIGHT = 124;
+const FullscreenSourcesStrip = styled(MobileSourceSlider)`
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  box-sizing: border-box;
+  height: ${FULLSCREEN_STRIP_HEIGHT}px;
+  align-items: center;
+  scroll-snap-type: none;
+  background: ${(p) => p.$isDarkMode ? "rgba(16, 17, 20, 0.94)" : "rgba(246, 247, 249, 0.94)"};
+
+  & > ${MobileSourceSlide} { flex-basis: 176px; }
 `;
 
 const KeyboardSettingRow = styled.div`
@@ -787,12 +871,14 @@ const KbdModeSelect = styled.select`
 // ── Бічна панель джерел (планшети та комп'ютери) ──
 const WIDE_LAYOUT_QUERY = "(min-width: 768px)";
 const SIDEBAR_ACCENT = "#ffb36c";
-const SPLIT_MIN_WIDTH_QUERY = "(min-width: 1200px)";
+// Два фрейми: комп'ютер від 1200px (миша/тачпад) або планшет в альбомній орієнтації від 1024px
+const SPLIT_QUERY =
+  "(min-width: 1200px) and (pointer: fine), (min-width: 1024px) and (orientation: landscape) and (pointer: coarse)";
 
 const MapLayout = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(190px, 22%, 260px);
-  gap: 12px;
+  gap: 5px;
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
@@ -800,6 +886,11 @@ const MapLayout = styled.div`
   & > ${MapWrapper} {
     margin: 0;
     min-width: 0;
+  }
+
+  /* На телефонах бічної панелі немає — порожня колонка стискала карту у вузьку смужку */
+  @media (max-width: 767.98px) {
+    grid-template-columns: minmax(0, 1fr);
   }
 `;
 
@@ -823,10 +914,10 @@ const SourcesSidebar = styled(motion.aside)`
 
 const SourcesScroll = styled.div`
   box-sizing: border-box;
-  padding: 20px 18px 22px;
+  padding: 7px 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 6px;
 `;
 
 const CardDelete = styled.button`
@@ -1247,6 +1338,93 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSpli
   );
 };
 
+// Картка джерела у мобільному слайдері налаштувань (без перетягування, поділу та видалення)
+const MobileSourceCard = ({ item, isActive, onSelect }) => {
+  const { id, title, subtitle, Icon, bg, frame, cover, favicon } = item;
+  const [faviconFailed, setFaviconFailed] = useState(false);
+  const cardRef = useRef(null);
+
+  // Активну картку одразу показуємо у слайдері; гортаємо лише сам слайдер, щоб панель не стрибала вертикально
+  useEffect(() => {
+    const card = cardRef.current;
+    const slider = card?.parentElement;
+    if (isActive && slider) slider.scrollLeft = card.offsetLeft - 12;
+  }, [isActive]);
+
+  return (
+    <MobileSourceSlide ref={cardRef}>
+      <SourceCard
+        type="button"
+        $bg={bg}
+        $active={isActive}
+        aria-pressed={isActive}
+        title={title}
+        onClick={() => onSelect(id)}
+      >
+        <CardCorner $active={isActive}><FiPlay /></CardCorner>
+        {cover ? (
+          <CardImage src={cover} alt="" loading="lazy" draggable={false} />
+        ) : favicon && !faviconFailed ? (
+          <>
+            <CardFaviconBackdrop src={favicon} alt="" draggable={false} />
+            <CardFavicon>
+              <img
+                src={favicon}
+                alt=""
+                draggable={false}
+                referrerPolicy="no-referrer"
+                onError={() => setFaviconFailed(true)}
+              />
+            </CardFavicon>
+          </>
+        ) : frame ? (
+          <CardInitial>{(title || "?").trim().charAt(0)}</CardInitial>
+        ) : (
+          <CardArt><Icon /></CardArt>
+        )}
+        <CardText>
+          <strong>{title}</strong>
+          <small>{subtitle}</small>
+        </CardText>
+      </SourceCard>
+    </MobileSourceSlide>
+  );
+};
+
+// Перемикач «1 / 2» у міні-плеєрі; інлайн-стилі, бо стилі styled-components не потрапляють у вікно PiP
+const MiniFrameSwitch = ({ value, onChange, titles }) => (
+  <div
+    role="group"
+    onDoubleClick={(e) => e.stopPropagation()}
+    style={{ display: "flex", gap: 2, padding: 2, borderRadius: 8, background: "rgba(255,255,255,0.08)" }}
+  >
+    {[0, 1].map((index) => (
+      <button
+        key={index}
+        type="button"
+        aria-pressed={value === index}
+        title={titles[index]}
+        onClick={(e) => {
+          e.stopPropagation();
+          onChange(index);
+        }}
+        style={{
+          minWidth: 28,
+          padding: "4px 8px",
+          border: "none",
+          borderRadius: 6,
+          background: value === index ? SIDEBAR_ACCENT : "transparent",
+          color: value === index ? "#1a0800" : "rgba(255,255,255,0.75)",
+          font: "600 12px system-ui, sans-serif",
+          cursor: "pointer",
+        }}
+      >
+        {index + 1}
+      </button>
+    ))}
+  </div>
+);
+
 const customFrameBg = (id) => {
   let hash = 0;
   for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
@@ -1270,6 +1448,22 @@ const getFrameHost = (url) => {
   }
 };
 
+// Чи дозволяє сайт вбудовування у фрейм: true / false, або null, якщо перевірити не вдалося.
+// Заголовки чужого сайту видно лише з сервера — питаємо функцію Cloudflare /api/frame-check
+const checkFrameEmbeddable = async (url) => {
+  const path = `/api/frame-check?url=${encodeURIComponent(url)}`;
+  // Під час локальної розробки функцій Cloudflare немає — беремо робочий сайт
+  const endpoint = import.meta.env.DEV ? `https://stuxia.com${path}` : path;
+  try {
+    const res = await fetch(endpoint, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok || !res.headers.get("content-type")?.includes("application/json")) return null;
+    const data = await res.json();
+    return typeof data.embeddable === "boolean" ? data.embeddable : null;
+  } catch {
+    return null;
+  }
+};
+
 const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const { t, i18n } = useTranslation();
   const isUkrainian = (i18n.resolvedLanguage || i18n.language) === "uk";
@@ -1284,8 +1478,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     typeof navigator === "undefined" ? true : navigator.onLine,
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // На весь екран саме карта (а не міні-плеєр) — тоді показуємо ряд джерел унизу
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [isMiniPlayerOpen, setIsMiniPlayerOpen] = useState(false);
   const [pipWindow, setPipWindow] = useState(null);
+  const [miniFrame, setMiniFrame] = useState(0);
+  const [isMiniLoading, setIsMiniLoading] = useState(true);
   const [provider, setProvider] = useState("ventusky");
   const [isPinned, setIsPinned] = useState(false);
 
@@ -1312,21 +1510,21 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [isSplitEnabled, setIsSplitEnabled] = useState(false);
   const [secondProvider, setSecondProvider] = useState("windy");
   const [isLoadingSecond, setIsLoadingSecond] = useState(true);
-  // Два фрейми — лише для комп'ютерів: екран від 1200px і точний вказівник (миша/тачпад)
-  const [isSplitWidth, setIsSplitWidth] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia(SPLIT_MIN_WIDTH_QUERY).matches,
+  // Портретний планшет і телефон — один фрейм (половина була б ~280px)
+  const [canSplit, setCanSplit] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia(SPLIT_QUERY).matches,
   );
   useEffect(() => {
-    const query = window.matchMedia(SPLIT_MIN_WIDTH_QUERY);
-    const update = () => setIsSplitWidth(query.matches);
+    const query = window.matchMedia(SPLIT_QUERY);
+    const update = () => setCanSplit(query.matches);
     update();
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   }, []);
-  const canSplit = isSplitWidth && !isCoarsePointer;
   const isSplitActive = canSplit && isSplitEnabled;
   const [isAddingFrame, setIsAddingFrame] = useState(false);
   const [sourceOrder, setSourceOrder] = useState([]);
+  const [sourceQuery, setSourceQuery] = useState("");
 
   useEffect(() => {
     const wideQuery = window.matchMedia(WIDE_LAYOUT_QUERY);
@@ -1357,6 +1555,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [customFrames, setCustomFrames] = useState([]);
   const [newFrameTitle, setNewFrameTitle] = useState("");
   const [newFrameUrl, setNewFrameUrl] = useState("");
+  const [isCheckingFrame, setIsCheckingFrame] = useState(false);
 
   const orderedSources = useMemo(() => {
     const all = [
@@ -1381,6 +1580,16 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     return [...ordered, ...all.filter((item) => !placed.has(item.id))];
   }, [customFrames, sourceOrder, t, isUkrainian]);
 
+  // Шукаємо за назвою, підписом і адресою власного фрейму
+  const filteredSources = useMemo(() => {
+    const query = sourceQuery.trim().toLowerCase();
+    if (!query) return orderedSources;
+    return orderedSources.filter((item) =>
+      [item.title, item.subtitle, item.frame?.url]
+        .some((text) => text && text.toLowerCase().includes(query)),
+    );
+  }, [orderedSources, sourceQuery]);
+
   const [videoError, setVideoError] = useState(false);
   const turkeyVideoRef = useRef(null);
   const shouldShowLoader = !isMapActive || isLoading || !isOnline;
@@ -1400,6 +1609,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
+      setIsMapFullscreen(
+        !!document.fullscreenElement && document.fullscreenElement === mapWrapperRef.current,
+      );
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
@@ -1588,9 +1800,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     }
   };
 
-  const handleAddFrame = (e) => {
+  const handleAddFrame = async (e) => {
     e.preventDefault();
-    if (!newFrameUrl.trim()) return;
+    if (!newFrameUrl.trim() || isCheckingFrame) return;
 
     let targetUrl = newFrameUrl.trim();
     const matchSrc = targetUrl.match(/src=["']([^"']+)["']/i);
@@ -1600,6 +1812,15 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
     if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
       toast.error(t("climateMap.invalidUrl"));
+      return;
+    }
+
+    // Сайти з X-Frame-Options / CSP frame-ancestors у фреймі показують лише порожнє вікно
+    setIsCheckingFrame(true);
+    const embeddable = await checkFrameEmbeddable(targetUrl);
+    setIsCheckingFrame(false);
+    if (embeddable === false) {
+      toast.error(t("climateMap.frameBlocked", { host: getFrameHost(targetUrl) || targetUrl }), { duration: 6000 });
       return;
     }
 
@@ -1633,6 +1854,33 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       console.error("Error saving source order:", err);
     }
   };
+
+  // Під час пошуку перетягуються лише знайдені картки: ставимо їх на ті самі місця в повному порядку
+  const handleReorderVisibleSources = (ids) => {
+    if (filteredSources.length === orderedSources.length) return handleReorderSources(ids);
+    const visible = new Set(ids);
+    const queue = [...ids];
+    handleReorderSources(orderedSources.map((item) => (visible.has(item.id) ? queue.shift() : item.id)));
+  };
+
+  const sourceSearchField = (
+    <SourceSearch $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
+      <FiSearch />
+      <input
+        type="search"
+        value={sourceQuery}
+        onChange={(e) => setSourceQuery(e.target.value)}
+        onKeyDown={(e) => e.key === "Escape" && setSourceQuery("")}
+        placeholder={t("climateMap.searchSources")}
+        aria-label={t("climateMap.searchSources")}
+      />
+      {sourceQuery && (
+        <button type="button" aria-label={t("climateMap.clearSearch")} onClick={() => setSourceQuery("")}>
+          <FiX />
+        </button>
+      )}
+    </SourceSearch>
+  );
 
   // Галочка на картці: додає джерело праворуч (максимум 2); повторна — повертає один фрейм
   const handleToggleSplitSource = (id) => {
@@ -1924,13 +2172,30 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     [secondProvider, lat, lon, zoom, overlay, customFrames],
   );
 
+  // Після закриття міні-плеєра фрейми монтуються наново — знову показуємо завантаження
   useEffect(() => {
     setIsLoading(isOnline);
-  }, [provider, lat, lon, zoom, overlay, isOnline]);
+  }, [provider, lat, lon, zoom, overlay, isOnline, isMiniPlayerOpen]);
 
   useEffect(() => {
     setIsLoadingSecond(isOnline);
-  }, [secondProvider, lat, lon, zoom, overlay, isOnline, isSplitActive]);
+  }, [secondProvider, lat, lon, zoom, overlay, isOnline, isSplitActive, isMiniPlayerOpen]);
+
+  // Міні-плеєр показує один фрейм: перший або (коли їх два) обраний перемикачем «1 / 2»
+  const miniShowsSecond = isSplitActive && miniFrame === 1;
+  const miniEmbedUrl = miniShowsSecond ? secondEmbedUrl : embedUrl;
+  const miniFrameTitles = [provider, secondProvider].map(
+    (id) => orderedSources.find((item) => item.id === id)?.title,
+  );
+  const miniFrameSwitch = isSplitActive && (
+    <MiniFrameSwitch value={miniFrame} onChange={setMiniFrame} titles={miniFrameTitles} />
+  );
+
+  useEffect(() => {
+    setIsMiniLoading(isOnline);
+  }, [miniEmbedUrl, isOnline, isMiniPlayerOpen]);
+
+  const showFullscreenStrip = isMapFullscreen && !isMiniPlayerOpen;
 
   return (
     <OuterContainer>
@@ -2092,25 +2357,20 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   </Dov>
                   <KeyboardShortcut $visible={showKeyboardShortcuts}>Ctrl + Alt + S</KeyboardShortcut>
                 </MobileSetting>
-                <MobileSourceSelect
-                  $isDarkMode={isDarkMode}
-                  value={provider}
-                  onChange={(e) => handleSetProvider(e.target.value)}
-                >
-                  <option value="ventusky">Ventusky</option>
-                  <option value="windy">Windy</option>
-                  {isUkrainian && <option value="alerts-ua">{t("climateMap.options.alerts")}</option>}
-                  {isUkrainian && <option value="ukrainealarm">{t("climateMap.options.airTargets")}</option>}
-                  <option value="excalidraw">{t("climateMap.options.excalidraw")}</option>
-                  {isUkrainian && <option value="saveecobot">{t("climateMap.options.saveEcoBot")}</option>}
-                  <option value="airtraffic">{t("climateMap.options.airTraffic")}</option>
-                  {isUkrainian && <option value="deepstate">{t("climateMap.options.deepState")}</option>}
-                  {customFrames.map((frame) => (
-                    <option key={frame.id} value={frame.id}>
-                      {frame.title}
-                    </option>
+                <div style={{ padding: "0 12px 2px" }}>{sourceSearchField}</div>
+                <MobileSourceSlider $isDarkMode={isDarkMode} aria-label={t("climateMap.sourcesAria")}>
+                  {filteredSources.length === 0 && (
+                    <SourcesEmpty $isDarkMode={isDarkMode}>{t("climateMap.noSourcesFound")}</SourcesEmpty>
+                  )}
+                  {filteredSources.map((item) => (
+                    <MobileSourceCard
+                      key={item.id}
+                      item={item}
+                      isActive={provider === item.id}
+                      onSelect={handleSetProvider}
+                    />
                   ))}
-                </MobileSourceSelect>
+                </MobileSourceSlider>
               </MobileSettingSelectGroup>
 
               {/* ── Власні фрейми ── */}
@@ -2136,6 +2396,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   />
                   <FormButton
                     type="submit"
+                    disabled={isCheckingFrame}
                     style={{
                       position: "absolute",
                       right: "4px",
@@ -2144,7 +2405,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                       padding: "6px 14px",
                     }}
                   >
-                    {t("climateMap.add")}
+                    {isCheckingFrame ? t("climateMap.frameChecking") : t("climateMap.add")}
                   </FormButton>
                 </InputContainer>
 
@@ -2213,7 +2474,10 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 <p>{t("climateMap.credits")}</p>
                 <p>{t("climateMap.settingsHint")}</p>
             </Loader>
-            <FramesGrid $split={isSplitActive}>
+            <FramesGrid
+              $split={isSplitActive}
+              $bottomInset={showFullscreenStrip ? FULLSCREEN_STRIP_HEIGHT : 0}
+            >
               <FramePane>
                 <StyledIframe
                   aria-label="Weather Map"
@@ -2245,19 +2509,42 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
             </FramesGrid>
           </>
         )}
+
+        {showFullscreenStrip && (
+          <FullscreenSourcesStrip
+            $isDarkMode={isDarkMode}
+            aria-label={t("climateMap.sourcesAria")}
+            onWheel={(e) => {
+              if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY;
+            }}
+          >
+            {orderedSources.map((item) => (
+              <MobileSourceCard
+                key={item.id}
+                item={item}
+                isActive={provider === item.id || (isSplitActive && secondProvider === item.id)}
+                onSelect={handleSelectSource}
+              />
+            ))}
+          </FullscreenSourcesStrip>
+        )}
       </MapWrapper>
 
       {isWideLayout && (
         <SourcesSidebar $isDarkMode={isDarkMode} aria-label={t("climateMap.sourcesAria")} layoutScroll>
           <SourcesScroll>
+            {sourceSearchField}
+            {filteredSources.length === 0 && (
+              <SourcesEmpty $isDarkMode={isDarkMode}>{t("climateMap.noSourcesFound")}</SourcesEmpty>
+            )}
             <Reorder.Group
               axis="y"
               as="div"
-              values={orderedSources.map((item) => item.id)}
-              onReorder={handleReorderSources}
+              values={filteredSources.map((item) => item.id)}
+              onReorder={handleReorderVisibleSources}
               style={{ display: "flex", flexDirection: "column", gap: "16px", margin: 0, padding: 0 }}
             >
-              {orderedSources.map((item) => (
+              {filteredSources.map((item) => (
                 <SourceItem
                   key={item.id}
                   item={item}
@@ -2296,7 +2583,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   required
                 />
                 <div style={{ display: "flex", gap: "6px" }}>
-                  <FormButton type="submit" style={{ flex: 1 }}>{t("climateMap.add")}</FormButton>
+                  <FormButton type="submit" style={{ flex: 1 }} disabled={isCheckingFrame}>
+                    {isCheckingFrame ? t("climateMap.frameChecking") : t("climateMap.add")}
+                  </FormButton>
                   <FormCancelButton $isDarkMode={isDarkMode} type="button" onClick={handleCancelAddFrame}>
                     {t("climateMap.cancel")}
                   </FormCancelButton>
@@ -2321,17 +2610,24 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
       {pipWindow ? (
         createPortal(
-          <StyledIframe
-            aria-label="Weather Map (PiP)"
-            src={embedUrl}
-            $isLoading={isLoading}
-            $isReady={true}
-            onLoad={() => setIsLoading(false)}
-            allowFullScreen
-            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-            referrerPolicy="strict-origin-when-cross-origin"
-            style={{ width: "100%", height: "100vh", border: "none" }}
-          />,
+          <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+            {miniFrameSwitch && (
+              <div style={{ display: "flex", justifyContent: "center", padding: 6, background: "#111" }}>
+                {miniFrameSwitch}
+              </div>
+            )}
+            <StyledIframe
+              aria-label="Weather Map (PiP)"
+              src={miniEmbedUrl}
+              $isLoading={isMiniLoading}
+              $isReady={true}
+              onLoad={() => setIsMiniLoading(false)}
+              allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              referrerPolicy="strict-origin-when-cross-origin"
+              style={{ width: "100%", flex: 1, minHeight: 0, border: "none" }}
+            />
+          </div>,
           pipWindow.document.body
         )
       ) : isMiniPlayerOpen && (
@@ -2350,6 +2646,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               {t("climateMap.miniMapTitle")}
             </MiniHeaderTitle>
             <MiniHeaderButtons>
+              {miniFrameSwitch}
               <ActionButton
                 onClick={(e) => {
                   e.stopPropagation();
@@ -2370,17 +2667,17 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
           </MiniPlayerHeader>
 
           <MiniPlayerBody>
-            {isLoading && (
+            {isMiniLoading && (
               <Loader>
                 <p>{t("climateMap.loading")}</p>
               </Loader>
             )}
             <StyledIframe
               aria-label="Weather Map Mini"
-              src={embedUrl}
-              $isLoading={isLoading}
+              src={miniEmbedUrl}
+              $isLoading={isMiniLoading}
               $isReady={true}
-              onLoad={() => setIsLoading(false)}
+              onLoad={() => setIsMiniLoading(false)}
               allowFullScreen
               sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
               referrerPolicy="strict-origin-when-cross-origin"

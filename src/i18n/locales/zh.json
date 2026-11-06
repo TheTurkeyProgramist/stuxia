@@ -17,6 +17,10 @@
         "africa": "非洲",
         "latinAmerica": "拉丁美洲"
       }
+    },
+    "decor": {
+      "label": "装饰",
+      "title": "国家插图和天气效果（关闭以节省性能）"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "全屏模式"
     },
     "invalidUrl": "请输入有效链接 (https://...)",
+    "frameBlocked": "{{host}} 不允许在框架中显示，因此无法添加。",
+    "frameChecking": "正在检查…",
     "confirmDeleteFrame": "从侧边栏移除“{{title}}”？",
     "locationPinned": "位置已固定！下次访问时将自动加载。",
     "pinError": "固定位置时出错。",
@@ -90,6 +96,9 @@
     "mapSource": "地图来源",
     "mapSourceDesc": "Windy、Ventusky、航班雷达、在线白板等",
     "sourcesAria": "地图来源",
+    "searchSources": "搜索地图和框架",
+    "noSourcesFound": "未找到任何内容",
+    "clearSearch": "清除搜索",
     "customFrame": "自定义框架 / 小组件",
     "titlePlaceholder": "名称（如：雷达、摄像头...）",
     "titlePlaceholderShort": "名称（如：雷达）",

@@ -17,6 +17,10 @@
         "africa": "Afrikka",
         "latinAmerica": "Latinalainen Amerikka"
       }
+    },
+    "decor": {
+      "label": "Koristelu",
+      "title": "Maakuvat ja säätehosteet (poista käytöstä suorituskyvyn säästämiseksi)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Koko näyttö"
     },
     "invalidUrl": "Anna kelvollinen linkki (https://...)",
+    "frameBlocked": "{{host}} ei salli näyttämistä kehyksessä, joten sitä ei voi lisätä.",
+    "frameChecking": "Tarkistetaan…",
     "confirmDeleteFrame": "Poistetaanko ”{{title}}” sivupaneelista?",
     "locationPinned": "Sijainti kiinnitetty! Se ladataan seuraavalla käynnillä.",
     "pinError": "Virhe sijainnin kiinnittämisessä.",
@@ -90,6 +96,9 @@
     "mapSource": "Kartan lähde",
     "mapSourceDesc": "Windy, Ventusky, lentotutka, verkkotaulu ja muut",
     "sourcesAria": "Kartan lähteet",
+    "searchSources": "Hae karttoja ja kehyksiä",
+    "noSourcesFound": "Mitään ei löytynyt",
+    "clearSearch": "Tyhjennä haku",
     "customFrame": "Oma kehys / widget",
     "titlePlaceholder": "Nimi (esim. Tutka, Verkkokamera...)",
     "titlePlaceholderShort": "Nimi (esim. Tutka)",

@@ -17,6 +17,10 @@
         "africa": "Afrika",
         "latinAmerica": "Latin-Amerika"
       }
+    },
+    "decor": {
+      "label": "Díszítés",
+      "title": "Országképek és időjárási effektek (kapcsold ki a teljesítmény kíméléséhez)"
     }
   },
   "climateMap": {
@@ -60,6 +64,8 @@
       "fullscreen": "Teljes képernyő"
     },
     "invalidUrl": "Adj meg érvényes hivatkozást (https://...)",
+    "frameBlocked": "A(z) {{host}} nem engedi a keretben való megjelenítést, ezért nem adható hozzá.",
+    "frameChecking": "Ellenőrzés…",
     "confirmDeleteFrame": "Eltávolítod a(z) „{{title}}” elemet az oldalsávból?",
     "locationPinned": "Hely rögzítve! A következő látogatáskor betöltődik.",
     "pinError": "Hiba a hely rögzítésekor.",
@@ -90,6 +96,9 @@
     "mapSource": "Térképforrás",
     "mapSourceDesc": "Windy, Ventusky, légiforgalmi radar, online tábla és mások",
     "sourcesAria": "Térképforrások",
+    "searchSources": "Térképek és keretek keresése",
+    "noSourcesFound": "Nincs találat",
+    "clearSearch": "Keresés törlése",
     "customFrame": "Saját keret / widget",
     "titlePlaceholder": "Név (pl. Radar, Webkamera...)",
     "titlePlaceholderShort": "Név (pl. Radar)",

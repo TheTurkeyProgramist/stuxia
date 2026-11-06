@@ -1,0 +1,12 @@
+/* «Вимкнути анімації» в налаштуваннях: CSS-анімації й переходи миттєво доходять
+   до кінцевого стану (а не зникають), тож елементи, що з'являються анімацією, лишаються видимими. */
+html[data-animations-off] *,
+html[data-animations-off] *::before,
+html[data-animations-off] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}

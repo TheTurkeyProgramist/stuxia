@@ -2,8 +2,6 @@ import React from "react";
 import styled from "styled-components";
 import { DEFAULT_BGS } from "../Hero/defaultBgs";
 
-const WIKI_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Wikipedia-logo-v2.svg/150px-Wikipedia-logo-v2.svg.png";
-
 const BgModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -99,16 +97,12 @@ const BgSquare = styled.img`
   display: block;
 `;
 
-// Вибір фону картки погоди: фото з Вікіпедії для міста або один зі стандартних фонів
+// Вибір фону картки погоди з набору стандартних фонів
 const WeatherBgModal = ({ locationName, bgMode, onSelect, onClose }) => (
   <BgModalOverlay onClick={onClose}>
     <BgModalContent onClick={(e) => e.stopPropagation()}>
       <h2 style={{ margin: 0, color: "#ffb36c" }}>Зміна фону: {locationName}</h2>
       <BgGrid>
-        <BgItem $active={bgMode === "wiki"} onClick={() => onSelect("wiki")}>
-          <NameOverlay>Вікіпедія</NameOverlay>
-          <BgSquare src={WIKI_LOGO} />
-        </BgItem>
         {DEFAULT_BGS.filter((bg) => /\.(webp|jpe?g|png|gif)(\?.*)?$/i.test(bg.src || "")).map((bg, idx) => (
           <BgItem key={idx} $active={bgMode === bg.src} onClick={() => onSelect(bg.src)}>
             {bg.author && (
