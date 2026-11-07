@@ -3379,7 +3379,7 @@ const App = () => {
               <VipModal onClose={() => setIsVipModalOpen(false)} />
             )}
             {isShopOpen && (
-              <ShopModal onClose={() => setIsShopOpen(false)} hasVip={!!user} />
+              <ShopModal onClose={() => setIsShopOpen(false)} hasVip={!!user} user={user} onUserUpdate={setUser} />
             )}
             {isAchivmentsOpen && (
               <AchivmentsModal

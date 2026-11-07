@@ -523,7 +523,7 @@ const Tower = () => (
   </svg>
 );
 
-const ShopModal = ({ onClose }) => {
+const ShopModal = ({ onClose, user, onUserUpdate }) => {
   const [isClosing, setIsClosing] = useState(false);
   const timerRef = useRef(null);
   const fundsRef = useRef(null);
@@ -594,7 +594,7 @@ const ShopModal = ({ onClose }) => {
               <QRCodeSVG value={DONATE_URL} size={96} />
             </QrBox>
           </SupportCard>
-          <SupportCosts />
+          <SupportCosts user={user} onUserUpdate={onUserUpdate} />
           <Battlements>
             {Array.from({ length: MERLON_COUNT }, (_, i) => {
               const { Icon } = MASCOTS[i % MASCOTS.length];

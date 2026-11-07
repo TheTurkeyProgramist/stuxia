@@ -38,12 +38,37 @@ export const getRaisedThisMonth = (now = new Date()) => {
   return RAISED.month === key ? RAISED.amount : 0;
 };
 
-// Донатери, які отримують значок «Друг індиків».
-// Додавайте Firebase UID (не email — він потрапить у публічний бандл).
-// UID видно в Firebase Console → Authentication.
+// Значок «Друг індиків» видається автоматично: людина натискає «Я задонатив»,
+// сервер (/api/support-progress) знаходить її донат на Donatello.
+// Сюди можна вручну дописати Firebase UID (не email — він потрапить у публічний бандл),
+// якщо хтось не зміг отримати значок сам. UID видно в Firebase Console → Authentication.
 export const SUPPORTER_UIDS = [];
 
+const supporterKey = (uid) => `stykhia_supporter_${uid}`;
+
+// Запам'ятати значок у цьому браузері (на випадок, якщо об'єкт user перезапишеться при вході)
+export const rememberSupporter = (uid) => {
+  if (!uid) return;
+  try {
+    localStorage.setItem(supporterKey(uid), String(Date.now()));
+  } catch {
+    /* приватний режим */
+  }
+};
+
+const isRememberedSupporter = (uid) => {
+  if (!uid) return false;
+  try {
+    return !!localStorage.getItem(supporterKey(uid));
+  } catch {
+    return false;
+  }
+};
+
 export const isSupporter = (user) =>
-  !!user && (user.isSupporter === true || SUPPORTER_UIDS.includes(user.uid));
+  !!user &&
+  (user.isSupporter === true ||
+    SUPPORTER_UIDS.includes(user.uid) ||
+    isRememberedSupporter(user.uid));
 
 export const formatUah = (n) => `${Math.round(n).toLocaleString("uk-UA")} грн`;
