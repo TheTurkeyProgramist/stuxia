@@ -37,10 +37,11 @@ import { FaRss } from "react-icons/fa";
 import { MdOutlineReportOff } from "react-icons/md"; //Заглушити
 import { MdHelpOutline, MdBlock, MdSelectAll, MdClose } from "react-icons/md";
 import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
-import { FiPlus, FiLink } from "react-icons/fi";
+import { FiPlus, FiLink, FiShield } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
 import toast from "react-hot-toast";
-import { hasBannedContent, isNewsFilterEnabled } from "../../utils/contentFilter";
+import { getNewsBlockReason, getNewsFilterPrefs } from "../../utils/contentFilter";
+import { mergeNewsFilterFromCloud } from "../../utils/newsFilterSync";
 import { loadFirebase, listCollection } from "../../firebaseLazy";
 import {
   CLOUD_LIMITS,
@@ -71,9 +72,9 @@ import {
   useRole,
   useInteractions,
   useTransitionStyles,  
-  FloatingPortal,
   FloatingArrow,         
 } from "@floating-ui/react";
+import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
 const TooltipBox = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0ceb" : "#fdff98e7")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
@@ -147,14 +148,14 @@ const { refs, floatingStyles, context } = useFloating({
         {children}
       </span>
       {isMounted && (
-        <FloatingPortal>
+        <MirrorFloatingPortal>
           <TooltipBox
             ref={refs.setFloating}
             $isDarkMode={isDarkMode}
             style={{ ...floatingStyles, ...transitionStyles }}
             {...getFloatingProps()}
           >
-            {content}
+            <MirrorText>{content}</MirrorText>
             <FloatingArrow
               ref={arrowRef}
               context={context}
@@ -163,7 +164,7 @@ const { refs, floatingStyles, context } = useFloating({
               strokeWidth={1}
             />
           </TooltipBox>
-        </FloatingPortal>
+        </MirrorFloatingPortal>
       )}
     </>
   );
@@ -297,6 +298,11 @@ const CarouselWrapper = styled.div`
   padding: 0 4px;
   box-sizing: border-box;
   overflow: hidden;
+
+  /* Місце під стрілки ◀ ▶, щоб вони не накривали текст крайніх карток */
+  @media (min-width: 480px) {
+    padding: 0 72px;
+  }
 `;
 const MobileCarousel = styled.div`
   display: flex;
@@ -575,6 +581,14 @@ const NewsImg = styled.img`
   object-fit: cover;
   display: block;
   z-index: 1;
+
+  /* Запасне фото (не з новини) — лише фірмова атмосфера, не головний об'єкт */
+  ${(props) =>
+    props.$fallback &&
+    `
+    filter: blur(3px) brightness(0.4) saturate(0.6);
+    transform: scale(1.08);
+  `}
 `;
 
 const SourceFlag = styled.span`
@@ -583,10 +597,15 @@ const SourceFlag = styled.span`
   left: 4px;
   background: rgba(0, 0, 0, 0.6);
   color: white;
-  display: flex;
-  justify-content: center;
+  display: block;
+  text-align: center;
   padding: 10px 10px;
-  width: 110px;
+  box-sizing: border-box;
+  min-width: 110px;
+  max-width: calc(100% - 70px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border-radius: 5px;
   font-size: 14px;
   z-index: 5;
@@ -677,10 +696,13 @@ const CardAction = styled.button`
 `;
 
 const NewsSettingsBtn = styled(CardAction)`
-  background: rgb(8, 8, 8);
-  color: #ffffff;
-  width: 50px;
-  height: 40px;
+  background: rgba(0, 0, 0, 0.4);
+  color: rgba(255, 255, 255, 0.8);
+  width: 34px;
+  min-width: 34px;
+  height: 32px;
+  box-shadow: none;
+  backdrop-filter: blur(4px);
   /* Глобальне правило CardAction span ховає будь-який span до ховеру — шестерня має бути видима завжди */
   span {
     max-width: none;
@@ -689,9 +711,10 @@ const NewsSettingsBtn = styled(CardAction)`
   }
   &:hover,
   &:focus-visible {
-    background: rgb(27, 27, 27);
-    width: 50px;
-    height: 40px;
+    background: rgba(0, 0, 0, 0.85);
+    color: #ffffff;
+    width: 34px;
+    height: 32px;
   }
 `;
 
@@ -879,6 +902,7 @@ const NewsCard = ({
   onReportClick,
   onMuteClick,
   onUnmuteClick,
+  onRevealClick,
   muteSyncInfo,
 }) => {
   const cardRef = useRef(null);
@@ -887,6 +911,7 @@ const NewsCard = ({
   const [isNewsSettingsOpen, setIsNewsSettingsOpen] = useState(false);
   // Lazy-load: показуємо реальне зображення лише коли картка входить у viewport
   const [imgSrc, setImgSrc] = useState(null);
+  const [isFallbackImg, setIsFallbackImg] = useState(false);
 
   useEffect(() => {
     const checkKey = async () => {
@@ -911,13 +936,18 @@ const NewsCard = ({
           observer.disconnect();
           if (item.displayImage && item.displayImage !== rainbow) {
             setImgSrc(item.displayImage);
+            setIsFallbackImg(false);
           } else {
             // Немає обкладинки у стрічці — пробуємо og:image зі сторінки статті,
             // а якщо його нема — стабільне фото з бібліотеки сайту
             const fallback = getNewsFallbackImage(item.link || item.title || "");
             setImgSrc(fallback);
+            setIsFallbackImg(true);
             fetchOgImage(item.link).then((og) => {
-              if (og) setImgSrc(og);
+              if (og) {
+                setImgSrc(og);
+                setIsFallbackImg(false);
+              }
             });
           }
         }
@@ -972,6 +1002,47 @@ const NewsCard = ({
           <h4 style={{ margin: 0, fontSize: "14px", lineHeight: "1.4" }}>
             Дана новина була неправомірна, і ви не можете її переглянути.
           </h4>
+        </BlockOverlay>
+      </Card>
+    );
+  }
+
+  // Фільтр у «м'якому» режимі: новина не зникає, а ховається під плашкою
+  if (item.isAutoBlocked && !item.isMuted) {
+    return (
+      <Card
+        $isDarkMode={$isDarkMode}
+        style={{ position: "relative", minHeight: "190px" }}
+        as="div"
+      >
+        <BlockOverlay style={{ background: "rgba(40, 30, 20, 0.6)" }}>
+          <span style={{ fontSize: "28px", marginBottom: "10px", background: "rgba(0,0,0,0.3)", padding: "6px 10px", borderRadius: "5px", display: "flex", color: "#fb923c" }}>
+            <FiShield aria-hidden="true" />
+          </span>
+          <h4 style={{ margin: 0, fontSize: "14px", lineHeight: "1.4", background: "rgba(0,0,0,0.3)", padding: "5px 10px", borderRadius: "5px" }}>
+            Небажаний контент був автозаблокований
+          </h4>
+          <span style={{ marginTop: "6px", fontSize: "12px", opacity: 0.85, background: "rgba(0,0,0,0.3)", padding: "3px 8px", borderRadius: "999px" }}>
+            {item.autoBlockReason}
+          </span>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onRevealClick) onRevealClick(item);
+            }}
+            style={{
+              marginTop: "10px",
+              padding: "5px 15px",
+              background: "#3f5959",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+              fontWeight: "bold",
+            }}
+          >
+            Розглушити
+          </button>
         </BlockOverlay>
       </Card>
     );
@@ -1047,6 +1118,7 @@ const NewsCard = ({
             window.open(item.sourceHome, "_blank");
           }}
           aria-label={`Перейти на головну сторінку ${item.sourceName}`}
+          title={item.sourceName}
         >
           {item.sourceName}
         </SourceFlag>
@@ -1143,10 +1215,12 @@ const NewsCard = ({
             alt=""
             loading="lazy"
             decoding="async"
+            $fallback={isFallbackImg}
             onError={(e) => {
               // Зображення не завантажилось — підставляємо обкладинку з природи
               e.target.onerror = null;
               e.target.src = getNewsFallbackImage(item.link || item.title || "");
+              setIsFallbackImg(true);
             }}
           />
         )}
@@ -1155,11 +1229,12 @@ const NewsCard = ({
             {showTitle && (
               <TitleRow>
                 <h2
+                  title={item.title}
                   style={{
                     margin: 0,
                     fontSize: "16px",
                     display: "-webkit-box",
-                    WebkitLineClamp: 2,
+                    WebkitLineClamp: 3,
                     fontWeight: "700",
                     WebkitBoxOrient: "vertical",
                     overflow: "hidden",
@@ -1193,7 +1268,7 @@ const NewsCard = ({
                   margin: 0,
                   lineHeight: "1.4",
     display: "-webkit-box",
-    WebkitLineClamp: 3, 
+    WebkitLineClamp: 2,
     WebkitBoxOrient: "vertical",
     overflow: "hidden",
                 }}
@@ -2056,6 +2131,10 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   const [blockedSources, setBlockedSources] = useState([]);
   const [showBlacklist, setShowBlacklist] = useState(false);
   const [mutedNewsUrls, setMutedNewsUrls] = useState([]);
+  // Автозаблоковані фільтром новини, які користувач розглушив (до перезавантаження сторінки)
+  const [revealedAutoBlocked, setRevealedAutoBlocked] = useState([]);
+  const handleRevealAutoBlocked = (item) =>
+    setRevealedAutoBlocked((prev) => (prev.includes(item.link) ? prev : [...prev, item.link]));
   const mutedNewsRef = useRef([]);
   mutedNewsRef.current = mutedNewsUrls;
   const syncMutedEnabled = Boolean(user?.syncMutedNews && user?.uid);
@@ -2141,6 +2220,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           setMutedNewsUrls(merged);
           localforage.setItem("muted_news_urls", merged).catch(() => {});
         }
+        // Налаштування фільтра новин — у тому ж документі й під тим самим лімітом
+        await mergeNewsFilterFromCloud(user.uid, cloud);
       } catch (err) {
         console.warn("Не вдалося завантажити заглушені новини з хмари", err);
       }
@@ -2369,14 +2450,21 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 
       allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
-      const filterEnabled = isNewsFilterEnabled();
-      const clean = allItems.filter((i) => {
-        if (!filterEnabled) return true;
-        const content = i.title + " " + (i.description || "");
-        return !hasBannedContent(content);
-      });
+      // Фільтр новин з урахуванням категорій і власних слів користувача.
+      // У «м'якому» режимі заблоковані новини лишаються у стрічці під плашкою.
+      const filterPrefs = getNewsFilterPrefs();
+      const clean = [];
+      const filteredNews = [];
+      for (const i of allItems) {
+        const reason = getNewsBlockReason(i.title + " " + (i.description || ""), filterPrefs);
+        if (!reason) {
+          clean.push(i);
+          continue;
+        }
+        filteredNews.push(i);
+        if (filterPrefs.softMode) clean.push({ ...i, autoBlockReason: reason.label });
+      }
 
-      const filteredNews = allItems.filter((i) => !clean.includes(i));
       const filteredNewsLinks = filteredNews.map(
         (item) => item.link || `${item.sourceUrl}:${item.title}`,
       );
@@ -2428,6 +2516,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             sourceUrl: item.sourceUrl,
             isNew,
             isBlocked: bNews.includes(encodeURIComponent(item.link)),
+            autoBlockReason: item.autoBlockReason,
           };
         } else {
           const cleanDesc = (item.description || "")
@@ -2527,7 +2616,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                 translatedItem,
               );
             }
-            results[idx] = translatedItem;
+            // Причину автоблоку не кешуємо — вона залежить від поточних налаштувань фільтра
+            results[idx] = { ...translatedItem, autoBlockReason: item.autoBlockReason };
           }
         }
       }
@@ -2592,7 +2682,11 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       latestPerSource.push(item);
     }
   });
-  const withMuted = (item) => ({ ...item, isMuted: mutedNewsUrls.includes(item.link) });
+  const withMuted = (item) => ({
+    ...item,
+    isMuted: mutedNewsUrls.includes(item.link),
+    isAutoBlocked: Boolean(item.autoBlockReason) && !revealedAutoBlocked.includes(item.link),
+  });
   const displayedItems = latestPerSource.slice(0, 45).map(withMuted);
   // «Більше новин»: 4 додаткові, яких немає у стрічці
   const moreItems = restItems.slice(0, 4).map(withMuted);
@@ -3214,6 +3308,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           onReportClick={handleReport}
           onMuteClick={handleMute}
           onUnmuteClick={handleUnmute}
+          onRevealClick={handleRevealAutoBlocked}
           muteSyncInfo={muteSyncInfo}
         />
       </CarouselSlide>
@@ -3351,6 +3446,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                       onReportClick={handleReport}
                       onMuteClick={handleMute}
                       onUnmuteClick={handleUnmute}
+                      onRevealClick={handleRevealAutoBlocked}
                       muteSyncInfo={muteSyncInfo}
                     />
                   ))}

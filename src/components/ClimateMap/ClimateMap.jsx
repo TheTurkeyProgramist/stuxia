@@ -24,6 +24,7 @@ import coverExcalidraw from "../../media/third-party/services/excalidraw.webp";
 import coverSaveEcoBot from "../../media/third-party/services/saveecobot.webp";
 import coverAirTraffic from "../../media/third-party/services/air-traffic.webp";
 import coverDeepState from "../../media/third-party/services/deepstate.webp";
+import { usePageActive } from "../../utils/pageActivity.js";
 // Ctrl + Alt + M: Активувати/деактивувати мапу
 // Ctrl + Alt + F: Відкрити на весь екран
 // Ctrl + Alt + P: Відкрити/закрити міні-плеєр
@@ -131,6 +132,7 @@ const MobileSettingsButton = styled.button`
   align-items: center;
   justify-content: flex-end;
   align-self: stretch;
+  text-align: right;
   padding: 10px 14px;
   border: 1px solid ${(p) => p.$isDarkMode ? "rgba(255, 179, 108, 0.55)" : "rgba(200, 100, 0, 0.5)"};
   border-radius: 10px;
@@ -440,19 +442,20 @@ const TurkeyVideoFrame = styled.div`
     content: "";
     position: absolute;
     z-index: 0;
-    left: 18%;
-    right: 18%;
-    bottom: -4%;
-    height: 28%;
+    /* Широка пласка тінь під усією сценою — ефект, що індики й дерево стоять на землі */
+    left: -6%;
+    right: -6%;
+    bottom: -2%;
+    height: 24%;
     border-radius: 50%;
     background: radial-gradient(
-      ellipse,
-      rgba(0, 0, 0, 0.92) 0%,
-      rgba(0, 0, 0, 0.76) 48%,
-      rgba(0, 0, 0, 0.76) 88%,
+      ellipse closest-side,
+      rgba(0, 0, 0, 0.9) 0%,
+      rgba(0, 0, 0, 0.72) 55%,
+      rgba(0, 0, 0, 0.35) 82%,
       transparent 100%
     );
-    filter: blur(10px);
+    filter: blur(12px);
     pointer-events: none;
   }
 `;
@@ -574,6 +577,23 @@ const AnimatedButtonText = styled.span`
   animation: ${textCycleAnimation} 3s ease-in-out infinite;
   color: #ffb36c;
   font-weight: 700;
+`;
+
+// Напис кнопки налаштувань: постійний заголовок + підказка, що змінюється
+const SettingsButtonLabel = styled.span`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #ffb36c;
+
+  & > strong { font-weight: 700; }
+`;
+
+const SettingsHint = styled(AnimatedButtonText)`
+  display: block;
+  font-size: 11.5px;
+  font-weight: 500;
+  opacity: 0.85;
 `;
 
 const InputContainer = styled.div`
@@ -910,6 +930,39 @@ const SourcesSidebar = styled(motion.aside)`
   border: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"};
   box-shadow: ${(p) => p.$isDarkMode ? "0 20px 50px rgba(0,0,0,0.6)" : "0 12px 32px rgba(0,0,0,0.12)"};
   ${PanelScrollbar}
+`;
+
+// Шапка бічної панелі: заголовок і кнопка налаштувань (на телефонах вони над картою)
+const SidebarHeader = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 8px 7px;
+  background: ${(p) => p.$isDarkMode ? "#1b1c1f" : "#f6f7f9"};
+  border-bottom: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"};
+`;
+
+const SidebarTitle = styled.h2`
+  margin: 0;
+  padding: 2px 4px;
+  font-family: var(--font-family);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: ${(p) => p.$isDarkMode ? "#ffffff" : "#111111"};
+`;
+
+const SidebarSettingsButton = styled(MobileSettingsButton)`
+  justify-content: center;
+  width: 100%;
+  min-height: 46px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.25;
+  text-align: center;
 `;
 
 const SourcesScroll = styled.div`
@@ -1593,18 +1646,21 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [videoError, setVideoError] = useState(false);
   const turkeyVideoRef = useRef(null);
   const shouldShowLoader = !isMapActive || isLoading || !isOnline;
+  // Вкладка видима і вікно у фокусі: після повернення з іншої програми/вкладки
+  // відео має само запуститися знову (main.jsx ставить усі відео на паузу при прихованні)
+  const pageActive = usePageActive();
 
   useEffect(() => {
     const video = turkeyVideoRef.current;
     if (!video) return;
 
-    if (shouldShowLoader) {
+    if (shouldShowLoader && pageActive) {
       const p = video.play();
       if (p !== undefined) p.catch(() => {});
     } else {
       video.pause();
     }
-  }, [shouldShowLoader, videoError, isMiniPlayerOpen]);
+  }, [shouldShowLoader, pageActive, videoError, isMiniPlayerOpen]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -1694,23 +1750,23 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     }
   };
 
-  const settingButtonTexts = useMemo(() => {
-    const settingsTitle = t("climateMap.settingsTitle");
-    return [
-      settingsTitle,
-      t(isWideLayout ? "climateMap.rotating.shortcuts" : "climateMap.rotating.addFrames"),
-      settingsTitle,
-      t("climateMap.rotating.pinLocation"),
-      settingsTitle,
-      t("climateMap.rotating.mapsAndFeatures"),
-      settingsTitle,
-      t("climateMap.rotating.miniPlayer"),
-      settingsTitle,
-      t("climateMap.rotating.fullscreen"),
-    ];
-  }, [isWideLayout, t]);
+  // «Налаштування Стихії» на кнопці завжди, під ним по черзі змінюються підказки
+  const settingsTitle = t("climateMap.settingsTitle");
+  const settingButtonTexts = useMemo(() => [
+    t(isWideLayout ? "climateMap.rotating.shortcuts" : "climateMap.rotating.addFrames"),
+    t("climateMap.rotating.pinLocation"),
+    t("climateMap.rotating.mapsAndFeatures"),
+    t("climateMap.rotating.miniPlayer"),
+    t("climateMap.rotating.fullscreen"),
+  ], [isWideLayout, t]);
 
   const [textIndex, setTextIndex] = useState(0);
+  const settingsButtonContent = (
+    <SettingsButtonLabel>
+      <strong>{settingsTitle}</strong>
+      <SettingsHint key={textIndex}>{settingButtonTexts[textIndex]}</SettingsHint>
+    </SettingsButtonLabel>
+  );
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -2199,9 +2255,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
   return (
     <OuterContainer>
-      <AihelpTitle $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-        {t("climateMap.title")}
-      </AihelpTitle>
+      {/* На планшетах і ПК заголовок і кнопка налаштувань — у шапці бічної панелі */}
+      {!isWideLayout && (
+        <AihelpTitle $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
+          {t("climateMap.title")}
+        </AihelpTitle>
+      )}
 
       <Toaster
         position="bottom-center"
@@ -2228,16 +2287,16 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         }}
       />
 
-      <MobileSettingsButton
-        $isDarkMode={isDarkMode}
-        type="button"
-        onClick={() => setIsControlsOpen(true)}
-        aria-label={settingButtonTexts[textIndex]}
-      >
-        <AnimatedButtonText key={textIndex}>
-          {settingButtonTexts[textIndex]}
-        </AnimatedButtonText>
-      </MobileSettingsButton>
+      {!isWideLayout && (
+        <MobileSettingsButton
+          $isDarkMode={isDarkMode}
+          type="button"
+          onClick={() => setIsControlsOpen(true)}
+          aria-label={settingsTitle}
+        >
+          {settingsButtonContent}
+        </MobileSettingsButton>
+      )}
 
       <MapLayout>
       <MapWrapper
@@ -2251,9 +2310,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               <MobileSettingsHeading $isDarkMode={isDarkMode}>
                 <div>
                   <h2>
-                    <AnimatedButtonText key={textIndex}>
-                      {settingButtonTexts[textIndex]}
-                    </AnimatedButtonText>
+                    <span style={{ color: "#ffb36c" }}>{settingsTitle}</span>
                   </h2>
                 </div>
                 <MobileSettingsClose $isDarkMode={isDarkMode} type="button" onClick={() => setIsControlsOpen(false)}>
@@ -2532,6 +2589,17 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
       {isWideLayout && (
         <SourcesSidebar $isDarkMode={isDarkMode} aria-label={t("climateMap.sourcesAria")} layoutScroll>
+          <SidebarHeader $isDarkMode={isDarkMode}>
+            <SidebarTitle $isDarkMode={isDarkMode}>{t("climateMap.title")}</SidebarTitle>
+            <SidebarSettingsButton
+              $isDarkMode={isDarkMode}
+              type="button"
+              onClick={() => setIsControlsOpen(true)}
+              aria-label={settingsTitle}
+            >
+              {settingsButtonContent}
+            </SidebarSettingsButton>
+          </SidebarHeader>
           <SourcesScroll>
             {sourceSearchField}
             {filteredSources.length === 0 && (

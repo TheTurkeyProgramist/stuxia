@@ -11,6 +11,7 @@ import React, {
 } from "react";
 import styled, { keyframes, css, createGlobalStyle } from "styled-components";
 import localforage from "localforage";
+import { getPref, setPref } from "./utils/prefsStore.js";
 import { GiSnowing } from "react-icons/gi";
 //import { useSelector } from "react-redux";
 import Loader from "./components/Loader/Loader.jsx";
@@ -30,6 +31,7 @@ import {
 } from "./components/MusicPhoto/MusicPhoto.assets.jsx";
 import { DEFAULT_SITE_SECTIONS } from "./components/Header/Menu.jsx";
 import { BASE_BG_TRACKS } from "./utils/bgMusicCatalog";
+import { useBgMusicSuspended } from "./utils/bgMusicSuspend";
 import axios from "axios";
 import "./App.css";
 import Header from "./components/Header/Header.jsx";
@@ -57,9 +59,9 @@ import {
   useRole,
   useInteractions,
   useTransitionStyles,  
-  FloatingPortal,
   FloatingArrow,         
 } from "@floating-ui/react";
+import { MirrorFloatingPortal, MirrorText } from "./components/Tooltip/MirrorSafe";
 import { FaSmog } from "react-icons/fa6";
 import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill } from "react-icons/bs";
@@ -173,14 +175,14 @@ const { refs, floatingStyles, context } = useFloating({
         {children}
       </span>
       {isMounted && (
-        <FloatingPortal>
+        <MirrorFloatingPortal>
           <Tooltipso
             ref={refs.setFloating}
             $isDarkMode={isDarkMode}
             style={{ ...floatingStyles, ...transitionStyles }}
             {...getFloatingProps()}
           >
-            {content}
+            <MirrorText>{content}</MirrorText>
             <FloatingArrow
               ref={arrowRef}
               context={context}
@@ -189,7 +191,7 @@ const { refs, floatingStyles, context } = useFloating({
               strokeWidth={1}
             />
           </Tooltipso>
-        </FloatingPortal>
+        </MirrorFloatingPortal>
       )}
     </>
   );
@@ -1263,6 +1265,8 @@ const App = () => {
   const appHiddenAtRef = useRef(null);
   const bgAudioRef = useRef(null);
   const bgAudioRef2 = useRef(null); // Для Crossfade
+  // Титри та інші сцени можуть тимчасово «відпустити» фонову музику (плавне затихання)
+  const bgMusicSuspended = useBgMusicSuspended();
   const [initialBgPosition, setInitialBgPosition] = useState(0);
   const bgPositionApplied = useRef(false);
 
@@ -1569,15 +1573,15 @@ const App = () => {
     const handleInteraction = () => {
       setHasInteracted(true);
       window.removeEventListener("mousedown", handleInteraction);
-      window.removeEventListener("scroll", handleInteraction);
+      window.removeEventListener("scroll", handleInteraction, true);
       window.removeEventListener("touchstart", handleInteraction);
     };
     window.addEventListener("mousedown", handleInteraction);
-    window.addEventListener("scroll", handleInteraction);
+    window.addEventListener("scroll", handleInteraction, true);
     window.addEventListener("touchstart", handleInteraction);
     return () => {
       window.removeEventListener("mousedown", handleInteraction);
-      window.removeEventListener("scroll", handleInteraction);
+      window.removeEventListener("scroll", handleInteraction, true);
       window.removeEventListener("touchstart", handleInteraction);
     };
   }, []);
@@ -1964,7 +1968,8 @@ const App = () => {
       prevSourceRef.current = currentAudioUrl;
     }
 
-    const shouldPlay = bgMusicEnabled && (!isFsActive || !autoMuteBgMusic);
+    const shouldPlay =
+      bgMusicEnabled && (!isFsActive || !autoMuteBgMusic) && !bgMusicSuspended;
     const targetVolume = shouldPlay ? bgMusicVolume : 0;
     const fadeStep = 0.02;
 
@@ -2005,10 +2010,8 @@ const App = () => {
           activeAudio.play().catch(() => {});
         }
       }
-    } else if (!shouldPlay) {
-      if (!a1.paused) a1.pause();
-      if (!a2.paused) a2.pause();
     }
+    // Якщо музика не має грати — не обриваємо її, а плавно стишуємо до 0 і ставимо на паузу (нижче)
 
     const crossfadeInterval = setInterval(() => {
       if (activeAudio.volume < targetVolume) {
@@ -2016,6 +2019,8 @@ const App = () => {
           targetVolume,
           activeAudio.volume + fadeStep,
         );
+      } else if (!shouldPlay) {
+        activeAudio.volume = Math.max(0, activeAudio.volume - fadeStep);
       } else {
         activeAudio.volume = targetVolume;
       }
@@ -2027,6 +2032,7 @@ const App = () => {
       }
 
       if (activeAudio.volume === targetVolume && inactiveAudio.volume === 0) {
+        if (!shouldPlay && !activeAudio.paused) activeAudio.pause();
         clearInterval(crossfadeInterval);
       }
     }, 50);
@@ -2040,6 +2046,7 @@ const App = () => {
     bgMusicVolume,
     bgMusicSpeed,
     initialBgPosition,
+    bgMusicSuspended,
   ]);
 
   // Негайне оновлення швидкості відтворення фонової музики
@@ -2436,7 +2443,7 @@ const App = () => {
         if ("Notification" in window && Notification.permission === "granted") {
           const now = Date.now();
           const lastNotificationMs = Number(
-            window.localStorage.getItem("weatherNotificationLastSentAt") || 0,
+            getPref("weatherNotificationLastSentAt") || 0,
           );
 
           if (now - lastNotificationMs >= 60 * 60 * 1000) {
@@ -2458,7 +2465,7 @@ const App = () => {
               icon: "/favicon.ico",
             });
 
-            window.localStorage.setItem(
+            setPref(
               "weatherNotificationLastSentAt",
               String(now),
             );

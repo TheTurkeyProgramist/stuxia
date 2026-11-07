@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 import uk from './locales/uk.json';
+import { getPref, setPref } from '../utils/prefsStore.js';
 
 export const RTL_LANGUAGES = new Set(['ar', 'fa']);
 
@@ -37,9 +38,17 @@ const lazyLocalesBackend = {
   },
 };
 
+// Вибрана мова зберігається в localforage (через prefsStore), а не в localStorage
+const languageDetector = new LanguageDetector();
+languageDetector.addDetector({
+  name: 'prefs',
+  lookup: () => getPref('i18nextLng') || undefined,
+  cacheUserLanguage: (lng) => setPref('i18nextLng', lng),
+});
+
 i18n
   .use(lazyLocalesBackend)
-  .use(LanguageDetector)
+  .use(languageDetector)
   .use(initReactI18next)
   .init({
     resources: { uk: { translation: uk } },
@@ -50,8 +59,8 @@ i18n
     react: { useSuspense: false },
     interpolation: { escapeValue: false },
     detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage'],
+      order: ['prefs', 'navigator', 'htmlTag'],
+      caches: ['prefs'],
     },
   });
 

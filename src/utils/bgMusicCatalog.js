@@ -1,4 +1,6 @@
 
+import { getPref, setPref } from "./prefsStore.js";
+
 export const BASE_BG_TRACKS = [
 ];
 
@@ -26,7 +28,7 @@ export const isCacheApiSupported = () => typeof window !== "undefined" && "cache
 export const getStoredSoftDeletedIds = () => {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem("bg_music_soft_deleted_ids");
+    const raw = getPref("bg_music_soft_deleted_ids");
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -36,7 +38,7 @@ export const getStoredSoftDeletedIds = () => {
 export const persistSoftDeletedIds = (ids = []) => {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(
+    setPref(
       "bg_music_soft_deleted_ids",
       JSON.stringify(Array.from(new Set(ids))),
     );

@@ -48,9 +48,10 @@ import {
   useRole,
   useInteractions,
   useTransitionStyles,
-  FloatingPortal,
   FloatingArrow,
 } from "@floating-ui/react";
+import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
+import { getPref, setPref } from "../../utils/prefsStore.js";
 const TooltipBox = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0ceb" : "#fdff98e7")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
@@ -124,14 +125,14 @@ export const Tooltip = ({
         {children}
       </span>
       {isMounted && (
-        <FloatingPortal>
+        <MirrorFloatingPortal>
           <TooltipBox
             ref={refs.setFloating}
             $isDarkMode={isDarkMode}
             style={{ ...floatingStyles, ...transitionStyles }}
             {...getFloatingProps()}
           >
-            {content}
+            <MirrorText>{content}</MirrorText>
             <FloatingArrow
               ref={arrowRef}
               context={context}
@@ -140,7 +141,7 @@ export const Tooltip = ({
               strokeWidth={1}
             />
           </TooltipBox>
-        </FloatingPortal>
+        </MirrorFloatingPortal>
       )}
     </>
   );
@@ -1637,7 +1638,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
   const [isLimitsModalOpen, setIsLimitsModalOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     try {
-      return localStorage.getItem("ai_help_sidebar_collapsed") === "1";
+      return getPref("ai_help_sidebar_collapsed") === "1";
     } catch {
       return false;
     }
@@ -1646,9 +1647,9 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     setIsSidebarCollapsed((prev) => {
       const next = !prev;
       try {
-        localStorage.setItem("ai_help_sidebar_collapsed", next ? "1" : "0");
+        setPref("ai_help_sidebar_collapsed", next ? "1" : "0");
       } catch {
-        /* localStorage недоступний */
+        /* сховище недоступне */
       }
       return next;
     });

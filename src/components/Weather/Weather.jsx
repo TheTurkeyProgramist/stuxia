@@ -85,9 +85,10 @@ import {
   useRole,
   useInteractions,
   useTransitionStyles,  
-  FloatingPortal,
   FloatingArrow,         
 } from "@floating-ui/react";
+import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
+import { createChartWeatherIcon, getChartIconKey } from "../../utils/chartWeatherIcon";
 
 // Кеш canvas-іконок для точок графіків: картка рендериться щосекунди, і без кешу
 // десятки іконок (з емодзі) малювались заново, а графік бачив «нові» дані
@@ -180,14 +181,14 @@ const { refs, floatingStyles, context } = useFloating({
         {children}
       </span>
       {isMounted && (
-        <FloatingPortal>
+        <MirrorFloatingPortal>
           <TooltipBox
             ref={refs.setFloating}
             $isDarkMode={isDarkMode}
             style={{ ...floatingStyles, ...transitionStyles }}
             {...getFloatingProps()}
           >
-            {content}
+            <MirrorText>{content}</MirrorText>
             <FloatingArrow
               ref={arrowRef}
               context={context}
@@ -196,7 +197,7 @@ const { refs, floatingStyles, context } = useFloating({
               strokeWidth={1}
             />
           </TooltipBox>
-        </FloatingPortal>
+        </MirrorFloatingPortal>
       )}
     </>
   );
@@ -475,7 +476,10 @@ const SideCardItem = styled.div`
   padding: 8px 12px;
 
   @media (min-width: 768px) {
-    height: 124px;
+    /* Картки ділять висоту колонки порівну — скільки б їх не було */
+    height: auto;
+    flex: 1 1 0;
+    min-height: 0;
   }
 
   &:hover {
@@ -1750,47 +1754,14 @@ const WeatherCardComponent = ({
     setIsEditingReason(false);
   }, [selectedDay]);
 
-  const createIconCanvas = (icon, size = 24, dangerColor = null, opacity = 1) => {
-    let iconStr = icon;
-    if (icon && typeof icon !== "string") {
-      const typeName = icon.type?.name || "";
-      if (typeName === "FaSmog") iconStr = "☁️";
-      else if (typeName === "IoRainy" || typeName === "LiaCloudSunRainSolid") iconStr = "🌧️";
-      else if (typeName === "GiSnowing") iconStr = "❄️";
-      else if (typeName === "IoThunderstorm") iconStr = "⛈️";
-      else if (typeName === "FaSun") iconStr = "☀️";
-      else if (typeName === "BsMoonStarsFill") iconStr = "🌙";
-      else if (typeName === "FaCloudMoon") iconStr = "☁️";
-      else if (typeName === "FaCloudMoonRain" || typeName === "LiaCloudMoonRainSolid") iconStr = "🌧️";
-      else iconStr = "☁️";
-    }
+  // item — погодинний/денний запис (потрібні weather_code та is_day)
+  const createIconCanvas = (item, size = 28, dangerColor = null, opacity = 1) => {
     // Однакові іконки не малюємо заново: той самий canvas — і графік не бачить змін
-    const cacheKey = `icon|${iconStr}|${size}|${dangerColor}|${opacity}`;
+    const cacheKey = `wicon|${getChartIconKey(item)}|${size}|${dangerColor}|${opacity}`;
     const cached = chartCanvasCache.get(cacheKey);
     if (cached) return cached;
-    const canvas = document.createElement("canvas");
+    const canvas = createChartWeatherIcon(item, size, dangerColor, opacity);
     rememberChartCanvas(cacheKey, canvas);
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
-
-    ctx.font = `${size - 8}px serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
-    ctx.globalAlpha = opacity;
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size * 0.76, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = opacity;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(iconStr, size / 2, size / 2);
-
-    if (dangerColor) {
-      ctx.fillStyle = dangerColor;
-      ctx.font = `bold ${size / 2}px Arial`;
-      ctx.fillText("!", size - 5, 5);
-    }
     return canvas;
   };
 const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
@@ -1884,12 +1855,7 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
           if ((h.tempNum ?? 0) > 30) danger = "#ff0000";
           else if ((h.tempNum ?? 0) < -30) danger = "#004cff";
           else if ((h.windNum ?? 0) > 10) danger = "#ff6a00";
-          return createIconCanvas(
-            h.iconSymbol ?? h.iconPlaceholder ?? "☁️",
-            24,
-            danger,
-            hourlyOpacity.day,
-          );
+          return createIconCanvas(h, 26, danger, hourlyOpacity.day);
         }),
         ...lineStyleProps(lineStyles.hourly.temp, { tension: 0.4, pointRadius: 12, fill: true }),
         yAxisID: "y",
@@ -2144,7 +2110,7 @@ const HOLIDAYS_2027 = {
         backgroundColor: `rgba(255, 179, 108, ${dailyOpacity.day * 0.5})`,
         hidden: dailyOpacity.day === 0,
         pointStyle: dailyList?.map((d) =>
-          createIconCanvas(d.iconSymbol ?? d.iconPlaceholder, 24, null, dailyOpacity.day),
+          createIconCanvas(d, 28, null, dailyOpacity.day),
         ),
         pointBorderColor: dailyList?.map((d) => {
           const dateType = getDateType(d.date, d.day, d.fullDate);
@@ -4217,6 +4183,31 @@ const HOLIDAYS_2027 = {
                   </NameCardItem>
                   <SubNameCardItem $active={activeTab === "ai"}>
                     Експертні правила
+                  </SubNameCardItem>
+                </div>
+              </div>
+            </SideCardItem>
+
+            {/* Налаштування — відкриває те саме меню, що й шестерня вгорі */}
+            <SideCardItem
+              $active={isDropdownOpen && !isDropdownClosing}
+              role="button"
+              aria-label="Налаштування картки"
+              onClick={() => {
+                if (isDropdownOpen) handleCloseDropdown();
+                else setIsDropdownOpen(true);
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
+                <div style={{ fontSize: "36px", color: "#a78bfa", display: "inline-flex" }}>
+                  <BiCog />
+                </div>
+                <div style={{ color: "#fff", display: "flex", flexDirection: "column", minWidth: 0 }}>
+                  <NameCardItem $active={isDropdownOpen && !isDropdownClosing}>
+                    Налаштування
+                  </NameCardItem>
+                  <SubNameCardItem $active={isDropdownOpen && !isDropdownClosing}>
+                    {tempLabel(units.temp)} · {windLabel(units.wind)} · фон, дати
                   </SubNameCardItem>
                 </div>
               </div>

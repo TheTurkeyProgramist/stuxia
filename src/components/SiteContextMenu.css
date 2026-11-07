@@ -7,7 +7,8 @@
   --context-menu-foreground: #172426;
   --context-menu-border: rgba(18, 54, 58, 0.2);
   --context-menu-hover: #dceff0;
-  z-index: 10000;
+  /* Поверх будь-яких модалок (у сайті вони мають z-index до 2147483647) */
+  z-index: 2147483647;
   min-width: 224px;
   padding: 5px;
   border: 1px solid var(--context-menu-border);
@@ -68,7 +69,7 @@
 
 .site-reader-backdrop {
   position: fixed;
-  z-index: 20000;
+  z-index: 2147483647;
   inset: 0;
   display: grid;
   place-items: center;

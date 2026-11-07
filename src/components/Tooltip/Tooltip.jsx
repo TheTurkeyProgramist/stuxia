@@ -13,9 +13,9 @@ import {
   useRole,
   useInteractions,
   useTransitionStyles,
-  FloatingPortal,
   FloatingArrow,
 } from "@floating-ui/react";
+import { MirrorFloatingPortal, MirrorText } from "./MirrorSafe";
 
 const TooltipBox = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0ceb" : "#fdff98e7")};
@@ -26,8 +26,8 @@ const TooltipBox = styled.div`
   font-size: 12px;
   font-weight: 500;
   padding: 5px 9px;
-  /* Вище за модалки (ModalOverlay має 99999) */
-  z-index: 100000;
+  /* Вище за всі модалки (налаштування — 100001, мова/AI — 200000…300001) */
+  z-index: 300010;
   pointer-events: none;
   white-space: nowrap;
 `;
@@ -37,6 +37,7 @@ export const Tooltip = ({
   children,
   placement = "bottom",
   isDarkMode = true,
+  wrapperStyle,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const arrowRef = useRef(null);
@@ -88,19 +89,19 @@ export const Tooltip = ({
       <span
         ref={refs.setReference}
         {...getReferenceProps()}
-        style={{ display: "inline-flex" }}
+        style={{ display: "inline-flex", ...wrapperStyle }}
       >
         {children}
       </span>
       {isMounted && (
-        <FloatingPortal>
+        <MirrorFloatingPortal>
           <TooltipBox
             ref={refs.setFloating}
             $isDarkMode={isDarkMode}
             style={{ ...floatingStyles, ...transitionStyles }}
             {...getFloatingProps()}
           >
-            {content}
+            <MirrorText>{content}</MirrorText>
             <FloatingArrow
               ref={arrowRef}
               context={context}
@@ -109,7 +110,7 @@ export const Tooltip = ({
               strokeWidth={1}
             />
           </TooltipBox>
-        </FloatingPortal>
+        </MirrorFloatingPortal>
       )}
     </>
   );

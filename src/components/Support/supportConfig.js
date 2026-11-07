@@ -3,6 +3,8 @@
 //  Усе, що треба оновлювати руками, — в цьому файлі.
 // ─────────────────────────────────────────────────────────────
 
+import { getPref, setPref } from "../../utils/prefsStore.js";
+
 export const DONATE_URL = "https://donatello.to/TheTurkeyStudio";
 
 // Комісія платформи донатів (Donatello) — частка, яка не доходить до проєкту
@@ -50,7 +52,7 @@ const supporterKey = (uid) => `stykhia_supporter_${uid}`;
 export const rememberSupporter = (uid) => {
   if (!uid) return;
   try {
-    localStorage.setItem(supporterKey(uid), String(Date.now()));
+    setPref(supporterKey(uid), String(Date.now()));
   } catch {
     /* приватний режим */
   }
@@ -59,7 +61,7 @@ export const rememberSupporter = (uid) => {
 const isRememberedSupporter = (uid) => {
   if (!uid) return false;
   try {
-    return !!localStorage.getItem(supporterKey(uid));
+    return !!getPref(supporterKey(uid));
   } catch {
     return false;
   }

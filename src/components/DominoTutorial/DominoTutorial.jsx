@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useTutorial } from './TutorialContext.jsx';
 import dominoVideo from '../../media/characters/kate-and-domino.webm';
+import { getPageScroller } from '../../utils/siteMirror';
 
 const ACCENT = '#ffb36c';
 const TOTAL_STEPS = 8;
@@ -420,7 +421,7 @@ const DominoTutorial = ({ user }) => {
       autoAction: () => {
         setTimeout(() => {
           document.body.style.overflow = '';
-          window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
+          getPageScroller().scrollTo({ top: window.innerHeight, behavior: 'smooth' });
           setTimeout(() => {
             document.body.style.overflow = 'hidden';
             nextStep();

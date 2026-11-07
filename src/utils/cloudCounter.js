@@ -8,7 +8,8 @@ import { getTodayKey, toDayKey, isPermissionDenied } from "./muteSync";
 export const CLOUD_LIMITS = {
   settings: { countKey: "settingsSyncCount", atKey: "settingsSyncAt", limit: 100 },
   cards: { countKey: "cardsSyncCount", atKey: "cardsSyncAt", limit: 100 },
-  mute: { countKey: "muteSyncCount", atKey: "muteSyncAt", limit: 30 },
+  // Спільний ліміт для заглушених новин і налаштувань фільтра новин (newsFilter)
+  mute: { countKey: "muteSyncCount", atKey: "muteSyncAt", limit: 50 },
   cardAdditions: { countKey: "cardAdditionsCount", atKey: "cardAdditionsAt", limit: 40 },
   reports: { countKey: "reportCount", atKey: "reportAt", limit: 20 },
 };

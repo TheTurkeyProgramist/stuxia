@@ -68,9 +68,9 @@ import {
   useRole,
   useInteractions,
   useTransitionStyles,  
-  FloatingPortal,
   FloatingArrow,         
 } from "@floating-ui/react";
+import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
 import TimezoneModal from "./TimezoneModal.jsx";
 import BgModal from "./BgModal.jsx";
 import LanguageModal from "../Modals/LanguageModal.jsx";
@@ -1235,14 +1235,14 @@ const { refs, floatingStyles, context } = useFloating({
         {children}
       </span>
       {isMounted && (
-        <FloatingPortal>
+        <MirrorFloatingPortal>
           <TooltipBox
             ref={refs.setFloating}
             $isDarkMode={isDarkMode}
             style={{ ...floatingStyles, ...transitionStyles }}
             {...getFloatingProps()}
           >
-            {content}
+            <MirrorText>{content}</MirrorText>
             <FloatingArrow
               ref={arrowRef}
               context={context}
@@ -1251,7 +1251,7 @@ const { refs, floatingStyles, context } = useFloating({
               strokeWidth={1}
             />
           </TooltipBox>
-        </FloatingPortal>
+        </MirrorFloatingPortal>
       )}
     </>
   );

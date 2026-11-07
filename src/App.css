@@ -41,6 +41,47 @@ body {
   background: white;
 }
 
+/* Дзеркальність сайту (src/utils/siteMirror.js): html = розмір вікна і не скролиться,
+   скролиться body — тоді fixed-модалки лишаються прив'язаними до екрана. */
+html.site-mirrored {
+  height: 100%;
+  overflow: hidden;
+}
+
+html.site-mirrored body {
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Під час 3D-перевороту за «дошкою» видно тло вікна — робимо його темним */
+html.site-flipping {
+  background: #05070a;
+}
+
+/* Шар-компенсатор для тултіпів/меню: той самий scale, що й у html → дзеркальність скасовується */
+.site-unmirror-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  /* Тултіпи та контекстне меню мають бути поверх модалок */
+  z-index: 2147483647;
+  transform: scale(var(--site-mirror-x, 1), var(--site-mirror-y, 1));
+}
+
+/* Вміст тултіпів/меню віддзеркалюється назад, щоб виглядати як решта сайту.
+   Окрема властивість scale не конфліктує з анімаціями через transform. */
+html.site-mirrored .site-mirror-text {
+  display: inline-block;
+  scale: var(--site-mirror-x, 1) var(--site-mirror-y, 1);
+}
+
+html.site-mirrored .site-unmirror-layer .site-context-menu-content {
+  pointer-events: auto;
+  scale: var(--site-mirror-x, 1) var(--site-mirror-y, 1);
+}
+
 img,
 picture,
 video,

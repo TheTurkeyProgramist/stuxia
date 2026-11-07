@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from "react";
 import "./animationsPref.css";
+import { getPref, setPref } from "./prefsStore.js";
 
-// Налаштування «Вимкнути анімації»: зберігається в localStorage і вмикає
+// Налаштування «Вимкнути анімації»: зберігається в localforage (prefsStore) і вмикає
 // атрибут data-animations-off на <html> (див. animationsPref.css)
 
 const STORAGE_KEY = "animations_disabled";
@@ -9,7 +10,7 @@ const EVENT = "animationsPrefChanged";
 
 const read = () => {
   try {
-    return localStorage.getItem(STORAGE_KEY) === "true";
+    return getPref(STORAGE_KEY) === "true";
   } catch {
     return false;
   }
@@ -27,7 +28,7 @@ export const isAnimationsDisabled = read;
 
 export const setAnimationsDisabled = (disabled) => {
   try {
-    localStorage.setItem(STORAGE_KEY, disabled ? "true" : "false");
+    setPref(STORAGE_KEY, disabled ? "true" : "false");
   } catch {}
   apply(disabled);
   window.dispatchEvent(new Event(EVENT));

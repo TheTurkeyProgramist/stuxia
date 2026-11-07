@@ -7,7 +7,7 @@ rules_version = '2';
 // Добові ліміти на акаунт (поля в config/{uid}):
 //   settings          → settingsSyncCount / settingsSyncAt  — 100
 //   savedWeatherCards → cardsSyncCount    / cardsSyncAt     — 100
-//   mutedNews         → muteSyncCount     / muteSyncAt      — 30
+//   mutedNews + newsFilter → muteSyncCount / muteSyncAt — 50 (спільний лічильник)
 //   додавання карток  → cardAdditionsCount / cardAdditionsAt — 40
 //   скарги на новини  → reportCount       / reportAt        — 20
 service cloud.firestore {
@@ -89,26 +89,39 @@ service cloud.firestore {
         && shortStringOrNull(s, 'heroBgMode', 32);
     }
 
+    // Налаштування фільтра новин: увімкнення, «м'який» режим, режими категорій,
+    // власні слова / правила (до 50 штук, кожне до 300 символів)
+    function newsFilterOk(f) {
+      return f is map
+        && f.keys().hasOnly(['enabled', 'softMode', 'categories', 'customWords'])
+        && (!('enabled' in f) || f.enabled is bool)
+        && (!('softMode' in f) || f.softMode is bool)
+        && (!('categories' in f) || (f.categories is map && f.categories.size() <= 30))
+        && (!('customWords' in f) || (f.customWords is list && f.customWords.size() <= 50));
+    }
+
     function configWriteOk() {
       let keys = changedKeys();
       let d = request.resource.data;
       return keys.hasOnly([
           'settings', 'settingsSyncCount', 'settingsSyncAt',
           'savedWeatherCards', 'cardsSyncCount', 'cardsSyncAt',
-          'mutedNews', 'muteSyncCount', 'muteSyncAt',
+          'mutedNews', 'newsFilter', 'muteSyncCount', 'muteSyncAt',
           'cardAdditionsCount', 'cardAdditionsAt',
           'reportCount', 'reportAt'
         ])
         && counterOk(keys, 'settings', 'settingsSyncCount', 'settingsSyncAt', 100)
         && counterOk(keys, 'savedWeatherCards', 'cardsSyncCount', 'cardsSyncAt', 100)
-        && counterOk(keys, 'mutedNews', 'muteSyncCount', 'muteSyncAt', 30)
+        && counterOk(keys, 'mutedNews', 'muteSyncCount', 'muteSyncAt', 50)
+        && counterOk(keys, 'newsFilter', 'muteSyncCount', 'muteSyncAt', 50)
         && counterOk(keys, 'cardAdditionsCount', 'cardAdditionsCount', 'cardAdditionsAt', 40)
         && counterOk(keys, 'reportCount', 'reportCount', 'reportAt', 20)
         && (!keys.hasAny(['settings']) || settingsOk())
         && (!keys.hasAny(['savedWeatherCards'])
             || (d.savedWeatherCards is list && d.savedWeatherCards.size() <= 9))
         && (!keys.hasAny(['mutedNews'])
-            || (d.mutedNews is list && d.mutedNews.size() <= 1000));
+            || (d.mutedNews is list && d.mutedNews.size() <= 1000))
+        && (!keys.hasAny(['newsFilter']) || newsFilterOk(d.newsFilter));
     }
 
     // Скарга: додається/оновлюється рівно один запис — свій uid з часом сервера,

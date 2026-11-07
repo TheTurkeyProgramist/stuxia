@@ -40,3 +40,6 @@ node_modules/
 package-lock.json
 # PocketBase
 pb_data/
+
+# Тимчасові файли wrangler (деплой на Cloudflare)
+.wrangler/

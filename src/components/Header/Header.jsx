@@ -36,9 +36,9 @@ import {
   useRole,
   useInteractions,
   useTransitionStyles,  
-  FloatingPortal,
   FloatingArrow,         
 } from "@floating-ui/react";
+import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
 const TooltipBox = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
@@ -61,7 +61,6 @@ const fadeInHeader = keyframes`
   from { opacity: 0; transform: translateY(-100%); }
   to { opacity: 1; transform: translateY(0); }
 `;
-
 
 const HeaderDiv = styled.div`
   height: 37px;
@@ -630,14 +629,14 @@ const { refs, floatingStyles, context } = useFloating({
         {children}
       </span>
       {isMounted && (
-        <FloatingPortal>
+        <MirrorFloatingPortal>
           <TooltipBox
             ref={refs.setFloating}
             $isDarkMode={isDarkMode}
             style={{ ...floatingStyles, ...transitionStyles }}
             {...getFloatingProps()}
           >
-            {content}
+            <MirrorText>{content}</MirrorText>
             <FloatingArrow
               ref={arrowRef}
               context={context}
@@ -646,7 +645,7 @@ const { refs, floatingStyles, context } = useFloating({
               strokeWidth={1}
             />
           </TooltipBox>
-        </FloatingPortal>
+        </MirrorFloatingPortal>
       )}
     </>
   );
@@ -1171,6 +1170,19 @@ const Header = ({
               aria-label="Автори та джерела"
             >
               <EmojiWrapper style={{ fontSize: "18px" }}><FaBookOpen/></EmojiWrapper>
+            </IconButton>
+          </Tooltip>
+
+          {/* Налаштування — доступні й гостям (вкладка «Безпека» для них заблокована) */}
+          <Tooltip content="Налаштування" isDarkMode={isDarkMode}>
+            <IconButton
+              onClick={handleSettingsClick}
+              $isDarkMode={isDarkMode}
+              aria-label="Налаштування"
+            >
+              <EmojiWrapper>
+                <MdSettingsSuggest />
+              </EmojiWrapper>
             </IconButton>
           </Tooltip>
 

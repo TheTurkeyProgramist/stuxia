@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import { FaCheck } from "react-icons/fa";
 import { MdFormatColorReset } from "react-icons/md";
+import { getPref, removePref, setPref, subscribePrefs } from "../../utils/prefsStore.js";
 
 // Кольори веселки + "без накладення"
 export const ACCENT_COLORS = [
@@ -21,7 +22,7 @@ const VALID = new Set(ACCENT_COLORS.map((c) => c.color).filter(Boolean));
 
 const readStored = () => {
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
+    const v = getPref(STORAGE_KEY);
     return VALID.has(v) ? v : null;
   } catch {
     return null;
@@ -35,18 +36,18 @@ export const useAccentColor = () => {
   useEffect(() => {
     const sync = () => setState(readStored());
     window.addEventListener(CHANGE_EVENT, sync);
-    window.addEventListener("storage", sync);
+    const unsubscribePrefs = subscribePrefs(sync);
     return () => {
       window.removeEventListener(CHANGE_EVENT, sync);
-      window.removeEventListener("storage", sync);
+      unsubscribePrefs();
     };
   }, []);
 
   const setAccentColor = useCallback((color) => {
     const next = VALID.has(color) ? color : null;
     try {
-      if (next) localStorage.setItem(STORAGE_KEY, next);
-      else localStorage.removeItem(STORAGE_KEY);
+      if (next) setPref(STORAGE_KEY, next);
+      else removePref(STORAGE_KEY);
     } catch { /* ignore */ }
     setState(next);
     window.dispatchEvent(new Event(CHANGE_EVENT));

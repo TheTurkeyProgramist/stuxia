@@ -1,10 +1,12 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { Fragment, useState, useEffect, useMemo, useRef } from "react";
 import avatarPlaceholder from "../../media/characters/domino-avatar.webp";
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
 import InfoModal from "./UserSearchModal.jsx";
 import KatSceneModal from "./KatSceneModal";
+import { Tooltip } from "../Tooltip/Tooltip";
 import { auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import localforage from "localforage";
@@ -18,11 +20,8 @@ import {
   FiGlobe,
   FiInfo,
   FiX,
-  FiRefreshCw,
   FiFilm,
-  FiLock,
   FiCalendar,
-  FiSmartphone,
   FiEye,
   FiEyeOff,
   FiMusic,
@@ -39,7 +38,6 @@ import {
   FiSearch,
   FiCompass,
   FiSun,
-  FiMoon,
   FiCopy,
   FiCheck,
   FiZap,
@@ -55,12 +53,37 @@ import {
   FiColumns,
   FiMaximize2,
   FiImage,
+  FiWatch,
+  FiPauseCircle,
+  FiMoreVertical,
+  FiType,
+  FiMousePointer,
+  FiFilter,
+  FiBellOff,
+  FiAnchor,
+  FiDownloadCloud,
+  FiPenTool,
+  FiKey,
+  FiLink,
+  FiGrid,
 } from "react-icons/fi";
-import { TbAutomation, TbMenuOrder } from "react-icons/tb";
+import {
+  TbAutomation,
+  TbMenuOrder,
+  TbClock24,
+  TbHourglass,
+  TbHandFinger,
+  TbFlipVertical,
+  TbSchool,
+  TbBrightnessDown,
+  TbColorFilter,
+  TbWand,
+  TbSpeakerphone,
+} from "react-icons/tb";
 import { GiPalette } from "react-icons/gi";
 import { ACCENT_COLORS, AccentSwatches, useAccentColor, getAccentLabel } from "../Header/AccentColorPicker.jsx";
 import { BsMoonStarsFill } from "react-icons/bs";
-import { FaSun as FaSunIcon, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaSun as FaSunIcon, FaEye, FaEyeSlash, FaWindows, FaAndroid, FaLinux, FaApple } from "react-icons/fa";
 import {
   BASE_BG_TRACKS,
   BG_CACHE_NAME,
@@ -84,8 +107,24 @@ import {
 import filterExampleImg from "../../media/backgrounds/scenes/mountains.webp";
 import { useDecorator } from "../Decorator/DecoratorContext.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
-import { isNewsFilterEnabled, setNewsFilterEnabled } from "../../utils/contentFilter";
+import {
+  isNewsFilterEnabled,
+  setNewsFilterEnabled,
+  isNewsFilterSoftMode,
+  setNewsFilterSoftMode,
+  getNewsFilterCategoryModes,
+  setNewsFilterCategoryModes,
+  getNewsFilterCustomWords,
+  setNewsFilterCustomWords,
+  NEWS_FILTER_CATEGORIES,
+  NEWS_FILTER_MAX_WORDS,
+  NEWS_FILTER_MAX_WORD_LENGTH,
+  parseNewsFilterEntry,
+} from "../../utils/contentFilter";
+import { scheduleNewsFilterSync, flushNewsFilterSync } from "../../utils/newsFilterSync";
 import { MUTE_SYNC_DAILY_LIMIT } from "../../utils/muteSync";
+import { applySiteMirror, getSiteMirror } from "../../utils/siteMirror";
+import { getPref, setPref } from "../../utils/prefsStore.js";
 
 // Keyframe Animations
 const fadeIn = keyframes`
@@ -174,7 +213,7 @@ const ModalWindow = styled.div`
 
 const WindowHeader = styled.div`
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 20px;
+  padding: 7px 10px;
   background: #202024;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   user-select: none;
@@ -237,6 +276,52 @@ const Sidebar = styled.div`
   }
 `;
 
+// ── Анімації іконок налаштувань ─────────────────────────────────────────────
+// Програються один раз при наведенні на картку / пункт меню. Кожна закінчується
+// в стані спокою, тож «Вимкнути анімації» (animationsPref.css) лишає іконку на місці.
+const ICON_ANIMS = {
+  pop: { kf: keyframes`0%,100%{transform:scale(1)}40%{transform:scale(1.25)}70%{transform:scale(0.92)}`, dur: "0.5s" },
+  swing: { kf: keyframes`0%,100%{transform:rotate(0)}20%{transform:rotate(-18deg)}45%{transform:rotate(14deg)}70%{transform:rotate(-7deg)}85%{transform:rotate(3deg)}`, dur: "0.8s" },
+  spin: { kf: keyframes`from{transform:rotate(0)}to{transform:rotate(360deg)}`, dur: "0.9s", ease: "cubic-bezier(0.45,0,0.25,1)" },
+  tick: { kf: keyframes`from{transform:rotate(0)}to{transform:rotate(360deg)}`, dur: "1s", ease: "steps(8, end)" },
+  hourglass: { kf: keyframes`0%{transform:rotate(0)}40%,60%{transform:rotate(180deg)}100%{transform:rotate(360deg)}`, dur: "1.1s" },
+  ring: { kf: keyframes`0%,70%,100%{transform:rotate(0)}10%,30%,50%{transform:rotate(-14deg)}20%,40%,60%{transform:rotate(14deg)}`, dur: "0.7s" },
+  drop: { kf: keyframes`0%,100%{transform:translateY(0)}35%{transform:translateY(4px)}55%{transform:translateY(-2px)}75%{transform:translateY(1px)}`, dur: "0.6s" },
+  lift: { kf: keyframes`0%,100%{transform:translateY(0)}35%{transform:translateY(-4px)}60%{transform:translateY(1px)}`, dur: "0.55s" },
+  bounce: { kf: keyframes`0%,100%{transform:translateY(0) scale(1,1)}30%{transform:translateY(-5px) scale(0.94,1.08)}55%{transform:translateY(0) scale(1.1,0.9)}75%{transform:translateY(-2px) scale(1,1)}`, dur: "0.6s" },
+  blink: { kf: keyframes`0%,100%{transform:scaleY(1)}35%{transform:scaleY(0.1)}55%{transform:scaleY(1)}`, dur: "0.5s" },
+  flip: { kf: keyframes`0%,100%{transform:perspective(80px) rotateY(0)}50%{transform:perspective(80px) rotateY(180deg)}`, dur: "0.7s" },
+  flipX: { kf: keyframes`0%,100%{transform:perspective(80px) rotateX(0)}50%{transform:perspective(80px) rotateX(180deg)}`, dur: "0.7s" },
+  tap: { kf: keyframes`0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(1px,2px) scale(0.82)}`, dur: "0.45s" },
+  turn: { kf: keyframes`0%,100%{transform:rotate(0)}35%,65%{transform:rotate(90deg)}`, dur: "0.9s" },
+  wiggle: { kf: keyframes`0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-2px) rotate(-8deg)}75%{transform:translateX(2px) rotate(8deg)}`, dur: "0.5s" },
+  flash: { kf: keyframes`0%,100%{opacity:1;transform:scale(1)}25%{opacity:0.25}50%{opacity:1;transform:scale(1.2)}`, dur: "0.6s" },
+};
+
+const ICON_ANIM_BY_TYPE = new Map([
+  [FiWatch, "tick"], [TbClock24, "tick"], [TbHourglass, "hourglass"], [FiCalendar, "flip"],
+  [FiPauseCircle, "pop"], [TbSpeakerphone, "ring"], [FiMoreVertical, "lift"], [FiType, "pop"],
+  [TbHandFinger, "tap"], [FiMousePointer, "tap"], [TbFlipVertical, "flipX"], [TbMenuOrder, "lift"],
+  [FiLink, "swing"], [FiKey, "turn"], [FiFilter, "drop"], [FiBellOff, "ring"], [FiEye, "blink"],
+  [TbSchool, "lift"], [BsMoonStarsFill, "swing"], [FaSunIcon, "spin"], [GiPalette, "swing"],
+  [FiAnchor, "swing"], [FiDownloadCloud, "drop"], [FiUpload, "lift"], [FiPenTool, "wiggle"],
+  [FaWindows, "lift"], [FaAndroid, "lift"], [FaLinux, "lift"], [FaApple, "lift"],
+  [FiVolume2, "ring"], [FiMusic, "bounce"], [TbWand, "wiggle"], [TbBrightnessDown, "spin"],
+  [TbColorFilter, "spin"], [FiLayers, "lift"], [FiImage, "pop"], [FiMaximize2, "pop"],
+  [FiColumns, "pop"], [FiGrid, "pop"], [FiSliders, "wiggle"], [FiHome, "lift"], [FiCloud, "wiggle"],
+  [FiMap, "flip"], [FiShield, "pop"], [FiCompass, "spin"], [FiZap, "flash"],
+]);
+
+const getIconAnim = (children) => {
+  const el = Array.isArray(children) ? children[0] : children;
+  return ICON_ANIM_BY_TYPE.get(el?.type) || "pop";
+};
+
+const iconAnimRule = (name) => {
+  const a = ICON_ANIMS[name] || ICON_ANIMS.pop;
+  return css`animation: ${a.kf} ${a.dur} ${a.ease || "ease-in-out"};`;
+};
+
 const NavItem = styled.div`
   display: flex; align-items: center; gap: 10px;
   padding: 9px 12px; border-radius: 6px; cursor: pointer;
@@ -245,7 +330,8 @@ const NavItem = styled.div`
   background: ${(p) => (p.$active ? "rgba(255,255,255,0.08)" : "transparent")};
   position: relative; transition: all 0.15s ease; white-space: nowrap;
   opacity: ${(p) => (p.$locked ? 0.45 : 1)};
-  pointer-events: ${(p) => (p.$locked ? "none" : "auto")};
+  /* Заблокований пункт лишається «живим» для наведення — щоб показати підказку */
+  cursor: ${(p) => (p.$locked ? "not-allowed" : "pointer")};
 
   ${(p) =>
     p.$active &&
@@ -258,7 +344,11 @@ const NavItem = styled.div`
       }
     `}
 
-  &:hover { background: rgba(255,255,255,0.06); color: #ffffff; }
+  ${(p) =>
+    !p.$locked &&
+    css`
+      &:hover { background: rgba(255,255,255,0.06); color: #ffffff; }
+    `}
 
   @media (max-width: 768px) {
     padding: 7px 10px;
@@ -269,6 +359,20 @@ const NavItem = styled.div`
 const NavIconBox = styled.span`
   font-size: 15px; display: flex; align-items: center; justify-content: center;
   color: ${(p) => (p.$active ? "#60cdff" : p.$locked ? "#555" : "#a0a0a0")};
+
+  & > svg { transform-origin: center; }
+
+  ${(p) =>
+    !p.$locked &&
+    css`
+      *:hover > & > svg {
+        ${iconAnimRule(p.$anim)}
+      }
+    `}
+
+  @media (prefers-reduced-motion: reduce) {
+    & > svg { animation: none !important; }
+  }
 `;
 
 const LockBadge = styled.span`
@@ -282,6 +386,34 @@ const MainContent = styled.div`
   &::-webkit-scrollbar { width: 6px; }
   &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
   @media (max-width: 768px) { padding: 16px; }
+`;
+
+// Обгортка області прокрутки — щоб натяк «прокрутіть нижче» лежав поверх, не зсуваючи вміст
+const MainContentWrap = styled.div`
+  position: relative; flex: 1; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column;
+`;
+const scrollHintBounce = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+`;
+const ScrollHintFade = styled(motion.div)`
+  position: absolute; left: 0; right: 6px; bottom: 0; height: 84px;
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px;
+  background: linear-gradient(to bottom, rgba(28,28,31,0), rgba(28,28,31,0.92) 60%, #1c1c1f);
+  pointer-events: none; z-index: 2;
+`;
+const ScrollHintButton = styled.button`
+  pointer-events: auto;
+  display: flex; align-items: center; gap: 6px;
+  font: inherit; font-size: 12px; font-weight: 600; color: #60cdff;
+  background: rgba(96,205,255,0.12); border: 1px solid rgba(96,205,255,0.35);
+  border-radius: 999px; padding: 5px 14px; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  transition: background 0.15s ease;
+  &:hover { background: rgba(96,205,255,0.22); }
+  &:focus-visible { outline: 2px solid rgba(96,205,255,0.6); outline-offset: 2px; }
+  svg { animation: ${scrollHintBounce} 1.4s ease-in-out infinite; }
 `;
 
 const SectionHeaderTitle = styled.h3`
@@ -305,8 +437,10 @@ const MAX_CUSTOM_MB = 20;
 const MAX_CUSTOM_MIN = 8;
 
 const SECTION_ICONS = { hero: <FiHome />, weather: <FiCloud />, map: <FiMap /> };
+const SECTION_COLORS = { hero: "#60a5fa", weather: "#7dd3fc", map: "#4ade80" };
 
-const SubSectionTitle = styled.h4`
+// data-scroll-hint: заголовок підрозділу, який показує натяк «Нижче: …»
+const SubSectionTitle = styled.h4.attrs({ "data-scroll-hint": "" })`
   font-size: 13px; font-weight: 600; color: #a0a0a0;
   text-transform: uppercase; letter-spacing: 0.04em;
   margin: 14px 0 2px 2px; display: flex; align-items: center; gap: 8px;
@@ -351,12 +485,45 @@ const CardLeft = styled.div`
   display: flex; align-items: center; gap: 14px; flex: 1;
 `;
 
-const CardIconBox = styled.div`
+// Кожна картка має свій колір: тонований фон, рамка й легке світіння в тон іконки
+const CardIconBoxBase = styled.div`
+  --icon-color: ${(p) => p.$color || "#60cdff"};
   width: 36px; height: 36px; min-width: 36px;
-  background: rgba(255,255,255,0.06); border-radius: 6px;
+  border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; color: ${(p) => p.$color || "#60cdff"};
+  font-size: 18px; color: var(--icon-color);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--icon-color) 22%, transparent),
+    color-mix(in srgb, var(--icon-color) 6%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, var(--icon-color) 35%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--icon-color) 14%, transparent);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  *:hover > & {
+    transform: scale(1.06);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--icon-color) 30%, transparent);
+  }
+
+  & > svg { transform-origin: center; }
+
+  ${Card}:hover & > svg,
+  *:hover > & > svg {
+    ${(p) => iconAnimRule(p.$anim)}
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    & > svg { animation: none !important; }
+  }
 `;
+
+// Анімацію підбирає сама за типом іконки (див. ICON_ANIM_BY_TYPE); $anim — щоб задати вручну
+const CardIconBox = ({ $anim, children, ...rest }) => (
+  <CardIconBoxBase $anim={$anim ?? getIconAnim(children)} {...rest}>
+    {children}
+  </CardIconBoxBase>
+);
 
 const CardInfo = styled.div`display: flex; flex-direction: column;`;
 const CardTitle = styled.span`font-size: 14px; font-weight: 600; color: #ffffff;`;
@@ -366,6 +533,122 @@ const CardControl = styled.div`
   display: flex; align-items: center; gap: 12px;
   @media (max-width: 550px) { width: 100%; justify-content: flex-end; }
 `;
+
+// Під-опції фільтра новин: відступ і лінія зліва; сірі й неактивні, коли фільтр вимкнено
+const FilterSubGroup = styled.div`
+  margin-left: 18px; padding-left: 14px;
+  border-left: 2px solid rgba(249,115,22,0.35);
+  display: flex; flex-direction: column; gap: 8px;
+  opacity: ${(p) => (p.$disabled ? 0.45 : 1)};
+  pointer-events: ${(p) => (p.$disabled ? "none" : "auto")};
+  filter: ${(p) => (p.$disabled ? "grayscale(1)" : "none")};
+  transition: opacity 0.2s ease, filter 0.2s ease;
+  @media (max-width: 550px) { margin-left: 6px; padding-left: 10px; }
+`;
+const FilterSubTitle = styled.span`
+  font-size: 13px; font-weight: 600; color: #ffffff;
+`;
+const FilterRow = styled.div`
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+  &:last-child { border-bottom: none; }
+  @media (max-width: 550px) { flex-wrap: wrap; }
+`;
+const Segmented = styled.div`
+  display: inline-flex; gap: 2px; padding: 2px; flex-shrink: 0;
+  background: #1f1f23; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
+`;
+const SegmentBtn = styled.button`
+  border: none; border-radius: 4px; padding: 4px 10px;
+  font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
+  background: ${(p) => (!p.$active ? "transparent" : p.$tone === "hide" ? "rgba(249,115,22,0.2)" : "rgba(52,211,153,0.2)")};
+  color: ${(p) => (!p.$active ? "#a0a0a0" : p.$tone === "hide" ? "#fb923c" : "#34d399")};
+  transition: background 0.15s ease, color 0.15s ease;
+  &:hover { color: #ffffff; }
+`;
+const WordChips = styled.div`display: flex; flex-wrap: wrap; gap: 6px;`;
+// Слово — жовтий чип, правило (регулярка) — блакитний моноширинний
+const WordChip = styled.span`
+  display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
+  font-size: 12px; word-break: break-all;
+  font-family: ${(p) => (p.$regex ? "Consolas, monospace" : "inherit")};
+  color: ${(p) => (p.$regex ? "#93c5fd" : "#fde68a")};
+  background: ${(p) => (p.$regex ? "rgba(96,165,250,0.1)" : "rgba(250,204,21,0.1)")};
+  border: 1px solid ${(p) => (p.$regex ? "rgba(96,165,250,0.3)" : "rgba(250,204,21,0.3)")};
+  border-radius: 999px; padding: 2px 4px 2px 10px;
+  button {
+    display: flex; border: none; background: none; color: inherit;
+    cursor: pointer; padding: 2px; border-radius: 50%;
+    &:hover { background: rgba(255,255,255,0.12); }
+  }
+`;
+
+const DraftHint = styled.span`
+  font-size: 12px; margin-top: -4px;
+  color: ${(p) => (p.$tone === "invalid" ? "#f87171" : p.$tone === "regex" ? "#34d399" : "#a0a0a0")};
+`;
+const RegexHelp = styled.div`
+  font-size: 12px; color: #c8c8cc; line-height: 1.5;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px; padding: 8px 12px;
+  p { margin: 8px 0 0; }
+  code {
+    font-family: Consolas, monospace; font-size: 12px; color: #93c5fd;
+    background: rgba(96,165,250,0.1); border-radius: 4px; padding: 1px 5px;
+    word-break: break-all;
+  }
+`;
+const RegexHelpToggle = styled.button`
+  display: flex; align-items: center; gap: 6px; width: 100%;
+  background: none; border: none; padding: 0; text-align: left;
+  font: inherit; font-size: 12px; font-weight: 600; color: #60cdff;
+  cursor: pointer; user-select: none;
+  &:hover { color: #8fdcff; }
+  &:focus-visible { outline: 2px solid rgba(96,205,255,0.5); outline-offset: 2px; border-radius: 4px; }
+`;
+// Стрілка плавно повертається разом із розгортанням
+const RegexHelpChevron = styled.span`
+  display: flex; transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: rotate(${(p) => (p.$open ? "180deg" : "0deg")});
+`;
+const RegexExample = styled.div`
+  display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap;
+  code { flex: 1; min-width: 200px; padding: 6px 8px; }
+`;
+const RegexLegend = styled.div`
+  display: grid; grid-template-columns: max-content 1fr; gap: 6px 10px;
+  align-items: baseline; margin-top: 8px;
+  @media (max-width: 550px) { grid-template-columns: 1fr; span { margin-bottom: 4px; } }
+`;
+const FilterNotes = styled.div`
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 12px; color: #a0a0a0; padding: 2px 4px;
+  span { display: flex; align-items: center; gap: 6px; }
+  svg { flex-shrink: 0; color: #60cdff; }
+`;
+
+// Приклад правила для фільтра новин і пояснення кожної його частини
+const NEWS_FILTER_REGEX_EXAMPLE = String.raw`/уряд(?:у|ом)?|парламент(?:у|ом)?|(?<!\p{L})влад(?:а|и|ою)(?!\p{L})/iu`;
+const NEWS_FILTER_REGEX_LEGEND = [
+  ["/ … /", "Початок і кінець правила. Без косих рисок запис вважається звичайним словом"],
+  ["уряд", "Звичайні літери шукаються як є"],
+  ["(?:у|ом)", "Група варіантів: «у» або «ом». «?:» означає просто групу (нічого не запам'ятовує)"],
+  ["?", "Після групи чи літери: «може бути, а може й не бути». Тому уряд(?:у|ом)? = уряд, уряду, урядом"],
+  ["|", "«АБО» між частинами правила: достатньо, щоб знайшлася будь-яка з них"],
+  [String.raw`\p{L}`, "Будь-яка літера будь-якої мови"],
+  [String.raw`(?<!\p{L})`, "Перед цим місцем не має бути літери — слово не може бути кінцем іншого слова (тож «безвладдя» не спрацює)"],
+  [String.raw`(?!\p{L})`, "Після цього місця не має бути літери — слово має тут закінчитись (тож «владика» не спрацює)"],
+  ["i", "Прапорець після правила: без різниці великі чи малі літери (додається автоматично)"],
+  ["u", "Прапорець Unicode — потрібен для \\p{L} (додається автоматично)"],
+];
+const NEWS_FILTER_REGEX_EXTRA = [
+  [".", "Будь-який один символ"],
+  ["*", "Попереднє повторюється 0 і більше разів: футбол\\p{L}* = футбол, футболу, футболіст…"],
+  ["+", "Попереднє повторюється 1 і більше разів"],
+  [String.raw`\s`, "Пробіл: збірн\\p{L}*\\s+україни = «збірна України», «збірної  України»"],
+  ["[аоє]", "Один із перелічених символів"],
+  [String.raw`\.`, "Сам символ крапки (без \\ крапка означає «будь-який символ»)"],
+];
 
 // Toggle Switch
 const ToggleWrapper = styled.div`
@@ -660,14 +943,65 @@ const UserSettingsModal = ({
     if (user?.photoURL && typeof user.photoURL === "string" && user.photoURL.startsWith("http")) {
       return user.photoURL;
     }
-    try { return localStorage.getItem("saved_google_avatar") || null; } catch { return null; }
+    try { return getPref("saved_google_avatar") || null; } catch { return null; }
   });
 
   const animationsDisabled = useAnimationsDisabled();
 
+  // Натяк «прокрутіть нижче»: показується, поки під видимою частиною є ще вміст.
+  // label — назва наступного прихованого підрозділу (напр. «Застосунки Стихії»).
+  const mainContentRef = useRef(null);
+  const [scrollHint, setScrollHint] = useState(null); // null | { label: string | null }
+
+  const findNextHiddenHeading = (el) => {
+    const visibleBottom = el.getBoundingClientRect().bottom - 40;
+    return [...el.querySelectorAll("[data-scroll-hint]")].find(
+      (h) => h.getBoundingClientRect().top > visibleBottom,
+    );
+  };
+
+  useEffect(() => {
+    const el = mainContentRef.current;
+    if (!el) return undefined;
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const remaining = el.scrollHeight - el.clientHeight - el.scrollTop;
+        if (remaining <= 24) {
+          setScrollHint(null);
+          return;
+        }
+        const label = findNextHiddenHeading(el)?.textContent?.trim() || null;
+        setScrollHint((prev) => (prev && prev.label === label ? prev : { label }));
+      });
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    // Розмір вмісту змінюється при перемиканні вкладок і розгортанні блоків
+    const resizeObserver = new ResizeObserver(update);
+    resizeObserver.observe(el);
+    [...el.children].forEach((child) => resizeObserver.observe(child));
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener("scroll", update);
+      resizeObserver.disconnect();
+    };
+  }, [activeTab]);
+
+  const scrollToHint = () => {
+    const el = mainContentRef.current;
+    if (!el) return;
+    const heading = findNextHiddenHeading(el);
+    const top = heading
+      ? el.scrollTop + heading.getBoundingClientRect().top - el.getBoundingClientRect().top - 12
+      : el.scrollTop + el.clientHeight * 0.8;
+    el.scrollTo({ top, behavior: animationsDisabled ? "auto" : "smooth" });
+  };
+
   const [isAdAntiHeaderEnabled, setIsAdAntiHeaderEnabled] = useState(() => {
     try {
-      return localStorage.getItem("ad_antiheader_enabled") !== "false";
+      return getPref("ad_antiheader_enabled") !== "false";
     } catch {
       return true;
     }
@@ -677,14 +1011,13 @@ const UserSettingsModal = ({
     const nextVal = !isAdAntiHeaderEnabled;
     setIsAdAntiHeaderEnabled(nextVal);
     try {
-      localStorage.setItem("ad_antiheader_enabled", nextVal ? "true" : "false");
-      window.dispatchEvent(new Event("storage"));
+      setPref("ad_antiheader_enabled", nextVal ? "true" : "false");
     } catch {}
   };
 
   const [isSiteContextMenuEnabled, setIsSiteContextMenuEnabled] = useState(() => {
     try {
-      return localStorage.getItem("site_context_menu_enabled") === "true";
+      return getPref("site_context_menu_enabled") === "true";
     } catch {
       return false;
     }
@@ -694,15 +1027,14 @@ const UserSettingsModal = ({
     const nextVal = !isSiteContextMenuEnabled;
     setIsSiteContextMenuEnabled(nextVal);
     try {
-      localStorage.setItem("site_context_menu_enabled", nextVal ? "true" : "false");
-      window.dispatchEvent(new Event("storage"));
+      setPref("site_context_menu_enabled", nextVal ? "true" : "false");
     } catch {}
   };
 
   // Вкладка фільтрів: вікно зсувається праворуч і вужчає, щоб було видно сторінку
   const [isFiltersPreviewOn, setIsFiltersPreviewOn] = useState(() => {
     try {
-      return localStorage.getItem("settings_filters_preview") !== "false";
+      return getPref("settings_filters_preview") !== "false";
     } catch {
       return true;
     }
@@ -711,12 +1043,12 @@ const UserSettingsModal = ({
   const toggleFiltersPreview = () => {
     const nextVal = !isFiltersPreviewOn;
     setIsFiltersPreviewOn(nextVal);
-    try { localStorage.setItem("settings_filters_preview", nextVal ? "true" : "false"); } catch {}
+    try { setPref("settings_filters_preview", nextVal ? "true" : "false"); } catch {}
   };
 
   const [filtersPreviewWidth, setFiltersPreviewWidth] = useState(() => {
     try {
-      const saved = Number(localStorage.getItem("settings_filters_preview_percent"));
+      const saved = Number(getPref("settings_filters_preview_percent"));
       return saved >= FILTERS_PREVIEW_MIN_WIDTH && saved <= FILTERS_PREVIEW_MAX_WIDTH ? saved : FILTERS_PREVIEW_DEFAULT_WIDTH;
     } catch {
       return FILTERS_PREVIEW_DEFAULT_WIDTH;
@@ -725,21 +1057,76 @@ const UserSettingsModal = ({
 
   const changeFiltersPreviewWidth = (width) => {
     setFiltersPreviewWidth(width);
-    try { localStorage.setItem("settings_filters_preview_percent", String(width)); } catch {}
+    try { setPref("settings_filters_preview_percent", String(width)); } catch {}
   };
 
   const [isNewsFilterOn, setIsNewsFilterOn] = useState(isNewsFilterEnabled);
+
+  // Синхронізація фільтра через акаунт — тим самим перемикачем, що й заглушені новини
+  const queueNewsFilterSync = () => {
+    if (user?.uid && user?.syncMutedNews) scheduleNewsFilterSync(user.uid);
+  };
+  // Закрили налаштування — відкладені зміни фільтра відправляємо одразу
+  useEffect(() => () => flushNewsFilterSync(), []);
 
   const toggleNewsFilter = () => {
     const nextVal = !isNewsFilterOn;
     setIsNewsFilterOn(nextVal);
     setNewsFilterEnabled(nextVal);
+    queueNewsFilterSync();
+  };
+
+  // Під-опції фільтра новин (зберігаються одразу, як і сам фільтр)
+  const [isNewsFilterSoft, setIsNewsFilterSoft] = useState(isNewsFilterSoftMode);
+  const [newsFilterModes, setNewsFilterModes] = useState(getNewsFilterCategoryModes);
+  const [newsFilterWords, setNewsFilterWords] = useState(getNewsFilterCustomWords);
+  const [newsFilterWordDraft, setNewsFilterWordDraft] = useState("");
+  const [isRegexHelpOpen, setIsRegexHelpOpen] = useState(false);
+  // Перевірка запису в полі: звичайне слово, коректне правило /.../ чи помилка
+  const newsFilterDraftEntry = newsFilterWordDraft.trim() ? parseNewsFilterEntry(newsFilterWordDraft) : null;
+
+  const toggleNewsFilterSoft = () => {
+    const nextVal = !isNewsFilterSoft;
+    setIsNewsFilterSoft(nextVal);
+    setNewsFilterSoftMode(nextVal);
+    queueNewsFilterSync();
+  };
+
+  const setNewsFilterCategoryMode = (key, mode) => {
+    if (newsFilterModes[key] === mode) return;
+    const next = { ...newsFilterModes, [key]: mode };
+    setNewsFilterModes(next);
+    setNewsFilterCategoryModes(next);
+    queueNewsFilterSync();
+  };
+
+  const addNewsFilterWord = () => {
+    const word = newsFilterWordDraft.trim().slice(0, NEWS_FILTER_MAX_WORD_LENGTH);
+    if (!word) return;
+    if (newsFilterWords.length >= NEWS_FILTER_MAX_WORDS) return; // кнопка вже неактивна
+    if (parseNewsFilterEntry(word).kind === "invalid") return; // помилку видно під полем
+    if (newsFilterWords.some((w) => w.toLowerCase() === word.toLowerCase())) {
+      setNewsFilterWordDraft("");
+      return;
+    }
+    const next = [...newsFilterWords, word];
+    setNewsFilterWords(next);
+    setNewsFilterCustomWords(next);
+    setNewsFilterWordDraft("");
+    queueNewsFilterSync();
+  };
+
+  const removeNewsFilterWord = (word) => {
+    const next = newsFilterWords.filter((w) => w !== word);
+    setNewsFilterWords(next);
+    setNewsFilterCustomWords(next);
+    queueNewsFilterSync();
   };
 
   useEffect(() => {
     if (user?.avatar && typeof user.avatar === "string" && user.avatar.startsWith("http") && !user.avatar.startsWith("data:")) {
       setSavedGoogleAvatar(user.avatar);
-      try { localStorage.setItem("saved_google_avatar", user.avatar); } catch {}
+      try { setPref("saved_google_avatar", user.avatar); } catch {}
     }
   }, [user]);
 
@@ -788,7 +1175,7 @@ const UserSettingsModal = ({
       const newPhoto = newGoogleUser.photoURL || newGoogleUser.providerData?.[0]?.photoURL;
       if (newPhoto) {
         setSavedGoogleAvatar(newPhoto);
-        try { localStorage.setItem("saved_google_avatar", newPhoto); } catch {}
+        try { setPref("saved_google_avatar", newPhoto); } catch {}
       }
       onUpdate({
         ...user,
@@ -883,20 +1270,12 @@ const UserSettingsModal = ({
   };
 
 
-  // Mirror flips
-  const [mirrorX, setMirrorX] = useState(false);
-  const [mirrorY, setMirrorY] = useState(false);
+  // Mirror flips — стан читається з DOM, щоб не скидатися після закриття модалки
+  const [mirrorX, setMirrorX] = useState(() => getSiteMirror().x);
+  const [mirrorY, setMirrorY] = useState(() => getSiteMirror().y);
 
   useEffect(() => {
-    const scaleX = mirrorX ? -1 : 1;
-    const scaleY = mirrorY ? -1 : 1;
-    if (scaleX === 1 && scaleY === 1) {
-      document.documentElement.style.transform = "";
-      document.documentElement.style.transformOrigin = "";
-    } else {
-      document.documentElement.style.transform = `scale(${scaleX}, ${scaleY})`;
-      document.documentElement.style.transformOrigin = "center center";
-    }
+    applySiteMirror(mirrorX, mirrorY);
   }, [mirrorX, mirrorY]);
 
   // Form State
@@ -1098,11 +1477,11 @@ const UserSettingsModal = ({
   const [downloadProgress, setDownloadProgress] = useState({});
   const [softDeletedIds, setSoftDeletedIds] = useState(() => getStoredSoftDeletedIds());
   const [downloadedTracks, setDownloadedTracks] = useState(() => {
-    try { return JSON.parse(window.localStorage.getItem("bg_music_downloaded_tracks") || "[]"); } catch { return []; }
+    try { return JSON.parse(getPref("bg_music_downloaded_tracks") || "[]"); } catch { return []; }
   });
 
   useEffect(() => {
-    window.localStorage.setItem("bg_music_downloaded_tracks", JSON.stringify(downloadedTracks));
+    setPref("bg_music_downloaded_tracks", JSON.stringify(downloadedTracks));
     persistSoftDeletedIds(softDeletedIds);
   }, [downloadedTracks, softDeletedIds]);
 
@@ -1281,7 +1660,7 @@ const UserSettingsModal = ({
                 <div style={{ fontSize: "20px", opacity: 0.5, display: isGuest ? "flex" : "none" }}>
                   <FiUser />
                 </div>
-                <div style={{ padding: isGuest ? "0 4px" : 0 }}>
+                <div >
                   <HeaderTitle>Параметри</HeaderTitle>
                   <HeaderSub>
                     {isGuest ? "Гість • Увійдіть для повного доступу" : (user?.email || user?.account || "Обліковий запис")}
@@ -1290,11 +1669,9 @@ const UserSettingsModal = ({
               </UserBadge>
             </HeaderLeft>
             <HeaderActions>
-              {!isGuest && (
-                <HeaderButton onClick={() => setShowKatScene(true)}>
-                  <FiFilm /> Титри
-                </HeaderButton>
-              )}
+              <HeaderButton onClick={() => setShowKatScene(true)}>
+                <FiFilm /> Титри
+              </HeaderButton>
               <CloseButton onClick={handleCancel}><FiX /></CloseButton>
             </HeaderActions>
           </WindowHeader>
@@ -1302,23 +1679,37 @@ const UserSettingsModal = ({
           {/* ── Body ───────────────────────────────────────────────────── */}
           <WindowBody>
             <Sidebar>
-              {navItems.map(({ key, icon, label, locked }) => (
-                <NavItem
-                  key={key}
-                  $active={activeTab === key}
-                  $locked={!!locked}
-                  onClick={() => !locked && setActiveTab(key)}
-                >
-                  <NavIconBox $active={activeTab === key} $locked={!!locked}>
-                    {icon}
-                  </NavIconBox>
-                  {label}
-                  {locked && <LockBadge>🔒</LockBadge>}
-                </NavItem>
-              ))}
+              {navItems.map(({ key, icon, label, locked }) => {
+                const item = (
+                  <NavItem
+                    key={key}
+                    $active={activeTab === key}
+                    $locked={!!locked}
+                    aria-disabled={locked ? true : undefined}
+                    onClick={() => !locked && setActiveTab(key)}
+                  >
+                    <NavIconBox $active={activeTab === key} $locked={!!locked} $anim={getIconAnim(icon)}>
+                      {icon}
+                    </NavIconBox>
+                    {label}
+                    {locked && <LockBadge>🔒</LockBadge>}
+                  </NavItem>
+                );
+                return locked ? (
+                  <Tooltip
+                    key={key}
+                    content="Необхідна реєстрація"
+                    placement="right"
+                    wrapperStyle={{ display: "block", flexShrink: 0 }}
+                  >
+                    {item}
+                  </Tooltip>
+                ) : item;
+              })}
             </Sidebar>
 
-            <MainContent>
+            <MainContentWrap>
+            <MainContent ref={mainContentRef}>
 
               {/* ── SECURITY TAB ────────────────────────────────────── */}
               {activeTab === "security" && !isGuest && (
@@ -1329,7 +1720,7 @@ const UserSettingsModal = ({
                   {/* Account Relinking & Binding Controls */}
                   <CardExpanded>
                     <CardLeft>
-                      <CardIconBox $color="#60cdff"><FiRefreshCw /></CardIconBox>
+                      <CardIconBox $color="#60cdff"><FiLink /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Керування прив'язками профілю</CardTitle>
                         <CardDescription>Зміна прив'язаного Google-акаунту або пошти</CardDescription>
@@ -1403,7 +1794,7 @@ const UserSettingsModal = ({
                   {!isGoogleAccount && (
                     <CardExpanded>
                       <CardLeft>
-                        <CardIconBox><FiLock /></CardIconBox>
+                        <CardIconBox $color="#f87171"><FiKey /></CardIconBox>
                         <CardInfo>
                           <CardTitle>Зміна пароля</CardTitle>
                           <CardDescription>Введіть новий пароль для профілю</CardDescription>
@@ -1436,7 +1827,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiClock /></CardIconBox>
+                      <CardIconBox $color="#38bdf8"><FiWatch /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Відображення секунд</CardTitle>
                         <CardDescription>Показувати секунди (17:23:17)</CardDescription>
@@ -1452,7 +1843,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiClock /></CardIconBox>
+                      <CardIconBox $color="#22d3ee"><TbClock24 /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Формат часу</CardTitle>
                         <CardDescription>24-годинний або 12-годинний (AM/PM)</CardDescription>
@@ -1468,7 +1859,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiCalendar /></CardIconBox>
+                      <CardIconBox $color="#34d399"><FiCalendar /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Режим відображення</CardTitle>
                         <CardDescription>Час, дата або обидва разом</CardDescription>
@@ -1488,7 +1879,7 @@ const UserSettingsModal = ({
                   {/* Вимкнути анімації */}
                   <Card>
                     <CardLeft>
-                      <CardIconBox $color="#60cdff"><FiZap /></CardIconBox>
+                      <CardIconBox $color="#fbbf24"><FiPauseCircle /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Вимкнути анімації</CardTitle>
                         <CardDescription>
@@ -1508,12 +1899,12 @@ const UserSettingsModal = ({
                     </CardControl>
                   </Card>
 
-                  {/* AntiHeader Ad Toggle */}
+                  {/* AntiHeader Tips Toggle — тимчасово приховано
                   <Card>
                     <CardLeft>
-                      <CardIconBox $color="#60cdff"><FiInfo /></CardIconBox>
+                      <CardIconBox $color="#fb923c"><TbSpeakerphone /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Реклама та підказки в хедері</CardTitle>
+                        <CardTitle>Підказки в хедері</CardTitle>
                         <CardDescription>
                           {isAdAntiHeaderEnabled
                             ? "Авто-показ банера з порадами інструментів(можливостей) Стихії та гарячими клавішами"
@@ -1530,10 +1921,11 @@ const UserSettingsModal = ({
                       </ToggleWrapper>
                     </CardControl>
                   </Card>
+                  */}
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox $color="#60cdff"><FiList /></CardIconBox>
+                      <CardIconBox $color="#a3e635"><FiMoreVertical /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Контекстне меню Стихії</CardTitle>
                         <CardDescription>
@@ -1555,7 +1947,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiClock /></CardIconBox>
+                      <CardIconBox $color="#2dd4bf"><TbHourglass /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Таймер оновлення погоди</CardTitle>
                         <CardDescription>Показувати відлік до наступного оновлення даних</CardDescription>
@@ -1571,7 +1963,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiSliders /></CardIconBox>
+                      <CardIconBox $color="#f472b6"><FiType /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Власний шрифт</CardTitle>
                         <CardDescription>Назва шрифту Google Fonts (напр. Roboto)</CardDescription>
@@ -1584,7 +1976,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiSmartphone /></CardIconBox>
+                      <CardIconBox $color="#fb7185"><TbHandFinger /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Чутливість жестів</CardTitle>
                         <CardDescription>Свайпи та слайдери: {formData.gestureSensitivity}x</CardDescription>
@@ -1598,7 +1990,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiSliders /></CardIconBox>
+                      <CardIconBox $color="#facc15"><FiMousePointer /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Швидкий відгук на кліки</CardTitle>
                         <CardDescription>Миттєвий відгук без затримок</CardDescription>
@@ -1614,7 +2006,7 @@ const UserSettingsModal = ({
 
                   <CardExpanded>
                     <CardLeft>
-                      <CardIconBox><FiEye /></CardIconBox>
+                      <CardIconBox $color="#818cf8"><TbFlipVertical /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Дзеркальність сайту</CardTitle>
                         <CardDescription>Скидається після перезавантаження сторінки</CardDescription>
@@ -1659,7 +2051,7 @@ const UserSettingsModal = ({
                       <CardExpanded key={sec.key}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
                           <CardLeft>
-                            <CardIconBox $color="#60cdff">{SECTION_ICONS[sec.key] || <FiLayers />}</CardIconBox>
+                            <CardIconBox $color={SECTION_COLORS[sec.key] || "#94a3b8"}>{SECTION_ICONS[sec.key] || <FiGrid />}</CardIconBox>
                             <CardInfo>
                               <CardTitle>{sec.label}</CardTitle>
                             </CardInfo>
@@ -1706,7 +2098,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiShield /></CardIconBox>
+                      <CardIconBox $color="#f97316"><FiFilter /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Фільтр новин</CardTitle>
                         <CardDescription>Приховує новини про війну, політику, кримінал та інший небажаний контент. Зміни діють після оновлення новин</CardDescription>
@@ -1720,15 +2112,199 @@ const UserSettingsModal = ({
                     </CardControl>
                   </Card>
 
+                  {/* Під-опції фільтра: завжди видно, але сірі й неактивні, коли фільтр вимкнено */}
+                  <FilterSubGroup $disabled={!isNewsFilterOn} aria-disabled={!isNewsFilterOn}>
+                    {/* 1. М'який режим */}
+                    <Card>
+                      <CardInfo>
+                        <CardTitle>Не видаляти, а показувати плашку</CardTitle>
+                        <CardDescription>
+                          Небажана новина лишається у стрічці під плашкою «Небажаний контент був автозаблокований» з кнопкою «Розглушити»
+                        </CardDescription>
+                      </CardInfo>
+                      <CardControl>
+                        <ToggleWrapper onClick={toggleNewsFilterSoft}>
+                          <ToggleStatusLabel $checked={isNewsFilterSoft}>{isNewsFilterSoft ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                          <SwitchPill $checked={isNewsFilterSoft} />
+                        </ToggleWrapper>
+                      </CardControl>
+                    </Card>
+
+                    {/* 2. Категорії: не рекомендувати / показувати */}
+                    <CardExpanded>
+                      <CardInfo>
+                        <CardTitle>Які теми бачити</CardTitle>
+                        <CardDescription>Для кожної теми оберіть: не рекомендувати (фільтр її ховає) чи показувати</CardDescription>
+                      </CardInfo>
+                      <div>
+                        {NEWS_FILTER_CATEGORIES.map(({ key, label }) => {
+                          const mode = newsFilterModes[key] || "hide";
+                          return (
+                            <FilterRow key={key}>
+                              <span style={{ fontSize: "13px", color: "#e0e0e0" }}>{label}</span>
+                              <Segmented role="radiogroup" aria-label={label}>
+                                <SegmentBtn
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={mode === "hide"}
+                                  $active={mode === "hide"}
+                                  $tone="hide"
+                                  onClick={() => setNewsFilterCategoryMode(key, "hide")}
+                                >
+                                  Не рекомендувати
+                                </SegmentBtn>
+                                <SegmentBtn
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={mode === "show"}
+                                  $active={mode === "show"}
+                                  $tone="show"
+                                  onClick={() => setNewsFilterCategoryMode(key, "show")}
+                                >
+                                  Показувати
+                                </SegmentBtn>
+                              </Segmented>
+                            </FilterRow>
+                          );
+                        })}
+                      </div>
+                    </CardExpanded>
+
+                    {/* 3. Власні слова та правила */}
+                    <CardExpanded>
+                      <CardInfo>
+                        <FilterSubTitle>Власні слова та правила ({newsFilterWords.length}/{NEWS_FILTER_MAX_WORDS})</FilterSubTitle>
+                        <CardDescription>
+                          Новини з цими словами в заголовку чи описі теж блокуватимуться. Регістр не важливий.
+                          Можна писати не лише слово, а й правило між косими рисками — див. пояснення нижче
+                        </CardDescription>
+                      </CardInfo>
+                      <form
+                        style={{ display: "flex", gap: "8px" }}
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          addNewsFilterWord();
+                        }}
+                      >
+                        <WinInput
+                          type="text"
+                          value={newsFilterWordDraft}
+                          maxLength={NEWS_FILTER_MAX_WORD_LENGTH}
+                          placeholder="Слово (футбол) або правило (/футбол\p{L}*/iu)"
+                          disabled={!isNewsFilterOn}
+                          spellCheck={false}
+                          onChange={(e) => setNewsFilterWordDraft(e.target.value)}
+                          style={newsFilterDraftEntry?.kind === "regex" || newsFilterDraftEntry?.kind === "invalid" ? { fontFamily: "Consolas, monospace" } : undefined}
+                        />
+                        <WinButton
+                          type="submit"
+                          disabled={
+                            !isNewsFilterOn ||
+                            !newsFilterWordDraft.trim() ||
+                            newsFilterDraftEntry?.kind === "invalid" ||
+                            newsFilterWords.length >= NEWS_FILTER_MAX_WORDS
+                          }
+                        >
+                          <FiPlus /> Додати
+                        </WinButton>
+                      </form>
+                      {newsFilterDraftEntry && (
+                        <DraftHint $tone={newsFilterDraftEntry.kind}>
+                          {newsFilterDraftEntry.kind === "word" && "Звичайне слово: блокуватиметься текст, що містить його"}
+                          {newsFilterDraftEntry.kind === "regex" && "Правило коректне — його можна додати"}
+                          {newsFilterDraftEntry.kind === "invalid" && `Помилка в правилі: ${newsFilterDraftEntry.error}`}
+                        </DraftHint>
+                      )}
+                      {newsFilterWords.length > 0 && (
+                        <WordChips>
+                          {newsFilterWords.map((word) => (
+                            <WordChip key={word} $regex={parseNewsFilterEntry(word).kind !== "word"}>
+                              {word}
+                              <button type="button" aria-label={`Прибрати «${word}»`} onClick={() => removeNewsFilterWord(word)}>
+                                <FiX />
+                              </button>
+                            </WordChip>
+                          ))}
+                        </WordChips>
+                      )}
+
+                      {/* Пояснення синтаксису правил на прикладі */}
+                      <RegexHelp>
+                        <RegexHelpToggle
+                          type="button"
+                          aria-expanded={isRegexHelpOpen}
+                          aria-controls="news-filter-regex-help"
+                          onClick={() => setIsRegexHelpOpen((v) => !v)}
+                        >
+                          <RegexHelpChevron $open={isRegexHelpOpen} aria-hidden="true">
+                            <FiChevronDown />
+                          </RegexHelpChevron>
+                          Як писати правила (регулярні вирази)
+                        </RegexHelpToggle>
+                        <AnimatePresence initial={false}>
+                          {isRegexHelpOpen && (
+                            <motion.div
+                              id="news-filter-regex-help"
+                              key="regex-help"
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                              style={{ overflow: "hidden" }}
+                            >
+                        <p>
+                          Правило — це шаблон між косими рисками. Воно ловить одразу всі форми слова. Приклад, який
+                          блокує новини про уряд, парламент і владу:
+                        </p>
+                        <RegexExample>
+                          <code>{NEWS_FILTER_REGEX_EXAMPLE}</code>
+                          <WinButton type="button" onClick={() => setNewsFilterWordDraft(NEWS_FILTER_REGEX_EXAMPLE)}>
+                            Вставити приклад
+                          </WinButton>
+                        </RegexExample>
+                        <p>
+                          Спрацює на: <i>уряд, уряду, урядом, парламент, парламенту, парламентом, влада, влади, владою</i>.
+                          Не спрацює на: <i>владика, безвладдя</i>.
+                        </p>
+                        <RegexLegend>
+                          {NEWS_FILTER_REGEX_LEGEND.map(([token, text]) => (
+                            <Fragment key={token}>
+                              <code>{token}</code>
+                              <span>{text}</span>
+                            </Fragment>
+                          ))}
+                        </RegexLegend>
+                        <p style={{ marginTop: "10px" }}>Інші корисні елементи:</p>
+                        <RegexLegend>
+                          {NEWS_FILTER_REGEX_EXTRA.map(([token, text]) => (
+                            <Fragment key={token}>
+                              <code>{token}</code>
+                              <span>{text}</span>
+                            </Fragment>
+                          ))}
+                        </RegexLegend>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </RegexHelp>
+                    </CardExpanded>
+
+                    <FilterNotes>
+                      <span><FiInfo aria-hidden="true" /> Нові налаштування, як і сам фільтр, діють після оновлення новин.</span>
+                      <span><FiInfo aria-hidden="true" /> Розглушена плашка відкрита лише до перезавантаження сторінки.</span>
+                    </FilterNotes>
+                  </FilterSubGroup>
+
                   {!isGuest ? (
                     <Card>
                       <CardLeft>
-                        <CardIconBox><FiGlobe /></CardIconBox>
+                        <CardIconBox $color="#e879f9"><FiBellOff /></CardIconBox>
                         <CardInfo>
-                          <CardTitle>Синхронізація заглушених новин</CardTitle>
+                          <CardTitle>Синхронізація заглушених новин і фільтра</CardTitle>
                           <CardDescription>
-                            Синхронізувати приховані новини між усіма пристроями. Не більше {MUTE_SYNC_DAILY_LIMIT} дій на добу —
-                            «Заглушити» і «Розглушити» рахуються обидві. Те, що понад ліміт, зберігається лише на цьому пристрої
+                            Синхронізувати приховані новини та налаштування фільтра (теми, власні слова й правила) між усіма пристроями.
+                            Не більше {MUTE_SYNC_DAILY_LIMIT} дій на добу — «Заглушити», «Розглушити» і зміна фільтра рахуються однаково
+                            (кілька змін фільтра поспіль — одна дія). Те, що понад ліміт, зберігається лише на цьому пристрої
                             й підтягнеться в хмару з наступною синхронізацією.
                           </CardDescription>
                         </CardInfo>
@@ -1743,9 +2319,9 @@ const UserSettingsModal = ({
                   ) : (
                     <Card style={{ opacity: 0.45 }}>
                       <CardLeft>
-                        <CardIconBox><FiGlobe /></CardIconBox>
+                        <CardIconBox $color="#e879f9"><FiBellOff /></CardIconBox>
                         <CardInfo>
-                          <CardTitle>Синхронізація заглушених новин</CardTitle>
+                          <CardTitle>Синхронізація заглушених новин і фільтра</CardTitle>
                           <CardDescription>🔒 Доступно тільки для зареєстрованих користувачів</CardDescription>
                         </CardInfo>
                       </CardLeft>
@@ -1754,7 +2330,7 @@ const UserSettingsModal = ({
 
                   <CardExpanded>
                     <CardLeft>
-                      <CardIconBox><FiGlobe /></CardIconBox>
+                      <CardIconBox $color="#c4b5fd"><FiEye /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Видимість елементів новин</CardTitle>
                         <CardDescription>Увімкніть або вимкніть частини новинних карток</CardDescription>
@@ -1786,7 +2362,7 @@ const UserSettingsModal = ({
                   {/* Restart tutorial */}
                   <Card>
                     <CardLeft>
-                      <CardIconBox $color="#60cdff"><FiRotateCcw /></CardIconBox>
+                      <CardIconBox $color="#86efac"><TbSchool /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Навчання від Доміно</CardTitle>
                         <CardDescription>Пройти інтерактивне навчання по сайту ще раз</CardDescription>
@@ -1843,7 +2419,7 @@ const UserSettingsModal = ({
                   {/* Sticky BG */}
                   <Card>
                     <CardLeft>
-                      <CardIconBox $color="#60cdff"><FiLayers /></CardIconBox>
+                      <CardIconBox $color="#5eead4"><FiAnchor /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Липкий фоновий ефект</CardTitle>
                         <CardDescription>Закріплення заднього плану при скролі</CardDescription>
@@ -1860,7 +2436,7 @@ const UserSettingsModal = ({
                   {/* Loading Strategy */}
                   <CardExpanded>
                     <CardLeft>
-                      <CardIconBox $color="#60cdff"><FiZap /></CardIconBox>
+                      <CardIconBox $color="#93c5fd"><FiDownloadCloud /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Стратегія завантаження ресурсів</CardTitle>
                         <CardDescription>Оптимізація швидкості запуску та економія трафіку</CardDescription>
@@ -1890,7 +2466,7 @@ const UserSettingsModal = ({
                   {/* Decorator Mode */}
                   <CardExpanded>
                     <CardLeft>
-                      <CardIconBox $color="#a78bfa"><GiPalette /></CardIconBox>
+                      <CardIconBox $color="#d946ef"><FiPenTool /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Режим Декоратора (CSS Редактор)</CardTitle>
                         <CardDescription>Візуальне редагування стилів елементів сторінки</CardDescription>
@@ -1961,7 +2537,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiDownload /></CardIconBox>
+                      <CardIconBox $color="#00a4ef"><FaWindows /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Версія для Windows</CardTitle>
                         <CardDescription>Завантажити застосунок Stuxia для комп'ютера</CardDescription>
@@ -1980,7 +2556,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiSmartphone /></CardIconBox>
+                      <CardIconBox $color="#3ddc84"><FaAndroid /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Версія для Android</CardTitle>
                         <CardDescription>APK для встановлення на Android-пристрої</CardDescription>
@@ -1999,7 +2575,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiDownload /></CardIconBox>
+                      <CardIconBox $color="#fcc624"><FaLinux /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Версія для Linux</CardTitle>
                         <CardDescription>AppImage для більшості дистрибутивів або DEB для Debian/Ubuntu</CardDescription>
@@ -2024,7 +2600,7 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
-                      <CardIconBox><FiSmartphone /></CardIconBox>
+                      <CardIconBox $color="#d1d5db"><FaApple /></CardIconBox>
                       <CardInfo>
                         <CardTitle>На iPhone та iPad</CardTitle>
                         <CardDescription>Відкрийте сайт у Safari, натисніть «Поділитися» → «На початковий екран»</CardDescription>
@@ -2058,7 +2634,7 @@ const UserSettingsModal = ({
                   <WideScreenOnly>
                   <Card>
                     <CardLeft>
-                      <CardIconBox $color="#ffb36c"><FiColumns /></CardIconBox>
+                      <CardIconBox $color="#fdba74"><FiColumns /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Перегляд поруч зі сторінкою</CardTitle>
                         <CardDescription>
@@ -2081,7 +2657,7 @@ const UserSettingsModal = ({
                   {isFiltersPreviewOn && (
                     <Card>
                       <CardLeft>
-                        <CardIconBox $color="#ffb36c"><FiMaximize2 /></CardIconBox>
+                        <CardIconBox $color="#fcd34d"><FiMaximize2 /></CardIconBox>
                         <CardInfo>
                           <CardTitle>Ширина вікна в режимі перегляду</CardTitle>
                           <CardDescription>{filtersPreviewWidth}% ширини екрана</CardDescription>
@@ -2104,7 +2680,7 @@ const UserSettingsModal = ({
                   {/* Dark intensity slider */}
                   <Card>
                     <CardLeft>
-                      <CardIconBox $color="#ffb36c"><FiMoon /></CardIconBox>
+                      <CardIconBox $color="#fde047"><TbBrightnessDown /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Зменшення яскравості / Затемнення</CardTitle>
                         <CardDescription>Інтенсивність: {visualConfig.darkIntensity || 0}%</CardDescription>
@@ -2122,7 +2698,7 @@ const UserSettingsModal = ({
                   {/* Filters grid */}
                   <CardExpanded>
                     <CardLeft>
-                      <CardIconBox $color="#ffb36c"><FiEye /></CardIconBox>
+                      <CardIconBox $color="#f0abfc"><TbColorFilter /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Кольорові та зорові фільтри</CardTitle>
                         <CardDescription>Оберіть ефект для оформлення сторінки</CardDescription>
@@ -2145,7 +2721,7 @@ const UserSettingsModal = ({
                   {visualConfig.filterType !== "none" && (
                     <Card>
                       <CardLeft>
-                        <CardIconBox $color="#ffb36c"><FiSlidersIcon /></CardIconBox>
+                        <CardIconBox $color="#fca5a5"><FiSlidersIcon /></CardIconBox>
                         <CardInfo>
                           <CardTitle>Сила ефекту фільтра</CardTitle>
                           <CardDescription>Інтенсивність: {visualConfig.filterIntensity || 50}%</CardDescription>
@@ -2164,7 +2740,7 @@ const UserSettingsModal = ({
                   {/* Example image: on narrow screens the page behind the modal isn't visible */}
                   <FilterExampleCard>
                     <CardLeft>
-                      <CardIconBox $color="#ffb36c"><FiImage /></CardIconBox>
+                      <CardIconBox $color="#67e8f9"><FiImage /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Приклад</CardTitle>
                         <CardDescription>Так фільтр виглядатиме на сторінці</CardDescription>
@@ -2181,7 +2757,7 @@ const UserSettingsModal = ({
                   {/* Combo builder */}
                   <CardExpanded>
                     <CardLeft>
-                      <CardIconBox $color="#ffb36c"><FiLayers /></CardIconBox>
+                      <CardIconBox $color="#a5b4fc"><FiLayers /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Комбінація фільтрів</CardTitle>
                         <CardDescription>
@@ -2203,7 +2779,7 @@ const UserSettingsModal = ({
                   {/* Presets Manager */}
                   <CardExpanded>
                     <CardLeft>
-                      <CardIconBox $color="#ffb36c"><FiZap /></CardIconBox>
+                      <CardIconBox $color="#f9a8d4"><TbWand /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Швидкі стилі та пресети</CardTitle>
                         <CardDescription>
@@ -2299,7 +2875,7 @@ const UserSettingsModal = ({
                     {/* Volume + Speed + Mode */}
                     <CardExpanded>
                       <CardLeft>
-                        <CardIconBox $color="#a78bfa"><FiVolume2 /></CardIconBox>
+                        <CardIconBox $color="#c084fc"><FiVolume2 /></CardIconBox>
                         <CardInfo>
                           <CardTitle>Гучність та швидкість</CardTitle>
                           <CardDescription>Налаштування відтворення фону та звукових ефектів</CardDescription>
@@ -2327,7 +2903,7 @@ const UserSettingsModal = ({
                     {/* Seek bar + mode */}
                     <CardExpanded>
                       <CardLeft>
-                        <CardIconBox $color="#a78bfa"><TbMenuOrder style={{ fontSize: "18px" }} /></CardIconBox>
+                        <CardIconBox $color="#8b5cf6"><TbMenuOrder style={{ fontSize: "18px" }} /></CardIconBox>
                         <CardInfo>
                           <CardTitle>Режим відтворення</CardTitle>
                           <CardDescription>Позиція: {formatTime(currentTime)} / {formatTime(duration)}</CardDescription>
@@ -2412,7 +2988,7 @@ const UserSettingsModal = ({
                     {musicTab === "custom" && (
                       <CardExpanded>
                         <CardLeft>
-                          <CardIconBox $color="#a78bfa"><FiUpload /></CardIconBox>
+                          <CardIconBox $color="#7c3aed"><FiUpload /></CardIconBox>
                           <CardInfo>
                             <CardTitle>Власні треки ({customTracks.length}/{MAX_CUSTOM_TRACKS})</CardTitle>
                             <CardDescription>MP3/WAV/OPUS (рекомендовано) до {MAX_CUSTOM_MB} МБ та {MAX_CUSTOM_MIN} хвилин. Додані треки з'являються в бібліотеці</CardDescription>
@@ -2446,6 +3022,25 @@ const UserSettingsModal = ({
 
 
             </MainContent>
+
+            {/* Натяк, що нижче є ще налаштування */}
+            <AnimatePresence>
+              {scrollHint && (
+                <ScrollHintFade
+                  key="scroll-hint"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <ScrollHintButton type="button" onClick={scrollToHint}>
+                    <FiChevronDown aria-hidden="true" />
+                    {scrollHint.label ? `Нижче: ${scrollHint.label}` : "Прокрутіть нижче"}
+                  </ScrollHintButton>
+                </ScrollHintFade>
+              )}
+            </AnimatePresence>
+            </MainContentWrap>
           </WindowBody>
 
           {/* ── Footer ─────────────────────────────────────────────────── */}

@@ -197,10 +197,17 @@
 
 
 
-export const BANNED_PATTERNS = [
+import { getPref, setPref } from "./prefsStore.js";
+
+// Мітка групи: усі шаблони після неї (до наступної мітки) належать до цієї категорії.
+// Категорії описані в NEWS_FILTER_CATEGORIES нижче — їх можна вмикати/вимикати в налаштуваннях.
+const group = (key) => ({ group: key });
+
+const RAW_PATTERNS = [
   // ==========================================
   // 1. ВІЙНА, СИЛОВИКИ ТА АТАКИ
   // ==========================================
+  group("war"),
   /війн(?:а|и|ою|і|нах)/iu,
   /бойов(?:і|их|им|ий|а|ої)/iu,
   /конфлікт(?:у|и|ів|ом)?/iu,
@@ -222,6 +229,7 @@ export const BANNED_PATTERNS = [
   // ==========================================
   // 2. ПОЛІТИКА, ВЛАДА ТА СВІТОВІ ЛІДЕРИ
   // ==========================================
+  group("politics"),
   /політик(?:а|и|ою|і|ів)/iu,
   /корупці(?:я|ї|ю|єю)/iu,
   /депутат(?:и|ів|ом|а)?|президент(?:и|ів|а)?/iu,
@@ -234,6 +242,7 @@ export const BANNED_PATTERNS = [
   // ==========================================
   // 3. КРИМІНАЛ, НАСИЛЬСТВО ТА ПОЛІЦІЯ
   // ==========================================
+  group("crime"),
   /кримінал(?:у|ом)?/iu,
   /поліці(?:я|ї|ю|єю)/iu,
   /(?<!\p{L})суд(?:у|ом|ів)?(?!\p{L})/iu,
@@ -253,6 +262,7 @@ export const BANNED_PATTERNS = [
   // ==========================================
   // 4. ADULT / НЕБАЖАНИЙ ТА ЕРОТИЧНИЙ КОНТЕНТ
   // ==========================================
+  group("adult"),
   /порно(?:графі|г| розроб| фільм.*)?/iu,
   /porno|pornography|\bporn\b|hentai|хентай|nsfw/iu,
   /еротик(?:а|и|ою|і|чн.*)?|erotic|erotica/iu,
@@ -273,6 +283,7 @@ export const BANNED_PATTERNS = [
   // ==========================================
   // 5. АЗАРТНІ ІГРИ, БЕТТІНГ, КРИПТА ТА РЕЛІГІЯ
   // ==========================================
+  group("gambling"),
   /(?:онлайн\s*)?казино|casino/iu,
   /рулетк(?:а|и|у|ою|ці|ок)/iu,
   /слот(?:и|ів|ами|ах|ам)?|slots?/iu,
@@ -333,11 +344,13 @@ export const BANNED_PATTERNS = [
   /bwin|бвін/iu,
   /stake\.com|stake\s*casino|bc\.game|roobet|rollbit/iu,
 
+  group("crypto"),
   // Крипта
   /крипто(?:валюта|валют|гроші|валютні)?|крипт(?:а|і)/iu,
   /crypto(?:currency)?|bitcoin|\bbtc\b|ethereum|\beth\b|\busdt\b|binance/iu,
   /аірдроп|airdrop|тапалк(?:а|и)|hamster\s*kombat|хом['’`ʼ]?як/iu,
 
+  group("religion"),
   // Релігія та езотерика
   /gallup/iu,
   /релігі(?:я|ї|ю|єю|йн.*)/iu,
@@ -358,6 +371,7 @@ export const BANNED_PATTERNS = [
   // ==========================================
   // 6. ІНШЕ
   // ==========================================
+  group("politics"),
   /(?<!\p{L})(?:набу|сап|бэб)(?!\p{L})/iu,
   /обшук(?:и|ів|ами|ах)?/iu,
   /детектив(?:и|ів|ам|ами)?/iu,
@@ -366,12 +380,14 @@ export const BANNED_PATTERNS = [
   /фракці(?:я|ї|ю|єю)/iu,
   /міністр(?:и|ів|ам|ами|а)?/iu,
   /голосувати|голосуванн(?:я|ь)/iu,
+  group("crime"),
   /підпал(?:и|ів|ам|ами)?/iu,
   /вербувати|завербува.*/iu,
 
   // ==========================================
   // 7. ДТП, КАТАСТРОФИ ТА ТРАВМИ
   // ==========================================
+  group("disasters"),
   /аварі(?:я|ї|ю|єю)/iu,
   /(?<!\p{L})(?:дзп|дтп)(?!\p{L})/iu,
   /врізавс(?:я|ь)|зіткненн(?:я|ь)/iu,
@@ -381,6 +397,7 @@ export const BANNED_PATTERNS = [
   // ==========================================
   // 8. ВИБОРИ ТА ОПОЗИЦІЯ
   // ==========================================
+  group("politics"),
   /вибор(?:и|ів|ам|ах|чий|чої)/iu,
   /опозиці(?:я|ї|ю|єю)/iu,
   /кампані(?:я|ї|ю)/iu,
@@ -389,6 +406,7 @@ export const BANNED_PATTERNS = [
   // ==========================================
   // 9. НЕЛЕГАЛЬНИЙ ПЕРЕТИН КОРДОНУ
   // ==========================================
+  group("crime"),
   /незаконн(?:ий|ого|е)\s+переправленн(?:я|ь)/iu,
   /схем(?:а|и|ам|ами)\s+(?:виїзду|втечі|переправлення)/iu,
 
@@ -402,6 +420,7 @@ export const BANNED_PATTERNS = [
   // ==========================================
   // 13. МЕДІА-ПЕРСОНИ, СКАПРИЗНІ БЛОГЕРИ ТА КУЛЬТУРНІ ДІЯЧІ
   // =========================================
+  group("celebrities"),
   // Лариса Ніцой
   /(?<!\p{L})(?:ніцой|ларис(?:а|и|і|у)?\s+ніцой)(?!\p{L})/iu,
   // Євген Хмара (тільки разом із ім'ям, щоб не блокувати погодні хмари!)
@@ -416,15 +435,19 @@ export const BANNED_PATTERNS = [
   /(?<!\p{L})(?:дурнєв(?:а|у)?|кондратюк(?:а|у)?|волошин(?:а|у)?|пренткович)(?!\p{L})/iu,
   // Публічні медіа-ведучі та активісти
   /(?<!\p{L})(?:янін(?:а|и)\s+соколов(?:а|и)|сергі(?:й|я)\s+притул(?:а|и)|олег\s+скрипк(?:а|и))(?!\p{L})/iu,
+  group("politics"),
   /(?<!\p{L})(?:єрмак(?:а|у)?|татаров(?:а|у)?|залужн(?:ий|ого|ому)|сирськ(?:ий|ого|ому)|буданов(?:а|у)?|резніков(?:а|у)?|безугл(?:а|у|ої)|арахамі(?:я|ї)|гетьманцев(?:а|у)?)(?!\p{L})/iu,
   /василь\s+малюк/iu,
   /(?<!\p{L})(?:кадиров(?:а|у)?|пригожин(?:а|у)?|герасимов(?:а|у)?|мішустін(?:а|у)?|соловйов(?:а|у)?|скабєєв(?:а|і|у)|сімоньян|дугін(?:а|у)?)(?!\p{L})/iu,
+  group("war"),
   /(?<!\p{L})(?:ппо|гур|ова|кмва)(?!\p{L})/iu,
   /(?<!\p{L})(?:каб(?:и|ів|ами)?|фаб(?:и|ів)?)(?!\p{L})|шахед(?:и|ів|ами)?|геран(?:ь|і)/iu,
   /повітрян(?:а|і)\s+тривог(?:а|и)|укритт(?:я|ях)|бомбосховищ(?:е|ах)|приліт(?:и|ів)?|контрнаступ/iu,
+  group("economy"),
   /блек\s*аут|відключенн(?:я|ь)\s+(?:світла|електроенергії)|графік(?:и|ів)\s+відключень/iu,
   /інфляці(?:я|ї)|дефолт|подорожчанн(?:я|ь)|податк(?:и|ів)|(?<!\p{L})борг(?:и|ів)(?!\p{L})|дефіцит\s+бюджету/iu,
   /банкрутств(?:о|а)/iu,
+  group("politics"),
   /(?<!\p{L})(?:шольц(?:а|у)?|пісторіус(?:а|у)?|фіцо|мелоні|блінкен(?:а|у)?|столтенберг(?:а|у)?|рютте|гросс(?:і|і))(?!\p{L})/iu,
   /фаріон/iu,
   /(?<!\p{L})(?:порошенк|ющенк|кучм|кравчук|янукович|шмигал|гройсман|яценюк|тимошенк|кличк|садов|труханов)(?:о|а|у|ом|ові|ий|ого)?(?!\p{L})/iu,
@@ -445,6 +468,7 @@ export const BANNED_PATTERNS = [
   // ==========================================
   // 11. ІДЕОЛОГІЇ, ТОТАЛІТАРИЗМ ТА СИМВОЛІКА
   // ==========================================
+  group("ideology"),
   /свастик(?:а|и|у|ою)/iu,
   /нацизмін?|нацист(?:и|ів|ський|ська)?/iu,
   /фашизмін?|фашист(?:и|ів|ський|ська)?/iu,
@@ -473,6 +497,7 @@ export const BANNED_PATTERNS = [
   // ==========================================
   // 12. МАТЮКИ ТА ВУЛЬГАРИЗМИ
   // ==========================================
+  group("profanity"),
   /(?<!\p{L})хер(?:а|у|ом|и)?(?!\p{L})/iu,
   /хуй|хюй|х\*+|залуп(?:а|и|у|ою)|мудак(?:и|а|ів)?/iu,
   /пизд|пізд|піпєц|пипец/iu,
@@ -488,9 +513,11 @@ export const BANNED_PATTERNS = [
   /п[*#@$]+зд[аяiі]/iu,
   /б[*#@$]+т[ьi]|б[*#@$]+д[ьi]/iu,
   /є[*#@$]+б|е[*#@$]+б/iu,
+  group("celebrities"),
   // Додаткові скандальні діячі та блогери
   /(?<!\p{L})(?:арестович(?:а|у)?|шарі(?:й|я|ю)|тищенк(?:о|а|у)|дубінськ(?:ий|ого)|кив(?:а|и|у)|бойк(?:о|а|у)|мураєв(?:а|у)?)(?!\p{L})/iu,
 
+  group("politics"),
   // Олігархи
   /(?<!\p{L})(?:коломойськ(?:ий|ого)|ахметов(?:а|у)?|пінчук(?:а|у)?|фірташ(?:а|у)?)(?!\p{L})/iu,
 
@@ -500,6 +527,7 @@ export const BANNED_PATTERNS = [
   // 14. ТЕЛЕВЕДУЧІ НОВИН ТА СУПЕРЕЧЛИВІ ШОУ
   // ==========================================
 
+  group("celebrities"),
   // Алла Мазур та Наталія Мосейчук
   /(?<!\p{L})(?:алл(?:а|и|і|у)?\s+мазур|мосейчук|натал(?:ія|і|ією|ію)?\s+мосейчук)(?!\p{L})/iu,
 
@@ -508,9 +536,11 @@ export const BANNED_PATTERNS = [
 
   // Дизель Шоу (безпечно: не чіпає дизельне паливо чи двигуни)
   /(?<!\p{L})дизель\s*шоу(?!\p{L})/iu,
+  group("war"),
   // Михайло Драпатий (генерал)
   /(?<!\p{L})(?:драпат(?:ий|ого|ому|им|і))(?!\p{L})/iu,
 
+  group("war"),
   // Мобілізація та призов
   /мобілізаці(?:я|ї|ю|єю)|мобілізува.*/iu,
   /призов(?:у|на|ний|ників)?|повісток|повістк(?:а|и|у|ами)/iu,
@@ -519,11 +549,49 @@ export const BANNED_PATTERNS = [
   /(?<!\p{L})(?:генштаб(?:у|ом)?|гш\s+зсу)(?!\p{L})/iu,
   /главком(?:а|у)?|командувач(?:а|і|ів)?/iu,
 
+  group("crime"),
   // Катування та побиття (доповнення до криміналу/насильства)
   /катуванн(?:я|ь|ям)|катува.*/iu,
   /побит(?:тя|тєм|ті)/iu,
+  group("religion"),
   /зодіак(?:у|а|и)/iu,
 ];
+
+/** Категорії фільтра новин (порядок = порядок у налаштуваннях). */
+export const NEWS_FILTER_CATEGORIES = [
+  { key: "war", label: "Війна та армія" },
+  { key: "politics", label: "Політика та влада" },
+  { key: "crime", label: "Кримінал і насильство" },
+  { key: "disasters", label: "ДТП та катастрофи" },
+  { key: "economy", label: "Економіка та блекаути" },
+  { key: "ideology", label: "Ідеології та тоталітаризм" },
+  { key: "celebrities", label: "Скандальні блогери та шоу" },
+  { key: "religion", label: "Релігія та езотерика" },
+  { key: "gambling", label: "Казино та ставки" },
+  { key: "crypto", label: "Криптовалюта" },
+  { key: "adult", label: "18+ контент" },
+  { key: "profanity", label: "Матюки" },
+];
+
+/** Плаский список усіх шаблонів (для повного фільтра, напр. в ШІ-помічнику). */
+export const BANNED_PATTERNS = RAW_PATTERNS.filter((item) => item instanceof RegExp);
+
+const PATTERNS_BY_GROUP = {};
+{
+  let current = "other";
+  for (const item of RAW_PATTERNS) {
+    if (item instanceof RegExp) (PATTERNS_BY_GROUP[current] ||= []).push(item);
+    else current = item.group;
+  }
+}
+
+const combinePatterns = (patterns) =>
+  new RegExp(patterns.map(({ source }) => `(?:${source})`).join("|"), "iu");
+
+const GROUP_PATTERNS = Object.fromEntries(
+  Object.entries(PATTERNS_BY_GROUP).map(([key, patterns]) => [key, combinePatterns(patterns)]),
+);
+
 const CHAR_MAP = {
   a: "а",
   c: "с",
@@ -559,10 +627,7 @@ const LEET_MAP = {
   "@": "а",
   $: "с",
 };
-const BANNED_CONTENT_PATTERN = new RegExp(
-  BANNED_PATTERNS.map(({ source }) => `(?:${source})`).join("|"),
-  "iu",
-);
+const BANNED_CONTENT_PATTERN = combinePatterns(BANNED_PATTERNS);
 
 /**
  * Нормалізація тексту: заміна латинських літер на кириличні аналоги (для захисту від обходу),
@@ -598,23 +663,39 @@ const normalizeObfuscatedText = (text) =>
     .replace(INNER_SEPARATORS, "")
     .replace(REPEATED_LETTERS, "$1");
 
-const hasBannedPattern = (text) =>
-  BANNED_CONTENT_PATTERN.test(text) ||
-  BANNED_CONTENT_PATTERN.test(
-    text.replace(/виборі/giu, " ").replace(/і/g, "и"),
-  );
+const testPattern = (pattern, text) =>
+  pattern.test(text) ||
+  pattern.test(text.replace(/виборі/giu, " ").replace(/і/g, "и"));
 
-/**
- * Перевіряє текст на наявність забороненого контенту за допомогою Regex та нормалізації.
- * @param {string} text - Текст для перевірки
- * @returns {boolean} - true, якщо знайдено заборонений контент
- */
+const hasBannedPattern = (text) => testPattern(BANNED_CONTENT_PATTERN, text);
+
 const NEWS_FILTER_STORAGE_KEY = "news_filter_enabled";
+const NEWS_FILTER_SOFT_KEY = "news_filter_soft_mode";
+const NEWS_FILTER_CATEGORIES_KEY = "news_filter_categories";
+const NEWS_FILTER_WORDS_KEY = "news_filter_custom_words";
+
+export const NEWS_FILTER_MAX_WORDS = 50;
+export const NEWS_FILTER_MAX_WORD_LENGTH = 300; // з запасом для правил-регулярок
+
+const readJson = (key, fallback) => {
+  try {
+    const raw = getPref(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const writeValue = (key, value) => {
+  try {
+    setPref(key, typeof value === "string" ? value : JSON.stringify(value));
+  } catch {}
+};
 
 /** Фільтр новин увімкнений за замовчуванням; вимикається лише явним "false". */
 export const isNewsFilterEnabled = () => {
   try {
-    return localStorage.getItem(NEWS_FILTER_STORAGE_KEY) !== "false";
+    return getPref(NEWS_FILTER_STORAGE_KEY) !== "false";
   } catch {
     return true;
   }
@@ -622,12 +703,138 @@ export const isNewsFilterEnabled = () => {
 
 export const setNewsFilterEnabled = (enabled) => {
   try {
-    localStorage.setItem(NEWS_FILTER_STORAGE_KEY, enabled ? "true" : "false");
+    setPref(NEWS_FILTER_STORAGE_KEY, enabled ? "true" : "false");
   } catch {}
 };
 
+/** «Не видаляти, а показувати плашку»: заблокована новина лишається у стрічці під плашкою. */
+export const isNewsFilterSoftMode = () => {
+  try {
+    return getPref(NEWS_FILTER_SOFT_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+
+export const setNewsFilterSoftMode = (enabled) =>
+  writeValue(NEWS_FILTER_SOFT_KEY, enabled ? "true" : "false");
+
+/** Режим кожної категорії: "hide" (не рекомендувати, за замовчуванням) або "show" (показувати). */
+export const getNewsFilterCategoryModes = () => {
+  const saved = readJson(NEWS_FILTER_CATEGORIES_KEY, {});
+  return Object.fromEntries(
+    NEWS_FILTER_CATEGORIES.map(({ key }) => [key, saved?.[key] === "show" ? "show" : "hide"]),
+  );
+};
+
+export const setNewsFilterCategoryModes = (modes) => writeValue(NEWS_FILTER_CATEGORIES_KEY, modes);
+
+/** Власні слова, які користувач хоче блокувати. */
+export const getNewsFilterCustomWords = () => {
+  const saved = readJson(NEWS_FILTER_WORDS_KEY, []);
+  return Array.isArray(saved) ? saved.filter((w) => typeof w === "string" && w.trim()) : [];
+};
+
+export const setNewsFilterCustomWords = (words) =>
+  writeValue(NEWS_FILTER_WORDS_KEY, words.slice(0, NEWS_FILTER_MAX_WORDS));
+
+export const getNewsFilterPrefs = () => ({
+  enabled: isNewsFilterEnabled(),
+  softMode: isNewsFilterSoftMode(),
+  categories: getNewsFilterCategoryModes(),
+  customWords: getNewsFilterCustomWords(),
+});
+
+/** Застосовує налаштування фільтра (напр. з хмари) — з перевіркою типів. */
+export const applyNewsFilterPrefs = (prefs) => {
+  if (!prefs || typeof prefs !== "object") return;
+  if (typeof prefs.enabled === "boolean") setNewsFilterEnabled(prefs.enabled);
+  if (typeof prefs.softMode === "boolean") setNewsFilterSoftMode(prefs.softMode);
+  if (prefs.categories && typeof prefs.categories === "object") {
+    setNewsFilterCategoryModes(
+      Object.fromEntries(
+        NEWS_FILTER_CATEGORIES.map(({ key }) => [key, prefs.categories[key] === "show" ? "show" : "hide"]),
+      ),
+    );
+  }
+  if (Array.isArray(prefs.customWords)) {
+    setNewsFilterCustomWords(
+      prefs.customWords
+        .filter((w) => typeof w === "string" && w.trim())
+        .map((w) => w.slice(0, NEWS_FILTER_MAX_WORD_LENGTH)),
+    );
+  }
+};
+
+/*
+ * Власний запис може бути:
+ *  • звичайним словом/фразою — шукається як є (без різниці великі чи малі літери);
+ *  • правилом (регулярним виразом) у форматі /вираз/прапорці, напр. /уряд(?:у|ом)?/iu.
+ * Прапорці i (без різниці регістру) та u (Unicode) додаються завжди,
+ * g та y відкидаються (вони роблять перевірку залежною від попередніх викликів).
+ */
+const REGEX_ENTRY = /^\/(.+)\/([a-z]*)$/s;
+const regexCache = new Map();
+
+/** @returns {{ kind: "word", text: string } | { kind: "regex", regex: RegExp } | { kind: "invalid", error: string }} */
+export const parseNewsFilterEntry = (entry) => {
+  const raw = (entry || "").trim();
+  const match = raw.match(REGEX_ENTRY);
+  if (!match) return { kind: "word", text: raw };
+  if (regexCache.has(raw)) return regexCache.get(raw);
+
+  const flags = [...new Set([...match[2].replace(/[gy]/g, ""), "i", "u"])].join("");
+  let result;
+  try {
+    result = { kind: "regex", regex: new RegExp(match[1], flags) };
+  } catch (err) {
+    result = { kind: "invalid", error: err.message };
+  }
+  regexCache.set(raw, result);
+  return result;
+};
+
+/**
+ * Повний фільтр (усі категорії) — для ШІ-помічника та інших місць поза новинами.
+ * @param {string} text - Текст для перевірки
+ * @returns {boolean} - true, якщо знайдено заборонений контент
+ */
 export const hasBannedContent = (text) => {
   if (!text) return false;
   const normalized = normalizeText(text);
   return hasBannedPattern(normalized) || hasBannedPattern(normalizeObfuscatedText(text));
+};
+
+/**
+ * Фільтр новин з урахуванням налаштувань користувача.
+ * @returns {{ type: "category" | "custom", key: string, label: string } | null}
+ *   причина блокування або null, якщо новину можна показувати
+ */
+export const getNewsBlockReason = (text, prefs = getNewsFilterPrefs()) => {
+  if (!text || !prefs.enabled) return null;
+  const variants = [normalizeText(text), normalizeObfuscatedText(text)];
+
+  for (const { key, label } of NEWS_FILTER_CATEGORIES) {
+    if (prefs.categories?.[key] === "show") continue;
+    const pattern = GROUP_PATTERNS[key];
+    if (pattern && variants.some((v) => testPattern(pattern, v))) {
+      return { type: "category", key, label };
+    }
+  }
+
+  for (const word of prefs.customWords || []) {
+    const entry = parseNewsFilterEntry(word);
+    if (entry.kind === "regex") {
+      if (variants.some((v) => testPattern(entry.regex, v))) {
+        return { type: "custom", key: word, label: `Ваше правило ${word.trim()}` };
+      }
+    } else if (entry.kind === "word") {
+      const needle = normalizeText(entry.text);
+      if (needle && variants.some((v) => v.includes(needle))) {
+        return { type: "custom", key: word, label: `Ваше слово «${entry.text}»` };
+      }
+    }
+  }
+
+  return null;
 };

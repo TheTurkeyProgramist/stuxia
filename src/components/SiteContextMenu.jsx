@@ -15,12 +15,14 @@ import {
   FiX,
 } from "react-icons/fi";
 import "./SiteContextMenu.css";
+import { getFloatingRoot } from "../utils/siteMirror";
+import { getPref, subscribePrefs } from "../utils/prefsStore.js";
 
 const SITE_CONTEXT_MENU_KEY = "site_context_menu_enabled";
 
 const readEnabled = () => {
   try {
-    return localStorage.getItem(SITE_CONTEXT_MENU_KEY) === "true";
+    return getPref(SITE_CONTEXT_MENU_KEY) === "true";
   } catch {
     return false;
   }
@@ -32,14 +34,16 @@ export default function SiteContextMenu({ children, isDarkMode }) {
   const [selectedText, setSelectedText] = useState("");
   const [media, setMedia] = useState(null);
   const [reader, setReader] = useState(null);
+  // У дзеркальному режимі меню рендериться в шар-компенсатор, інакше воно опиниться навпроти курсора
+  const [portalRoot, setPortalRoot] = useState(undefined);
 
   useEffect(() => {
     const syncEnabled = () => setIsEnabled(readEnabled());
-    window.addEventListener("storage", syncEnabled);
-    return () => window.removeEventListener("storage", syncEnabled);
+    return subscribePrefs(syncEnabled);
   }, []);
 
   const captureContext = (event) => {
+    setPortalRoot(getFloatingRoot());
     setSelectedText(window.getSelection()?.toString().trim() ?? "");
     const target = event.target instanceof Element ? event.target : null;
     const mediaElement = target?.closest("img, video");
@@ -152,7 +156,7 @@ export default function SiteContextMenu({ children, isDarkMode }) {
           {children}
         </div>
       </ContextMenu.Trigger>
-      <ContextMenu.Portal>
+      <ContextMenu.Portal container={portalRoot}>
         <ContextMenu.Content
           className="site-context-menu-content"
           data-theme={isDarkMode ? "dark" : "light"}
@@ -218,7 +222,7 @@ export default function SiteContextMenu({ children, isDarkMode }) {
       </ContextMenu.Portal>
       {reader &&
         createPortal(
-          <div className="site-reader-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setReader(null)}>
+          <div className="site-reader-backdrop" onMouseDown={(event) => event.button === 0 && event.target === event.currentTarget && setReader(null)}>
             <section className="site-reader" role="dialog" aria-modal="true" aria-labelledby="site-reader-title" data-theme={isDarkMode ? "dark" : "light"}>
               <header className="site-reader-header">
                 <h1 id="site-reader-title">{reader.title}</h1>

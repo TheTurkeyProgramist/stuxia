@@ -8,6 +8,8 @@
 // Додатково: будь-яка плашка — не частіше ніж раз на 3 дні,
 // а після кліку «Підтримати» — тиша на 60 днів.
 
+import { getPref, setPref } from "../../utils/prefsStore.js";
+
 const KEY = "stykhia_support_nudge_v1";
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -25,7 +27,7 @@ const MIN_ACCOUNT_AGE = 3 * DAY;
 
 const read = () => {
   try {
-    return JSON.parse(localStorage.getItem(KEY)) || {};
+    return JSON.parse(getPref(KEY)) || {};
   } catch {
     return {};
   }
@@ -33,7 +35,7 @@ const read = () => {
 
 const write = (state) => {
   try {
-    localStorage.setItem(KEY, JSON.stringify(state));
+    setPref(KEY, JSON.stringify(state));
   } catch {
     /* приватний режим — просто не запам'ятовуємо */
   }

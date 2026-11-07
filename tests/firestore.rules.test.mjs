@@ -147,8 +147,20 @@ const run = async () => {
     setDoc(aliceCfg, { savedWeatherCards: [card] }, { merge: true }));
   await expectAllow("заглушені новини з лічильником", () =>
     setDoc(aliceCfg, counted({ mutedNews: ["https://a"] }, "muteSyncCount", "muteSyncAt", 1), { merge: true }));
-  await expectDeny("заглушені: 31-ша за добу", () =>
-    setDoc(aliceCfg, counted({ mutedNews: ["https://b"] }, "muteSyncCount", "muteSyncAt", 31), { merge: true }));
+  await expectAllow("заглушені: 50-та за добу", () =>
+    setDoc(aliceCfg, counted({ mutedNews: ["https://b"] }, "muteSyncCount", "muteSyncAt", 50), { merge: true }));
+  await expectDeny("заглушені: 51-ша за добу", () =>
+    setDoc(aliceCfg, counted({ mutedNews: ["https://c"] }, "muteSyncCount", "muteSyncAt", 51), { merge: true }));
+  await clearAll();
+  const newsFilter = { enabled: true, softMode: true, categories: { politics: "show" }, customWords: ["футбол", "/уряд(?:у|ом)?/iu"] };
+  await expectAllow("фільтр новин з лічильником", () =>
+    setDoc(aliceCfg, counted({ newsFilter }, "muteSyncCount", "muteSyncAt", 1), { merge: true }));
+  await expectDeny("фільтр новин без лічильника", () =>
+    setDoc(aliceCfg, { newsFilter: { ...newsFilter, softMode: false } }, { merge: true }));
+  await expectDeny("фільтр новин: невідоме поле", () =>
+    setDoc(aliceCfg, counted({ newsFilter: { ...newsFilter, hack: 1 } }, "muteSyncCount", "muteSyncAt", 2), { merge: true }));
+  await expectDeny("фільтр новин: понад 50 слів", () =>
+    setDoc(aliceCfg, counted({ newsFilter: { customWords: Array.from({ length: 51 }, (_, i) => `w${i}`) } }, "muteSyncCount", "muteSyncAt", 2), { merge: true }));
   await expectDeny("заглушені: понад 1000 у списку", () =>
     setDoc(aliceCfg, counted({ mutedNews: Array.from({ length: 1001 }, (_, i) => `u${i}`) }, "muteSyncCount", "muteSyncAt", 2), { merge: true }));
   await expectAllow("додавання картки: лічильник 1", () =>
