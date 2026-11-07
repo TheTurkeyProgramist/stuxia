@@ -20,6 +20,7 @@ import { DEFAULT_BGS } from "./defaultBgs";
 import village from "../../media/third-party/games/dragon-village-3.webp";
 import faded from "../../media/backgrounds/scenes/resort.webp";
 import { Tooltip } from "./Hero.jsx";
+import { notifySupportMoment } from "../Support/supportNudge.js";
 
 const isVideoSource = (src) => {
   if (!src) return false;
@@ -663,6 +664,7 @@ const BgModal = ({
 
   const handleSelectBg = useCallback(
     (src, targetLayer = 1) => {
+      notifySupportMoment("bg");
       const indexInQueue = randomBgsList.findIndex((item) => item.src === src);
       if (heroBgMode === "random") {
         const layerToUpdate = activeLayer === 2 ? 2 : 1;
@@ -782,6 +784,7 @@ const BgModal = ({
       }
       setCustomHeroBgs((prev) => [{ src: file, name: file.name, category: "Ваші відео" }, ...prev]);
       setHeroBg(file);
+      notifySupportMoment("bg");
       try {
         const uid = user?.uid || "guest";
         const today = new Date().toISOString().split("T")[0];
@@ -822,6 +825,7 @@ const BgModal = ({
             }
             setCustomHeroBgs((prev) => [{ src: blob, name: file.name, category: "Ваші картинки" }, ...prev]);
             setHeroBg(blob);
+            notifySupportMoment("bg");
           },
           "image/jpeg",
           0.7,

@@ -4,6 +4,8 @@ import styled, { css, keyframes } from "styled-components";
 import { SiRedragon, SiDungeonsanddragons } from "react-icons/si";
 import { GiSpikedDragonHead } from "react-icons/gi";
 import shop from '../../media/backgrounds/scenes/turkey-in-dragon-museum.webp';
+import SupportCosts from "../Support/SupportCosts.jsx";
+import { DONATE_URL } from "../Support/supportConfig";
 
 const CLOSE_DURATION_MS = 500;
 
@@ -173,7 +175,7 @@ const Battlements = styled.div`
   overflow-x: clip;
   overflow-y: visible;
   z-index: 2;
-  margin-top: 80px;
+  margin-top: 56px;
 `;
 
 const MerlonSlot = styled.div`
@@ -193,7 +195,7 @@ const Mascot = styled.span`
   display: flex;
   justify-content: center;
   color: ${WALL_COLOR};
-  font-size: 68px;
+  font-size: 52px;
   line-height: 0;
 `;
 
@@ -223,6 +225,70 @@ const MASCOTS = [
   { Icon: TurkeyIcon },
 ];
 
+const FundsHeader = styled.div`
+  padding: 10px 16px 8px;
+  text-align: center;
+  background: rgba(8, 28, 16, 0.88);
+  border-bottom: 1px solid rgba(47, 191, 113, 0.6);
+  scroll-margin-top: 20px;
+`;
+
+const FundsTitle = styled.h3`
+  margin: 0 0 4px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  letter-spacing: 1px;
+  color: #b8f5cf;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+`;
+
+const FundsSubtitle = styled.p`
+  margin: 0;
+  font-size: 13px;
+  color: #e6f7ec;
+  opacity: 0.85;
+`;
+
+const FundDesc = styled.div`
+  font-size: 12px;
+  color: #f1e6e0;
+  opacity: 0.85;
+  text-align: center;
+  max-width: 260px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+`;
+
+// Елементи в ряд, на вузькому екрані переносяться
+const InlineRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+
+  & > h2 {
+    margin: 0;
+    flex-shrink: 0;
+  }
+`;
+
+const EcoJumpButton = styled.button`
+  padding: 13px 16px;
+  border-radius: 8px;
+  border: 1px solid #b8f5cf;
+  background: rgba(8, 28, 16, 0.85);
+  color: #b8f5cf;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  &:hover {
+    transform: translateY(-1px);
+    background: rgba(20, 60, 35, 0.9);
+  }
+  &:focus-visible { outline: 2px solid #00afce; outline-offset: 2px; }
+`;
+
 const FundList = styled.div`
   display: grid;
   grid-template-columns: 1fr;
@@ -236,9 +302,10 @@ const FundRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  min-height: 120px;
-  border-bottom: 1px solid #ff6c6c;
+  padding: 12px 16px;
+  min-height: 0;
+  border-bottom: 1px solid rgba(47, 191, 113, 0.45);
+  border-right: 1px solid rgba(47, 191, 113, 0.2);
   background-color: ${WALL_COLOR};
   background-image:
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 2px, transparent 2px 32px),
@@ -255,15 +322,15 @@ const SupportCard = styled.div`
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
-  gap: 5px;
-  padding: 10px;
+  gap: 10px;
+  padding: 8px 10px 4px;
 `;
 
 const SupportBody = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
+  gap: 8px;
   flex: 1 1 260px;
 `;
 
@@ -274,6 +341,8 @@ const QrBox = styled.a`
   background: #fff;
   border-radius: 12px;
   line-height: 0;
+  align-self: flex-start;
+  margin-top: 34px; /* під кнопкою «Закрити» */
   flex-shrink: 0;
 `;
 
@@ -282,7 +351,7 @@ const RowContent = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 `;
 
 const FundName = styled.div`
@@ -326,6 +395,21 @@ const LinkButton = styled.a`
   }
 
   ${(props) =>
+    props.$eco &&
+    css`
+      padding: 10px 18px;
+      font-size: 14px;
+      background: linear-gradient(135deg, #2fbf71 0%, #149a52 100%);
+      border-color: #b8f5cf;
+      box-shadow: 0 4px 14px rgba(47, 191, 113, 0.35);
+
+      &:hover {
+        background: linear-gradient(135deg, #43d684 0%, #1bb362 100%);
+        box-shadow: 0 6px 18px rgba(47, 191, 113, 0.5);
+      }
+    `}
+
+  ${(props) =>
     props.$featured &&
     css`
       padding:13px 16px;
@@ -344,6 +428,7 @@ const CharacterText = styled.div`
   color: #f8f1c6;
   font-size: 13px;
   font-style: italic;
+  flex: 1 1 280px;
   background: rgba(0, 0, 0, 0.6);
   padding: 8px 12px;
   border-radius: 8px;
@@ -357,42 +442,47 @@ const AnimatedContent = styled.div`
   animation: ${fadeIn} 0.4s ease-out;
 `;
 
-const DONATE_URL = "https://donatello.to/TheTurkeyStudio";
 
 const funds = [
   {
     id: "uanimals",
     title: "Допомога тваринам",
+    desc: "Рятують тварин, які постраждали від війни",
     buttonText: "Підтримати UAnimals",
     linkUrl: "https://uanimals.org/",
   },
   {
     id: "ecoaction",
     title: "Захист природи",
+    desc: "Захищають довкілля і клімат України",
     buttonText: "Підтримати Екодію",
     linkUrl: "https://ecoaction.org.ua/",
   },
   {
     id: "happypaw",
     title: "Притулки для тварин",
+    desc: "Допомагають безпритульним тваринам знайти дім",
     buttonText: "Підтримати Happy Paw",
     linkUrl: "https://happypaw.ua/",
   },
   {
     id: "tnc",
     title: "Охорона земель і вод",
+    desc: "Бережуть землі й води по всьому світу",
     buttonText: "Підтримати Nature Conservancy",
     linkUrl: "https://www.nature.org/",
   },
   {
     id: "oceana",
     title: "Захист океанів",
+    desc: "Захищають океани та морське життя",
     buttonText: "Підтримати Oceana",
     linkUrl: "https://oceana.org/",
   },
   {
     id: "rainforest",
     title: "Захист тропічних лісів",
+    desc: "Бережуть тропічні ліси від вирубки",
     buttonText: "Підтримати Rainforest Trust",
     linkUrl: "https://rainforesttrust.org/",
   },
@@ -436,6 +526,7 @@ const Tower = () => (
 const ShopModal = ({ onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
   const timerRef = useRef(null);
+  const fundsRef = useRef(null);
 
   const handleClose = useCallback(() => {
     if (timerRef.current) return;
@@ -475,13 +566,24 @@ const ShopModal = ({ onClose }) => {
         <AnimatedContent>
           <SupportCard>
             <SupportBody>
-             <ShopTitle>Древній Замок</ShopTitle>
-              <CharacterText>
-                Мене звати Доміно, я люблю давнє кіно. Підтримай фонди і мене будь ласка!
-              </CharacterText>
-              <LinkButton href={DONATE_URL} target="_blank" rel="noopener noreferrer" $featured>
-                Підтримате нас! 
-              </LinkButton>
+              <InlineRow>
+                <ShopTitle>Древній Замок</ShopTitle>
+                <CharacterText>
+                  Мене звати Доміно, я люблю давнє кіно. Стихія завжди буде безкоштовною,
+                  а якщо хочете допомогти їй жити — ось банка.
+                </CharacterText>
+              </InlineRow>
+              <InlineRow>
+                <LinkButton href={DONATE_URL} target="_blank" rel="noopener noreferrer" $featured>
+                  Підтримати Стихію
+                </LinkButton>
+                <EcoJumpButton
+                  type="button"
+                  onClick={() => fundsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                >
+                  Або допомогти екофондам ↓
+                </EcoJumpButton>
+              </InlineRow>
             </SupportBody>
             <QrBox
               href={DONATE_URL}
@@ -489,9 +591,10 @@ const ShopModal = ({ onClose }) => {
               rel="noopener noreferrer"
               aria-label="QR-код для підтримки автора"
             >
-              <QRCodeSVG value={DONATE_URL} size={128} />
+              <QRCodeSVG value={DONATE_URL} size={96} />
             </QrBox>
           </SupportCard>
+          <SupportCosts />
           <Battlements>
             {Array.from({ length: MERLON_COUNT }, (_, i) => {
               const { Icon } = MASCOTS[i % MASCOTS.length];
@@ -504,13 +607,20 @@ const ShopModal = ({ onClose }) => {
               );
             })}
           </Battlements>
+          <FundsHeader ref={fundsRef} id="eco-funds">
+            <FundsTitle>Екологічні фонди</FundsTitle>
+            <FundsSubtitle>
+              Донат іде напряму фонду, не нам. Обирайте те, що вам близьке.
+            </FundsSubtitle>
+          </FundsHeader>
           <FundList>
             {funds.map((fund) => (
               <FundRow key={fund.id}>
                 <RowContent>
                   <FundName>{fund.title}</FundName>
+                  <FundDesc>{fund.desc}</FundDesc>
                   <ActionWrapper>
-                    <LinkButton href={fund.linkUrl} target="_blank" rel="noopener noreferrer">
+                    <LinkButton href={fund.linkUrl} target="_blank" rel="noopener noreferrer" $eco>
                       {fund.buttonText}
                     </LinkButton>
                   </ActionWrapper>

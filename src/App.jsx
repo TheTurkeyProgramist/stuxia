@@ -34,6 +34,8 @@ import axios from "axios";
 import "./App.css";
 import Header from "./components/Header/Header.jsx";
 import AuthorsDirectoryModal from "./components/Header/AuthorsDirectoryModal.jsx";
+import SupportBanner from "./components/Support/SupportBanner.jsx";
+import { notifySupportMoment } from "./components/Support/supportNudge.js";
 import Hero from "./components/Hero/Hero.jsx";
 import { DecoratorProvider } from "./components/Decorator/DecoratorContext.jsx";
 import { sanitizeWeatherCards } from "./utils/weatherPersistence.js";
@@ -3009,7 +3011,10 @@ const App = () => {
           alert(`Можна мати не більше ${MAX_CUSTOM_WEATHER_CARDS} власних карток погоди плюс поточну GPS-картку.`);
           return false;
         }
-        return (await fetchWeather(cityObj, false)) !== false;
+        const added = (await fetchWeather(cityObj, false)) !== false;
+        // Приємний момент: людина вже стежить за 3+ містами
+        if (added && customCardsCount + 1 >= 3) notifySupportMoment("cards");
+        return added;
       });
       addCityQueueRef.current = task.catch(() => {});
       return task;
@@ -3415,6 +3420,11 @@ const App = () => {
             </TooltipS>
           )}
           <DecoratorOverlay isStickyBgMode={isStickyBgMode} />
+          <SupportBanner
+            isDarkMode={isDarkMode}
+            user={user}
+            onOpenDetails={() => setIsShopOpen(true)}
+          />
         </div>
       </ThemeWrapper>
       {isMaintenanceMode && (

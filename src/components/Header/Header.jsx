@@ -1,7 +1,7 @@
 //bun run --cwd Stuxia tauri android build --apk - Android
 //bun run --cwd Stuxia tauri build --bundles nsis - Windows
 //Launch wsl.exe 
-//
+//bun run deploy:cloudflare
 //cd ~/projects/stuxia-linux-build
 //bun run --cwd Stuxia tauri build --bundles deb
 //bun run --cwd Stuxia tauri build --bundles deb - WSL(Linux)
@@ -21,6 +21,7 @@ import conimg from "../../mp3/modals/concierge.mp3";
 import userDefault from "../../media/ui/user-placeholder.webp";
 import { useVisualFilters, presetName, selectFilter, CUSTOM_PRESET_ICON as CustomPresetIcon } from "./useVisualFilters";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
+import { isSupporter } from "../Support/supportConfig";
 // import AntiHeaderAd from "./AntiHeaderAd";
 import {
   useFloating,
@@ -299,6 +300,36 @@ const ProfileModalName = styled.div`
 
 const ProfileModalLabel = styled.div`
   font-size: 12px;
+`;
+
+// Значок донатера «Друг індиків» — лише подяка, жодних платних функцій
+const SupporterDot = styled.span`
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
+  background: linear-gradient(135deg, #ffd36b 0%, #f3a83b 100%);
+  border: 1px solid ${(props) => (props.$isDarkMode ? "#111" : "#fff")};
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+`;
+
+const SupporterChip = styled.div`
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2b1313;
+  background: linear-gradient(135deg, #ffd36b 0%, #f3a83b 100%);
 `;
 
 const ButtonsGroup = styled.div`
@@ -653,6 +684,7 @@ const Header = ({
   const avatarSource = user?.photoURL || user?.avatar || currentAvatar || userDefault;
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const networkStatus = useNetworkStatus();
+  const supporter = isSupporter(user);
 
   // Helper to play sound effects with current volume
   // Оголошено ТУТ — до useEffect-ів, щоб вони могли її викликати
@@ -1004,18 +1036,24 @@ const Header = ({
           </Tooltip>
 
         <ProfileButtonWrap>
-          <Tooltip content={`Ваш профіль · ${NETWORK_LABELS[networkStatus]}`} isDarkMode={isDarkMode}>
+          <Tooltip
+            content={`Ваш профіль${supporter ? " · Друг індиків" : ""} · ${NETWORK_LABELS[networkStatus]}`}
+            isDarkMode={isDarkMode}
+          >
           <ProfileButton
             id="header-profile-button"
             $isDarkMode={isDarkMode}
             onClick={() => setIsProfileModalOpen((prev) => !prev)}
-            aria-label={`Профіль користувача. ${NETWORK_LABELS[networkStatus]}`}
+            aria-label={`Профіль користувача.${supporter ? " Друг індиків." : ""} ${NETWORK_LABELS[networkStatus]}`}
           >
             <RecoveringAvatar
               src={avatarSource}
               $bColor={user.borderColor}
               style={{ width: "33px", height: "33px" }}
             />
+            {supporter && (
+              <SupporterDot $isDarkMode={isDarkMode} aria-hidden="true">🦃</SupporterDot>
+            )}
             <NetworkBadge status={networkStatus} isDarkMode={isDarkMode} />
           </ProfileButton>
          </Tooltip>
@@ -1033,6 +1071,9 @@ const Header = ({
                 <div>
                   <ProfileModalLabel>Профіль</ProfileModalLabel>
                    <ProfileModalName>Електронна пошта: {user.email || user.account}</ProfileModalName>
+                   {supporter && (
+                     <SupporterChip title="Дякуємо, що підтримуєте Стихію!">🦃 Друг індиків</SupporterChip>
+                   )}
                 </div>
               </ProfileModalBody>
             </ProfileModal>
