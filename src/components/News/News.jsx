@@ -1552,33 +1552,82 @@ const getNewsFallbackImage = (link) => {
   return NEWS_FALLBACK_IMAGES[Math.abs(hash) % NEWS_FALLBACK_IMAGES.length];
 };
 
+// Публічні CORS-проксі. Будь-який може «лягти» (таймаути, відповідь без CORS-заголовка),
+// тому пробуємо по черзі, з таймаутом, і тимчасово вимикаємо ті, що впали.
+const CORS_PROXIES = [
+  { name: "codetabs", build: (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}` },
+  { name: "allorigins", build: (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}` },
+  { name: "corsproxy", build: (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}` },
+];
+const PROXY_TIMEOUT_MS = 8000;
+const PROXY_COOLDOWN_MS = 10 * 60 * 1000;
+const proxyDisabledUntil = new Map();
+
 const fetchWithProxyFallback = async (url) => {
-  try {
-    const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-    if (!res.ok) throw new Error("AllOrigins error status: " + res.status);
-    const data = await res.json();
-    if (!data.contents) throw new Error("AllOrigins returned empty contents");
-    return data.contents;
-  } catch (e) {
-    console.warn("AllOrigins failed, trying corsproxy.io fallback...", e);
-    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
-    if (!res.ok) throw new Error("corsproxy.io error status: " + res.status, { cause: e });
-    const text = await res.text();
-    return text;
+  let lastError = null;
+  for (const proxy of CORS_PROXIES) {
+    if ((proxyDisabledUntil.get(proxy.name) || 0) > Date.now()) continue;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), PROXY_TIMEOUT_MS);
+    try {
+      const res = await fetch(proxy.build(url), { signal: controller.signal });
+      if (!res.ok) {
+        // 401/403/429/5xx — проблема самого проксі (ключ, ліміт, падіння), а не статті
+        if ([401, 403, 429].includes(res.status) || res.status >= 500) {
+          proxyDisabledUntil.set(proxy.name, Date.now() + PROXY_COOLDOWN_MS);
+        }
+        throw new Error(`${proxy.name} error status: ${res.status}`);
+      }
+      const text = await res.text();
+      if (!text) throw new Error(`${proxy.name} returned empty body`);
+      return text;
+    } catch (e) {
+      lastError = e;
+      // Мережева помилка / CORS / таймаут — проксі недоступний, не мучимо його якийсь час
+      if (e?.name === "AbortError" || e instanceof TypeError) {
+        proxyDisabledUntil.set(proxy.name, Date.now() + PROXY_COOLDOWN_MS);
+      }
+    } finally {
+      clearTimeout(timer);
+    }
   }
+  throw new Error("All CORS proxies failed", { cause: lastError });
 };
 
 /**
  * Дістає og:image зі сторінки статті (для стрічок без картинок, напр. Phys.org).
  * Результат кешується в localforage під ключем og_img_<link>; "" — картинки немає.
  */
+const OG_FAIL_TTL_MS = 6 * 60 * 60 * 1000;
+const OG_MAX_CONCURRENT = 2;
+let ogActive = 0;
+const ogQueue = [];
+const withOgSlot = async (task) => {
+  if (ogActive >= OG_MAX_CONCURRENT) {
+    await new Promise((resolve) => ogQueue.push(resolve));
+  }
+  ogActive++;
+  try {
+    return await task();
+  } finally {
+    ogActive--;
+    ogQueue.shift()?.();
+  }
+};
+
 const fetchOgImage = async (link) => {
   if (!link || !/^https?:\/\//i.test(link)) return null;
   const cacheKey = `og_img_${link}`;
+  const failKey = `og_fail_${link}`;
   try {
     const cached = await localforage.getItem(cacheKey);
     if (typeof cached === "string") return cached || null;
-    const html = await fetchWithProxyFallback(link);
+    const failedAt = await localforage.getItem(failKey);
+    if (typeof failedAt === "number" && Date.now() - failedAt < OG_FAIL_TTL_MS) return null;
+    const html = await withOgSlot(() => fetchWithProxyFallback(link)).catch(async (e) => {
+      await localforage.setItem(failKey, Date.now());
+      throw e;
+    });
     const doc = new DOMParser().parseFromString(html, "text/html");
     const og =
       doc.querySelector('meta[property="og:image"]')?.getAttribute("content") ||

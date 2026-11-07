@@ -1,0 +1,5 @@
+# Cloudflare Pages: статична збірка з dist + функції з папки functions/
+# (functions/api/news-feed.js → /api/news-feed, functions/api/frame-check.js → /api/frame-check)
+name = "stuxia"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"

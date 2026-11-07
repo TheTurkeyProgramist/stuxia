@@ -46,6 +46,8 @@
     "deploy:only": "node deploy-gh-pages.mjs",
     "deploy:legacy": "bun run predeploy && bun run build && bun x gh-pages -d dist -f --cname stuxia.com",
     "deploy:cpanel": "bun run build && node deploy.js",
+    "deploy:cloudflare": "bun run build && bun x wrangler pages deploy",
+    "dev:cloudflare": "bun run build && bun x wrangler pages dev",
     "test": "react-scripts test",
     "test:rules": "bun x firebase-tools@13.35.1 emulators:exec --only firestore --project demo-stuxia \"node tests/firestore.rules.test.mjs\"",
     "star": "node server/index.js"
