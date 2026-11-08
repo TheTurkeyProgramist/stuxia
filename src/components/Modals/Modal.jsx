@@ -373,7 +373,7 @@ const Modal = ({
     e.preventDefault();
     e.stopPropagation();
     if (isSubmitting) return;
-    if (!accepted) return setError("Прийміть угоду!");
+    if (!accepted) return setError("Підтвердіть, що вам є 14 років, і прийміть угоду!");
     setIsSubmitting(true);
     setError("");
     try {
@@ -479,7 +479,7 @@ const Modal = ({
                 onChange={(e) => setAccepted(e.target.checked)}
               />
               <label htmlFor="accept-terms">
-                Для входу через Google я погоджуюсь з{" "}
+                Мені виповнилося 14 років, і я погоджуюсь з{" "}
                 <TermsBtn
                   type="button"
                   onClick={(e) => {

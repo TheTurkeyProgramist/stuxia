@@ -3334,6 +3334,7 @@ const App = () => {
                 }}
                 user={user}
                 onUpdate={setUser}
+                onLogout={handleLogout}
                 weatherCardLayout={weatherCardLayout}
                 onUpdateLayout={setWeatherCardLayout}
                 showUpdateTimer={showUpdateTimer}

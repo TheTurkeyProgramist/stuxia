@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useMemo, useRef } from "react";
+import { Fragment, useState, useEffect, useMemo, useRef, useCallback } from "react";
 import avatarPlaceholder from "../../media/characters/domino-avatar.webp";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -8,10 +8,22 @@ import InfoModal from "./UserSearchModal.jsx";
 import KatSceneModal from "./KatSceneModal";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { auth } from "../../firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { factoryReset } from "../../utils/factoryReset";
+import { useAgeGate } from "./AgeGateModal";
 import localforage from "localforage";
 import { useAnimationsDisabled, setAnimationsDisabled } from "../../utils/animationsPref";
-import { GoogleAuthProvider, linkWithPopup, unlink, verifyBeforeUpdateEmail, reauthenticateWithPopup } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  EmailAuthProvider,
+  linkWithPopup,
+  unlink,
+  verifyBeforeUpdateEmail,
+  reauthenticateWithPopup,
+  reauthenticateWithCredential,
+  deleteUser,
+} from "firebase/auth";
+import { loadFirebase } from "../../firebaseLazy";
 import {
   FiUser,
   FiClock,
@@ -124,7 +136,7 @@ import {
 import { scheduleNewsFilterSync, flushNewsFilterSync } from "../../utils/newsFilterSync";
 import { MUTE_SYNC_DAILY_LIMIT } from "../../utils/muteSync";
 import { applySiteMirror, getSiteMirror } from "../../utils/siteMirror";
-import { getPref, setPref } from "../../utils/prefsStore.js";
+import { getPref, setPref, removePref } from "../../utils/prefsStore.js";
 
 // Keyframe Animations
 const fadeIn = keyframes`
@@ -744,9 +756,138 @@ const WindowFooter = styled.div`
   padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
 `;
 const TermsRow = styled.div`
-  display: flex; align-items: center; gap: 8px; font-size: 13px; color: #c5c5c5;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: #c5c5c5;
 `;
 const TermsLink = styled.span`color: #60cdff; text-decoration: underline; cursor: pointer;`;
+// ── Модалка підтвердження скидання ──────────────────────────────────────────
+const confirmFadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
+const confirmPopIn = keyframes`
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+`;
+const ConfirmOverlay = styled.div`
+  position: fixed; inset: 0; z-index: 100003;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  animation: ${confirmFadeIn} 0.18s ease both;
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+`;
+const ConfirmBox = styled.div`
+  width: min(440px, 100%);
+  padding: 22px 22px 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  background: #1c1c1f;
+  color: #f3f3f3;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.7), 0 0 1px rgba(255,255,255,0.2);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  animation: ${confirmPopIn} 0.22s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+`;
+const ConfirmHeader = styled.div`
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+`;
+const ConfirmIcon = styled.div`
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  width: 40px; height: 40px; border-radius: 10px;
+  background: rgba(196,43,28,0.18); color: #ff8a8a; font-size: 19px;
+`;
+const ConfirmTitle = styled.h3`
+  margin: 0; font-size: 17px; font-weight: 600; line-height: 1.3;
+`;
+const ConfirmList = styled.ul`
+  list-style: none; margin: 0 0 14px; padding: 0;
+  display: flex; flex-direction: column; gap: 8px;
+  font-size: 13px; color: #d4d4d4; line-height: 1.4;
+  li { display: flex; align-items: flex-start; gap: 10px; }
+  svg { flex: 0 0 auto; margin-top: 2px; color: #a0a0a0; }
+`;
+const ConfirmNote = styled.div`
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; margin-bottom: 18px;
+  border-radius: 8px;
+  background: rgba(96,205,255,0.08); border: 1px solid rgba(96,205,255,0.2);
+  font-size: 12px; color: #bfe9ff; line-height: 1.45;
+  svg { flex: 0 0 auto; margin-top: 1px; color: #60cdff; }
+`;
+const ConfirmActions = styled.div`
+  display: flex; justify-content: flex-end; gap: 10px;
+`;
+const ConfirmDangerButton = styled(WinButton)`
+  background: #c42b1c; border-color: #c42b1c; color: #ffffff;
+  &:hover:not(:disabled) { background: #d83b2b; border-color: #d83b2b; }
+  &:focus-visible { outline: 2px solid #ff8a8a; outline-offset: 2px; }
+`;
+
+const ResetConfirmDialog = ({ onConfirm, onCancel, loading }) => {
+  const cancelRef = useRef(null);
+  useEffect(() => {
+    // Фокус на безпечній кнопці: випадковий Enter нічого не зітре
+    cancelRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key === "Escape" && !loading) onCancel();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel, loading]);
+
+  return (
+    <ConfirmOverlay
+      // pageActivity.js ставить на паузу всі анімації поза активною модалкою, а сам
+      // позначає лише елемент з aria-modal (картку). Без цього атрибута підкладка
+      // застигала на першому кадрі появи (opacity: 0) — і модалку не було видно.
+      data-active-overlay=""
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget && !loading) onCancel();
+      }}
+    >
+      <ConfirmBox
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="reset-confirm-title"
+        aria-describedby="reset-confirm-list"
+      >
+        <ConfirmHeader>
+          <ConfirmIcon><FiRotateCcw aria-hidden="true" /></ConfirmIcon>
+          <ConfirmTitle id="reset-confirm-title">Скинути сайт до заводських?</ConfirmTitle>
+        </ConfirmHeader>
+        <ConfirmList id="reset-confirm-list">
+          <li><FiUser aria-hidden="true" /> Вийти з акаунта на цьому пристрої</li>
+          <li><FiImage aria-hidden="true" /> Стерти тему, фони, музику, ключ Gemini та всі інші локальні налаштування</li>
+          <li><FiTrash2 aria-hidden="true" /> Очистити кеш і перезавантажити сторінку</li>
+        </ConfirmList>
+        <ConfirmNote>
+          <FiCloud aria-hidden="true" />
+          <span>Акаунт і хмарні дані не видаляються — після входу вони повернуться.</span>
+        </ConfirmNote>
+        <ConfirmActions>
+          <WinButton ref={cancelRef} type="button" onClick={onCancel} disabled={loading}>
+            Скасувати
+          </WinButton>
+          <ConfirmDangerButton type="button" onClick={onConfirm} disabled={loading}>
+            {loading ? "Скидаємо..." : "Скинути"}
+          </ConfirmDangerButton>
+        </ConfirmActions>
+      </ConfirmBox>
+    </ConfirmOverlay>
+  );
+};
+
+// Тиха «небезпечна» кнопка поруч з угодою: не кричить, але помітна при наведенні
+const ResetLink = styled.button`
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-left: 6px; padding: 3px 9px;
+  border: 1px solid rgba(255,107,107,0.35); border-radius: 6px;
+  background: transparent; color: #ff8a8a;
+  font: inherit; font-size: 12px; cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  &:hover:not(:disabled) { background: rgba(196,43,28,0.25); border-color: rgba(255,107,107,0.7); color: #ffffff; }
+  &:focus-visible { outline: 2px solid #ff8a8a; outline-offset: 2px; }
+  &:disabled { opacity: 0.6; cursor: progress; }
+`;
 const FooterButtons = styled.div`display: flex; align-items: center; gap: 10px;`;
 
 // Music components
@@ -883,6 +1024,7 @@ const UserSettingsModal = ({
   onSkipBgTrack = () => {},
   sfxVolume = 0.2, setSfxVolume = () => {},
   bgAudioRef, bgAudioRef2,
+  onLogout = () => {},
 }) => {
   const isGuest = !user;
   const dispatch = useDispatch();
@@ -1069,8 +1211,19 @@ const UserSettingsModal = ({
   // Закрили налаштування — відкладені зміни фільтра відправляємо одразу
   useEffect(() => () => flushNewsFilterSync(), []);
 
-  const toggleNewsFilter = () => {
+  // Вікові обмеження фільтра: показ тем — 18+, казино та ставки — 21+.
+  // Вимкнений фільтр показує все, зокрема казино, тому вимкнення — теж 21+.
+  const [requestAge, ageGate] = useAgeGate();
+
+  const toggleNewsFilter = async () => {
     const nextVal = !isNewsFilterOn;
+    if (!nextVal) {
+      const ok = await requestAge(
+        21,
+        "Без фільтра у стрічку потраплять усі новини, зокрема про війну, кримінал, казино та ставки. Вимкнути фільтр можна лише з 21 року.",
+      );
+      if (!ok) return;
+    }
     setIsNewsFilterOn(nextVal);
     setNewsFilterEnabled(nextVal);
     queueNewsFilterSync();
@@ -1092,8 +1245,15 @@ const UserSettingsModal = ({
     queueNewsFilterSync();
   };
 
-  const setNewsFilterCategoryMode = (key, mode) => {
+  const setNewsFilterCategoryMode = async (key, mode) => {
     if (newsFilterModes[key] === mode) return;
+    if (mode === "show") {
+      const label = NEWS_FILTER_CATEGORIES.find((c) => c.key === key)?.label || key;
+      const ok = key === "gambling"
+        ? await requestAge(21, "Новини про казино та ставки можна показувати лише з 21 року.")
+        : await requestAge(18, `Тема «${label}» може містити неприємний або дорослий контент. Показувати її можна лише з 18 років.`);
+      if (!ok) return;
+    }
     const next = { ...newsFilterModes, [key]: mode };
     setNewsFilterModes(next);
     setNewsFilterCategoryModes(next);
@@ -1269,6 +1429,116 @@ const UserSettingsModal = ({
     }
   };
 
+
+  // ── Видалення акаунта ────────────────────────────────────────────────────
+  // Порядок важливий: спершу повторний вхід, потім стираємо хмарні дані
+  // (поки акаунт існує — після deleteUser доступу до них уже не буде),
+  // і лише тоді видаляємо сам акаунт.
+  const [deleteStatus, setDeleteStatus] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteWipeDevice, setDeleteWipeDevice] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const closeResetDialog = useCallback(() => setShowResetDialog(false), []);
+
+  const confirmFactoryReset = async () => {
+    setResetLoading(true);
+    await factoryReset(() => signOut(auth));
+  };
+
+  // Лічильники лімітів правила Firestore стерти не дозволяють
+  const CONFIG_COUNTER_KEYS = [
+    "settingsSyncCount", "settingsSyncAt",
+    "cardsSyncCount", "cardsSyncAt",
+    "muteSyncCount", "muteSyncAt",
+    "cardAdditionsCount", "cardAdditionsAt",
+    "reportCount", "reportAt",
+  ];
+
+  const handleDeleteAccount = async () => {
+    const cu = auth.currentUser;
+    if (!cu) {
+      setDeleteStatus("⚠️ Хмарний акаунт неактивний — вийдіть та увійдіть знову, потім спробуйте ще раз.");
+      return;
+    }
+    const typed = window.prompt(
+      "Видалення акаунта не можна скасувати: зникнуть вхід, хмарні налаштування, картки погоди та фільтри новин.\n\nЩоб підтвердити, введіть слово ВИДАЛИТИ",
+    );
+    if (typed === null) return;
+    if (typed.trim().toUpperCase() !== "ВИДАЛИТИ") {
+      setDeleteStatus("❌ Слово введено неправильно — акаунт не видалено.");
+      return;
+    }
+
+    setDeleteLoading(true);
+    try {
+      // 1. Firebase дозволяє видалити акаунт лише після свіжого входу
+      setDeleteStatus("⏳ Підтвердіть, що це ви...");
+      if (providerIds.includes("google.com")) {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+        await reauthenticateWithPopup(cu, provider);
+      } else if (hasPasswordProvider) {
+        const password = window.prompt("Введіть поточний пароль від акаунта:");
+        if (!password) {
+          setDeleteStatus("");
+          return;
+        }
+        await reauthenticateWithCredential(cu, EmailAuthProvider.credential(cu.email, password));
+      }
+
+      // 2. Стираємо хмарні дані
+      setDeleteStatus("⏳ Видаляємо дані...");
+      const { db, doc, getDoc, updateDoc, deleteDoc, deleteField } = await loadFirebase();
+      const configRef = doc(db, "config", cu.uid);
+      const snap = await getDoc(configRef);
+      if (snap.exists()) {
+        const wipe = Object.fromEntries(
+          Object.keys(snap.data())
+            .filter((key) => !CONFIG_COUNTER_KEYS.includes(key))
+            .map((key) => [key, deleteField()]),
+        );
+        if (Object.keys(wipe).length) await updateDoc(configRef, wipe);
+      }
+      // Старий документ із заглушеними новинами (є не в усіх)
+      await deleteDoc(doc(db, "users", cu.uid)).catch(() => {});
+
+      // 3. Видаляємо сам акаунт
+      await deleteUser(cu);
+
+      // 4. Локальні дані акаунта на цьому пристрої
+      await Promise.all(
+        ["registered_user", "currentAvatar"].map((key) => localforage.removeItem(key).catch(() => {})),
+      );
+      try { removePref("saved_google_avatar"); } catch {}
+
+      if (deleteWipeDevice) {
+        alert("✅ Акаунт видалено. Зараз очистимо цей пристрій і перезавантажимо сторінку.");
+        await factoryReset();
+        return;
+      }
+      alert("✅ Акаунт і пов'язані з ним дані видалено.");
+      onLogout();
+    } catch (err) {
+      const code = err?.code || "";
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        setDeleteStatus("");
+      } else if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
+        setDeleteStatus("❌ Неправильний пароль — акаунт не видалено.");
+      } else if (code === "auth/user-mismatch") {
+        setDeleteStatus("⚠️ Оберіть той самий Google-акаунт, з яким ви увійшли.");
+      } else if (code === "auth/requires-recent-login") {
+        setDeleteStatus("⚠️ Потрібна повторна авторизація — вийдіть та увійдіть знову, потім спробуйте ще раз.");
+      } else if (code === "permission-denied") {
+        setDeleteStatus("❌ Сервер не дозволив стерти дані — акаунт не видалено. Спробуйте пізніше.");
+      } else {
+        setDeleteStatus(`❌ Не вдалося видалити акаунт: ${code || err?.message}`);
+      }
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   // Mirror flips — стан читається з DOM, щоб не скидатися після закриття модалки
   const [mirrorX, setMirrorX] = useState(() => getSiteMirror().x);
@@ -1814,6 +2084,54 @@ const UserSettingsModal = ({
                       </div>
                     </CardExpanded>
                   )}
+
+                  {/* Account Deletion */}
+                  <CardExpanded>
+                    <CardLeft>
+                      <CardIconBox $color="#ff6b6b"><FiTrash2 /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Видалити акаунт</CardTitle>
+                        <CardDescription>
+                          Назавжди видаляє вхід, хмарні налаштування, картки погоди та фільтри новин. Скасувати не можна.
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#c5c5c5", cursor: "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={deleteWipeDevice}
+                          onChange={(e) => setDeleteWipeDevice(e.target.checked)}
+                          disabled={deleteLoading}
+                        />
+                        Також очистити цей пристрій (тема, фони, музика, ключ Gemini)
+                      </label>
+                      <div>
+                        <WinButton
+                          type="button"
+                          $danger
+                          onClick={handleDeleteAccount}
+                          disabled={deleteLoading || !hasFirebaseSession}
+                        >
+                          {deleteLoading ? "⏳..." : "Видалити акаунт"}
+                        </WinButton>
+                      </div>
+                      {!hasFirebaseSession && (
+                        <span style={{ fontSize: "11px", color: "#888" }}>
+                          Хмарний акаунт неактивний — вийдіть та увійдіть знову.
+                        </span>
+                      )}
+                      {deleteStatus && (
+                        <span style={{
+                          fontSize: "11px",
+                          color: deleteStatus.startsWith("❌") ? "#f44336"
+                            : deleteStatus.startsWith("⚠️") ? "#ffb300"
+                            : "#a0a0a0",
+                          lineHeight: "1.5",
+                        }}>{deleteStatus}</span>
+                      )}
+                    </div>
+                  </CardExpanded>
                 </CardGroup>
               )}
 
@@ -3051,6 +3369,20 @@ const UserSettingsModal = ({
                 Ви погодились з{" "}
                 <TermsLink onClick={() => setShowTerms(true)}>Угодою</TermsLink>
               </span>
+              <Tooltip
+                content="Вийти з акаунта й стерти всі дані сайту на цьому пристрої"
+                placement="top"
+                isDarkMode={isDarkMode}
+              >
+                <ResetLink
+                  type="button"
+                  onClick={() => setShowResetDialog(true)}
+                  disabled={resetLoading}
+                >
+                  <FiRotateCcw aria-hidden="true" />
+                  {resetLoading ? "Скидаємо..." : "Скинути сайт"}
+                </ResetLink>
+              </Tooltip>
             </TermsRow>
             <FooterButtons>
               <WinButton onClick={handleCancel}>Скасувати</WinButton>
@@ -3069,6 +3401,16 @@ const UserSettingsModal = ({
         <NestedModalPortal>
           <InfoModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
         </NestedModalPortal>
+      )}
+
+      {ageGate}
+
+      {showResetDialog && (
+        <ResetConfirmDialog
+          onConfirm={confirmFactoryReset}
+          onCancel={closeResetDialog}
+          loading={resetLoading}
+        />
       )}
     </>,
     document.body,

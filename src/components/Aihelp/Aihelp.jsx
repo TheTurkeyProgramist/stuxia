@@ -3,6 +3,20 @@ import styled, { css, keyframes } from "styled-components";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import localforage from "localforage";
 import ReactMarkdown from "react-markdown";
+import { GeminiKeyButton } from "../Modals/GeminiKeyModal";
+import {
+  MAX_MESSAGE_LENGTH,
+  SUGGESTED_COUNT_KEY,
+  SUGGESTED_COUNT_OPTIONS,
+  getCooldownSeconds,
+  getSuggestionsInstruction,
+  normalizeSuggestedCount,
+  parseSuggestedQuestions,
+} from "../AiShared/aiConfig";
+import { useGeminiKey } from "../AiShared/useGeminiKey";
+import { useSharedCooldown } from "../AiShared/useSharedCooldown";
+import { useVoiceInput } from "../AiShared/useVoiceInput";
+import { useStarterCarousel } from "../AiShared/useStarterCarousel";
 import { RiDeleteBack2Fill } from "react-icons/ri";
 import { hasBannedContent } from "../../utils/contentFilter";
 import { fetchFreeWebSearch } from "../../utils/freeWebSearch";
@@ -22,7 +36,6 @@ import {
   TbPencil,
   TbAlignLeft,
   TbBulb,
-  TbGauge,
   TbMessagePlus,
   TbPlus,
   TbRefresh,
@@ -163,8 +176,6 @@ const shimmer = keyframes`
   100% { background-position:  200% center; }
 `;
 
-const MAX_MESSAGE_LENGTH = 300;
-const GLOBAL_COOLDOWN_KEY = "gemini_global_cooldown_until";
 
 /* ── Styled components ── */
 const AihelpDiv = styled.div`
@@ -438,8 +449,6 @@ const SidebarToggleBtn = styled(ChatHeaderBtn)`
   flex-shrink: 0;
 `;
 
-const LimitsButton = styled(SidebarToggleBtn)``;
-
 const NewChatHeaderBtn = styled.button`
   justify-content: center;
   font-size: 18px;
@@ -564,17 +573,6 @@ const ProviderRow = styled.div`
       box-shadow: 0 0 0 2px rgba(255, 165, 0, 0.15);
     }
   }
-`;
-
-const GetKeyLink = styled.a`
-  font-size: 11px;
-  color: orange;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-  &:hover { text-decoration: underline; }
 `;
 
 const ChatHistory = styled.div`
@@ -1209,123 +1207,6 @@ const AttachedChip = styled.div`
   }
 `;
 
-const ModalOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 300000;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  overflow-y: auto;
-  animation: ${fadeIn} 0.2s ease;
-`;
-
-const ModalContainer = styled.div`
-  width: min(500px, 92vw);
-  max-height: calc(100vh - 32px);
-  background: ${(p) => (p.$isDarkMode ? "#1a1a26" : "#ffffff")};
-  color: ${(p) => (p.$isDarkMode ? "#f0f0f0" : "#111111")};
-  border: 1px solid rgba(255, 160, 0, 0.4);
-  border-radius: 16px;
-  padding: 14px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  position: relative;
-  overflow: hidden;
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 2px solid rgba(255, 160, 0, 0.2);
-
-  h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 700;
-    color: #ff9500;
-    display: flex;
-    align-items: center;
-  }
-`;
-
-const ModalCloseBtn = styled.button`
-  background: transparent;
-  border: none;
-  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)")};
-  font-size: 22px;
-  cursor: pointer;
-  padding: 2px 8px;
-  border-radius: 5px;
-  font-weight: 900;
-  &:hover {
-    color: #ff4d4d;
-    background: rgba(255, 77, 77, 0.1);
-  }
-`;
-
-const LimitsList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-  max-height: min(42vh, 260px);
-  padding-right: 4px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 149, 0, 0.7) transparent;
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #ff9500, #ff6b00);
-    border-radius: 999px;
-  }
-`;
-
-const LimitItem = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: ${(p) =>
-    p.$isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"};
-  border-radius: 8px;
-  font-size: 13px;
-
-  span:first-child {
-    font-weight: 600;
-  }
-  span:last-child {
-    font-weight: 700;
-    color: #ff9500;
-  }
-`;
-
-const NoteBox = styled.div`
-  background: ${(p) =>
-    p.$isDarkMode ? "rgba(255, 160, 0, 0.08)" : "rgba(255, 160, 0, 0.06)"};
-  border: 1px solid rgba(255, 160, 0, 0.25);
-  border-radius: 10px;
-  padding: 12px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.8)")};
-
-  strong {
-    color: #ff9500;
-  }
-`;
-
-/* ── New Starter & Suggested Questions Styled Components ── */
 const EmptyChatWelcome = styled.div`
   display: flex;
   flex-direction: column;
@@ -1423,48 +1304,14 @@ const StarterQuestionsCarousel = ({ isDarkMode, onAsk }) => {
     { text: "Порадь екологічні компанії", icon: < FaHandsHelping/> },
     { text: "Порадити гру, кіно і т.д.?", icon: <FaClapperboard /> },
   ];
-  const [position, setPosition] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
-
-  useEffect(() => {
-    if (isPaused) return undefined;
-
-    const timer = setInterval(() => {
-      // Не виходимо за дубльовані картки, навіть якщо transitionend не спрацював
-      setPosition((current) => Math.min(current + 1, questions.length));
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [isPaused, questions.length]);
-
-  // Після прокрутки до дубліката першої картки миттєво повертаємось на початок.
-  // Таймер замість onTransitionEnd: подія не приходить у фоновій вкладці чи прихованому вікні,
-  // через що позиція раніше росла без кінця і картки зникали.
-  useEffect(() => {
-    if (position < questions.length) return undefined;
-    const resetTimer = setTimeout(() => {
-      setIsResetting(true);
-      setPosition(0);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setIsResetting(false));
-      });
-    }, 700);
-    return () => clearTimeout(resetTimer);
-  }, [position, questions.length]);
+  const { position, isResetting, pauseProps } = useStarterCarousel(questions.length);
 
   return (
     <StarterQuestionsGrid
       role="group"
       aria-label="Популярні запитання"
       aria-roledescription="карусель"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onFocus={() => setIsPaused(true)}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setIsPaused(false);
-        }
-      }}
+      {...pauseProps}
     >
       <StarterCarouselViewport>
         <StarterCarouselTrack
@@ -1569,25 +1416,8 @@ export const getResponseLengthInstruction = (responseLength) => {
   return { label: "Менше", instruction: "Коротко." };
 };
 
-export const parseSuggestedQuestions = (text) => {
-  if (!text) return { cleanText: text, questions: [] };
-  const regex = /\[РЕКОМЕНДОВАНІ_ПИТАННЯ\]([\s\S]*?)\[\/РЕКОМЕНДОВАНІ_ПИТАННЯ\]/;
-  const match = text.match(regex);
-  if (!match) return { cleanText: text, questions: [] };
-  const cleanText = text.replace(regex, "").trim();
-  const rawQuestions = match[1]
-    .split("\n")
-    .map((q) => q.replace(/^[•\-*\d.\s]+/, "").trim())
-    .filter((q) => q.length > 0)
-    .slice(0, 3);
-  return { cleanText, questions: rawQuestions };
-};
-
 const getSystemPrompt = (suggestedQuestionsCount) => {
-  const suggestionsInstruction =
-    suggestedQuestionsCount === 0
-      ? "11. Не додавай рекомендованих питань або блок [РЕКОМЕНДОВАНІ_ПИТАННЯ]."
-      : `11. Наприкінці кожної відповіді додавай рівно ${suggestedQuestionsCount} коротких змістовних питань у форматі [РЕКОМЕНДОВАНІ_ПИТАННЯ]. Питання мають допомагати обдумати тему, перевірити припущення або побачити іншу перспективу, а не просто заохочувати продовжувати чат.`;
+  const suggestionsInstruction = `11. ${getSuggestionsInstruction(suggestedQuestionsCount)}`;
 
   return `Ти — ШІ-асистент вбудований у веб-платформу «Стихія».
 КОНЦЕПЦІЯ ПЛАТФОРМИ:
@@ -1598,8 +1428,8 @@ const getSystemPrompt = (suggestedQuestionsCount) => {
 • Допомога ШІ (це ти) — чат з Gemini, аналіз фото/відео/аудіо, скріншот сторінки.
 
 АВТОР: TheTurkeyStudio. Email: theturkeystudio@gmail.com
-Вікові обмеження: 13+
-Конфіденційність: платформа не збирає персональні дані.
+Вікові обмеження: 14+ (і для сайту, і для акаунта).
+Конфіденційність: платформа збирає мінімум даних і не продає їх; подробиці — в Угоді користувача (розділ 4). Акаунт можна видалити самостійно: Налаштування → Безпека → «Видалити акаунт».
 
 ТВОЇ ПРАВИЛА:
 1. Якщо у вхідних даних є погодний контекст (Open-Meteo або інтернет-пошук), ЗАВЖДИ відповідай конкретним прогнозом (температура, сонячно/хмарно/дощ, вітер, опади) для запитаного міста/дня (наприклад, завтра в Києві), а не слати на сторінку погоди.
@@ -1612,11 +1442,7 @@ const getSystemPrompt = (suggestedQuestionsCount) => {
 8. Тримай стриманий, нейтральний і предметний тон — без надмірної теплоти, вибачень, захоплення чи порожніх вступів. Пояснюй ключову логіку стисло й підтримуй дискусію запитанням, яке допоможе перевірити припущення або самостійно обдумати тему, коли це доречно. Не завершуй кожну відповідь шаблонним запитанням; невимушено пропонувати цікавий факт, зокрема про Азію, можна лише за контекстом.
 9. Якщо користувач навчається або розв'язує задачу, почни з однієї конкретної підказки, яка допоможе зробити наступний крок, і запропонуй спробувати. Це правило діє і тоді, коли користувач одразу просить готову відповідь: не розкривай її в першій відповіді, натомість дай підказку. Після спроби користувача реагуй саме на неї: поясни помилку або дай наступну підказку, не повторюй ту саму і не відмовляй уперто. Якщо користувач після підказки чи спроби повторно просить повний розв'язок або відповідь, надай їх із зрозумілим поясненням; не затягуй навчальний режим після такого повторного прохання.
 10. Якщо користувач питає про суб'єктивний особистий вибір — наприклад, колір волосся чи стін — прямо скажи, що це його особистий вибір, і не обирай за нього. Не видавай перевагу кольору за об'єктивний факт і не підміняй допомогу шаблонною символікою. Замість цього допоможи людині визначити власні критерії, порівняти практичні наслідки й уподобання або постав одне конкретне запитання, яке допоможе їй вирішити. Якщо користувач уже назвав свої критерії, допоможи їх зважити, але остаточний вибір залиш за ним.
-${suggestionsInstruction}
-${suggestedQuestionsCount === 0 ? "" : `[РЕКОМЕНДОВАНІ_ПИТАННЯ]
-• Запитання${suggestedQuestionsCount > 1 ? " 1" : ""}?
-${suggestedQuestionsCount > 1 ? "• Запитання 2?" : ""}
-[/РЕКОМЕНДОВАНІ_ПИТАННЯ]`}`;
+${suggestionsInstruction}`;
 };
 
 const createDefaultChatObject = (index = 1, initialMessages = []) => ({
@@ -1631,11 +1457,18 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
   const [prompt, setPrompt] = useState("");
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState("");
-  const [personalApiKey, setPersonalApiKey] = useState("");
   const [geminiModel, setGeminiModel] = useState("gemini-3.5-flash-lite");
+  // Спільне з «ШІ Викладом новини»: ключ (+18+), перезарядка
+  const {
+    apiKey: personalApiKey,
+    openKeyModal,
+    ensureAge,
+    keyElements,
+  } = useGeminiKey({ modelName: geminiModel });
+  const cooldown = useSharedCooldown();
+  const cooldownSeconds = cooldown.seconds;
   const [responseLength, setResponseLength] = useState("normal");
-  const [suggestedQuestionsCount, setSuggestedQuestionsCount] = useState("2");
-  const [isLimitsModalOpen, setIsLimitsModalOpen] = useState(false);
+  const [suggestedQuestionsCount, setSuggestedQuestionsCount] = useState("1");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     try {
       return getPref("ai_help_sidebar_collapsed") === "1";
@@ -1689,10 +1522,6 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
   const lastPromptRef = useRef("");
   const [totalFilesSize, setTotalFilesSize] = useState(0);
   const [error, setError] = useState(null);
-  const [cooldownUntil, setCooldownUntil] = useState(0);
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef(null);
   const [viewingFile, setViewingFile] = useState(null);
   const [mediaPlaying, setMediaPlaying] = useState(false);
   const [mediaProgress, setMediaProgress] = useState(0);
@@ -1704,25 +1533,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
   const chatEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const mediaRef = useRef(null);
-  const cooldownUntilRef = useRef(0);
   const requestInFlightRef = useRef(false);
-
-  useEffect(() => {
-    if (!cooldownUntil) return undefined;
-
-    const updateCooldown = () => {
-      const remaining = Math.max(0, cooldownUntil - Date.now());
-      setCooldownSeconds(Math.ceil(remaining / 1000));
-      if (remaining === 0) {
-        setCooldownUntil(0);
-        cooldownUntilRef.current = 0;
-      }
-    };
-
-    updateCooldown();
-    const timer = setInterval(updateCooldown, 250);
-    return () => clearInterval(timer);
-  }, [cooldownUntil]);
 
   // Active chat calculation
   const activeChat = chats.find((c) => c.id === activeChatId) || chats[0];
@@ -1897,47 +1708,23 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     if (dist < 150) container.scrollTop = container.scrollHeight;
   }, [streamingText]);
 
-  const handleVoiceInput = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error("Ваш браузер не підтримує розпізнавання голосу.");
-      return;
-    }
-    if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-    recognition.lang = "uk-UA";
-    recognition.interimResults = false;
-    recognition.onstart = () => { setIsListening(true); setStatus("Слухаю вас..."); };
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setPrompt((prev) =>
-        `${prev ? `${prev} ` : ""}${transcript}`.slice(0, MAX_MESSAGE_LENGTH),
-      );
-    };
-    recognition.onerror = () => { setIsListening(false); setStatus(""); recognitionRef.current = null; };
-    recognition.onend = () => { setIsListening(false); setStatus(""); recognitionRef.current = null; };
-    recognition.start();
-  };
+  const { isListening, toggle: handleVoiceInput } = useVoiceInput({
+    onText: (transcript) =>
+      setPrompt((prev) => `${prev ? `${prev} ` : ""}${transcript}`.slice(0, MAX_MESSAGE_LENGTH)),
+    onStart: () => setStatus("Слухаю вас..."),
+    onStop: () => setStatus(""),
+  });
 
   useEffect(() => {
-    const loadKeyAndChats = async () => {
-      const gK = await localforage.getItem("gemini_api_key");
+    const loadSettingsAndChats = async () => {
       const gM = await localforage.getItem("gemini_model");
       const savedGoogleSearch = await localforage.getItem("gemini_google_search_enabled");
-      const savedSuggestedQuestionsCount = await localforage.getItem(
-        "gemini_suggested_questions_count",
+      const savedSuggestedQuestionsCount = normalizeSuggestedCount(
+        await localforage.getItem(SUGGESTED_COUNT_KEY),
       );
-      if (gK) {
-        const cleaned = typeof gK === "string" ? gK.trim().replace(/^["']|["']$/g, "") : gK;
-        setPersonalApiKey(cleaned);
-      }
       if (gM) setGeminiModel(gM);
       if (savedGoogleSearch !== null) setGoogleSearchEnabled(savedGoogleSearch);
-      if (["0", "1", "2"].includes(savedSuggestedQuestionsCount)) {
+      if (savedSuggestedQuestionsCount !== null) {
         setSuggestedQuestionsCount(savedSuggestedQuestionsCount);
       }
 
@@ -1964,10 +1751,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       await localforage.setItem("ai_help_active_chat_id", targetId);
     };
 
-    loadKeyAndChats();
-    const handleKeyChange = (e) => setPersonalApiKey(e.detail);
-    window.addEventListener("geminiKeyChanged", handleKeyChange);
-    return () => window.removeEventListener("geminiKeyChanged", handleKeyChange);
+    loadSettingsAndChats();
   }, []);
 
   useEffect(() => {
@@ -1991,13 +1775,6 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     setSelectedFiles([]);
     setAttachedCards([]);
     setTotalFilesSize(0);
-  };
-
-  const saveApiKey = async (val) => {
-    const cleaned = (val || "").trim().replace(/^["']|["']$/g, "");
-    setPersonalApiKey(cleaned);
-    await localforage.setItem("gemini_api_key", cleaned);
-    window.dispatchEvent(new CustomEvent("geminiKeyChanged", { detail: cleaned }));
   };
 
   const handleFileSelect = (files) => {
@@ -2105,9 +1882,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       previousMessages.slice(0, messageIndex),
     );
     clearFiles();
-    cooldownUntilRef.current = 0;
-    setCooldownUntil(0);
-    setCooldownSeconds(0);
+    cooldown.reset();
     requestAnimationFrame(() => textareaRef.current?.focus());
   };
 
@@ -2132,10 +1907,13 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     if (!personalApiKey) {
       updateChatMessages(targetChatId, (prev) => [
         ...prev,
-        { text: "Будь ласка, введіть Gemini API-ключ у панелі налаштувань.", isBot: true },
+        { text: "Будь ласка, вставте ключ Gemini — натисніть кнопку з ключем угорі.", isBot: true },
       ]);
+      openKeyModal();
       return;
     }
+    // Ключ могли зберегти ще до появи підтвердження віку — питаємо перед першим запитом
+    if (!(await ensureAge())) return;
     if (originalPrompt && hasBannedContent(originalPrompt)) {
       updateChatMessages(targetChatId, (prev) => [
         ...prev,
@@ -2144,16 +1922,9 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       return;
     }
 
-    const now = Date.now();
-    const sharedCooldownUntil = await localforage.getItem(GLOBAL_COOLDOWN_KEY);
-    const activeCooldownUntil = Math.max(
-      cooldownUntilRef.current,
-      Number(sharedCooldownUntil) || 0,
-    );
-    if (activeCooldownUntil > now) {
-      const remainingSec = Math.ceil((activeCooldownUntil - now) / 1000);
-      cooldownUntilRef.current = activeCooldownUntil;
-      setCooldownUntil(activeCooldownUntil);
+    // Перезарядку могли запустити в «ШІ Викладі новини»
+    const remainingSec = await cooldown.sync();
+    if (remainingSec > 0) {
       toast.error(`Зачекайте ще ${remainingSec} с перед наступним запитом.`);
       return;
     }
@@ -2255,16 +2026,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       setStreamingText("");
       clearFiles();
 
-      const cooldownSecondsBySuggestionCount = {
-        0: 5,
-        1: 10,
-        2: 15,
-      };
-      const nextCooldown =
-        Date.now() + cooldownSecondsBySuggestionCount[suggestionCount] * 1000;
-      cooldownUntilRef.current = nextCooldown;
-      setCooldownUntil(nextCooldown);
-      await localforage.setItem(GLOBAL_COOLDOWN_KEY, nextCooldown);
+      await cooldown.start(getCooldownSeconds(suggestionCount));
     } catch (err) {
       setStreamingText("");
       const errorMessage = err?.message || "Невідома помилка Gemini.";
@@ -2275,10 +2037,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
           : errorMessage,
       );
       clearFiles();
-      const nextCooldown = Date.now() + 5000;
-      cooldownUntilRef.current = nextCooldown;
-      setCooldownUntil(nextCooldown);
-      await localforage.setItem(GLOBAL_COOLDOWN_KEY, nextCooldown);
+      await cooldown.start(5);
     } finally {
       requestInFlightRef.current = false;
       setLoading(false);
@@ -2289,6 +2048,8 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
   const canSend = !loading && cooldownSeconds === 0 && (!!prompt.trim() || selectedFiles.length > 0 || attachedCards.length > 0);
 
   return (
+    <>
+    {keyElements}
     <AihelpDiv
       $isStickyBgMode={isStickyBgMode}
       $isDarkMode={isDarkMode}
@@ -2319,16 +2080,6 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
               {isSidebarCollapsed ? <TbLayoutSidebarLeftExpand /> : <TbLayoutSidebarLeftCollapse />}
             </SidebarToggleBtn>
           </Tooltip>
-          <Tooltip content="Переглянути приблизні ліміти" isDarkMode={isDarkMode}>
-            <LimitsButton
-              type="button"
-              $isDarkMode={isDarkMode}
-              onClick={() => setIsLimitsModalOpen(true)}
-              aria-label="Переглянути приблизні ліміти"
-            >
-              <TbGauge />
-            </LimitsButton>
-          </Tooltip>
           <Tooltip content="Створити новий паралельний чат" isDarkMode={isDarkMode}>
             <NewChatHeaderBtn
               type="button"
@@ -2357,9 +2108,11 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
 
       <SettingsPanel $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
         <ProviderRow $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-          <label style={{ minWidth: "unset", fontWeight: 700, fontSize: 13 }}>
-            Gemini API Key
-          </label>
+          <GeminiKeyButton
+            hasKey={Boolean(personalApiKey)}
+            onClick={openKeyModal}
+            isDarkMode={isDarkMode}
+          />
           <Tooltip content="Безкоштовний онлайн-пошук фактів та інформації без використання квоти Gemini" isDarkMode={isDarkMode}>
             <label
               style={{
@@ -2385,24 +2138,6 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
               Інтернет-пошук
             </label>
           </Tooltip>
-          <input
-            type="password"
-            placeholder="Вставте ваш Gemini API Key..."
-            value={personalApiKey}
-            onChange={(e) => saveApiKey(e.target.value)}
-            name="ai-help-gemini-key"
-            autoComplete="off"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            data-form-type="other"
-            data-lpignore="true"
-          />
-          {!personalApiKey && (
-            <GetKeyLink href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">
-              Отримати ключ
-            </GetKeyLink>
-          )}
         </ProviderRow>
       </SettingsPanel>
 
@@ -2634,11 +2369,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                     </QuickLabel>
                   </Tooltip>
                   <Segmented $isDarkMode={isDarkMode} role="group" aria-label="Кількість рекомендованих питань">
-                    {[
-                      ["0", "5 с"],
-                      ["1", "10 с"],
-                      ["2", "15 с"],
-                    ].map(([value, delay]) => (
+                    {SUGGESTED_COUNT_OPTIONS.map(({ value, cooldown: delay }) => (
                       <SegmentButton
                         key={value}
                         type="button"
@@ -2647,11 +2378,11 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                         aria-pressed={suggestedQuestionsCount === value}
                         onClick={async () => {
                           setSuggestedQuestionsCount(value);
-                          await localforage.setItem("gemini_suggested_questions_count", value);
+                          await localforage.setItem(SUGGESTED_COUNT_KEY, value);
                         }}
                       >
                         {value}
-                        <small>{delay}</small>
+                        <small>{delay} с</small>
                       </SegmentButton>
                     ))}
                   </Segmented>
@@ -2790,33 +2521,8 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       )}
 
 
-      {isLimitsModalOpen && (
-        <ModalOverlay onClick={() => setIsLimitsModalOpen(false)}>
-          <ModalContainer $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
-            <ModalHeader $isDarkMode={isDarkMode}>
-              <h3><TbGauge style={{ marginRight: 6 }} /> Приблизні ліміти використання</h3>
-              <ModalCloseBtn $isDarkMode={isDarkMode} onClick={() => setIsLimitsModalOpen(false)} aria-label="Закрити">
-                <TbX />
-              </ModalCloseBtn>
-            </ModalHeader>
-
-            <LimitsList>
-              <LimitItem $isDarkMode={isDarkMode}>
-                <span> Ліміт на хвилину(Гугл):</span>
-                <span>15 / хв</span>
-              </LimitItem>
-              <LimitItem $isDarkMode={isDarkMode}>
-                <span>Ліміт на добу(Гугл):</span>
-                <span>1500 / доба</span>
-              </LimitItem>
-            </LimitsList>
-            <NoteBox $isDarkMode={isDarkMode}>
-              <strong>Примітка:</strong> Це безкоштовні ліміти Google AI Studio. Їх визначає ваш індивідуальний ключ, а не «Стихія» (зараз використовується модель <strong>{geminiModel}</strong>) Якщо ви підключите платний ключ, ліміти будуть більшими, проте тут вони все одно відображатимуться у базовому вигляді, оскільки ми не маємо доступу до параметрів вашого акаунта. Перезарядка 15с після кожного запиту та ліміт 300символів на запит зроблені з метою економії вашої квоти.
-            </NoteBox>
-          </ModalContainer>
-        </ModalOverlay>
-      )}
     </AihelpDiv>
+    </>
   );
 };
 export default Aihelp;

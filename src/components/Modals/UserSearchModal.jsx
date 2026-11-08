@@ -5,7 +5,7 @@ import rawFaqData from "./faqData.json";
 import hills from "../../media/backgrounds/scenes/foggy-forest.webp";
 import texts from "../../media/backgrounds/scenes/egyptian-hieroglyphs.webp";
 import logofix from "../../media/brand/logo.webp";
-import { FiSearch, FiX, FiDownload } from "react-icons/fi";
+import { FiSearch, FiX, FiDownload, FiArrowUp } from "react-icons/fi";
 import info from "../../media/ui/information-sign.webp";
 import one from "../../media/drawings/two-brothers.webp";
 import two from "../../media/drawings/emperor-nitseron.webp";
@@ -322,7 +322,12 @@ const AnswerActionButton = styled.button`
   }
 
   &:hover svg {
-    transform: ${({ $variant }) => ($variant === "close" ? "rotate(90deg)" : "translateY(1px)")};
+    transform: ${({ $variant }) =>
+      $variant === "close"
+        ? "rotate(90deg)"
+        : $variant === "top"
+          ? "translateY(-2px)"
+          : "translateY(1px)"};
   }
 
   &:focus-visible {
@@ -355,8 +360,10 @@ const FaqAnswerModal = styled.div`
   width: 95%;
   max-width: none;
   max-height: 85vh;
-  overflow-y: auto;
-  padding: 28px clamp(16px, 3vw, 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
   border-radius: 14px;
   color: #fff;
   background-color: #17252b;
@@ -369,9 +376,65 @@ const FaqAnswerModal = styled.div`
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
 `;
 
+// Липка шапка: заголовок + кнопки завжди видно, прокручується лише текст
+const FaqAnswerHeader = styled.div`
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px clamp(16px, 3vw, 32px) 14px;
+  border-bottom: 1px solid
+    ${({ $scrolled }) => ($scrolled ? "rgba(255, 255, 255, 0.14)" : "transparent")};
+  background: ${({ $scrolled }) => ($scrolled ? "rgba(0, 0, 0, 0.45)" : "transparent")};
+  backdrop-filter: ${({ $scrolled }) => ($scrolled ? "blur(8px)" : "none")};
+  -webkit-backdrop-filter: ${({ $scrolled }) => ($scrolled ? "blur(8px)" : "none")};
+  box-shadow: ${({ $scrolled }) => ($scrolled ? "0 6px 18px rgba(0, 0, 0, 0.35)" : "none")};
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+`;
+
 const FaqAnswerTitle = styled.h2`
-  margin: 0 ${({ $actions }) => ($actions > 1 ? "100px" : "52px")} 18px 0;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
   font-size: 22px;
+`;
+
+const FaqAnswerBody = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px clamp(16px, 3vw, 32px) 28px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+  }
+`;
+
+// Кнопка «вгору» — з'являється після прокрутки, закріплена в куті модалки
+const ScrollTopButton = styled(AnswerActionButton)`
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2;
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  visibility: ${({ $visible }) => ($visible ? "visible" : "hidden")};
+  transform: translateY(${({ $visible }) => ($visible ? "0" : "10px")});
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease,
+    transform 0.25s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
 `;
 
 const FaqAnswerText = styled.div`
@@ -385,10 +448,7 @@ const FaqAnswerText = styled.div`
 `;
 
 const FaqAnswerActions = styled.div`
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 2;
+  flex: 0 0 auto;
   display: flex;
   gap: 8px;
 `;
@@ -609,6 +669,32 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [previewImage, setPreviewImage] = useState(null);
+
+  // Стан прокрутки тексту відповіді: тінь під шапкою та кнопка «вгору»
+  const answerBodyRef = useRef(null);
+  const [answerScrolled, setAnswerScrolled] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    setAnswerScrolled(false);
+    setShowScrollTop(false);
+  }, [selectedFaq]);
+
+  const handleAnswerScroll = (e) => {
+    const top = e.currentTarget.scrollTop;
+    setAnswerScrolled(top > 4);
+    setShowScrollTop(top > 300);
+  };
+
+  const scrollAnswerToTop = () => {
+    const reduceMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    answerBodyRef.current?.scrollTo({
+      top: 0,
+      behavior: reduceMotion ? "auto" : "smooth",
+    });
+  };
 
   const handleClose = useCallback(() => {
     if (previewImage) {
@@ -890,6 +976,8 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
             $backgroundImage={selectedFaq.image}
             onClick={(e) => e.stopPropagation()}
           >
+            <FaqAnswerHeader $scrolled={answerScrolled}>
+            <FaqAnswerTitle>{selectedFaq.q}</FaqAnswerTitle>
             <FaqAnswerActions>
               {selectedFaq.image && (
                 <AnswerActionButton
@@ -912,8 +1000,22 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                 <FiX aria-hidden="true" />
               </AnswerActionButton>
             </FaqAnswerActions>
-            <FaqAnswerTitle $actions={selectedFaq.image ? 2 : 1}>{selectedFaq.q}</FaqAnswerTitle>
-            <FaqAnswerText>{renderAnswerBlocks(selectedFaq)}</FaqAnswerText>
+            </FaqAnswerHeader>
+            <FaqAnswerBody ref={answerBodyRef} onScroll={handleAnswerScroll}>
+              <FaqAnswerText>{renderAnswerBlocks(selectedFaq)}</FaqAnswerText>
+            </FaqAnswerBody>
+            <ScrollTopButton
+              type="button"
+              $variant="top"
+              $visible={showScrollTop}
+              tabIndex={showScrollTop ? 0 : -1}
+              aria-hidden={!showScrollTop}
+              aria-label="Прокрутити вгору"
+              title="Прокрутити вгору"
+              onClick={scrollAnswerToTop}
+            >
+              <FiArrowUp aria-hidden="true" />
+            </ScrollTopButton>
           </FaqAnswerModal>
         </FaqAnswerOverlay>
       )}

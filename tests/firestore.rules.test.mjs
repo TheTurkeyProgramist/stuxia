@@ -9,6 +9,8 @@ import {
   setDoc,
   getDoc,
   deleteDoc,
+  updateDoc,
+  deleteField,
   writeBatch,
   serverTimestamp,
   Timestamp,
@@ -135,6 +137,40 @@ const run = async () => {
   await seed("config/alice", { legacyField: { stringValue: "old" }, cardAdditionsDate: { stringValue: "2026-01-01" } });
   await expectAllow("запис налаштувань у документ зі старими полями", () =>
     setDoc(aliceCfg, counted({ settings }, "settingsSyncCount", "settingsSyncAt", 1), { merge: true }));
+
+  console.log("\nconfig/{uid}: видалення акаунта (стирання даних)");
+  const seedFullConfig = () =>
+    seed("config/alice", {
+      settings: { mapValue: { fields: { isDarkMode: { booleanValue: true } } } },
+      savedWeatherCards: { arrayValue: { values: [{ stringValue: "Київ" }] } },
+      legacyField: { stringValue: "old" },
+      settingsSyncCount: { integerValue: "5" },
+      settingsSyncAt: { timestampValue: new Date().toISOString() },
+    });
+  await clearAll();
+  await seedFullConfig();
+  await expectAllow("власник стирає свої дані (лічильники лишаються)", () =>
+    updateDoc(aliceCfg, {
+      settings: deleteField(),
+      savedWeatherCards: deleteField(),
+      legacyField: deleteField(),
+    }));
+  await clearAll();
+  await seedFullConfig();
+  await expectDeny("стирання разом з лічильником", () =>
+    updateDoc(aliceCfg, { settings: deleteField(), settingsSyncCount: deleteField() }));
+  await expectDeny("стирання з підміною даних", () =>
+    updateDoc(aliceCfg, { settings: deleteField(), savedWeatherCards: ["Хакер"] }));
+  await expectDeny("стирання з додаванням нового поля", () =>
+    updateDoc(aliceCfg, { settings: deleteField(), junk: "spam" }));
+  await expectDeny("чужий акаунт стирає config/alice", () =>
+    updateDoc(doc(bob, "config", "alice"), { settings: deleteField() }));
+
+  console.log("\nusers/{uid}: видалення старого документа");
+  await clearAll();
+  await seed("users/alice", { mutedNews: { arrayValue: { values: [] } } });
+  await expectDeny("чужий акаунт видаляє users/alice", () => deleteDoc(doc(bob, "users", "alice")));
+  await expectAllow("власник видаляє users/alice", () => deleteDoc(doc(alice, "users", "alice")));
 
   console.log("\nconfig/{uid}: картки, заглушені новини, додавання");
   await clearAll();

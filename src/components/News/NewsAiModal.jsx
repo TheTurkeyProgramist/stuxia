@@ -14,6 +14,20 @@ import { MdVerified } from "react-icons/md";
 import { FaCircleInfo } from "react-icons/fa6";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { fetchFreeWebSearch } from "../../utils/freeWebSearch";
+import { GeminiKeyButton } from "../Modals/GeminiKeyModal";
+import {
+  MAX_MESSAGE_LENGTH,
+  SUGGESTED_COUNT_KEY,
+  SUGGESTED_COUNT_OPTIONS,
+  getCooldownSeconds,
+  getSuggestionsInstruction,
+  normalizeSuggestedCount,
+  parseSuggestedQuestions,
+} from "../AiShared/aiConfig";
+import { useGeminiKey } from "../AiShared/useGeminiKey";
+import { useSharedCooldown } from "../AiShared/useSharedCooldown";
+import { useVoiceInput } from "../AiShared/useVoiceInput";
+import { useStarterCarousel } from "../AiShared/useStarterCarousel";
 import reader from "../../media/characters/domino-reading.webp";
 import { GiSpikedDragonHead, GiTimeBomb } from "react-icons/gi";
 import readerfour from "../../media/characters/domino-reading-4.webp";
@@ -442,47 +456,14 @@ const SuggestedQuestion = styled.button`
 `;
 
 const StarterQuestionsCarousel = ({ isDarkMode, onAsk }) => {
-  const [position, setPosition] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
-
-  useEffect(() => {
-    if (isPaused) return undefined;
-
-    const timer = setInterval(() => {
-      // Не виходимо за дубльовані картки, навіть якщо transitionend не спрацював
-      setPosition((current) => Math.min(current + 1, starterQuestions.length));
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [isPaused]);
-
-  // Повернення на початок по таймеру: transitionend не приходить у фоновій вкладці,
-  // через що позиція росла без кінця і картки зникали
-  useEffect(() => {
-    if (position < starterQuestions.length) return undefined;
-    const resetTimer = setTimeout(() => {
-      setIsResetting(true);
-      setPosition(0);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setIsResetting(false));
-      });
-    }, 700);
-    return () => clearTimeout(resetTimer);
-  }, [position]);
+  const { position, isResetting, pauseProps } = useStarterCarousel(starterQuestions.length);
 
   return (
     <StarterCarouselViewport
       role="group"
       aria-label="Популярні запитання про новину"
       aria-roledescription="карусель"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onFocus={() => setIsPaused(true)}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setIsPaused(false);
-        }
-      }}
+      {...pauseProps}
     >
       <StarterCarouselTrack
         $position={position}
@@ -579,6 +560,15 @@ const Message = styled.div`
   }
 `;
 
+// Рядок з кнопкою ключа Gemini (той самий ключ, що й у «Допомозі ШІ»)
+const KeyBar = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-top: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)")};
+  background: ${(props) => (props.$isDarkMode ? "#16171b" : "#fafafa")};
+`;
+
 const InputArea = styled.div`
   padding: 5px;
   border-top: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)")};
@@ -608,26 +598,13 @@ const Input = styled.input`
   }
 `;
 
-const MAX_MESSAGE_LENGTH = 300;
-const GLOBAL_COOLDOWN_KEY = "gemini_global_cooldown_until";
-
 const getResponseLengthInstruction = (value) => {
   if (value === "detailed") return "Відповідай докладно, але структуровано.";
   if (value === "concise") return "Відповідай стисло, лише головна суть.";
   return "Відповідай нормально, збалансовано за обсягом.";
 };
 
-const parseSuggestedQuestions = (text) => {
-  const regex = /\[РЕКОМЕНДОВАНІ_ПИТАННЯ\]([\s\S]*?)\[\/РЕКОМЕНДОВАНІ_ПИТАННЯ\]/;
-  const match = text.match(regex);
-  if (!match) return { cleanText: text, questions: [] };
-  const questions = match[1]
-    .split("\n")
-    .map((item) => item.replace(/^[•\-*\d.\s]+/, "").trim())
-    .filter(Boolean)
-    .slice(0, 2);
-  return { cleanText: text.replace(regex, "").trim(), questions };
-};
+const NEWS_AI_MODEL = "gemini-2.5-flash";
 
 export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
   const [responseLength, setResponseLength] = useState("normal");
@@ -636,13 +613,18 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [apiKey, setApiKey] = useState("");
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
-  const [isListening, setIsListening] = useState(false);
+
+  // Спільне з «Допомогою ШІ»: ключ (+18+), перезарядка, голосовий ввід
+  const { apiKey, openKeyModal, ensureAge, reload: reloadKey, keyElements } =
+    useGeminiKey({ modelName: NEWS_AI_MODEL });
+  const cooldown = useSharedCooldown();
+  const cooldownSeconds = cooldown.seconds;
+  const { isListening, toggle: handleVoiceInput } = useVoiceInput({
+    onText: (transcript) =>
+      setInput((previous) => `${previous ? `${previous} ` : ""}${transcript}`.slice(0, MAX_MESSAGE_LENGTH)),
+  });
 
   const chatEndRef = useRef(null);
-  const recognitionRef = useRef(null);
-  const cooldownRef = useRef(0);
 
   // Блокування скролу фонової сторінки при відкритті
   useEffect(() => {
@@ -659,19 +641,15 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
 
   useEffect(() => {
     if (!isOpen) return;
+    reloadKey();
+    cooldown.sync();
     Promise.all([
-      localforage.getItem("gemini_api_key"),
       localforage.getItem("gemini_google_search_enabled"),
-      localforage.getItem("gemini_suggested_questions_count"),
-      localforage.getItem(GLOBAL_COOLDOWN_KEY),
-    ]).then(([key, searchEnabled, suggestions, cooldownUntil]) => {
-      setApiKey(key || "");
+      localforage.getItem(SUGGESTED_COUNT_KEY),
+    ]).then(([searchEnabled, suggestions]) => {
       if (searchEnabled !== null) setGoogleSearchEnabled(searchEnabled);
-      if (["0", "1", "2"].includes(suggestions)) setSuggestedQuestionsCount(suggestions);
-      if (cooldownUntil && cooldownUntil > Date.now()) {
-        cooldownRef.current = cooldownUntil;
-        setCooldownSeconds(Math.ceil((cooldownUntil - Date.now()) / 1000));
-      }
+      const normalized = normalizeSuggestedCount(suggestions);
+      if (normalized !== null) setSuggestedQuestionsCount(normalized);
     });
 
     const historyKey = `news_ai_chat_${newsItem?.link || "general"}`;
@@ -687,23 +665,8 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
         setMessages([]);
       }
     });
+    // reloadKey і cooldown.sync стабільні (useCallback) — перечитуємо лише при відкритті
   }, [isOpen, newsItem]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      localforage.getItem(GLOBAL_COOLDOWN_KEY).then((sharedCooldownUntil) => {
-        const until = Math.max(cooldownRef.current, Number(sharedCooldownUntil) || 0);
-        const remaining = Math.max(0, until - Date.now());
-        cooldownRef.current = until;
-        setCooldownSeconds(Math.ceil(remaining / 1000));
-        if (!remaining && until) {
-          cooldownRef.current = 0;
-          localforage.removeItem(GLOBAL_COOLDOWN_KEY);
-        }
-      });
-    }, 250);
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -719,47 +682,22 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
     setMessages(toSave);
   };
 
-  const setCooldown = (seconds) => {
-    const until = Date.now() + seconds * 1000;
-    cooldownRef.current = until;
-    setCooldownSeconds(seconds);
-    localforage.setItem(GLOBAL_COOLDOWN_KEY, until);
-  };
-
   const handleClearChat = async () => {
     setMessages([]);
     await localforage.removeItem(`news_ai_chat_${newsItem?.link || "general"}`);
   };
 
-  const handleVoiceInput = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-    if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-    recognition.lang = "uk-UA";
-    recognition.onstart = () => setIsListening(true);
-    recognition.onresult = (event) => {
-      setInput((previous) => `${previous ? `${previous} ` : ""}${event.results[0][0].transcript}`.slice(0, MAX_MESSAGE_LENGTH));
-    };
-    recognition.onend = () => {
-      setIsListening(false);
-      recognitionRef.current = null;
-    };
-    recognition.start();
-  };
-
   const handleSend = async (customPrompt = null) => {
     const textToSend = customPrompt || input;
-    if (!textToSend.trim() || loading || cooldownRef.current > Date.now()) return;
+    if (!textToSend.trim() || loading || cooldown.isActive()) return;
 
     if (!apiKey) {
-      alert("Не знайдено Gemini API ключ! Додайте його в меню 'Допомога ШІ' внизу сторінки.");
+      openKeyModal();
       return;
     }
+    if (!(await ensureAge())) return;
+    // Перезарядку могли запустити в «Допомозі ШІ»
+    if (await cooldown.sync()) return;
 
     const userMsg = {
       text: textToSend,
@@ -774,7 +712,7 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
+        model: NEWS_AI_MODEL,
         ...(googleSearchEnabled ? { tools: [{ googleSearch: {} }] } : {}),
       });
 
@@ -782,10 +720,7 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
       if (googleSearchEnabled) {
         webContext = await fetchFreeWebSearch(`${newsItem?.title || ""} ${textToSend}`);
       }
-      const suggestionCount = Number(suggestedQuestionsCount);
-      const suggestionsInstruction = suggestionCount
-        ? `Додай рівно ${suggestionCount} коротке(их) змістовне(их) питання(нь) у блоці [РЕКОМЕНДОВАНІ_ПИТАННЯ], щоб допомогти обдумати тему, перевірити припущення чи побачити іншу перспективу, а не просто продовжити чат.`
-        : "Не додавай блок рекомендованих питань.";
+      const suggestionsInstruction = getSuggestionsInstruction(suggestedQuestionsCount);
       const systemInstructions = `Ти — ШІ-помічник для аналізу новин і живої дискусії.
 ${getResponseLengthInstruction(responseLength)}
 Відповідай українською, якщо користувач не пише іншою мовою. Розрізняй підтверджені факти, твердження джерела та власні висновки; не вигадуй деталей, яких немає в новині чи наданому контексті.
@@ -823,7 +758,7 @@ ${webContext}
           : null,
       };
       saveHistory([...newMsgs, botMsg]);
-      setCooldown(Number(suggestedQuestionsCount) === 0 ? 5 : Number(suggestedQuestionsCount) === 1 ? 10 : 15);
+      cooldown.start(getCooldownSeconds(suggestedQuestionsCount));
     } catch (error) {
       console.error(error);
       const botMsg = {
@@ -840,6 +775,8 @@ ${webContext}
 
   // Рендеримо модальне вікно безпосередньо в document.body
   return createPortal(
+    <>
+    {keyElements}
     <ModalOverlay onClick={onClose}>
       <ModalContent $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
         <Header $isDarkMode={isDarkMode}>
@@ -880,22 +817,18 @@ ${webContext}
               role="group"
               aria-label="Кількість запропонованих питань (затримка між запитами)"
             >
-              {[
-                ["0", "5 с"],
-                ["1", "10 с"],
-                ["2", "15 с"],
-              ].map(([value, delay]) => (
+              {SUGGESTED_COUNT_OPTIONS.map(({ value, cooldown: delay }) => (
                 <SegmentButton
                   key={value}
                   type="button"
                   $active={suggestedQuestionsCount === value}
                   onClick={async () => {
                     setSuggestedQuestionsCount(value);
-                    await localforage.setItem("gemini_suggested_questions_count", value);
+                    await localforage.setItem(SUGGESTED_COUNT_KEY, value);
                   }}
                 >
                   {value}
-                  <small>{delay}</small>
+                  <small>{delay} с</small>
                 </SegmentButton>
               ))}
             </Segmented>
@@ -962,6 +895,14 @@ ${webContext}
           )}
         </Body>
 
+        <KeyBar $isDarkMode={isDarkMode}>
+          <GeminiKeyButton
+            hasKey={Boolean(apiKey)}
+            onClick={openKeyModal}
+            isDarkMode={isDarkMode}
+          />
+        </KeyBar>
+
         <InputArea $isDarkMode={isDarkMode}>
           <InputShell>
             <Input
@@ -1011,7 +952,8 @@ ${webContext}
           </InputShell>
         </InputArea>
       </ModalContent>
-    </ModalOverlay>,
+    </ModalOverlay>
+    </>,
     document.body
   );
 }
