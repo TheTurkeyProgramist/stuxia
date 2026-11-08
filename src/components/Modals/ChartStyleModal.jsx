@@ -3,8 +3,8 @@ import { createPortal } from "react-dom";
 import styled from "styled-components";
 import { FaTimes, FaUndo } from "react-icons/fa";
 import { BiPalette, BiLayer, BiSliderAlt, BiTrendingUp, BiInfoCircle, BiCheck } from "react-icons/bi";
-import { MdOutlineFormatColorFill, MdScatterPlot } from "react-icons/md";
-import { CURVES, DASHES, WIDTH_MIN, WIDTH_MAX, DIM_MAX } from "../../utils/chartLineStyles.js";
+import { MdOutlineFormatColorFill, MdScatterPlot, MdNumbers } from "react-icons/md";
+import { CURVES, DASHES, WIDTH_MIN, WIDTH_MAX, DIM_MAX, DEFAULT_DIM, WIND_LABELS } from "../../utils/chartLineStyles.js";
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -487,7 +487,8 @@ const ChartStyleModal = ({
   const allDash = lines.map((l) => styles[l.key]?.dash);
   const sameCurve = allCurve.every((c) => c === allCurve[0]) ? allCurve[0] : null;
   const sameDash = allDash.every((c) => c === allDash[0]) ? allDash[0] : null;
-  const commonDim = styles[mainLines[0]?.key]?.dimOpacity ?? 0.3;
+  const commonDim = styles[mainLines[0]?.key]?.dimOpacity ?? DEFAULT_DIM;
+  const anyLabels = mainLines.some((l) => styles[l.key]?.labels === true);
 
   const renderLineCard = (l) => {
     const s = styles[l.key];
@@ -576,7 +577,27 @@ const ChartStyleModal = ({
               {s.points ? <BiCheck /> : <MdScatterPlot />}
               Точки / іконки
             </ToggleChip>
+            {s.labels !== undefined && (
+              <ToggleChip $active={s.labels} $color={l.color} $isDarkMode={isDarkMode} title="Маленькі числа біля точок графіка">
+                <input type="checkbox" checked={s.labels} onChange={(e) => set({ labels: e.target.checked })} />
+                {s.labels ? <BiCheck /> : <MdNumbers />}
+                Підписи значень
+              </ToggleChip>
+            )}
           </Toggles>
+        )}
+
+        {l.wind && s.windLabel !== undefined && s.labels && (
+          <Row title="Що писати маленьким текстом під кожною стрілкою вітру">
+            <span className="name">Під стрілкою</span>
+            <Options>
+              {Object.entries(WIND_LABELS).map(([k, w]) => (
+                <OptionButton key={k} $active={s.windLabel === k} $isDarkMode={isDarkMode} onClick={() => set({ windLabel: k })}>
+                  {w.label}
+                </OptionButton>
+              ))}
+            </Options>
+          </Row>
         )}
       </LineCard>
     );
@@ -661,6 +682,18 @@ const ChartStyleModal = ({
                 label="Прозорість вимкнених ліній"
                 onChange={(v) => onApplyAll({ dimOpacity: v })}
               />
+            </Row>
+            <Divider $isDarkMode={isDarkMode} />
+            <Row title="Маленькі числа біля точок: температура, вітер тощо">
+              <span className="name">Цифри</span>
+              <Options>
+                <OptionButton $active={anyLabels} $isDarkMode={isDarkMode} onClick={() => onApplyAll({ labels: true })}>
+                  Показувати
+                </OptionButton>
+                <OptionButton $active={!anyLabels} $isDarkMode={isDarkMode} onClick={() => onApplyAll({ labels: false })}>
+                  Сховати
+                </OptionButton>
+              </Options>
             </Row>
           </AllLinesPanel>
         </div>

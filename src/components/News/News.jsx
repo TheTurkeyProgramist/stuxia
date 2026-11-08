@@ -355,6 +355,27 @@ const CarouselHint = styled.div`
     gap: 20%;
   }
 `;
+// Підказка каруселі сама керує своїм миганням: раніше цей стан жив у News і
+// кожні кілька секунд перерендерював усі картки новин
+const PulsingCarouselHint = (props) => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    let hideTimer;
+    const trigger = () => {
+      setVisible(true);
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => setVisible(false), 1500);
+    };
+    const initialTimer = setTimeout(trigger, 2000);
+    const interval = setInterval(trigger, 7000);
+    return () => {
+      clearTimeout(initialTimer);
+      clearTimeout(hideTimer);
+      clearInterval(interval);
+    };
+  }, []);
+  return <CarouselHint $visible={visible} {...props} />;
+};
 const CarouselHintItem = styled.button`
   position: absolute;
   top: 50%;
@@ -2121,7 +2142,6 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [selectedNews, setSelectedNews] = useState(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const [showCarouselHint, setShowCarouselHint] = useState(false);
 
   const [customSources, setCustomSources] = useState([]);
   const [newUrl, setNewUrl] = useState("");
@@ -2244,19 +2264,6 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 
     return () => window.clearTimeout(timer);
   }, [user?.newsAutoScroll]);
-  useEffect(() => {
-    const triggerHint = () => {
-      setShowCarouselHint(true);
-      setTimeout(() => setShowCarouselHint(false), 1500); // ховаємо через 3.5 сек
-    };
-    const initialTimer = setTimeout(triggerHint, 2000);
-    const interval = setInterval(triggerHint, 7000);
-    return () => {
-      clearTimeout(initialTimer);
-      clearInterval(interval);
-    };
-  }, []);
-
   const getData = useCallback(async (showLoader = false, forceFresh = false) => {
     // Скасовуємо попереднє завантаження, щоб старі запити не конкурували з новим
     abortRef.current?.abort();
@@ -3314,7 +3321,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       </CarouselSlide>
     ))}
   </MobileCarousel>
-  <CarouselHint $visible={showCarouselHint}>
+  <PulsingCarouselHint>
     <CarouselHintItem
       $direction="previous"
       onClick={() => scrollCarousel("left")}
@@ -3324,7 +3331,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     <CarouselHintItem $direction="next" onClick={() => scrollCarousel("right")}>
       ▶
     </CarouselHintItem>
-  </CarouselHint>
+  </PulsingCarouselHint>
 </CarouselWrapper>
             </motion.div>
           </AnimatePresence>

@@ -39,6 +39,7 @@ import AuthorsDirectoryModal from "./components/Header/AuthorsDirectoryModal.jsx
 import SupportBanner from "./components/Support/SupportBanner.jsx";
 import { notifySupportMoment } from "./components/Support/supportNudge.js";
 import Hero from "./components/Hero/Hero.jsx";
+import HeroClock from "./components/Hero/HeroClock.jsx";
 import { DecoratorProvider } from "./components/Decorator/DecoratorContext.jsx";
 import { sanitizeWeatherCards } from "./utils/weatherPersistence.js";
 import { IoThunderstorm, IoRainy } from "react-icons/io5";
@@ -68,7 +69,7 @@ import { BsMoonStarsFill } from "react-icons/bs";
 import { FaCloudMoonRain, FaCloudMoon } from "react-icons/fa";
 import { LiaCloudSunRainSolid, LiaCloudMoonRainSolid, LiaCloudSunSolid } from "react-icons/lia";
 import { stripSecrets } from "./utils/passwordHash";
-import { getNow, syncClock } from "./utils/serverClock";
+import { syncClock } from "./utils/serverClock";
 import { useLanguageEffect } from "./i18n/useI18nHelpers.js";
 import toast from "react-hot-toast";
 import {
@@ -87,14 +88,23 @@ import {
   usedTodayFromCloud,
   writeWithDailyCounter,
 } from "./utils/cloudCounter";
-import { MotionConfig } from "framer-motion";
+import { createPortal } from "react-dom";
+import { MotionConfig, Reorder, useDragControls } from "framer-motion";
 import { useAnimationsDisabled, setAnimationsDisabled } from "./utils/animationsPref";
+import { useBeta, setBetaOn } from "./utils/betaFeatures";
+import GpsCardReturnDialog from "./components/Weather/GpsCardReturnDialog.jsx";
 import { aggregateHourlyByDay } from "./utils/dailyAggregates";
-import { FaPlay, FaPause } from "react-icons/fa";
-import { FaMagnifyingGlass } from "react-icons/fa6";
+import { FaMagnifyingGlass, FaGripVertical, FaArrowsUpDown } from "react-icons/fa6";
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
 // Ліміти карток погоди: власні картки (без GPS) і нові створення на добу (лічильник у Firestore)
 const MAX_CUSTOM_WEATHER_CARDS = 8;
+// Бета «Вимкнути GPS-картку»: її місце можна віддати ще одній власній картці
+const maxCustomCardsFor = (hideGpsCard) =>
+  hideGpsCard ? MAX_CUSTOM_WEATHER_CARDS + 1 : MAX_CUSTOM_WEATHER_CARDS;
+const cardLimitMessage = (hideGpsCard) =>
+  hideGpsCard
+    ? `Можна мати не більше ${maxCustomCardsFor(true)} карток погоди (GPS-картку вимкнено в бета-функціях).`
+    : `Можна мати не більше ${MAX_CUSTOM_WEATHER_CARDS} власних карток погоди плюс поточну GPS-картку.`;
 // Понад цю кількість — попередження про навантаження на пристрій
 const SOFT_CUSTOM_WEATHER_CARDS = 5;
 const MAX_DAILY_CARD_ADDITIONS = 40;
@@ -493,13 +503,151 @@ const WeatherCarouselWrapper = styled.div`
 
 const CityJumpWrapper = styled.div`
   position: relative;
+  display: flex;
+  gap: 6px;
   width: min(420px, calc(100% - 16px));
   margin: 0 auto 10px;
   z-index: 9500;
 `;
 
-/* Ряд «кнопка анімацій + заголовок Погода» справа над картками */
+/* Бета «Перетягування карток»: кнопка біля пошуку й список, який можна сортувати */
+const ReorderToggle = styled.button`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid #00ffe5;
+  background: ${(props) => (props.$active ? "#00ffe5" : props.$isDarkMode ? "#000" : "#fff")};
+  color: ${(props) => (props.$active ? "#000" : props.$isDarkMode ? "#00ffe5" : "#006b61")};
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 255, 229, 0.25);
+
+  &:hover {
+    box-shadow: 0 0 16px rgba(0, 255, 229, 0.5);
+  }
+
+  @media (max-width: 420px) {
+    & > span {
+      display: none;
+    }
+  }
+`;
+
+const ReorderHint = styled.p`
+  margin: 0 0 6px;
+  font-size: 12px;
+  opacity: 0.75;
+  color: ${(props) => (props.$isDarkMode ? "#e6fffc" : "#111")};
+`;
+
+const ReorderRowItem = styled(Reorder.Item)`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  list-style: none;
+  border: 1px solid rgba(0, 255, 229, 0.35);
+  background: ${(props) => (props.$isDarkMode ? "#111" : "#f5f8fc")};
+  color: ${(props) => (props.$isDarkMode ? "#e6fffc" : "#111")};
+  font-size: 14px;
+  user-select: none;
+
+  & > span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+
+const EmptyWeatherNote = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 12px auto;
+  padding: 18px 16px;
+  max-width: 440px;
+  text-align: center;
+  border-radius: 10px;
+  border: 2px dashed rgba(0, 255, 229, 0.5);
+  background: ${(props) => (props.$isDarkMode ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.92)")};
+  color: ${(props) => (props.$isDarkMode ? "#e6fffc" : "#111")};
+  font-size: 14px;
+
+  & > button {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 2px solid #00ffe5;
+    background: transparent;
+    color: inherit;
+    font-weight: bold;
+    cursor: pointer;
+  }
+`;
+
+const DragHandle = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 255, 229, 0.15);
+  color: inherit;
+  cursor: grab;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+`;
+
+const ReorderRow = ({ item, index, isDarkMode, onDragEnd }) => {
+  const controls = useDragControls();
+  return (
+    <ReorderRowItem
+      value={item.id}
+      dragListener={false}
+      dragControls={controls}
+      onDragEnd={onDragEnd}
+      $isDarkMode={isDarkMode}
+      whileDrag={{ scale: 1.03, boxShadow: "0 6px 18px rgba(0, 255, 229, 0.35)" }}
+    >
+      <DragHandle
+        type="button"
+        aria-label={`Перетягнути картку «${item.label}»`}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          controls.start(e);
+        }}
+      >
+        <FaGripVertical />
+      </DragHandle>
+      <span title={item.label}>
+        {index + 1}. {item.isMain ? "📍 " : ""}
+        {item.label}
+      </span>
+    </ReorderRowItem>
+  );
+};
+
+/* Ряд «пошук міст + перемикач анімацій + заголовок Погода» над картками.
+   На телефоні пошук лишається окремим рядком у каруселі, з 768px — переїжджає сюди (порталом) */
+const WIDE_WEATHER_ROW_QUERY = "(min-width: 768px)";
+
 const WeatherTitleRow = styled.div`
+  position: relative;
+  z-index: 1900;
   display: flex;
   justify-content: flex-end;
   align-items: stretch;
@@ -511,15 +659,45 @@ const WeatherTitleRow = styled.div`
   }
 `;
 
-/* Кнопка «Анімації» поруч із «Погода»: та сама висота, заокруглення й z-index, щоб не провалювалась у липкому режимі */
+/* Слот під пошук міст: займає вільне місце ліворуч; порожній — не заважає */
+const CityJumpSlot = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+
+  & > div {
+    margin: 0;
+    width: min(420px, 100%);
+  }
+`;
+
+const useMediaQuery = (query) => {
+  const getMatch = () =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia(query).matches
+      : false;
+  const [matches, setMatches] = useState(getMatch);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return undefined;
+    const mql = window.matchMedia(query);
+    const onChange = () => setMatches(mql.matches);
+    onChange();
+    mql.addEventListener?.("change", onChange);
+    return () => mql.removeEventListener?.("change", onChange);
+  }, [query]);
+  return matches;
+};
+
+/* Перемикач «Анімації» поруч із «Погода»: та сама висота, заокруглення й z-index, щоб не провалювалась у липкому режимі */
 const AnimationsToggleButton = styled.button`
   position: relative;
   z-index: 400;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 5px 14px;
+  gap: 8px;
+  padding: 5px 12px;
   border-radius: 10px;
   border: 2px solid ${(props) => (props.$off ? "#888" : "rgba(0, 255, 229, 0.6)")};
   background: ${(props) => (props.$isDarkMode ? "rgba(0, 0, 0, 0.93)" : "rgb(255, 255, 255)")};
@@ -528,24 +706,64 @@ const AnimationsToggleButton = styled.button`
   font-size: 13px;
   font-weight: bold;
   cursor: pointer;
+  white-space: nowrap;
 
   &:hover {
     box-shadow: 0 0 12px rgba(0, 255, 229, 0.4);
   }
 `;
 
+const AnimationsSwitchTrack = styled.span`
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  border: 1.5px solid ${(props) => (props.$on ? "#00ffe5" : "#888")};
+  background: ${(props) => (props.$on ? "rgba(0, 255, 229, 0.35)" : "#2a2a2a")};
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: ${(props) => (props.$on ? "20px" : "2px")};
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transform: translateY(-50%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    transition: left 0.2s ease;
+  }
+`;
+
+const AnimationsStateLabel = styled.span`
+  font-weight: normal;
+  font-size: 12px;
+  opacity: 0.85;
+  min-width: 62px;
+  text-align: left;
+`;
+
 const WeatherAnimationsToggle = ({ isDarkMode }) => {
   const animationsDisabled = useAnimationsDisabled();
+  const isOn = !animationsDisabled;
   return (
     <AnimationsToggleButton
       type="button"
+      role="switch"
       $off={animationsDisabled}
       $isDarkMode={isDarkMode}
-      aria-pressed={animationsDisabled}
+      aria-checked={isOn}
+      aria-label={`Анімації: ${isOn ? "увімкнено" : "вимкнено"}`}
       onClick={() => setAnimationsDisabled(!animationsDisabled)}
     >
-      {animationsDisabled ? <FaPlay /> : <FaPause />}
-      {animationsDisabled ? "Увімкнути анімації" : "Вимкнути анімації"}
+      <span>Анімації</span>
+      <AnimationsSwitchTrack $on={isOn} aria-hidden="true" />
+      <AnimationsStateLabel aria-hidden="true">
+        {isOn ? "увімкнено" : "вимкнено"}
+      </AnimationsStateLabel>
     </AnimationsToggleButton>
   );
 };
@@ -658,22 +876,45 @@ const CityJumpEmpty = styled.div`
 // Скільки карток ліворуч і праворуч від видимої тримати змонтованими
 const CAROUSEL_MOUNT_RADIUS = 1;
 
-const WeatherCarousel = ({ children, labels = [], isDarkMode }) => {
+const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkMode, jumpSlot }) => {
+  const isWideRow = useMediaQuery(WIDE_WEATHER_ROW_QUERY);
   const scrollRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [cityQuery, setCityQuery] = useState("");
   const [isCityJumpOpen, setIsCityJumpOpen] = useState(false);
+  const [isReorderOpen, setIsReorderOpen] = useState(false);
+  // Порядок у списку під час перетягування; у картки застосовується, коли палець/мишу відпустили
+  const [reorderIds, setReorderIds] = useState([]);
+  const reorderIdsRef = useRef([]);
+  const pendingActiveIdRef = useRef(null);
   const cityJumpRef = useRef(null);
+  const itemsKey = items.map((item) => item.id).join("|");
 
   useEffect(() => {
-    if (!isCityJumpOpen) return undefined;
+    const ids = items.map((item) => item.id);
+    reorderIdsRef.current = ids;
+    setReorderIds(ids);
+    // Лише коли змінився склад/порядок карток, а не на кожен рендер
+  }, [itemsKey]);
+
+  // Бету вимкнули, поки список був відкритий
+  useEffect(() => {
+    if (!onReorder) setIsReorderOpen(false);
+  }, [onReorder]);
+
+  useEffect(() => {
+    if (!isCityJumpOpen && !isReorderOpen) return undefined;
+    const closeAll = () => {
+      setIsCityJumpOpen(false);
+      setIsReorderOpen(false);
+    };
     const handleOutside = (e) => {
       if (cityJumpRef.current && !cityJumpRef.current.contains(e.target)) {
-        setIsCityJumpOpen(false);
+        closeAll();
       }
     };
     const handleEscape = (e) => {
-      if (e.key === "Escape") setIsCityJumpOpen(false);
+      if (e.key === "Escape") closeAll();
     };
     document.addEventListener("mousedown", handleOutside);
     document.addEventListener("keydown", handleEscape);
@@ -681,7 +922,7 @@ const WeatherCarousel = ({ children, labels = [], isDarkMode }) => {
       document.removeEventListener("mousedown", handleOutside);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [isCityJumpOpen]);
+  }, [isCityJumpOpen, isReorderOpen]);
 
   const childrenArray = React.Children.toArray(children);
   const childCount = childrenArray.length;
@@ -741,25 +982,99 @@ const WeatherCarousel = ({ children, labels = [], isDarkMode }) => {
     setCityQuery("");
   };
 
+  const handleReorderPreview = (ids) => {
+    reorderIdsRef.current = ids;
+    setReorderIds(ids);
+  };
+
+  // Відпустили картку в списку — переставляємо самі картки, а на екрані лишаємо ту, що була
+  const commitReorder = () => {
+    const nextIds = reorderIdsRef.current;
+    if (!onReorder || nextIds.join("|") === itemsKey) return;
+    pendingActiveIdRef.current = items[activeIndex]?.id ?? null;
+    onReorder(nextIds);
+  };
+
+  useEffect(() => {
+    const activeId = pendingActiveIdRef.current;
+    if (activeId === null) return;
+    pendingActiveIdRef.current = null;
+    const nextIndex = items.findIndex((item) => item.id === activeId);
+    if (nextIndex === -1) return;
+    setActiveIndex(nextIndex);
+    requestAnimationFrame(() => {
+      const container = scrollRef.current;
+      const card = container?.children[nextIndex];
+      if (card) container.scrollTo({ left: card.offsetLeft, behavior: "auto" });
+    });
+    // Спрацьовує, коли App застосував новий порядок карток
+  }, [itemsKey]);
+
+  const reorderLabelById = Object.fromEntries(items.map((item) => [item.id, item]));
+
   const normalizedQuery = cityQuery.trim().toLowerCase();
   const matchingCities = labels
     .map((label, index) => ({ label: label || `Картка ${index + 1}`, index }))
     .filter(({ label }) => !normalizedQuery || label.toLowerCase().includes(normalizedQuery));
 
-  return (
-    <WeatherCarouselWrapper>
-      {childCount > 1 && (
+  const cityJumpBlock = childCount > 1 && (
         <CityJumpWrapper ref={cityJumpRef}>
           <CityJumpToggle
             type="button"
             $isDarkMode={isDarkMode}
             aria-expanded={isCityJumpOpen}
-            onClick={() => setIsCityJumpOpen((open) => !open)}
+            onClick={() => {
+              setIsReorderOpen(false);
+              setIsCityJumpOpen((open) => !open);
+            }}
           >
             <FaMagnifyingGlass aria-hidden="true" />
             <span>Натисніть, щоб знайти створене місто</span>
             <span aria-hidden="true">{isCityJumpOpen ? "▲" : "▼"}</span>
           </CityJumpToggle>
+          {onReorder && (
+            <ReorderToggle
+              type="button"
+              $isDarkMode={isDarkMode}
+              $active={isReorderOpen}
+              aria-expanded={isReorderOpen}
+              title="Змінити порядок карток (бета)"
+              onClick={() => {
+                setIsCityJumpOpen(false);
+                setIsReorderOpen((open) => !open);
+              }}
+            >
+              <FaArrowsUpDown aria-hidden="true" />
+              <span>Порядок</span>
+            </ReorderToggle>
+          )}
+          {isReorderOpen && onReorder && (
+            <CityJumpDropdown $isDarkMode={isDarkMode}>
+              <ReorderHint $isDarkMode={isDarkMode}>
+                Потягніть за ⠿, щоб змінити порядок карток (бета)
+              </ReorderHint>
+              <Reorder.Group
+                as="ul"
+                axis="y"
+                values={reorderIds}
+                onReorder={handleReorderPreview}
+                layoutScroll
+                style={{ margin: 0, padding: 0, maxHeight: 300, overflowY: "auto" }}
+              >
+                {reorderIds.map((id, index) =>
+                  reorderLabelById[id] ? (
+                    <ReorderRow
+                      key={id}
+                      item={reorderLabelById[id]}
+                      index={index}
+                      isDarkMode={isDarkMode}
+                      onDragEnd={commitReorder}
+                    />
+                  ) : null,
+                )}
+              </Reorder.Group>
+            </CityJumpDropdown>
+          )}
           {isCityJumpOpen && (
             <CityJumpDropdown $isDarkMode={isDarkMode}>
               <CityJumpInput
@@ -795,7 +1110,12 @@ const WeatherCarousel = ({ children, labels = [], isDarkMode }) => {
             </CityJumpDropdown>
           )}
         </CityJumpWrapper>
-      )}
+      );
+
+  return (
+    <WeatherCarouselWrapper>
+      {cityJumpBlock &&
+        (isWideRow && jumpSlot ? createPortal(cityJumpBlock, jumpSlot) : cityJumpBlock)}
       <WeatherCardsContainer ref={scrollRef}>
         {/* Монтуємо лише видиму картку та сусідні; далекі — порожні заглушки тієї ж ширини, щоб не тримати їх у пам'яті */}
         {childrenArray.map((child, i) =>
@@ -1111,13 +1431,20 @@ const SectionContent = memo(
     weatherCards,
     weatherCardLayout,
     heroDateString,
+    hideGpsCard,
+    onReorderCards,
   }) => {
+    // Слот у ряду «Погода», куди на планшетах/ПК переїжджає пошук міст
+    const [cityJumpSlot, setCityJumpSlot] = useState(null);
+    const isWideRow = useMediaQuery(WIDE_WEATHER_ROW_QUERY);
+
     if (!section) return null;
 
     if (section.key === "weather") {
       return (
         <div id="weather">
           <WeatherTitleRow>
+            {isWideRow && <CityJumpSlot ref={setCityJumpSlot} />}
             <WeatherAnimationsToggle isDarkMode={isDarkMode} />
             <AihelpTitle
               $isStickyBgMode={isStickyBgMode}
@@ -1126,9 +1453,29 @@ const SectionContent = memo(
               Погода
             </AihelpTitle>
           </WeatherTitleRow>
+          {hideGpsCard && weatherCards.length === 0 && (
+            <EmptyWeatherNote $isDarkMode={isDarkMode}>
+              GPS-картку вимкнено в бета-функціях, а власних карток ще немає.
+              <button
+                type="button"
+                onClick={() =>
+                  document.getElementById("hero")?.scrollIntoView({ behavior: "smooth" })
+                }
+              >
+                Додати місто через пошук
+              </button>
+            </EmptyWeatherNote>
+          )}
           <WeatherCarousel
             isDarkMode={isDarkMode}
             labels={weatherCards.map((card) => card.locationName)}
+            items={weatherCards.map((card) => ({
+              id: card.id,
+              label: card.locationName || "Картка",
+              isMain: !!card.isMain,
+            }))}
+            onReorder={onReorderCards}
+            jumpSlot={cityJumpSlot}
           >
             {weatherCards.map((card, index) => {
               const isExtremeTemp =
@@ -1183,7 +1530,6 @@ const App = () => {
   const [areInitialModulesReady, setAreInitialModulesReady] = useState(false);
   const [minimumLoaderTimePassed, setMinimumLoaderTimePassed] = useState(false);
   const [phraseData, setPhraseData] = useState({ text: "", isNew: false });
-  const [now, setNow] = useState(new Date());
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isStickyBgMode, setIsStickyBgMode] = useState(false);
   const [hiddenSections, setHiddenSections] = useState([]);
@@ -1605,6 +1951,21 @@ const App = () => {
 
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [weatherCards, setWeatherCards] = useState([]);
+  // Бета-функції «Вимкнути GPS-картку» та «Перетягування карток»
+  const hideGpsCard = useBeta("hideGpsCard");
+  const isDragCardsBeta = useBeta("dragCards");
+  const hideGpsCardRef = useRef(hideGpsCard);
+  hideGpsCardRef.current = hideGpsCard;
+  const maxCustomCards = maxCustomCardsFor(hideGpsCard);
+  // { cards, removeCount } — діалог вибору картки, яку прибрати при поверненні GPS-картки
+  const [gpsReturnRequest, setGpsReturnRequest] = useState(null);
+
+  // GPS-картку вимкнено — прибираємо її, звідки б вона не з'явилась (кеш, хмара, старий запит)
+  useEffect(() => {
+    if (hideGpsCard && weatherCards.some((card) => card.isMain)) {
+      setWeatherCards((prev) => prev.filter((card) => !card.isMain));
+    }
+  }, [hideGpsCard, weatherCards]);
   // Скільки карток створено сьогодні (лише для акаунта; лічильник живе у Firestore)
   const [dailyCardAdditions, setDailyCardAdditions] = useState(0);
 
@@ -2270,6 +2631,8 @@ const App = () => {
 
   const fetchWeather = useCallback(
     async (cityData, isMain, lat = null, lon = null, insertAtFirst = false) => {
+      // GPS-картку вимкнено в бета-функціях — не робимо зайвих запитів
+      if (isMain && hideGpsCardRef.current) return;
       try {
         let targetLat = lat;
         let targetLon = lon;
@@ -2314,8 +2677,8 @@ const App = () => {
           const customCardsCount = weatherCardsRef.current.filter(
             (card) => !card.isMain,
           ).length;
-          if (customCardsCount >= MAX_CUSTOM_WEATHER_CARDS) {
-            alert(`Можна мати не більше ${MAX_CUSTOM_WEATHER_CARDS} власних карток погоди плюс поточну GPS-картку.`);
+          if (customCardsCount >= maxCustomCardsFor(hideGpsCardRef.current)) {
+            alert(cardLimitMessage(hideGpsCardRef.current));
             return false;
           }
           if (customCardsCount >= SOFT_CUSTOM_WEATHER_CARDS) {
@@ -2486,6 +2849,8 @@ const App = () => {
         const hourlyForecastLimit = 7 * 24;
 
         setWeatherCards((prev) => {
+          // Поки йшов запит, GPS-картку вимкнули
+          if (isMain && hideGpsCardRef.current) return prev;
           const existingCard = prev.find((c) => c.id === id);
 
           // Логування перед створенням карти
@@ -2655,7 +3020,8 @@ const App = () => {
           } else {
             return existingCard
               ? prev.map((c) => (c.id === id ? newCardData : c))
-              : prev.filter((c) => !c.isMain).length >= MAX_CUSTOM_WEATHER_CARDS
+              : prev.filter((c) => !c.isMain).length >=
+                  maxCustomCardsFor(hideGpsCardRef.current)
                 ? prev
                 : [...prev, newCardData];
           }
@@ -2773,6 +3139,8 @@ const App = () => {
   }, []);
 
   const getInitialLocation = useCallback(() => {
+    // GPS-картку вимкнено в бета-функціях: ні геолокації, ні запиту погоди
+    if (hideGpsCard) return;
     if (!isLocationEnabled) {
       fetchWeather(
         {
@@ -2843,7 +3211,7 @@ const App = () => {
         30.52,
       );
     }
-  }, [fetchWeather, isLocationEnabled]);
+  }, [fetchWeather, isLocationEnabled, hideGpsCard]);
 
   const handleRefreshCard = useCallback(
     (card) => {
@@ -2960,17 +3328,19 @@ const App = () => {
   useEffect(() => {
     if (!isHydrated) return;
 
+    let prevRemaining = calculateSecondsUntilNextHour();
     const timerId = setInterval(() => {
       if (document.visibilityState === "visible") {
         const remaining = calculateSecondsUntilNextHour();
-        setSecondsUntilUpdate((prev) => {
-          // Якщо ми перетнули межу години (було мало секунд, а стало знову близько 3600)
-          if (prev <= 5 && remaining > 3590) {
-            console.log("Auto-updating weather cards at start of hour...");
-            weatherCardsRef.current.forEach((card) => handleRefreshCard(card));
-          }
-          return remaining;
-        });
+        // Якщо ми перетнули межу години (було мало секунд, а стало знову близько 3600)
+        if (prevRemaining <= 5 && remaining > 3590) {
+          console.log("Auto-updating weather cards at start of hour...");
+          weatherCardsRef.current.forEach((card) => handleRefreshCard(card));
+        }
+        prevRemaining = remaining;
+        // На екрані лише хвилини: округлюємо, щоб App перерендерювався раз на
+        // хвилину, а не щосекунди (однакове значення React пропускає)
+        setSecondsUntilUpdate(Math.floor(remaining / 60) * 60);
       }
     }, 1000);
 
@@ -3014,8 +3384,8 @@ const App = () => {
         const customCardsCount = weatherCardsRef.current.filter(
           (card) => !card.isMain,
         ).length;
-        if (customCardsCount >= MAX_CUSTOM_WEATHER_CARDS) {
-          alert(`Можна мати не більше ${MAX_CUSTOM_WEATHER_CARDS} власних карток погоди плюс поточну GPS-картку.`);
+        if (customCardsCount >= maxCustomCardsFor(hideGpsCardRef.current)) {
+          alert(cardLimitMessage(hideGpsCardRef.current));
           return false;
         }
         const added = (await fetchWeather(cityObj, false)) !== false;
@@ -3049,14 +3419,47 @@ const App = () => {
     });
   }, []);
 
+  // Бета «Перетягування карток»: новий порядок id зі списку над картками
+  const reorderWeatherCards = useCallback((orderedIds) => {
+    setWeatherCards((prev) => {
+      const byId = new Map(prev.map((card) => [card.id, card]));
+      const ordered = orderedIds.map((id) => byId.get(id)).filter(Boolean);
+      // Картки, що з'явились під час перетягування, не губимо — ставимо в кінець
+      const rest = prev.filter((card) => !orderedIds.includes(card.id));
+      return [...ordered, ...rest];
+    });
+  }, []);
+
+  // Бета «Вимкнути GPS-картку». Повертаючи її, перевіряємо ліміт власних карток
+  const handleToggleHideGpsCard = useCallback((nextHidden) => {
+    if (nextHidden) {
+      setBetaOn("hideGpsCard", true);
+      return;
+    }
+    const customCards = weatherCardsRef.current.filter((card) => !card.isMain);
+    const removeCount = customCards.length - MAX_CUSTOM_WEATHER_CARDS;
+    if (removeCount > 0) {
+      setGpsReturnRequest({ cards: customCards, removeCount });
+      return;
+    }
+    setBetaOn("hideGpsCard", false);
+  }, []);
+
+  const confirmGpsCardReturn = useCallback((idsToRemove) => {
+    setWeatherCards((prev) => prev.filter((card) => !idsToRemove.includes(card.id)));
+    setBetaOn("hideGpsCard", false);
+    setGpsReturnRequest(null);
+    toast.success("GPS-картку повернуто", { id: "gps-card-return" });
+  }, []);
+
+  const cancelGpsCardReturn = useCallback(() => setGpsReturnRequest(null), []);
+
   useEffect(() => {
     const fadeTimer = setTimeout(() => setMinimumLoaderTimePassed(true), 3500);
-    syncClock().then(() => setNow(getNow()));
-    const clockTimer = setInterval(() => setNow(getNow()), 1000);
+    syncClock();
 
     return () => {
       clearTimeout(fadeTimer);
-      clearInterval(clockTimer);
     };
   }, []);
 
@@ -3105,55 +3508,8 @@ const App = () => {
       return [...prev, key];
     });
   }, []);
-  const heroDateString = (() => {
-    const showSeconds = user?.showSeconds !== false;
-    const mode = user?.dateDisplayMode || "both";
-    const hour12 = user?.hour12 === true;
-
-    try {
-      const options = {
-        timeZone: selectedTimezone,
-        hour12: hour12,
-      };
-      if (mode === "time" || mode === "both") {
-        options.hour = "2-digit";
-        options.minute = "2-digit";
-        if (showSeconds) options.second = "2-digit";
-      }
-
-      if (mode === "date" || mode === "both") {
-        options.weekday = "long";
-        options.day = "numeric";
-        options.month = "2-digit";
-        options.year = "numeric";
-      }
-
-      const fmt = new Intl.DateTimeFormat("uk", options);
-      const parts = fmt.formatToParts(now);
-      const p = (type) => parts.find((x) => x.type === type)?.value || "";
-
-      const timePart =
-        mode === "time" || mode === "both"
-          ? `${p("hour")}:${p("minute")}${showSeconds ? ":" + p("second") : ""}${hour12 && p("dayPeriod") ? " " + p("dayPeriod") : ""}`
-          : "";
-      const datePart =
-        mode === "date" || mode === "both"
-          ? `${p("weekday") ? p("weekday").charAt(0).toUpperCase() + p("weekday").slice(1) : ""}${p("day") ? `, ${p("day")}.${p("month")}.${p("year")}` : ""}`
-          : "";
-
-      if (mode === "both") return `${timePart} ${datePart}`.trim();
-      return timePart || datePart;
-    } catch (e) {
-      const h = String(now.getHours()).padStart(2, "0");
-      const m = String(now.getMinutes()).padStart(2, "0");
-      const s =
-        user?.showSeconds !== false
-          ? `:${String(now.getSeconds()).padStart(2, "0")}`
-          : "";
-      const d = now.toLocaleDateString("uk");
-      return `${h}:${m}${s} ${d}`;
-    }
-  })();
+  // Годинник оновлює себе сам, щоб не перерендерювати весь App щосекунди
+  const heroDateString = <HeroClock user={user} timeZone={selectedTimezone} />;
 
   const moveSiteSection = (idx, dir) => {
     setSiteSections((prev) => {
@@ -3173,7 +3529,7 @@ const App = () => {
           onAddCity={handleAddCityFromHero}
           cardLimits={{
             custom: weatherCards.filter((c) => !c.isMain).length,
-            maxCustom: MAX_CUSTOM_WEATHER_CARDS,
+            maxCustom: maxCustomCards,
             // Денний ліміт рахується лише для акаунта
             daily: user ? dailyCardAdditions : null,
             maxDaily: MAX_DAILY_CARD_ADDITIONS,
@@ -3240,6 +3596,8 @@ const App = () => {
                   isStickyBgMode={isStickyBgMode}
                   weatherCardLayout={weatherCardLayout}
                   heroDateString={heroDateString}
+                  hideGpsCard={hideGpsCard}
+                  onReorderCards={isDragCardsBeta ? reorderWeatherCards : undefined}
                 />
               </StyledSectionContainer>
             ),
@@ -3381,6 +3739,16 @@ const App = () => {
                 onSetLoadingStrategy={setLoadingStrategy}
                 isStickyBgMode={isStickyBgMode}
                 onToggleStickyBg={() => setIsStickyBgMode(!isStickyBgMode)}
+                onToggleHideGpsCard={handleToggleHideGpsCard}
+              />
+            )}
+            {gpsReturnRequest && (
+              <GpsCardReturnDialog
+                cards={gpsReturnRequest.cards}
+                removeCount={gpsReturnRequest.removeCount}
+                maxWithGps={MAX_CUSTOM_WEATHER_CARDS}
+                onConfirm={confirmGpsCardReturn}
+                onCancel={cancelGpsCardReturn}
               />
             )}
             {isVipModalOpen && (

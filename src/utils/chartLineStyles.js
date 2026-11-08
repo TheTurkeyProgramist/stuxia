@@ -19,7 +19,13 @@ export const WIDTH_MIN = 1;
 export const WIDTH_MAX = 8;
 // Прозорість лінії, вимкненої в легенді (0 — повністю сховати)
 export const DIM_MAX = 0.9;
-export const DEFAULT_DIM = 0.3;
+export const DEFAULT_DIM = 0.1;
+
+// Що писати під стрілками вітру
+export const WIND_LABELS = {
+  speed: { label: "Швидкість" },
+  gusts: { label: "Пориви" },
+};
 
 const line = (overrides = {}) => ({
   curve: "smooth",
@@ -28,6 +34,7 @@ const line = (overrides = {}) => ({
   fill: false,
   points: true,
   dimOpacity: DEFAULT_DIM,
+  labels: true, // маленькі підписи значень біля точок
   ...overrides,
 });
 
@@ -37,12 +44,12 @@ const trendLine = () => ({ dash: "dashed", width: 2 });
 export const DEFAULT_LINE_STYLES = {
   hourly: {
     temp: line({ fill: true }),
-    right: line({ fill: null }),
+    right: line({ fill: null, windLabel: "speed" }),
   },
   daily: {
     day: line(),
     night: line(),
-    right: line(),
+    right: line({ windLabel: "speed" }),
     trendDay: trendLine(),
     trendNight: trendLine(),
   },
@@ -65,6 +72,10 @@ export const mergeLineStyles = (saved) => {
       if (defaults.dimOpacity !== undefined) {
         const dim = Number(merged.dimOpacity);
         merged.dimOpacity = Number.isFinite(dim) ? Math.min(DIM_MAX, Math.max(0, dim)) : defaults.dimOpacity;
+      }
+      if (defaults.labels !== undefined) merged.labels = merged.labels !== false;
+      if (defaults.windLabel !== undefined && !WIND_LABELS[merged.windLabel]) {
+        merged.windLabel = defaults.windLabel;
       }
       result[chartKey][lineKey] = merged;
     });

@@ -22,8 +22,13 @@ import {
   BiPalette,
   BiChevronDown,
   BiLowVision,
+  BiVolumeFull,
+  BiStopCircle,
 } from "react-icons/bi";
 import { FiPlus } from "react-icons/fi";
+import toast from "react-hot-toast";
+import { useBeta } from "../../utils/betaFeatures";
+import { buildForecastSpeech, getVoiceSettings, speak, stopSpeaking } from "../../utils/weatherSpeech";
 import {
   removeCustomDay,
   addCustomDay,
@@ -88,7 +93,7 @@ import {
   FloatingArrow,         
 } from "@floating-ui/react";
 import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
-import { createChartWeatherIcon, getChartIconKey } from "../../utils/chartWeatherIcon";
+import { createChartWeatherIcon, getChartIconKey, createChartWindArrow, valueLabelsPlugin } from "../../utils/chartWeatherIcon";
 
 // Кеш canvas-іконок для точок графіків: картка рендериться щосекунди, і без кешу
 // десятки іконок (з емодзі) малювались заново, а графік бачив «нові» дані
@@ -991,6 +996,61 @@ const BlockStatValue = styled.div`
     font-size: 12px;
   }
 `;
+// Плагіни Chart.js для основних графіків (стабільний масив — щоб графік не перестворювався)
+const CHART_PLUGINS = [valueLabelsPlugin];
+
+// Підказка над графіком: як читати стрілки вітру й підписи біля точок
+// Підказка-компас стоїть у рядку легенди між кнопками, тож висоту графіка не забирає
+const WindCompassHint = ({ isDarkMode, windUnit, tempSuffix, gusts, showLabels = true }) => {
+  const text = isDarkMode ? "#e5f6ff" : "#0f172a";
+  const muted = isDarkMode ? "rgba(229, 246, 255, 0.7)" : "rgba(15, 23, 42, 0.7)";
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        boxSizing: "border-box",
+        height: "34px",
+        // Стискається першою (текст обрізається трикрапкою), щоб легенда не переносилась
+        flex: "0 100 auto",
+        minWidth: 0,
+        margin: "0 auto",
+        padding: "0 8px 0 1px",
+        overflow: "hidden",
+        borderRadius: "10px",
+        background: isDarkMode ? "rgba(8, 12, 20, 0.75)" : "rgba(255, 255, 255, 0.85)",
+        border: "1px solid rgba(56, 189, 248, 0.35)",
+        fontSize: "11px",
+        color: muted,
+      }}
+    >
+      <svg width="32" height="32" viewBox="0 0 54 54" role="img" aria-label="Компас: північ угорі, південь унизу, схід праворуч, захід ліворуч" style={{ flexShrink: 0 }}>
+        <circle cx="27" cy="27" r="16" fill="none" stroke="rgba(56, 189, 248, 0.5)" strokeWidth="1.2" />
+        <path d="M27 13 L30 27 L27 24 L24 27 Z" fill="#ef4444" />
+        <path d="M27 41 L30 27 L27 30 L24 27 Z" fill={isDarkMode ? "#cbd5e1" : "#64748b"} />
+        <circle cx="27" cy="27" r="1.6" fill={text} />
+        <g fontSize="11.5" fontWeight="800" fill={text} textAnchor="middle" fontFamily="system-ui, sans-serif">
+          <text x="27" y="10">Пн</text>
+          <text x="27" y="53.5">Пд</text>
+          <text x="46.5" y="31">Сх</text>
+          <text x="7.5" y="31">Зх</text>
+        </g>
+      </svg>
+      <div style={{ display: "flex", flexDirection: "column", gap: "1px", lineHeight: 1.2, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <span style={{ color: text, fontWeight: 700 }}>Стрілка показує, куди дме вітер</span>
+        {showLabels ? (
+          <span>
+            Під стрілкою — {gusts ? "пориви" : "швидкість"}, {windUnit} · біля точок — температура, {tempSuffix}
+          </span>
+        ) : (
+          <span>Вітер — {windUnit} · цифри біля точок вмикає кнопка «123»</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const WeatherCardComponent = ({
   user,
   card,
@@ -1015,6 +1075,50 @@ const WeatherCardComponent = ({
   const customDays = useSelector((state) => state.calendar?.customDays || []);
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(card.locationName);
+
+  // Бета «Озвучення прогнозу»
+  const isVoiceBeta = useBeta("voiceForecast");
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const handleSpeakForecast = async () => {
+    if (isSpeaking) {
+      stopSpeaking();
+      setIsSpeaking(false);
+      return;
+    }
+    setIsSpeaking(true);
+    const { engine } = getVoiceSettings();
+    let progressToastShown = false;
+    try {
+      await speak(buildForecastSpeech(card), {
+        // Перший запуск Piper качає модель — показуємо хід завантаження
+        onProgress: ({ loaded, total }) => {
+          if (engine !== "piper" || !total || loaded >= total) return;
+          progressToastShown = true;
+          toast.loading(`Завантаження голосу… ${Math.round((loaded / total) * 100)}%`, {
+            id: "voice-model-download",
+          });
+        },
+      });
+    } catch (err) {
+      console.error("Forecast speech failed:", err);
+      toast.error("Не вдалося озвучити прогноз. Спробуйте інший голос у Параметри → Бета-функції.", {
+        id: "voice-error",
+      });
+    } finally {
+      if (progressToastShown) toast.dismiss("voice-model-download");
+      setIsSpeaking(false);
+    }
+  };
+  // Картку прибрали з екрана (карусель, видалення) — замовкаємо, але лише якщо говорила саме вона
+  const isSpeakingRef = useRef(false);
+  isSpeakingRef.current = isSpeaking;
+  useEffect(
+    () => () => {
+      if (isSpeakingRef.current) stopSpeaking();
+    },
+    [],
+  );
+
   const [selectedDay, setSelectedDay] = useState(null);
   const [copiedForecast, setCopiedForecast] = useState(false);
   const [selectedHourlyDay, setSelectedHourlyDay] = useState(0);
@@ -1028,7 +1132,8 @@ const WeatherCardComponent = ({
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  const defaultChartHeight = isNarrowScreen ? "250px" : "380px";
+  // Картка на комп'ютері має фіксовану висоту (542px): 350px — щоб під графіком вміщався скролбар
+  const defaultChartHeight = isNarrowScreen ? "250px" : "350px";
   // Розділи «Смарт» на телефоні згортаються; спочатку відкритий лише перший
   const [openRuleSections, setOpenRuleSections] = useState(["dayNight"]);
   const isRuleSectionOpen = (key) => !isNarrowScreen || openRuleSections.includes(key);
@@ -1255,6 +1360,16 @@ const WeatherCardComponent = ({
     if (rightMetric === "visibility") return `Видимість: ${value ?? "—"} ${visibilityLabel(units.distance)}`;
     return "";
   };
+  // Маленькі підписи біля точок правої осі (одиниці — як на осі)
+  const rightLabelText = (value) => {
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return "";
+    if (rightMetric === "uv") return `${Math.round(value * 10) / 10}`;
+    if (isPercentMetric) return `${Math.round(value)}%`;
+    return `${value}`;
+  };
+  // Підпис під стрілкою вітру — у вибраних одиницях (м/с, км/год…)
+  const windLabelText = (ms) =>
+    ms === null || ms === undefined || !Number.isFinite(Number(ms)) ? "" : String(fmt.windValue(Number(ms)));
 
   const toggleDatasetVisibility = (datasetKey) => {
     setHiddenSeries((prev) => ({ ...prev, [datasetKey]: !prev[datasetKey] }));
@@ -1510,6 +1625,31 @@ const WeatherCardComponent = ({
         <BiPalette size={16} />
       </button>
       </Tooltip>
+      {(() => {
+        // Швидко ввімкнути/вимкнути цифри біля точок для всіх ліній цього графіка
+        const labelsOn = Object.values(lineStyles[chartKey]).some((s) => s.labels === true);
+        return (
+          <Tooltip content={labelsOn ? "Сховати цифри біля точок" : "Показати цифри біля точок"} isDarkMode={isDarkMode}>
+            <button
+              type="button"
+              onClick={() => applyLineStyleToAll(chartKey, { labels: !labelsOn })}
+              aria-label={labelsOn ? "Сховати цифри біля точок" : "Показати цифри біля точок"}
+              aria-pressed={labelsOn}
+              style={{
+                ...chartActionButtonStyle,
+                width: "auto",
+                padding: "0 6px",
+                fontSize: "11px",
+                fontWeight: "bold",
+                textDecoration: labelsOn ? "none" : "line-through",
+                background: labelsOn ? "rgba(0, 190, 235, 0.25)" : chartActionButtonStyle.background,
+              }}
+            >
+              123
+            </button>
+          </Tooltip>
+        );
+      })()}
       {chartKey === "daily" && (
         <Tooltip content={showDailyTrend ? `Сховати лінію тренду. ${dailyTrendText}` : "Показати лінію тренду температури"} isDarkMode={isDarkMode}>
         <button
@@ -1638,7 +1778,8 @@ const WeatherCardComponent = ({
   );
 
   // Легенда + кнопки дій — один рядок
-  const renderChartHeader = (chartKey, panelRef, items) => (
+  // middle — необов'язковий вміст між легендою й кнопками (підказка-компас)
+  const renderChartHeader = (chartKey, panelRef, items, middle = null) => (
     <div
       style={{
         display: "flex",
@@ -1650,9 +1791,22 @@ const WeatherCardComponent = ({
       }}
     >
       {renderChartLegend(items)}
+      {middle}
       {renderChartActions(chartKey, panelRef)}
     </div>
   );
+
+  // Підказка-компас у рядку легенди (лише коли на правій осі вітер)
+  const renderWindHint = (chartKey) =>
+    rightMetric === "wind" ? (
+      <WindCompassHint
+        isDarkMode={isDarkMode}
+        windUnit={windLabel(units.wind)}
+        tempSuffix={tempSuffix}
+        gusts={lineStyles[chartKey].right.windLabel === "gusts"}
+        showLabels={lineStyles[chartKey].right.labels}
+      />
+    ) : null;
 
   useEffect(() => {
     if (dailyChartRef.current) {
@@ -1764,51 +1918,22 @@ const WeatherCardComponent = ({
     rememberChartCanvas(cacheKey, canvas);
     return canvas;
   };
-const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
-  // Стрілки знімаються з кроком 45°, тож варіантів мало — кешуємо
-  const snapped = Math.round(((((Number(degrees) || 0) % 360) + 360) % 360) / 45) * 45;
-  const cacheKey = `arrow|${snapped}|${size}|${opacity}`;
+// Стрілка вітру (react-icons, векторно): показує, КУДИ дме вітер — як ⬇ у блоках прогнозу
+const createDirectionArrowCanvas = (degrees, size = 22, opacity = 1, strong = false) => {
+  // Кут з кроком 5° — точно, але варіантів небагато, тож кешуємо
+  const snapped = (Math.round(((((Number(degrees) || 0) % 360) + 360) % 360) / 5) * 5) % 360;
+  const cacheKey = `arrow2|${snapped}|${size}|${opacity}|${strong ? 1 : 0}`;
   const cached = chartCanvasCache.get(cacheKey);
   if (cached) return cached;
-  const canvas = document.createElement("canvas");
+  const canvas = createChartWindArrow(snapped, size, opacity, strong);
   rememberChartCanvas(cacheKey, canvas);
-
-  // 1. Збільшуємо розмір полотна Canvas, щоб затемнення вміщалося і не обрізалося
-  const padding = 12; // Запас для затемнення
-  const canvasSize = size + padding;
-  canvas.width = canvasSize;
-  canvas.height = canvasSize;
-
-  const ctx = canvas.getContext("2d");
-  const center = canvasSize / 2; 
-  const normalizedDegrees = ((Number(degrees) || 0) % 360 + 360) % 360;
-  const snappedDegrees = Math.round(normalizedDegrees / 45) * 45;
-  const angle = (snappedDegrees * Math.PI) / 180;
-
-  ctx.translate(center, center);
-  ctx.rotate(angle);
-  ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
-  ctx.globalAlpha = opacity;
-  ctx.beginPath();
-    ctx.arc(0, 0, canvasSize * 0.45, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = opacity;
-  ctx.fillStyle = "#0099ff";
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(0, -size * 0.43);
-  ctx.lineTo(size * 0.2, size * 0.12);
-  ctx.lineTo(size * 0.07, size * 0.08);
-  ctx.lineTo(size * 0.07, size * 0.4);
-  ctx.lineTo(-size * 0.07, size * 0.4);
-  ctx.lineTo(-size * 0.07, size * 0.08);
-  ctx.lineTo(-size * 0.2, size * 0.12);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
   return canvas;
+};
+
+// Короткий підпис значення біля точки графіка
+const formatChartTempLabel = (value, suffix) => {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return "";
+  return suffix === "K" ? `${value}K` : suffix === "°F" ? `${value}°F` : `${value}°`;
 };
   const getWindDirectionLabel = (degrees) => {
     const normalizedDegrees = ((Number(degrees) || 0) % 360 + 360) % 360;
@@ -1857,6 +1982,12 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
           else if ((h.windNum ?? 0) > 10) danger = "#ff6a00";
           return createIconCanvas(h, 26, danger, hourlyOpacity.day);
         }),
+        valueLabels: lineStyles.hourly.temp.labels
+          ? visibleHourly?.map((h) => formatChartTempLabel(toDisplayTemp(h.tempNum ?? 0), tempSuffix))
+          : null,
+        valueLabelOffset: -15,
+        valueLabelColor: "#ffd2a6",
+        valueLabelOpacity: hourlyOpacity.day,
         ...lineStyleProps(lineStyles.hourly.temp, { tension: 0.4, pointRadius: 12, fill: true }),
         yAxisID: "y",
       },
@@ -1872,9 +2003,17 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
                 (h.windNum ?? 0) > 10 ? "#ff6a00" : `rgba(0, 190, 235, ${hourlyOpacity.wind})`,
               ) || [],
             pointStyle: visibleHourly?.map((h) =>
-              createDirectionArrowCanvas(h.wind_direction_10m, 18, hourlyOpacity.wind),
+              createDirectionArrowCanvas(h.wind_direction_10m, 22, hourlyOpacity.wind, (h.windNum ?? 0) > 10),
             ) || [],
-            ...lineStyleProps(lineStyles.hourly.right, { tension: 0.4, pointRadius: 6, fill: false }),
+            valueLabels: lineStyles.hourly.right.labels
+              ? visibleHourly?.map((h) =>
+                  windLabelText(lineStyles.hourly.right.windLabel === "gusts" ? h.wind_gusts_10m : h.windNum ?? 0),
+                )
+              : null,
+            valueLabelOffset: 13,
+            valueLabelColor: "#9be3ff",
+            valueLabelOpacity: hourlyOpacity.wind,
+            ...lineStyleProps(lineStyles.hourly.right, { tension: 0.4, pointRadius: 11, fill: false }),
             yAxisID: "y1",
           }
         : {
@@ -1886,6 +2025,12 @@ const createDirectionArrowCanvas = (degrees, size = 18, opacity = 1) => {
             hidden: hourlyOpacity.wind === 0,
             pointStyle: "circle",
             pointBackgroundColor: `rgba(${rightMeta.rgb}, ${hourlyOpacity.wind})`,
+            valueLabels: lineStyles.hourly.right.labels
+              ? visibleHourly?.map((h) => rightLabelText(rightValue(h, false)))
+              : null,
+            valueLabelOffset: 8,
+            valueLabelColor: rightMeta.color,
+            valueLabelOpacity: hourlyOpacity.wind,
             ...lineStyleProps(lineStyles.hourly.right, { tension: 0.4, pointRadius: 4, fill: rightMetric === "precip" }),
             yAxisID: "y1",
           },
@@ -2121,6 +2266,12 @@ const HOLIDAYS_2027 = {
           const dateType = getDateType(d.date, d.day, d.fullDate);
           return dateType.color ? 3 : 2;
         }),
+        valueLabels: lineStyles.daily.day.labels
+          ? dailyDayTemps.map((v) => formatChartTempLabel(v, tempSuffix))
+          : null,
+        valueLabelOffset: -16,
+        valueLabelColor: "#ffd2a6",
+        valueLabelOpacity: dailyOpacity.day,
         ...lineStyleProps(lineStyles.daily.day, { tension: 0.3, pointRadius: 12, fill: false }),
         yAxisID: "y",
       },
@@ -2131,6 +2282,12 @@ const HOLIDAYS_2027 = {
         backgroundColor: `rgba(255, 20, 147, ${dailyOpacity.night * 0.2})`,
         hidden: dailyOpacity.night === 0,
         pointStyle: "circle",
+        valueLabels: lineStyles.daily.night.labels
+          ? dailyNightTemps.map((v) => formatChartTempLabel(v, tempSuffix))
+          : null,
+        valueLabelOffset: 8,
+        valueLabelColor: "#ff8fd0",
+        valueLabelOpacity: dailyOpacity.night,
         ...lineStyleProps(lineStyles.daily.night, { tension: 0.3, pointRadius: 4, fill: false }),
         yAxisID: "y",
       },
@@ -2142,14 +2299,24 @@ const HOLIDAYS_2027 = {
             backgroundColor: `rgba(0, 153, 255, ${dailyOpacity.wind * 0.2})`,
             hidden: dailyOpacity.wind === 0,
             pointStyle: dailyList?.map((d) =>
-              createDirectionArrowCanvas(d.wind_direction_10m, 18, dailyOpacity.wind),
+              createDirectionArrowCanvas(d.wind_direction_10m, 22, dailyOpacity.wind, parseFloat(d.wind_speed) > 10),
             ),
             pointBorderColor: "#ffffff",
             pointBorderWidth: 1.5,
             pointBackgroundColor: dailyList?.map((d) =>
               parseFloat(d.wind_speed) > 10 ? "#ff6a00" : "#0099ff",
             ),
-            ...lineStyleProps(lineStyles.daily.right, { tension: 0.3, pointRadius: 6, fill: false }),
+            valueLabels: lineStyles.daily.right.labels
+              ? dailyList?.map((d) =>
+                  windLabelText(
+                    lineStyles.daily.right.windLabel === "gusts" ? d.wind_gusts_max : parseFloat(d.wind_speed) || 0,
+                  ),
+                )
+              : null,
+            valueLabelOffset: 13,
+            valueLabelColor: "#9be3ff",
+            valueLabelOpacity: dailyOpacity.wind,
+            ...lineStyleProps(lineStyles.daily.right, { tension: 0.3, pointRadius: 11, fill: false }),
             yAxisID: "y1",
           }
         : {
@@ -2161,6 +2328,12 @@ const HOLIDAYS_2027 = {
             hidden: dailyOpacity.wind === 0,
             pointStyle: "circle",
             pointBackgroundColor: `rgba(${rightMeta.rgb}, ${dailyOpacity.wind})`,
+            valueLabels: lineStyles.daily.right.labels
+              ? dailyList?.map((d) => rightLabelText(rightValue(d, true)))
+              : null,
+            valueLabelOffset: 8,
+            valueLabelColor: rightMeta.color,
+            valueLabelOpacity: dailyOpacity.wind,
             ...lineStyleProps(lineStyles.daily.right, { tension: 0.3, pointRadius: 4, fill: false }),
             yAxisID: "y1",
           },
@@ -3160,6 +3333,27 @@ const HOLIDAYS_2027 = {
             }}
           >
             <ActionButtons style={{ position: "relative", zIndex: 2 }}>
+              {isVoiceBeta && (
+                <Tooltip content={isSpeaking ? "Зупинити озвучення" : "Озвучити прогноз (бета)"} isDarkMode={isDarkMode}>
+                  <button
+                    type="button"
+                    onClick={handleSpeakForecast}
+                    aria-label={isSpeaking ? "Зупинити озвучення" : "Озвучити прогноз"}
+                    aria-pressed={isSpeaking}
+                    style={{
+                      padding: "5px",
+                      display: "inline-flex",
+                      height: "100%",
+                      boxSizing: "border-box",
+                      alignItems: "center",
+                      fontSize: "18px",
+                      color: isSpeaking ? "#facc15" : isDarkMode ? "rgb(251, 251, 251)" : "rgb(3, 3, 3)",
+                    }}
+                  >
+                    {isSpeaking ? <BiStopCircle /> : <BiVolumeFull />}
+                  </button>
+                </Tooltip>
+              )}
               <Tooltip content="Налаштування картки" isDarkMode={isDarkMode}>
               <button
                 ref={(el) => { if (card.isMain && registerRef) registerRef('weatherGear', el); }}
@@ -3613,7 +3807,7 @@ const HOLIDAYS_2027 = {
                     {renderChartHeader("hourly", hourlyChartPanelRef, [
                       { key: "day", label: "Температура", color: "#ffb36c", icon: <BsThermometerSun /> },
                       { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
-                    ])}
+                    ], renderWindHint("hourly"))}
                     <div style={{ position: "relative", width: "100%" }}>
                       <ChartScrollWrapper>
                         <ChartInnerContainer
@@ -3625,6 +3819,7 @@ const HOLIDAYS_2027 = {
                             ref={hourlyChartInstanceRef}
                             options={chartOptions}
                             data={hourlyChartData}
+                            plugins={CHART_PLUGINS}
                           />
                         </ChartInnerContainer>
                       </ChartScrollWrapper>
@@ -3749,6 +3944,7 @@ const HOLIDAYS_2027 = {
                       { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
                       { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
                     ])}
+                    {renderWindHint("daily")}
                     {renderChartActions("daily", dailyChartPanelRef)}
                   </div>
                   <div
@@ -3768,7 +3964,7 @@ const HOLIDAYS_2027 = {
                       { key: "day", label: "День", color: "#ffb36c", icon: <FaSun /> },
                       { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
                       { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
-                    ])}
+                    ], renderWindHint("daily"))}
                     <div style={{ position: "relative", width: "100%" }}>
                       <ChartScrollWrapper ref={dailyChartRef}>
                         <ChartInnerContainer
@@ -3780,6 +3976,7 @@ const HOLIDAYS_2027 = {
                             ref={dailyChartInstanceRef}
                             options={dailyChartOptions}
                             data={dailyChartData}
+                            plugins={CHART_PLUGINS}
                           />
                         </ChartInnerContainer>
                       </ChartScrollWrapper>
@@ -4241,12 +4438,12 @@ const HOLIDAYS_2027 = {
             styleModalChart === "hourly"
               ? [
                   { key: "temp", label: "Температура", color: "#ffb36c", icon: <BsThermometerSun /> },
-                  { key: "right", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon, autoFill: rightMetric === "precip" },
+                  { key: "right", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon, autoFill: rightMetric === "precip", wind: rightMetric === "wind" },
                 ]
               : [
                   { key: "day", label: "День", color: "#ffb36c", icon: <FaSun /> },
                   { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
-                  { key: "right", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
+                  { key: "right", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon, wind: rightMetric === "wind" },
                   { key: "trendDay", label: "Тренд дня", color: "#ffb36c", icon: <BiTrendingUp />, trend: true },
                   { key: "trendNight", label: "Тренд ночі", color: "#ff1493", icon: <BiTrendingUp />, trend: true },
                 ]

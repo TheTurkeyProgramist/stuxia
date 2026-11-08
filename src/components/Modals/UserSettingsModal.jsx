@@ -78,8 +78,13 @@ import {
   FiKey,
   FiLink,
   FiGrid,
+  FiNavigation,
+  FiMove,
 } from "react-icons/fi";
+import { useBeta, setBetaOn } from "../../utils/betaFeatures";
+import BetaVoiceSettings from "./BetaVoiceSettings.jsx";
 import {
+  TbFlask,
   TbAutomation,
   TbMenuOrder,
   TbClock24,
@@ -322,6 +327,7 @@ const ICON_ANIM_BY_TYPE = new Map([
   [TbColorFilter, "spin"], [FiLayers, "lift"], [FiImage, "pop"], [FiMaximize2, "pop"],
   [FiColumns, "pop"], [FiGrid, "pop"], [FiSliders, "wiggle"], [FiHome, "lift"], [FiCloud, "wiggle"],
   [FiMap, "flip"], [FiShield, "pop"], [FiCompass, "spin"], [FiZap, "flash"],
+  [TbFlask, "wiggle"], [FiNavigation, "swing"], [FiMove, "lift"],
 ]);
 
 const getIconAnim = (children) => {
@@ -1010,6 +1016,8 @@ const UserSettingsModal = ({
   onSetLoadingStrategy = () => {},
   isStickyBgMode = false,
   onToggleStickyBg = () => {},
+  // Бета-функції: GPS-картку перемикає App (може спитати, яку картку прибрати)
+  onToggleHideGpsCard = (hidden) => setBetaOn("hideGpsCard", hidden),
   // bg music props from App.jsx
   bgMusicEnabled, setBgMusicEnabled,
   bgMusicSource, setBgMusicSource,
@@ -1028,6 +1036,9 @@ const UserSettingsModal = ({
 }) => {
   const isGuest = !user;
   const dispatch = useDispatch();
+  const isHideGpsCardBeta = useBeta("hideGpsCard");
+  const isDragCardsBeta = useBeta("dragCards");
+  const isVoiceBeta = useBeta("voiceForecast");
   const tutorial = useTutorial();
   const [accentColor, setAccentColor] = useAccentColor();
   const [activeTab, setActiveTab] = useState("personalization");
@@ -1556,7 +1567,6 @@ const UserSettingsModal = ({
     textColor: user?.textColor || "grey",
     borderColor: user?.borderColor || "grey",
     fontFamily: user?.fontFamily || "",
-    showSeconds: user?.showSeconds !== false,
     dateDisplayMode: user?.dateDisplayMode || "both",
     hour12: user?.hour12 === true,
     voiceActingMode: user?.voiceActingMode || "malyatko",
@@ -1594,7 +1604,6 @@ const UserSettingsModal = ({
       textColor: user?.textColor || "grey",
       borderColor: user?.borderColor || "grey",
       fontFamily: user?.fontFamily || "",
-      showSeconds: user?.showSeconds !== false,
       dateDisplayMode: user?.dateDisplayMode || "both",
       hour12: user?.hour12 === true,
       voiceActingMode: user?.voiceActingMode || "malyatko",
@@ -1624,7 +1633,6 @@ const UserSettingsModal = ({
       textColor: newFormData.textColor,
       borderColor: newFormData.borderColor,
       fontFamily: newFormData.fontFamily,
-      showSeconds: newFormData.showSeconds,
       dateDisplayMode: newFormData.dateDisplayMode,
       hour12: newFormData.hour12,
       voiceActingMode: newFormData.voiceActingMode,
@@ -1715,7 +1723,6 @@ const UserSettingsModal = ({
       textColor: formData.textColor,
       borderColor: formData.borderColor,
       fontFamily: formData.fontFamily,
-      showSeconds: formData.showSeconds,
       dateDisplayMode: formData.dateDisplayMode,
       hour12: formData.hour12,
       voiceActingMode: formData.voiceActingMode,
@@ -1898,6 +1905,7 @@ const UserSettingsModal = ({
     { key: "modes", icon: <FiZap />, label: "Режими та застосунки" },
     { key: "filters", icon: <FiEye />, label: "Візуальні фільтри" },
     { key: "bgMusic", icon: <FiMusic />, label: "Фонова музика" },
+    { key: "beta", icon: <TbFlask />, label: "Бета-функції" },
   ];
 
   const isFiltersPreview = activeTab === "filters" && isFiltersPreviewOn;
@@ -2142,22 +2150,6 @@ const UserSettingsModal = ({
                   <SectionDescription>Формат часу й дати, анімації, підказки, шрифт, жести та дзеркальність сайту</SectionDescription>
 
                   <SubSectionTitle><FiClock /> Час та дата</SubSectionTitle>
-
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox $color="#38bdf8"><FiWatch /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Відображення секунд</CardTitle>
-                        <CardDescription>Показувати секунди (17:23:17)</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <ToggleWrapper onClick={() => updateLivePreview({ showSeconds: !formData.showSeconds })}>
-                        <ToggleStatusLabel $checked={formData.showSeconds}>{formData.showSeconds ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
-                        <SwitchPill $checked={formData.showSeconds} />
-                      </ToggleWrapper>
-                    </CardControl>
-                  </Card>
 
                   <Card>
                     <CardLeft>
@@ -3338,6 +3330,81 @@ const UserSettingsModal = ({
                 </CardGroup>
               )}
 
+              {/* ── BETA TAB ─────────────────────────────────────────── */}
+              {activeTab === "beta" && (
+                <CardGroup>
+                  <SectionHeaderTitle><TbFlask /> Бета-функції</SectionHeaderTitle>
+                  <SectionDescription>
+                    Нові можливості, які ще допрацьовуються. Можуть поводитись несподівано — якщо щось не так,
+                    просто вимкніть. Налаштування діють лише в цьому браузері.
+                  </SectionDescription>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#60a5fa"><FiNavigation /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Вимкнути GPS-картку</CardTitle>
+                        <CardDescription>
+                          {isHideGpsCardBeta
+                            ? "Картка «Ваша локація» не створюється, геолокація не запитується. Можна мати 9 власних карток"
+                            : "Прибрати картку «Ваша локація» й отримати місце ще для однієї власної картки (8 → 9)"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={() => onToggleHideGpsCard(!isHideGpsCardBeta)}>
+                        <ToggleStatusLabel $checked={isHideGpsCardBeta}>
+                          {isHideGpsCardBeta ? "Увімкнуто" : "Вимкнуто"}
+                        </ToggleStatusLabel>
+                        <SwitchPill $checked={isHideGpsCardBeta} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#f472b6"><FiMove /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Перетягування карток</CardTitle>
+                        <CardDescription>
+                          Кнопка «Порядок» біля пошуку міст: тягніть картки за ⠿, щоб змінити їхній порядок
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={() => setBetaOn("dragCards", !isDragCardsBeta)}>
+                        <ToggleStatusLabel $checked={isDragCardsBeta}>
+                          {isDragCardsBeta ? "Увімкнуто" : "Вимкнуто"}
+                        </ToggleStatusLabel>
+                        <SwitchPill $checked={isDragCardsBeta} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  <CardExpanded>
+                    <Card style={{ padding: 0, border: "none", background: "transparent" }}>
+                      <CardLeft>
+                        <CardIconBox $color="#facc15"><FiVolume2 /></CardIconBox>
+                        <CardInfo>
+                          <CardTitle>Озвучення прогнозу</CardTitle>
+                          <CardDescription>
+                            Кнопка 🔊 на картці погоди читає коротке зведення: зараз, вітер, сьогодні
+                          </CardDescription>
+                        </CardInfo>
+                      </CardLeft>
+                      <CardControl>
+                        <ToggleWrapper onClick={() => setBetaOn("voiceForecast", !isVoiceBeta)}>
+                          <ToggleStatusLabel $checked={isVoiceBeta}>
+                            {isVoiceBeta ? "Увімкнуто" : "Вимкнуто"}
+                          </ToggleStatusLabel>
+                          <SwitchPill $checked={isVoiceBeta} />
+                        </ToggleWrapper>
+                      </CardControl>
+                    </Card>
+                    {isVoiceBeta && <BetaVoiceSettings />}
+                  </CardExpanded>
+                </CardGroup>
+              )}
 
             </MainContent>
 

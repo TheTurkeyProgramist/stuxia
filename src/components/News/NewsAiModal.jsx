@@ -766,6 +766,8 @@ ${webContext}
         isBot: true,
       };
       saveHistory([...newMsgs, botMsg]);
+      // Як і в ШІ-Допомозі: коротка пауза після помилки, щоб не спамити запитами при 429/503
+      cooldown.start(5);
     } finally {
       setLoading(false);
     }

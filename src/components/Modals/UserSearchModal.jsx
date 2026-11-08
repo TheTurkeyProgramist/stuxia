@@ -31,6 +31,32 @@ import {
   FloatingArrow,         
 } from "@floating-ui/react";
 import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
+import WhyUsModal from "./WhyUsModal";
+
+const WhyUsLink = styled.button`
+  display: block;
+  margin: -6px auto 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: ${({ $isDarkMode }) => ($isDarkMode ? "#7ff3e6" : "#174348")};
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
+  &:focus-visible {
+    outline: 2px solid #ffd001;
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+`;
+
 const TooltipBox = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
@@ -650,6 +676,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
   const [isClosing, setIsClosing] = useState(false);
   const customDays = useSelector((state) => state.calendar?.customDays || []);
   const [selectedFaq, setSelectedFaq] = useState(null);
+  const [isWhyUsOpen, setIsWhyUsOpen] = useState(false);
 
   // Закриваємо по кліку на підкладку лише якщо і натискання, і відпускання
   // миші були саме на ній. Інакше виділення тексту, що «з'їхало» за край
@@ -705,13 +732,17 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
       setSelectedFaq(null);
       return;
     }
+    if (isWhyUsOpen) {
+      setIsWhyUsOpen(false);
+      return;
+    }
     setPreviewImage(null);
     setIsClosing(true);
     setTimeout(() => {
       setIsClosing(false);
       onClose();
     }, 400);
-  }, [onClose, previewImage, selectedFaq]);
+  }, [onClose, previewImage, selectedFaq, isWhyUsOpen]);
 
   const handleDownloadImage = async (imgSrc) => {
     let href = imgSrc;
@@ -790,6 +821,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
   useEffect(() => {
     if (!isOpen) {
       setSelectedFaq(null);
+      setIsWhyUsOpen(false);
       return;
     }
 
@@ -898,6 +930,13 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
 >
   Останнє оновлення: 30 серпня 2026 року
 </p>
+          <WhyUsLink
+            type="button"
+            $isDarkMode={isDarkMode}
+            onClick={() => setIsWhyUsOpen(true)}
+          >
+            Чому треба обрати нас?
+          </WhyUsLink>
         </Conten>
         <ScrollArea>
           <>
@@ -970,6 +1009,13 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
           </>
         </ScrollArea>
       </Content>
+      {isWhyUsOpen && (
+        <WhyUsModal
+          isDarkMode={isDarkMode}
+          onClose={() => setIsWhyUsOpen(false)}
+          backdropProps={backdropProps("whyUs", () => setIsWhyUsOpen(false))}
+        />
+      )}
       {selectedFaq && (
         <FaqAnswerOverlay {...backdropProps("answer", () => setSelectedFaq(null))}>
           <FaqAnswerModal

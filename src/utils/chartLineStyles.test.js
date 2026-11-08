@@ -23,8 +23,21 @@ describe("mergeLineStyles", () => {
     const merged = mergeLineStyles({ daily: { day: { dimOpacity: 5 }, night: { dimOpacity: -1 }, right: { width: 2 } } });
     expect(merged.daily.day.dimOpacity).toBe(0.9);
     expect(merged.daily.night.dimOpacity).toBe(0);
-    expect(merged.daily.right.dimOpacity).toBe(0.3);
+    expect(merged.daily.right.dimOpacity).toBe(0.1);
     expect(merged.daily.trendDay.dimOpacity).toBeUndefined();
+  });
+
+  it("adds value labels and wind label mode to old saved styles", () => {
+    const merged = mergeLineStyles({
+      daily: { day: { labels: false }, right: { windLabel: "???" } },
+      hourly: { right: { windLabel: "gusts" } },
+    });
+    expect(merged.daily.day.labels).toBe(false);
+    expect(merged.daily.night.labels).toBe(true);
+    expect(merged.daily.right.windLabel).toBe("speed");
+    expect(merged.hourly.right.windLabel).toBe("gusts");
+    expect(merged.daily.trendDay.labels).toBeUndefined();
+    expect(merged.daily.day.windLabel).toBeUndefined();
   });
 });
 
