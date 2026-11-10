@@ -74,7 +74,8 @@ import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, Cl
 import { WeatherIcon, stripEmoji } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
 import { BiWind } from "react-icons/bi"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
-import { MdOutlineSpeed, MdClose, MdStraighten } from "react-icons/md"; //Тиск
+import { MdOutlineSpeed, MdClose, MdStraighten, MdNotificationsActive, MdNotificationsOff } from "react-icons/md"; //Тиск
+import { isWeatherAlertsEnabled, isCardWeatherAlertsOn, setCardWeatherAlerts } from "../../utils/emergencyAlerts";
 import { FaSnowflake, FaSun, FaExclamationTriangle } from "react-icons/fa"; //Іконки
 import { GiSunRadiations, GiSnowing, GiWaterRecycling, GiIceCube } from "react-icons/gi";//Сонячна радіація
 import {
@@ -1273,6 +1274,13 @@ const WeatherCardComponent = ({
   const [isCustomDatesModalOpen, setIsCustomDatesModalOpen] = useState(false);
   const [newCustomDate, setNewCustomDate] = useState({ date: "", time: "", reason: "", duration: 1, durationUnit: "hours", targetCard: "all" });
   const [isCardSettingsOpen, setIsCardSettingsOpen] = useState(false);
+  // Сповіщення про небезпечну погоду саме для цієї картки (загальний перемикач — у Налаштуваннях)
+  const [cardAlertsOn, setCardAlertsOn] = useState(() => isCardWeatherAlertsOn(card.id));
+  const toggleCardAlerts = () => {
+    const next = !cardAlertsOn;
+    setCardAlertsOn(next);
+    setCardWeatherAlerts(card.id, next);
+  };
   const [activeTab, setActiveTab] = useState("current");
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
@@ -3429,6 +3437,24 @@ const HOLIDAYS_2027 = {
                 >
                   <FaCalendarPlus /> Встановити дати
                   <SettingsItemHint>Свої свята й події в прогнозі</SettingsItemHint>
+                </SettingsDropdownItem>
+                <SettingsDropdownItem
+                  isDarkMode={isDarkMode}
+                  role="switch"
+                  aria-checked={cardAlertsOn}
+                  onClick={toggleCardAlerts}
+                >
+                  {cardAlertsOn ? (
+                    <MdNotificationsActive style={{ color: "#facc15" }} />
+                  ) : (
+                    <MdNotificationsOff style={{ opacity: 0.6 }} />
+                  )}
+                  Сповіщення про небезпеку: {cardAlertsOn ? "увімк." : "вимк."}
+                  <SettingsItemHint>
+                    {isWeatherAlertsEnabled()
+                      ? "Гроза, ураган, злива, ожеледь для цієї картки"
+                      : "Спершу увімкніть у Налаштуваннях → Секції та новини"}
+                  </SettingsItemHint>
                 </SettingsDropdownItem>
                 <div
                   style={{

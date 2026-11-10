@@ -12,6 +12,12 @@ import React, {
 import styled, { keyframes, css, createGlobalStyle } from "styled-components";
 import localforage from "localforage";
 import { getPref, setPref } from "./utils/prefsStore.js";
+import { notifyWeatherHazardsLocal } from "./utils/emergencyAlerts.js";
+import {
+  initPushNotifications,
+  isPushSubscribed,
+  setPushPlaces,
+} from "./utils/pushNotifications.js";
 import { GiSnowing } from "react-icons/gi";
 //import { useSelector } from "react-redux";
 import Loader from "./components/Loader/Loader.jsx";
@@ -689,7 +695,7 @@ const useMediaQuery = (query) => {
   return matches;
 };
 
-/* Перемикач «Анімації» поруч із «Погода»: та сама висота, заокруглення й z-index, щоб не провалювалась у липкому режимі */
+/* Перемикач «Анімації та розмиття» поруч із «Погода»: та сама висота, заокруглення й z-index, щоб не провалювалась у липкому режимі */
 const AnimationsToggleButton = styled.button`
   position: relative;
   z-index: 400;
@@ -744,6 +750,21 @@ const AnimationsStateLabel = styled.span`
   opacity: 0.85;
   min-width: 62px;
   text-align: left;
+
+  /* На вузьких екранах стан і так видно по перемикачу — звільняємо місце під довшу назву */
+  @media (max-width: 520px) {
+    display: none;
+  }
+`;
+
+/* «Анімації та розмиття»: на телефонах дозволяємо перенос у два рядки, щоб не вилазило за екран */
+const AnimationsToggleText = styled.span`
+  @media (max-width: 520px) {
+    white-space: normal;
+    line-height: 1.1;
+    text-align: left;
+    max-width: 92px;
+  }
 `;
 
 const WeatherAnimationsToggle = ({ isDarkMode }) => {
@@ -756,10 +777,10 @@ const WeatherAnimationsToggle = ({ isDarkMode }) => {
       $off={animationsDisabled}
       $isDarkMode={isDarkMode}
       aria-checked={isOn}
-      aria-label={`Анімації: ${isOn ? "увімкнено" : "вимкнено"}`}
+      aria-label={`Анімації та розмиття: ${isOn ? "увімкнено" : "вимкнено"}`}
       onClick={() => setAnimationsDisabled(!animationsDisabled)}
     >
-      <span>Анімації</span>
+      <AnimationsToggleText>Анімації та розмиття</AnimationsToggleText>
       <AnimationsSwitchTrack $on={isOn} aria-hidden="true" />
       <AnimationsStateLabel aria-hidden="true">
         {isOn ? "увімкнено" : "вимкнено"}
@@ -2618,6 +2639,9 @@ const App = () => {
     }
   }, [user, isHydrated]);
 
+  // Push-сповіщення: щотижневе підтвердження токена й синхронізація налаштувань
+  useEffect(() => initPushNotifications(), []);
+
   // Запит дозволу на системні сповіщення
   useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") {
@@ -2627,6 +2651,9 @@ const App = () => {
 
   useEffect(() => {
     weatherCardsRef.current = weatherCards;
+    // Сервер стереже ці місця від небезпечної погоди (лише якщо пристрій підписаний на push;
+    // профіль записується, тільки коли список місць справді змінився)
+    setPushPlaces(weatherCards);
   }, [weatherCards]);
 
   const fetchWeather = useCallback(
@@ -2834,6 +2861,15 @@ const App = () => {
             );
           }
         }
+        // Гроза, ураган, ожеледь… у найближчі години — поки Стихія відкрита.
+        // Якщо пристрій підписаний на push, цю картку стереже сервер — не дублюємо.
+        notifyWeatherHazardsLocal({
+          cardId: id,
+          placeName: displayName,
+          hourly: d.hourly,
+          utcOffsetSeconds: d.utc_offset_seconds,
+          skip: isPushSubscribed(),
+        }).catch(() => {});
         const nowLocal = new Date();
         let targetHour = nowLocal.getHours();
         if (targetHour >= 18) {
@@ -3780,6 +3816,7 @@ const App = () => {
             <AuthorsDirectoryModal
               isOpen={isAuthorsDirectoryOpen}
               onClose={() => setIsAuthorsDirectoryOpen(false)}
+              isDarkMode={isDarkMode}
             />
 
           </Suspense>
@@ -3818,7 +3855,8 @@ import DominoTutorial from "./components/DominoTutorial/DominoTutorial";
 import { TutorialProvider } from "./components/DominoTutorial/TutorialContext.jsx";
 
 export default function AppWrapper() {
-  // «Вимкнути анімації» з налаштувань: CSS гасить animationsPref.css, framer-motion — MotionConfig
+  // «Вимкнути анімації та розмиття» з налаштувань (або авто на слабких пристроях):
+  // CSS гасить animationsPref.css, framer-motion — MotionConfig
   const animationsDisabled = useAnimationsDisabled();
   return (
     <MotionConfig reducedMotion={animationsDisabled ? "always" : "user"}>

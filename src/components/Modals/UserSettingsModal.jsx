@@ -12,7 +12,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { factoryReset } from "../../utils/factoryReset";
 import { useAgeGate } from "./AgeGateModal";
 import localforage from "localforage";
-import { useAnimationsDisabled, setAnimationsDisabled } from "../../utils/animationsPref";
+import { useAnimationsDisabled, useAnimationsAutoDisabled, setAnimationsDisabled } from "../../utils/animationsPref";
 import {
   GoogleAuthProvider,
   EmailAuthProvider,
@@ -80,6 +80,10 @@ import {
   FiGrid,
   FiNavigation,
   FiMove,
+  FiBell,
+  FiRss,
+  FiHeart,
+  FiCloudLightning,
 } from "react-icons/fi";
 import { useBeta, setBetaOn } from "../../utils/betaFeatures";
 import BetaVoiceSettings from "./BetaVoiceSettings.jsx";
@@ -139,6 +143,47 @@ import {
   parseNewsFilterEntry,
 } from "../../utils/contentFilter";
 import { scheduleNewsFilterSync, flushNewsFilterSync } from "../../utils/newsFilterSync";
+import {
+  CUSTOM_FEEDS_MIN,
+  CUSTOM_FEEDS_MAX,
+  getCustomFeedsLimit,
+  setCustomFeedsLimit,
+  isUrgentNotifyEnabled,
+  setUrgentNotifyEnabled,
+  getUrgentWords,
+  setUrgentWords,
+  resetUrgentWords,
+  DEFAULT_URGENT_WORDS,
+  URGENT_MAX_WORDS,
+  URGENT_MAX_WORD_LENGTH,
+  isRecsEnabled,
+  setRecsEnabled,
+  getRecsTopics,
+  setRecsTopics,
+  resetRecsProfile,
+  getTopInterests,
+  NEWS_TOPICS,
+} from "../../utils/newsPersonal";
+import {
+  isPushSupported,
+  isPushSubscribed,
+  subscribePush,
+  wantsPush,
+  getLastPushError,
+} from "../../utils/pushNotifications";
+import {
+  ALERT_PAUSE_OPTIONS,
+  ALERT_DAILY_MIN,
+  ALERT_DAILY_MAX,
+  getAlertPause,
+  setAlertPause,
+  getAlertDailyLimit,
+  setAlertDailyLimit,
+  isWeatherAlertsEnabled,
+  setWeatherAlertsEnabled,
+  GUST_STORM_MS,
+  WEATHER_ALERT_HOURS,
+} from "../../utils/emergencyAlerts";
 import { MUTE_SYNC_DAILY_LIMIT } from "../../utils/muteSync";
 import { applySiteMirror, getSiteMirror } from "../../utils/siteMirror";
 import { getPref, setPref, removePref } from "../../utils/prefsStore.js";
@@ -295,7 +340,7 @@ const Sidebar = styled.div`
 
 // ── Анімації іконок налаштувань ─────────────────────────────────────────────
 // Програються один раз при наведенні на картку / пункт меню. Кожна закінчується
-// в стані спокою, тож «Вимкнути анімації» (animationsPref.css) лишає іконку на місці.
+// в стані спокою, тож «Вимкнути анімації та розмиття» (animationsPref.css) лишає іконку на місці.
 const ICON_ANIMS = {
   pop: { kf: keyframes`0%,100%{transform:scale(1)}40%{transform:scale(1.25)}70%{transform:scale(0.92)}`, dur: "0.5s" },
   swing: { kf: keyframes`0%,100%{transform:rotate(0)}20%{transform:rotate(-18deg)}45%{transform:rotate(14deg)}70%{transform:rotate(-7deg)}85%{transform:rotate(3deg)}`, dur: "0.8s" },
@@ -638,6 +683,20 @@ const RegexLegend = styled.div`
   align-items: baseline; margin-top: 8px;
   @media (max-width: 550px) { grid-template-columns: 1fr; span { margin-bottom: 4px; } }
 `;
+// Тема для персональних рекомендацій: натиснута — зелена з галочкою
+const TopicChip = styled.button`
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-family: inherit; cursor: pointer;
+  border-radius: 999px; padding: 4px 10px;
+  color: ${(p) => (p.$active ? "#34d399" : "#c0c0c0")};
+  background: ${(p) => (p.$active ? "rgba(52,211,153,0.15)" : "transparent")};
+  border: 1px solid ${(p) => (p.$active ? "rgba(52,211,153,0.45)" : "rgba(255,255,255,0.15)")};
+  transition: background 0.15s ease, color 0.15s ease;
+  &:hover:not(:disabled) { color: #ffffff; }
+  &:disabled { cursor: default; }
+  &:focus-visible { outline: 2px solid #60cdff; outline-offset: 2px; }
+`;
+
 const FilterNotes = styled.div`
   display: flex; flex-direction: column; gap: 4px;
   font-size: 12px; color: #a0a0a0; padding: 2px 4px;
@@ -1100,6 +1159,7 @@ const UserSettingsModal = ({
   });
 
   const animationsDisabled = useAnimationsDisabled();
+  const animationsAutoDisabled = useAnimationsAutoDisabled();
 
   // Натяк «прокрутіть нижче»: показується, поки під видимою частиною є ще вміст.
   // label — назва наступного прихованого підрозділу (напр. «Застосунки Стихії»).
@@ -1292,6 +1352,118 @@ const UserSettingsModal = ({
     setNewsFilterWords(next);
     setNewsFilterCustomWords(next);
     queueNewsFilterSync();
+  };
+
+  // ── Новини: ліміт власних стрічок, термінові новини, рекомендації (зберігаються одразу) ──
+  const [customFeedsLimit, setCustomFeedsLimitState] = useState(getCustomFeedsLimit);
+  const chooseCustomFeedsLimit = (n) => {
+    setCustomFeedsLimitState(n);
+    setCustomFeedsLimit(n);
+  };
+
+  const [isUrgentNotifyOn, setIsUrgentNotifyOn] = useState(isUrgentNotifyEnabled);
+  // "push" — приходять і коли сайт закрито; "local" — лише поки Стихія відкрита
+  const [urgentDelivery, setUrgentDelivery] = useState(() => (isPushSubscribed() ? "push" : "local"));
+  const [isUrgentBusy, setIsUrgentBusy] = useState(false);
+  const [urgentWords, setUrgentWordsState] = useState(getUrgentWords);
+  const [urgentWordDraft, setUrgentWordDraft] = useState("");
+  // Спільне для термінових новин і погоди: дозвіл браузера + підписка на push.
+  // Вимкнення не відписує напряму — initPushNotifications (App.jsx) відпише,
+  // лише коли вимкнуто обидва види сповіщень.
+  const toggleEmergencyKind = async (isOn, setLocal, savePref) => {
+    if (isUrgentBusy) return;
+    if (isOn) {
+      setLocal(false);
+      savePref(false);
+      if (!wantsPush()) setUrgentDelivery("local");
+      return;
+    }
+    if (!("Notification" in window)) {
+      alert("Цей браузер не підтримує сповіщення.");
+      return;
+    }
+    let permission = Notification.permission;
+    if (permission === "default") permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      alert("Сповіщення заблоковані в налаштуваннях браузера. Дозвольте їх для цього сайту й спробуйте ще раз.");
+      return;
+    }
+    setLocal(true);
+    savePref(true);
+    // Справжній push (FCM): приходить і тоді, коли сайт закрито
+    if (!isPushSupported()) return;
+    if (isPushSubscribed()) {
+      setUrgentDelivery("push"); // профіль на сервері оновить initPushNotifications
+      return;
+    }
+    setIsUrgentBusy(true);
+    const ok = await subscribePush();
+    setIsUrgentBusy(false);
+    setUrgentDelivery(ok ? "push" : "local");
+    if (!ok && getLastPushError() === "limit") {
+      alert("Сьогодні забагато нових підписок на сповіщення. Поки сповіщення приходитимуть, коли Стихія відкрита; спробуйте ввімкнути ще раз завтра.");
+    } else if (!ok && getLastPushError() === "captcha") {
+      alert("Не вдалося пройти перевірку від ботів (Cloudflare). Поки сповіщення приходитимуть, коли Стихія відкрита; спробуйте ввімкнути ще раз пізніше.");
+    }
+  };
+  const toggleUrgentNotify = () =>
+    toggleEmergencyKind(isUrgentNotifyOn, setIsUrgentNotifyOn, setUrgentNotifyEnabled);
+
+  // Небезпечна погода, пауза між сповіщеннями й ліміт на добу
+  const [isWeatherAlertsOn, setIsWeatherAlertsOn] = useState(isWeatherAlertsEnabled);
+  const toggleWeatherAlerts = () =>
+    toggleEmergencyKind(isWeatherAlertsOn, setIsWeatherAlertsOn, setWeatherAlertsEnabled);
+  const [alertPause, setAlertPauseState] = useState(getAlertPause);
+  const chooseAlertPause = (minutes) => {
+    setAlertPauseState(minutes);
+    setAlertPause(minutes);
+  };
+  const [alertDailyLimit, setAlertDailyLimitState] = useState(getAlertDailyLimit);
+  const changeAlertDailyLimit = (n) => {
+    setAlertDailyLimitState(n);
+    setAlertDailyLimit(n);
+  };
+  const isAnyEmergencyOn = isUrgentNotifyOn || isWeatherAlertsOn;
+  const formatPause = (m) => (m < 60 ? `${m} хв` : `${m / 60} год`);
+  const addUrgentWord = () => {
+    const word = urgentWordDraft.trim().toLowerCase().slice(0, URGENT_MAX_WORD_LENGTH);
+    if (!word || urgentWords.length >= URGENT_MAX_WORDS) return;
+    if (urgentWords.includes(word)) {
+      setUrgentWordDraft("");
+      return;
+    }
+    const next = [...urgentWords, word];
+    setUrgentWordsState(next);
+    setUrgentWords(next);
+    setUrgentWordDraft("");
+  };
+  const removeUrgentWord = (word) => {
+    const next = urgentWords.filter((w) => w !== word);
+    setUrgentWordsState(next);
+    setUrgentWords(next);
+  };
+  const restoreUrgentWords = () => {
+    resetUrgentWords();
+    setUrgentWordsState(DEFAULT_URGENT_WORDS);
+  };
+
+  const [isRecsOn, setIsRecsOn] = useState(isRecsEnabled);
+  const [recsTopics, setRecsTopicsState] = useState(getRecsTopics);
+  const [recsInterests, setRecsInterests] = useState(() => getTopInterests());
+  const hasRecsHistory = recsInterests.topics.length > 0 || recsInterests.sources.length > 0;
+  const toggleRecs = () => {
+    const nextVal = !isRecsOn;
+    setIsRecsOn(nextVal);
+    setRecsEnabled(nextVal);
+  };
+  const toggleRecsTopic = (id) => {
+    const next = recsTopics.includes(id) ? recsTopics.filter((t) => t !== id) : [...recsTopics, id];
+    setRecsTopicsState(next);
+    setRecsTopics(next);
+  };
+  const clearRecsHistory = () => {
+    resetRecsProfile();
+    setRecsInterests({ topics: [], sources: [] });
   };
 
   useEffect(() => {
@@ -2147,7 +2319,7 @@ const UserSettingsModal = ({
               {activeTab === "personalization" && (
                 <CardGroup>
                   <SectionHeaderTitle><FiSliders /> Персоналізація та інтерфейс</SectionHeaderTitle>
-                  <SectionDescription>Формат часу й дати, анімації, підказки, шрифт, жести та дзеркальність сайту</SectionDescription>
+                  <SectionDescription>Формат часу й дати, анімації та розмиття, підказки, шрифт, жести та дзеркальність сайту</SectionDescription>
 
                   <SubSectionTitle><FiClock /> Час та дата</SubSectionTitle>
 
@@ -2186,16 +2358,18 @@ const UserSettingsModal = ({
 
                   <SubSectionTitle><FiSliders /> Інтерфейс</SubSectionTitle>
 
-                  {/* Вимкнути анімації */}
+                  {/* Вимкнути анімації та розмиття */}
                   <Card>
                     <CardLeft>
                       <CardIconBox $color="#fbbf24"><FiPauseCircle /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Вимкнути анімації</CardTitle>
+                        <CardTitle>Вимкнути анімації та розмиття</CardTitle>
                         <CardDescription>
-                          {animationsDisabled
-                            ? "Анімації та плавні переходи вимкнено — сайт легший для слабких пристроїв"
-                            : "Іконки, переходи й ефекти анімовані"}
+                          {animationsAutoDisabled
+                            ? "Вимкнено автоматично: пристрій слабкий, тож анімації й розмиття фону могли б гальмувати. Можна увімкнути вручну"
+                            : animationsDisabled
+                            ? "Анімації, плавні переходи й розмиття фону вимкнено — сайт легший для слабких пристроїв"
+                            : "Іконки, переходи й ефекти анімовані, фон під вікнами розмитий"}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
@@ -2605,6 +2779,250 @@ const UserSettingsModal = ({
                     </FilterNotes>
                   </FilterSubGroup>
 
+                  {/* Ліміт власних стрічок: 6 за замовчуванням, до 9 за бажанням */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#38bdf8"><FiRss /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Власні стрічки новин</CardTitle>
+                        <CardDescription>
+                          Скільки своїх джерел можна додати. Кожна стрічка — ще один запит при оновленні, тож що більше стрічок, то повільніше завантаження
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <Segmented role="radiogroup" aria-label="Скільки власних стрічок можна додати">
+                        {Array.from({ length: CUSTOM_FEEDS_MAX - CUSTOM_FEEDS_MIN + 1 }, (_, i) => CUSTOM_FEEDS_MIN + i).map((n) => (
+                          <SegmentBtn
+                            key={n}
+                            type="button"
+                            role="radio"
+                            aria-checked={customFeedsLimit === n}
+                            $active={customFeedsLimit === n}
+                            $tone="show"
+                            onClick={() => chooseCustomFeedsLimit(n)}
+                          >
+                            {n}
+                          </SegmentBtn>
+                        ))}
+                      </Segmented>
+                    </CardControl>
+                  </Card>
+
+                  {/* Термінові новини: позначка й порядок — завжди, системні сповіщення — за перемикачем */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#ef4444"><FiBell /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Сповіщення про термінові новини</CardTitle>
+                        <CardDescription>
+                          {isUrgentBusy
+                            ? "Підключаємо сповіщення…"
+                            : isUrgentNotifyOn && urgentDelivery === "push"
+                              ? "Приходять навіть тоді, коли Стихія закрита (вбудовані джерела, стандартні слова). Про власні стрічки й слова — поки Стихія відкрита. Перевірка — раз на 30 хвилин"
+                              : isPushSupported()
+                                ? "Системне сповіщення про термінову новину — навіть коли Стихія закрита. На iPhone — лише якщо сайт додано на екран «Додому». Перевірка — раз на 30 хвилин"
+                                : "Системне сповіщення про термінову новину, поки Стихія відкрита — можна у фоновій вкладці. Цей браузер не отримує сповіщень із закритого сайту. Перевірка — раз на 30 хвилин"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={toggleUrgentNotify}>
+                        <ToggleStatusLabel $checked={isUrgentNotifyOn}>{isUrgentNotifyOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <SwitchPill $checked={isUrgentNotifyOn} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  <FilterSubGroup>
+                    <CardExpanded>
+                      <CardInfo>
+                        <FilterSubTitle>Слова термінових новин ({urgentWords.length}/{URGENT_MAX_WORDS})</FilterSubTitle>
+                        <CardDescription>
+                          Новина з цими словами в заголовку чи описі отримує червону позначку «Терміново» і стає першою в каруселі.
+                          Можна писати початок слова: «евакуац» знайде і «евакуація», і «евакуації». Англійські слова — для іноземних стрічок
+                        </CardDescription>
+                      </CardInfo>
+                      <form
+                        style={{ display: "flex", gap: "8px" }}
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          addUrgentWord();
+                        }}
+                      >
+                        <WinInput
+                          type="text"
+                          value={urgentWordDraft}
+                          maxLength={URGENT_MAX_WORD_LENGTH}
+                          placeholder="Слово або його початок (тривога, землетрус)"
+                          spellCheck={false}
+                          onChange={(e) => setUrgentWordDraft(e.target.value)}
+                        />
+                        <WinButton
+                          type="submit"
+                          disabled={!urgentWordDraft.trim() || urgentWords.length >= URGENT_MAX_WORDS}
+                        >
+                          <FiPlus /> Додати
+                        </WinButton>
+                      </form>
+                      {urgentWords.length > 0 && (
+                        <WordChips>
+                          {urgentWords.map((word) => (
+                            <WordChip key={word}>
+                              {word}
+                              <button type="button" aria-label={`Прибрати «${word}»`} onClick={() => removeUrgentWord(word)}>
+                                <FiX />
+                              </button>
+                            </WordChip>
+                          ))}
+                        </WordChips>
+                      )}
+                      <div>
+                        <WinButton type="button" onClick={restoreUrgentWords}>
+                          <FiRotateCcw /> Повернути стандартні слова
+                        </WinButton>
+                      </div>
+                    </CardExpanded>
+                  </FilterSubGroup>
+
+                  {/* Небезпечна погода: для кожної картки, вимикається в меню ⚙ картки */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#facc15"><FiCloudLightning /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Сповіщення про небезпечну погоду</CardTitle>
+                        <CardDescription>
+                          Гроза, град, штормовий (пориви від {GUST_STORM_MS} м/с) чи ураганний вітер, злива, сильний снігопад, ожеледь — у найближчі {WEATHER_ALERT_HOURS} годин для кожної картки погоди.
+                          Вимкнути для окремої картки можна в її меню ⚙.
+                          {isWeatherAlertsOn && urgentDelivery === "push" ? " Приходять навіть тоді, коли Стихія закрита" : ""}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={toggleWeatherAlerts}>
+                        <ToggleStatusLabel $checked={isWeatherAlertsOn}>{isWeatherAlertsOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <SwitchPill $checked={isWeatherAlertsOn} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  {/* Частота: однакова для термінових новин і погоди */}
+                  <FilterSubGroup $disabled={!isAnyEmergencyOn} aria-disabled={!isAnyEmergencyOn}>
+                    <CardExpanded>
+                      <CardInfo>
+                        <FilterSubTitle>Пауза між сповіщеннями</FilterSubTitle>
+                        <CardDescription>
+                          Після сповіщення наступна новина прийде не раніше, ніж через цей час. Попередження про небезпечну погоду не чекають — приходять одразу
+                        </CardDescription>
+                      </CardInfo>
+                      <div>
+                        <Segmented role="radiogroup" aria-label="Пауза між сповіщеннями">
+                          {ALERT_PAUSE_OPTIONS.map((m) => (
+                            <SegmentBtn
+                              key={m}
+                              type="button"
+                              role="radio"
+                              aria-checked={alertPause === m}
+                              $active={alertPause === m}
+                              $tone="show"
+                              disabled={!isAnyEmergencyOn}
+                              onClick={() => chooseAlertPause(m)}
+                            >
+                              {formatPause(m)}
+                            </SegmentBtn>
+                          ))}
+                        </Segmented>
+                      </div>
+                    </CardExpanded>
+                    <CardExpanded>
+                      <CardInfo>
+                        <FilterSubTitle>Не більше {alertDailyLimit} сповіщень на добу</FilterSubTitle>
+                        <CardDescription>
+                          Разом для термінових новин і погоди. Лічильник скидається опівночі
+                        </CardDescription>
+                      </CardInfo>
+                      <ProgressBar
+                        type="range"
+                        min={ALERT_DAILY_MIN}
+                        max={ALERT_DAILY_MAX}
+                        step="1"
+                        value={alertDailyLimit}
+                        disabled={!isAnyEmergencyOn}
+                        aria-label="Скільки екстрених сповіщень на добу"
+                        onChange={(e) => changeAlertDailyLimit(Number(e.target.value))}
+                      />
+                    </CardExpanded>
+                  </FilterSubGroup>
+
+                  {/* Персональні рекомендації: обрані теми + що користувач відкриває */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#f472b6"><FiHeart /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Персональні рекомендації</CardTitle>
+                        <CardDescription>
+                          Цікавіші вам новини стоять першими. Стихія враховує обрані теми та новини, які ви відкриваєте. Ці дані лишаються лише на цьому пристрої
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={toggleRecs}>
+                        <ToggleStatusLabel $checked={isRecsOn}>{isRecsOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <SwitchPill $checked={isRecsOn} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  <FilterSubGroup $disabled={!isRecsOn} aria-disabled={!isRecsOn}>
+                    <CardExpanded>
+                      <CardInfo>
+                        <FilterSubTitle>Мої теми</FilterSubTitle>
+                        <CardDescription>Новини на ці теми показуються першими</CardDescription>
+                      </CardInfo>
+                      <WordChips>
+                        {NEWS_TOPICS.map((topic) => {
+                          const active = recsTopics.includes(topic.id);
+                          return (
+                            <TopicChip
+                              key={topic.id}
+                              type="button"
+                              aria-pressed={active}
+                              $active={active}
+                              disabled={!isRecsOn}
+                              onClick={() => toggleRecsTopic(topic.id)}
+                            >
+                              {active ? <FiCheck aria-hidden="true" /> : <FiPlus aria-hidden="true" />}
+                              {topic.label}
+                            </TopicChip>
+                          );
+                        })}
+                      </WordChips>
+                    </CardExpanded>
+
+                    <CardExpanded>
+                      <CardInfo>
+                        <FilterSubTitle>Що Стихія вже знає про ваші інтереси</FilterSubTitle>
+                        <CardDescription>
+                          {hasRecsHistory
+                            ? [
+                                recsInterests.topics.length > 0 && `Теми: ${recsInterests.topics.join(", ")}`,
+                                recsInterests.sources.length > 0 && `Джерела: ${recsInterests.sources.join(", ")}`,
+                              ].filter(Boolean).join(" · ")
+                            : "Поки нічого. Відкрийте кілька новин — і тут з'являться ваші улюблені теми та джерела"}
+                        </CardDescription>
+                      </CardInfo>
+                      <div>
+                        <WinButton type="button" onClick={clearRecsHistory} disabled={!isRecsOn || !hasRecsHistory}>
+                          <FiTrash2 /> Забути мої кліки
+                        </WinButton>
+                      </div>
+                    </CardExpanded>
+
+                    <FilterNotes>
+                      <span><FiInfo aria-hidden="true" /> Теми й перемикачі змінюють порядок новин одразу, а нові кліки — з наступного оновлення стрічки.</span>
+                    </FilterNotes>
+                  </FilterSubGroup>
+
                   {!isGuest ? (
                     <Card>
                       <CardLeft>
@@ -2888,7 +3306,7 @@ const UserSettingsModal = ({
                       <CardIconBox $color="#fcc624"><FaLinux /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Версія для Linux</CardTitle>
-                        <CardDescription>AppImage для більшості дистрибутивів або DEB для Debian/Ubuntu</CardDescription>
+                        <CardDescription>Ubuntu 22.04+, Debian 12+, Mint 21+, Fedora 38+: AppImage або DEB</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>

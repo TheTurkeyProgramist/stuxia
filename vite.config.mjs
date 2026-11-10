@@ -258,6 +258,8 @@ export default defineConfig(({ mode }) => {
       injectRegister: null, // /sw.js реєструє скрипт в index.html
       manifest: false, // лишаємо public/manifest.json
       workbox: {
+        // Обробник натискання на сповіщення про термінові новини
+        importScripts: ['sw-notifications.js'],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // Firebase і ШІ без мережі все одно не працюють — не витрачаємо на них трафік наперед
         globIgnores: [
@@ -315,7 +317,10 @@ export default defineConfig(({ mode }) => {
         drop_debugger: true,
       },
     },
-    target: 'es2020',
+    // Реальний мінімум задає CSS color-mix() (32 файли) та dvh/AbortSignal.timeout:
+    // нижчі браузери все одно ламаються, тож не транспілюємо під них зайвого.
+    // Заодно CSS-мініфікатор додасть -webkit-backdrop-filter для Safari < 18.
+    target: ['chrome111', 'edge111', 'firefox114', 'safari16.4'],
     cssCodeSplit: true,
     modulePreload: {
       polyfill: true,

@@ -37,10 +37,23 @@ import { FaRss } from "react-icons/fa";
 import { MdOutlineReportOff } from "react-icons/md"; //Заглушити
 import { MdHelpOutline, MdBlock, MdSelectAll, MdClose } from "react-icons/md";
 import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
-import { FiPlus, FiLink, FiShield } from "react-icons/fi";
+import { FiPlus, FiLink, FiShield, FiMoreVertical } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
 import toast from "react-hot-toast";
 import { getNewsBlockReason, getNewsFilterPrefs } from "../../utils/contentFilter";
+import { subscribePrefs } from "../../utils/prefsStore.js";
+import { isPushSubscribed } from "../../utils/pushNotifications.js";
+import {
+  getCustomFeedsLimit,
+  getUrgentWords,
+  isUrgentNews,
+  isUrgentNotifyEnabled,
+  notifyUrgentNews,
+  getRecsContext,
+  scoreNews,
+  recordNewsClick,
+  NEWS_ORDER_PREF_KEYS,
+} from "../../utils/newsPersonal";
 import { mergeNewsFilterFromCloud } from "../../utils/newsFilterSync";
 import { loadFirebase, listCollection } from "../../firebaseLazy";
 import {
@@ -215,6 +228,13 @@ const SOURCES = [
     name: "The Guardian Environment",
     home: "https://www.theguardian.com/environment",
     unblockable: true,
+  },
+  {
+    // Стара адреса earthobservatory.nasa.gov/feeds/… редіректить сюди
+    id: "nasa-earth-observatory",
+    url: "https://science.nasa.gov/feed/?science_org=19791%2C22453",
+    name: "NASA Earth Observatory",
+    home: "https://science.nasa.gov/earth/earth-observatory/",
   },
 ];
 
@@ -536,7 +556,7 @@ const MoreNewsButton = styled.button`
   }
 `;
 
-/* Телефон — один стовпчик; планшет і комп’ютер — сітка 2×2 */
+/* «Всі новини»: згруповані за джерелом, по 3 найсвіжіші з кожного */
 const MoreNewsPanel = styled.div`
   width: 100%;
   max-width: 1400px;
@@ -552,27 +572,35 @@ const MoreNewsPanel = styled.div`
   color: #fff;
 `;
 
+const MoreNewsSection = styled.section`
+  flex-shrink: 0;
+
+  & + & {
+    margin-top: 18px;
+  }
+`;
+
+const MoreNewsSourceTitle = styled.h3`
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #ffaa00;
+`;
+
+// Телефон — список рядків (CompactRow), планшет — 2 картки в ряд, комп'ютер — 3
 const MoreNewsGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 0;
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
 
-  @media (min-width: 600px) {
-    flex: 1;
+  @media (min-width: 480px) {
+    gap: 12px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(240px, 1fr));
-
-    /* Картки розтягуються на всю висоту модалки */
-    & > a {
-      height: 100%;
-    }
-    & > a > div:first-child {
-      flex: 1;
-      height: auto !important;
-    }
+  }
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 `;
 
@@ -913,6 +941,154 @@ const CloseButton = styled.button`
 // Набір вже вбудованих джерел (для яких не показуємо кнопку скарги)
 const BUILTIN_SOURCE_NAMES = new Set(SOURCES.map((s) => s.name));
 
+// Позначка термінової новини (слова — у Налаштуваннях → Новини)
+const UrgentTag = styled.span`
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+`;
+
+// ───── Компактний рядок новини для телефона (модалка «Всі новини») ─────
+
+const CompactRow = styled.a`
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  color: #ffffff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+
+  &:last-child {
+    border-bottom: none;
+  }
+  &:focus-visible {
+    outline: 2px solid #ffaa00;
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+`;
+
+const CompactThumb = styled.div`
+  position: relative;
+  flex: 0 0 104px;
+  width: 104px;
+  height: 74px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #222;
+
+  /* На найвужчих телефонах (320–359px) лишаємо більше місця заголовку */
+  @media (max-width: 359px) {
+    flex-basis: 84px;
+    width: 84px;
+    height: 64px;
+  }
+`;
+
+const CompactNewBadge = styled.span`
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  z-index: 2;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #ddff00;
+  color: #000;
+  font-size: 11px;
+  font-weight: 900;
+`;
+
+const CompactBody = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+`;
+
+const CompactSource = styled.span`
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffaa00;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const CompactTitle = styled.h3`
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+const CompactMoreBtn = styled.button`
+  position: relative;
+  z-index: 9;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 20px;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+  &:focus-visible {
+    outline: 2px solid #ffaa00;
+  }
+`;
+
+// Те саме меню, але одним рядком поверх новини; праворуч лишаємо місце для «✕»
+const CompactMenu = styled(NewsSettingsMenu)`
+  min-height: 0;
+  padding: 0 44px 0 0;
+  border-radius: 10px;
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+
+  & > button {
+    border-top: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: 11px;
+
+    svg {
+      font-size: 20px;
+    }
+  }
+  & > button:first-child {
+    border-left: none;
+  }
+  & > button:last-child:nth-child(odd) {
+    grid-column: auto;
+  }
+`;
+
 const NewsCard = ({
   item,
   $isDarkMode,
@@ -925,6 +1101,7 @@ const NewsCard = ({
   onUnmuteClick,
   onRevealClick,
   muteSyncInfo,
+  compact = false,
 }) => {
   const cardRef = useRef(null);
   const [isVisible, setIsVisible] = useState(item.isNew);
@@ -1114,6 +1291,147 @@ const NewsCard = ({
     );
   }
 
+  const copyLink = () =>
+    navigator.clipboard.writeText(item.link).then(() => {
+      toast.success("Посилання скопійовано!");
+    });
+
+  // Пункти меню «Налаштування» — спільні для звичайної картки та компактного рядка
+  const settingsMenuItems = (
+    <>
+      {compact && (
+        <NewsSettingsItem
+          onClick={() => {
+            copyLink();
+            setIsNewsSettingsOpen(false);
+          }}
+        >
+          <FiLink /> Копіювати
+        </NewsSettingsItem>
+      )}
+      <NewsSettingsItem
+        $color={hasGeminiKey ? "#ff69b4" : "#888"}
+        disabled={!hasGeminiKey}
+        title={hasGeminiKey ? "Прикріпити до ШІ-чату" : "Додайте Gemini API-ключ"}
+        onClick={() => {
+          if (!hasGeminiKey) return;
+          const cleanText = (item.description || item.title).replace(/<[^>]*>?/gm, "").trim();
+          window.dispatchEvent(
+            new CustomEvent("attachCardToAiHelp", {
+              detail: {
+                id: `news-${item.link}`,
+                type: "news",
+                title: item.title,
+                details: `Джерело: ${item.sourceName}. Заголовок: "${item.title}". Зміст: "${cleanText}". Посилання: ${item.link}`,
+              },
+            })
+          );
+          setIsNewsSettingsOpen(false);
+        }}
+      >
+        <FiPlus /> {compact ? "До ШІ" : "Прикріпити до ШІ"}
+      </NewsSettingsItem>
+      <NewsSettingsItem
+        onClick={() => {
+          if (onAiSummaryClick) onAiSummaryClick(item);
+          setIsNewsSettingsOpen(false);
+        }}
+      >
+        <TbStarsFilled /> ШІ Виклад
+      </NewsSettingsItem>
+      {!BUILTIN_SOURCE_NAMES.has(item.sourceName) && (
+        <NewsSettingsItem
+          $color="#ff6b6b"
+          onClick={(e) => {
+            if (onReportClick) onReportClick(item, e);
+            setIsNewsSettingsOpen(false);
+          }}
+        >
+          <MdReport /> {compact ? "Скарга" : "Подати скаргу"}
+        </NewsSettingsItem>
+      )}
+      <NewsSettingsItem
+        $color="#aaa"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (onMuteClick) onMuteClick(item, e);
+          setIsNewsSettingsOpen(false);
+        }}
+      >
+        <MdOutlineReportOff /> Заглушити
+        {muteSyncInfo && !compact && (
+          <MuteSyncHint $exhausted={muteSyncInfo.used >= muteSyncInfo.limit}>
+            {muteSyncInfo.used >= muteSyncInfo.limit
+              ? "Лише на цьому пристрої"
+              : `Синхронізація ${muteSyncInfo.used}/${muteSyncInfo.limit}`}
+          </MuteSyncHint>
+        )}
+      </NewsSettingsItem>
+    </>
+  );
+
+  // Телефон: рядок як у Метеофорі — фото ліворуч, праворуч джерело й заголовок.
+  // Копіювання та налаштування сховані під одну кнопку «⋮», щоб не тіснити заголовок.
+  if (compact) {
+    return (
+      <CompactRow
+        ref={cardRef}
+        href={item.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => recordNewsClick(item)}
+        onAuxClick={() => recordNewsClick(item)}
+      >
+        {showImage && (
+          <CompactThumb>
+            <NewsImg
+              src={imgSrc || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              $fallback={isFallbackImg}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = getNewsFallbackImage(item.link || item.title || "");
+                setIsFallbackImg(true);
+              }}
+            />
+            {isVisible && <CompactNewBadge>Нове</CompactNewBadge>}
+          </CompactThumb>
+        )}
+        <CompactBody>
+          <CompactSource>
+            {item.isUrgent && <UrgentTag>Терміново</UrgentTag>}
+            {item.sourceName}
+          </CompactSource>
+          <CompactTitle title={item.title}>{item.title}</CompactTitle>
+        </CompactBody>
+        <CompactMoreBtn
+          type="button"
+          aria-label={isNewsSettingsOpen ? "Закрити дії з новиною" : "Дії з новиною"}
+          aria-expanded={isNewsSettingsOpen}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsNewsSettingsOpen((v) => !v);
+          }}
+        >
+          {isNewsSettingsOpen ? <MdClose aria-hidden="true" /> : <FiMoreVertical aria-hidden="true" />}
+        </CompactMoreBtn>
+        <CompactMenu
+          $open={isNewsSettingsOpen}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          {settingsMenuItems}
+        </CompactMenu>
+      </CompactRow>
+    );
+  }
+
   return (
     <Card
       ref={cardRef}
@@ -1121,6 +1439,8 @@ const NewsCard = ({
       target="_blank"
       rel="noopener noreferrer"
       $isDarkMode={$isDarkMode}
+      onClick={() => recordNewsClick(item)}
+      onAuxClick={() => recordNewsClick(item)}
     >
       <div
         style={{
@@ -1161,75 +1481,15 @@ const NewsCard = ({
             </NewsSettingsBtn>
           </Tooltip>
         </CardActions>
-        {(
-            <NewsSettingsMenu
-              $open={isNewsSettingsOpen}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              <NewsSettingsItem
-                $color={hasGeminiKey ? "#ff69b4" : "#888"}
-                disabled={!hasGeminiKey}
-                title={hasGeminiKey ? "Прикріпити до ШІ-чату" : "Додайте Gemini API-ключ"}
-                onClick={() => {
-                  if (!hasGeminiKey) return;
-                  const cleanText = (item.description || item.title).replace(/<[^>]*>?/gm, "").trim();
-                  window.dispatchEvent(
-                    new CustomEvent("attachCardToAiHelp", {
-                      detail: {
-                        id: `news-${item.link}`,
-                        type: "news",
-                        title: item.title,
-                        details: `Джерело: ${item.sourceName}. Заголовок: "${item.title}". Зміст: "${cleanText}". Посилання: ${item.link}`,
-                      },
-                    })
-                  );
-                  setIsNewsSettingsOpen(false);
-                }}
-              >
-                <FiPlus /> Прикріпити до ШІ
-              </NewsSettingsItem>
-              <NewsSettingsItem
-                onClick={() => {
-                  if (onAiSummaryClick) onAiSummaryClick(item);
-                  setIsNewsSettingsOpen(false);
-                }}
-              >
-                <TbStarsFilled /> ШІ Виклад
-              </NewsSettingsItem>
-              {!BUILTIN_SOURCE_NAMES.has(item.sourceName) && (
-                <NewsSettingsItem
-                  $color="#ff6b6b"
-                  onClick={(e) => {
-                    if (onReportClick) onReportClick(item, e);
-                    setIsNewsSettingsOpen(false);
-                  }}
-                >
-                  <MdReport /> Подати скаргу
-                </NewsSettingsItem>
-              )}
-              <NewsSettingsItem
-                $color="#aaa"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (onMuteClick) onMuteClick(item, e);
-                  setIsNewsSettingsOpen(false);
-                }}
-              >
-                <MdOutlineReportOff /> Заглушити
-                {muteSyncInfo && (
-                  <MuteSyncHint $exhausted={muteSyncInfo.used >= muteSyncInfo.limit}>
-                    {muteSyncInfo.used >= muteSyncInfo.limit
-                      ? "Лише на цьому пристрої"
-                      : `Синхронізація ${muteSyncInfo.used}/${muteSyncInfo.limit}`}
-                  </MuteSyncHint>
-                )}
-              </NewsSettingsItem>
-            </NewsSettingsMenu>
-          )}
+        <NewsSettingsMenu
+          $open={isNewsSettingsOpen}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          {settingsMenuItems}
+        </NewsSettingsMenu>
         {showImage && (
           <NewsImg
             src={imgSrc || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
@@ -1262,6 +1522,7 @@ const NewsCard = ({
                     lineHeight: "1.3",
                   }}
                 >
+                  {item.isUrgent && <UrgentTag>Терміново</UrgentTag>}
                   {item.title}
                 </h2>
                 <Tooltip content="Копіювати шлях" isDarkMode={$isDarkMode}>
@@ -1271,9 +1532,7 @@ const NewsCard = ({
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      navigator.clipboard.writeText(item.link).then(() => {
-                        toast.success("Посилання скопійовано!");
-                      });
+                      copyLink();
                     }}
                   >
                     <FiLink aria-hidden="true" />
@@ -1688,6 +1947,58 @@ const fetchWithProxyFallback = async (url) => {
     }
   }
   throw new Error("All CORS proxies failed", { cause: lastError });
+};
+
+// Кеш стрічок на пристрої: поки він свіжий, мережу не чіпаємо взагалі,
+// а без інтернету показуємо останню збережену версію, хоч і стару.
+const FEED_CACHE_TTL_MS = 30 * 60 * 1000;
+const FEED_CACHE_PREFIX = "news_feed_cache_";
+// Готова стрічка (з перекладом) — щоб показати її миттєво при відкритті сторінки
+const NEWS_SNAPSHOT_KEY = "news_last_results";
+// Скільки новин кожного джерела гарантовано є у стрічці і показується у «Всіх новинах»
+const NEWS_PER_SOURCE = 3;
+
+// План А для RSS: rss2json прямо з браузера. Його ліміт рахується на IP користувача,
+// а не на наш Cloudflare. Самі сайти CORS не віддають, тож напряму читати їх не можна.
+const RSS2JSON_COOLDOWN_MS = 10 * 60 * 1000;
+let rss2jsonDisabledUntil = 0;
+
+// rss2json віддає дату як "2026-11-09 12:00:00" (UTC) — Safari такий рядок не розбирає
+const normalizeRss2JsonDate = (value) =>
+  /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value || "")
+    ? `${value.replace(" ", "T")}Z`
+    : value || "";
+
+const fetchViaRss2Json = async (feedUrl, signal) => {
+  if (rss2jsonDisabledUntil > Date.now()) return null;
+  try {
+    const res = await fetch(
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`,
+      { signal },
+    );
+    if (!res.ok) {
+      if (res.status === 429 || res.status >= 500) {
+        rss2jsonDisabledUntil = Date.now() + RSS2JSON_COOLDOWN_MS;
+      }
+      return null;
+    }
+    const data = await res.json();
+    // status "error" буває і через ліміт «нових стрічок за короткий час» — тоді йдемо в план Б
+    if (data.status !== "ok" || !Array.isArray(data.items) || data.items.length === 0) {
+      return null;
+    }
+    return data.items.map((item) => ({
+      ...item,
+      pubDate: normalizeRss2JsonDate(item.pubDate),
+    }));
+  } catch (err) {
+    if (err.name === "AbortError") throw err;
+    // Мережа / CORS — сервіс недоступний, якийсь час не витрачаємо на нього запити
+    if (err instanceof TypeError) {
+      rss2jsonDisabledUntil = Date.now() + RSS2JSON_COOLDOWN_MS;
+    }
+    return null;
+  }
 };
 
 /**
@@ -2139,6 +2450,143 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       return null;
     }
   };
+  // Переклад і підготовка новин до показу. Готові переклади беремо з кешу (news_trans_*),
+  // решту перекладаємо пакетами. Повертає масив у тому ж порядку, що й list.
+  const translateNewsItems = async (list, { bNews = [], onTranslateStart = null } = {}) => {
+    const results = new Array(list.length);
+    const toTranslateIndices = [];
+    const stringsToTranslate = [];
+
+    // 1. Перевіряємо кеш та збираємо тексти для пакетного перекладу
+    const seenLinks = (await localforage.getItem("seen_news_links")) || [];
+
+    for (let i = 0; i < list.length; i++) {
+      const item = list[i];
+      const cached = await localforage.getItem(`news_trans_${item.link}`);
+      const isNew = !seenLinks.includes(item.link);
+
+      if (cached) {
+        results[i] = {
+          ...cached,
+          // Якщо старий кеш містить лише запасне фото — беремо свіже зображення зі статті
+          displayImage:
+            cached.displayImage && cached.displayImage !== rainbow
+              ? cached.displayImage
+              : item.displayImage || rainbow,
+          sourceName: item.sourceName,
+          sourceFlag: item.sourceFlag,
+          sourceHome: item.sourceHome,
+          sourceUrl: item.sourceUrl,
+          pubDate: item.pubDate,
+          isNew,
+          isBlocked: bNews.includes(encodeURIComponent(item.link)),
+          autoBlockReason: item.autoBlockReason,
+          // Терміновість не кешуємо — вона залежить від поточного списку слів
+          isUrgent: item.isUrgent,
+        };
+      } else {
+        const cleanDesc = (item.description || "")
+          .replace(/<[^>]*>?/gm, "")
+          .trim()
+          .substring(0, 170);
+
+        toTranslateIndices.push(i);
+        stringsToTranslate.push(item.title);
+        stringsToTranslate.push(cleanDesc);
+      }
+    }
+
+    if (stringsToTranslate.length === 0) return results;
+
+    // 2. Пакетний переклад з безпечним роздільником ___ та перевіркою довжини
+    if (onTranslateStart) onTranslateStart();
+
+    let currentBatchStrings = [];
+    let currentBatchIndices = [];
+    let currentLen = 0;
+    const batches = [];
+
+    for (let i = 0; i < toTranslateIndices.length; i++) {
+      const title = stringsToTranslate[i * 2];
+      const desc = stringsToTranslate[i * 2 + 1];
+      const pairLen = title.length + desc.length + 10; // Довжина тексту + роздільники
+
+      if (currentLen + pairLen > 4500 && currentBatchStrings.length > 0) {
+        batches.push({ strings: currentBatchStrings, indices: currentBatchIndices });
+        currentBatchStrings = [];
+        currentBatchIndices = [];
+        currentLen = 0;
+      }
+      currentBatchStrings.push(title, desc);
+      currentBatchIndices.push(toTranslateIndices[i]);
+      currentLen += pairLen;
+    }
+    if (currentBatchStrings.length > 0) {
+      batches.push({ strings: currentBatchStrings, indices: currentBatchIndices });
+    }
+    // Переклад однієї пари «заголовок + опис»; null, якщо не вдався або роздільник зіпсовано
+    const translatePair = async (title, desc) => {
+      const combined = await translateText(`${title} ___ ${desc}`);
+      if (combined === null) return null;
+      const parts = combined.split(/\s*___\s*/);
+      return parts.length === 2 ? parts : null;
+    };
+
+    for (const batch of batches) {
+      const translatedCombined = await translateText(batch.strings.join(" ___ "));
+      const splitResults =
+        translatedCombined === null ? null : translatedCombined.split(/\s*___\s*/);
+      // Якщо пакетний переклад зіпсував роздільники — перекладаємо кожну новину окремо
+      const batchValid = splitResults && splitResults.length === batch.strings.length;
+
+      for (let j = 0; j < batch.indices.length; j++) {
+        const idx = batch.indices[j];
+        const item = list[idx];
+        const originalTitle = batch.strings[j * 2];
+        const originalDesc = batch.strings[j * 2 + 1];
+        const bestImg = extractImageFromContent(item) || rainbow;
+
+        const pair = batchValid
+          ? [splitResults[j * 2], splitResults[j * 2 + 1]]
+          : await translatePair(originalTitle, originalDesc);
+
+        const translatedItem = {
+          title: pair?.[0]?.trim() || item.title,
+          description: (pair ? pair[1]?.trim() || "" : originalDesc) + "...",
+          link: item.link,
+          displayImage: bestImg,
+          sourceName: item.sourceName,
+          sourceFlag: item.sourceFlag,
+          sourceHome: item.sourceHome,
+          sourceUrl: item.sourceUrl,
+          pubDate: item.pubDate,
+          isNew: !seenLinks.includes(item.link),
+          isBlocked: bNews.includes(encodeURIComponent(item.link)),
+        };
+
+        // Кешуємо лише успішний переклад, щоб оригінал не застряг як «переклад»
+        if (pair) {
+          await localforage.setItem(`news_trans_${item.link}`, translatedItem);
+        }
+        // Причину автоблоку не кешуємо — вона залежить від поточних налаштувань фільтра
+        results[idx] = {
+          ...translatedItem,
+          autoBlockReason: item.autoBlockReason,
+          isUrgent: item.isUrgent,
+        };
+      }
+    }
+    return results;
+  };
+
+  // «Всі новини»: сирі новини, що чекають перекладу (pending), і вже готові (items).
+  // Перекладаємо їх лише тоді, коли модалку відкрили.
+  const [moreNews, setMoreNews] = useState({
+    pending: [],
+    bNews: [],
+    items: [],
+    loaded: false,
+  });
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [selectedNews, setSelectedNews] = useState(null);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
@@ -2172,6 +2620,16 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   const newsSectionRef = useRef(null);
   const abortRef = useRef(null);
   const [showMoreNews, setShowMoreNews] = useState(false);
+  // Телефон (як у каруселі, до 479px) — у «Всіх новинах» компактні рядки замість карток
+  const [isPhone, setIsPhone] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 479px)").matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 479px)");
+    const onChange = (e) => setIsPhone(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
   const [isSearchActive, setIsSearchActive] = useState(false);
 
   useEffect(() => {
@@ -2376,56 +2834,87 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           };
         });
 
-      // Завантажуємо одну стрічку: повертає масив новин або кидає помилку
+      // План Б — наша Cloudflare-функція. Під час локальної розробки її немає,
+      // тому тоді звертаємося до робочого сайту.
+      const tryCloudflare = async (endpoint) =>
+        (await tryJsonFeed(endpoint)) ||
+        (import.meta.env.DEV ? await tryJsonFeed(`https://stuxia.com${endpoint}`) : null);
+
+      // Завантажуємо одну стрічку з мережі: повертає масив новин або кидає помилку
       const loadSource = async (source) => {
         const type = getSourceType(source.url);
         if (type !== "rss" && type !== "youtube") {
-          // Telegram спершу беремо через власну функцію (без публічних проксі)
+          // План А — публічні проксі в браузері, Cloudflare лише якщо вони не впоралися
+          let customData = null;
+          try {
+            customData = await fetchCustomSource(source);
+          } catch (err) {
+            if (err.name === "AbortError") throw err;
+          }
+          if (customData?.items?.length > 0) return customData.items;
           if (type === "telegram") {
-            const viaApi = await tryJsonFeed(
+            const viaApi = await tryCloudflare(
               `/api/news-feed?url=${encodeURIComponent(source.url)}`,
             );
             if (viaApi && viaApi.length > 0) return withSourceInfo(viaApi, source);
           }
-          const customData = await fetchCustomSource(source);
-          return customData?.items?.length > 0 ? customData.items : [];
+          return [];
         }
 
-        const builtInSource = SOURCES.find((item) => item.url === source.url);
-        const localEndpoint = builtInSource
-          ? `/api/news-feed?source=${encodeURIComponent(builtInSource.id)}`
-          : `/api/news-feed?url=${encodeURIComponent(source.url)}`;
+        let feedItems = await fetchViaRss2Json(source.url, signal);
 
-        let feedItems = await tryJsonFeed(localEndpoint);
-
-        // Під час локальної розробки функцій Cloudflare немає — беремо зовнішній ендпоінт
-        if (!feedItems && import.meta.env.DEV) {
-          feedItems = await tryJsonFeed(`https://stuxia.com${localEndpoint}`);
+        if (!feedItems) {
+          const builtInSource = SOURCES.find((item) => item.url === source.url);
+          const byUrl = `/api/news-feed?url=${encodeURIComponent(source.url)}`;
+          feedItems = await tryCloudflare(
+            builtInSource
+              ? `/api/news-feed?source=${encodeURIComponent(builtInSource.id)}`
+              : byUrl,
+          );
+          // Задеплоєна функція може ще не знати нового вбудованого джерела
+          // («Unknown RSS source») — тоді просимо ту саму стрічку за адресою
+          if (!feedItems && builtInSource) feedItems = await tryCloudflare(byUrl);
         }
 
         if (!feedItems) {
-          const res = await fetch(
-            `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.url)}`,
-            { signal },
-          );
-          if (!res.ok) {
-            throw new Error(`RSS-конвертер відповів HTTP ${res.status}`);
-          }
-          const data = await res.json();
-          if (data.status !== "ok" || !Array.isArray(data.items)) {
-            throw new Error(data.message || "RSS-конвертер повернув некоректну відповідь");
-          }
-          feedItems = data.items;
+          throw new Error("Ні rss2json, ні Cloudflare не віддали стрічку");
         }
 
         return withSourceInfo(feedItems, source);
+      };
+
+      // Обгортка з кешем: свіжий кеш — без мережі; збій мережі — остання збережена версія
+      const loadSourceCached = async (source) => {
+        const cacheKey = `${FEED_CACHE_PREFIX}${source.url}`;
+        let cached = null;
+        try {
+          cached = await localforage.getItem(cacheKey);
+        } catch (e) {}
+        const hasCached = Array.isArray(cached?.items) && cached.items.length > 0;
+        if (hasCached && Date.now() - cached.savedAt < FEED_CACHE_TTL_MS) {
+          return cached.items;
+        }
+        try {
+          const fresh = await loadSource(source);
+          if (fresh.length > 0) {
+            localforage
+              .setItem(cacheKey, { savedAt: Date.now(), items: fresh })
+              .catch(() => {});
+            return fresh;
+          }
+          return hasCached ? cached.items : fresh;
+        } catch (err) {
+          if (err.name === "AbortError") throw err;
+          if (hasCached) return cached.items;
+          throw err;
+        }
       };
 
       // Усі стрічки паралельно: збій однієї не зачіпає інші
       const activeSources = allSources.filter(
         (source) => !bSourcesList.includes(source.url),
       );
-      const settled = await Promise.allSettled(activeSources.map(loadSource));
+      const settled = await Promise.allSettled(activeSources.map(loadSourceCached));
       settled.forEach((result, i) => {
         if (result.status === "fulfilled") {
           allItems = [...allItems, ...result.value];
@@ -2488,153 +2977,53 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       });
       if (isMounted.current) setFilteredNewsCount(uniqueLinks.length);
 
-      // Збільшуємо кількість новин до 45
-      // Не більше 10 новин з одного джерела, щоб частіші стрічки не витісняли решту
-      const perSourceCount = {};
-      const balanced = clean.filter((i) => {
-        perSourceCount[i.sourceName] = (perSourceCount[i.sourceName] || 0) + 1;
-        return perSourceCount[i.sourceName] <= 10;
+      // Одразу обробляємо (перекладаємо) лише найсвіжішу новину кожного джерела — для каруселі.
+      // Ще NEWS_PER_SOURCE - 1 з кожного джерела чекають, доки відкриють «Всі новини».
+      // clean уже відсортований за датою, тож перші за джерелом — найсвіжіші.
+      //
+      // У карусель із цих NEWS_PER_SOURCE іде: термінова → найцікавіша користувачу → найсвіжіша.
+      const urgentWords = getUrgentWords();
+      const recsCtx = getRecsContext();
+      const topBySource = new Map();
+      clean.forEach((i) => {
+        const list = topBySource.get(i.sourceName) || [];
+        if (list.length >= NEWS_PER_SOURCE) return;
+        list.push({ ...i, isUrgent: isUrgentNews(i, urgentWords), recScore: scoreNews(i, recsCtx) });
+        topBySource.set(i.sourceName, list);
       });
-      const limited = balanced.slice(0, 45);
-      const results = new Array(limited.length);
-      const toTranslateIndices = [];
-      const stringsToTranslate = [];
-
-      // 1. Перевіряємо кеш та збираємо тексти для пакетного перекладу
-      const seenLinks = (await localforage.getItem("seen_news_links")) || [];
-
-      for (let i = 0; i < limited.length; i++) {
-        const item = limited[i];
-        const cacheKey = `news_trans_${item.link}`;
-        const cached = await localforage.getItem(cacheKey);
-        const isNew = !seenLinks.includes(item.link);
-
-        if (cached) {
-          results[i] = {
-            ...cached,
-            // Якщо старий кеш містить лише запасне фото — беремо свіже зображення зі статті
-            displayImage:
-              cached.displayImage && cached.displayImage !== rainbow
-                ? cached.displayImage
-                : item.displayImage || rainbow,
-            sourceName: item.sourceName,
-            sourceFlag: item.sourceFlag,
-            sourceHome: item.sourceHome,
-            sourceUrl: item.sourceUrl,
-            isNew,
-            isBlocked: bNews.includes(encodeURIComponent(item.link)),
-            autoBlockReason: item.autoBlockReason,
-          };
-        } else {
-          const cleanDesc = (item.description || "")
-            .replace(/<[^>]*>?/gm, "")
-            .trim()
-            .substring(0, 170);
-
-          toTranslateIndices.push(i);
-          stringsToTranslate.push(item.title);
-          stringsToTranslate.push(cleanDesc);
+      const primary = [];
+      const secondary = [];
+      topBySource.forEach((list) => {
+        let pick = list.findIndex((i) => i.isUrgent);
+        if (pick === -1 && recsCtx.enabled) {
+          const best = Math.max(...list.map((i) => i.recScore));
+          if (best > 0) pick = list.findIndex((i) => i.recScore === best);
         }
-      }
-
-      // 2. Пакетний переклад з безпечним роздільником ___ та перевіркою довжини
-      if (stringsToTranslate.length > 0) {
-        if (showLoader && isMounted.current) setLoadProgress(40);
-
-        let currentBatchStrings = [];
-        let currentBatchIndices = [];
-        let currentLen = 0;
-        const batches = [];
-
-        for (let i = 0; i < toTranslateIndices.length; i++) {
-          const title = stringsToTranslate[i * 2];
-          const desc = stringsToTranslate[i * 2 + 1];
-          const pairLen = title.length + desc.length + 10; // Довжина тексту + роздільники
-
-          if (currentLen + pairLen > 4500 && currentBatchStrings.length > 0) {
-            batches.push({
-              strings: currentBatchStrings,
-              indices: currentBatchIndices,
-            });
-            currentBatchStrings = [];
-            currentBatchIndices = [];
-            currentLen = 0;
-          }
-          currentBatchStrings.push(title, desc);
-          currentBatchIndices.push(toTranslateIndices[i]);
-          currentLen += pairLen;
-        }
-        if (currentBatchStrings.length > 0) {
-          batches.push({
-            strings: currentBatchStrings,
-            indices: currentBatchIndices,
-          });
-        }
-        // Переклад однієї пари «заголовок + опис»; null, якщо не вдався або роздільник зіпсовано
-        const translatePair = async (title, desc) => {
-          const combined = await translateText(`${title} ___ ${desc}`);
-          if (combined === null) return null;
-          const parts = combined.split(/\s*___\s*/);
-          return parts.length === 2 ? parts : null;
-        };
-
-        for (const batch of batches) {
-          const translatedCombined = await translateText(
-            batch.strings.join(" ___ "),
-          );
-          let splitResults =
-            translatedCombined === null
-              ? null
-              : translatedCombined.split(/\s*___\s*/);
-          // Якщо пакетний переклад зіпсував роздільники — перекладаємо кожну новину окремо
-          const batchValid =
-            splitResults && splitResults.length === batch.strings.length;
-
-          for (let j = 0; j < batch.indices.length; j++) {
-            const idx = batch.indices[j];
-            const item = limited[idx];
-            const originalTitle = batch.strings[j * 2];
-            const originalDesc = batch.strings[j * 2 + 1];
-            const bestImg =
-              extractImageFromContent(item) ||
-              rainbow;
-
-            const pair = batchValid
-              ? [splitResults[j * 2], splitResults[j * 2 + 1]]
-              : await translatePair(originalTitle, originalDesc);
-
-            const translatedItem = {
-              title: pair?.[0]?.trim() || item.title,
-              description: (pair ? pair[1]?.trim() || "" : originalDesc) + "...",
-              link: item.link,
-              displayImage: bestImg,
-              sourceName: item.sourceName,
-              sourceFlag: item.sourceFlag,
-              sourceHome: item.sourceHome,
-              sourceUrl: item.sourceUrl,
-              isNew: !seenLinks.includes(item.link),
-              isBlocked: bNews.includes(encodeURIComponent(item.link)),
-            };
-
-            // Кешуємо лише успішний переклад, щоб оригінал не застряг як «переклад»
-            if (pair) {
-              await localforage.setItem(
-                `news_trans_${item.link}`,
-                translatedItem,
-              );
-            }
-            // Причину автоблоку не кешуємо — вона залежить від поточних налаштувань фільтра
-            results[idx] = { ...translatedItem, autoBlockReason: item.autoBlockReason };
-          }
-        }
-      }
+        if (pick === -1) pick = 0;
+        primary.push(list[pick]);
+        secondary.push(...list.filter((_, idx) => idx !== pick));
+      });
+      // Порядок каруселі: спершу термінові, далі — за інтересами, далі — за датою
+      primary.sort(
+        (a, b) =>
+          Number(b.isUrgent) - Number(a.isUrgent) ||
+          b.recScore - a.recScore ||
+          new Date(b.pubDate) - new Date(a.pubDate),
+      );
+      const results = await translateNewsItems(primary, {
+        bNews,
+        onTranslateStart:
+          showLoader && isMounted.current ? () => setLoadProgress(40) : null,
+      });
 
       if (showLoader && isMounted.current) setLoadProgress(100);
       const allKeys = await localforage.keys();
       const newsCacheKeys = allKeys.filter((k) => k.startsWith("news_trans_"));
       const ogCacheKeys = allKeys.filter((k) => k.startsWith("og_img_"));
-      const currentActiveNewsKeys = limited.map((i) => `news_trans_${i.link}`);
-      const currentActiveOgKeys = limited.map((i) => `og_img_${i.link}`);
+      // Переклади й обкладинки «Всіх новин» теж лишаємо — вони знадобляться при відкритті модалки
+      const keptItems = [...primary, ...secondary];
+      const currentActiveNewsKeys = keptItems.map((i) => `news_trans_${i.link}`);
+      const currentActiveOgKeys = keptItems.map((i) => `og_img_${i.link}`);
 
       for (const key of newsCacheKeys) {
         if (!currentActiveNewsKeys.includes(key)) {
@@ -2646,11 +3035,41 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           await localforage.removeItem(key);
         }
       }
+      // Кеш стрічок, які користувач уже прибрав зі своїх джерел
+      const activeFeedKeys = new Set(
+        allSources.map((source) => `${FEED_CACHE_PREFIX}${source.url}`),
+      );
+      for (const key of allKeys) {
+        if (key.startsWith(FEED_CACHE_PREFIX) && !activeFeedKeys.has(key)) {
+          await localforage.removeItem(key);
+        }
+      }
 
       if (isMounted.current) {
         setItems(results);
+        // Ті самі новини, що вже підвантажені у «Всі новини», — не скидаємо їх (без мигання)
+        const pendingKey = secondary.map((i) => i.link).join("\n");
+        setMoreNews((cur) =>
+          cur.loaded && cur.pending.map((i) => i.link).join("\n") === pendingKey
+            ? { ...cur, pending: secondary, bNews }
+            : { pending: secondary, bNews, items: [], loaded: false },
+        );
         setLastUpdated(new Date());
       }
+      // З push вбудовані джерела стереже сервер (з тими самими словами) — тут лише власні стрічки
+      notifyUrgentNews(
+        isPushSubscribed()
+          ? results.filter((i) => !BUILTIN_SOURCE_NAMES.has(i.sourceName))
+          : results,
+      ).catch(() => {});
+      localforage
+        .setItem(NEWS_SNAPSHOT_KEY, {
+          savedAt: Date.now(),
+          items: results,
+          pending: secondary,
+          bNews,
+        })
+        .catch(() => {});
     } catch (e) {
       if (e.name === "AbortError" || e.message?.includes("aborted")) {
         console.log("Запит було скасовано");
@@ -2695,8 +3114,43 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     isAutoBlocked: Boolean(item.autoBlockReason) && !revealedAutoBlocked.includes(item.link),
   });
   const displayedItems = latestPerSource.slice(0, 45).map(withMuted);
-  // «Більше новин»: 4 додаткові, яких немає у стрічці
-  const moreItems = restItems.slice(0, 4).map(withMuted);
+  // «Всі новини»: по 3 найсвіжіші з кожного джерела — та, що в каруселі,
+  // плюс ще 2, які підвантажуються лише після відкриття модалки.
+  // Порядок джерел — як у каруселі (найсвіжіші першими).
+  const moreGroups = latestPerSource.map((latest) => ({
+    sourceName: latest.sourceName,
+    sourceFlag: latest.sourceFlag,
+    items: [
+      latest,
+      ...restItems.filter((item) => item.sourceName === latest.sourceName),
+      ...moreNews.items.filter((item) => item.sourceName === latest.sourceName),
+    ]
+      .slice(0, NEWS_PER_SOURCE)
+      .map(withMuted),
+  }));
+  const isMoreNewsLoading =
+    showMoreNews && !moreNews.loaded && moreNews.pending.length > 0;
+
+  // Відкрили «Всі новини» — перекладаємо решту новин (з кешем, тож повторно це миттєво)
+  useEffect(() => {
+    if (!showMoreNews || moreNews.loaded) return;
+    let cancelled = false;
+    const target = moreNews;
+    (async () => {
+      let ready = [];
+      try {
+        ready = (await translateNewsItems(target.pending, { bNews: target.bNews })).filter(Boolean);
+      } catch (err) {
+        console.warn("Не вдалося підвантажити решту новин:", err);
+      }
+      if (cancelled || !isMounted.current) return;
+      // Якщо за цей час стрічка оновилася — результат уже не актуальний
+      setMoreNews((cur) => (cur === target ? { ...cur, items: ready, loaded: true } : cur));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showMoreNews, moreNews]);
   const infiniteItems =
     displayedItems.length > 0
       ? [...displayedItems, ...displayedItems, ...displayedItems]
@@ -2800,14 +3254,47 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           if (remaining > 0) setCooldown(remaining);
         }
       } catch (err) {}
-      // Перший запуск із показом лоадера
-      getData(true);
+      // Спершу миттєво показуємо збережені новини, свіжі підтягуємо у фоні
+      let hasSnapshot = false;
+      try {
+        const snapshot = await localforage.getItem(NEWS_SNAPSHOT_KEY);
+        if (snapshot?.items?.length > 0 && isMounted.current) {
+          setItems(snapshot.items);
+          setMoreNews({
+            pending: snapshot.pending || [],
+            bNews: snapshot.bNews || [],
+            items: [],
+            loaded: false,
+          });
+          setLastUpdated(new Date(snapshot.savedAt));
+          setLoading(false);
+          hasSnapshot = true;
+        }
+      } catch (err) {}
+      // Лоадер лише тоді, коли показати поки нічого
+      getData(!hasSnapshot);
     };
 
     init();
-    const interval = setInterval(() => getData(false), 60 * 60 * 1000);
+    // Перевірка щопівгодини лише з увімкненими сповіщеннями про термінові новини
+    // (це й так строк кешу стрічок), інакше — раз на годину, як раніше
+    let tick = 0;
+    const interval = setInterval(() => {
+      tick += 1;
+      if (isUrgentNotifyEnabled() || tick % 2 === 0) getData(false);
+    }, 30 * 60 * 1000);
+    // Інтернет повернувся — оновлюємо стрічки, що встигли застаріти
+    const onOnline = () => getData(false);
+    window.addEventListener("online", onOnline);
+    // Змінили теми, рекомендації чи слова термінових новин — перебудовуємо стрічку
+    // (стрічки беруться з кешу, тож без зайвих запитів)
+    const unsubscribePrefs = subscribePrefs((e) => {
+      if (NEWS_ORDER_PREF_KEYS.has(e.detail?.key)) getData(false);
+    });
     return () => {
       clearInterval(interval);
+      window.removeEventListener("online", onOnline);
+      unsubscribePrefs();
     };
   }, []);
 
@@ -2824,8 +3311,9 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     if (FACEBOOK_QUERY.test(inputUrl)) return; // підказку показано під полем
     if (!inputUrl) return;
     
-    if (customSources.length >= 5) {
-      alert("Ви досягли ліміту! Можна додати не більше 5 власних джерел.");
+    const feedsLimit = getCustomFeedsLimit();
+    if (customSources.length >= feedsLimit) {
+      alert(`Ви досягли ліміту! Можна додати не більше ${feedsLimit} власних джерел. Збільшити ліміт до 9 можна в Налаштуваннях → Новини.`);
       return;
     }
 
@@ -2906,8 +3394,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 
       const saved = (await localforage.getItem("custom_news_sources")) || [];
       if (!saved.find((s) => s.url === resolvedUrl)) {
-        if (saved.length >= 5) {
-          alert("Ви досягли ліміту! Можна додати не більше 5 власних джерел.");
+        if (saved.length >= getCustomFeedsLimit()) {
+          alert(`Ви досягли ліміту! Можна додати не більше ${getCustomFeedsLimit()} власних джерел. Збільшити ліміт до 9 можна в Налаштуваннях → Новини.`);
           return;
         }
         const updated = [...saved, newSource];
@@ -3336,7 +3824,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             </motion.div>
           </AnimatePresence>
           <MoreNewsButton onClick={() => setShowMoreNews(true)}>
-            Більше новин, джерела над кнопкою
+            Всі новини
           </MoreNewsButton>
           <FilteredNewsCounter $isDarkMode={$isDarkMode}>
             За сьогодні відфільтровано {filteredNewsCount} небажаних новин.
@@ -3433,31 +3921,51 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                   }}
                 >
                   <h2 style={{ margin: 0, color: "#ffaa00", fontSize: "15px" }}>
-                    Більше новин
+                    Всі новини
                   </h2>
                   <CloseButton onClick={() => setShowMoreNews(false)}>✕</CloseButton>
                 </div>
-                <MoreNewsGrid>
-                  {moreItems.map((item) => (
-                    <NewsCard
-                      key={item.link}
-                      item={item}
-                      $isDarkMode={$isDarkMode}
-                      showImage={showImage}
-                      showTitle={showTitle}
-                      showDescription={showDescription}
-                      onAiSummaryClick={(news) => {
-                        setSelectedNews(news);
-                        setIsAiModalOpen(true);
-                      }}
-                      onReportClick={handleReport}
-                      onMuteClick={handleMute}
-                      onUnmuteClick={handleUnmute}
-                      onRevealClick={handleRevealAutoBlocked}
-                      muteSyncInfo={muteSyncInfo}
-                    />
-                  ))}
-                </MoreNewsGrid>
+                {isMoreNewsLoading && (
+                  <p role="status" style={{ margin: "0 0 12px", fontSize: "13px", opacity: 0.85 }}>
+                    Підвантажуємо ще {moreNews.pending.length} новин…
+                  </p>
+                )}
+                {moreGroups.length === 0 ? (
+                  <p style={{ margin: "20px 0", textAlign: "center", opacity: 0.8 }}>
+                    Для обраних джерел поки немає новин.
+                  </p>
+                ) : (
+                  moreGroups.map((group) => (
+                    <MoreNewsSection key={group.sourceName}>
+                      <MoreNewsSourceTitle>
+                        {group.sourceFlag ? `${group.sourceFlag} ` : ""}
+                        {group.sourceName}
+                      </MoreNewsSourceTitle>
+                      <MoreNewsGrid>
+                        {group.items.map((item) => (
+                          <NewsCard
+                            key={item.link}
+                            item={item}
+                            $isDarkMode={$isDarkMode}
+                            showImage={showImage}
+                            showTitle={showTitle}
+                            showDescription={showDescription}
+                            onAiSummaryClick={(news) => {
+                              setSelectedNews(news);
+                              setIsAiModalOpen(true);
+                            }}
+                            onReportClick={handleReport}
+                            onMuteClick={handleMute}
+                            onUnmuteClick={handleUnmute}
+                            onRevealClick={handleRevealAutoBlocked}
+                            muteSyncInfo={muteSyncInfo}
+                            compact={isPhone}
+                          />
+                        ))}
+                      </MoreNewsGrid>
+                    </MoreNewsSection>
+                  ))
+                )}
               </MoreNewsPanel>
             </FullscreenModalOverlay>
           )}
@@ -3557,7 +4065,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                           return (
                             <RecoItem
                               key={r.url}
-                              disabled={added || customSources.length >= 5}
+                              disabled={added || customSources.length >= getCustomFeedsLimit()}
                               onClick={() => handleAddSource(r.url, r.name)}
                             >
                               <FaRss />

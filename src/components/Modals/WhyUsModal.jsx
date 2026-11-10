@@ -24,7 +24,7 @@ const Box = styled.div`
   position: relative;
   box-sizing: border-box;
   width: 100%;
-  max-width: 980px;
+  max-width: 1200px;
   max-height: 88vh;
   display: flex;
   flex-direction: column;
@@ -97,8 +97,15 @@ const Lead = styled.p`
   opacity: 0.85;
 `;
 
+// На вузьких екранах таблиця на 4 колонки не влазить — показуємо картки
+const MOBILE = "@media (max-width: 600px)";
+
 const TableWrap = styled.div`
   overflow-x: auto;
+
+  ${MOBILE} {
+    display: none;
+  }
   border-radius: 10px;
   border: 1px solid
     ${({ $isDarkMode }) =>
@@ -161,6 +168,74 @@ const Mark = styled.span`
   }
 `;
 
+const CardList = styled.ul`
+  display: none;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  ${MOBILE} {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+`;
+
+const Card = styled.li`
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid
+    ${({ $isDarkMode }) =>
+      $isDarkMode ? "rgba(90, 230, 216, 0.25)" : "rgba(23, 67, 72, 0.2)"};
+`;
+
+const CardTitle = styled.h4`
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 14px;
+  background: ${({ $isDarkMode }) => ($isDarkMode ? "#0d272c" : "#ffe679")};
+`;
+
+const CardRows = styled.dl`
+  margin: 0;
+`;
+
+const CardRow = styled.div`
+  display: grid;
+  grid-template-columns: minmax(84px, 36%) 1fr;
+  gap: 8px;
+  padding: 7px 12px;
+  background: ${({ $highlight, $isDarkMode }) =>
+    $highlight
+      ? $isDarkMode
+        ? "rgba(81, 230, 213, 0.08)"
+        : "rgba(23, 67, 72, 0.06)"
+      : "transparent"};
+
+  & + & {
+    border-top: 1px solid
+      ${({ $isDarkMode }) =>
+        $isDarkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)"};
+  }
+
+  dt {
+    font-size: 12px;
+    opacity: 0.75;
+    padding-top: 1px;
+  }
+  dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+`;
+
+const COLUMNS = [
+  { key: "us", label: "Стихія" },
+  { key: "weather", label: "Погодні сайти" },
+  { key: "news", label: "Новинні агрегатори" },
+];
+
 const SectionTitle = styled.h3`
   margin: 22px 0 8px;
   font-size: 17px;
@@ -190,10 +265,22 @@ const ROWS = [
     news: ["part", "Буває платний доступ до статей"],
   },
   {
-    feature: "Погода + новини + музика в одному місці",
+    feature: "Погода + новини в одному місці",
     us: ["yes", "Так"],
-    weather: ["no", "Лише погода"],
-    news: ["no", "Лише новини"],
+    weather: ["part", "У деяких, так"],
+    news: ["part", "Дуже рідко"],
+  },
+  {
+    feature: "Кілька карток погоди одночасно безкоштовно",
+    us: ["yes", "Так, без підписки"],
+    weather: ["part", "Зазвичай одне місто, більше — платно"],
+    news: ["no", "—"],
+  },
+  {
+    feature: "Працює без інтернету",
+    us: ["yes", "Так, показує останній прогноз"],
+      weather: ["part", "У деяких, так"],
+    news: ["part", "У деяких, так"],
   },
   {
     feature: "Фільтр токсичного контенту в новинах",
@@ -203,13 +290,27 @@ const ROWS = [
   },
   {
     feature: "Власні джерела новин (RSS, YouTube, Telegram, Mastodon…)",
-    us: ["yes", "До 5 своїх джерел"],
+    us: ["yes", "6 своїх джерел, у налаштуваннях — до 9"],
     weather: ["no", "—"],
     news: ["part", "Залежить від сервісу"],
   },
   {
+    feature: "Термінові новини та push-сповіщення",
+    // Коли запрацює push (ключ Turnstile + деплой функцій) — змінити на
+    // ["yes", "Позначка «Терміново» і push навіть із закритим сайтом (iPhone — з екрана «Додому»)"]
+    us: ["part", "Позначка «Терміново» і сповіщення, поки Стихія відкрита"],
+    weather: ["part", "Попередження про погоду, зазвичай у застосунку"],
+    news: ["yes", "Push навіть із закритим застосунком"],
+  },
+  {
+    feature: "Персональні рекомендації",
+    us: ["yes", "Обрані теми + ваші кліки, дані лише на пристрої"],
+    weather: ["no", "—"],
+    news: ["yes", "Так, але профіль зберігається на серверах сервісу"],
+  },
+  {
     feature: "Кілька кліматичних карт (Ventusky, Windy…)",
-    us: ["yes", "Так, дві поруч і міні-плеєр"],
+    us: ["yes", "Так, дві поруч і міні-плеєр, бонус: власні фрейми, онлайн-дошка, карта: тривог, авіапольотів, якості повітря та Deepstate"],
     weather: ["part", "Одна власна карта"],
     news: ["no", "—"],
   },
@@ -238,8 +339,50 @@ const ROWS = [
     news: ["part", "Іноді просять акаунт"],
   },
   {
+    feature: "Синхронізація між пристроями",
+    us: ["yes", "Так, з акаунтом (є денні ліміти)"],
+    weather: ["part", "Зазвичай лише в застосунку з акаунтом"],
+    news: ["part", "Залежить від сервісу"],
+  },
+  {
+    feature: "Мови інтерфейсу",
+    us: ["yes", "Понад 25 мов"],
+    weather: ["part", "Зазвичай кілька"],
+    news: ["part", "Часто одна-дві"],
+  },
+  {
+    feature: "Відкритий код",
+    us: ["yes", "Так, AGPL-3.0 на GitHub"],
+    weather: ["no", "Рідко"],
+    news: ["no", "Рідко"],
+  },
+  {
+    feature: "Вбудований музичний плеєр",
+    us: ["yes", "Так, пісні та відео"],
+    weather: ["no", "—"],
+    news: ["no", "—"],
+  },
+  {
+    feature: "Вимкнення анімацій і розмиття",
+    us: ["yes", "Так, на слабких пристроях — автоматично"],
+    weather: ["part", "Залежить від сайту"],
+    news: ["part", "Залежить від сайту"],
+  },
+  {
+    feature: "Власний CSS (режим Декоратора)",
+    us: ["yes", "Так"],
+    weather: ["no", "—"],
+    news: ["no", "—"],
+  },
+  {
+    feature: "Застосунки для Windows, Linux та Android",
+    us: ["yes", "Так, усі три"],
+    weather: ["part", "Зазвичай лише мобільні"],
+    news: ["part", "Зазвичай лише мобільні"],
+  },
+  {
     feature: "Застосунок для iPhone з App Store",
-    us: ["no", "Немає (лише «На екран Додому»)"],
+    us: ["no", "Немає (лише «На екран Додому»), але планую весною!"],
     weather: ["yes", "Зазвичай є"],
     news: ["yes", "Зазвичай є"],
   },
@@ -249,6 +392,24 @@ const ROWS = [
     weather: ["part", "У великих сервісів є"],
     news: ["no", "—"],
   },
+  {
+    feature: "Без вікових обмежень",
+    us: ["part", "Від 14 років, окремі функції — 18+ або 21+"],
+    weather: ["yes", "Зазвичай так"],
+    news: ["part", "Залежить від сервісу"],
+  },
+  {
+    feature: "Швидкість на слабких пристроях",
+    us: ["part", "Важчий через багато функцій"],
+    weather: ["yes", "Зазвичай легкі"],
+    news: ["part", "Залежить від кількості реклами"],
+  },
+  {
+    feature: "Команда розробників",
+    us: ["part", "Одна людина, оновлення повільніші"],
+    weather: ["yes", "Зазвичай команда"],
+    news: ["yes", "Зазвичай команда"],
+  },
 ];
 
 const ADVANTAGES = [
@@ -257,6 +418,12 @@ const ADVANTAGES = [
   "Ключі ШІ та чати зберігаються лише у вашому браузері.",
   "Сайт можна «зібрати під себе»: теми, фони, порядок і видимість секцій.",
   "Є версії для Windows, Linux та Android.",
+  "Відкритий код під ліцензією AGPL-3.0 — кожен може перевірити, що відбувається з даними.",
+  "Інтерфейс перекладено понад 25 мовами.",
+  "Дбаємо про доступність: можна вимкнути анімації та розмиття, а на слабких пристроях це відбувається автоматично.",
+  "Режим Декоратора дозволяє додати власний CSS і змінити сайт до дрібниць.",
+  "Акаунт необов'язковий, але з ним картки погоди, тема й фільтр новин синхронізуються між пристроями.",
+  "Вбудований музичний плеєр із підбіркою пісень і відео.",
 ];
 
 const DISADVANTAGES = [
@@ -265,6 +432,11 @@ const DISADVANTAGES = [
   "ШІ працює лише з вашим власним ключем Gemini (з 18 років).",
   "Через безкоштовні ліміти Firebase є денні обмеження на синхронізацію та нові картки.",
   "Молодий проєкт, який розвиває одна людина, тож оновлення можуть виходити повільніше.",
+  "Сайт призначений для користувачів від 14 років, а окремі функції мають вищий вік (18+ або 21+).",
+  "Через велику кількість функцій сайт важчий за звичайний погодний — на старих пристроях може працювати повільніше.",
+  "Автоматичний фільтр новин може помилятися: пропустити зайве або сховати корисне.",
+  "Прогноз залежить від доступності сторонніх сервісів: якщо Open-Meteo недоступний, свіжих даних не буде.",
+  "Багато налаштувань (ключ Gemini, фільтр новин, Декоратор) новачкам можуть здатися складними.",
 ];
 
 const MarkCell = ({ value, isDarkMode }) => {
@@ -331,6 +503,28 @@ const WhyUsModal = ({ onClose, isDarkMode, backdropProps }) => (
             </tbody>
           </Table>
         </TableWrap>
+
+        <CardList>
+          {ROWS.map((row) => (
+            <Card key={row.feature} $isDarkMode={isDarkMode}>
+              <CardTitle $isDarkMode={isDarkMode}>{row.feature}</CardTitle>
+              <CardRows>
+                {COLUMNS.map((col) => (
+                  <CardRow
+                    key={col.key}
+                    $highlight={col.key === "us"}
+                    $isDarkMode={isDarkMode}
+                  >
+                    <dt>{col.label}</dt>
+                    <dd>
+                      <MarkCell value={row[col.key]} isDarkMode={isDarkMode} />
+                    </dd>
+                  </CardRow>
+                ))}
+              </CardRows>
+            </Card>
+          ))}
+        </CardList>
 
         <SectionTitle>Переваги Стихії</SectionTitle>
         <List>

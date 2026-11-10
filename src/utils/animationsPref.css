@@ -1,5 +1,7 @@
-/* «Вимкнути анімації» в налаштуваннях: CSS-анімації й переходи миттєво доходять
-   до кінцевого стану (а не зникають), тож елементи, що з'являються анімацією, лишаються видимими. */
+/* «Вимкнути анімації та розмиття» в налаштуваннях: CSS-анімації й переходи миттєво доходять
+   до кінцевого стану (а не зникають), тож елементи, що з'являються анімацією, лишаються видимими.
+   Розмиття фону (backdrop-filter) — найважче для відеочипа слабких пристроїв, тому теж гаситься.
+   Звичайний filter не чіпаємо: на ньому тримаються зорові фільтри сайту та фарбування іконок. */
 html[data-animations-off] *,
 html[data-animations-off] *::before,
 html[data-animations-off] *::after {
@@ -9,4 +11,6 @@ html[data-animations-off] *::after {
   transition-duration: 0.01ms !important;
   transition-delay: 0s !important;
   scroll-behavior: auto !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }

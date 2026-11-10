@@ -14,6 +14,7 @@ const FEEDS = {
   nature: "https://www.nature.com/nature.rss",
   mongabay: "https://news.mongabay.com/feed/",
   "guardian-environment": "https://www.theguardian.com/environment/rss",
+  "nasa-earth-observatory": "https://science.nasa.gov/feed/?science_org=19791%2C22453",
 };
 const MAX_ITEMS_PER_FEED = 10;
 const MAX_BODY_BYTES = 2 * 1024 * 1024;

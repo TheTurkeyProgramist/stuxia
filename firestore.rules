@@ -198,6 +198,39 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Токени push-сповіщень (FCM). Записує їх ЛИШЕ Cloud Function savePushProfile —
+    // вона перевіряє Cloudflare Turnstile (захист від ботів), ліміти за адресою та на добу і справжність
+    // токена. Id документа — SHA-256 токена, тож видалити свій запис пристрій може сам
+    // (знати id може лише той, у кого є токен), а читати колекцію — ніхто, крім сервера.
+    //
+    // Єдине, що пристрій може змінити сам, — лічильник своїх ЛОКАЛЬНИХ сповіщень за добу
+    // (щоб сервер урахував їх у паузі та ліміті). Це впливає лише на сповіщення того ж
+    // пристрою (id знає тільки власник токена), тому перевірка від ботів тут не потрібна.
+    function localCountersOk() {
+      let d = request.resource.data;
+      return changedKeys().hasOnly(['localDay', 'localCount', 'localLastAt'])
+        && d.localLastAt == request.time
+        && d.localDay is string
+        && d.localDay.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && d.localCount is int
+        && d.localCount >= 1
+        && d.localCount <= 40;
+    }
+
+    match /push_tokens/{tokenId} {
+      allow read, create: if false;
+      allow update: if localCountersOk();
+      allow delete: if true;
+    }
+
+    // Службові дані розсилки й лічильники реєстрацій — лише для сервера
+    match /push_state/{document=**} {
+      allow read, write: if false;
+    }
+    match /push_limits/{document=**} {
+      allow read, write: if false;
+    }
+
     match /rss_reports/{sourceId} {
       allow read: if true;
       allow create, update: if realAccount()

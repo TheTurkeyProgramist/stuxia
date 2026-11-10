@@ -258,6 +258,45 @@ const run = async () => {
   await expectDeny("зміна назви джерела", () => rssBatch(bob, "bob", 1, { name: "Hacked" }));
   await expectAllow("скарга без зміни назви", () => rssBatch(bob, "bob", 1, {}));
 
+  console.log("\npush_tokens: токени сповіщень (пише лише Cloud Function)");
+  await clearAll();
+  const sha256Hex = async (s) =>
+    [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))]
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  const token = "fcm-token:" + "x".repeat(140);
+  const tokenId = await sha256Hex(token);
+  await expectDeny("гість записує токен напряму (в обхід App Check)", () =>
+    setDoc(doc(guest, "push_tokens", tokenId), { token, updatedAt: serverTimestamp() }));
+  await expectDeny("акаунт записує токен напряму", () =>
+    setDoc(doc(alice, "push_tokens", tokenId), { token, updatedAt: serverTimestamp() }));
+  await seed(`push_tokens/${tokenId}`, {
+    token: { stringValue: token },
+    updatedAt: { timestampValue: new Date().toISOString() },
+    dailyLimit: { integerValue: "5" },
+  });
+  await expectDeny("зміна профілю напряму (ліміт 20)", () =>
+    setDoc(doc(guest, "push_tokens", tokenId), { dailyLimit: 20 }, { merge: true }));
+  await expectDeny("читання токенів", () => getDoc(doc(alice, "push_tokens", tokenId)));
+  const kyivToday = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Kyiv" }).format(new Date());
+  await expectAllow("пристрій повідомляє свої локальні сповіщення", () =>
+    updateDoc(doc(guest, "push_tokens", tokenId), { localDay: kyivToday, localCount: 2, localLastAt: serverTimestamp() }));
+  await expectDeny("локальний лічильник 0 (спроба «обнулити» ліміт)", () =>
+    updateDoc(doc(guest, "push_tokens", tokenId), { localDay: kyivToday, localCount: 0, localLastAt: serverTimestamp() }));
+  await expectDeny("час з браузера в localLastAt", () =>
+    updateDoc(doc(guest, "push_tokens", tokenId), { localDay: kyivToday, localCount: 3, localLastAt: Timestamp.now() }));
+  await expectDeny("разом із лічильником змінити ліміт", () =>
+    updateDoc(doc(guest, "push_tokens", tokenId), { localDay: kyivToday, localCount: 3, localLastAt: serverTimestamp(), dailyLimit: 20 }));
+  await expectDeny("лічильник для неіснуючого токена (створення)", () =>
+    setDoc(doc(guest, "push_tokens", "b".repeat(64)), { localDay: kyivToday, localCount: 1, localLastAt: serverTimestamp() }));
+  await expectAllow("пристрій видаляє свій токен", () => deleteDoc(doc(guest, "push_tokens", tokenId)));
+  await expectDeny("запис у push_state", () => setDoc(doc(alice, "push_state", "urgent_news"), { sent: [] }));
+  await expectDeny("читання push_state", () => getDoc(doc(guest, "push_state", "urgent_news")));
+  await expectDeny("обнулити лічильник реєстрацій", () =>
+    setDoc(doc(guest, "push_limits", "new_2026-11-10"), { count: 0 }));
+  await expectDeny("читання лічильників реєстрацій", () =>
+    getDoc(doc(alice, "push_limits", "new_2026-11-10")));
+
   console.log("\nінші колекції");
   await expectAllow("читання global без входу", () => getDoc(doc(guest, "global", "x")));
   await expectDeny("запис у global", () => setDoc(doc(alice, "global", "x"), { a: 1 }));
