@@ -22,6 +22,7 @@ import userDefault from "../../media/ui/user-placeholder.webp";
 import { useVisualFilters, presetName, selectFilter, CUSTOM_PRESET_ICON as CustomPresetIcon } from "./useVisualFilters";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { isSupporter } from "../Support/supportConfig";
+import { isInviter, isInvitee } from "../../utils/referral.js";
 // import AntiHeaderAd from "./AntiHeaderAd";
 import {
   useFloating,
@@ -684,6 +685,8 @@ const Header = ({
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const networkStatus = useNetworkStatus();
   const supporter = isSupporter(user);
+  const inviter = isInviter(user);
+  const invitee = isInvitee(user);
 
   // Helper to play sound effects with current volume
   // Оголошено ТУТ — до useEffect-ів, щоб вони могли її викликати
@@ -1036,7 +1039,7 @@ const Header = ({
 
         <ProfileButtonWrap>
           <Tooltip
-            content={`Ваш профіль${supporter ? " · Друг індиків" : ""} · ${NETWORK_LABELS[networkStatus]}`}
+            content={`Ваш профіль${supporter ? " · Друг індиків" : ""}${inviter ? " · Посол Стихії" : ""}${invitee ? " · Паросток Стихії" : ""} ·${NETWORK_LABELS[networkStatus]}`}
             isDarkMode={isDarkMode}
           >
           <ProfileButton
@@ -1072,6 +1075,12 @@ const Header = ({
                    <ProfileModalName>Електронна пошта: {user.email || user.account}</ProfileModalName>
                    {supporter && (
                      <SupporterChip title="Дякуємо, що підтримуєте Стихію!">🦃 Друг індиків</SupporterChip>
+                   )}
+                   {inviter && (
+                     <SupporterChip title="Ви привели друга у Стихію!">📣 Посол Стихії</SupporterChip>
+                   )}
+                   {invitee && (
+                     <SupporterChip title="Ви прийшли у Стихію за запрошенням друга!">🌱 Паросток Стихії</SupporterChip>
                    )}
                 </div>
               </ProfileModalBody>

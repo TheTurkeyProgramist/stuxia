@@ -880,6 +880,7 @@ const BgModal = ({
             <label><FiImage /> Режим фону:</label>
             <div style={{ display: "flex", gap: "5px", width: "100%" }}>
               <select
+                aria-label="Режим фону"
                 value={heroBgMode}
                 onChange={(e) => {
                   setHeroBgMode(e.target.value);
@@ -965,7 +966,7 @@ const BgModal = ({
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
               <label style={{ fontSize: "12px", color: "#ffc996", fontWeight: "600" }}>Категорія:</label>
-              <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ background: "rgba(10, 14, 26, 0.95)", fontSize: "12px", color: "#fff", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
+              <select aria-label="Категорія фонів" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ background: "rgba(10, 14, 26, 0.95)", fontSize: "12px", color: "#fff", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
                 <option value="all">Усі зображення</option>
                 <option value="Природа та Стихії">Природа та Стихії</option>
                 <option value="Фентезі та Легенди">Фентезі та Легенди</option>
@@ -975,7 +976,7 @@ const BgModal = ({
             </div>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
               <label style={{ fontSize: "12px", color: "#ffc996", fontWeight: "600" }}>Сортувати:</label>
-              <select value={sortType} onChange={(e) => setSortType(e.target.value)} style={{ background: "rgba(10, 14, 26, 0.95)", color: "#fff", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", fontSize: "12px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
+              <select aria-label="Сортування фонів" value={sortType} onChange={(e) => setSortType(e.target.value)} style={{ background: "rgba(10, 14, 26, 0.95)", color: "#fff", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", fontSize: "12px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
                 <option value="az">Назва А-Я</option>
                 <option value="za">Назва Я-А</option>
               </select>

@@ -1,6 +1,7 @@
 // Initialize i18n BEFORE rendering (must be first import; prefs are hydrated in index.jsx)
 import "./i18n/i18n.js";
 import "./i18n/i18n.css";
+import "./media/fonts/stykhiia/stykhiia-fonts.css";
 
 import React from "react";
 import ReactDOM from "react-dom/client";

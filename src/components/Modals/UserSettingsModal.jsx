@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { Fragment, useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from "react";
 import avatarPlaceholder from "../../media/characters/domino-avatar.webp";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -11,6 +11,7 @@ import { auth } from "../../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { factoryReset } from "../../utils/factoryReset";
 import { useAgeGate } from "./AgeGateModal";
+import { GAMBLING_MIN_AGE } from "../../utils/ageGate";
 import localforage from "localforage";
 import { useAnimationsDisabled, useAnimationsAutoDisabled, setAnimationsDisabled } from "../../utils/animationsPref";
 import {
@@ -144,10 +145,6 @@ import {
 } from "../../utils/contentFilter";
 import { scheduleNewsFilterSync, flushNewsFilterSync } from "../../utils/newsFilterSync";
 import {
-  CUSTOM_FEEDS_MIN,
-  CUSTOM_FEEDS_MAX,
-  getCustomFeedsLimit,
-  setCustomFeedsLimit,
   isUrgentNotifyEnabled,
   setUrgentNotifyEnabled,
   getUrgentWords,
@@ -187,6 +184,8 @@ import {
 import { MUTE_SYNC_DAILY_LIMIT } from "../../utils/muteSync";
 import { applySiteMirror, getSiteMirror } from "../../utils/siteMirror";
 import { getPref, setPref, removePref } from "../../utils/prefsStore.js";
+import { applySettingsSearch, clearSettingsSearch, getSearchWords } from "./settingsSearch";
+import { STYKHIIA_FONTS, getStykhiiaFont } from "../../utils/stykhiiaFont";
 
 // Keyframe Animations
 const fadeIn = keyframes`
@@ -224,6 +223,8 @@ const FILTERS_PREVIEW_MAX_WIDTH = 100;
 const FILTERS_PREVIEW_MIN_PX = 640;
 // З цієї ширини екрана вікно зсувається праворуч; на вужчих — приклад-картинка в модалці
 const FILTERS_PREVIEW_BREAKPOINT = 768;
+// До цієї ширини «Параметри» відкриваються на весь екран (телефони)
+const MOBILE_BP = 600;
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -234,6 +235,7 @@ const ModalOverlay = styled.div`
   display: flex; justify-content: center; align-items: center;
   z-index: 100001;
   transition: background 0.3s ease, backdrop-filter 0.3s ease;
+  @media (max-width: ${MOBILE_BP}px) { height: 100dvh; }
   /* На вкладці фільтрів сторінку не затемнюємо, щоб було видно результат.
      На вужчих екранах сторінку за вікном не видно — там приклад-картинка в самій модалці */
   ${(p) => p.$preview && css`
@@ -271,18 +273,26 @@ const ModalWindow = styled.div`
   overflow: hidden;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   animation: ${(p) => (p.$isClosing ? fadeOut : fadeIn)} 0.25s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+  /* Телефон: на весь екран — кожен піксель висоти йде під налаштування */
+  @media (max-width: ${MOBILE_BP}px) {
+    width: 100%; height: 100vh; height: 100dvh; max-height: none;
+    border: none; border-radius: 0; box-shadow: none;
+  }
 `;
 
 const WindowHeader = styled.div`
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 7px 10px;
+  @media (max-width: ${MOBILE_BP}px) {
+    padding: calc(6px + env(safe-area-inset-top)) 8px 6px 10px;
+  }
   background: #202024;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   user-select: none;
 `;
 
 const HeaderLeft = styled.div`
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;
 `;
 
 const UserBadge = styled.div`
@@ -290,16 +300,49 @@ const UserBadge = styled.div`
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.08);
   padding: 4px 12px 4px 6px; border-radius: 20px;
+  min-width: 0; max-width: min(380px, 100%);
+  & > div:last-child { min-width: 0; display: flex; flex-direction: column; }
+  @media (max-width: ${MOBILE_BP}px) {
+    background: transparent; border: none; padding: 0; gap: 8px;
+  }
 `;
 
 const UserAvatarThumb = styled.img`
-  width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
+  width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
 `;
 
-const HeaderTitle = styled.h2`font-size: 16px; font-weight: 600; margin: 0; color: #ffffff;`;
-const HeaderSub = styled.span`font-size: 11px; color: #a0a0a0;`;
+// Довга пошта обрізається посередині: «дуже-довге-ім…@gmail.com» — домен лишається видимим.
+// Повну адресу видно в підказці при наведенні.
+const AccountEllipsis = styled.span`
+  display: inline-flex; min-width: 0; max-width: 100%; vertical-align: bottom;
+  & > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  & > span + span { flex-shrink: 0; max-width: 65%; }
+`;
 
-const HeaderActions = styled.div`display: flex; align-items: center; gap: 8px;`;
+const AccountName = ({ value }) => {
+  const text = String(value || "");
+  const at = text.lastIndexOf("@");
+  return (
+    <AccountEllipsis title={text}>
+      {at > 0 ? (
+        <>
+          <span>{text.slice(0, at)}</span>
+          <span>{text.slice(at)}</span>
+        </>
+      ) : (
+        <span>{text}</span>
+      )}
+    </AccountEllipsis>
+  );
+};
+
+const HeaderTitle = styled.h2`font-size: 16px; font-weight: 600; margin: 0; color: #ffffff;`;
+const HeaderSub = styled.span`
+  font-size: 11px; color: #a0a0a0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+`;
+
+const HeaderActions = styled.div`display: flex; align-items: center; gap: 8px; flex-shrink: 0;`;
 
 const HeaderButton = styled.button`
   background: rgba(255,255,255,0.06);
@@ -310,14 +353,20 @@ const HeaderButton = styled.button`
   display: flex; align-items: center; gap: 6px;
   transition: all 0.15s ease;
   &:hover { background: rgba(255,255,255,0.12); color: #ffffff; }
+  /* На телефоні — лише іконка */
+  @media (max-width: ${MOBILE_BP}px) {
+    width: 36px; height: 36px; padding: 0; justify-content: center; font-size: 16px;
+    & > span { display: none; }
+  }
 `;
 
 const CloseButton = styled.button`
   background: transparent; border: none; color: #f4f2f2;
   width: 32px; height: 32px; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 28px; transition: all 0.15s ease;
+  cursor: pointer; font-size: 28px; transition: all 0.15s ease; flex-shrink: 0;
   &:hover { background: #c42b1c; }
+  @media (max-width: ${MOBILE_BP}px) { width: 36px; height: 36px; font-size: 24px; }
 `;
 
 const WindowBody = styled.div`
@@ -332,9 +381,22 @@ const Sidebar = styled.div`
   padding: 12px; display: flex; flex-direction: column; gap: 2px;
   overflow-y: auto; flex-shrink: 0;
   @media (max-width: 768px) {
-    width: 100%; flex-direction: row;
+    width: 100%; gap: 8px; overflow: visible;
     border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08);
-    overflow-x: auto; padding: 8px;
+    padding: 8px 10px;
+  }
+`;
+
+const NavList = styled.div`
+  position: relative; display: flex; flex-direction: column; gap: 2px;
+  @media (max-width: 768px) {
+    flex-direction: row; gap: 6px;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    margin: 0 -10px; padding: 0 10px;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+    /* Плавне згасання справа — натяк, що вкладки гортаються */
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
   }
 `;
 
@@ -414,7 +476,9 @@ const NavItem = styled.div`
     `}
 
   @media (max-width: 768px) {
-    padding: 7px 10px;
+    flex-shrink: 0; gap: 7px; padding: 7px 12px; border-radius: 999px;
+    background: ${(p) => (p.$active ? "rgba(96,205,255,0.16)" : "rgba(255,255,255,0.05)")};
+    border: 1px solid ${(p) => (p.$active ? "rgba(96,205,255,0.45)" : "rgba(255,255,255,0.08)")};
     &::before { display: none; }
   }
 `;
@@ -443,12 +507,71 @@ const LockBadge = styled.span`
   background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 4px;
 `;
 
+const searchFlash = keyframes`
+  0%, 35% { box-shadow: 0 0 0 2px rgba(96,205,255,0.85); background-color: rgba(96,205,255,0.10); }
+  100% { box-shadow: 0 0 0 2px rgba(96,205,255,0); }
+`;
+
 const MainContent = styled.div`
   flex: 1; padding: 24px; overflow-y: auto;
   background: #1c1c1f; display: flex; flex-direction: column; gap: 16px;
   &::-webkit-scrollbar { width: 6px; }
   &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
-  @media (max-width: 768px) { padding: 16px; }
+  @media (max-width: 768px) { padding: 16px 14px calc(16px + env(safe-area-inset-bottom)); gap: 12px; }
+
+  /* ── Загальний пошук (settingsSearch.js) ── */
+  [data-search-hidden] { display: none !important; }
+  & ::highlight(settings-search) { background-color: rgba(96,205,255,0.35); color: #ffffff; }
+  [data-search-flash] { animation: ${searchFlash} 1.8s ease-out; }
+
+  &[data-searching] {
+    [data-settings-tab]:not([data-search-hidden]) ~ [data-settings-tab]:not([data-search-hidden]) {
+      margin-top: 8px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    [data-settings-head="title"] { cursor: pointer; }
+    [data-settings-head="title"]::after {
+      content: "Відкрити розділ ›"; margin-left: auto;
+      font-size: 12px; font-weight: 600; color: #60cdff; opacity: 0.75;
+    }
+    [data-settings-head="title"]:hover::after { opacity: 1; }
+    [data-settings-title] { cursor: pointer; }
+    [data-settings-title]:hover { color: #60cdff; text-decoration: underline; text-underline-offset: 3px; }
+  }
+`;
+
+const SearchBox = styled.div`
+  position: relative; display: flex; align-items: center;
+  margin-bottom: 8px; flex-shrink: 0;
+  & > svg { position: absolute; left: 10px; font-size: 14px; color: #8a8a90; pointer-events: none; }
+  @media (max-width: 768px) { margin: 0; }
+`;
+
+const SearchClear = styled.button`
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; padding: 0; border: none; border-radius: 4px;
+  background: transparent; color: #a0a0a0; cursor: pointer; font-size: 14px;
+  &:hover { background: rgba(255,255,255,0.08); color: #ffffff; }
+  &:focus-visible { outline: 2px solid rgba(96,205,255,0.6); }
+`;
+
+const NavCount = styled.span`
+  margin-left: auto; min-width: 20px; padding: 1px 6px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; text-align: center;
+  background: ${(p) => (p.$zero ? "transparent" : "rgba(96,205,255,0.16)")};
+  color: ${(p) => (p.$zero ? "#555" : "#60cdff")};
+`;
+
+const SearchNote = styled.div`
+  font-size: 12px; color: #a0a0a0; line-height: 1.5;
+  strong { color: #ffffff; font-weight: 600; }
+`;
+
+const SearchEmpty = styled.div`
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 56px 16px; text-align: center; color: #a0a0a0; font-size: 13px;
+  & > svg { font-size: 30px; opacity: 0.45; }
+  strong { color: #ffffff; font-size: 15px; }
 `;
 
 // Обгортка області прокрутки — щоб натяк «прокрутіть нижче» лежав поверх, не зсуваючи вміст
@@ -465,6 +588,8 @@ const ScrollHintFade = styled(motion.div)`
   display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px;
   background: linear-gradient(to bottom, rgba(28,28,31,0), rgba(28,28,31,0.92) 60%, #1c1c1f);
   pointer-events: none; z-index: 2;
+  /* На телефоні мало висоти — натяк нижчий, щоб не закривав картки */
+  @media (max-width: ${MOBILE_BP}px) { height: 52px; padding-bottom: 8px; }
 `;
 const ScrollHintButton = styled.button`
   pointer-events: auto;
@@ -477,16 +602,22 @@ const ScrollHintButton = styled.button`
   &:hover { background: rgba(96,205,255,0.22); }
   &:focus-visible { outline: 2px solid rgba(96,205,255,0.6); outline-offset: 2px; }
   svg { animation: ${scrollHintBounce} 1.4s ease-in-out infinite; }
+  @media (max-width: ${MOBILE_BP}px) { font-size: 11px; padding: 4px 12px; }
 `;
 
-const SectionHeaderTitle = styled.h3`
+const SectionHeaderTitle = styled.h3.attrs({ "data-settings-head": "title" })`
   font-size: 20px; font-weight: 600; color: #ffffff;
   margin: 0 0 12px 0; display: flex; align-items: center; gap: 10px;
+  @media (max-width: ${MOBILE_BP}px) {
+    font-size: 17px; gap: 8px; margin-bottom: 10px;
+    &::after { font-size: 11px !important; white-space: nowrap; }
+  }
 `;
 
-const SectionDescription = styled.p`
+const SectionDescription = styled.p.attrs({ "data-settings-head": "desc" })`
   font-size: 13px; color: #a0a0a0; line-height: 1.5;
   margin: -8px 0 10px 0;
+  @media (max-width: ${MOBILE_BP}px) { font-size: 12px; margin-bottom: 6px; }
 `;
 
 const MusicSettingsWrap = styled.div`
@@ -512,7 +643,8 @@ const SubSectionTitle = styled.h4.attrs({ "data-scroll-hint": "" })`
 
 const CardGroup = styled.div`display: flex; flex-direction: column; gap: 8px;`;
 
-const Card = styled.div`
+// data-settings-item: одиниця загального пошуку в параметрах (див. settingsSearch.js)
+const Card = styled.div.attrs({ "data-settings-item": "" })`
   background: #27272a;
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 8px; padding: 14px 16px;
@@ -524,6 +656,14 @@ const Card = styled.div`
 
 const CardExpanded = styled(Card)`
   flex-direction: column; align-items: stretch; gap: 12px;
+`;
+
+// Порожній, коли секція новин не змонтована (вимкнена) — тоді показуємо підказку
+const NewsFeedsSlot = styled.div`
+  &:empty::before {
+    content: "Увімкніть секцію новин вище, щоб керувати стрічками.";
+    font-size: 12px; color: #a0a0a0;
+  }
 `;
 
 // Показується лише на широких екранах, де працює перегляд поруч зі сторінкою
@@ -589,7 +729,7 @@ const CardIconBox = ({ $anim, children, ...rest }) => (
 );
 
 const CardInfo = styled.div`display: flex; flex-direction: column;`;
-const CardTitle = styled.span`font-size: 14px; font-weight: 600; color: #ffffff;`;
+const CardTitle = styled.span.attrs({ "data-settings-title": "" })`font-size: 14px; font-weight: 600; color: #ffffff;`;
 const CardDescription = styled.span`font-size: 12px; color: #a0a0a0; margin-top: 2px;`;
 
 const CardControl = styled.div`
@@ -628,6 +768,17 @@ const SegmentBtn = styled.button`
   color: ${(p) => (!p.$active ? "#a0a0a0" : p.$tone === "hide" ? "#fb923c" : "#34d399")};
   transition: background 0.15s ease, color 0.15s ease;
   &:hover { color: #ffffff; }
+`;
+const FontDownloads = styled.div`display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;`;
+const FontDownloadLink = styled.a`
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11px; font-weight: 600;
+  color: #60cdff; text-decoration: none;
+  background: rgba(96,205,255,0.1); border: 1px solid rgba(96,205,255,0.3);
+  border-radius: 999px; padding: 2px 10px;
+  transition: background 0.15s ease;
+  &:hover { background: rgba(96,205,255,0.22); }
+  &:focus-visible { outline: 2px solid rgba(96,205,255,0.6); outline-offset: 2px; }
 `;
 const WordChips = styled.div`display: flex; flex-wrap: wrap; gap: 6px;`;
 // Слово — жовтий чип, правило (регулярка) — блакитний моноширинний
@@ -818,10 +969,20 @@ const PasswordStrengthText = styled.span`
 // Footer
 const WindowFooter = styled.div`
   background: #202024; border-top: 1px solid rgba(255,255,255,0.08);
-  padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  /* Телефон: угода й «Скинути сайт» одним рядком, під ними — кнопки на всю ширину */
+  @media (max-width: ${MOBILE_BP}px) {
+    flex-direction: column; align-items: stretch; gap: 10px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  }
 `;
 const TermsRow = styled.div`
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: #c5c5c5;
+  @media (max-width: ${MOBILE_BP}px) {
+    flex-wrap: nowrap; gap: 6px; font-size: 12px;
+    & > svg { flex-shrink: 0; }
+    & > :last-child { margin-left: auto; flex-shrink: 0; }
+  }
 `;
 const TermsLink = styled.span`color: #60cdff; text-decoration: underline; cursor: pointer;`;
 // ── Модалка підтвердження скидання ──────────────────────────────────────────
@@ -952,8 +1113,14 @@ const ResetLink = styled.button`
   &:hover:not(:disabled) { background: rgba(196,43,28,0.25); border-color: rgba(255,107,107,0.7); color: #ffffff; }
   &:focus-visible { outline: 2px solid #ff8a8a; outline-offset: 2px; }
   &:disabled { opacity: 0.6; cursor: progress; }
+  @media (max-width: ${MOBILE_BP}px) { margin-left: auto; white-space: nowrap; flex-shrink: 0; }
 `;
-const FooterButtons = styled.div`display: flex; align-items: center; gap: 10px;`;
+const FooterButtons = styled.div`
+  display: flex; align-items: center; gap: 10px;
+  @media (max-width: ${MOBILE_BP}px) {
+    & > * { flex: 1; min-height: 40px; }
+  }
+`;
 
 // Music components
 const MusicScrollList = styled.div`
@@ -1092,6 +1259,7 @@ const UserSettingsModal = ({
   sfxVolume = 0.2, setSfxVolume = () => {},
   bgAudioRef, bgAudioRef2,
   onLogout = () => {},
+  initialTab = null,
 }) => {
   const isGuest = !user;
   const dispatch = useDispatch();
@@ -1100,7 +1268,23 @@ const UserSettingsModal = ({
   const isVoiceBeta = useBeta("voiceForecast");
   const tutorial = useTutorial();
   const [accentColor, setAccentColor] = useAccentColor();
-  const [activeTab, setActiveTab] = useState("personalization");
+  const [activeTab, setActiveTab] = useState(initialTab || "personalization");
+  // Загальний пошук: поки рядок не порожній, показуються всі вкладки, відфільтровані за запитом
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Слот для панелі «Мої стрічки»: її рендерить News.jsx через портал (там уся логіка стрічок).
+  // Елемент кладемо у window, щоб News підхопив його навіть якщо змонтується пізніше.
+  const newsFeedsSlotRef = useCallback(
+    (el) => {
+      window.__stykhiiaNewsFeedsSlot = el;
+      window.dispatchEvent(new CustomEvent("stykhiia:news-feeds-slot", { detail: el }));
+      // Відкрили з секції новин — прокручуємо одразу до стрічок
+      if (el && initialTab === "siteSections") {
+        requestAnimationFrame(() => el.scrollIntoView({ behavior: "smooth", block: "center" }));
+      }
+    },
+    [initialTab],
+  );
   const [isClosing, setIsClosing] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showKatScene, setShowKatScene] = useState(false);
@@ -1200,7 +1384,7 @@ const UserSettingsModal = ({
       el.removeEventListener("scroll", update);
       resizeObserver.disconnect();
     };
-  }, [activeTab]);
+  }, [activeTab, searchQuery]);
 
   const scrollToHint = () => {
     const el = mainContentRef.current;
@@ -1282,16 +1466,16 @@ const UserSettingsModal = ({
   // Закрили налаштування — відкладені зміни фільтра відправляємо одразу
   useEffect(() => () => flushNewsFilterSync(), []);
 
-  // Вікові обмеження фільтра: показ тем — 18+, казино та ставки — 21+.
-  // Вимкнений фільтр показує все, зокрема казино, тому вимкнення — теж 21+.
+  // Вікові обмеження фільтра: показ тем — 18+, казино та ставки — 22+ (GAMBLING_MIN_AGE).
+  // Вимкнений фільтр показує все, зокрема казино, тому вимкнення — теж 22+.
   const [requestAge, ageGate] = useAgeGate();
 
   const toggleNewsFilter = async () => {
     const nextVal = !isNewsFilterOn;
     if (!nextVal) {
       const ok = await requestAge(
-        21,
-        "Без фільтра у стрічку потраплять усі новини, зокрема про війну, кримінал, казино та ставки. Вимкнути фільтр можна лише з 21 року.",
+        GAMBLING_MIN_AGE,
+        `Без фільтра у стрічку потраплять усі новини, зокрема про війну, кримінал, казино та ставки. Вимкнути фільтр можна лише з ${GAMBLING_MIN_AGE} років.`,
       );
       if (!ok) return;
     }
@@ -1321,7 +1505,7 @@ const UserSettingsModal = ({
     if (mode === "show") {
       const label = NEWS_FILTER_CATEGORIES.find((c) => c.key === key)?.label || key;
       const ok = key === "gambling"
-        ? await requestAge(21, "Новини про казино та ставки можна показувати лише з 21 року.")
+        ? await requestAge(GAMBLING_MIN_AGE, `Новини про казино та ставки можна показувати лише з ${GAMBLING_MIN_AGE} років.`)
         : await requestAge(18, `Тема «${label}» може містити неприємний або дорослий контент. Показувати її можна лише з 18 років.`);
       if (!ok) return;
     }
@@ -1354,12 +1538,7 @@ const UserSettingsModal = ({
     queueNewsFilterSync();
   };
 
-  // ── Новини: ліміт власних стрічок, термінові новини, рекомендації (зберігаються одразу) ──
-  const [customFeedsLimit, setCustomFeedsLimitState] = useState(getCustomFeedsLimit);
-  const chooseCustomFeedsLimit = (n) => {
-    setCustomFeedsLimitState(n);
-    setCustomFeedsLimit(n);
-  };
+  // ── Новини: термінові новини, рекомендації (зберігаються одразу) ──
 
   const [isUrgentNotifyOn, setIsUrgentNotifyOn] = useState(isUrgentNotifyEnabled);
   // "push" — приходять і коли сайт закрито; "local" — лише поки Стихія відкрита
@@ -2080,7 +2259,119 @@ const UserSettingsModal = ({
     { key: "beta", icon: <TbFlask />, label: "Бета-функції" },
   ];
 
-  const isFiltersPreview = activeTab === "filters" && isFiltersPreviewOn;
+  // ── Загальний пошук у параметрах ─────────────────────────────────────────
+  const searchInputRef = useRef(null);
+  const pendingJumpRef = useRef(null);
+  const searchWords = useMemo(() => getSearchWords(searchQuery), [searchQuery]);
+  const isSearching = searchWords.length > 0;
+  const [searchStats, setSearchStats] = useState({ counts: {}, total: 0 });
+  const showTab = (key) => isSearching || activeTab === key;
+
+  // Фільтруємо DOM після кожної зміни вмісту (розгортання блоків, оновлення лічильників тощо)
+  useLayoutEffect(() => {
+    const root = mainContentRef.current;
+    if (!root) return undefined;
+    if (!isSearching) {
+      clearSettingsSearch(root);
+      return undefined;
+    }
+    let frame = 0;
+    const run = () => {
+      const next = applySettingsSearch(root, searchWords);
+      setSearchStats((prev) =>
+        prev.total === next.total && JSON.stringify(prev.counts) === JSON.stringify(next.counts) ? prev : next,
+      );
+    };
+    run();
+    // Атрибути не відстежуємо — інакше пошук реагував би на власні зміни
+    const observer = new MutationObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(run);
+    });
+    observer.observe(root, { childList: true, subtree: true, characterData: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      clearSettingsSearch(root);
+    };
+  }, [isSearching, searchWords]);
+
+  useEffect(() => {
+    mainContentRef.current?.scrollTo({ top: 0 });
+  }, [searchQuery]);
+
+  // Ctrl+F / Cmd+F — фокус на пошук (якщо поверх не відкрите інше вікно)
+  useEffect(() => {
+    if (showKatScene || showTerms || showResetDialog) return undefined;
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.code === "KeyF") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showKatScene, showTerms, showResetDialog]);
+
+  // Перехід із результатів пошуку до самої вкладки; target — картка, до якої прокрутити
+  const openFromSearch = (tab, target = null) => {
+    pendingJumpRef.current = target;
+    setSearchQuery("");
+    setActiveTab(tab);
+  };
+
+  useEffect(() => {
+    const el = pendingJumpRef.current;
+    if (isSearching || !el) return undefined;
+    pendingJumpRef.current = null;
+    if (!el.isConnected) return undefined;
+    let timer = 0;
+    const frame = requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: animationsDisabled ? "auto" : "smooth", block: "center" });
+      el.setAttribute("data-search-flash", "");
+      timer = setTimeout(() => el.removeAttribute("data-search-flash"), 1900);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+      el.removeAttribute("data-search-flash");
+    };
+  }, [isSearching, activeTab, animationsDisabled]);
+
+  const handleSearchResultClick = (e) => {
+    if (!isSearching) return;
+    const group = e.target.closest("[data-settings-tab]");
+    if (!group) return;
+    const tab = group.dataset.settingsTab;
+    if (e.target.closest('[data-settings-head="title"]')) {
+      openFromSearch(tab);
+      return;
+    }
+    if (!e.target.closest("[data-settings-title]")) return;
+    let item = e.target.closest("[data-settings-item]");
+    while (item?.parentElement?.closest("[data-settings-item]")) item = item.parentElement.closest("[data-settings-item]");
+    openFromSearch(tab, item);
+  };
+
+  const pluralResults = (n) => {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    // 1, 2–4 налаштування; 5–20 налаштувань
+    return mod10 >= 1 && mod10 <= 4 && (mod100 < 11 || mod100 > 14) ? "налаштування" : "налаштувань";
+  };
+
+  // На телефоні вкладки — горизонтальний ряд: тримаємо активну в полі зору
+  const navListRef = useRef(null);
+  useEffect(() => {
+    const list = navListRef.current;
+    const chip = list?.querySelector(`[data-nav-key="${activeTab}"]`);
+    if (!list || !chip || list.scrollWidth <= list.clientWidth) return;
+    const left = chip.offsetLeft - (list.clientWidth - chip.offsetWidth) / 2;
+    list.scrollTo({ left: Math.max(0, left), behavior: animationsDisabled ? "auto" : "smooth" });
+  }, [activeTab, animationsDisabled]);
+
+  const isFiltersPreview = !isSearching && activeTab === "filters" && isFiltersPreviewOn;
 
   return createPortal(
     <>
@@ -2113,14 +2404,14 @@ const UserSettingsModal = ({
                 <div >
                   <HeaderTitle>Параметри</HeaderTitle>
                   <HeaderSub>
-                    {isGuest ? "Гість • Увійдіть для повного доступу" : (user?.email || user?.account || "Обліковий запис")}
+                    {isGuest ? "Гість • Увійдіть для повного доступу" : <AccountName value={user?.email || user?.account || "Обліковий запис"} />}
                   </HeaderSub>
                 </div>
               </UserBadge>
             </HeaderLeft>
             <HeaderActions>
-              <HeaderButton onClick={() => setShowKatScene(true)}>
-                <FiFilm /> Титри
+              <HeaderButton onClick={() => setShowKatScene(true)} aria-label="Титри">
+                <FiFilm /> <span>Титри</span>
               </HeaderButton>
               <CloseButton onClick={handleCancel}><FiX /></CloseButton>
             </HeaderActions>
@@ -2129,20 +2420,63 @@ const UserSettingsModal = ({
           {/* ── Body ───────────────────────────────────────────────────── */}
           <WindowBody>
             <Sidebar>
+              <SearchBox>
+                <FiSearch aria-hidden="true" />
+                <WinInput
+                  ref={searchInputRef}
+                  type="text"
+                  role="searchbox"
+                  aria-label="Пошук у параметрах"
+                  placeholder="Пошук у параметрах"
+                  title="Пошук по всіх розділах (Ctrl+F)"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape" && searchQuery) {
+                      e.stopPropagation();
+                      setSearchQuery("");
+                    }
+                  }}
+                  style={{ height: "34px", paddingLeft: "32px", paddingRight: searchQuery ? "32px" : "12px" }}
+                />
+                {searchQuery && (
+                  <SearchClear
+                    type="button"
+                    aria-label="Очистити пошук"
+                    onClick={() => {
+                      setSearchQuery("");
+                      searchInputRef.current?.focus();
+                    }}
+                  >
+                    <FiX />
+                  </SearchClear>
+                )}
+              </SearchBox>
+              <NavList ref={navListRef}>
               {navItems.map(({ key, icon, label, locked }) => {
+                const isActive = !isSearching && activeTab === key;
+                const count = searchStats.counts[key] || 0;
                 const item = (
                   <NavItem
                     key={key}
-                    $active={activeTab === key}
+                    data-nav-key={key}
+                    $active={isActive}
                     $locked={!!locked}
                     aria-disabled={locked ? true : undefined}
-                    onClick={() => !locked && setActiveTab(key)}
+                    onClick={() => {
+                      if (locked) return;
+                      setSearchQuery("");
+                      setActiveTab(key);
+                    }}
                   >
-                    <NavIconBox $active={activeTab === key} $locked={!!locked} $anim={getIconAnim(icon)}>
+                    <NavIconBox $active={isActive} $locked={!!locked} $anim={getIconAnim(icon)}>
                       {icon}
                     </NavIconBox>
                     {label}
                     {locked && <LockBadge>🔒</LockBadge>}
+                    {isSearching && !locked && <NavCount $zero={!count}>{count}</NavCount>}
                   </NavItem>
                 );
                 return locked ? (
@@ -2156,14 +2490,32 @@ const UserSettingsModal = ({
                   </Tooltip>
                 ) : item;
               })}
+              </NavList>
             </Sidebar>
 
             <MainContentWrap>
-            <MainContent ref={mainContentRef}>
+            <MainContent
+              ref={mainContentRef}
+              data-searching={isSearching ? "" : undefined}
+              onClick={handleSearchResultClick}
+            >
+              {isSearching && searchStats.total > 0 && (
+                <SearchNote>
+                  Знайдено <strong>{searchStats.total}</strong> {pluralResults(searchStats.total)}. Змінюйте їх просто тут
+                  або натисніть назву, щоб перейти до її розділу.
+                </SearchNote>
+              )}
+              {isSearching && searchStats.total === 0 && (
+                <SearchEmpty>
+                  <FiSearch aria-hidden="true" />
+                  <strong>Нічого не знайдено</strong>
+                  <span>За запитом «{searchQuery.trim()}» немає налаштувань. Спробуйте інше слово.</span>
+                </SearchEmpty>
+              )}
 
               {/* ── SECURITY TAB ────────────────────────────────────── */}
-              {activeTab === "security" && !isGuest && (
-                <CardGroup>
+              {showTab("security") && !isGuest && (
+                <CardGroup data-settings-tab="security">
                   <SectionHeaderTitle><FiShield /> Безпека та переприв'язка акаунту</SectionHeaderTitle>
                   <SectionDescription>Прив'язка Google-акаунту, зміна пошти та пароля для входу в профіль</SectionDescription>
 
@@ -2179,12 +2531,18 @@ const UserSettingsModal = ({
                     <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "4px" }}>
                       {/* Google Binding */}
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
-                        <div style={{ display: "flex", flexDirection: "column" }}>
+                        <div style={{ display: "flex", flexDirection: "column", minWidth: 0, maxWidth: "100%" }}>
                           <span style={{ fontSize: "13px", fontWeight: "600", color: "#ffffff" }}>Google Акаунт</span>
-                          <span style={{ fontSize: "11px", color: isLinkedGoogle ? "#60cdff" : "#a0a0a0" }}>
+                          <span style={{ fontSize: "11px", color: isLinkedGoogle ? "#60cdff" : "#a0a0a0", display: "flex", minWidth: 0 }}>
                             {!hasFirebaseSession
                               ? "Хмарний акаунт неактивний — увійдіть знову"
-                              : isLinkedGoogle ? `✓ Прив'язано (${googleEmail || "Google"})` : "Не прив'язано"}
+                              : isLinkedGoogle ? (
+                                <>
+                                  <span style={{ whiteSpace: "pre", flexShrink: 0 }}>✓ Прив'язано (</span>
+                                  <AccountName value={googleEmail || "Google"} />
+                                  <span style={{ flexShrink: 0 }}>)</span>
+                                </>
+                              ) : "Не прив'язано"}
                           </span>
                         </div>
                         <div style={{ display: "flex", gap: "6px" }}>
@@ -2316,8 +2674,8 @@ const UserSettingsModal = ({
               )}
 
               {/* ── PERSONALIZATION TAB ─────────────────────────────── */}
-              {activeTab === "personalization" && (
-                <CardGroup>
+              {showTab("personalization") && (
+                <CardGroup data-settings-tab="personalization">
                   <SectionHeaderTitle><FiSliders /> Персоналізація та інтерфейс</SectionHeaderTitle>
                   <SectionDescription>Формат часу й дати, анімації та розмиття, підказки, шрифт, жести та дзеркальність сайту</SectionDescription>
 
@@ -2447,6 +2805,47 @@ const UserSettingsModal = ({
 
                   <Card>
                     <CardLeft>
+                      <CardIconBox $color="#4ade80"><FiType /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Шрифт Стихії</CardTitle>
+                        <CardDescription style={{ fontFamily: (getStykhiiaFont(formData.fontFamily) || STYKHIIA_FONTS[0]).stack }}>
+                          Погода в Конотопі −3°C, сніг
+                        </CardDescription>
+                        <FontDownloads>
+                          {STYKHIIA_FONTS.map((f) => (
+                            <FontDownloadLink key={f.id} href={f.ttfUrl} download={f.fileName} title={`Викачати ${f.fileName}, щоб встановити на комп'ютер`}>
+                              <FiDownload /> {f.label} .ttf
+                            </FontDownloadLink>
+                          ))}
+                        </FontDownloads>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <Segmented role="radiogroup" aria-label="Шрифт Стихії">
+                        {[{ id: "", label: "Вимк.", stack: "inherit" }, ...STYKHIIA_FONTS].map((f) => {
+                          const active = f.id ? formData.fontFamily === f.id : !getStykhiiaFont(formData.fontFamily);
+                          return (
+                            <SegmentBtn
+                              key={f.id || "off"}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              $active={active}
+                              $tone="show"
+                              style={{ fontFamily: f.stack }}
+                              onClick={() => updateLivePreview({ fontFamily: f.id || (getStykhiiaFont(formData.fontFamily) ? "" : formData.fontFamily) })}
+                            >
+                              {f.label}
+                            </SegmentBtn>
+                          );
+                        })}
+                      </Segmented>
+                    </CardControl>
+                  </Card>
+
+                  {!getStykhiiaFont(formData.fontFamily) && (
+                  <Card>
+                    <CardLeft>
                       <CardIconBox $color="#f472b6"><FiType /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Власний шрифт</CardTitle>
@@ -2457,6 +2856,7 @@ const UserSettingsModal = ({
                       <WinInput placeholder="Назва шрифту" value={formData.fontFamily} onChange={(e) => updateLivePreview({ fontFamily: e.target.value })} />
                     </CardControl>
                   </Card>
+                  )}
 
                   <Card>
                     <CardLeft>
@@ -2522,8 +2922,8 @@ const UserSettingsModal = ({
               )}
 
               {/* ── SITE SECTIONS TAB ─────────────────────────────────── */}
-              {activeTab === "siteSections" && (
-                <CardGroup>
+              {showTab("siteSections") && (
+                <CardGroup data-settings-tab="siteSections">
                   <SectionHeaderTitle><FiCompass /> Секції сайту та новини</SectionHeaderTitle>
                   <SectionDescription>Порядок, видимість і тема кожної секції, а також фільтр та вигляд новин</SectionDescription>
 
@@ -2779,35 +3179,19 @@ const UserSettingsModal = ({
                     </FilterNotes>
                   </FilterSubGroup>
 
-                  {/* Ліміт власних стрічок: 6 за замовчуванням, до 9 за бажанням */}
-                  <Card>
+                  {/* Додавання стрічок і чорний список — вміст підставляє News.jsx */}
+                  <CardExpanded>
                     <CardLeft>
-                      <CardIconBox $color="#38bdf8"><FiRss /></CardIconBox>
+                      <CardIconBox $color="#ffaa00"><FiRss /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Власні стрічки новин</CardTitle>
+                        <CardTitle>Мої стрічки</CardTitle>
                         <CardDescription>
-                          Скільки своїх джерел можна додати. Кожна стрічка — ще один запит при оновленні, тож що більше стрічок, то повільніше завантаження
+                          Додайте сайт, RSS, YouTube, Telegram, Mastodon, Bluesky чи Hive. Тут же — чорний список заблокованих джерел
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
-                    <CardControl>
-                      <Segmented role="radiogroup" aria-label="Скільки власних стрічок можна додати">
-                        {Array.from({ length: CUSTOM_FEEDS_MAX - CUSTOM_FEEDS_MIN + 1 }, (_, i) => CUSTOM_FEEDS_MIN + i).map((n) => (
-                          <SegmentBtn
-                            key={n}
-                            type="button"
-                            role="radio"
-                            aria-checked={customFeedsLimit === n}
-                            $active={customFeedsLimit === n}
-                            $tone="show"
-                            onClick={() => chooseCustomFeedsLimit(n)}
-                          >
-                            {n}
-                          </SegmentBtn>
-                        ))}
-                      </Segmented>
-                    </CardControl>
-                  </Card>
+                    <NewsFeedsSlot ref={newsFeedsSlotRef} />
+                  </CardExpanded>
 
                   {/* Термінові новини: позначка й порядок — завжди, системні сповіщення — за перемикачем */}
                   <Card>
@@ -3082,8 +3466,8 @@ const UserSettingsModal = ({
               )}
 
               {/* ── MODES & LOADING TAB ───────────────────────────────── */}
-              {activeTab === "modes" && (
-                <CardGroup>
+              {showTab("modes") && (
+                <CardGroup data-settings-tab="modes">
                   <SectionHeaderTitle><FiZap /> Режими сайту та застосунки</SectionHeaderTitle>
                   <SectionDescription>Тема, акцентний колір, швидкість завантаження, режим Декоратора, навчання та застосунки для пристроїв</SectionDescription>
 
@@ -3350,8 +3734,8 @@ const UserSettingsModal = ({
               )}
 
               {/* ── VISUAL FILTERS TAB ─────────────────────────────────── */}
-              {activeTab === "filters" && (
-                <CardGroup>
+              {showTab("filters") && (
+                <CardGroup data-settings-tab="filters">
                   <SectionHeaderTitle><FiEye /> Візуальні фільтри та пресети</SectionHeaderTitle>
                   <SectionDescription>
                     Затемнення, кольорові фільтри для зору та збереження власних пресетів.
@@ -3577,8 +3961,8 @@ const UserSettingsModal = ({
               )}
 
               {/* ── BG MUSIC TAB ────────────────────────────────────── */}
-              {activeTab === "bgMusic" && (
-                <CardGroup>
+              {showTab("bgMusic") && (
+                <CardGroup data-settings-tab="bgMusic">
                   <SectionHeaderTitle><FiMusic /> Фонова музика</SectionHeaderTitle>
                   <SectionDescription>Гучність, швидкість і режим відтворення, бібліотека треків та власні файли</SectionDescription>
 
@@ -3749,8 +4133,8 @@ const UserSettingsModal = ({
               )}
 
               {/* ── BETA TAB ─────────────────────────────────────────── */}
-              {activeTab === "beta" && (
-                <CardGroup>
+              {showTab("beta") && (
+                <CardGroup data-settings-tab="beta">
                   <SectionHeaderTitle><TbFlask /> Бета-функції</SectionHeaderTitle>
                   <SectionDescription>
                     Нові можливості, які ще допрацьовуються. Можуть поводитись несподівано — якщо щось не так,

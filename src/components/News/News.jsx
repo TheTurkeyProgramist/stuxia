@@ -33,17 +33,19 @@ import { MdReport } from "react-icons/md"; //Поскаржитися
 import { FaYoutube } from "react-icons/fa6";
 import { GiTreeBeehive } from "react-icons/gi";
 import { PiNewspaperClippingFill } from "react-icons/pi";
-import { FaRss } from "react-icons/fa";
+import SourceLogo, { getSourceBrand } from "./SourceLogo.jsx";
+import { useAnimationsDisabled } from "../../utils/animationsPref";
 import { MdOutlineReportOff } from "react-icons/md"; //Заглушити
-import { MdHelpOutline, MdBlock, MdSelectAll, MdClose } from "react-icons/md";
+import { MdBlock, MdClose } from "react-icons/md";
 import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
-import { FiPlus, FiLink, FiShield, FiMoreVertical } from "react-icons/fi";
+import { FiPlus, FiLink, FiShield, FiMoreVertical, FiAlertTriangle } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
 import toast from "react-hot-toast";
 import { getNewsBlockReason, getNewsFilterPrefs } from "../../utils/contentFilter";
 import { subscribePrefs } from "../../utils/prefsStore.js";
 import { isPushSubscribed } from "../../utils/pushNotifications.js";
 import {
+  CUSTOM_FEEDS_WARN_AT,
   getCustomFeedsLimit,
   getUrgentWords,
   isUrgentNews,
@@ -1575,14 +1577,17 @@ const CopyLinkBtn = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  /* Бічні картки каруселі масштабуються до 0.9 — 30px дає ≥24px області дотику */
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
   padding: 0;
   border: none;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.12);
   color: inherit;
-  font-size: 15px;
+  font-size: 16px;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
 
@@ -1702,6 +1707,28 @@ const SourceSearchInput = styled.input`
     border-color: #ffaa00;
     box-shadow: 0 0 12px rgba(255, 170, 0, 0.35);
   }
+  /* Ліміт вичерпано — червона рамка */
+  ${(p) => p.$full && `
+    border-color: rgba(255, 99, 99, 0.6);
+    &:focus { border-color: #ff6363; box-shadow: 0 0 12px rgba(255, 99, 99, 0.3); }
+  `}
+`;
+
+// Попередження під полем, коли стрічок уже багато (з CUSTOM_FEEDS_WARN_AT)
+const FeedsWarning = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: ${(p) => (p.$full ? "#ffb4b4" : "#ffd9a0")};
+  background: ${(p) => (p.$full ? "rgba(255, 99, 99, 0.10)" : "rgba(255, 170, 0, 0.08)")};
+  border: 1px solid ${(p) => (p.$full ? "rgba(255, 99, 99, 0.35)" : "rgba(255, 170, 0, 0.3)")};
+  & > svg { flex-shrink: 0; margin-top: 2px; }
+  strong { color: #ffffff; font-weight: 600; }
 `;
 
 const RecoGrid = styled.div`
@@ -1714,29 +1741,63 @@ const RecoGrid = styled.div`
 `;
 
 const RecoItem = styled.button`
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 6px;
   min-height: 86px;
-  padding: 10px 8px;
+  padding: 12px 8px 10px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
+  /* Банер у кольорі джерела: фірмова смужка зверху й легкий відтінок фону */
+  /* Старі браузери без color-mix просто лишають рівний фон */
   background: rgb(26, 49, 56);
+  ${(p) =>
+    p.$brand &&
+    `background: linear-gradient(165deg, color-mix(in srgb, ${p.$brand} 38%, rgb(26, 49, 56)) 0%, rgb(26, 49, 56) 72%);`}
   color: #fff;
   font-family: var(--font-family);
   font-size: 13px;
   font-weight: 600;
   text-align: center;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 3px;
+    background: ${(p) => p.$brand || "transparent"};
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
 
   & > svg {
     font-size: 24px;
   }
+  & > small {
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.6;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   &:hover:not(:disabled) {
     background: rgba(255, 179, 108, 0.3);
+    transform: translateY(-2px);
+    border-color: ${(p) => p.$brand || "rgba(255, 255, 255, 0.25)"};
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  }
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:hover:not(:disabled) { transform: none; }
   }
   &:disabled {
     opacity: 0.5;
@@ -2631,6 +2692,17 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     return () => mq.removeEventListener("change", onChange);
   }, []);
   const [isSearchActive, setIsSearchActive] = useState(false);
+  // Плавне розгортання/згортання панелей «Мої стрічки» ↔ «Рекомендовані»
+  const animationsDisabled = useAnimationsDisabled();
+  const feedsCollapseMotion = {
+    initial: { height: 0, opacity: 0 },
+    animate: { height: "auto", opacity: 1 },
+    exit: { height: 0, opacity: 0 },
+    transition: animationsDisabled
+      ? { duration: 0 }
+      : { height: { duration: 0.32, ease: [0.2, 0.8, 0.2, 1] }, opacity: { duration: 0.22 } },
+    style: { overflow: "hidden" },
+  };
 
   useEffect(() => {
     isMounted.current = true;
@@ -3313,7 +3385,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     
     const feedsLimit = getCustomFeedsLimit();
     if (customSources.length >= feedsLimit) {
-      alert(`Ви досягли ліміту! Можна додати не більше ${feedsLimit} власних джерел. Збільшити ліміт до 9 можна в Налаштуваннях → Новини.`);
+      alert(`Ви досягли ліміту! Можна додати не більше ${feedsLimit} власних джерел. Видаліть одну зі стрічок, щоб додати нову.`);
       return;
     }
 
@@ -3395,7 +3467,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       const saved = (await localforage.getItem("custom_news_sources")) || [];
       if (!saved.find((s) => s.url === resolvedUrl)) {
         if (saved.length >= getCustomFeedsLimit()) {
-          alert(`Ви досягли ліміту! Можна додати не більше ${getCustomFeedsLimit()} власних джерел. Збільшити ліміт до 9 можна в Налаштуваннях → Новини.`);
+          alert(`Ви досягли ліміту! Можна додати не більше ${getCustomFeedsLimit()} власних джерел. Видаліть одну зі стрічок, щоб додати нову.`);
           return;
         }
         const updated = [...saved, newSource];
@@ -3600,7 +3672,13 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   const showTitle = isVisible("title");
   const showDescription = isVisible("description");
 
-  const [isFullscreenNewsOpen, setIsFullscreenNewsOpen] = useState(false);
+  // DOM-слот у Налаштуваннях → «Секції та новини», куди порталом рендериться панель стрічок
+  const [feedsSlot, setFeedsSlot] = useState(() => window.__stykhiiaNewsFeedsSlot || null);
+  useEffect(() => {
+    const onSlot = (e) => setFeedsSlot(e.detail || null);
+    window.addEventListener("stykhiia:news-feeds-slot", onSlot);
+    return () => window.removeEventListener("stykhiia:news-feeds-slot", onSlot);
+  }, []);
 
   return (
     <NewsDiv ref={newsSectionRef}>
@@ -3609,7 +3687,11 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           <FilterBtn
             ref={(el) => registerRef('newsHeader', el)}
             $isDarkMode={$isDarkMode}
-            onClick={() => setIsFullscreenNewsOpen(true)}
+            onClick={() =>
+              window.dispatchEvent(
+                new CustomEvent("stykhiia:open-settings", { detail: { tab: "siteSections" } }),
+              )
+            }
             style={{ marginLeft: "5px", padding: "2px", fontSize: "15px", fontWeight: "600", background: "none"}}
           >
             Натисніть для додавання стрічки новин
@@ -3857,8 +3939,9 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           initialFaqQuestion="Новини: покроковий посібник"
         />
       )}
-      {showBlacklist && (
-        <ModalOverlay onClick={() => setShowBlacklist(false)}>
+      {/* Відкривається з Налаштувань, тож у body і вище за вікно налаштувань (z-index 100001+) */}
+      {showBlacklist && createPortal(
+        <ModalOverlay onClick={() => setShowBlacklist(false)} style={{ zIndex: 100010 }}>
           <ModalContent
             $isDarkMode={$isDarkMode}
             onClick={(e) => e.stopPropagation()}
@@ -3894,7 +3977,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
               </ul>
             )}
           </ModalContent>
-        </ModalOverlay>
+        </ModalOverlay>,
+        document.body,
       )}
 
       {createPortal(
@@ -3972,52 +4056,10 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         </AnimatePresence>,
         document.body,
       )}
-      {createPortal(
-        <AnimatePresence>
-          {isFullscreenNewsOpen && (
-            <FullscreenModalOverlay
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.25 }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  width: "100%",
-                  zIndex: "3000",
-                  margin: "0 auto 16px auto",
-                  paddingBottom: "3px",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
-                }}
-              >
-                <h2 style={{ margin: 0, color: "#ffaa00", fontSize: "15px" }}>
-                  Повноекранні новини та керування стрічками
-                </h2>
-                <CloseButton
-                  onClick={() => setIsFullscreenNewsOpen(false)}
-                  style={{ fontSize: "16px", padding: "6px 16px" }}
-                >
-                  Закрити
-                </CloseButton>
-              </div>
-
-              <FullscreenModalContent>
-                {/* Панель керування стрічками новин */}
-                <div
-                  style={{
-                    background: "rgba(20, 20, 20, 0.8)",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    marginBottom: "20px",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                  }}
-                >
-                  <div style={{ marginBottom: "10px", fontWeight: "600", fontSize: "14px" }}>
-                    Налаштування та вибір авторів / джерел:
-                  </div>
+      {/* Додавання стрічок і чорний список — у Налаштуваннях → «Секції та новини» (слот рендерить UserSettingsModal) */}
+      {feedsSlot &&
+        createPortal(
+                <div>
                   <SourceSearchInput
                     type="text"
                     value={newUrl}
@@ -4028,10 +4070,31 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                       if (e.key === "Enter" && newUrl.trim()) handleAddSource();
                       if (e.key === "Escape") e.currentTarget.blur();
                     }}
-                    placeholder="Додати стрічку: назва сайту або посилання (RSS, YouTube, Telegram, Mastodon, Bluesky, Hive)"
+                    $full={customSources.length >= getCustomFeedsLimit()}
+                    placeholder={
+                      customSources.length >= getCustomFeedsLimit()
+                        ? `Досягнуто ліміту: ${getCustomFeedsLimit()} стрічок. Видаліть одну (×), щоб додати нову`
+                        : "Додати стрічку: назва сайту або посилання (RSS, YouTube, Telegram, Mastodon, Bluesky, Hive)"
+                    }
                   />
+                  <AnimatePresence initial={false}>
+                    {customSources.length >= CUSTOM_FEEDS_WARN_AT && (
+                      <motion.div key="feeds-warning" {...feedsCollapseMotion}>
+                        <FeedsWarning role="status" $full={customSources.length >= getCustomFeedsLimit()}>
+                          <FiAlertTriangle aria-hidden="true" />
+                          <span>
+                            Стрічок: <strong>{customSources.length} з {getCustomFeedsLimit()}</strong>.{" "}
+                            {customSources.length >= getCustomFeedsLimit()
+                              ? "Це максимум — видаліть одну (×), щоб додати нову."
+                              : "Кожна стрічка — ще один запит при оновленні, тож що більше стрічок, то повільніше завантажуються новини."}
+                          </span>
+                        </FeedsWarning>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <AnimatePresence initial={false}>
                   {isSearchActive ? (
-                    <div onMouseDown={(e) => e.preventDefault()}>
+                    <motion.div key="reco" {...feedsCollapseMotion} onMouseDown={(e) => e.preventDefault()}>
                       <RecoGrid>
                         {FACEBOOK_QUERY.test(newUrl) && (
                           <div
@@ -4062,62 +4125,44 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                           const added =
                             SOURCES.some((x) => x.url === r.url) ||
                             customSources.some((x) => x.url === r.url);
+                          const brand = getSourceBrand(r);
                           return (
                             <RecoItem
                               key={r.url}
+                              $brand={brand.color}
+                              title={brand.domain || r.url}
                               disabled={added || customSources.length >= getCustomFeedsLimit()}
                               onClick={() => handleAddSource(r.url, r.name)}
                             >
-                              <FaRss />
+                              <SourceLogo name={r.name} url={r.url} home={r.home} size={36} />
                               {r.name}
+                              {brand.domain && <small>{brand.domain}</small>}
                               {added && <span style={{ fontSize: "11px" }}>✓ Додано</span>}
                             </RecoItem>
                           );
                         })}
                       </RecoGrid>
-                    </div>
+                    </motion.div>
                   ) : (
+                    <motion.div key="tiles" {...feedsCollapseMotion}>
                     <SourceTileGrid>
-                    <SourceTile
-                      $isDarkMode={$isDarkMode}
-                      onClick={() => setIsHelpModalOpen(true)}
-                    >
-                      <MdHelpOutline />
-                      Інструкція
-                    </SourceTile>
-                    <SourceTile
-                      $isDarkMode={$isDarkMode}
-                      $active={filterSources.includes("all")}
-                      onClick={() => handleToggleFilter("all")}
-                    >
-                      <MdSelectAll />
-                      {filterSources.includes("all") ? "☑" : "☐"} Усі
-                    </SourceTile>
-                    {SOURCES.map((s) => (
-                      <SourceTile
-                        key={s.name}
-                        $isDarkMode={$isDarkMode}
-                        $active={filterSources.includes(s.name)}
-                        onClick={() => handleToggleFilter(s.name)}
-                      >
-                        <FaRss />
-                        {filterSources.includes(s.name) ? "☑" : "☐"} {s.name}
-                      </SourceTile>
-                    ))}
+                    {/* Власні стрічки — лише щоб бачити й видаляти (×) */}
                     {customSources.map((s) => (
                       <SourceTile
                         key={s.url}
+                        as="div"
                         $isDarkMode={$isDarkMode}
-                        $active={filterSources.includes(s.name)}
-                        onClick={() => handleToggleFilter(s.name)}
+                        style={{ cursor: "default" }}
                       >
-                        <FaRss />
-                        <span>{filterSources.includes(s.name) ? "☑" : "☐"} {s.name}</span>
+                        <SourceLogo name={s.name} url={s.url} home={s.home} size={32} />
+                        <span>{s.name}</span>
                         <span
                           onClick={(e) => {
                             e.stopPropagation();
                             handleRemoveSource(s.url);
                           }}
+                          role="button"
+                          tabIndex={0}
                           style={{
                             position: "absolute",
                             top: "4px",
@@ -4125,6 +4170,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                             fontSize: "18px",
                             color: "#ff4d4d",
                             fontWeight: "bold",
+                            cursor: "pointer",
                           }}
                           aria-label="Видалити джерело"
                         >
@@ -4145,15 +4191,12 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                       Чорний список ({blockedSources.length})
                     </SourceTile>
                   </SourceTileGrid>
+                    </motion.div>
                   )}
-
-                </div>
-              </FullscreenModalContent>
-            </FullscreenModalOverlay>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+                  </AnimatePresence>
+                </div>,
+          feedsSlot,
+        )}
     </NewsDiv>
   );
 };

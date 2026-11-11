@@ -18,6 +18,13 @@ import {
   isPushSubscribed,
   setPushPlaces,
 } from "./utils/pushNotifications.js";
+import {
+  claimPendingReferral,
+  trackInviteeActivity,
+  BADGES,
+  INVITE_ACTIVE_DAYS,
+  INVITE_WINDOW_DAYS,
+} from "./utils/referral.js";
 import { GiSnowing } from "react-icons/gi";
 //import { useSelector } from "react-redux";
 import Loader from "./components/Loader/Loader.jsx";
@@ -100,10 +107,39 @@ import { useAnimationsDisabled, setAnimationsDisabled } from "./utils/animations
 import { useBeta, setBetaOn } from "./utils/betaFeatures";
 import GpsCardReturnDialog from "./components/Weather/GpsCardReturnDialog.jsx";
 import { aggregateHourlyByDay } from "./utils/dailyAggregates";
+import { buildConsensusUrl, blendWithConsensus } from "./utils/weatherConsensus";
+import { getStykhiiaFont } from "./utils/stykhiiaFont";
 import { FaMagnifyingGlass, FaGripVertical, FaArrowsUpDown } from "react-icons/fa6";
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
+// Консенсус — найдорожчий запит до Open-Meteo (~11 «викликів»), а моделі оновлюються
+// раз на 1–6 год, тож кешуємо його на годину. 55 хв, а не рівно 60: щогодинне
+// автооновлення карток має отримати свіжі дані, а не кеш віком 59:59.
+const CONSENSUS_CACHE_TTL_MS = 55 * 60 * 1000;
+
+// Прогнози 7 незалежних моделей для звірки (див. utils/weatherConsensus.js).
+// Не вдалося — повертаємо null, і картка лишається на best_match.
+const fetchWeatherConsensus = async (lat, lon) => {
+  const cacheKey = `om_consensus_v1_${Number(lat).toFixed(2)},${Number(lon).toFixed(2)}`;
+  try {
+    const cached = await localforage.getItem(cacheKey);
+    if (cached?.data && Date.now() - cached.time < CONSENSUS_CACHE_TTL_MS) {
+      return cached.data;
+    }
+  } catch {
+    // кеш недоступний — просто йдемо в мережу
+  }
+  try {
+    const res = await axios.get(buildConsensusUrl(lat, lon), { timeout: 15000 });
+    if (!res.data?.hourly?.time?.length) return null;
+    localforage.setItem(cacheKey, { time: Date.now(), data: res.data }).catch(() => {});
+    return res.data;
+  } catch (error) {
+    console.warn("Консенсус моделей недоступний, лишаємо best_match:", error?.message);
+    return null;
+  }
+};
 // Ліміти карток погоди: власні картки (без GPS) і нові створення на добу (лічильник у Firestore)
-const MAX_CUSTOM_WEATHER_CARDS = 8;
+const MAX_CUSTOM_WEATHER_CARDS = 9;
 // Бета «Вимкнути GPS-картку»: її місце можна віддати ще одній власній картці
 const maxCustomCardsFor = (hideGpsCard) =>
   hideGpsCard ? MAX_CUSTOM_WEATHER_CARDS + 1 : MAX_CUSTOM_WEATHER_CARDS;
@@ -113,7 +149,7 @@ const cardLimitMessage = (hideGpsCard) =>
     : `Можна мати не більше ${MAX_CUSTOM_WEATHER_CARDS} власних карток погоди плюс поточну GPS-картку.`;
 // Понад цю кількість — попередження про навантаження на пристрій
 const SOFT_CUSTOM_WEATHER_CARDS = 5;
-const MAX_DAILY_CARD_ADDITIONS = 40;
+const MAX_DAILY_CARD_ADDITIONS = 20;
 const Tooltipso = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
@@ -1594,6 +1630,16 @@ const App = () => {
   const [currentAvatar, setCurrentAvatar] = useState(userDefault);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  // Вкладка, з якої відкрити налаштування (напр. секція новин → «Секції та новини»)
+  const [settingsInitialTab, setSettingsInitialTab] = useState(null);
+  useEffect(() => {
+    const open = (e) => {
+      setSettingsInitialTab(e.detail?.tab || null);
+      setIsSettingsModalOpen(true);
+    };
+    window.addEventListener("stykhiia:open-settings", open);
+    return () => window.removeEventListener("stykhiia:open-settings", open);
+  }, []);
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [isAchivmentsOpen, setIsAchivmentsOpen] = useState(false);
@@ -1910,7 +1956,12 @@ const App = () => {
 
   // Підключення власного шрифту
   useEffect(() => {
-    if (user?.fontFamily) {
+    const stykhiiaFont = getStykhiiaFont(user?.fontFamily);
+    if (stykhiiaFont) {
+      // Шрифти Стихії лежать локально (media/fonts/stykhiia) — Google Fonts не потрібні
+      document.getElementById("custom-google-font")?.remove();
+      document.documentElement.style.setProperty("--font-family", stykhiiaFont.stack);
+    } else if (user?.fontFamily) {
       const fontName = user.fontFamily
         .trim()
         .replace(/ /g, "+")
@@ -2642,6 +2693,31 @@ const App = () => {
   // Push-сповіщення: щотижневе підтвердження токена й синхронізація налаштувань
   useEffect(() => initPushNotifications(), []);
 
+  // «Запроси друга»: новий акаунт, що прийшов за посиланням, записується як запрошений,
+  // а далі раз на добу зараховується день активності (потрібно 3 дні за 14 днів)
+  useEffect(() => {
+    if (!user?.uid) return;
+    const uid = user.uid;
+    (async () => {
+      const claimed = await claimPendingReferral(user);
+      if (claimed) {
+        toast.success(
+          `Вітаємо у Стихії! Вас запросив друг. Заходьте ${INVITE_ACTIVE_DAYS} різні дні за ${INVITE_WINDOW_DAYS} днів, і ви обидва отримаєте значки. День 1 з ${INVITE_ACTIVE_DAYS} ✅`,
+          { duration: 7000 },
+        );
+        return;
+      }
+      const res = await trackInviteeActivity(user);
+      if (!res?.justCounted) return;
+      if (res.justDone) {
+        setUser((prev) => (prev?.uid === uid ? { ...prev, isInvitee: true } : prev));
+        toast.success(`${BADGES.invitee.emoji} Значок «${BADGES.invitee.name}» ваш! Ваш друг теж отримав значок.`, { duration: 7000 });
+      } else {
+        toast.success(`День ${res.activeDays} з ${INVITE_ACTIVE_DAYS} у Стихії ✅ Ще трохи, і значки отримаєте ви з другом.`);
+      }
+    })();
+  }, [user?.uid]); // лише при зміні акаунта
+
   // Запит дозволу на системні сповіщення
   useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") {
@@ -2752,6 +2828,8 @@ const App = () => {
         // Кеш відповіді Open-Meteo: 10 хв на пару координат
         // v2: вітер у м/с (раніше API віддавав км/год)
         const cacheKey = `om_cache_v2_${Number(targetLat).toFixed(2)},${Number(targetLon).toFixed(2)}`;
+        // Звірка з іншими моделями йде паралельно й ніколи не кидає помилку
+        const consensusPromise = fetchWeatherConsensus(targetLat, targetLon);
         let d = null;
         try {
           const cached = await localforage.getItem(cacheKey);
@@ -2781,6 +2859,20 @@ const App = () => {
           localforage
             .setItem(cacheKey, { time: Date.now(), data: d })
             .catch(() => {});
+        }
+
+        // Медіана 7 моделей замість однієї; сирий best_match лишаємо для попереджень
+        // про небезпеку — там краще перестрахуватися, ніж згладити пік пориву
+        const rawData = d;
+        const { data: blendedData, accuracy: forecastAccuracy } = blendWithConsensus(
+          d,
+          await consensusPromise,
+        );
+        d = blendedData;
+        if (forecastAccuracy) {
+          console.log(
+            `🎯 Консенсус ${forecastAccuracy.models.length} моделей для ${displayName}, розкид ±${forecastAccuracy.tempSpread ?? "?"}°C`,
+          );
         }
 
         // СИРИЙ лог для перевірки що повертає API
@@ -2866,8 +2958,8 @@ const App = () => {
         notifyWeatherHazardsLocal({
           cardId: id,
           placeName: displayName,
-          hourly: d.hourly,
-          utcOffsetSeconds: d.utc_offset_seconds,
+          hourly: rawData.hourly,
+          utcOffsetSeconds: rawData.utc_offset_seconds,
           skip: isPushSubscribed(),
         }).catch(() => {});
         const nowLocal = new Date();
@@ -2914,6 +3006,8 @@ const App = () => {
                   : displayName,
             lat: targetLat,
             lon: targetLon,
+            // Скільки моделей звірено і наскільки вони розходяться (null — лише best_match)
+            accuracy: forecastAccuracy,
             current: {
               temp: `${Math.round(d.current.temperature_2m)}°C`,
               tempNum: Math.round(d.current.temperature_2m),
@@ -3722,9 +3816,11 @@ const App = () => {
             )}
             {(isSettingsModalOpen || isOtherOptionsOpen) && (
               <UserSettingsModal
+                initialTab={settingsInitialTab}
                 onClose={() => {
                   setIsSettingsModalOpen(false);
                   setIsOtherOptionsOpen(false);
+                  setSettingsInitialTab(null);
                 }}
                 user={user}
                 onUpdate={setUser}

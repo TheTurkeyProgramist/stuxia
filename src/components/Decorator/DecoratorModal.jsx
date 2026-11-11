@@ -664,6 +664,7 @@ const DecoratorModal = ({ targetElement, onClose }) => {
                       value={val}
                       onChange={(e) => handleChange(cssProp, e.target.value)}
                       data-decorator-ignore="true"
+                      aria-label={`${label}: вигляд курсора`}
                       style={{ ...selectStyle, width: "100%" }}
                     >
                       <option value="">успадковується (default)</option>
@@ -694,6 +695,7 @@ const DecoratorModal = ({ targetElement, onClose }) => {
                             value={parsed.width}
                             onChange={(e) => set(e.target.value, parsed.style, parsed.color)}
                             data-decorator-ignore="true"
+                            aria-label={`${label}: товщина рамки`}
                             style={{ ...selectStyle, flex: 1 }}
                           >
                             {widths.map((w) => (
@@ -707,6 +709,7 @@ const DecoratorModal = ({ targetElement, onClose }) => {
                             value={parsed.style}
                             onChange={(e) => set(parsed.width, e.target.value, parsed.color)}
                             data-decorator-ignore="true"
+                            aria-label={`${label}: стиль рамки`}
                             style={{ ...selectStyle, flex: 2 }}
                           >
                             <option value="none">немає (none)</option>

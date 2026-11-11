@@ -1,0 +1,18 @@
+/* Шрифти Стихії. Лише оголошення: браузер завантажує файл, тільки коли шрифт
+   справді використано (вмикається в Налаштуваннях → «Шрифт Стихії»). */
+@font-face {
+  font-family: "Stykhiia Text";
+  src: url("./StykhiiaText.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Декоративний — лише для великих заголовків (від ~40px). */
+@font-face {
+  font-family: "Stykhiia Decor";
+  src: url("./StykhiiaDecor.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

@@ -177,8 +177,8 @@ const run = async () => {
   const card = { id: 1, isMain: false, locationName: "Київ", lat: 50.45, lon: 30.52 };
   await expectAllow("2 картки з лічильником", () =>
     setDoc(aliceCfg, counted({ savedWeatherCards: [card, { ...card, id: 2 }] }, "cardsSyncCount", "cardsSyncAt", 1), { merge: true }));
-  await expectDeny("10 карток (максимум 9)", () =>
-    setDoc(aliceCfg, counted({ savedWeatherCards: Array.from({ length: 10 }, (_, i) => ({ ...card, id: i })) }, "cardsSyncCount", "cardsSyncAt", 2), { merge: true }));
+  await expectDeny("11 карток (максимум 10)", () =>
+    setDoc(aliceCfg, counted({ savedWeatherCards: Array.from({ length: 11 }, (_, i) => ({ ...card, id: i })) }, "cardsSyncCount", "cardsSyncAt", 2), { merge: true }));
   await expectDeny("картки без лічильника", () =>
     setDoc(aliceCfg, { savedWeatherCards: [card] }, { merge: true }));
   await expectAllow("заглушені новини з лічильником", () =>
@@ -201,8 +201,8 @@ const run = async () => {
     setDoc(aliceCfg, counted({ mutedNews: Array.from({ length: 1001 }, (_, i) => `u${i}`) }, "muteSyncCount", "muteSyncAt", 2), { merge: true }));
   await expectAllow("додавання картки: лічильник 1", () =>
     setDoc(aliceCfg, { cardAdditionsCount: 1, cardAdditionsAt: serverTimestamp() }, { merge: true }));
-  await expectDeny("додавання картки: 41-ше", () =>
-    setDoc(aliceCfg, { cardAdditionsCount: 41, cardAdditionsAt: serverTimestamp() }, { merge: true }));
+  await expectDeny("додавання картки: 21-ше", () =>
+    setDoc(aliceCfg, { cardAdditionsCount: 21, cardAdditionsAt: serverTimestamp() }, { merge: true }));
 
   console.log("\nскарги");
   await clearAll();

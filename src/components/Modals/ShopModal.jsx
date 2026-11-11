@@ -1,11 +1,23 @@
 import { QRCodeSVG } from "qrcode.react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, forwardRef } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { SiRedragon, SiDungeonsanddragons } from "react-icons/si";
 import { GiSpikedDragonHead } from "react-icons/gi";
 import shop from '../../media/backgrounds/scenes/turkey-in-dragon-museum.webp';
 import SupportCosts from "../Support/SupportCosts.jsx";
 import { DONATE_URL } from "../Support/supportConfig";
+import {
+  inviteLink,
+  shareInvite,
+  countMyInvites,
+  isInviter,
+  rememberInviter,
+  readInviteeStatus,
+  BADGES,
+  INVITES_FOR_BADGE,
+  INVITE_ACTIVE_DAYS,
+  INVITE_WINDOW_DAYS,
+} from "../../utils/referral.js";
 
 const CLOSE_DURATION_MS = 500;
 
@@ -140,18 +152,6 @@ const CloseButton = styled.button`
     transform: scale(1.1);
     color: #fff;
   }
-`;
-
-const ShopTitle = styled.h2`
-  color: #fdfdfd;
-  letter-spacing: 2px;
-  font-size: 20px;
-  width: 200px;
-  height: 30px;
-  border-radius: 10px;
-  background: #000000cd;
-  text-align: center;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 `;
 
 const WALL_COLOR = "rgba(20, 8, 8, 0.82)";
@@ -289,6 +289,556 @@ const EcoJumpButton = styled.button`
   &:focus-visible { outline: 2px solid #00afce; outline-offset: 2px; }
 `;
 
+const ShareButton = styled(EcoJumpButton)`
+  border-color: #ffb3d1;
+  color: #ffd6e6;
+  background: rgba(40, 10, 28, 0.85);
+  &:hover {
+    background: rgba(70, 20, 50, 0.9);
+  }
+`;
+
+// ───────────── «Запроси друга» ─────────────
+
+const PINK = "#ffb3d1";
+const PINK_SOFT = "rgba(255, 179, 209, 0.35)";
+
+const InviteBox = styled.section`
+  margin: 4px 10px 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(48, 12, 34, 0.92) 0%, rgba(26, 8, 22, 0.92) 100%);
+  border: 1px solid ${PINK_SOFT};
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  scroll-margin-top: 20px;
+`;
+
+// Вміст під заголовком (посилання, статус, умови) — розгортається плавно
+const InviteContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 3px 3px; /* щоб рамка фокусу не обрізалась */
+`;
+
+const InviteChevron = styled.span`
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 20px;
+  line-height: 1;
+  color: #ffd6e6;
+  transition: transform 0.35s ease;
+  transform: rotate(${(p) => (p.$open ? "90deg" : "0deg")});
+`;
+
+const InviteHead = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  cursor: pointer;
+`;
+
+const InviteTitle = styled.h3`
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  font-weight: normal;
+  color: #ffe3ee;
+
+  /* заголовок — кнопка згортання (доступна з клавіатури) */
+  button {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+  button:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+`;
+
+const InviteText = styled.p`
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: #f1d7e2;
+  opacity: 0.85;
+`;
+
+const BadgePills = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #f1d7e2;
+`;
+
+const BadgePill = styled.span`
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid ${PINK_SOFT};
+  background: rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+`;
+
+// Посилання й кнопки — одне поле
+const LinkGroup = styled.div`
+  display: flex;
+  align-items: stretch;
+  border: 1px solid ${PINK_SOFT};
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+
+  &:focus-within {
+    border-color: ${PINK};
+  }
+`;
+
+const InviteLinkInput = styled.input`
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  outline: none;
+`;
+
+const LinkAction = styled.button`
+  flex-shrink: 0;
+  padding: 0 14px;
+  border: none;
+  border-left: 1px solid ${PINK_SOFT};
+  background: ${(p) => (p.$primary ? PINK : "transparent")};
+  color: ${(p) => (p.$primary ? "#2b0f1f" : "#ffd6e6")};
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: ${(p) => (p.$primary ? "#ffc9de" : "rgba(255, 179, 209, 0.12)")};
+  }
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: -2px;
+  }
+`;
+
+const InviteFooter = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-height: 26px;
+`;
+
+const InviteStatus = styled.div`
+  flex: 1 1 200px;
+  font-size: 12.5px;
+  color: ${(p) => (p.$ok ? "#b8f5cf" : "#f1d7e2")};
+  opacity: ${(p) => (p.$ok ? 1 : 0.85)};
+`;
+
+const RefreshButton = styled.button`
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid ${PINK_SOFT};
+  background: transparent;
+  color: #ffd6e6;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.3s ease, background 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 179, 209, 0.12);
+    transform: rotate(90deg);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: wait;
+  }
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+`;
+
+// Крапки прогресу: ●●○
+const Dots = styled.span`
+  display: inline-flex;
+  gap: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+
+  i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1px solid ${PINK};
+  }
+  i[data-on="true"] {
+    background: ${PINK};
+  }
+`;
+
+const ProgressDots = ({ value, total }) => (
+  <Dots aria-hidden="true">
+    {Array.from({ length: total }, (_, i) => (
+      <i key={i} data-on={i < value} />
+    ))}
+  </Dots>
+);
+
+const RULES_ANIM_MS = 350;
+
+const InviteRules = styled.div`
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #f1d7e2;
+  border-top: 1px solid rgba(255, 179, 209, 0.15);
+  padding-top: 8px;
+`;
+
+const RulesToggle = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: #ffd6e6;
+  opacity: 0.75;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+
+  &::after {
+    content: "›";
+    display: inline-block;
+    transition: transform ${RULES_ANIM_MS}ms ease;
+    transform: rotate(${(p) => (p["aria-expanded"] ? "90deg" : "0deg")});
+  }
+  &:hover {
+    opacity: 1;
+  }
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+`;
+
+// Плавне розгортання: висота 0fr → 1fr + прозорість
+const RulesCollapse = styled.div`
+  display: grid;
+  grid-template-rows: ${(p) => (p.$open ? "1fr" : "0fr")};
+  opacity: ${(p) => (p.$open ? 1 : 0)};
+  transition:
+    grid-template-rows ${RULES_ANIM_MS}ms ease,
+    opacity ${RULES_ANIM_MS}ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+const RulesInner = styled.div`
+  overflow: hidden;
+  min-height: 0;
+  visibility: ${(p) => (p.$open ? "visible" : "hidden")};
+  /* ховаємо від клавіатури й читачів екрана лише після завершення згортання */
+  transition: visibility 0s linear ${(p) => (p.$open ? "0s" : `${RULES_ANIM_MS}ms`)};
+
+  h4 {
+    margin: 10px 0 4px;
+    font-size: 12.5px;
+    color: #ffe3ee;
+  }
+  ul, ol {
+    margin: 0;
+    padding-left: 18px;
+  }
+  li + li {
+    margin-top: 2px;
+  }
+`;
+
+const { supporter: B_SUP, inviter: B_INV, invitee: B_NEW } = BADGES;
+const fmtDate = (ms) =>
+  Number.isFinite(ms) ? new Date(ms).toLocaleDateString("uk-UA", { day: "numeric", month: "long" }) : "";
+
+// Умови й опис значків — видно завжди, навіть без акаунта
+const InviteRulesBlock = () => {
+  const [open, setOpen] = useState(false);
+  return (
+    <InviteRules>
+      <RulesToggle
+        type="button"
+        aria-expanded={open}
+        aria-controls="invite-rules"
+        onClick={() => setOpen((v) => !v)}
+      >
+        Умови та як це працює
+      </RulesToggle>
+      <RulesCollapse $open={open}>
+        <RulesInner $open={open} id="invite-rules">
+
+          <h4>Як отримати значки</h4>
+          <ol>
+            <li>Увійдіть в акаунт, і тут з'явиться ваше особисте посилання.</li>
+            <li>Скопіюйте його або натисніть «Поділитися» і надішліть другові.</li>
+            <li>Друг відкриває посилання і створює акаунт у Стихії (через Google або пошту).</li>
+            <li>
+              Друг заходить у Стихію {INVITE_ACTIVE_DAYS} різні дні протягом {INVITE_WINDOW_DAYS} днів
+              від реєстрації. День реєстрації вже рахується як перший.
+            </li>
+            <li>
+              Значки отримуєте обидва: ви {B_INV.emoji} «{B_INV.name}», друг {B_NEW.emoji} «{B_NEW.name}».
+              Щоб побачити свій, відкрийте замок або натисніть ↻.
+            </li>
+          </ol>
+
+          <h4>Коли друга зараховано</h4>
+          <ul>
+            <li>Акаунт новий: створений після переходу за вашим посиланням. Старі акаунти не рахуються.</li>
+            <li>
+              Друг створює акаунт протягом 30 днів після переходу і в тому самому браузері, де
+              відкрив посилання.
+            </li>
+            <li>
+              День зараховується, коли друг відкриває Стихію, увійшовши в акаунт. Один день
+              рахується один раз, хоч скільки разів зайти. Підряд заходити не обов'язково.
+            </li>
+            <li>
+              Доба рахується за світовим часом (UTC): у Києві нова доба для значка починається
+              о 02:00 взимку й о 03:00 влітку.
+            </li>
+            <li>Анонімний вхід (без акаунта) не рахується.</li>
+            <li>Кожну людину можна запросити лише один раз. Якщо друг відкрив кілька посилань, рахується перше.</li>
+            <li>Запросити самого себе не можна.</li>
+            <li>
+              {INVITES_FOR_BADGE === 1
+                ? "Для значка вистачить одного друга, який виконав умову."
+                : `Для значка потрібно ${INVITES_FOR_BADGE} друзів, які виконали умову.`}
+            </li>
+          </ul>
+
+          <h4>Усі значки Стихії</h4>
+          <ul>
+            <li>{B_SUP.emoji} «{B_SUP.name}»: за підтримку Стихії донатом.</li>
+            <li>{B_INV.emoji} «{B_INV.name}»: за друга, якого ви привели.</li>
+            <li>{B_NEW.emoji} «{B_NEW.name}»: для друга, який прийшов за запрошенням.</li>
+          </ul>
+
+          <h4>Про значки</h4>
+          <ul>
+            <li>Значки видно у вашому профілі (кнопка з аватаром угорі).</li>
+            <li>Це просто подяка: значки не дають платних функцій і нічого не відкривають.</li>
+            <li>Значок залишається з вами назавжди. На новому пристрої відкрийте замок, і він повернеться.</li>
+            <li>Ми показуємо лише кількість друзів, а не їхні імена чи пошту.</li>
+            <li>Якщо щось пішло не так, напишіть нам, і ми розберемося.</li>
+          </ul>
+        </RulesInner>
+      </RulesCollapse>
+    </InviteRules>
+  );
+};
+
+// Короткий підсумок про друзів, які прийшли за посиланням
+const invitesSummary = (stats) => {
+  if (!stats.total) return "Поки що ніхто не прийшов за вашим посиланням";
+  const parts = [`Друзів: ${stats.total}`, `виконали умову: ${stats.qualified}`];
+  if (stats.inProgress.length) {
+    parts.push(`набирають дні: ${stats.inProgress.map((d) => `${d}/${INVITE_ACTIVE_DAYS}`).join(", ")}`);
+  }
+  if (stats.expired) parts.push(`не встигли: ${stats.expired}`);
+  return parts.join(" · ");
+};
+
+// Посилання, кнопки й прогрес — лише для акаунта
+const InviteLinkBlock = ({ user, onUserUpdate }) => {
+  const [stats, setStats] = useState(null);
+  const [invitee, setInvitee] = useState(null);
+  const [checking, setChecking] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef(null);
+  const inviterBadge = isInviter(user);
+  const link = inviteLink(user.uid);
+
+  const check = useCallback(async () => {
+    setChecking(true);
+    const [s, me] = await Promise.all([countMyInvites(user.uid), readInviteeStatus(user.uid)]);
+    setChecking(false);
+    setInvitee(me);
+    setFailed(s === null);
+    if (s === null) return;
+    setStats(s);
+    const patch = {};
+    if (s.qualified >= INVITES_FOR_BADGE && !isInviter(user)) {
+      rememberInviter(user.uid);
+      Object.assign(patch, { isInviter: true, inviterSince: Date.now() });
+    }
+    if (me?.done && !user.isInvitee) Object.assign(patch, { isInvitee: true });
+    if (Object.keys(patch).length) onUserUpdate?.({ ...user, ...patch });
+  }, [user, onUserUpdate]);
+
+  useEffect(() => {
+    check();
+  }, [user.uid]); // перевіряємо лише при відкритті / зміні акаунта
+
+  useEffect(() => () => clearTimeout(copiedTimer.current), []);
+
+  const flashCopied = () => {
+    setCopied(true);
+    clearTimeout(copiedTimer.current);
+    copiedTimer.current = setTimeout(() => setCopied(false), 2000);
+  };
+
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      flashCopied();
+    } catch {
+      /* можна скопіювати вручну: поле виділяється при фокусі */
+    }
+  };
+
+  const onShare = async () => {
+    if ((await shareInvite(user.uid)) === "copied") flashCopied();
+  };
+
+  const canShare = typeof navigator !== "undefined" && !!navigator.share;
+
+  let status;
+  if (invitee && !invitee.done && !invitee.expired) {
+    status = (
+      <>
+        <ProgressDots value={invitee.activeDays} total={INVITE_ACTIVE_DAYS} />
+        Вас запросив друг: день {invitee.activeDays} з {INVITE_ACTIVE_DAYS}. Заходьте до{" "}
+        {fmtDate(invitee.deadline)}
+      </>
+    );
+  } else if (failed) {
+    status = "Не вдалося перевірити запрошення";
+  } else if (stats) {
+    status = (
+      <>
+        {inviterBadge && `${B_INV.emoji} Ви — ${B_INV.name} · `}
+        {invitee?.done && `${B_NEW.emoji} Ви — ${B_NEW.name} · `}
+        {invitesSummary(stats)}
+      </>
+    );
+  } else {
+    status = "Перевіряємо…";
+  }
+
+  return (
+    <>
+      <LinkGroup>
+        <InviteLinkInput
+          readOnly
+          value={link}
+          onFocus={(e) => e.target.select()}
+          aria-label="Ваше посилання-запрошення"
+        />
+        <LinkAction type="button" onClick={onCopy} aria-live="polite">
+          {copied ? "Скопійовано ✓" : "Копіювати"}
+        </LinkAction>
+        {canShare && (
+          <LinkAction type="button" $primary onClick={onShare}>
+            Поділитися
+          </LinkAction>
+        )}
+      </LinkGroup>
+      <InviteFooter>
+        <InviteStatus $ok={(inviterBadge || invitee?.done) && !failed} role="status">
+          {status}
+        </InviteStatus>
+        <RefreshButton
+          type="button"
+          onClick={check}
+          disabled={checking}
+          aria-label="Оновити стан запрошень"
+          title="Оновити"
+        >
+          ↻
+        </RefreshButton>
+      </InviteFooter>
+    </>
+  );
+};
+
+// Згорнутий блок показує лише заголовок і значки; клік по ньому розгортає решту.
+// Вміст монтується при першому розгортанні — тоді ж і перевіряються запрошення.
+const InvitePanel = forwardRef(({ user, onUserUpdate, open, onToggle }, ref) => {
+  const [mounted, setMounted] = useState(open);
+  useEffect(() => {
+    if (open) setMounted(true);
+  }, [open]);
+
+  return (
+    <InviteBox ref={ref} id="invite-friend" aria-labelledby="invite-friend-title">
+      <InviteHead onClick={onToggle}>
+        <div>
+          <InviteTitle>
+            <button
+              type="button"
+              id="invite-friend-title"
+              aria-expanded={open}
+              aria-controls="invite-friend-content"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle();
+              }}
+            >
+              🎁 Запроси друга
+            </button>
+          </InviteTitle>
+          <InviteText>
+            Друг заходить у Стихію {INVITE_ACTIVE_DAYS} дні, і значки отримуєте обидва
+          </InviteText>
+        </div>
+        <BadgePills>
+          <BadgePill title={`Вам: «${B_INV.name}»`}>{B_INV.emoji} {B_INV.name}</BadgePill>
+          <BadgePill title={`Другу: «${B_NEW.name}»`}>{B_NEW.emoji} {B_NEW.name}</BadgePill>
+          <InviteChevron $open={open} aria-hidden="true">›</InviteChevron>
+        </BadgePills>
+      </InviteHead>
+      <RulesCollapse $open={open}>
+        <RulesInner $open={open} id="invite-friend-content">
+          {mounted && (
+            <InviteContent>
+              {user?.uid ? (
+                <InviteLinkBlock user={user} onUserUpdate={onUserUpdate} />
+              ) : (
+                <InviteStatus>Увійдіть в акаунт (кнопка «Акаунт» угорі), щоб отримати своє посилання.</InviteStatus>
+              )}
+              <InviteRulesBlock />
+            </InviteContent>
+          )}
+        </RulesInner>
+      </RulesCollapse>
+    </InviteBox>
+  );
+});
+InvitePanel.displayName = "InvitePanel";
+
 const FundList = styled.div`
   display: grid;
   grid-template-columns: 1fr;
@@ -335,15 +885,35 @@ const SupportBody = styled.div`
 `;
 
 
+// Маленький QR у ряду кнопок — щоб задонатити з телефона, дивлячись на комп'ютер
 const QrBox = styled.a`
   display: block;
-  padding: 8px;
+  padding: 4px;
   background: #fff;
-  border-radius: 12px;
+  border-radius: 8px;
   line-height: 0;
-  align-self: flex-start;
-  margin-top: 34px; /* під кнопкою «Закрити» */
   flex-shrink: 0;
+  transition: transform 0.15s ease;
+
+  &:hover {
+    transform: scale(1.6);
+    position: relative;
+    z-index: 5;
+  }
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+
+  /* на телефоні сканувати власний екран нема сенсу */
+  @media (max-width: 600px) {
+    display: none;
+  }
+`;
+
+// Перший ряд не заходить під кнопку «Закрити»
+const TopRow = styled(InlineRow)`
+  padding-right: 90px;
 `;
 
 const RowContent = styled.div`
@@ -429,7 +999,7 @@ const CharacterText = styled.div`
   font-size: 13px;
   font-style: italic;
   flex: 1 1 280px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.83);
   padding: 8px 12px;
   border-radius: 8px;
   border-left: 3px solid #f3a83b;
@@ -526,6 +1096,8 @@ const Tower = () => (
 const ShopModal = ({ onClose, user, onUserUpdate }) => {
   const [isClosing, setIsClosing] = useState(false);
   const timerRef = useRef(null);
+  const inviteRef = useRef(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const fundsRef = useRef(null);
 
   const handleClose = useCallback(() => {
@@ -566,35 +1138,51 @@ const ShopModal = ({ onClose, user, onUserUpdate }) => {
         <AnimatedContent>
           <SupportCard>
             <SupportBody>
-              <InlineRow>
-                <ShopTitle>Древній Замок</ShopTitle>
+              <TopRow>
                 <CharacterText>
-                  Мене звати Доміно, я люблю давнє кіно. Стихія завжди буде безкоштовною,
-                  а якщо хочете допомогти їй жити — ось банка.
-                </CharacterText>
-              </InlineRow>
+  Мене звати Доміно, у цьому замку я показую погоду. Вхід в Стихію - завжди відкритий!
+  А якщо хочете, щоб світло в залі не згасало, ось банка.
+</CharacterText>
+              </TopRow>
               <InlineRow>
                 <LinkButton href={DONATE_URL} target="_blank" rel="noopener noreferrer" $featured>
                   Підтримати Стихію
                 </LinkButton>
+                <QrBox
+                  href={DONATE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="QR-код для підтримки Стихії"
+                  title="Відскануйте телефоном, щоб підтримати Стихію"
+                >
+                  <QRCodeSVG value={DONATE_URL} size={42} />
+                </QrBox>
                 <EcoJumpButton
                   type="button"
                   onClick={() => fundsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
                 >
                   Або допомогти екофондам ↓
                 </EcoJumpButton>
+                <ShareButton
+                  type="button"
+                  onClick={() => {
+                    setInviteOpen(true);
+                    inviteRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  🎁 Поділитися — значок у подарунок ↓
+                </ShareButton>
               </InlineRow>
             </SupportBody>
-            <QrBox
-              href={DONATE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="QR-код для підтримки автора"
-            >
-              <QRCodeSVG value={DONATE_URL} size={96} />
-            </QrBox>
           </SupportCard>
           <SupportCosts user={user} onUserUpdate={onUserUpdate} />
+          <InvitePanel
+            ref={inviteRef}
+            user={user}
+            onUserUpdate={onUserUpdate}
+            open={inviteOpen}
+            onToggle={() => setInviteOpen((v) => !v)}
+          />
           <Battlements>
             {Array.from({ length: MERLON_COUNT }, (_, i) => {
               const { Icon } = MASCOTS[i % MASCOTS.length];

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styled, { keyframes } from "styled-components";
-import { confirmAge, isAgeConfirmed } from "../../utils/ageGate";
+import { GAMBLING_MIN_AGE, confirmAge, isAgeConfirmed } from "../../utils/ageGate";
 
 const fadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
 const popIn = keyframes`
@@ -42,9 +42,9 @@ const AgeBadge = styled.div`
   flex: 0 0 auto;
   display: grid; place-items: center;
   width: 44px; height: 44px; border-radius: 50%;
-  background: ${({ $age }) => ($age >= 21 ? "rgba(196, 43, 28, 0.2)" : "rgba(255, 179, 0, 0.16)")};
-  border: 2px solid ${({ $age }) => ($age >= 21 ? "#ff6b6b" : "#ffb300")};
-  color: ${({ $age }) => ($age >= 21 ? "#ff8a8a" : "#ffc94d")};
+  background: ${({ $age }) => ($age >= GAMBLING_MIN_AGE ? "rgba(196, 43, 28, 0.2)" : "rgba(255, 179, 0, 0.16)")};
+  border: 2px solid ${({ $age }) => ($age >= GAMBLING_MIN_AGE ? "#ff6b6b" : "#ffb300")};
+  color: ${({ $age }) => ($age >= GAMBLING_MIN_AGE ? "#ff8a8a" : "#ffc94d")};
   font-size: 14px; font-weight: 800;
 `;
 

@@ -8,7 +8,7 @@ rules_version = '2';
 //   settings          → settingsSyncCount / settingsSyncAt  — 100
 //   savedWeatherCards → cardsSyncCount    / cardsSyncAt     — 100
 //   mutedNews + newsFilter → muteSyncCount / muteSyncAt — 50 (спільний лічильник)
-//   додавання карток  → cardAdditionsCount / cardAdditionsAt — 40
+//   додавання карток  → cardAdditionsCount / cardAdditionsAt — 20
 //   скарги на новини  → reportCount       / reportAt        — 20
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -114,11 +114,11 @@ service cloud.firestore {
         && counterOk(keys, 'savedWeatherCards', 'cardsSyncCount', 'cardsSyncAt', 100)
         && counterOk(keys, 'mutedNews', 'muteSyncCount', 'muteSyncAt', 50)
         && counterOk(keys, 'newsFilter', 'muteSyncCount', 'muteSyncAt', 50)
-        && counterOk(keys, 'cardAdditionsCount', 'cardAdditionsCount', 'cardAdditionsAt', 40)
+        && counterOk(keys, 'cardAdditionsCount', 'cardAdditionsCount', 'cardAdditionsAt', 20)
         && counterOk(keys, 'reportCount', 'reportCount', 'reportAt', 20)
         && (!keys.hasAny(['settings']) || settingsOk())
         && (!keys.hasAny(['savedWeatherCards'])
-            || (d.savedWeatherCards is list && d.savedWeatherCards.size() <= 9))
+            || (d.savedWeatherCards is list && d.savedWeatherCards.size() <= 10))
         && (!keys.hasAny(['mutedNews'])
             || (d.mutedNews is list && d.mutedNews.size() <= 1000))
         && (!keys.hasAny(['newsFilter']) || newsFilterOk(d.newsFilter));
@@ -181,6 +181,38 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       allow create, update: if false;
       allow delete: if isOwner(uid);
+    }
+
+    // «Запроси друга»: referrals/{uid нового акаунта} =
+    //   { referrer, createdAt, activeDays, lastActiveAt }
+    // Створює лише сам запрошений (справжній акаунт, не анонім), один раз,
+    // не на себе; день реєстрації — перший активний день.
+    // Далі друг може додати +1 день: не частіше разу на добу (UTC), до 3 днів
+    // і лише протягом 14 днів від реєстрації. Значки — коли activeDays == 3.
+    // Числа 3 і 14 продубльовані в src/utils/referral.js.
+    // Читати запис може той, кого він стосується (запрошений або той, хто запросив).
+    match /referrals/{uid} {
+      allow read: if signedIn()
+        && (request.auth.uid == uid || resource.data.referrer == request.auth.uid);
+      allow create: if isOwner(uid)
+        && realAccount()
+        && request.resource.data.keys().hasOnly(['referrer', 'createdAt', 'activeDays', 'lastActiveAt'])
+        && request.resource.data.referrer is string
+        && request.resource.data.referrer.size() >= 6
+        && request.resource.data.referrer.size() <= 128
+        && request.resource.data.referrer != uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.lastActiveAt == request.time
+        && request.resource.data.activeDays == 1;
+      allow update: if isOwner(uid)
+        && realAccount()
+        && changedKeys().hasOnly(['activeDays', 'lastActiveAt'])
+        && request.resource.data.lastActiveAt == request.time
+        && request.resource.data.activeDays == resource.data.activeDays + 1
+        && request.resource.data.activeDays <= 3
+        && request.time.date() > resource.data.lastActiveAt.date()
+        && request.time < resource.data.createdAt + duration.value(14, 'd');
+      allow delete: if false;
     }
 
     // Клієнт сюди не пише

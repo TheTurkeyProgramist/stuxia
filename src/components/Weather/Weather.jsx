@@ -64,6 +64,7 @@ import CustomDatesModal from "../Modals/CustomDatesModal";
 import UnitsModal from "../Modals/UnitsModal";
 import { loadCardUnits, isUnitsEventForCard, cardUnitsKey, UNITS_GLOBAL_KEY, UNITS_USE_GLOBAL_KEY } from "../../utils/unitsStorage";
 import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, tempLabel, windLabel, pressureLabel, visibilityLabel, convertVisibility } from "../../utils/units.js";
+import { CONSENSUS_MODEL_LABELS } from "../../utils/weatherConsensus";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { PiThermometerFill } from "react-icons/pi"; //Нормальна температура
 import { BsThermometerSnow, BsThermometerSun, BsMoonStarsFill, BsClockHistory, BsHourglassSplit, BsBuildings, BsCompass, BsStars } from "react-icons/bs"; //Холодна температура / Ніч / Астрономія
@@ -3638,6 +3639,16 @@ const HOLIDAYS_2027 = {
     <TextContent $mt="0px">
       {formatTemp(card.current.temp)}
       <SubText $size="9px">Відчувається: {formatTemp(card.current.feels_like)}</SubText>
+      {card.accuracy?.models?.length > 0 && (
+        <SubText
+          $size="9px"
+          title={`Медіана прогнозів: ${card.accuracy.models.map((m) => CONSENSUS_MODEL_LABELS[m] || m).join(", ")}`}
+        >
+          Звірено {card.accuracy.models.length} моделей
+          {typeof card.accuracy.tempSpread === "number" &&
+            ` · ±${(units.temp === "F" ? card.accuracy.tempSpread * 1.8 : card.accuracy.tempSpread).toFixed(1)}${units.temp === "F" ? "°F" : units.temp === "K" ? "K" : "°C"}`}
+        </SubText>
+      )}
     </TextContent>
   </IndicatorCard>
 
@@ -3793,6 +3804,7 @@ const HOLIDAYS_2027 = {
                   <select
                     value={selectedHourlyDay}
                     onChange={(event) => setSelectedHourlyDay(Number(event.target.value))}
+                    aria-label="День погодинного прогнозу"
                     style={{
                       width: "100%",
                       maxWidth: "260px",

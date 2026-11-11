@@ -1,13 +1,15 @@
 import React, { useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { BiLogoVisualStudio } from "react-icons/bi";
-import { SiBun, SiGithub, SiCloudflare, SiVercel, SiHostinger } from "react-icons/si";
+import { SiBun, SiGithub, SiCloudflare } from "react-icons/si";
 import { TbBrandVite } from "react-icons/tb";
 import { IoLogoFirebase } from "react-icons/io5";
 import { SiPixabay } from "react-icons/si";
 import loadtwo from "../../media/backgrounds/scenes/foggy-forest-loader.webp";
 import { TbBrandWindy } from "react-icons/tb";
+import { TiWeatherPartlySunny } from "react-icons/ti";
 import { RiGeminiFill } from "react-icons/ri";
+import hostingerLogo from "../../media/_unused/logos/logo-iq.webp";
 const DOTS_CONFIG = [
   { r: 1, c: 1, delay: "0s" },
   { r: 1, c: 2, delay: "0.1s" },
@@ -20,14 +22,17 @@ const DOTS_CONFIG = [
 ];
 
 const TECH_STACK = [
-  { Icon: TbBrandVite, color: "#2bfffb", title: "Vite" },
+  { Icon: TbBrandVite, color: "#646CFF", title: "Vite" },
+  { Icon: TbBrandWindy, color: "#00c6ff", title: "Windy API" },
+  { Icon: TiWeatherPartlySunny, color: "#FFB300", title: "WeatherAPI" },
+  { Icon: RiGeminiFill, color: "#8E75FF", title: "Gemini AI" },
+  { Icon: SiPixabay, color: "#2EC66D", title: "Pixabay API" },
   { Icon: SiBun, color: "#FBF0DF", title: "Bun" },
   { Icon: SiGithub, color: "#FFFFFF", title: "GitHub" },
   { Icon: SiCloudflare, color: "#F38020", title: "Cloudflare" },
   { Icon: IoLogoFirebase, color: "#FFCA28", title: "Firebase" },
-  { Icon: BiLogoVisualStudio, color: "#007ACC", title: "VS Code" },
-  { Icon: SiVercel, color: "#FFFFFF", title: "Vercel" },
-  { Icon: SiHostinger, color: "#00fff7", title: "HostIQ / Hosting" },
+  { Icon: BiLogoVisualStudio, color: "#1F9CF0", title: "VS Code" },
+  { src: hostingerLogo, title: "HostIQ" },
 ];
 
 const expandEntrance = keyframes`
@@ -111,10 +116,9 @@ const PoweredByWrapper = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  margin-bottom: 8px;
   background: rgba(0, 0, 0, 0.45);
-  padding: 8px 16px;
-  border-radius: 14px;
+  padding: 5px 10px;
+  border-radius: 10px;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.05);
 
@@ -130,11 +134,23 @@ const IconsGrid = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 
+  img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.15);
+    }
+  }
+
   svg {
-    font-size: 22px;
+    font-size: 18px;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
     transition: transform 0.2s ease;
 
@@ -145,17 +161,13 @@ const IconsGrid = styled.div`
 `;
 
 const PhraseText = styled.div`
-  font-size: 13px;
+  font-size: 12px;
   color: #00c6ff;
   line-height: 1.5;
   font-weight: 900;
   max-width: 1200px;
   font-style: italic;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.61);
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  padding: 5px 12px;
-  margin-top: 5px;
 `;
 const CopyrightText = styled.p`
   margin-bottom: clamp(24px, 6vh, 55px);
@@ -234,13 +246,17 @@ export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
         <PoweredByWrapper>
           <span>Працює на базі:</span>
           <IconsGrid>
-            {TECH_STACK.map(({ Icon, color, title }) => (
-              <Icon key={title} style={{ color }} title={title} />
-            ))}
+            {TECH_STACK.map(({ Icon, src, color, title }) =>
+              src ? (
+                <img key={title} src={src} alt={title} title={title} />
+              ) : (
+                <Icon key={title} style={{ color }} title={title} />
+              )
+            )}
           </IconsGrid>
+          {randomPhrase && <PhraseText>{randomPhrase}</PhraseText>}
         </PoweredByWrapper>
 
-        {randomPhrase && <PhraseText>{randomPhrase}</PhraseText>}
         <CopyrightText>
           2026 Stuxia™. Всі права захищені. Автор: TheTurkeyProgramist
         </CopyrightText>

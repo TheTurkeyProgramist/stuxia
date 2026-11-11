@@ -30,21 +30,12 @@ const matchesWord = (text, word) => {
 
 // ───────────── Власні стрічки ─────────────
 
-export const CUSTOM_FEEDS_MIN = 6;
+// Ліміт фіксований: до 9 власних стрічок. Кожна стрічка — ще один запит при оновленні,
+// тому з 5-ї під полем додавання показуємо попередження про повільніше завантаження.
 export const CUSTOM_FEEDS_MAX = 9;
-const CUSTOM_FEEDS_LIMIT_KEY = "news_custom_feeds_limit";
+export const CUSTOM_FEEDS_WARN_AT = 5;
 
-export const getCustomFeedsLimit = () => {
-  const n = Number(getPref(CUSTOM_FEEDS_LIMIT_KEY));
-  return Number.isInteger(n) && n >= CUSTOM_FEEDS_MIN && n <= CUSTOM_FEEDS_MAX
-    ? n
-    : CUSTOM_FEEDS_MIN;
-};
-
-export const setCustomFeedsLimit = (n) => {
-  const clamped = Math.min(CUSTOM_FEEDS_MAX, Math.max(CUSTOM_FEEDS_MIN, Math.round(n)));
-  setPref(CUSTOM_FEEDS_LIMIT_KEY, String(clamped));
-};
+export const getCustomFeedsLimit = () => CUSTOM_FEEDS_MAX;
 
 // ───────────── Термінові новини ─────────────
 

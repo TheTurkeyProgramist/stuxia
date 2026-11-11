@@ -10,7 +10,7 @@ export const CLOUD_LIMITS = {
   cards: { countKey: "cardsSyncCount", atKey: "cardsSyncAt", limit: 100 },
   // Спільний ліміт для заглушених новин і налаштувань фільтра новин (newsFilter)
   mute: { countKey: "muteSyncCount", atKey: "muteSyncAt", limit: 50 },
-  cardAdditions: { countKey: "cardAdditionsCount", atKey: "cardAdditionsAt", limit: 40 },
+  cardAdditions: { countKey: "cardAdditionsCount", atKey: "cardAdditionsAt", limit: 20 },
   reports: { countKey: "reportCount", atKey: "reportAt", limit: 20 },
 };
 
