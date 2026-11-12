@@ -302,6 +302,39 @@ const ProfileModalLabel = styled.div`
   font-size: 12px;
 `;
 
+// Вихід з акаунта — кнопка внизу спливного вікна профілю
+const LogoutButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255, 92, 92, 0.35)" : "rgba(200, 30, 30, 0.3)")};
+  background: ${(props) => (props.$isDarkMode ? "rgba(255, 92, 92, 0.08)" : "rgba(200, 30, 30, 0.06)")};
+  color: ${(props) => (props.$isDarkMode ? "#ff8a8a" : "#c01e1e")};
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  svg {
+    font-size: 16px;
+  }
+
+  &:hover {
+    background: ${(props) => (props.$isDarkMode ? "rgba(255, 92, 92, 0.18)" : "rgba(200, 30, 30, 0.12)")};
+    border-color: ${(props) => (props.$isDarkMode ? "rgba(255, 92, 92, 0.6)" : "rgba(200, 30, 30, 0.5)")};
+  }
+
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+`;
+
 // Значок донатера «Друг індиків» — лише подяка, жодних платних функцій
 const SupporterDot = styled.span`
   position: absolute;
@@ -342,6 +375,20 @@ const ButtonsGroup = styled.div`
     & > * {
     flex: 1;
     display: flex;
+    justify-content: center;
+  }
+`;
+
+/*
+  Обгортка кнопки теми (потрібна для позиціювання міні-модалки).
+  Падінг IconButton у відсотках рахується від ширини батька — тож внутрішній
+  span тултіпа має розтягнутися на всю комірку, як в інших кнопок, інакше кнопка стає квадратом.
+*/
+const ThemePickerWrap = styled.div`
+  position: relative;
+
+  & > span:first-child {
+    flex: 1;
     justify-content: center;
   }
 `;
@@ -915,7 +962,7 @@ const Header = ({
       <>
         <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)} onKeyDown={handleHeaderKeyDown}>
           {/* Тема — відкриває міні-модалку вибору теми */}
-          <div style={{ position: "relative", display: "inline-flex" }}>
+          <ThemePickerWrap>
             <Tooltip content="Вибір теми" isDarkMode={isDarkMode}>
               <IconButton
                 ref={themePickerBtnRef}
@@ -962,7 +1009,7 @@ const Header = ({
                 />
               </ThemePickerModal>
             )}
-          </div>
+          </ThemePickerWrap>
 
           {/* Липкий фон */}
           <Tooltip content="Фон на увесь сайт" isDarkMode={isDarkMode}>
@@ -1024,19 +1071,6 @@ const Header = ({
             </IconButton>
           </Tooltip>
 
-          {/* Вихід */}
-          <Tooltip content="Вихід з акаунта" isDarkMode={isDarkMode}>
-            <IconButton 
-              onClick={handleLogoutClick} 
-              $isDarkMode={isDarkMode}
-              aria-label="Вихід з акаунта"
-            >
-              <EmojiWrapper>
-                <GiExitDoor />
-              </EmojiWrapper>
-            </IconButton>
-          </Tooltip>
-
         <ProfileButtonWrap>
           <Tooltip
             content={`Ваш профіль${supporter ? " · Друг індиків" : ""}${inviter ? " · Посол Стихії" : ""}${invitee ? " · Паросток Стихії" : ""} ·${NETWORK_LABELS[networkStatus]}`}
@@ -1084,6 +1118,17 @@ const Header = ({
                    )}
                 </div>
               </ProfileModalBody>
+              <LogoutButton
+                type="button"
+                $isDarkMode={isDarkMode}
+                onClick={() => {
+                  setIsProfileModalOpen(false);
+                  handleLogoutClick();
+                }}
+              >
+                <GiExitDoor aria-hidden="true" />
+                Вийти з акаунта
+              </LogoutButton>
             </ProfileModal>
           )}
         </ProfileButtonWrap>
@@ -1093,7 +1138,7 @@ const Header = ({
       <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)} onKeyDown={handleHeaderKeyDown}>
         {/* Незалогінений користувач */}
         {/* Тема — міні-модалка вибору */}
-        <div style={{ position: "relative", display: "inline-flex" }}>
+        <ThemePickerWrap>
           <Tooltip content="Вибір теми" isDarkMode={isDarkMode}>
             <IconButton
               ref={themePickerBtnRef}
@@ -1136,7 +1181,7 @@ const Header = ({
               />
             </ThemePickerModal>
           )}
-        </div>
+        </ThemePickerWrap>
 
         <Tooltip content="Фон на увесь сайт" isDarkMode={isDarkMode}>
           <IconButton

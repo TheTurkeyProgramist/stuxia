@@ -36,7 +36,7 @@ initializeApp();
 const db = getFirestore();
 
 // Стрічки беремо через нашу ж функцію на Cloudflare: вона вже вміє розбирати RSS
-// і кешує відповіді (6 запитів на 30 хвилин для всіх користувачів разом).
+// і кешує відповіді (sendAlerts — раз на 30 хв, refreshNewsBundle — раз на 10 хв, повз кеш).
 const SITE = "https://stuxia.com";
 
 // Синхронно з SOURCES у src/components/News/News.jsx
@@ -47,6 +47,10 @@ const FEEDS = [
   { name: "Mongabay", url: "https://news.mongabay.com/feed/" },
   { name: "The Guardian Environment", url: "https://www.theguardian.com/environment/rss" },
   { name: "NASA Earth Observatory", url: "https://science.nasa.gov/feed/?science_org=19791%2C22453" },
+  { name: "BBC Science & Environment", url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml" },
+  { name: "New Scientist", url: "https://www.newscientist.com/subject/environment/feed/" },
+  { name: "Carbon Brief", url: "https://www.carbonbrief.org/feed/" },
+  { name: "Grist", url: "https://grist.org/feed/" },
 ];
 
 const REGION = "europe-west1";
@@ -79,8 +83,10 @@ const DEAD_TOKEN_CODES = new Set([
 
 const stripTags = (html) => (html || "").replace(/<[^>]*>?/gm, " ");
 
-const loadFeed = async (feed) => {
-  const res = await fetch(`${SITE}/api/news-feed?url=${encodeURIComponent(feed.url)}`, {
+// fresh — мітка інтервалу: інший URL = повз годинний кеш Cloudflare (для набору новин кожні 10 хв)
+const loadFeed = async (feed, fresh = "") => {
+  const freshParam = fresh ? `&fresh=${encodeURIComponent(fresh)}` : "";
+  const res = await fetch(`${SITE}/api/news-feed?url=${encodeURIComponent(feed.url)}${freshParam}`, {
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`${feed.name}: HTTP ${res.status}`);
@@ -93,22 +99,48 @@ const loadFeed = async (feed) => {
       link: item.url,
       pubDate: item.date_published,
       sourceName: feed.name,
+      image: typeof item.image === "string" ? item.image : "",
     }));
 };
 
-// Той самий безкоштовний перекладач, що й на сайті; не вдалося — лишаємо оригінал
+// Переклад вважаємо вдалим, лише якщо в ньому є кирилиця (інакше перекладач повернув оригінал)
+const hasCyrillic = (s) => /[а-яіїєґ]/i.test(s || "");
+
+// План А — той самий безкоштовний Google, що й на сайті (з адрес Google Cloud його іноді ріже)
+const translateGoogle = async (text) => {
+  const res = await fetch(
+    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=uk&dt=t&q=${encodeURIComponent(text)}`,
+    { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
+  );
+  if (!res.ok) throw new Error(`Google HTTP ${res.status}`);
+  const data = await res.json();
+  return (data?.[0] || []).map((s) => s?.[0] || "").join("");
+};
+
+// План Б — MyMemory (безкоштовно, без ключа; до 500 символів за запит)
+const translateMyMemory = async (text) => {
+  const res = await fetch(
+    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 480))}&langpair=en|uk`,
+    { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
+  );
+  if (!res.ok) throw new Error(`MyMemory HTTP ${res.status}`);
+  const data = await res.json();
+  return data?.responseData?.translatedText || "";
+};
+
+// Уже українською — не чіпаємо; обидва перекладачі не впоралися — лишаємо оригінал
 const translateToUk = async (text) => {
-  try {
-    const res = await fetch(
-      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=uk&dt=t&q=${encodeURIComponent(text)}`,
-      { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
-    );
-    if (!res.ok) return text;
-    const data = await res.json();
-    return data[0].map((s) => s[0]).join("") || text;
-  } catch {
-    return text;
+  if (!text || hasCyrillic(text)) return text;
+  for (const [name, translate] of [["Google", translateGoogle], ["MyMemory", translateMyMemory]]) {
+    try {
+      const result = (await translate(text)).trim();
+      if (hasCyrillic(result)) return result;
+      logger.warn(`Переклад ${name}: без кирилиці`, { text, result });
+    } catch (err) {
+      logger.warn(`Переклад ${name} не вдався`, { error: String(err) });
+    }
   }
+  return text;
 };
 
 // Прогноз на найближчі години для всіх унікальних місць (кількома запитами)
@@ -318,7 +350,7 @@ export const sendAlerts = onSchedule(
     // Новини — лише якщо хтось їх хоче
     let news = [];
     if (live.some((t) => t.data.newsAlerts)) {
-      const settled = await Promise.allSettled(FEEDS.map(loadFeed));
+      const settled = await Promise.allSettled(FEEDS.map((feed) => loadFeed(feed)));
       settled.forEach((result, i) => {
         if (result.status === "rejected") {
           logger.warn(`Стрічка ${FEEDS[i].name} недоступна`, { error: String(result.reason) });
@@ -396,6 +428,114 @@ export const sendAlerts = onSchedule(
     logger.info(
       `Пристроїв: ${live.length}; свіжих новин: ${news.length}; місць: ${hazardsByPlace.size}; ` +
         `сповіщень: ${outgoing.length} (доставлено ${delivered}); видалено токенів: ${toDelete.size}`,
+    );
+  },
+);
+
+// ───────────── Спільний набір новин (вбудовані стрічки) ─────────────
+//
+// Кожні 10 хв: по NEWS_PER_SOURCE найсвіжіших новин з кожної вбудованої стрічки,
+// перекладені українською, — одним документом global/newsBundle (читати може будь-хто,
+// писати — лише сервер). Сайт бере цей набір через /api/news-bundle (кеш Cloudflare)
+// замість 10 окремих стрічок і перекладу на кожному пристрої.
+// Перекладаємо лише нові новини: уже перекладені беремо з попереднього набору.
+
+const NEWS_BUNDLE_DOC = "global/newsBundle";
+const NEWS_PER_SOURCE = 3; // синхронно з NEWS_PER_SOURCE у News.jsx
+const NEWS_BUNDLE_INTERVAL_MS = 10 * 60 * 1000;
+const NEWS_DESC_MAX = 300;
+
+const cleanDescription = (text) =>
+  stripTags(text).replace(/\s+/g, " ").trim().slice(0, NEWS_DESC_MAX);
+
+// Перекладене лише з кирилицею — інакше null, і сайт перекладе сам
+const translatedOrNull = async (text) => {
+  if (!text) return "";
+  const result = await translateToUk(text);
+  return hasCyrillic(result) ? result : null;
+};
+
+export const refreshNewsBundle = onSchedule(
+  {
+    schedule: "every 10 minutes",
+    timeZone: "Europe/Kyiv",
+    region: REGION,
+    memory: "256MiB",
+    timeoutSeconds: 120,
+    maxInstances: 1,
+    retryCount: 0,
+  },
+  async () => {
+    const now = Date.now();
+    const ref = db.doc(NEWS_BUNDLE_DOC);
+
+    let previous = [];
+    try {
+      const snap = await ref.get();
+      if (snap.exists) previous = JSON.parse(snap.get("json") || "[]");
+    } catch (err) {
+      logger.warn("Попередній набір новин не прочитався", { error: String(err) });
+    }
+    const previousByLink = new Map(previous.map((item) => [item.link, item]));
+
+    const fresh = String(Math.floor(now / NEWS_BUNDLE_INTERVAL_MS));
+    const settled = await Promise.allSettled(FEEDS.map((feed) => loadFeed(feed, fresh)));
+
+    const items = [];
+    const failed = [];
+    let translatedCount = 0;
+    for (let i = 0; i < FEEDS.length; i++) {
+      const feed = FEEDS[i];
+      const result = settled[i];
+      if (result.status !== "fulfilled" || result.value.length === 0) {
+        // Стрічка лежить — лишаємо її новини з попереднього набору
+        failed.push(feed.name);
+        items.push(...previous.filter((item) => item.sourceName === feed.name));
+        continue;
+      }
+      const top = result.value
+        .filter((item) => item.link && item.title)
+        .sort((a, b) => (Date.parse(b.pubDate) || 0) - (Date.parse(a.pubDate) || 0))
+        .slice(0, NEWS_PER_SOURCE);
+      for (const raw of top) {
+        const description = cleanDescription(raw.description);
+        const old = previousByLink.get(raw.link);
+        let titleUk = old?.title === raw.title ? old.titleUk : undefined;
+        let descriptionUk = old?.description === description ? old.descriptionUk : undefined;
+        if (!titleUk) {
+          titleUk = await translatedOrNull(raw.title);
+          translatedCount += 1;
+        }
+        if (descriptionUk === undefined || descriptionUk === null) {
+          descriptionUk = await translatedOrNull(description.slice(0, 170));
+          translatedCount += 1;
+        }
+        items.push({
+          link: raw.link,
+          title: raw.title,
+          description,
+          titleUk: titleUk || null,
+          descriptionUk: descriptionUk ?? null,
+          pubDate: raw.pubDate || "",
+          sourceName: feed.name,
+          image: raw.image || "",
+        });
+      }
+    }
+
+    if (items.length === 0) {
+      logger.error("Набір новин порожній — попередній лишаємо без змін", { failed });
+      return;
+    }
+    await ref.set({
+      json: JSON.stringify(items),
+      count: items.length,
+      updatedAt: now,
+      failed,
+    });
+    logger.info(
+      `Набір новин: ${items.length} новин, перекладено ${translatedCount} текстів` +
+        (failed.length ? `; недоступні: ${failed.join(", ")}` : ""),
     );
   },
 );

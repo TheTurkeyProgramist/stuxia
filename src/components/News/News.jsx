@@ -38,7 +38,7 @@ import { useAnimationsDisabled } from "../../utils/animationsPref";
 import { MdOutlineReportOff } from "react-icons/md"; //Заглушити
 import { MdBlock, MdClose } from "react-icons/md";
 import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
-import { FiPlus, FiLink, FiShield, FiMoreVertical, FiAlertTriangle } from "react-icons/fi";
+import { FiPlus, FiList, FiLink, FiShield, FiMoreVertical, FiAlertTriangle } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
 import toast from "react-hot-toast";
 import { getNewsBlockReason, getNewsFilterPrefs } from "../../utils/contentFilter";
@@ -195,7 +195,7 @@ const Decoder = styled.div`
   width: 100%;
   border-radius: 10px;
   box-sizing: border-box;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.81);
 `;
 
 const SOURCES = [
@@ -237,6 +237,30 @@ const SOURCES = [
     url: "https://science.nasa.gov/feed/?science_org=19791%2C22453",
     name: "NASA Earth Observatory",
     home: "https://science.nasa.gov/earth/earth-observatory/",
+  },
+  {
+    id: "bbc-science-environment",
+    url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+    name: "BBC Science & Environment",
+    home: "https://www.bbc.com/news/science_and_environment",
+  },
+  {
+    id: "new-scientist-environment",
+    url: "https://www.newscientist.com/subject/environment/feed/",
+    name: "New Scientist",
+    home: "https://www.newscientist.com/subject/environment/",
+  },
+  {
+    id: "carbon-brief",
+    url: "https://www.carbonbrief.org/feed/",
+    name: "Carbon Brief",
+    home: "https://www.carbonbrief.org",
+  },
+  {
+    id: "grist",
+    url: "https://grist.org/feed/",
+    name: "Grist",
+    home: "https://grist.org",
   },
 ];
 
@@ -304,7 +328,7 @@ const NewsDiv = styled.div`
 `;
 
 const AihelpTitle = styled.div`
-  font-size: 22px;
+  font-size: 25px;
   text-align: center;
   font-family: var(--font-family);
   font-weight: 600;
@@ -535,7 +559,9 @@ const CarouselSlide = styled.div`
 `;
 
 const MoreNewsButton = styled.button`
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   margin: 0 auto 0;
   padding: 6px 22px;
   border: 2px solid #ffaa00;
@@ -547,7 +573,12 @@ const MoreNewsButton = styled.button`
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 0 12px rgba(255, 170, 0, 0.35);
-  transition: box-shadow 0.2s ease, transform 0.1s ease;
+  transition: box-shadow 0.2s ease, transform 0.1s ease, background 0.2s ease;
+
+  & > svg {
+    flex-shrink: 0;
+    font-size: 16px;
+  }
 
   &:hover {
     box-shadow: 0 0 18px rgba(255, 170, 0, 0.99);
@@ -555,6 +586,65 @@ const MoreNewsButton = styled.button`
 
   &:active {
     transform: scale(0.97);
+  }
+
+  /* Другорядна дія (налаштування): пунктир, напівпрозорий фон, без світіння */
+  ${({ $secondary }) =>
+    $secondary &&
+    `
+    border-style: dashed;
+    border-color: rgba(255, 170, 0, 0.75);
+    background: rgba(0, 0, 0, 0.45);
+    color: rgba(255, 170, 0, 0.9);
+    box-shadow: none;
+
+    &:hover {
+      box-shadow: none;
+      background: rgba(0, 0, 0, 0.75);
+      border-color: #ffaa00;
+      color: #ffaa00;
+    }
+  `}
+`;
+
+/* Лічильник новин на кнопці «Всі новини» */
+const MoreNewsCount = styled.span`
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #ffaa00;
+  color: #000;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+`;
+
+/* Ряд кнопок під каруселлю: «Додати стрічку» ліворуч від «Всі новини» */
+const MoreNewsActions = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  & > button {
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  /* Телефон: обидві кнопки в один ряд, компактніші */
+  @media (max-width: 480px) {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 0 8px;
+
+    & > button {
+      min-width: 0;
+      padding: 5px 12px;
+      font-size: 13px;
+      gap: 5px;
+    }
   }
 `;
 
@@ -603,6 +693,17 @@ const MoreNewsGrid = styled.div`
   }
   @media (min-width: 900px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+`;
+
+/* Обгортка картки у «Всі новини»: поява по черзі, картка тягнеться на всю клітинку сітки */
+const MoreNewsAppear = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  & > * {
+    flex: 1;
   }
 `;
 
@@ -2019,6 +2120,115 @@ const NEWS_SNAPSHOT_KEY = "news_last_results";
 // Скільки новин кожного джерела гарантовано є у стрічці і показується у «Всіх новинах»
 const NEWS_PER_SOURCE = 3;
 
+// ───── Спільний набір вбудованих стрічок (/api/news-bundle) ─────
+// Сервер (Firebase refreshNewsBundle) кожні 10 хв збирає по 3 новини з кожної
+// вбудованої стрічки й перекладає їх. Сайт робить 1 запит замість 10 і не перекладає сам.
+const NEWS_BUNDLE_CACHE_KEY = "news_bundle_cache";
+const NEWS_BUNDLE_TTL_MS = 10 * 60 * 1000; // на пристрої — не частіше, ніж сервер оновлює
+const NEWS_BUNDLE_MAX_AGE_MS = 60 * 60 * 1000; // сервер мовчить годину — набір застарів
+const NEWS_BUNDLE_OFFLINE_MS = 6 * 60 * 60 * 1000; // без мережі показуємо й старіший
+const NEWS_BUNDLE_TIMEOUT_MS = 6000;
+
+const fetchNewsBundle = async (signal) => {
+  const endpoints = import.meta.env.DEV
+    ? ["/api/news-bundle", "https://stuxia.com/api/news-bundle"]
+    : ["/api/news-bundle"];
+  for (const endpoint of endpoints) {
+    const timeout = new AbortController();
+    const timer = setTimeout(() => timeout.abort(), NEWS_BUNDLE_TIMEOUT_MS);
+    const onAbort = () => timeout.abort();
+    signal?.addEventListener("abort", onAbort);
+    try {
+      const res = await fetch(endpoint, { signal: timeout.signal });
+      if (!res.ok || !(res.headers.get("content-type") || "").includes("json")) continue;
+      const data = await res.json();
+      if (Array.isArray(data?.items) && data.items.length > 0) return data;
+    } catch (err) {
+      if (signal?.aborted) throw err;
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+    }
+  }
+  return null;
+};
+
+// Map(назва джерела → новини у форматі стрічки) або null, якщо набору немає.
+// Готові переклади кладемо в кеш news_trans_*, тож translateNewsItems не перекладає їх удруге.
+const loadNewsBundle = async ({ forceFresh = false, signal } = {}) => {
+  let cached = null;
+  try {
+    cached = await localforage.getItem(NEWS_BUNDLE_CACHE_KEY);
+  } catch {
+    // без кешу
+  }
+  let bundle = null;
+  if (!forceFresh && cached?.data && Date.now() - cached.savedAt < NEWS_BUNDLE_TTL_MS) {
+    bundle = cached.data;
+  } else {
+    try {
+      bundle = await fetchNewsBundle(signal);
+    } catch (err) {
+      if (err.name === "AbortError") throw err;
+    }
+    if (bundle) {
+      localforage
+        .setItem(NEWS_BUNDLE_CACHE_KEY, { savedAt: Date.now(), data: bundle })
+        .catch(() => {});
+    } else if (cached?.data && Date.now() - cached.savedAt < NEWS_BUNDLE_OFFLINE_MS) {
+      bundle = cached.data;
+    }
+  }
+  if (!bundle || Date.now() - (Number(bundle.updatedAt) || 0) > NEWS_BUNDLE_MAX_AGE_MS) {
+    return null;
+  }
+
+  const bySource = new Map();
+  for (const entry of bundle.items) {
+    const source = SOURCES.find((s) => s.name === entry?.sourceName);
+    if (!source || !entry.link || !entry.title) continue;
+    const image = typeof entry.image === "string" ? entry.image : "";
+    const item = {
+      title: entry.title,
+      link: entry.link,
+      description: entry.description || "",
+      content: "",
+      pubDate: entry.pubDate || "",
+      thumbnail: image,
+      displayImage: image || rainbow,
+      sourceName: source.name,
+      sourceFlag: source.flag,
+      sourceHome: source.home,
+      sourceUrl: source.url,
+    };
+    if (!bySource.has(source.name)) bySource.set(source.name, []);
+    bySource.get(source.name).push(item);
+
+    // Сервер не зміг перекласти (null) — сайт перекладе цю новину сам, як раніше
+    if (entry.titleUk && typeof entry.descriptionUk === "string") {
+      const key = `news_trans_${entry.link}`;
+      try {
+        if (!(await localforage.getItem(key))) {
+          await localforage.setItem(key, {
+            title: entry.titleUk,
+            description: `${entry.descriptionUk}...`,
+            link: entry.link,
+            displayImage: image || rainbow,
+            sourceName: source.name,
+            sourceFlag: source.flag,
+            sourceHome: source.home,
+            sourceUrl: source.url,
+            pubDate: entry.pubDate || "",
+          });
+        }
+      } catch {
+        // не вдалося — перекладемо на пристрої
+      }
+    }
+  }
+  return bySource;
+};
+
 // План А для RSS: rss2json прямо з браузера. Його ліміт рахується на IP користувача,
 // а не на наш Cloudflare. Самі сайти CORS не віддають, тож напряму читати їх не можна.
 const RSS2JSON_COOLDOWN_MS = 10 * 60 * 1000;
@@ -2816,7 +3026,12 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       // Старі збережені стрічки Facebook мовчки пропускаємо
       const allSources = [
         ...SOURCES,
-        ...savedCustom.filter((source) => !FACEBOOK_QUERY.test(source.url || "")),
+        // Власна стрічка, яка тепер є серед вбудованих, — не вантажимо двічі
+        ...savedCustom.filter(
+          (source) =>
+            !FACEBOOK_QUERY.test(source.url || "") &&
+            !SOURCES.some((builtIn) => builtIn.url === source.url),
+        ),
       ];
 
       // Отримуємо списки заблокованих
@@ -2986,7 +3201,17 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       const activeSources = allSources.filter(
         (source) => !bSourcesList.includes(source.url),
       );
-      const settled = await Promise.allSettled(activeSources.map(loadSourceCached));
+      // Вбудовані стрічки — одним готовим набором із сервера (уже перекладені);
+      // окремо вантажимо лише власні стрічки та вбудовані, яких у наборі немає
+      const bundleBySource = await loadNewsBundle({ forceFresh, signal });
+      const fromBundle = activeSources.filter(
+        (source) => SOURCES.includes(source) && bundleBySource?.get(source.name)?.length > 0,
+      );
+      fromBundle.forEach((source) => {
+        allItems = [...allItems, ...bundleBySource.get(source.name)];
+      });
+      const separateSources = activeSources.filter((source) => !fromBundle.includes(source));
+      const settled = await Promise.allSettled(separateSources.map(loadSourceCached));
       settled.forEach((result, i) => {
         if (result.status === "fulfilled") {
           allItems = [...allItems, ...result.value];
@@ -2994,9 +3219,9 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         }
         if (result.reason?.name === "AbortError") return;
         // Технічний текст (напр. "Failed to fetch") лишаємо лише в консолі
-        sourceErrors.push(activeSources[i].name);
+        sourceErrors.push(separateSources[i].name);
         console.warn(
-          `Не вдалося завантажити новини з ${activeSources[i].name}:`,
+          `Не вдалося завантажити новини з ${separateSources[i].name}:`,
           result.reason,
         );
       });
@@ -3200,8 +3425,36 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       .slice(0, NEWS_PER_SOURCE)
       .map(withMuted),
   }));
+  // Скільки новин у «Всі новини». Доки модалку не відкривали, решта ще в черзі (pending),
+  // тож рахуємо і її — по NEWS_PER_SOURCE максимум на джерело.
+  const moreNewsCount = moreGroups.reduce((sum, group) => {
+    if (moreNews.loaded) return sum + group.items.length;
+    const waiting = moreNews.pending.filter((i) => i.sourceName === group.sourceName).length;
+    return sum + Math.min(NEWS_PER_SOURCE, group.items.length + waiting);
+  }, 0);
   const isMoreNewsLoading =
     showMoreNews && !moreNews.loaded && moreNews.pending.length > 0;
+
+  // Поява карток у «Всі новини» по черзі: затримка — за порядком серед тих,
+  // яких ще не показували. Уже показані при підвантаженні решти не «стрибають» знову.
+  const shownMoreNewsRef = useRef(new Set());
+  const moreNewsAppearDelay = new Map();
+  moreGroups.forEach((group) =>
+    group.items.forEach((item) => {
+      if (!shownMoreNewsRef.current.has(item.link) && !moreNewsAppearDelay.has(item.link)) {
+        moreNewsAppearDelay.set(item.link, Math.min(moreNewsAppearDelay.size * 0.08, 1.6));
+      }
+    }),
+  );
+  useEffect(() => {
+    if (!showMoreNews) {
+      shownMoreNewsRef.current = new Set(); // наступне відкриття — знову з анімацією
+      return;
+    }
+    moreGroups.forEach((group) =>
+      group.items.forEach((item) => shownMoreNewsRef.current.add(item.link)),
+    );
+  });
 
   // Відкрили «Всі новини» — перекладаємо решту новин (з кешем, тож повторно це миттєво)
   useEffect(() => {
@@ -3684,18 +3937,12 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     <NewsDiv ref={newsSectionRef}>
       <Decoder $isStickyBgMode={isStickyBgMode} $isDarkMode={$isDarkMode}>
         <AihelpTitle $isDarkMode={$isDarkMode}>
-          <FilterBtn
+          <span
             ref={(el) => registerRef('newsHeader', el)}
-            $isDarkMode={$isDarkMode}
-            onClick={() =>
-              window.dispatchEvent(
-                new CustomEvent("stykhiia:open-settings", { detail: { tab: "siteSections" } }),
-              )
-            }
-            style={{ marginLeft: "5px", padding: "2px", fontSize: "15px", fontWeight: "600", background: "none"}}
+            style={{ marginLeft: "5px", padding: "2px", fontSize: "15px", fontWeight: "600" }}
           >
-            Натисніть для додавання стрічки новин
-          </FilterBtn>
+            Новини: України, світу, клімату!
+          </span>
         </AihelpTitle>
         <AnimatePresence>
           {isSettingsOpen && (
@@ -3753,7 +4000,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                     </span>
                   </FilterBtn>
                 ))}
-                {customSources.length < 5 && (
+                {customSources.length < getCustomFeedsLimit() && (
                   <FilterBtn
                     $isDarkMode={$isDarkMode}
                     onClick={() => setIsAddingSource(!isAddingSource)}
@@ -3905,9 +4152,28 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 </CarouselWrapper>
             </motion.div>
           </AnimatePresence>
-          <MoreNewsButton onClick={() => setShowMoreNews(true)}>
-            Всі новини
-          </MoreNewsButton>
+          <MoreNewsActions>
+            <MoreNewsButton
+              $secondary
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent("stykhiia:open-settings", { detail: { tab: "siteSections" } }),
+                )
+              }
+            >
+              <FiPlus aria-hidden="true" />
+              Додати стрічку
+            </MoreNewsButton>
+            <MoreNewsButton onClick={() => setShowMoreNews(true)}>
+              <FiList aria-hidden="true" />
+              Всі новини
+              {moreNewsCount > 0 && (
+                <MoreNewsCount aria-label={`${moreNewsCount} новин`}>
+                  {moreNewsCount}
+                </MoreNewsCount>
+              )}
+            </MoreNewsButton>
+          </MoreNewsActions>
           <FilteredNewsCounter $isDarkMode={$isDarkMode}>
             За сьогодні відфільтровано {filteredNewsCount} небажаних новин.
           </FilteredNewsCounter>
@@ -4027,8 +4293,17 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                       </MoreNewsSourceTitle>
                       <MoreNewsGrid>
                         {group.items.map((item) => (
-                          <NewsCard
+                          <MoreNewsAppear
                             key={item.link}
+                            initial={{ opacity: 0, y: 18, scale: 0.96, filter: "blur(4px)" }}
+                            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                            transition={{
+                              duration: 0.45,
+                              ease: [0.22, 1, 0.36, 1],
+                              delay: moreNewsAppearDelay.get(item.link) ?? 0,
+                            }}
+                          >
+                          <NewsCard
                             item={item}
                             $isDarkMode={$isDarkMode}
                             showImage={showImage}
@@ -4045,6 +4320,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                             muteSyncInfo={muteSyncInfo}
                             compact={isPhone}
                           />
+                          </MoreNewsAppear>
                         ))}
                       </MoreNewsGrid>
                     </MoreNewsSection>

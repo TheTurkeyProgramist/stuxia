@@ -290,7 +290,7 @@ const ROWS = [
   },
   {
     feature: "Власні джерела новин (RSS, YouTube, Telegram, Mastodon…)",
-    us: ["yes", "6 своїх джерел, у налаштуваннях — до 9"],
+    us: ["yes", "до 10 своїх джерел"],
     weather: ["no", "—"],
     news: ["part", "Залежить від сервісу"],
   },

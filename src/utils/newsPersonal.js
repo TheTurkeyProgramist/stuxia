@@ -30,9 +30,9 @@ const matchesWord = (text, word) => {
 
 // ───────────── Власні стрічки ─────────────
 
-// Ліміт фіксований: до 9 власних стрічок. Кожна стрічка — ще один запит при оновленні,
+// Ліміт фіксований: до 10 власних стрічок. Кожна стрічка — ще один запит при оновленні,
 // тому з 5-ї під полем додавання показуємо попередження про повільніше завантаження.
-export const CUSTOM_FEEDS_MAX = 9;
+export const CUSTOM_FEEDS_MAX = 10;
 export const CUSTOM_FEEDS_WARN_AT = 5;
 
 export const getCustomFeedsLimit = () => CUSTOM_FEEDS_MAX;
@@ -86,6 +86,40 @@ export const isUrgentNews = (item, words = getUrgentWords()) => {
  * Системне сповіщення про свіжі термінові новини (поки сайт або застосунок відкритий).
  * Про кожну новину — лише раз; за одну перевірку — не більше трьох.
  */
+const hasCyrillic = (s) => /[а-яіїєґ]/i.test(s || "");
+
+// Заголовок українською: Google, далі MyMemory; не вдалося — оригінал
+const ensureUkrainianTitle = async (title) => {
+  if (!title || hasCyrillic(title)) return title;
+  const attempts = [
+    async () => {
+      const res = await fetch(
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=uk&dt=t&q=${encodeURIComponent(title)}`,
+      );
+      if (!res.ok) return "";
+      const data = await res.json();
+      return (data?.[0] || []).map((s) => s?.[0] || "").join("");
+    },
+    async () => {
+      const res = await fetch(
+        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(title.slice(0, 480))}&langpair=en|uk`,
+      );
+      if (!res.ok) return "";
+      const data = await res.json();
+      return data?.responseData?.translatedText || "";
+    },
+  ];
+  for (const attempt of attempts) {
+    try {
+      const result = (await attempt()).trim();
+      if (hasCyrillic(result)) return result;
+    } catch {
+      // пробуємо наступний перекладач
+    }
+  }
+  return title;
+};
+
 export const notifyUrgentNews = async (items) => {
   if (!isUrgentNotifyEnabled()) return;
   if (typeof window === "undefined" || !("Notification" in window)) return;
@@ -107,7 +141,9 @@ export const notifyUrgentNews = async (items) => {
     // Пауза між сповіщеннями й ліміт на добу (Налаштування → Секції та новини)
     if (!(await canSendLocalAlert("news"))) break;
     try {
-      await showSystemNotification(`Терміново: ${item.title}`.slice(0, 120), {
+      // Переклад новини міг не вдатися — тоді перекладаємо хоча б заголовок сповіщення
+      const title = await ensureUkrainianTitle(item.title);
+      await showSystemNotification(`Терміново: ${title}`.slice(0, 120), {
         body: item.sourceName || "Стихія",
         tag: `urgent-${item.link}`,
         url: item.link,

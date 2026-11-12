@@ -4,6 +4,11 @@ const FEEDS = {
   nature: "https://www.nature.com/nature.rss",
   mongabay: "https://news.mongabay.com/feed/",
   "guardian-environment": "https://www.theguardian.com/environment/rss",
+  "nasa-earth-observatory": "https://science.nasa.gov/feed/?science_org=19791%2C22453",
+  "bbc-science-environment": "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+  "new-scientist-environment": "https://www.newscientist.com/subject/environment/feed/",
+  "carbon-brief": "https://www.carbonbrief.org/feed/",
+  grist: "https://grist.org/feed/",
 };
 const MAX_ITEMS_PER_FEED = 10;
 
