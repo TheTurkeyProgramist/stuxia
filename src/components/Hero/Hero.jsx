@@ -2111,7 +2111,7 @@ const Hero = ({
                     aria-label="Змінити часовий пояс?"
                     $isDarkMode={isDarkMode}
                   >
-                    <MdSettingsSuggest size={18} /> Змінити часовий пояс?
+                    <MdSettingsSuggest size={18} /> Змінити часов. пояс?
                   </TimezoneButton>
                 </HeroControls>
                 <Tag $isDarkMode={isDarkMode} style={{ flex: 1, textAlign: "right" }}>

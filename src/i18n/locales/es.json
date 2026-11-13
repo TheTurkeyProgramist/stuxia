@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Pizarra en línea",
       "saveEcoBotSubtitle": "Calidad del aire",
       "airTrafficTitle": "Radar aéreo",
-      "deepStateSubtitle": "Mapa de eventos en Ucrania"
+      "deepStateSubtitle": "Mapa de eventos en Ucrania",
+      "rainViewerSubtitle": "Radar de precipitaciones",
+      "blitzortungSubtitle": "Mapa de rayos"
     },
     "options": {
       "alerts": "Mapa de alertas de Ucrania (alerts.in.ua)",

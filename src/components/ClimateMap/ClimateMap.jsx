@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import styled, { keyframes, css } from "styled-components";
-import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket } from "react-icons/fa";
+import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaCloudRain, FaBolt } from "react-icons/fa";
 import { FiCheck, FiPlay, FiPlus, FiSearch, FiX } from "react-icons/fi";
 import { Tooltip } from "../Header/Header.jsx";
 import { MdDragIndicator } from "react-icons/md";
@@ -901,7 +901,7 @@ const MapLayout = styled.div`
   gap: 5px;
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 0 auto 30px;
 
   & > ${MapWrapper} {
     margin: 0;
@@ -1299,6 +1299,8 @@ const BUILTIN_SOURCES = [
   { id: "saveecobot", title: "SaveEcoBot", subtitleKey: "climateMap.sources.saveEcoBotSubtitle", Icon: FaLeaf, bg: "linear-gradient(135deg, #0f6b5f, #7cbf1e)", cover: coverSaveEcoBot },
   { id: "airtraffic", titleKey: "climateMap.sources.airTrafficTitle", subtitle: "TheAirTraffic (ADS-B)", Icon: FaPlane, bg: "linear-gradient(135deg, #0b2545, #d98a0b)", cover: coverAirTraffic },
   { id: "deepstate", title: "DeepState", subtitleKey: "climateMap.sources.deepStateSubtitle", Icon: FaMapMarkedAlt, bg: "linear-gradient(135deg, #1b2a3a, #3d6b4f)", cover: coverDeepState },
+  { id: "rainviewer", title: "RainViewer", subtitleKey: "climateMap.sources.rainViewerSubtitle", Icon: FaCloudRain, bg: "linear-gradient(135deg, #0a3d62, #3c9ee8)" },
+  { id: "blitzortung", title: "Blitzortung", subtitleKey: "climateMap.sources.blitzortungSubtitle", Icon: FaBolt, bg: "linear-gradient(135deg, #1a1446, #e0b100)" },
 ];
 
 const BUILTIN_PROVIDERS = BUILTIN_SOURCES.map((s) => s.id);
@@ -2205,6 +2207,14 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
     if (provider === "deepstate") {
       return "https://deepstatemap.live/";
+    }
+
+    if (provider === "rainviewer") {
+      return `https://www.rainviewer.com/map.html?loc=${lat},${lon},${zoom}&oFa=0&oC=1&oU=0&oCS=1&oF=0&oAP=1&c=3&o=83&lm=1&layer=radar&sm=1&sn=1`;
+    }
+
+    if (provider === "blitzortung") {
+      return `https://map.blitzortung.org/#${zoom}/${lat}/${lon}`;
     }
 
     const foundFrame = customFrames.find((f) => f.id === provider);

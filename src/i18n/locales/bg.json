@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Онлайн дъска",
       "saveEcoBotSubtitle": "Качество на въздуха",
       "airTrafficTitle": "Авиорадар",
-      "deepStateSubtitle": "Карта на събитията в Украйна"
+      "deepStateSubtitle": "Карта на събитията в Украйна",
+      "rainViewerSubtitle": "Радар за валежи",
+      "blitzortungSubtitle": "Карта на мълниите"
     },
     "options": {
       "alerts": "Карта на тревогите в Украйна (alerts.in.ua)",

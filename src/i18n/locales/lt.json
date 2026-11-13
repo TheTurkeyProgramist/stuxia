@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Internetinė lenta",
       "saveEcoBotSubtitle": "Oro kokybė",
       "airTrafficTitle": "Skrydžių radaras",
-      "deepStateSubtitle": "Įvykių Ukrainoje žemėlapis"
+      "deepStateSubtitle": "Įvykių Ukrainoje žemėlapis",
+      "rainViewerSubtitle": "Kritulių radaras",
+      "blitzortungSubtitle": "Žaibų žemėlapis"
     },
     "options": {
       "alerts": "Ukrainos pavojų žemėlapis (alerts.in.ua)",

@@ -125,6 +125,20 @@ const FOG_LINES = [
   { y: 21.5, x1: 4, x2: 17, cls: "driftA" },
 ];
 
+// У скільки разів збільшити малюнок кожного типу, щоб він заповнював іконку
+const KIND_SCALE = {
+  drizzle: 1.3,
+  rain: 1.3,
+  showers: 1.3,
+  sleet: 1.3,
+  snow: 1.3,
+  fog: 1.2,
+  clear: 1.15,
+  overcast: 1.15,
+  partly: 1.1,
+  thunder: 1,
+};
+
 // Код WMO -> тип іконки.
 export const getWeatherKind = (code) => {
   if (code === 0) return "clear";
@@ -267,9 +281,16 @@ export const WeatherIcon = ({ item, code, isDay }) => {
       );
   }
 
+  // Малюнок займає лише частину квадрата 24×24 (хмара для опадів — 75%), тож поруч
+  // зі звичайними іконками виглядав дрібним. Збільшуємо від центру, скільки дозволяє
+  // кожен тип: промені сонця й блискавка не мають вилазити за край
+  const scale = KIND_SCALE[kind] ?? 1;
+
   return (
     <Svg width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true">
-      {body}
+      {scale === 1 ? body : (
+        <g transform={`translate(12 12) scale(${scale}) translate(-12 -12)`}>{body}</g>
+      )}
     </Svg>
   );
 };

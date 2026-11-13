@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "تختهٔ آنلاین",
       "saveEcoBotSubtitle": "کیفیت هوا",
       "airTrafficTitle": "رادار پرواز",
-      "deepStateSubtitle": "نقشهٔ رویدادهای اوکراین"
+      "deepStateSubtitle": "نقشهٔ رویدادهای اوکراین",
+      "rainViewerSubtitle": "رادار بارش",
+      "blitzortungSubtitle": "نقشه صاعقه"
     },
     "options": {
       "alerts": "نقشهٔ هشدارهای اوکراین (alerts.in.ua)",

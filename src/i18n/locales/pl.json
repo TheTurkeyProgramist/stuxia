@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Tablica online",
       "saveEcoBotSubtitle": "Jakość powietrza",
       "airTrafficTitle": "Radar lotniczy",
-      "deepStateSubtitle": "Mapa wydarzeń w Ukrainie"
+      "deepStateSubtitle": "Mapa wydarzeń w Ukrainie",
+      "rainViewerSubtitle": "Radar opadów",
+      "blitzortungSubtitle": "Mapa wyładowań"
     },
     "options": {
       "alerts": "Mapa alarmów w Ukrainie (alerts.in.ua)",

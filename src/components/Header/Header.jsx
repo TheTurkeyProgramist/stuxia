@@ -123,7 +123,7 @@ const IconButton = styled.button`
   align-items: center;
   height: 26px;
   justify-content: center;
-  padding: 4px 20%;
+  padding: 4px 25%;
   border-radius: 6px;
   flex-shrink: 0;
   transition: outline 0.15s ease, transform 0.15s ease;
@@ -137,36 +137,6 @@ const IconButton = styled.button`
 const EmojiWrapper = styled.span`
   display: inline-block;
   font-size: 21px;
-`;
-
-const UserName = styled.span`
-  font-size: 12px;
-  font-weight: 900;
-  max-width: 78%;
-  white-space: nowrap;
-  text-shadow: 
-    -1px -1px 0 #080808,  
-     1px -1px 0 #080808,
-    -1px  1px 0 #080808,
-     1px  1px 0 #080808;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin: 0 3px;
-  flex-shrink: 2;
-
-  ${(props) => {
-    if (props.$uColor?.includes("linear")) {
-      return css`
-        background: ${props.$uColor};
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        background-size: 400% 400%;
-        animation: ${flow} 5s ease infinite;
-      `;
-    }
-    return `color: ${props.$uColor || "inherit"};`;
-  }}
 `;
 
 const HeaderAvatar = styled.img`

@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Lavagna online",
       "saveEcoBotSubtitle": "Qualità dell'aria",
       "airTrafficTitle": "Radar aereo",
-      "deepStateSubtitle": "Mappa degli eventi in Ucraina"
+      "deepStateSubtitle": "Mappa degli eventi in Ucraina",
+      "rainViewerSubtitle": "Radar delle precipitazioni",
+      "blitzortungSubtitle": "Mappa dei fulmini"
     },
     "options": {
       "alerts": "Mappa delle allerte in Ucraina (alerts.in.ua)",

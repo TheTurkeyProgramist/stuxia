@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Online tábla",
       "saveEcoBotSubtitle": "Levegőminőség",
       "airTrafficTitle": "Légiforgalmi radar",
-      "deepStateSubtitle": "Ukrajnai események térképe"
+      "deepStateSubtitle": "Ukrajnai események térképe",
+      "rainViewerSubtitle": "Csapadékradar",
+      "blitzortungSubtitle": "Villámtérkép"
     },
     "options": {
       "alerts": "Ukrajna riasztási térképe (alerts.in.ua)",

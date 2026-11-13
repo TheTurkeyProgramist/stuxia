@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Анлайн-дошка",
       "saveEcoBotSubtitle": "Якасць паветра",
       "airTrafficTitle": "Авіярадар",
-      "deepStateSubtitle": "Мапа падзей ва Украіне"
+      "deepStateSubtitle": "Мапа падзей ва Украіне",
+      "rainViewerSubtitle": "Радар ападкаў",
+      "blitzortungSubtitle": "Карта маланак"
     },
     "options": {
       "alerts": "Мапа трывог Украіны (alerts.in.ua)",

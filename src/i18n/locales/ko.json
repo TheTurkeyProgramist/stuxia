@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "온라인 화이트보드",
       "saveEcoBotSubtitle": "대기질",
       "airTrafficTitle": "항공 레이더",
-      "deepStateSubtitle": "우크라이나 사건 지도"
+      "deepStateSubtitle": "우크라이나 사건 지도",
+      "rainViewerSubtitle": "강수 레이더",
+      "blitzortungSubtitle": "낙뢰 지도"
     },
     "options": {
       "alerts": "우크라이나 경보 지도 (alerts.in.ua)",

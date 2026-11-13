@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Online-Whiteboard",
       "saveEcoBotSubtitle": "Luftqualität",
       "airTrafficTitle": "Flugradar",
-      "deepStateSubtitle": "Ereigniskarte der Ukraine"
+      "deepStateSubtitle": "Ereigniskarte der Ukraine",
+      "rainViewerSubtitle": "Niederschlagsradar",
+      "blitzortungSubtitle": "Blitzkarte"
     },
     "options": {
       "alerts": "Luftalarmkarte der Ukraine (alerts.in.ua)",

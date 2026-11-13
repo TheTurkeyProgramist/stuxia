@@ -30,6 +30,8 @@ import { GiSnowing } from "react-icons/gi";
 import Loader from "./components/Loader/Loader.jsx";
 import WeatherCardComponent, {
   AihelpTitle,
+  CARD_BG_CHANGE_EVENT,
+  DEFAULT_CARD_BG,
 } from "./components/Weather/Weather.jsx";
 import Maintenance from "./components/Maintenance.jsx";
 import { getMaintenanceStatus, loadFirebase } from "./firebaseLazy.js";
@@ -101,10 +103,17 @@ import {
   usedTodayFromCloud,
   writeWithDailyCounter,
 } from "./utils/cloudCounter";
-import { createPortal } from "react-dom";
 import { MotionConfig, Reorder, useDragControls } from "framer-motion";
 import { useAnimationsDisabled, setAnimationsDisabled } from "./utils/animationsPref";
-import { useBeta, setBetaOn } from "./utils/betaFeatures";
+import {
+  useBeta,
+  setBetaOn,
+  usePrefValue,
+  togglePrefFlag,
+  CITY_SIDEBAR_HIDDEN_KEY,
+  CAROUSEL_ARROWS_HIDDEN_KEY,
+  CAROUSEL_NUMBERS_HIDDEN_KEY,
+} from "./utils/betaFeatures";
 import GpsCardReturnDialog from "./components/Weather/GpsCardReturnDialog.jsx";
 import { aggregateHourlyByDay } from "./utils/dailyAggregates";
 import { buildConsensusUrl, blendWithConsensus } from "./utils/weatherConsensus";
@@ -411,7 +420,12 @@ const WeatherCardsContainer = styled.div`
   }
 `;
 
-/* Номери карток стоять під картками, а не поверх них */
+/* Плавне зникнення/поява стрілок і номерів, коли їх вимикають у налаштуваннях */
+const CAROUSEL_TOGGLE_TRANSITION = "0.3s ease";
+
+/* Номери карток: на телефоні — під картками; на планшеті/ПК ($inCard) — у нижній смузі
+   картки, під її основною частиною (координати з коду). Проміжки між кнопками кліки не ловлять.
+   $hidden — вимкнені в налаштуваннях: плавно тануть і зсуваються вниз */
 const CarouselNav = styled.div`
   position: relative;
   display: flex;
@@ -420,6 +434,47 @@ const CarouselNav = styled.div`
   flex-wrap: wrap;
   z-index: 9000;
   margin-top: 8px;
+  max-height: 200px;
+  overflow: hidden;
+  transition:
+    opacity ${CAROUSEL_TOGGLE_TRANSITION},
+    transform ${CAROUSEL_TOGGLE_TRANSITION},
+    max-height ${CAROUSEL_TOGGLE_TRANSITION},
+    margin-top ${CAROUSEL_TOGGLE_TRANSITION},
+    visibility ${CAROUSEL_TOGGLE_TRANSITION};
+
+  ${(props) =>
+    props.$hidden &&
+    css`
+      opacity: 0;
+      visibility: hidden;
+      max-height: 0;
+      margin-top: 0;
+      pointer-events: none;
+    `}
+
+  ${(props) =>
+    props.$inCard &&
+    css`
+      position: absolute;
+      margin: 0;
+      max-height: none;
+      overflow: visible;
+      padding: 0 10px;
+      box-sizing: border-box;
+      transform: translateY(${props.$hidden ? "calc(-50% + 12px)" : "-50%"});
+      pointer-events: none;
+
+      & > button {
+        pointer-events: ${props.$hidden ? "none" : "auto"};
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      }
+    `}
+
+  ${(props) => props.$noAnim && "transition: none;"}
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 const CarouselSideButton = styled.button`
   position: absolute;
@@ -445,7 +500,26 @@ const CarouselSideButton = styled.button`
   cursor: pointer;
   transform: translateY(-50%);
   box-shadow: 0 0 12px rgba(0, 255, 229, 0.3);
-  transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    opacity ${CAROUSEL_TOGGLE_TRANSITION},
+    visibility ${CAROUSEL_TOGGLE_TRANSITION};
+
+  /* Вимкнені в налаштуваннях — плавно тануть (transform зайнятий левітацією, тож лише прозорість) */
+  ${(props) =>
+    props.$hidden &&
+    css`
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    `}
+  ${(props) =>
+    props.$noAnim && "transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;"}
+  @media (prefers-reduced-motion: reduce) {
+    transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
 
   /* Підключення анімації левітації */
   animation: ${levitate} 3s ease-in-out infinite;
@@ -683,13 +757,15 @@ const ReorderRow = ({ item, index, isDarkMode, onDragEnd }) => {
   );
 };
 
-/* Ряд «пошук міст + перемикач анімацій + заголовок Погода» над картками.
-   На телефоні пошук лишається окремим рядком у каруселі, з 768px — переїжджає сюди (порталом) */
+/* Ряд «перемикач анімацій + заголовок Погода» над картками.
+   З 768px пошук міст — бокова панель зліва від карток, на телефоні — випадаючий список над ними */
 const WIDE_WEATHER_ROW_QUERY = "(min-width: 768px)";
 
+/* z-index: над каруселлю (1800), але під фіксованою шапкою сайту (1900),
+   інакше при прокрутці «Анімації» й «Погода» налазять на шапку */
 const WeatherTitleRow = styled.div`
   position: relative;
-  z-index: 1900;
+  z-index: 1850;
   display: flex;
   justify-content: flex-end;
   align-items: stretch;
@@ -698,19 +774,6 @@ const WeatherTitleRow = styled.div`
   & > * {
     margin-left: 0 !important;
     margin-bottom: 0 !important;
-  }
-`;
-
-/* Слот під пошук міст: займає вільне місце ліворуч; порожній — не заважає */
-const CityJumpSlot = styled.div`
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-
-  & > div {
-    margin: 0;
-    width: min(420px, 100%);
   }
 `;
 
@@ -930,11 +993,290 @@ const CityJumpEmpty = styled.div`
   color: ${(props) => (props.$isDarkMode ? "#e6fffc" : "#111")};
 `;
 
+/* Бокова панель міст зліва від карток: планшет — вузька (120px), ПК — ширша.
+   На телефоні замість неї лишається випадаючий список над картками */
+const CITY_SIDEBAR_DESKTOP_MEDIA = "@media (min-width: 1200px)";
+
+const WeatherCarouselLayout = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+`;
+
+/* Колонка з картками; від неї рахуються стрілки ◀ ▶ і позиції карток при прокрутці */
+const CarouselMain = styled.div`
+  position: relative;
+  flex: 1;
+  min-width: 0;
+`;
+
+const CITY_SIDEBAR_TRANSITION = "0.35s cubic-bezier(0.4, 0, 0.2, 1)";
+
+/* Обгортка панелі: її ширина плавно їде 120/210px ↔ 0, і картки так само плавно
+   розширюються/звужуються. Від'ємний відступ «з'їдає» проміжок між панеллю й картками.
+   overflow: clip з запасом — щоб не обрізати світіння рамки панелі */
+const CitySidebarShell = styled.div`
+  flex: 0 0 ${(props) => (props.$collapsed ? "0px" : "120px")};
+  min-width: 0;
+  margin-right: ${(props) => (props.$collapsed ? "-8px" : "0px")};
+  overflow: hidden;
+  overflow: clip;
+  overflow-clip-margin: 12px;
+  transition:
+    flex-basis ${CITY_SIDEBAR_TRANSITION},
+    margin-right ${CITY_SIDEBAR_TRANSITION};
+
+  ${CITY_SIDEBAR_DESKTOP_MEDIA} {
+    flex-basis: ${(props) => (props.$collapsed ? "0px" : "210px")};
+  }
+
+  ${(props) => props.$noAnim && "transition: none;"}
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+/* Панель стоїть на місці (не їде за прокруткою); верх і висота — точно як у рамки
+   поточної картки (задаються з коду), зайві міста прокручуються всередині.
+   Ширина фіксована — під час згортання панель не стискається, а виїжджає вліво й тьмяніє */
+const CitySidebar = styled.aside`
+  width: 120px;
+  box-sizing: border-box;
+  max-height: min(520px, 75vh);
+  opacity: ${(props) => (props.$collapsed ? 0 : 1)};
+  transform: translateX(${(props) => (props.$collapsed ? "-24px" : "0")});
+  transition:
+    opacity ${CITY_SIDEBAR_TRANSITION},
+    transform ${CITY_SIDEBAR_TRANSITION};
+  ${(props) => props.$noAnim && "transition: none;"}
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 10px;
+  border: 2px solid #00ffe5;
+  background: ${(props) => (props.$isDarkMode ? "rgba(0, 0, 0, 0.93)" : "#fff")};
+  color: ${(props) => (props.$isDarkMode ? "#00ffe5" : "#006b61")};
+  box-shadow: 0 0 10px rgba(0, 255, 229, 0.25);
+  z-index: 9500;
+
+  ${CityJumpInput} {
+    margin: 0;
+    padding: 5px 6px;
+    font-size: 12px;
+  }
+
+  ${ReorderRowItem} {
+    gap: 4px;
+    padding: 4px;
+    font-size: 12px;
+  }
+
+  ${DragHandle} {
+    width: 22px;
+    height: 22px;
+  }
+
+  ${CITY_SIDEBAR_DESKTOP_MEDIA} {
+    width: 210px;
+    padding: 8px;
+
+    ${CityJumpInput} {
+      padding: 7px 10px;
+      font-size: 14px;
+    }
+
+    ${ReorderRowItem} {
+      gap: 8px;
+      padding: 6px 8px;
+      font-size: 14px;
+    }
+
+    ${DragHandle} {
+      width: 28px;
+      height: 28px;
+    }
+  }
+`;
+
+const CitySidebarHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: bold;
+
+  & > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  ${CITY_SIDEBAR_DESKTOP_MEDIA} {
+    font-size: 14px;
+  }
+`;
+
+const CitySidebarIconButton = styled.button`
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1.5px solid #00ffe5;
+  background: ${(props) => (props.$active ? "#00ffe5" : "transparent")};
+  color: ${(props) => (props.$active ? "#000" : "inherit")};
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: 0 0 10px rgba(0, 255, 229, 0.5);
+  }
+`;
+
+/* Низ панелі: перемикачі стрілок ◀ ▶ і номерів 1, 2, 3… */
+const CitySidebarFooter = styled.div`
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+
+  & > button {
+    flex: 1;
+    width: auto;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: -0.5px;
+  }
+
+  ${CITY_SIDEBAR_DESKTOP_MEDIA} {
+    gap: 6px;
+
+    & > button {
+      font-size: 13px;
+    }
+  }
+`;
+
+/* Список міст у панелі: тягнеться на всю доступну висоту, прокручується сам */
+const CitySidebarList = styled(CityJumpList)`
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+`;
+
+/* Місто в панелі — плитка з фото фону цієї картки (як «Годинна» / «Прогноз на 16 днів») */
+const CitySidebarTile = styled.button`
+  width: 100%;
+  min-height: 52px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 1px;
+  margin-bottom: 6px;
+  padding: 6px;
+  border-radius: 8px;
+  border: 2px solid ${(props) => (props.$active ? "#fc7a00" : "rgba(0, 255, 229, 0.35)")};
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.8)),
+    ${(props) => (props.$bg ? `url("${props.$bg}") center/cover no-repeat,` : "")}
+    #111;
+  box-shadow: ${(props) => (props.$active ? "0 0 12px rgba(252, 122, 0, 0.6)" : "none")};
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: ${(props) => (props.$active ? "#fdd9b6" : "#00ffe5")};
+    box-shadow: 0 0 10px rgba(0, 255, 229, 0.45);
+  }
+
+  ${CITY_SIDEBAR_DESKTOP_MEDIA} {
+    min-height: 68px;
+    padding: 8px 10px;
+  }
+`;
+
+const CitySidebarTileName = styled.span`
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+
+  ${CITY_SIDEBAR_DESKTOP_MEDIA} {
+    font-size: 15px;
+  }
+`;
+
+/* Країна під назвою: на вузькій планшетній панелі ховаємо, щоб не тіснило */
+const CitySidebarTileSub = styled.span`
+  display: none;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  opacity: 0.85;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+
+  ${CITY_SIDEBAR_DESKTOP_MEDIA} {
+    display: block;
+  }
+`;
+
+const sidebarReorderGroupStyle = {
+  position: "relative",
+  flex: 1,
+  minHeight: 0,
+  margin: 0,
+  padding: 0,
+  overflowY: "auto",
+};
+
+// Два місця ближче за це (км) вважаємо одним містом — щоб не було однакових карток
+const DUPLICATE_CITY_RADIUS_KM = 3;
+
+/** Власна картка (не GPS) з тими самими координатами, або null. */
+const findDuplicateCityCard = (cards, lat, lon) => {
+  const latNum = Number(lat);
+  const lonNum = Number(lon);
+  if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return null;
+  const kmPerDegLon = 111.32 * Math.cos((latNum * Math.PI) / 180);
+  return (
+    cards.find((card) => {
+      if (card.isMain) return false;
+      const cardLat = Number(card.lat);
+      const cardLon = Number(card.lon);
+      if (!Number.isFinite(cardLat) || !Number.isFinite(cardLon)) return false;
+      const dy = (cardLat - latNum) * 110.57;
+      const dx = (cardLon - lonNum) * kmPerDegLon;
+      return Math.hypot(dx, dy) < DUPLICATE_CITY_RADIUS_KM;
+    }) || null
+  );
+};
+
 // Скільки карток ліворуч і праворуч від видимої тримати змонтованими
 const CAROUSEL_MOUNT_RADIUS = 1;
 
-const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkMode, jumpSlot }) => {
+const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkMode }) => {
+  // З 768px (планшет/ПК) пошук міст — бокова панель зліва, на телефоні — випадаючий список
   const isWideRow = useMediaQuery(WIDE_WEATHER_ROW_QUERY);
+  const [isSidebarReorder, setIsSidebarReorder] = useState(false);
+  const sidebarListRef = useRef(null);
   const scrollRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [cityQuery, setCityQuery] = useState("");
@@ -956,7 +1298,10 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
 
   // Бету вимкнули, поки список був відкритий
   useEffect(() => {
-    if (!onReorder) setIsReorderOpen(false);
+    if (!onReorder) {
+      setIsReorderOpen(false);
+      setIsSidebarReorder(false);
+    }
   }, [onReorder]);
 
   useEffect(() => {
@@ -1080,13 +1425,15 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
             type="button"
             $isDarkMode={isDarkMode}
             aria-expanded={isCityJumpOpen}
+            title="Знайти серед створених карток міст"
             onClick={() => {
               setIsReorderOpen(false);
               setIsCityJumpOpen((open) => !open);
             }}
           >
             <FaMagnifyingGlass aria-hidden="true" />
-            <span>Натисніть, щоб знайти створене місто</span>
+            {/* Коротко, щоб влазило на вузькому телефоні; повне пояснення — у підказці */}
+            <span>Знайти місто ({childCount})</span>
             <span aria-hidden="true">{isCityJumpOpen ? "▲" : "▼"}</span>
           </CityJumpToggle>
           {onReorder && (
@@ -1169,10 +1516,253 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
         </CityJumpWrapper>
       );
 
+  // Сховати/показати — плитка «Сховати панель» у меню картки.
+  // Схована панель лишається в розмітці згорнутою (ширина 0) — так згортання й розгортання плавні
+  const isCitySidebarHidden = usePrefValue(CITY_SIDEBAR_HIDDEN_KEY, "false") === "true";
+  const hasCitySidebar = isWideRow && childCount > 1;
+  const animationsDisabled = useAnimationsDisabled();
+
+  // Після згортання/розгортання ширина карток змінилась — ставимо поточну точно на місце
+  const handleSidebarTransitionEnd = (e) => {
+    if (e.target !== e.currentTarget || e.propertyName !== "flex-basis") return;
+    const container = scrollRef.current;
+    const card = container?.children[activeIndex];
+    if (card) container.scrollTo({ left: card.offsetLeft, behavior: "auto" });
+  };
+
+  // Планшет/ПК: міряємо рамку поточної картки — по ній панель міст бере верх і висоту,
+  // а номери 1, 2, 3… стають у низ основної частини картки (не під карткою).
+  // ResizeObserver — бо висота картки міняється (вкладки, графік, завантаження)
+  const [sidebarBox, setSidebarBox] = useState(null);
+  useEffect(() => {
+    if (!isWideRow || childCount < 2) return undefined;
+    const container = scrollRef.current;
+    const slide = container?.children[activeIndex];
+    const card = slide?.querySelector("[data-weather-card]") || slide;
+    if (!container || !card) return undefined;
+    const measure = () => {
+      const containerRect = container.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      if (cardRect.height <= 0) return;
+      const main = card.querySelector("[data-weather-card-main]");
+      const mainRect = main?.getBoundingClientRect();
+      // Ліво рахуємо від картки, а не від екрана: під час гортання картка ще їде,
+      // а на місці вона завжди стоїть біля лівого відступу контейнера
+      const paddingLeft = parseFloat(getComputedStyle(container).paddingLeft) || 0;
+      const next = {
+        top: Math.max(0, Math.round(cardRect.top - containerRect.top)),
+        height: Math.round(cardRect.height),
+        mainLeft: Math.round(paddingLeft + (mainRect ? mainRect.left - cardRect.left : 0)),
+        mainWidth: Math.round(mainRect ? mainRect.width : cardRect.width),
+        mainBottom: Math.round((mainRect || cardRect).bottom - containerRect.top),
+        cardBottom: Math.round(cardRect.bottom - containerRect.top),
+      };
+      setSidebarBox((prev) =>
+        prev && Object.keys(next).every((key) => prev[key] === next[key]) ? prev : next,
+      );
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(measure);
+    observer.observe(card);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [isWideRow, activeIndex, childCount]);
+
+  // Окремо вимикаються в «Налаштування» картки та в панелі міст
+  const showArrows = usePrefValue(CAROUSEL_ARROWS_HIDDEN_KEY, "false") !== "true";
+  const showNumbers = usePrefValue(CAROUSEL_NUMBERS_HIDDEN_KEY, "false") !== "true";
+  const numbersInCard = isWideRow && !!sidebarBox;
+  // Номери — по центру смуги між основною частиною картки й її нижньою рамкою.
+  // Якщо смуга вужча за кнопки (30px + запас) — притискаємо до низу основної частини
+  const NUMBER_BUTTON_ROOM = 38;
+  const numbersCenterY = numbersInCard
+    ? sidebarBox.cardBottom - sidebarBox.mainBottom >= NUMBER_BUTTON_ROOM
+      ? (sidebarBox.mainBottom + sidebarBox.cardBottom) / 2
+      : sidebarBox.mainBottom - NUMBER_BUTTON_ROOM / 2
+    : 0;
+
+  // Фото для плиток панелі — той самий фон, що обрано для кожної картки
+  const [cardBgs, setCardBgs] = useState({});
+  useEffect(() => {
+    if (!hasCitySidebar) return undefined;
+    let cancelled = false;
+    Promise.all(
+      items.map((item) =>
+        localforage
+          .getItem(`bgMode_${item.id}`)
+          .then((src) => [item.id, src])
+          .catch(() => [item.id, null]),
+      ),
+    ).then((entries) => {
+      if (cancelled) return;
+      setCardBgs(Object.fromEntries(entries.filter(([, src]) => src && src !== "wiki")));
+    });
+    return () => {
+      cancelled = true;
+    };
+    // Перечитуємо, коли змінився склад карток або панель щойно з'явилась
+  }, [itemsKey, hasCitySidebar]);
+
+  useEffect(() => {
+    const handleBgChange = (e) => {
+      const { id, src } = e.detail || {};
+      if (id != null) setCardBgs((prev) => ({ ...prev, [id]: src }));
+    };
+    window.addEventListener(CARD_BG_CHANGE_EVENT, handleBgChange);
+    return () => window.removeEventListener(CARD_BG_CHANGE_EVENT, handleBgChange);
+  }, []);
+
+  // Поточне місто в панелі завжди видно: підкручуємо лише сам список, а не сторінку
+  useEffect(() => {
+    const list = sidebarListRef.current;
+    if (!list) return;
+    const activeItem = list.querySelector('[data-active="true"]');
+    if (!activeItem) return;
+    const itemTop = activeItem.offsetTop;
+    const itemBottom = itemTop + activeItem.offsetHeight;
+    if (itemTop < list.scrollTop) {
+      list.scrollTop = itemTop;
+    } else if (itemBottom > list.scrollTop + list.clientHeight) {
+      list.scrollTop = itemBottom - list.clientHeight;
+    }
+  }, [activeIndex, hasCitySidebar, isSidebarReorder]);
+
+  const citySidebar = hasCitySidebar && (
+    <CitySidebarShell
+      $collapsed={isCitySidebarHidden}
+      $noAnim={animationsDisabled}
+      style={sidebarBox ? { marginTop: sidebarBox.top, height: sidebarBox.height } : undefined}
+      onTransitionEnd={handleSidebarTransitionEnd}
+      inert={isCitySidebarHidden}
+      aria-hidden={isCitySidebarHidden || undefined}
+    >
+    <CitySidebar
+      $isDarkMode={isDarkMode}
+      $collapsed={isCitySidebarHidden}
+      $noAnim={animationsDisabled}
+      aria-label="Мої міста"
+      style={sidebarBox ? { height: "100%", maxHeight: "none" } : undefined}
+    >
+      <CitySidebarHeader>
+        <span title={`Мої міста: ${childCount}`}>Міста ({childCount})</span>
+        {onReorder && (
+          <CitySidebarIconButton
+            type="button"
+            $active={isSidebarReorder}
+            aria-pressed={isSidebarReorder}
+            title="Змінити порядок карток (бета)"
+            aria-label="Змінити порядок карток (бета)"
+            onClick={() => setIsSidebarReorder((on) => !on)}
+          >
+            <FaArrowsUpDown aria-hidden="true" />
+          </CitySidebarIconButton>
+        )}
+      </CitySidebarHeader>
+      {isSidebarReorder && onReorder ? (
+        <>
+          <ReorderHint $isDarkMode={isDarkMode}>Тягніть за ⠿ (бета)</ReorderHint>
+          <Reorder.Group
+            as="ul"
+            axis="y"
+            values={reorderIds}
+            onReorder={handleReorderPreview}
+            layoutScroll
+            style={sidebarReorderGroupStyle}
+          >
+            {reorderIds.map((id, index) =>
+              reorderLabelById[id] ? (
+                <ReorderRow
+                  key={id}
+                  item={reorderLabelById[id]}
+                  index={index}
+                  isDarkMode={isDarkMode}
+                  onDragEnd={commitReorder}
+                />
+              ) : null,
+            )}
+          </Reorder.Group>
+        </>
+      ) : (
+        <>
+          <CityJumpInput
+            type="search"
+            $isDarkMode={isDarkMode}
+            value={cityQuery}
+            placeholder="Пошук..."
+            aria-label="Пошук серед створених карток"
+            onChange={(e) => setCityQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && matchingCities.length > 0) {
+                jumpTo(matchingCities[0].index);
+              }
+            }}
+          />
+          <CitySidebarList ref={sidebarListRef}>
+            {matchingCities.map(({ label, index }) => {
+              const isActive = index === activeIndex;
+              const [cityName, ...rest] = label.split(",");
+              const cityRest = rest.join(",").trim();
+              const cardId = items[index]?.id;
+              return (
+                <li key={`city-sidebar-${index}`} data-active={isActive ? "true" : undefined}>
+                  <CitySidebarTile
+                    type="button"
+                    title={label}
+                    $active={isActive}
+                    $bg={cardBgs[cardId] || DEFAULT_CARD_BG}
+                    aria-current={isActive ? "true" : undefined}
+                    onClick={() => jumpTo(index)}
+                  >
+                    <CitySidebarTileName>
+                      {index + 1}. {cityName.trim()}
+                    </CitySidebarTileName>
+                    {cityRest && <CitySidebarTileSub>{cityRest}</CitySidebarTileSub>}
+                  </CitySidebarTile>
+                </li>
+              );
+            })}
+          </CitySidebarList>
+          {matchingCities.length === 0 && (
+            <CityJumpEmpty $isDarkMode={isDarkMode}>Немає такого міста</CityJumpEmpty>
+          )}
+        </>
+      )}
+      {/* Окремо вмикаємо/вимикаємо стрілки ◀ ▶ і номери 1, 2, 3… */}
+      <CitySidebarFooter>
+        <CitySidebarIconButton
+          type="button"
+          role="switch"
+          $active={showArrows}
+          aria-checked={showArrows}
+          title={showArrows ? "Сховати стрілки ◀ ▶" : "Показати стрілки ◀ ▶"}
+          aria-label="Стрілки гортання карток"
+          onClick={() => togglePrefFlag(CAROUSEL_ARROWS_HIDDEN_KEY)}
+        >
+          ◀▶
+        </CitySidebarIconButton>
+        <CitySidebarIconButton
+          type="button"
+          role="switch"
+          $active={showNumbers}
+          aria-checked={showNumbers}
+          title={showNumbers ? "Сховати номери карток" : "Показати номери карток"}
+          aria-label="Номери карток"
+          onClick={() => togglePrefFlag(CAROUSEL_NUMBERS_HIDDEN_KEY)}
+        >
+          123
+        </CitySidebarIconButton>
+      </CitySidebarFooter>
+    </CitySidebar>
+    </CitySidebarShell>
+  );
+
   return (
     <WeatherCarouselWrapper>
-      {cityJumpBlock &&
-        (isWideRow && jumpSlot ? createPortal(cityJumpBlock, jumpSlot) : cityJumpBlock)}
+      <WeatherCarouselLayout>
+      {citySidebar}
+      <CarouselMain>
+      {!isWideRow && cityJumpBlock}
       <WeatherCardsContainer ref={scrollRef}>
         {/* Монтуємо лише видиму картку та сусідні; далекі — порожні заглушки тієї ж ширини, щоб не тримати їх у пам'яті */}
         {childrenArray.map((child, i) =>
@@ -1184,7 +1774,22 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
         )}
       </WeatherCardsContainer>
       {childCount > 1 && (
-        <CarouselNav>
+        <CarouselNav
+          $inCard={numbersInCard}
+          $hidden={!showNumbers}
+          $noAnim={animationsDisabled}
+          inert={!showNumbers}
+          aria-hidden={!showNumbers || undefined}
+          style={
+            numbersInCard
+              ? {
+                  left: sidebarBox.mainLeft,
+                  width: sidebarBox.mainWidth,
+                  top: numbersCenterY,
+                }
+              : undefined
+          }
+        >
           {Array.from({ length: childCount }, (_, i) => (
             <CarouselPageButton
               key={`carousel-page-${i}`}
@@ -1204,6 +1809,10 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
           <CarouselSideButton
             type="button"
             $direction="previous"
+            $hidden={!showArrows}
+            $noAnim={animationsDisabled}
+            inert={!showArrows}
+            aria-hidden={!showArrows || undefined}
             aria-label="Попередня картка"
             onClick={() => changeSlide(-1)}
           >
@@ -1212,6 +1821,10 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
           <CarouselSideButton
             type="button"
             $direction="next"
+            $hidden={!showArrows}
+            $noAnim={animationsDisabled}
+            inert={!showArrows}
+            aria-hidden={!showArrows || undefined}
             aria-label="Наступна картка"
             onClick={() => changeSlide(1)}
           >
@@ -1219,6 +1832,8 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
           </CarouselSideButton>
         </>
       )}
+      </CarouselMain>
+      </WeatherCarouselLayout>
     </WeatherCarouselWrapper>
   );
 };
@@ -1491,17 +2106,12 @@ const SectionContent = memo(
     hideGpsCard,
     onReorderCards,
   }) => {
-    // Слот у ряду «Погода», куди на планшетах/ПК переїжджає пошук міст
-    const [cityJumpSlot, setCityJumpSlot] = useState(null);
-    const isWideRow = useMediaQuery(WIDE_WEATHER_ROW_QUERY);
-
     if (!section) return null;
 
     if (section.key === "weather") {
       return (
         <div id="weather">
           <WeatherTitleRow>
-            {isWideRow && <CityJumpSlot ref={setCityJumpSlot} />}
             <WeatherAnimationsToggle isDarkMode={isDarkMode} />
             <AihelpTitle
               $isStickyBgMode={isStickyBgMode}
@@ -1532,7 +2142,6 @@ const SectionContent = memo(
               isMain: !!card.isMain,
             }))}
             onReorder={onReorderCards}
-            jumpSlot={cityJumpSlot}
           >
             {weatherCards.map((card, index) => {
               const isExtremeTemp =
@@ -2777,6 +3386,20 @@ const App = () => {
           !isMain && !weatherCardsRef.current.find((c) => c.id === id);
 
         if (isNewCard) {
+          // Те саме місто вже є серед власних карток — другу не створюємо
+          const duplicateCard = findDuplicateCityCard(
+            weatherCardsRef.current,
+            targetLat,
+            targetLon,
+          );
+          if (duplicateCard) {
+            toast(`«${duplicateCard.locationName}» вже є серед ваших карток`, {
+              id: "duplicate-city-card",
+              icon: "📍",
+            });
+            return false;
+          }
+
           const customCardsCount = weatherCardsRef.current.filter(
             (card) => !card.isMain,
           ).length;

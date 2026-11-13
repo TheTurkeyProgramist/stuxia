@@ -24,10 +24,20 @@ import {
   BiLowVision,
   BiVolumeFull,
   BiStopCircle,
+  BiSidebar,
 } from "react-icons/bi";
 import { FiPlus } from "react-icons/fi";
 import toast from "react-hot-toast";
-import { useBeta } from "../../utils/betaFeatures";
+import {
+  useBeta,
+  usePrefValue,
+  togglePrefFlag,
+  CITY_SIDEBAR_HIDDEN_KEY,
+  CAROUSEL_ARROWS_HIDDEN_KEY,
+  CAROUSEL_NUMBERS_HIDDEN_KEY,
+} from "../../utils/betaFeatures";
+import { setPref } from "../../utils/prefsStore";
+import { useAnimationsDisabled } from "../../utils/animationsPref";
 import { buildForecastSpeech, getVoiceSettings, speak, stopSpeaking } from "../../utils/weatherSpeech";
 import {
   removeCustomDay,
@@ -384,18 +394,17 @@ const DesktopLayoutWrapper = styled.div`
 
   @media (min-width: 768px) {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 240px;
-    gap: 14px;
-    padding: 12px;
+    /* Права колонка меню вузька: іконки стоять над заголовками, а не збоку */
+    grid-template-columns: minmax(0, 1fr) 190px;
+    gap: 8px;
+    padding: 10px;
     height: 570px;
     box-sizing: border-box;
     background: ${(props) => (props.$isDarkMode ? "rgba(10, 10, 18, 0.6)" : "rgba(240, 244, 248, 0.8)")};
   }
 
   @media (min-width: 1024px) {
-    grid-template-columns: minmax(0, 1fr) 280px;
-    gap: 16px;
-    padding: 14px;
+    grid-template-columns: minmax(0, 1fr) 190px;
     height: 595px;
   }
 `;
@@ -449,18 +458,145 @@ const SideCardsColumn = styled.div`
   @media (min-width: 768px) {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     justify-content: space-between;
     height: 542px;
   }
 `;
+/* Плитка меню праворуч: іконка зверху посередині, під нею заголовок і підпис (колонка вузька) */
+const SIDE_CARD_INNER_STYLE = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  textAlign: "center",
+  justifyContent: "center",
+  gap: "3px",
+  width: "100%",
+  minWidth: 0,
+};
+const SIDE_CARD_ICON_STYLE = { fontSize: "24px", lineHeight: 1, display: "inline-flex" };
+const SIDE_CARD_TEXT_STYLE = {
+  color: "#fff",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  width: "100%",
+  minWidth: 0,
+};
+
+/* Плитка «Налаштування»: шестерня різко обертається і перетворюється на іконку одного
+   з налаштувань (підпис теж міняється), потім так само повертається в шестерню */
+const settingsSpinIn = keyframes`
+  0% { transform: rotate(-300deg) scale(0.3); opacity: 0; }
+  70% { transform: rotate(15deg) scale(1.12); opacity: 1; }
+  100% { transform: rotate(0deg) scale(1); opacity: 1; }
+`;
+const settingsTextIn = keyframes`
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+`;
+const SettingsCycleIcon = styled.span`
+  display: inline-flex;
+  animation: ${settingsSpinIn} 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+const SettingsCycleText = styled.span`
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: ${settingsTextIn} 0.35s ease both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
+// Скільки стоїть шестерня і скільки — іконка налаштування
+const SETTINGS_GEAR_MS = 3500;
+const SETTINGS_STEP_MS = 2200;
+
+/** Вміст плитки «Налаштування». Окремий компонент: таймер перемальовує лише плитку,
+    а не всю картку. Крутиться, тільки поки плитку видно і меню закрите */
+const SettingsTileContent = ({ active, steps }) => {
+  const animationsDisabled = useAnimationsDisabled();
+  const iconRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+  // -1 — шестерня, інакше номер налаштування в steps
+  const [stepIndex, setStepIndex] = useState(-1);
+  const nextStepRef = useRef(0);
+
+  useEffect(() => {
+    const el = iconRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return undefined;
+    const observer = new IntersectionObserver(([entry]) => setIsVisible(entry.isIntersecting));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const reducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const isCycling = isVisible && !active && !animationsDisabled && !reducedMotion && steps.length > 0;
+
+  useEffect(() => {
+    if (!isCycling) {
+      setStepIndex(-1);
+      return undefined;
+    }
+    const timer = setTimeout(
+      () => {
+        if (stepIndex === -1) {
+          const next = nextStepRef.current % steps.length;
+          nextStepRef.current = next + 1;
+          setStepIndex(next);
+        } else {
+          setStepIndex(-1);
+        }
+      },
+      stepIndex === -1 ? SETTINGS_GEAR_MS : SETTINGS_STEP_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [isCycling, stepIndex, steps.length]);
+
+  const step = stepIndex >= 0 ? steps[stepIndex] : null;
+  const Icon = step ? step.Icon : BiCog;
+
+  return (
+    <div style={SIDE_CARD_INNER_STYLE}>
+      <div ref={iconRef} style={{ ...SIDE_CARD_ICON_STYLE, color: step ? step.color : "#a78bfa" }}>
+        <SettingsCycleIcon key={stepIndex}>
+          <Icon />
+        </SettingsCycleIcon>
+      </div>
+      <div style={SIDE_CARD_TEXT_STYLE}>
+        <NameCardItem $active={active}>Налаштування</NameCardItem>
+        <SubNameCardItem $active={active}>
+          <SettingsCycleText key={stepIndex}>{step ? step.text : "Усі налаштування картки"}</SettingsCycleText>
+        </SubNameCardItem>
+      </div>
+    </div>
+  );
+};
+
+/* Довгий текст у вузькій плитці обрізається трьома крапками, а не ламає висоту */
 const NameCardItem = styled.div`
-font-size: 17px;
+font-size: 15px;
 font-weight: 700;
+line-height: 1.2;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+max-width: 100%;
 color: ${(props) => (props.$active ? "#00eeff" : "#fff")};
 `;
 const SubNameCardItem = styled.div`
-font-size: 15px;
+font-size: 13px;
+line-height: 1.2;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+max-width: 100%;
 color: ${(props) => (props.$active ? "#00eeff" : "#fff")};
 `;
 const SideCardItem = styled.div`
@@ -487,6 +623,8 @@ const SideCardItem = styled.div`
     height: auto;
     flex: 1 1 0;
     min-height: 0;
+    /* Менші відступи: іконка + заголовок + підпис мають влізти навіть коли плиток шість */
+    padding: 6px 10px;
   }
 
   &:hover {
@@ -831,14 +969,12 @@ const SettingsDropdownMenu = styled.div`
   overflow-y: auto;
   height: calc(522px - 100% - 6px);
 grid-template-columns: repeat(2, 1fr);
-  /* Перший ряд («Одиниці виміру») за висотою вмісту, решта ділять простір порівну */
+  /* Перший ряд («Одиниці виміру» + «Прикріпити до ШІ») за висотою вмісту,
+     решта ділять простір порівну */
   grid-template-rows: auto;
   grid-auto-rows: 1fr;
-  & > :first-child {
-    grid-column: span 2;
-  }
   /* Останній пункт, що лишився сам у ряду, розтягується на всю ширину */
-  & > :last-child:nth-child(even) {
+  & > :last-child:nth-child(odd) {
     grid-column: 1 / -1;
   }
   @media (max-width: 767px) {
@@ -909,8 +1045,10 @@ svg {
 }
 `;
 // Фон картки погоди за замовчуванням
-const DEFAULT_CARD_BG =
+export const DEFAULT_CARD_BG =
   DEFAULT_BGS.find((bg) => bg.name === "Туманний ліс")?.src || DEFAULT_BGS[0].src;
+// Подія «у картки змінився фон» — щоб бокова панель міст одразу оновила фото
+export const CARD_BG_CHANGE_EVENT = "weather-card-bg-change";
 
 /* Дрібне пояснення під назвою пункту налаштувань */
 const SettingsItemHint = styled.span`
@@ -1207,6 +1345,9 @@ const WeatherCardComponent = ({
 
   const [cityImage, setCityImage] = useState(card.cityImage || "");
   const [bgMode, setBgMode] = useState(DEFAULT_CARD_BG);
+  const isCitySidebarHidden = usePrefValue(CITY_SIDEBAR_HIDDEN_KEY, "false") === "true";
+  const carouselArrowsOn = usePrefValue(CAROUSEL_ARROWS_HIDDEN_KEY, "false") !== "true";
+  const carouselNumbersOn = usePrefValue(CAROUSEL_NUMBERS_HIDDEN_KEY, "false") !== "true";
   const [isBgModalOpen, setIsBgModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDropdownClosing, setIsDropdownClosing] = useState(false);
@@ -1888,6 +2029,9 @@ const WeatherCardComponent = ({
   const handleChangeBackground = (newMode) => {
     setBgMode(newMode);
     localforage.setItem(`bgMode_${card.id}`, newMode);
+    window.dispatchEvent(
+      new CustomEvent(CARD_BG_CHANGE_EVENT, { detail: { id: card.id, src: newMode } }),
+    );
     setIsBgModalOpen(false);
   };
 
@@ -3213,13 +3357,15 @@ const HOLIDAYS_2027 = {
     <div
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
     >
-      <WeatherCard $isMain={card.isMain} $isDarkMode={isDarkMode}>
+      {/* data-weather-card: по цій рамці бокова панель міст підганяє свою висоту */}
+      <WeatherCard $isMain={card.isMain} $isDarkMode={isDarkMode} data-weather-card="">
         <DesktopLayoutWrapper
           $isDarkMode={isDarkMode}
           onMouseEnter={() => setIsBannerHovered(true)}
           onMouseLeave={() => setIsBannerHovered(false)}
         >
-          <MainBannerArea $image={cityImage || card.cityImage}>
+          {/* data-weather-card-main: у низ цієї частини на планшеті/ПК стають номери карток 1, 2, 3… */}
+          <MainBannerArea $image={cityImage || card.cityImage} data-weather-card-main="">
         <CardHeader
           $isMain={card.isMain}
           style={{
@@ -3407,6 +3553,37 @@ const HOLIDAYS_2027 = {
                     {tempLabel(units.temp)} · {windLabel(units.wind)} · {pressureLabel(units.pressure)}
                   </span>
                 </SettingsDropdownItem>
+                {/* У першому ряду поруч з «Одиниці виміру» */}
+                <SettingsDropdownItem
+                  onClick={() => {
+                    handleCloseDropdown();
+                    if (!hasGeminiKey) return;
+                    window.dispatchEvent(
+                      new CustomEvent("attachCardToAiHelp", {
+                        detail: {
+                          id: `weather-${card.id}`,
+                          type: "weather",
+                          title: card.locationName,
+                          details: `Місто: ${card.locationName}. Координати: ${card.lat?.toFixed(2)}, ${card.lon?.toFixed(2)}. Температура: ${card.current?.temp}°C, відчувається: ${card.current?.feels_like}°C. Вітер: ${card.current?.wind_speed} м/с. Вологість: ${card.current?.humidity}%. Тиск: ${card.current?.pressure} гПа.`,
+                        },
+                      })
+                    );
+                  }}
+                  style={{
+                    textAlign: "center",
+                    padding: "4px 12px",
+                    gap: "0",
+                    background: hasGeminiKey
+                      ? "linear-gradient(135deg, #5c1d3c, #62123d)"
+                      : "rgba(120,120,120,0.3)",
+                    cursor: hasGeminiKey ? "pointer" : "default",
+                  }}
+                >
+                  <FiPlus style={{ transform: "scale(1.2)" }} /> Прикріпити до ШІ
+                  <SettingsItemHint>
+                    {hasGeminiKey ? "Запитати ШІ про цю погоду" : "Потрібен ключ Gemini"}
+                  </SettingsItemHint>
+                </SettingsDropdownItem>
                 {!isEditing && (
                   <SettingsDropdownItem
                     isDarkMode={isDarkMode}
@@ -3457,6 +3634,35 @@ const HOLIDAYS_2027 = {
                       : "Спершу увімкніть у Налаштуваннях → Секції та новини"}
                   </SettingsItemHint>
                 </SettingsDropdownItem>
+                {/* Кнопки гортання карток — спільні для всіх карток, вмикаються окремо */}
+                {totalCards > 1 && (
+                  <>
+                    <SettingsDropdownItem
+                      isDarkMode={isDarkMode}
+                      role="switch"
+                      aria-checked={carouselArrowsOn}
+                      onClick={() => togglePrefFlag(CAROUSEL_ARROWS_HIDDEN_KEY)}
+                    >
+                      <span aria-hidden="true" style={{ opacity: carouselArrowsOn ? 1 : 0.6 }}>
+                        ◀▶
+                      </span>
+                      Стрілки гортання: {carouselArrowsOn ? "увімк." : "вимк."}
+                      <SettingsItemHint>Кнопки ◀ ▶ по боках карток</SettingsItemHint>
+                    </SettingsDropdownItem>
+                    <SettingsDropdownItem
+                      isDarkMode={isDarkMode}
+                      role="switch"
+                      aria-checked={carouselNumbersOn}
+                      onClick={() => togglePrefFlag(CAROUSEL_NUMBERS_HIDDEN_KEY)}
+                    >
+                      <span aria-hidden="true" style={{ opacity: carouselNumbersOn ? 1 : 0.6 }}>
+                        123
+                      </span>
+                      Номери карток: {carouselNumbersOn ? "увімк." : "вимк."}
+                      <SettingsItemHint>Кнопки 1, 2, 3… внизу карток</SettingsItemHint>
+                    </SettingsDropdownItem>
+                  </>
+                )}
                 <div
                   style={{
                     display: "flex",
@@ -3546,34 +3752,6 @@ const HOLIDAYS_2027 = {
                     <SettingsItemHint>Прибрати цю картку</SettingsItemHint>
                   </SettingsDropdownItem>
                 )}
-                <SettingsDropdownItem
-                  onClick={() => {
-                    handleCloseDropdown();
-                    if (!hasGeminiKey) return;
-                    window.dispatchEvent(
-                      new CustomEvent("attachCardToAiHelp", {
-                        detail: {
-                          id: `weather-${card.id}`,
-                          type: "weather",
-                          title: card.locationName,
-                          details: `Місто: ${card.locationName}. Координати: ${card.lat?.toFixed(2)}, ${card.lon?.toFixed(2)}. Температура: ${card.current?.temp}°C, відчувається: ${card.current?.feels_like}°C. Вітер: ${card.current?.wind_speed} м/с. Вологість: ${card.current?.humidity}%. Тиск: ${card.current?.pressure} гПа.`,
-                        },
-                      })
-                    );
-                  }}
-                  style={{
-                    textAlign: "center",
-                    background: hasGeminiKey
-                      ? "linear-gradient(135deg, #5c1d3c, #62123d)"
-                      : "rgba(120,120,120,0.3)",
-                    cursor: hasGeminiKey ? "pointer" : "default",
-                  }}
-                >
-                  <FiPlus style={{ transform: "scale(1.2)" }} /> Прикріпити до ШІ
-                  <SettingsItemHint>
-                    {hasGeminiKey ? "Запитати ШІ про цю погоду" : "Потрібен ключ Gemini"}
-                  </SettingsItemHint>
-                </SettingsDropdownItem>
               </SettingsDropdownMenu>
             )}
         </CardHeader>
@@ -4367,9 +4545,13 @@ const HOLIDAYS_2027 = {
               $bgImg={cityImage || card.cityImage}
               onClick={() => setActiveTab("current")}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
-                <div style={{ fontSize: "36px" }}><WeatherIcon item={card.current} /></div>
-                <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
+              <div style={SIDE_CARD_INNER_STYLE}>
+                {/* Погодна іконка трохи більша, щоб на око була як інші;
+                    від'ємний відступ не дає плитці вирости */}
+                <div style={{ ...SIDE_CARD_ICON_STYLE, fontSize: "30px", margin: "-3px 0" }}>
+                  <WeatherIcon item={card.current} />
+                </div>
+                <div style={SIDE_CARD_TEXT_STYLE}>
                   <NameCardItem $active={activeTab === "current"}>Зараз: {formatTemp(card.current?.temp)}</NameCardItem>
                   <SubNameCardItem $active={activeTab === "current"}>Відчувається: {formatTemp(card.current?.feels_like)}</SubNameCardItem>
                 </div>
@@ -4380,9 +4562,9 @@ const HOLIDAYS_2027 = {
                $bgImg={daynight}
               onClick={() => setActiveTab("hourly")}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
-                <div style={{ fontSize: "36px", color: "#ffb36c" }}><BiLineChart /></div>
-                <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
+              <div style={SIDE_CARD_INNER_STYLE}>
+                <div style={{ ...SIDE_CARD_ICON_STYLE, color: "#ffb36c" }}><BiLineChart /></div>
+                <div style={SIDE_CARD_TEXT_STYLE}>
                   <NameCardItem $active={activeTab === "hourly"}>Годинна(72г)</NameCardItem>
                   <SubNameCardItem $active={activeTab === "hourly"}>Детально 72г, далі до 7 днів</SubNameCardItem>
                 </div>
@@ -4394,9 +4576,9 @@ const HOLIDAYS_2027 = {
               onClick={() => setActiveTab("daily")}
               $bgImg={daysthunders}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
-                <div style={{ fontSize: "36px", color: "#ff1493" }}><FaCalendarPlus /></div>
-                <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
+              <div style={SIDE_CARD_INNER_STYLE}>
+                <div style={{ ...SIDE_CARD_ICON_STYLE, color: "#ff1493" }}><FaCalendarPlus /></div>
+                <div style={SIDE_CARD_TEXT_STYLE}>
                   <NameCardItem $active={activeTab === "daily"}>Прогноз на 16 днів</NameCardItem>
                   <SubNameCardItem $active={activeTab === "daily"}>Бундючий графік</SubNameCardItem>
                 </div>
@@ -4408,11 +4590,11 @@ const HOLIDAYS_2027 = {
               $bgImg="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=300&auto=format&fit=crop"
               onClick={() => setActiveTab("ai")}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
-                <div style={{ fontSize: "36px", color: "#00eeff" }}>
+              <div style={SIDE_CARD_INNER_STYLE}>
+                <div style={{ ...SIDE_CARD_ICON_STYLE, color: "#00eeff" }}>
                   <BiLineChart />
                 </div>
-                <div style={{ color: "#fff", display: "flex", flexDirection: "column" }}>
+                <div style={SIDE_CARD_TEXT_STYLE}>
                   <NameCardItem $active={activeTab === "ai"}>
                     Смарт-прогноз
                   </NameCardItem>
@@ -4433,20 +4615,52 @@ const HOLIDAYS_2027 = {
                 else setIsDropdownOpen(true);
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%" }}>
-                <div style={{ fontSize: "36px", color: "#a78bfa", display: "inline-flex" }}>
-                  <BiCog />
-                </div>
-                <div style={{ color: "#fff", display: "flex", flexDirection: "column", minWidth: 0 }}>
-                  <NameCardItem $active={isDropdownOpen && !isDropdownClosing}>
-                    Налаштування
-                  </NameCardItem>
-                  <SubNameCardItem $active={isDropdownOpen && !isDropdownClosing}>
-                    {tempLabel(units.temp)} · {windLabel(units.wind)} · фон, дати
-                  </SubNameCardItem>
-                </div>
-              </div>
+              <SettingsTileContent
+                active={isDropdownOpen && !isDropdownClosing}
+                steps={[
+                  {
+                    Icon: MdStraighten,
+                    color: "#ffb36c",
+                    text: `Одиниці: ${tempLabel(units.temp)} · ${windLabel(units.wind)}`,
+                  },
+                  { Icon: BiImageAlt, color: "#7dd3fc", text: "Змінити фон" },
+                  { Icon: FaCalendarPlus, color: "#ff1493", text: "Свої дати й свята" },
+                  { Icon: BiEdit, color: "#a3e635", text: "Змінити назву" },
+                  {
+                    Icon: cardAlertsOn ? MdNotificationsActive : MdNotificationsOff,
+                    color: "#facc15",
+                    text: `Сповіщення: ${cardAlertsOn ? "увімк." : "вимк."}`,
+                  },
+                ]}
+              />
             </SideCardItem>
+
+            {/* Сховати/показати бокову панель міст (вона є лише коли карток більше однієї) */}
+            {totalCards > 1 && (
+              <SideCardItem
+                $active={!isCitySidebarHidden}
+                role="button"
+                aria-pressed={!isCitySidebarHidden}
+                aria-label={isCitySidebarHidden ? "Показати панель міст" : "Сховати панель міст"}
+                onClick={() =>
+                  setPref(CITY_SIDEBAR_HIDDEN_KEY, isCitySidebarHidden ? "false" : "true")
+                }
+              >
+                <div style={SIDE_CARD_INNER_STYLE}>
+                  <div style={{ ...SIDE_CARD_ICON_STYLE, color: "#fc7a00" }}>
+                    <BiSidebar />
+                  </div>
+                  <div style={SIDE_CARD_TEXT_STYLE}>
+                    <NameCardItem $active={!isCitySidebarHidden}>
+                      {isCitySidebarHidden ? "Показати панель" : "Сховати панель"}
+                    </NameCardItem>
+                    <SubNameCardItem $active={!isCitySidebarHidden}>
+                      Список міст зліва
+                    </SubNameCardItem>
+                  </div>
+                </div>
+              </SideCardItem>
+            )}
           </SideCardsColumn>
         </DesktopLayoutWrapper>
       </WeatherCard>

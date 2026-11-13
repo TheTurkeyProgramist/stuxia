@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Онлайн-дошка",
       "saveEcoBotSubtitle": "Якість повітря",
       "airTrafficTitle": "Авіарадар",
-      "deepStateSubtitle": "Карта подій в Україні"
+      "deepStateSubtitle": "Карта подій в Україні",
+      "rainViewerSubtitle": "Радар опадів",
+      "blitzortungSubtitle": "Карта блискавок"
     },
     "options": {
       "alerts": "Карта тривог України (alerts.in.ua)",

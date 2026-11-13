@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Διαδικτυακός πίνακας",
       "saveEcoBotSubtitle": "Ποιότητα αέρα",
       "airTrafficTitle": "Ραντάρ πτήσεων",
-      "deepStateSubtitle": "Χάρτης γεγονότων στην Ουκρανία"
+      "deepStateSubtitle": "Χάρτης γεγονότων στην Ουκρανία",
+      "rainViewerSubtitle": "Ραντάρ βροχής",
+      "blitzortungSubtitle": "Χάρτης κεραυνών"
     },
     "options": {
       "alerts": "Χάρτης συναγερμών Ουκρανίας (alerts.in.ua)",

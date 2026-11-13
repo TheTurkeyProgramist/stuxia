@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Online whiteboard",
       "saveEcoBotSubtitle": "Luchtkwaliteit",
       "airTrafficTitle": "Vluchtradar",
-      "deepStateSubtitle": "Kaart van gebeurtenissen in Oekraïne"
+      "deepStateSubtitle": "Kaart van gebeurtenissen in Oekraïne",
+      "rainViewerSubtitle": "Neerslagradar",
+      "blitzortungSubtitle": "Bliksemkaart"
     },
     "options": {
       "alerts": "Luchtalarmkaart van Oekraïne (alerts.in.ua)",

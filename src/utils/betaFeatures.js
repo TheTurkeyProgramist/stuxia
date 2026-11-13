@@ -17,6 +17,17 @@ export const setBetaOn = (feature, on) => setPref(BETA_KEYS[feature], on ? "true
 export const useBeta = (feature) =>
   useSyncExternalStore(subscribePrefs, () => isBetaOn(feature), () => false);
 
+/** Бокова панель міст зліва від карток (планшет/ПК): "true" — схована. */
+export const CITY_SIDEBAR_HIDDEN_KEY = "city_sidebar_hidden";
+
+/** Карусель карток погоди: "true" — сховати стрілки ◀ ▶ / номери 1, 2, 3… (окремо). */
+export const CAROUSEL_ARROWS_HIDDEN_KEY = "carousel_arrows_hidden";
+export const CAROUSEL_NUMBERS_HIDDEN_KEY = "carousel_numbers_hidden";
+
+/** Перемикач «true»/«false» налаштування з prefsStore. */
+export const togglePrefFlag = (key) =>
+  setPref(key, getPref(key) === "true" ? "false" : "true");
+
 /** Будь-яке рядкове налаштування з prefsStore як React-стан. */
 export const usePrefValue = (key, fallback = null) =>
   useSyncExternalStore(

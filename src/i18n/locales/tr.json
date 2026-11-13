@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Çevrimiçi tahta",
       "saveEcoBotSubtitle": "Hava kalitesi",
       "airTrafficTitle": "Uçuş radarı",
-      "deepStateSubtitle": "Ukrayna'daki olaylar haritası"
+      "deepStateSubtitle": "Ukrayna'daki olaylar haritası",
+      "rainViewerSubtitle": "Yağış radarı",
+      "blitzortungSubtitle": "Yıldırım haritası"
     },
     "options": {
       "alerts": "Ukrayna alarm haritası (alerts.in.ua)",

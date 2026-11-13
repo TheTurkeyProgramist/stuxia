@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Online whiteboard",
       "saveEcoBotSubtitle": "Air quality",
       "airTrafficTitle": "Flight radar",
-      "deepStateSubtitle": "Map of events in Ukraine"
+      "deepStateSubtitle": "Map of events in Ukraine",
+      "rainViewerSubtitle": "Precipitation radar",
+      "blitzortungSubtitle": "Lightning map"
     },
     "options": {
       "alerts": "Ukraine air raid alert map (alerts.in.ua)",

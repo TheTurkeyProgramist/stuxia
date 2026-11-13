@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Tablă online",
       "saveEcoBotSubtitle": "Calitatea aerului",
       "airTrafficTitle": "Radar aerian",
-      "deepStateSubtitle": "Harta evenimentelor din Ucraina"
+      "deepStateSubtitle": "Harta evenimentelor din Ucraina",
+      "rainViewerSubtitle": "Radar de precipitații",
+      "blitzortungSubtitle": "Harta fulgerelor"
     },
     "options": {
       "alerts": "Harta alertelor din Ucraina (alerts.in.ua)",

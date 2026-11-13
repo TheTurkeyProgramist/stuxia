@@ -86,7 +86,7 @@ import {
   FiHeart,
   FiCloudLightning,
 } from "react-icons/fi";
-import { useBeta, setBetaOn } from "../../utils/betaFeatures";
+import { useBeta, setBetaOn, usePrefValue } from "../../utils/betaFeatures";
 import BetaVoiceSettings from "./BetaVoiceSettings.jsx";
 import {
   TbFlask,
@@ -160,6 +160,9 @@ import {
   resetRecsProfile,
   getTopInterests,
   NEWS_TOPICS,
+  NEWS_VIEW_KEY,
+  NEWS_VIEW_MODES,
+  setNewsViewMode,
 } from "../../utils/newsPersonal";
 import {
   isPushSupported,
@@ -1626,6 +1629,7 @@ const UserSettingsModal = ({
     setUrgentWordsState(DEFAULT_URGENT_WORDS);
   };
 
+  const newsViewMode = usePrefValue(NEWS_VIEW_KEY, "cards");
   const [isRecsOn, setIsRecsOn] = useState(isRecsEnabled);
   const [recsTopics, setRecsTopicsState] = useState(getRecsTopics);
   const [recsInterests, setRecsInterests] = useState(() => getTopInterests());
@@ -3178,6 +3182,43 @@ const UserSettingsModal = ({
                       <span><FiInfo aria-hidden="true" /> Розглушена плашка відкрита лише до перезавантаження сторінки.</span>
                     </FilterNotes>
                   </FilterSubGroup>
+
+                  {/* Вигляд новин: блоки-картки в каруселі або список (фото ліворуч, заголовок праворуч) */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#ffaa00">{newsViewMode === "list" ? <FiList /> : <FiGrid />}</CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Вигляд новин</CardTitle>
+                        <CardDescription>
+                          {newsViewMode === "list"
+                            ? "Список: маленьке фото ліворуч, джерело й заголовок праворуч — більше новин на екрані"
+                            : "Блоки: великі картки з фото й описом, гортаються каруселлю"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <Segmented role="radiogroup" aria-label="Вигляд новин">
+                        {NEWS_VIEW_MODES.map((mode) => {
+                          const active = (newsViewMode === "list" ? "list" : "cards") === mode.id;
+                          return (
+                            <SegmentBtn
+                              key={mode.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              $active={active}
+                              $tone="show"
+                              style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}
+                              onClick={() => setNewsViewMode(mode.id)}
+                            >
+                              {mode.id === "list" ? <FiList aria-hidden="true" /> : <FiGrid aria-hidden="true" />}
+                              {mode.label}
+                            </SegmentBtn>
+                          );
+                        })}
+                      </Segmented>
+                    </CardControl>
+                  </Card>
 
                   {/* Додавання стрічок і чорний список — вміст підставляє News.jsx */}
                   <CardExpanded>

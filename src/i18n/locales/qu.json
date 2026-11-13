@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Online pizarra",
       "saveEcoBotSubtitle": "Wayrap allin kaynin",
       "airTrafficTitle": "Phawaq radar",
-      "deepStateSubtitle": "Ukraniapi ruwakuqkunap mapan"
+      "deepStateSubtitle": "Ukraniapi ruwakuqkunap mapan",
+      "rainViewerSubtitle": "Para radar",
+      "blitzortungSubtitle": "Illapa mapa"
     },
     "options": {
       "alerts": "Ukraniapa alarma mapan (alerts.in.ua)",

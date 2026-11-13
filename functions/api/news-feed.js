@@ -8,18 +8,10 @@
 // Усе повертається у форматі JSON Feed (items[].url/title/summary/content_html/date_published/image),
 // тому клієнтський parseJsonFeed працює без змін.
 
-const FEEDS = {
-  "phys-org": "https://phys.org/rss-feed/biology-news/animals-news/",
-  "science-daily": "https://www.sciencedaily.com/rss/top/environment.xml",
-  nature: "https://www.nature.com/nature.rss",
-  mongabay: "https://news.mongabay.com/feed/",
-  "guardian-environment": "https://www.theguardian.com/environment/rss",
-  "nasa-earth-observatory": "https://science.nasa.gov/feed/?science_org=19791%2C22453",
-  "bbc-science-environment": "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
-  "new-scientist-environment": "https://www.newscientist.com/subject/environment/feed/",
-  "carbon-brief": "https://www.carbonbrief.org/feed/",
-  grist: "https://grist.org/feed/",
-};
+import { NEWS_SOURCES } from "../../firebase-functions/newsSources.js";
+
+// Вбудовані стрічки — спільний список (firebase-functions/newsSources.js)
+const FEEDS = Object.fromEntries(NEWS_SOURCES.map((source) => [source.id, source.url]));
 const MAX_ITEMS_PER_FEED = 10;
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
 const FETCH_TIMEOUT_MS = 10000;

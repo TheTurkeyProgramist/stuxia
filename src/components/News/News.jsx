@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
+import React, { Fragment, useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import styled, { keyframes, css } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,6 +25,7 @@ import ultraTurkeysThumb from "../../media/thumbs/turkeys-kate.webp";
 import castleThumb from "../../media/thumbs/turkey-in-dragon-museum.webp";
 import swampnineThumb from "../../media/thumbs/swamp-lake-of-freedom.webp";
 import { DEFAULT_BGS } from "../Hero/defaultBgs.js";
+import { NEWS_SOURCES, NEWS_DESC_TRANSLATE_MAX, cleanNewsDescription } from "../../../firebase-functions/newsSources.js";
 // ШІ та markdown підвантажуються лише при відкритті модалки
 const NewsAiModal = lazy(() => import("./NewsAiModal"));
 import InfoModal from "../Modals/UserSearchModal.jsx";
@@ -55,7 +56,9 @@ import {
   scoreNews,
   recordNewsClick,
   NEWS_ORDER_PREF_KEYS,
+  NEWS_VIEW_KEY,
 } from "../../utils/newsPersonal";
+import { usePrefValue } from "../../utils/betaFeatures";
 import { mergeNewsFilterFromCloud } from "../../utils/newsFilterSync";
 import { loadFirebase, listCollection } from "../../firebaseLazy";
 import {
@@ -198,83 +201,17 @@ const Decoder = styled.div`
   background: rgba(0, 0, 0, 0.81);
 `;
 
-const SOURCES = [
-  {
-    id: "phys-org",
-    url: "https://phys.org/rss-feed/biology-news/animals-news/",
-    name: "Phys.org",
-    home: "https://phys.org",
-  },
-  {
-    id: "science-daily",
-    url: "https://www.sciencedaily.com/rss/top/environment.xml",
-    name: "ScienceDaily",
-    home: "https://www.sciencedaily.com",
-  },
-  {
-    id: "nature",
-    url: "https://www.nature.com/nature.rss",
-    name: "Nature",
-    home: "https://www.nature.com",
-  },
-  {
-    id: "mongabay",
-    url: "https://news.mongabay.com/feed/",
-    name: "Mongabay",
-    home: "https://news.mongabay.com",
-    unblockable: true,
-  },
-  {
-    id: "guardian-environment",
-    url: "https://www.theguardian.com/environment/rss",
-    name: "The Guardian Environment",
-    home: "https://www.theguardian.com/environment",
-    unblockable: true,
-  },
-  {
-    // Стара адреса earthobservatory.nasa.gov/feeds/… редіректить сюди
-    id: "nasa-earth-observatory",
-    url: "https://science.nasa.gov/feed/?science_org=19791%2C22453",
-    name: "NASA Earth Observatory",
-    home: "https://science.nasa.gov/earth/earth-observatory/",
-  },
-  {
-    id: "bbc-science-environment",
-    url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
-    name: "BBC Science & Environment",
-    home: "https://www.bbc.com/news/science_and_environment",
-  },
-  {
-    id: "new-scientist-environment",
-    url: "https://www.newscientist.com/subject/environment/feed/",
-    name: "New Scientist",
-    home: "https://www.newscientist.com/subject/environment/",
-  },
-  {
-    id: "carbon-brief",
-    url: "https://www.carbonbrief.org/feed/",
-    name: "Carbon Brief",
-    home: "https://www.carbonbrief.org",
-  },
-  {
-    id: "grist",
-    url: "https://grist.org/feed/",
-    name: "Grist",
-    home: "https://grist.org",
-  },
-];
+// Вбудовані стрічки — спільний список із сервером і Cloudflare (firebase-functions/newsSources.js)
+const SOURCES = NEWS_SOURCES;
 
 // Рекомендовані новинні сайти (адреси перевірено через RSS-конвертер)
 const RECOMMENDED_SOURCES = [
-  { name: "BBC News", url: "https://feeds.bbci.co.uk/news/rss.xml" },
   { name: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml" },
-  { name: "CNN", url: "http://rss.cnn.com/rss/edition.rss" },
   { name: "The New York Times", url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml" },
   { name: "The Guardian World", url: "https://www.theguardian.com/world/rss" },
   { name: "Al Jazeera", url: "https://www.aljazeera.com/xml/rss/all.xml" },
   { name: "Fox News", url: "https://moxie.foxnews.com/google-publisher/latest.xml" },
   { name: "NBC News", url: "https://feeds.nbcnews.com/nbcnews/public/news" },
-  { name: "ABC News", url: "https://abcnews.go.com/abcnews/topstories" },
   { name: "CBS News", url: "https://www.cbsnews.com/latest/rss/main" },
   { name: "Sky News", url: "https://feeds.skynews.com/feeds/rss/world.xml" },
   { name: "Deutsche Welle", url: "https://rss.dw.com/rdf/rss-en-all" },
@@ -659,23 +596,97 @@ const MoreNewsPanel = styled.div`
   background: #111;
   border: 1px solid rgba(255, 170, 0, 0.4);
   border-radius: 10px;
-  padding: 12px;
+  padding: 0 12px 12px;
   box-sizing: border-box;
   color: #fff;
+`;
+
+/* Шапка «Всіх новин»: лишається вгорі під час прокрутки */
+const MoreNewsHeader = styled.header`
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 -12px 12px;
+  padding: 12px 14px;
+  background: rgba(17, 17, 17, 0.96);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255, 170, 0, 0.25);
+  border-radius: 10px 10px 0 0;
+`;
+
+const MoreNewsHeaderIcon = styled.span`
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(255, 170, 0, 0.14);
+  color: #ffaa00;
+  font-size: 20px;
+`;
+
+const MoreNewsHeaderText = styled.div`
+  flex: 1;
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #ffffff;
+  }
+  p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+
+const MoreNewsClose = styled.button`
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid rgba(255, 170, 0, 0.6);
+  border-radius: 50%;
+  background: #000;
+  color: #ffaa00;
+  font-size: 20px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+
+  &:hover,
+  &:focus-visible {
+    border-color: #ffaa00;
+    box-shadow: 0 0 12px rgba(255, 170, 0, 0.6);
+  }
+  &:focus-visible {
+    outline: none;
+  }
+  &:active {
+    transform: scale(0.94);
+  }
 `;
 
 const MoreNewsSection = styled.section`
   flex-shrink: 0;
 
+  /* Групи джерел розділяє тонка лінія замість заголовка */
   & + & {
-    margin-top: 18px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
-`;
-
-const MoreNewsSourceTitle = styled.h3`
-  margin: 0 0 8px;
-  font-size: 14px;
-  color: #ffaa00;
 `;
 
 // Телефон — список рядків (CompactRow), планшет — 2 картки в ряд, комп'ютер — 3
@@ -1127,6 +1138,7 @@ const CompactSource = styled.span`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
 `;
 
 const CompactTitle = styled.h3`
@@ -1138,6 +1150,7 @@ const CompactTitle = styled.h3`
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+
 `;
 
 const CompactMoreBtn = styled.button`
@@ -1164,6 +1177,7 @@ const CompactMoreBtn = styled.button`
   &:focus-visible {
     outline: 2px solid #ffaa00;
   }
+
 `;
 
 // Те саме меню, але одним рядком поверх новини; праворуч лишаємо місце для «✕»
@@ -1189,6 +1203,63 @@ const CompactMenu = styled(NewsSettingsMenu)`
   }
   & > button:last-child:nth-child(odd) {
     grid-column: auto;
+  }
+`;
+
+/* Вигляд «Список»: прямокутний блок каруселі тієї ж ширини й висоти, що й велика картка
+   (160px — текст картки лежить поверх фото), а в ньому дві новини рядками:
+   фото ліворуч, текст праворуч. */
+const NEWS_CARD_HEIGHT = 160; // висота великої картки в NewsCard (showImage)
+// Блок «Списку» трохи вищий за картку: дві новини з заголовками до 3 рядків
+const NEWS_PAIR_HEIGHT = 190;
+const NewsPairBlock = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  height: ${NEWS_PAIR_HEIGHT}px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: rgba(20, 20, 20, 0.88);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+  overflow: hidden;
+
+  ${CompactRow} {
+    padding: 6px 0;
+    gap: 10px;
+  }
+  ${CompactThumb} {
+    flex-basis: 84px;
+    width: 84px;
+    height: 62px;
+    border-radius: 8px;
+  }
+  ${CompactTitle} {
+    font-size: 13px;
+    -webkit-line-clamp: 3;
+  }
+  ${CompactMoreBtn} {
+    flex-basis: 28px;
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+  }
+
+  /* 480–1099px: блоки вужчі — менше фото, більше місця тексту */
+  @media (min-width: 480px) and (max-width: 699px) {
+    ${CompactThumb} {
+      flex-basis: 60px;
+      width: 60px;
+      height: 48px;
+    }
+  }
+  @media (min-width: 700px) and (max-width: 1099px) {
+    ${CompactThumb} {
+      flex-basis: 72px;
+      width: 72px;
+      height: 54px;
+    }
   }
 `;
 
@@ -1550,7 +1621,7 @@ const NewsCard = ({
           position: "relative",
           display: "flex",
           flexDirection: "column",
-          height: showImage ? "160px" : "auto",
+          height: showImage ? `${NEWS_CARD_HEIGHT}px` : "auto",
           minHeight: "auto",
         }}
       >
@@ -2756,10 +2827,9 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           isUrgent: item.isUrgent,
         };
       } else {
-        const cleanDesc = (item.description || "")
-          .replace(/<[^>]*>?/gm, "")
-          .trim()
-          .substring(0, 170);
+        const cleanDesc = cleanNewsDescription(
+          (item.description || "").replace(/<[^>]*>?/gm, ""),
+        ).substring(0, NEWS_DESC_TRANSLATE_MAX);
 
         toTranslateIndices.push(i);
         stringsToTranslate.push(item.title);
@@ -2901,6 +2971,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+  // Вигляд новин (Налаштування → Секції та новини): блоки в каруселі або список рядків
+  const isListView = usePrefValue(NEWS_VIEW_KEY, "cards") === "list";
   const [isSearchActive, setIsSearchActive] = useState(false);
   // Плавне розгортання/згортання панелей «Мої стрічки» ↔ «Рекомендовані»
   const animationsDisabled = useAnimationsDisabled();
@@ -3241,6 +3313,24 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       }
       if (showLoader && isMounted.current) setLoadProgress(25);
 
+      // Та сама стаття з двох стрічок (напр. BBC World і BBC Science & Environment) —
+      // лишаємо одну. Вбудовані стрічки в allItems ідуть першими, тож перевага за ними.
+      const normalizeLink = (link) =>
+        String(link || "")
+          .trim()
+          .replace(/^http:\/\//i, "https://")
+          .replace(/[?#].*$/, "")
+          .replace(/\/+$/, "")
+          .toLowerCase();
+      const seenArticleLinks = new Set();
+      allItems = allItems.filter((item) => {
+        const key = normalizeLink(item.link);
+        if (!key) return true;
+        if (seenArticleLinks.has(key)) return false;
+        seenArticleLinks.add(key);
+        return true;
+      });
+
       allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
       // Фільтр новин з урахуванням категорій і власних слів користувача.
@@ -3480,6 +3570,35 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     displayedItems.length > 0
       ? [...displayedItems, ...displayedItems, ...displayedItems]
       : [];
+  // «Список»: ті самі новини парами — по дві в одному блоці каруселі
+  const displayedPairs = [];
+  for (let i = 0; i < displayedItems.length; i += 2) {
+    displayedPairs.push(displayedItems.slice(i, i + 2));
+  }
+  const carouselSlides = isListView
+    ? displayedPairs.length > 0
+      ? [...displayedPairs, ...displayedPairs, ...displayedPairs]
+      : []
+    : infiniteItems;
+  const renderNewsCard = (item, compact = false) => (
+    <NewsCard
+      item={item}
+      $isDarkMode={$isDarkMode}
+      showImage={showImage}
+      showTitle={showTitle}
+      showDescription={showDescription}
+      onAiSummaryClick={(news) => {
+        setSelectedNews(news);
+        setIsAiModalOpen(true);
+      }}
+      onReportClick={handleReport}
+      onMuteClick={handleMute}
+      onUnmuteClick={handleUnmute}
+      onRevealClick={handleRevealAutoBlocked}
+      muteSyncInfo={muteSyncInfo}
+      compact={compact}
+    />
+  );
   const carouselRef = useRef(null);
   const [centeredSlideIndex, setCenteredSlideIndex] = useState(null);
   const isProgrammaticScrollRef = useRef(false);
@@ -3569,7 +3688,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       carouselRef.current.scrollLeft = oneSetWidth;
       requestAnimationFrame(updateCenteredSlide);
     }
-  }, [displayedItems.length, filterSources, updateCenteredSlide]);
+  }, [displayedItems.length, filterSources, updateCenteredSlide, isListView]);
   useEffect(() => {
     const init = async () => {
       try {
@@ -4109,32 +4228,26 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             >
              <CarouselWrapper>
   <MobileCarousel ref={carouselRef} onScroll={handleScroll}>
-    {infiniteItems.map((item, index) => (
+    {carouselSlides.map((slide, index) => (
       <CarouselSlide
         data-news-slide
-        key={`${item.link}-${index}`}
+        key={`${isListView ? slide.map((i) => i.link).join("|") : slide.link}-${index}`}
         $distanceFromCenter={
           centeredSlideIndex === null
             ? 2
             : Math.min(Math.abs(centeredSlideIndex - index), 2)
         }
       >
-        <NewsCard
-          item={item}
-          $isDarkMode={$isDarkMode}
-          showImage={showImage}
-          showTitle={showTitle}
-          showDescription={showDescription}
-          onAiSummaryClick={(news) => {
-            setSelectedNews(news);
-            setIsAiModalOpen(true);
-          }}
-          onReportClick={handleReport}
-          onMuteClick={handleMute}
-          onUnmuteClick={handleUnmute}
-          onRevealClick={handleRevealAutoBlocked}
-          muteSyncInfo={muteSyncInfo}
-        />
+        {isListView ? (
+          // «Список»: той самий блок каруселі, але в ньому дві новини рядками
+          <NewsPairBlock>
+            {slide.map((item) => (
+              <Fragment key={item.link}>{renderNewsCard(item, true)}</Fragment>
+            ))}
+          </NewsPairBlock>
+        ) : (
+          renderNewsCard(slide)
+        )}
       </CarouselSlide>
     ))}
   </MobileCarousel>
@@ -4260,21 +4373,29 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
               style={{ alignItems: "center", justifyContent: "center", padding: "8px" }}
             >
               <MoreNewsPanel onClick={(e) => e.stopPropagation()}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "12px",
-                    paddingBottom: "6px",
-                    borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
-                  }}
-                >
-                  <h2 style={{ margin: 0, color: "#ffaa00", fontSize: "15px" }}>
-                    Всі новини
-                  </h2>
-                  <CloseButton onClick={() => setShowMoreNews(false)}>✕</CloseButton>
-                </div>
+                <MoreNewsHeader>
+                  <MoreNewsHeaderIcon aria-hidden="true">
+                    <FiList />
+                  </MoreNewsHeaderIcon>
+                  <MoreNewsHeaderText>
+                    <h2>Всі новини</h2>
+                    <p>
+                      {moreNewsCount} новин · {moreGroups.length} джерел
+                      {lastUpdated &&
+                        ` · оновлено о ${lastUpdated.toLocaleTimeString("uk-UA", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}`}
+                    </p>
+                  </MoreNewsHeaderText>
+                  <MoreNewsClose
+                    type="button"
+                    aria-label="Закрити «Всі новини»"
+                    onClick={() => setShowMoreNews(false)}
+                  >
+                    <MdClose aria-hidden="true" />
+                  </MoreNewsClose>
+                </MoreNewsHeader>
                 {isMoreNewsLoading && (
                   <p role="status" style={{ margin: "0 0 12px", fontSize: "13px", opacity: 0.85 }}>
                     Підвантажуємо ще {moreNews.pending.length} новин…
@@ -4286,11 +4407,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                   </p>
                 ) : (
                   moreGroups.map((group) => (
-                    <MoreNewsSection key={group.sourceName}>
-                      <MoreNewsSourceTitle>
-                        {group.sourceFlag ? `${group.sourceFlag} ` : ""}
-                        {group.sourceName}
-                      </MoreNewsSourceTitle>
+                    // Назву джерела показує кожна новина, тож окремий заголовок групи не потрібен
+                    <MoreNewsSection key={group.sourceName} aria-label={group.sourceName}>
                       <MoreNewsGrid>
                         {group.items.map((item) => (
                           <MoreNewsAppear
@@ -4318,7 +4436,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                             onUnmuteClick={handleUnmute}
                             onRevealClick={handleRevealAutoBlocked}
                             muteSyncInfo={muteSyncInfo}
-                            compact={isPhone}
+                            compact={isPhone || isListView}
                           />
                           </MoreNewsAppear>
                         ))}

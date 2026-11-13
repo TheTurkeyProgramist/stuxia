@@ -37,6 +37,15 @@ export const CUSTOM_FEEDS_WARN_AT = 5;
 
 export const getCustomFeedsLimit = () => CUSTOM_FEEDS_MAX;
 
+// ───────────── Вигляд новин ─────────────
+// "cards" — блоки-картки в каруселі (як завжди), "list" — список: фото ліворуч, заголовок праворуч
+export const NEWS_VIEW_KEY = "news_view_mode";
+export const NEWS_VIEW_MODES = [
+  { id: "cards", label: "Блоки" },
+  { id: "list", label: "Список" },
+];
+export const setNewsViewMode = (mode) => setPref(NEWS_VIEW_KEY, mode === "list" ? "list" : "cards");
+
 // ───────────── Термінові новини ─────────────
 
 export const URGENT_NOTIFY_KEY = "news_urgent_notify";

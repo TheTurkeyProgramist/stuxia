@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Online-whiteboard",
       "saveEcoBotSubtitle": "Luftkvalitet",
       "airTrafficTitle": "Flygradar",
-      "deepStateSubtitle": "Karta över händelser i Ukraina"
+      "deepStateSubtitle": "Karta över händelser i Ukraina",
+      "rainViewerSubtitle": "Nederbördsradar",
+      "blitzortungSubtitle": "Blixtkarta"
     },
     "options": {
       "alerts": "Karta över larm i Ukraina (alerts.in.ua)",

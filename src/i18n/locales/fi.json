@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Verkkotaulu",
       "saveEcoBotSubtitle": "Ilmanlaatu",
       "airTrafficTitle": "Lentotutka",
-      "deepStateSubtitle": "Ukrainan tapahtumakartta"
+      "deepStateSubtitle": "Ukrainan tapahtumakartta",
+      "rainViewerSubtitle": "Sadetutka",
+      "blitzortungSubtitle": "Salamakartta"
     },
     "options": {
       "alerts": "Ukrainan hälytyskartta (alerts.in.ua)",

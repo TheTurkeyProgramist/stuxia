@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "Tableau blanc en ligne",
       "saveEcoBotSubtitle": "Qualité de l'air",
       "airTrafficTitle": "Radar aérien",
-      "deepStateSubtitle": "Carte des événements en Ukraine"
+      "deepStateSubtitle": "Carte des événements en Ukraine",
+      "rainViewerSubtitle": "Radar de précipitations",
+      "blitzortungSubtitle": "Carte des éclairs"
     },
     "options": {
       "alerts": "Carte des alertes en Ukraine (alerts.in.ua)",

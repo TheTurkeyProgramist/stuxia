@@ -35,7 +35,9 @@
       "excalidrawSubtitle": "在线白板",
       "saveEcoBotSubtitle": "空气质量",
       "airTrafficTitle": "航班雷达",
-      "deepStateSubtitle": "乌克兰事件地图"
+      "deepStateSubtitle": "乌克兰事件地图",
+      "rainViewerSubtitle": "降水雷达",
+      "blitzortungSubtitle": "闪电地图"
     },
     "options": {
       "alerts": "乌克兰警报地图 (alerts.in.ua)",
