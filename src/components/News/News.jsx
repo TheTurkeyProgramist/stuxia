@@ -2250,10 +2250,20 @@ const loadNewsBundle = async ({ forceFresh = false, signal } = {}) => {
       bundle = cached.data;
     }
   }
-  if (!bundle || Date.now() - (Number(bundle.updatedAt) || 0) > NEWS_BUNDLE_MAX_AGE_MS) {
+  if (!bundle) return null;
+  if (Date.now() - (Number(bundle.updatedAt) || 0) > NEWS_BUNDLE_MAX_AGE_MS) {
+    // Застарілий набір не показуємо одразу, але тримаємо як запасний:
+    // якщо жодна стрічка не завантажиться, краще старі новини, ніж помилка
+    staleNewsBundle = bundle;
     return null;
   }
+  return bundleToMap(bundle);
+};
 
+// Останній відомий набір, що був старший за годину (див. loadNewsBundle)
+let staleNewsBundle = null;
+
+const bundleToMap = async (bundle) => {
   const bySource = new Map();
   for (const entry of bundle.items) {
     const source = SOURCES.find((s) => s.name === entry?.sourceName);
@@ -3092,7 +3102,6 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     }
     try {
       let allItems = [];
-      const sourceErrors = [];
       const savedCustom =
         (await localforage.getItem("custom_news_sources")) || [];
       // Старі збережені стрічки Facebook мовчки пропускаємо
@@ -3291,20 +3300,23 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         }
         if (result.reason?.name === "AbortError") return;
         // Технічний текст (напр. "Failed to fetch") лишаємо лише в консолі
-        sourceErrors.push(separateSources[i].name);
         console.warn(
           `Не вдалося завантажити новини з ${separateSources[i].name}:`,
           result.reason,
         );
       });
       if (signal.aborted) return;
+      // Жодна стрічка не відповіла — показуємо останній збережений набір, навіть старий
+      if (allItems.length === 0 && staleNewsBundle) {
+        const staleBySource = await bundleToMap(staleNewsBundle);
+        activeSources.forEach((source) => {
+          allItems = [...allItems, ...(staleBySource.get(source.name) || [])];
+        });
+      }
       if (allItems.length === 0) {
         if (isMounted.current) {
-          setLoadError(
-            sourceErrors.length > 0
-              ? `Не вдалося отримати новини (недоступно: ${sourceErrors.join(", ")}). Перевірте з'єднання або спробуйте оновити сторінку пізніше.`
-              : "Зараз немає доступних новин. Спробуйте оновити сторінку пізніше.",
-          );
+          // Перелік недоступних джерел — лише в консолі (console.warn вище)
+          setLoadError("Новини тимчасово недоступні.");
           setHasError(true);
           setLoadProgress(100);
           setLoading(false);
@@ -3464,7 +3476,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       }
       console.error("Справжня помилка завантаження:", e);
       if (isMounted.current) {
-        setLoadError("Сталася помилка під час завантаження новин. Спробуйте ще раз пізніше.");
+        setLoadError("Новини тимчасово недоступні.");
         setHasError(true);
         setLoadProgress(100);
         if (showLoader) {

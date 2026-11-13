@@ -1,7 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
-import { UKRAINE_CITIES_40, getCitySlug } from './src/utils/citiesDatabase.js';
+import { UKRAINE_CITIES_40, getCitySlug, getCitySeo } from './src/utils/citiesDatabase.js';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import viteCompression from 'vite-plugin-compression';
 import { imagetools } from 'vite-imagetools';
@@ -143,16 +143,28 @@ function cityPagesPlugin() {
           const slug = getCitySlug(city);
           if (!slug) continue;
           const url = `${SITE_URL}/pohoda/${slug}/`;
-          const title = `Погода ${city.name} — точний прогноз на сьогодні, завтра і 16 днів | Стихія`;
-          const description = `Погода в місті ${city.fullName}: температура зараз, погодинний прогноз, вітер, опади, УФ-індекс і графіки на 16 днів.`;
+          // Ті самі тексти ставить і застосунок (App.jsx), тож після JS заголовок не зміниться
+          const seo = getCitySeo(city);
+          const { title, description } = seo;
 
           let html = base.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`);
           html = setMeta(html, 'name', 'description', description);
           html = setMeta(html, 'property', 'og:url', url);
-          html = setMeta(html, 'property', 'og:title', `Погода ${city.name} | Стихія`);
+          html = setMeta(html, 'property', 'og:title', seo.shortTitle);
           html = setMeta(html, 'property', 'og:description', description);
-          html = setMeta(html, 'name', 'twitter:title', `Погода ${city.name} | Стихія`);
+          html = setMeta(html, 'name', 'twitter:title', seo.shortTitle);
           html = setMeta(html, 'name', 'twitter:description', description);
+          // Видимий заголовок і текст поза #root: React його не перемальовує, тож Google
+          // бачить H1 «Погода в Конотопі» і в сирому HTML, і після виконання JS (внизу сторінки)
+          html = html.replace(
+            '</main>',
+            `</main>
+    <section id="city-seo" style="max-width:900px;margin:24px auto;padding:16px 18px;box-sizing:border-box;border-radius:12px;background:rgba(0,0,0,.62);color:#fff;font-size:14px;line-height:1.55">
+      <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3">${escapeHtml(seo.heading)}</h1>
+      <p style="margin:0 0 6px">${escapeHtml(description)}</p>
+      <p style="margin:0;opacity:.85">${escapeHtml(seo.text)}</p>
+    </section>`,
+          );
           html = html.replace(/(<link\s+rel="canonical"\s+href=")[^"]*(")/, `$1${url}$2`);
           html = html.replace(
             '</head>',
@@ -160,7 +172,7 @@ function cityPagesPlugin() {
               '@context': 'https://schema.org',
               '@type': 'Place',
               name: city.name,
-              description: `Прогноз погоди в місті ${city.name}`,
+              description: seo.heading,
               geo: { '@type': 'GeoCoordinates', latitude: city.lat, longitude: city.lon },
               address: { '@type': 'PostalAddress', addressCountry: 'UA', addressLocality: city.name },
             })}</script>\n  </head>`,
@@ -243,13 +255,15 @@ export default defineConfig(({ mode }) => {
       threshold: 10240,
     }),
 
-    // Інтерактивна карта розміру файлів після білду; браузер відкривається лише з ANALYZE=1
-    visualizer({
-      filename: './dist/stats.html',
-      open: !!process.env.ANALYZE,
-      gzipSize: true,
-      brotliSize: true,
-    }),
+    // Карта розміру файлів — лише за `bun run analyze` (ANALYZE=1). Пишеться в корінь
+    // проєкту (у .gitignore), а не в dist, щоб stats.html не потрапляв на сайт.
+    process.env.ANALYZE &&
+      visualizer({
+        filename: './stats.html',
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+      }),
 
     // Офлайн: застосунок (js/css/html/іконки) зберігається при першому візиті,
     // відповіді Open-Meteo — NetworkFirst, щоб без зв'язку показати останній прогноз

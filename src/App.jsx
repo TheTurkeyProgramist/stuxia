@@ -61,7 +61,7 @@ import { IoThunderstorm, IoRainy } from "react-icons/io5";
 import DecoratorOverlay from "./components/Decorator/DecoratorOverlay.jsx";
 import SiteContextMenu from "./components/SiteContextMenu.jsx";
 import { analyzeSearchQuery } from "./utils/searchAnalyzer.js";
-import { findCityInDatabase, getCitySlug } from "./utils/citiesDatabase.js";
+import { findCityInDatabase, getCitySlug, getCitySeo } from "./utils/citiesDatabase.js";
 import {
   useFloating,
   autoUpdate,
@@ -3327,12 +3327,8 @@ const App = () => {
     })();
   }, [user?.uid]); // лише при зміні акаунта
 
-  // Запит дозволу на системні сповіщення
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-  }, []);
+  // Дозвіл на системні сповіщення НЕ питаємо при відкритті: якщо людина натисне «Блокувати»,
+  // push до неї вже не дійде. Браузер питає лише після кліку на перемикач у налаштуваннях.
 
   useEffect(() => {
     weatherCardsRef.current = weatherCards;
@@ -3998,13 +3994,18 @@ const App = () => {
     if (analysis.isSearchEntry && analysis.cityName) {
       const city = analysis.cityData;
 
-      // Динамічне оновлення заголовка та мета-опису як у Gismeteo / Sinoptik
-      document.title = `Погода в місті ${analysis.cityName} — точний прогноз | Стихія`;
+      // Динамічне оновлення заголовка та мета-опису. Для міст із бази — ті самі тексти,
+      // що й у статичній сторінці /pohoda/<slug>/ (getCitySeo), щоб Google бачив один заголовок
+      const dbCity = findCityInDatabase(analysis.cityName);
+      const seo = dbCity ? getCitySeo(dbCity) : null;
+      document.title =
+        seo?.title || `Погода в місті ${analysis.cityName} — точний прогноз | Стихія`;
       const metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
         metaDesc.setAttribute(
           "content",
-          `Точний прогноз погоди в місті ${analysis.cityName}: температура, вітер, вологість, тиск та графік на 16 днів.`
+          seo?.description ||
+            `Точний прогноз погоди в місті ${analysis.cityName}: температура, вітер, вологість, тиск та графік на 16 днів.`
         );
       }
 
@@ -4012,7 +4013,6 @@ const App = () => {
       let canonical = document.querySelector('link[rel="canonical"]');
       if (canonical) {
         // Для міст із бази — статична сторінка /pohoda/<slug>/ (її і індексує Google)
-        const dbCity = findCityInDatabase(analysis.cityName);
         canonical.setAttribute(
           "href",
           dbCity
@@ -4032,7 +4032,7 @@ const App = () => {
         "@context": "https://schema.org",
         "@type": "Place",
         "name": analysis.cityName,
-        "description": `Точний прогноз погоди в місті ${analysis.cityName}`,
+        "description": seo?.heading || `Точний прогноз погоди в місті ${analysis.cityName}`,
         "address": {
           "@type": "PostalAddress",
           "addressCountry": "UA",

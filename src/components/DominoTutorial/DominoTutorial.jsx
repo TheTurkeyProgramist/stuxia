@@ -71,12 +71,22 @@ const CornerPrompt = styled.div`
   animation: ${(p) => (p.$closing ? fadeOut : fadeIn)} 0.3s ease-out forwards;
   pointer-events: ${(p) => (p.$closing ? 'none' : 'auto')};
 
-  /* На телефоні знизу бейдж закривав кнопку «Погода» — переносимо під шапку */
+  /* Телефон: під шапкою бейдж закривав пошук міста, а великий блок знизу — кнопку «Погода».
+     Тому тут це низька смужка в один рядок біля нижнього краю */
   @media (max-width: 767px) {
-    top: calc(80px + env(safe-area-inset-top));
-    bottom: auto;
-    width: 220px;
-    padding: 10px 12px;
+    top: auto;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    left: 10px;
+    right: 10px;
+    width: auto;
+    padding: 8px 8px 8px 10px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    /* Поки людина друкує в полі (клавіатура відкрита), смужка не заважає підказкам міст */
+    :root:has(input:focus, textarea:focus) & { display: none; }
   }
 `;
 
@@ -86,6 +96,15 @@ const CornerHead = styled.div`
   gap: 10px;
   margin-bottom: 10px;
   padding-right: 22px;
+
+  @media (max-width: 767px) {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    gap: 8px;
+    & > div:first-child { width: 36px; height: 36px; }
+  }
 `;
 
 const CornerTitle = styled.div`
@@ -101,6 +120,13 @@ const CornerButton = styled.button`
   border-radius: 10px;
   padding: 9px 12px;
   font-size: 14px;
+
+  @media (max-width: 767px) {
+    width: auto;
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
 `;
 
 const CornerHint = styled.div`
@@ -108,6 +134,8 @@ const CornerHint = styled.div`
   font-size: 11px;
   line-height: 1.35;
   color: rgba(255,255,255,0.6);
+
+  @media (max-width: 767px) { display: none; }
 `;
 
 const CornerClose = styled.button`
@@ -128,6 +156,12 @@ const CornerClose = styled.button`
   cursor: pointer;
   transition: background 0.15s ease;
   &:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+  @media (max-width: 767px) {
+    position: static;
+    flex-shrink: 0;
+    order: 3;
+  }
 `;
 
 // Маленький Доміно: кадр відео 16:9 з великими прозорими полями — обрізаємо до самого індика

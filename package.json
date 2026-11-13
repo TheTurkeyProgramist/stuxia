@@ -40,6 +40,7 @@
   "scripts": {
     "dev": "vite",
     "build": "bun x vite build",
+    "analyze": "ANALYZE=1 bun x vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "backup": "powershell -Command \"$date = Get-Date -Format 'yyyy-MM-dd_HH-mm'; Get-ChildItem -Path './*' -Exclude 'node_modules', 'server', '.next', '.git', 'out', 'dist', '.env*' | Compress-Archive -DestinationPath ('../stykhiya-backup-' + $date + '.zip')\"",
@@ -50,7 +51,7 @@
     "deploy:cpanel": "bun run build && node deploy.js",
     "deploy:cloudflare": "bun run build && bun x wrangler pages deploy",
     "dev:cloudflare": "bun run build && bun x wrangler pages dev",
-    "test": "react-scripts test",
+    "test": "bun test src",
     "test:rules": "bun x firebase-tools@13.35.1 emulators:exec --only firestore --project demo-stuxia \"node tests/firestore.rules.test.mjs\"",
     "star": "node server/index.js"
   },
