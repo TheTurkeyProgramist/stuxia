@@ -71,11 +71,20 @@ import {
   FloatingArrow,         
 } from "@floating-ui/react";
 import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
-import TimezoneModal from "./TimezoneModal.jsx";
 import WallpaperScene, { findWallpaper } from "./WallpaperScene.jsx";
 import { isWallpaperSrc } from "../../utils/wallpaperPrefs.js";
-import BgModal from "./BgModal.jsx";
-import LanguageModal from "../Modals/LanguageModal.jsx";
+// Модалки вантажаться при першому відкритті, а не на старті
+const TimezoneModal = React.lazy(() => import("./TimezoneModal.jsx"));
+const BgModal = React.lazy(() => import("./BgModal.jsx"));
+const LanguageModal = React.lazy(() => import("../Modals/LanguageModal.jsx"));
+
+// true з першого разу, коли flag став true, і далі назавжди: модалка після
+// першого відкриття лишається змонтованою й зберігає свій стан, як і раніше
+const useOpenedOnce = (flag) => {
+  const [opened, setOpened] = useState(flag);
+  if (flag && !opened) setOpened(true);
+  return opened || flag;
+};
 import { usePageActive } from "../../utils/pageActivity.js";
 const CHANGE_BG_PREVIEW_IMAGES = [
   villagePreview,
@@ -1360,8 +1369,11 @@ const Hero = ({
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const bgModalMounted = useOpenedOnce(isModalOpen);
   const [showTimezoneMenu, setShowTimezoneMenu] = useState(false);
+  const timezoneModalMounted = useOpenedOnce(showTimezoneMenu);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
+  const languageModalMounted = useOpenedOnce(isLanguageModalOpen);
   const { t, i18n } = useTranslation();
   // «Language (Мова)»: англійське слово для всіх + назва мовою сайту в дужках
   const languageButtonText =
@@ -2136,13 +2148,17 @@ const Hero = ({
                 <Tag $isDarkMode={isDarkMode} style={{ flex: 1, textAlign: "right" }}>
                   {heroDateString}
                 </Tag>
-                <TimezoneModal
-                  isOpen={showTimezoneMenu}
-                  onClose={() => setShowTimezoneMenu(false)}
-                  selectedTimezone={selectedTimezone}
-                  setSelectedTimezone={setSelectedTimezone}
-                  isDarkMode={isDarkMode}
-                />
+                {timezoneModalMounted && (
+                  <React.Suspense fallback={null}>
+                    <TimezoneModal
+                      isOpen={showTimezoneMenu}
+                      onClose={() => setShowTimezoneMenu(false)}
+                      selectedTimezone={selectedTimezone}
+                      setSelectedTimezone={setSelectedTimezone}
+                      isDarkMode={isDarkMode}
+                    />
+                  </React.Suspense>
+                )}
                 </HeroDate>
               </HeroFi>
             </HeroFix>
@@ -2451,6 +2467,8 @@ const Hero = ({
           <News user={user} isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
         </div>
       </DelayedContent>
+      {bgModalMounted && (
+      <React.Suspense fallback={null}>
       <BgModal
         isOpen={isModalOpen}
         isClosing={isClosing}
@@ -2486,10 +2504,16 @@ const Hero = ({
         setRandomCurrentIndex={setRandomCurrentIndex}
         hills={hills}
       />
-      <LanguageModal
-        isOpen={isLanguageModalOpen}
-        onClose={() => setIsLanguageModalOpen(false)}
-      />
+      </React.Suspense>
+      )}
+      {languageModalMounted && (
+        <React.Suspense fallback={null}>
+          <LanguageModal
+            isOpen={isLanguageModalOpen}
+            onClose={() => setIsLanguageModalOpen(false)}
+          />
+        </React.Suspense>
+      )}
 
 
 

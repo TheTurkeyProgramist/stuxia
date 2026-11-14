@@ -55,10 +55,7 @@ import { DEFAULT_BGS } from "../Hero/defaultBgs";
 import { getWindDirectionText } from "../../utils/windUtils";
 import { linearTrend } from "../../utils/chartTrend";
 import { DEFAULT_LINE_STYLES, DEFAULT_DIM, mergeLineStyles, lineStyleProps } from "../../utils/chartLineStyles";
-import ChartStyleModal from "../Modals/ChartStyleModal";
-import ForecastReportModal from "../Modals/ForecastReportModal";
 import CardSettingsModal from "../Modals/CardSettingsModal";
-import WeatherBgModal from "../Modals/WeatherBgModal";
 import {
   FaCalendarPlus,
   FaClock,
@@ -76,8 +73,12 @@ import {
   FaLightbulb,
   FaGaugeHigh,
 } from "react-icons/fa6";
-import CustomDatesModal from "../Modals/CustomDatesModal";
-import UnitsModal from "../Modals/UnitsModal";
+// Модалки картки вантажаться лише при відкритті, а не на старті
+const ChartStyleModal = lazy(() => import("../Modals/ChartStyleModal"));
+const ForecastReportModal = lazy(() => import("../Modals/ForecastReportModal"));
+const WeatherBgModal = lazy(() => import("../Modals/WeatherBgModal"));
+const CustomDatesModal = lazy(() => import("../Modals/CustomDatesModal"));
+const UnitsModal = lazy(() => import("../Modals/UnitsModal"));
 import { loadCardUnits, isUnitsEventForCard, cardUnitsKey, UNITS_GLOBAL_KEY, UNITS_USE_GLOBAL_KEY } from "../../utils/unitsStorage";
 import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, tempLabel, windLabel, pressureLabel, visibilityLabel, convertVisibility } from "../../utils/units.js";
 import { CONSENSUS_MODEL_LABELS } from "../../utils/weatherConsensus";
@@ -5019,6 +5020,7 @@ const HOLIDAYS_2027 = {
         </DesktopLayoutWrapper>
       </WeatherCard>
 
+      <Suspense fallback={null}>
       {isAiModalOpen && (
         <ForecastReportModal
           ruleForecast={ruleForecast}
@@ -5092,6 +5094,7 @@ const HOLIDAYS_2027 = {
           onClose={() => setIsBgModalOpen(false)}
         />
       )}
+      </Suspense>
     </div>
   );
 };

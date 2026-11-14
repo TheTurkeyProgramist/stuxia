@@ -1,6 +1,6 @@
 import { memo, useEffect, useState } from "react";
 import CityScene from "./CityScene.jsx";
-import { TIMEZONES } from "./TimezoneModal.jsx";
+import { TIMEZONES } from "./timezones.js";
 import {
   EVERGREEN_LANGUAGES,
   LANGUAGE_CLIMATES,

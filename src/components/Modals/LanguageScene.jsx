@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import CITY_SVGS from '../Hero/citySvgs.js';
+import { citySvgKey, hasCitySvg, useCitySvg } from '../Hero/citySvgs.js';
 import { HEAT_TILE, FOG_TILE } from '../Hero/CityScene.jsx';
 import { Lanterns, Petals } from '../Hero/SceneParticles.jsx';
 import {
@@ -51,7 +51,8 @@ const mixHex = (a, b, t) => {
 // рахуються тут один раз, а картинка растеризується й далі лише зсувається.
 const sceneCache = new Map();
 
-const buildSceneSrc = (code) => {
+// cityMarkup — мальок міста-основи (для мов без власної сцени), уже завантажений
+const buildSceneSrc = (code, cityMarkup) => {
   const climate = LANGUAGE_CLIMATES[code];
   // Сніговим країнам пори року не потрібні (там і так зима), тропікам — теж.
   // Виняток — снігові сцени із зеленою травою (Білорусь).
@@ -64,10 +65,7 @@ const buildSceneSrc = (code) => {
 
   const phase = NIGHT_LANGUAGES.has(code) ? 'night' : DAWN_LANGUAGES.has(code) ? 'dawn' : 'day';
   const sky = SKIES[phase];
-  let markup =
-    LANGUAGE_SCENES[code] ??
-    CITY_SVGS[`./images/timezones/${LANGUAGE_CITY_SVGS[code]}.svg`] ??
-    '';
+  let markup = LANGUAGE_SCENES[code] ?? cityMarkup ?? '';
   for (const [from, to] of Object.entries(LANGUAGE_CITY_RECOLOR[code] ?? {})) {
     markup = markup.replaceAll(from, to);
   }
@@ -236,6 +234,10 @@ const LanguageScene = ({ code }) => {
   const animated = Boolean(climate || Particles);
   const sky = { ...SKIES[phase], ...(climate === 'snow' ? SNOW_SKY : null) };
   const rootRef = useRef(null);
+  const cityKey = !LANGUAGE_SCENES[code] && LANGUAGE_CITY_SVGS[code] ? citySvgKey(LANGUAGE_CITY_SVGS[code]) : null;
+  const cityMarkup = useCitySvg(cityKey);
+  // Поки мальок міста вантажиться, не «запікаємо» порожню сцену в кеш
+  const waitingForCity = hasCitySvg(cityKey) && !cityMarkup;
 
   // Анімації крутяться лише в картках, які зараз видно на екрані
   useEffect(() => {
@@ -257,7 +259,7 @@ const LanguageScene = ({ code }) => {
       data-climate={climate}
       style={{ '--sky-top': sky.top, '--sky-bot': sky.bot }}
     >
-      <img src={buildSceneSrc(code)} alt="" decoding="async" draggable={false} />
+      {!waitingForCity && <img src={buildSceneSrc(code, cityMarkup)} alt="" decoding="async" draggable={false} />}
       {Particles && <Particles />}
       {climate === 'heat' && <span className="fx fx-heat" />}
       {climate === 'wind' && <span className="fx fx-wind" />}

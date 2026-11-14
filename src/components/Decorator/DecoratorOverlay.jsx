@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useDecorator } from "./DecoratorContext";
-import DecoratorModal from "./DecoratorModal";
+
+// Модалка декоратора потрібна лише після вибору елемента
+const DecoratorModal = lazy(() => import("./DecoratorModal"));
 
 const HIGHLIGHT_STYLE = {
   outline: "2px dashed #ffb36c",
@@ -128,10 +130,12 @@ const DecoratorOverlay = ({ isStickyBgMode }) => {
   return (
     <>
       {selectedEl && (
-        <DecoratorModal
-          targetElement={selectedEl}
-          onClose={() => setSelectedEl(null)}
-        />
+        <Suspense fallback={null}>
+          <DecoratorModal
+            targetElement={selectedEl}
+            onClose={() => setSelectedEl(null)}
+          />
+        </Suspense>
       )}
     </>
   );

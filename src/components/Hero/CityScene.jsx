@@ -3,15 +3,11 @@ import * as SunCalc from "suncalc";
 import styled from "styled-components";
 import { Lanterns, Petals } from "./SceneParticles.jsx";
 import { applySeason, getSeason } from "../../utils/sceneSeasons.js";
+import { citySvgKey, useCitySvg } from "./citySvgs.js";
 
 // SVG-мальки міст: небо прозоре, кольори суші змішуються з --shade на --night,
 // вікна мають клас "win" ("win off" — вночі не світиться).
-// Лежать прямо в бандлі (~17 КБ gzip), тож міста є вже в першому кадрі модалки.
-const CITY_SVGS = import.meta.glob("./images/timezones/*.svg", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
+// Вантажаться по одному, коли місто показують (див. citySvgs.js).
 
 // Клімат міста: спека (марево вдень), дощ (вночі злива), сніг (вночі заметіль), туман
 const CLIMATES = {
@@ -499,7 +495,8 @@ const CityScene = ({ timezone, now, timeOfDay = "auto", season: seasonChoice = "
   const angleRef = useRef(null);
   // Сцени країн (живі шпалери з мов) приносять власні розмітку, клімат і частинки
   const slug = timezone.slug ?? timezone.value.toLowerCase().replace(/\//g, "_");
-  const svgKey = `./images/timezones/${slug}.svg`;
+  // Сцени країн приносять власну розмітку — файл міста їм не потрібен
+  const loadedMarkup = useCitySvg(timezone.markup == null ? citySvgKey(slug) : null);
   const climate = "climate" in timezone ? timezone.climate : CLIMATES[slug];
   const seasonal = timezone.seasonal ?? (climate !== "snow" && !EVERGREEN.has(slug));
   const season = !seasonal
@@ -507,7 +504,7 @@ const CityScene = ({ timezone, now, timeOfDay = "auto", season: seasonChoice = "
     : seasonChoice !== "auto"
       ? seasonChoice
       : getSeason(now, timezone.lat < 0);
-  const cityMarkup = timezone.markup ?? CITY_SVGS[svgKey] ?? "";
+  const cityMarkup = timezone.markup ?? loadedMarkup;
   const contain = fit === "contain";
   const aspect = contain ? "xMidYMax meet" : "xMidYMax slice";
   const { cityHtml, bands } = useMemo(() => {

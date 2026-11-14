@@ -50,7 +50,8 @@ import { useBgMusicSuspended } from "./utils/bgMusicSuspend";
 import axios from "axios";
 import "./App.css";
 import Header from "./components/Header/Header.jsx";
-import AuthorsDirectoryModal from "./components/Header/AuthorsDirectoryModal.jsx";
+// Довідник авторів (~10 КБ gzip) — лише при відкритті
+const AuthorsDirectoryModal = lazy(() => import("./components/Header/AuthorsDirectoryModal.jsx"));
 import SupportBanner from "./components/Support/SupportBanner.jsx";
 import { notifySupportMoment } from "./components/Support/supportNudge.js";
 import Hero from "./components/Hero/Hero.jsx";
@@ -2034,6 +2035,9 @@ const App = () => {
   const [isUserSearchOpen, setIsUserSearchOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isAuthorsDirectoryOpen, setIsAuthorsDirectoryOpen] = useState(false);
+  // Після першого відкриття лишається змонтованим (пам'ятає сторінку книги)
+  const [authorsDirectoryMounted, setAuthorsDirectoryMounted] = useState(false);
+  if (isAuthorsDirectoryOpen && !authorsDirectoryMounted) setAuthorsDirectoryMounted(true);
   const [isOtherOptionsOpen, setIsOtherOptionsOpen] = useState(false);
   const [bgMusicEnabled, setBgMusicEnabled] = useState(false);
   const [autoMuteBgMusic, setAutoMuteBgMusic] = useState(true);
@@ -4285,11 +4289,13 @@ const App = () => {
               />
             )}
             {isInfoOpen && <TermsModal onClose={() => setIsInfoOpen(false)} />}
-            <AuthorsDirectoryModal
-              isOpen={isAuthorsDirectoryOpen}
-              onClose={() => setIsAuthorsDirectoryOpen(false)}
-              isDarkMode={isDarkMode}
-            />
+            {authorsDirectoryMounted && (
+              <AuthorsDirectoryModal
+                isOpen={isAuthorsDirectoryOpen}
+                onClose={() => setIsAuthorsDirectoryOpen(false)}
+                isDarkMode={isDarkMode}
+              />
+            )}
 
           </Suspense>
           <DecoratorOverlay isStickyBgMode={isStickyBgMode} />
