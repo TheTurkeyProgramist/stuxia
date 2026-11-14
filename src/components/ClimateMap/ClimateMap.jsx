@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import styled, { keyframes, css } from "styled-components";
-import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaCloudRain, FaBolt } from "react-icons/fa";
+import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaSatelliteDish, FaBolt } from "react-icons/fa";
 import { FiCheck, FiPlay, FiPlus, FiSearch, FiX } from "react-icons/fi";
 import { Tooltip } from "../Header/Header.jsx";
 import { MdDragIndicator } from "react-icons/md";
@@ -1197,6 +1197,23 @@ const CardText = styled.span`
   small { font-size: 11px; opacity: 0.85; }
 `;
 
+// Примітка над назвою картки (наприклад, «Потрібна Дія»)
+const CardNote = styled.span`
+  align-self: flex-start;
+  max-width: 100%;
+  margin-bottom: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-shadow: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 const SourceCard = styled.button`
   position: relative;
   display: block;
@@ -1294,25 +1311,30 @@ const BUILTIN_SOURCES = [
   { id: "ventusky", title: "Ventusky", subtitleKey: "climateMap.sources.ventuskySubtitle", Icon: FaCloudSun, bg: "linear-gradient(135deg, #1e3c72, #2a8bd8)", cover: coverVentusky },
   { id: "windy", title: "Windy", subtitleKey: "climateMap.sources.windySubtitle", Icon: FaWind, bg: "linear-gradient(135deg, #3b1d8f, #1fa2b8)", cover: coverWindy },
   { id: "alerts-ua", titleKey: "climateMap.sources.alertsTitle", subtitleKey: "climateMap.sources.alertsSubtitle", Icon: FaBell, bg: "linear-gradient(135deg, #5c1010, #d63333)", cover: coverAlerts },
-  { id: "ukrainealarm", titleKey: "climateMap.sources.airTargetsTitle", subtitleKey: "climateMap.sources.airTargetsSubtitle", Icon: FaRocket, bg: "linear-gradient(135deg, #3a0d0d, #b8451f)", cover: coverAirTargets },
+  { id: "ukrainealarm", titleKey: "climateMap.sources.airTargetsTitle", subtitleKey: "climateMap.sources.airTargetsSubtitle", noteKey: "climateMap.sources.airTargetsNote", Icon: FaRocket, bg: "linear-gradient(135deg, #3a0d0d, #b8451f)", cover: coverAirTargets },
+  // Неофіційна карта цілей: офіційна з листопада 2026 показує цілі лише після входу через Дію
+  { id: "trivoga-online", titleKey: "climateMap.sources.airTargetsAltTitle", subtitleKey: "climateMap.sources.airTargetsAltSubtitle", Icon: FaSatelliteDish, bg: "linear-gradient(135deg, #1a0f2e, #c2410c)" },
   { id: "excalidraw", title: "Excalidraw", subtitleKey: "climateMap.sources.excalidrawSubtitle", Icon: FaPencilAlt, bg: "linear-gradient(135deg, #4b3fc4, #9d93f5)", cover: coverExcalidraw },
   { id: "saveecobot", title: "SaveEcoBot", subtitleKey: "climateMap.sources.saveEcoBotSubtitle", Icon: FaLeaf, bg: "linear-gradient(135deg, #0f6b5f, #7cbf1e)", cover: coverSaveEcoBot },
   { id: "airtraffic", titleKey: "climateMap.sources.airTrafficTitle", subtitle: "TheAirTraffic (ADS-B)", Icon: FaPlane, bg: "linear-gradient(135deg, #0b2545, #d98a0b)", cover: coverAirTraffic },
   { id: "deepstate", title: "DeepState", subtitleKey: "climateMap.sources.deepStateSubtitle", Icon: FaMapMarkedAlt, bg: "linear-gradient(135deg, #1b2a3a, #3d6b4f)", cover: coverDeepState },
-  { id: "rainviewer", title: "RainViewer", subtitleKey: "climateMap.sources.rainViewerSubtitle", Icon: FaCloudRain, bg: "linear-gradient(135deg, #0a3d62, #3c9ee8)" },
   { id: "blitzortung", title: "Blitzortung", subtitleKey: "climateMap.sources.blitzortungSubtitle", Icon: FaBolt, bg: "linear-gradient(135deg, #1a1446, #e0b100)" },
 ];
 
 const BUILTIN_PROVIDERS = BUILTIN_SOURCES.map((s) => s.id);
 
+// Джерела, що самі озвучують тривоги вголос. Гучність чужого фрейму сайт змінити не може
+// (браузер не дає доступу до звуку іншого домену), тож лише попереджаємо
+const VOICE_SOURCES = new Set(["trivoga-online"]);
+
 // Джерела лише для України: на інших мовах сайту їх не показуємо
-const UKRAINE_ONLY_SOURCES = new Set(["alerts-ua", "ukrainealarm", "saveecobot", "deepstate"]);
+const UKRAINE_ONLY_SOURCES = new Set(["alerts-ua", "ukrainealarm", "trivoga-online", "saveecobot", "deepstate"]);
 
 // Картка джерела; перетягується лише за ручку, щоб не заважати прокрутці на дотик
 const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSplitChecked, splitLocked, onToggleSplit, isDarkMode }) => {
   const { t } = useTranslation();
   const controls = useDragControls();
-  const { id, title, subtitle, Icon, bg, frame, cover, favicon } = item;
+  const { id, title, subtitle, note, Icon, bg, frame, cover, favicon } = item;
   const [faviconFailed, setFaviconFailed] = useState(false);
   return (
     <SourceCardWrap
@@ -1351,6 +1373,7 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSpli
           <CardArt><Icon /></CardArt>
         )}
         <CardText>
+          {note && <CardNote>{note}</CardNote>}
           <strong>{title}</strong>
           <small>{subtitle}</small>
         </CardText>
@@ -1395,7 +1418,7 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSpli
 
 // Картка джерела у мобільному слайдері налаштувань (без перетягування, поділу та видалення)
 const MobileSourceCard = ({ item, isActive, onSelect }) => {
-  const { id, title, subtitle, Icon, bg, frame, cover, favicon } = item;
+  const { id, title, subtitle, note, Icon, bg, frame, cover, favicon } = item;
   const [faviconFailed, setFaviconFailed] = useState(false);
   const cardRef = useRef(null);
 
@@ -1438,6 +1461,7 @@ const MobileSourceCard = ({ item, isActive, onSelect }) => {
           <CardArt><Icon /></CardArt>
         )}
         <CardText>
+          {note && <CardNote>{note}</CardNote>}
           <strong>{title}</strong>
           <small>{subtitle}</small>
         </CardText>
@@ -1618,6 +1642,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         ...s,
         title: s.titleKey ? t(s.titleKey) : s.title,
         subtitle: s.subtitleKey ? t(s.subtitleKey) : s.subtitle,
+        note: s.noteKey ? t(s.noteKey) : undefined,
       })),
       ...customFrames.map((frame) => ({
         id: frame.id,
@@ -1632,6 +1657,14 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     const byId = new Map(all.map((item) => [item.id, item]));
     const ordered = sourceOrder.filter((id) => byId.has(id)).map((id) => byId.get(id));
     const placed = new Set(ordered.map((item) => item.id));
+    // Нові вбудовані джерела, яких ще немає у збереженому порядку, ставимо одразу за їхнім сусідом зі списку
+    all.forEach((item, i) => {
+      if (placed.has(item.id) || item.frame) return;
+      const at = i > 0 ? ordered.findIndex((x) => x.id === all[i - 1].id) : -1;
+      if (at === -1) ordered.push(item);
+      else ordered.splice(at + 1, 0, item);
+      placed.add(item.id);
+    });
     return [...ordered, ...all.filter((item) => !placed.has(item.id))];
   }, [customFrames, sourceOrder, t, isUkrainian]);
 
@@ -1648,6 +1681,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [videoError, setVideoError] = useState(false);
   const turkeyVideoRef = useRef(null);
   const shouldShowLoader = !isMapActive || isLoading || !isOnline;
+  const hasVoiceSource = VOICE_SOURCES.has(provider) || (isSplitActive && VOICE_SOURCES.has(secondProvider));
   // Вкладка видима і вікно у фокусі: після повернення з іншої програми/вкладки
   // відео має само запуститися знову (main.jsx ставить усі відео на паузу при прихованні)
   const pageActive = usePageActive();
@@ -1696,6 +1730,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   useEffect(() => () => pipWindow?.close(), [pipWindow]);
 
   const handleSetProvider = async (newProvider) => {
+    if (VOICE_SOURCES.has(newProvider) && newProvider !== provider) {
+      toast(t("climateMap.voiceWarning"), { icon: "🔊", duration: 8000 });
+    }
     setProvider(newProvider);
     try {
       await localforage.setItem("selected_climate_provider", newProvider);
@@ -1870,6 +1907,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
     if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
       toast.error(t("climateMap.invalidUrl"));
+      return;
+    }
+
+    // Стихію саму в себе не вкладаємо (і будь-яку її сторінку)
+    const targetHost = (getFrameHost(targetUrl) || "").replace(/^www\./, "");
+    if (targetHost === "stuxia.com" || targetHost === window.location.hostname.replace(/^www\./, "")) {
+      toast.error(t("climateMap.selfFrame"));
       return;
     }
 
@@ -2209,8 +2253,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       return "https://deepstatemap.live/";
     }
 
-    if (provider === "rainviewer") {
-      return `https://www.rainviewer.com/map.html?loc=${lat},${lon},${zoom}&oFa=0&oC=1&oU=0&oCS=1&oF=0&oAP=1&c=3&o=83&lm=1&layer=radar&sm=1&sn=1`;
+    if (provider === "trivoga-online") {
+      return "https://xn--80adds5ajn.online/"; // тривога.online
     }
 
     if (provider === "blitzortung") {
@@ -2538,6 +2582,11 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                       ? t("climateMap.clickToActivate")
                       : t("climateMap.loading")}
                 </p>
+                {hasVoiceSource && (
+                  <p style={{ maxWidth: 520, margin: "4px auto", padding: "8px 12px", borderRadius: 10, background: "rgba(255, 170, 0, 0.18)", border: "1px solid rgba(255, 170, 0, 0.5)" }}>
+                    🔊 {t("climateMap.voiceWarning")}
+                  </p>
+                )}
                 <p>{t("climateMap.credits")}</p>
                 <p>{t("climateMap.settingsHint")}</p>
             </Loader>

@@ -62,22 +62,6 @@ import DecoratorOverlay from "./components/Decorator/DecoratorOverlay.jsx";
 import SiteContextMenu from "./components/SiteContextMenu.jsx";
 import { analyzeSearchQuery } from "./utils/searchAnalyzer.js";
 import { findCityInDatabase, getCitySlug, getCitySeo } from "./utils/citiesDatabase.js";
-import {
-  useFloating,
-  autoUpdate,
-  offset,
-  flip,
-  shift,
-  arrow,                 
-  useHover,
-  useFocus,
-  useDismiss,
-  useRole,
-  useInteractions,
-  useTransitionStyles,  
-  FloatingArrow,         
-} from "@floating-ui/react";
-import { MirrorFloatingPortal, MirrorText } from "./components/Tooltip/MirrorSafe";
 import { FaSmog } from "react-icons/fa6";
 import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill } from "react-icons/bs";
@@ -159,104 +143,6 @@ const cardLimitMessage = (hideGpsCard) =>
 // Понад цю кількість — попередження про навантаження на пристрій
 const SOFT_CUSTOM_WEATHER_CARDS = 5;
 const MAX_DAILY_CARD_ADDITIONS = 20;
-const Tooltipso = styled.div`
-  background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
-  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
-  border: 2px solid #00afce;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, ${(props) => (props.$isDarkMode ? "0.5" : "0.15")});
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 9px;
-  z-index: 10000;
-  pointer-events: none;
-`;
-
-export const TooltipS = ({
-  content,
-  children,
-  placement = "bottom",
-  isDarkMode = true,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const arrowRef = useRef(null);
-const { refs, floatingStyles, context } = useFloating({
-    open: isOpen,
-    onOpenChange: setIsOpen,
-    placement,
-    strategy: "fixed",
-    transform: false, 
-    whileElementsMounted: autoUpdate,
-    middleware: [
-      offset(8),
-      flip(),
-      shift({ padding: 5 }),
-      arrow({ element: arrowRef }),
-    ],
-  });
-  const { isMounted, styles: transitionStyles } = useTransitionStyles(context, {
-    duration: 150,
-    initial: {
-      opacity: 0,
-      transform: "scale(0.9)",
-    },
-    open: {
-      opacity: 1,
-      transform: "scale(1)",
-    },
-  });
-
-  const hover = useHover(context, { move: false });
-  const focus = useFocus(context);
-  const dismiss = useDismiss(context);
-  const role = useRole(context, { role: "tooltip" });
-
-  const { getReferenceProps, getFloatingProps } = useInteractions([
-    hover,
-    focus,
-    dismiss,
-    role,
-  ]);
-
-  if (!content) return children;
-
-  const bgTheme = isDarkMode ? "#111111" : "#ffffff";
-  const borderTheme = "#00acb9";
-
-  return (
-    <>
-      <span
-        ref={refs.setReference}
-        {...getReferenceProps({
-          onMouseLeave: () => setIsOpen(false),
-          onClick: () => setIsOpen(false),
-        })}
-        style={{ display: "inline-flex" }}
-      >
-        {children}
-      </span>
-      {isMounted && (
-        <MirrorFloatingPortal>
-          <Tooltipso
-            ref={refs.setFloating}
-            $isDarkMode={isDarkMode}
-            style={{ ...floatingStyles, ...transitionStyles }}
-            {...getFloatingProps()}
-          >
-            <MirrorText>{content}</MirrorText>
-            <FloatingArrow
-              ref={arrowRef}
-              context={context}
-              fill={bgTheme}
-              stroke={borderTheme}
-              strokeWidth={1}
-            />
-          </Tooltipso>
-        </MirrorFloatingPortal>
-      )}
-    </>
-  );
-};
 const Aihelp = lazy(() => import("./components/Aihelp/Aihelp.jsx"));
 const ShopModal = lazy(() => import("./components/Modals/ShopModal.jsx"));
 const ClimateMap = lazy(() => import("./components/ClimateMap/ClimateMap.jsx"));
@@ -280,7 +166,8 @@ const GlobalFilterLock = createGlobalStyle`
         backdrop-filter: none !important;
       }
       /* Візуальні фільтри тепер живуть на окремому шарі (useVisualFilters) */
-      #visual-filters-layer {
+      #visual-filters-layer,
+      #visual-filters-blends {
         display: none !important;
       }
     `}
@@ -1938,36 +1825,6 @@ const ParticleSymbol = styled.span`
   --y: ${(props) => props.$y}px;
 `;
 
-const UpdateTimerBadge = styled.div`
-  position: fixed;
-  bottom: 20px;
-  right: 10px;
-  background: ${(props) => (props.$isDarkMode ? "rgba(0, 0, 0, 0.89)" : "rgba(255, 255, 255, 0.97)")};
-  color: ${(props) => (props.$isDarkMode ? "#f8f9f9" : "#060606")};
-  padding: 0px 18px;
-  border-radius: 7px;
-  font-size: 14px;
-  font-weight: 700;
-  z-index: 1998;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  backdrop-filter: blur(6px);
-  border: 2px solid
-    ${(props) => (props.$isDarkMode ? "rgba(249, 248, 250, 0.99)" : "rgb(5, 5, 5)")};
-  pointer-events: auto;
-  cursor: pointer;
-  opacity: ${(props) => (props.$isVisible ? 1 : 0)};
-  transition: all 0.3s ease;
-  &:hover {
-    opacity: 1;
-    transform: scale(1.07);
-     }
-  &:active {
-    transform: scale(0.95);
-  }
-`;
-
 const LoadingPhraseWrapper = styled.div`
   position: relative;
   display: inline-block;
@@ -2255,7 +2112,6 @@ const App = () => {
   const [isUserSearchOpen, setIsUserSearchOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isAuthorsDirectoryOpen, setIsAuthorsDirectoryOpen] = useState(false);
-  const [showUpdateTimer, setShowUpdateTimer] = useState(true); // New state for update timer visibility
   const [isOtherOptionsOpen, setIsOtherOptionsOpen] = useState(false);
   const [bgMusicEnabled, setBgMusicEnabled] = useState(false);
   const [autoMuteBgMusic, setAutoMuteBgMusic] = useState(true);
@@ -2280,9 +2136,6 @@ const App = () => {
     return secondsRemaining <= 0 ? 3600 : secondsRemaining;
   }, []);
 
-  const [secondsUntilUpdate, setSecondsUntilUpdate] = useState(
-    calculateSecondsUntilNextHour(),
-  );
   const weatherCardsRef = useRef([]);
   const appHiddenAtRef = useRef(null);
   const bgAudioRef = useRef(null);
@@ -2451,11 +2304,6 @@ const App = () => {
         );
         const savedLayout = await localforage.getItem("weather_card_layout");
         if (savedLayout) setWeatherCardLayout(savedLayout);
-
-        const savedShowUpdateTimer =
-          await localforage.getItem("show_update_timer");
-        if (savedShowUpdateTimer !== null)
-          setShowUpdateTimer(savedShowUpdateTimer);
 
         const deployId = process.env.REACT_APP_DEPLOY_ID;
         if (deployId && lastSeenVersion !== deployId) {
@@ -3252,7 +3100,6 @@ const App = () => {
       localforage.setItem("custom_holiday_name", customHolidayName);
       localforage.setItem("selected_timezone", selectedTimezone);
       localforage.setItem("weather_card_layout", weatherCardLayout);
-      localforage.setItem("show_update_timer", showUpdateTimer);
       localforage.setItem("modal_loading_strategy", loadingStrategy);
     }
   }, [
@@ -3272,7 +3119,6 @@ const App = () => {
     customHolidayName,
     selectedTimezone,
     weatherCardLayout,
-    showUpdateTimer, // Save new setting
     loadingStrategy,
   ]);
 
@@ -3969,15 +3815,6 @@ const App = () => {
     [getInitialLocation, fetchWeather],
   );
 
-  // Функція для миттєвого оновлення всіх карток та скидання таймера
-  const handleManualBulkRefresh = useCallback(() => {
-    console.log("Manual bulk refresh triggered...");
-    if (weatherCardsRef.current.length > 0) {
-      weatherCardsRef.current.forEach((card) => handleRefreshCard(card));
-    }
-    setSecondsUntilUpdate(calculateSecondsUntilNextHour());
-  }, [handleRefreshCard, calculateSecondsUntilNextHour]);
-
   // 1. Початкове завантаження локації
   useEffect(() => {
     getInitialLocation();
@@ -4091,9 +3928,6 @@ const App = () => {
           weatherCardsRef.current.forEach((card) => handleRefreshCard(card));
         }
         prevRemaining = remaining;
-        // На екрані лише хвилини: округлюємо, щоб App перерендерювався раз на
-        // хвилину, а не щосекунди (однакове значення React пропускає)
-        setSecondsUntilUpdate(Math.floor(remaining / 60) * 60);
       }
     }, 1000);
 
@@ -4117,13 +3951,12 @@ const App = () => {
       if (hiddenDuration < 5 * 60 * 1000) return;
 
       weatherCardsRef.current.forEach((card) => handleRefreshCard(card));
-      setSecondsUntilUpdate(calculateSecondsUntilNextHour());
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () =>
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [isHydrated, handleRefreshCard, calculateSecondsUntilNextHour]);
+  }, [isHydrated, handleRefreshCard]);
 
   const handleDeleteCard = useCallback((id) => {
     setWeatherCards((prev) => prev.filter((card) => card.id !== id));
@@ -4397,6 +4230,7 @@ const App = () => {
           />
           <div className="container">
             <Header
+              isIntroDone={isFadingOut || !isLoading}
               sfxVolume={sfxVolume}
               onOpenRegister={() => setIsModalOpen(true)}
               onOpenSettings={() => setIsSettingsModalOpen(true)}
@@ -4450,8 +4284,6 @@ const App = () => {
                 onLogout={handleLogout}
                 weatherCardLayout={weatherCardLayout}
                 onUpdateLayout={setWeatherCardLayout}
-                showUpdateTimer={showUpdateTimer}
-                setShowUpdateTimer={setShowUpdateTimer}
                 isDarkMode={isDarkMode}
                 bgMusicEnabled={bgMusicEnabled}
                 setBgMusicEnabled={setBgMusicEnabled}
@@ -4539,18 +4371,6 @@ const App = () => {
             />
 
           </Suspense>
-          {showUpdateTimer && (
-            <TooltipS content="Налаштування вигляду" isDarkMode={isDarkMode}>
-            <UpdateTimerBadge
-              $isDarkMode={isDarkMode}
-              $isVisible={Math.floor(secondsUntilUpdate / 60) % 10 === 0}
-              onClick={handleManualBulkRefresh}
-              aria-label="Показує час оновлення картки теперішньої погоди і ШІ прогноз."
-            >
-              Оновлення погоди через: {Math.floor(secondsUntilUpdate / 60)} хв
-            </UpdateTimerBadge>
-            </TooltipS>
-          )}
           <DecoratorOverlay isStickyBgMode={isStickyBgMode} />
           <SupportBanner
             isDarkMode={isDarkMode}

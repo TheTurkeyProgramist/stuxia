@@ -13,9 +13,7 @@ import electrodynamix from "../../media/backgrounds/scenes/thunderstorm.webp";
 import sirenhead from "../../media/fan-art/siren-head.webp"
 import backrooms from "../../media/backgrounds/scenes/backrooms.webp"
 // Desert
-import deserttwo from "../../media/backgrounds/desert/mirages.webp";
 import desertthree from "../../media/backgrounds/desert/cacti.webp";
-import desertfour from "../../media/backgrounds/desert/pyramid.webp";
 import desertone from "../../media/backgrounds/desert/ships-in-desert.webp";
 import mecha from "../../media/backgrounds/scenes/gears.webp";
 import clubstep from "../../media/backgrounds/scenes/unknown-place.webp";
@@ -48,12 +46,7 @@ import swampnine from "../../media/backgrounds/swamp/lake-of-freedom.webp";
 import theory from "../../media/backgrounds/scenes/campfire.webp";
 import deadlocked from "../../media/backgrounds/swamp/swamp-of-torment.webp";
 // Horror
-import horrortwo from "../../media/backgrounds/horror/trap-house.webp";
-import horrorthree from "../../media/backgrounds/horror/basement.webp";
-import horrorfour from "../../media/backgrounds/horror/evil-garden.webp";
-import horror from "../../media/backgrounds/horror/fighting-dog.webp";
-import horrorsix from "../../media/backgrounds/horror/escape.webp";
-import horroreight from "../../media/backgrounds/horror/escape-finale.webp";
+import horror from "../../media/backgrounds/scenes/fighting-dog.webp";
 // Дракони
 import dinofrozone from "../../media/third-party/dinofroz/emperor-nitseron.webp";
 import dinofrozthree from "../../media/third-party/dinofroz/preview.webp";
@@ -356,21 +349,9 @@ export const DEFAULT_BGS = [
     author: "TheTurkeyStudio",
   },
   {
-    src: deserttwo,
-    name: "Пустельні міражі",
-    category: "Фентезі та Легенди",
-    author: "Генерація ШІ (Gemini)",
-  },
-  {
     src: desertthree,
     name: "Кактуси",
     category: "Природа та Стихії",
-    author: "Генерація ШІ (Gemini)",
-  },
-  {
-    src: desertfour,
-    name: "Піраміда",
-    category: "Фентезі та Легенди",
     author: "Генерація ШІ (Gemini)",
   },
   {
@@ -455,30 +436,6 @@ export const DEFAULT_BGS = [
     author: "Генерація ШІ(Gemini)",
   },
   {
-    src: horrortwo,
-    name: "Будинок з пастками",
-    category: "Темрява та Містика",
-    author: "Генерація ШІ(Gemini)",
-  },
-  {
-    src: horrorthree,
-    name: "Підвал",
-    category: "Темрява та Містика",
-    author: "Генерація ШІ(Gemini)",
-  },
-  {
-    src: horrorfour,
-    name: "Город зла",
-    category: "Темрява та Містика",
-    author: "Генерація ШІ(Gemini)",
-  },
-  {
-    src: horrorsix,
-    name: "Втеча",
-    category: "Темрява та Містика",
-    author: "Генерація ШІ(Gemini)",
-  },
-  {
     src: daysVideo,
     name: "Касета, що вбиває",
     category: "Темрява та Містика",
@@ -486,12 +443,6 @@ export const DEFAULT_BGS = [
     source: "Фільм 'Дзвінок'",
     start: 0,
     end: 300,
-  },
-  {
-    src: horroreight,
-    name: "Втеча (фінал)",
-    category: "Темрява та Містика",
-    author: "Генерація ШІ(Gemini)",
   },
   {
     src: swampeight,

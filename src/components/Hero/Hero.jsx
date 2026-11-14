@@ -72,6 +72,8 @@ import {
 } from "@floating-ui/react";
 import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
 import TimezoneModal from "./TimezoneModal.jsx";
+import WallpaperScene, { findWallpaper } from "./WallpaperScene.jsx";
+import { isWallpaperSrc } from "../../utils/wallpaperPrefs.js";
 import BgModal from "./BgModal.jsx";
 import LanguageModal from "../Modals/LanguageModal.jsx";
 import { usePageActive } from "../../utils/pageActivity.js";
@@ -366,12 +368,13 @@ const BgLayer = React.memo((props) => {
   const shouldPlay = $active && inView && pageActive;
 
   useEffect(() => {
-    if (!isVideo) return;
+    // Завантажені файли (картинки й відео) зберігаються як Blob — показуємо через object URL
     if ($image instanceof Blob) {
       const objectUrl = URL.createObjectURL($image);
       setBlobUrl({ key: $image, url: objectUrl });
       return () => URL.revokeObjectURL(objectUrl);
     }
+    if (!isVideo) return;
     // Кешований blob URL береться прямо під час рендеру, fetch не потрібен
     if (typeof $image !== "string" || !$image || videoBlobCache.has($image)) return;
     let active = true;
@@ -396,6 +399,8 @@ const BgLayer = React.memo((props) => {
   const url = !isVideo
     ? typeof $image === "string"
       ? $image
+      : blobUrl?.key === $image
+      ? blobUrl.url
       : ""
     : typeof $image === "string" && videoBlobCache.has($image)
     ? videoBlobCache.get($image)
@@ -470,6 +475,20 @@ const BgLayer = React.memo((props) => {
       setFailedSrc(url);
     }
   };
+
+  // Жива шпалера (сцена міста). Невідоме місто — показуємо заглушку
+  if (isWallpaperSrc($image)) {
+    const known = Boolean(findWallpaper($image));
+    return (
+      <BgLayerStyled ref={layerRef} data-page-bg="" {...props}>
+        {known ? (
+          <WallpaperScene src={$image} />
+        ) : (
+          <img src={hills} alt="Геройський фон" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        )}
+      </BgLayerStyled>
+    );
+  }
 
   return (
     <BgLayerStyled ref={layerRef} data-page-bg="" {...props}>

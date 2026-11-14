@@ -114,33 +114,6 @@ const fr = svg(
     roundTree(260, 10),
 );
 
-// ── Іспанія: Саграда Фамілія ──
-const spire = (x, top, w = 18) =>
-  path(`M${x} 170V${top + 30}Q${x + w / 2} ${top - 6} ${x + w} ${top + 30}V170Z`, "#c9a777") +
-  circ(x + w / 2, top + 2, 3, "#d9654b") +
-  windows(x + w / 2 - 2, top + 40, 1, 4, 0, 18, 4, 9, 2);
-// Міська площа Барселони: квартали Ешампле з балконами й платани, без пляжу
-const eixample = (x) =>
-  path(`M${x} 170V104l8 -8h56l8 8V170Z`, "#ead9bd") +
-  path(`M${x - 2} 104l10 -10h56l10 10z`, "#b5523b") +
-  windows(x + 8, 110, 4, 3, 15, 19, 7, 11, 1) +
-  line(`M${x + 4} 124h64M${x + 4} 143h64`, "#5a4a3a", 1);
-const es = svg(
-  ground("#bdb3a2") +
-    line("M-20 186h440M-20 204h440", "#a89c88", 1) +
-    eixample(-6) +
-    eixample(328) +
-    rect(126, 116, 148, 54, "#c4a06d") +
-    path("M150 116l50 -26 50 26z", "#b8925e") +
-    spire(132, 54) +
-    spire(156, 36) +
-    spire(226, 36) +
-    spire(250, 54) +
-    spire(191, 14) +
-    roundTree(98, 12, "#4f8f3f") +
-    roundTree(302, 12, "#4f8f3f"),
-);
-
 // ── Польща: Старе місто Варшави ──
 const plHouse = (x, h, c, roof) =>
   rect(x, 170 - h, 36, h, c) +
@@ -456,7 +429,7 @@ const qu = svg(
     llama(350),
 );
 
-export const LANGUAGE_SCENES = { be, de, fr, es, pl, ro, nl, el, cs, hu, sv, fi, bg, lt, ja, fa, so, qu };
+export const LANGUAGE_SCENES = { be, de, fr, pl, ro, nl, el, cs, hu, sv, fi, bg, lt, ja, fa, so, qu };
 
 // Для решти мов — готові мальки міст із часових поясів
 export const LANGUAGE_CITY_SVGS = {
@@ -464,6 +437,7 @@ export const LANGUAGE_CITY_SVGS = {
   en: "europe_london",
   it: "europe_rome",
   pt: "america_sao_paulo",
+  es: "america_mexico_city",
   tr: "europe_istanbul",
   zh: "asia_shanghai",
   ko: "asia_seoul",
@@ -488,6 +462,35 @@ export const LANGUAGE_CLIMATES = {
   so: "heat",
   fa: "heat",
   es: "heat",
+};
+
+// Тропічні й пустельні сцени зелені цілий рік — пори року їх не перефарбовують:
+// Мехіко (es), Сан-Паулу (pt), Перу (qu), Сомалі (so), Дубай (ar)
+export const EVERGREEN_LANGUAGES = new Set(["es", "pt", "qu", "so", "ar"]);
+
+// Снігові країни, де на малюнку все ж є зелена трава — їм пори року потрібні
+export const SEASONAL_SNOW_LANGUAGES = new Set(["be"]);
+
+// Де намальована кожна власна сцена — для живих шпалер: рух сонця за
+// реальним часом цього місця (координати й часовий пояс) і підпис картки
+export const LANGUAGE_PLACES = {
+  be: { label: "Білорусь · Мірський замок", lat: 53.451, lon: 26.473, tz: "Europe/Minsk" },
+  de: { label: "Німеччина · Бранденбурзькі ворота", lat: 52.516, lon: 13.378, tz: "Europe/Berlin" },
+  fr: { label: "Франція · Ейфелева вежа", lat: 48.858, lon: 2.294, tz: "Europe/Paris" },
+  pl: { label: "Польща · Стара Варшава", lat: 52.25, lon: 21.012, tz: "Europe/Warsaw" },
+  ro: { label: "Румунія · замок Бран", lat: 45.515, lon: 25.367, tz: "Europe/Bucharest" },
+  nl: { label: "Нідерланди · вітряки", lat: 52.37, lon: 4.895, tz: "Europe/Amsterdam" },
+  el: { label: "Греція · Акрополь", lat: 37.972, lon: 23.726, tz: "Europe/Athens" },
+  cs: { label: "Чехія · Прага", lat: 50.087, lon: 14.421, tz: "Europe/Prague" },
+  hu: { label: "Угорщина · Парламент", lat: 47.507, lon: 19.046, tz: "Europe/Budapest" },
+  sv: { label: "Швеція · Гамла Стан", lat: 59.325, lon: 18.071, tz: "Europe/Stockholm" },
+  fi: { label: "Фінляндія · Гельсінкі", lat: 60.17, lon: 24.952, tz: "Europe/Helsinki" },
+  bg: { label: "Болгарія · Софія", lat: 42.696, lon: 23.333, tz: "Europe/Sofia" },
+  lt: { label: "Литва · вежа Гедиміна", lat: 54.687, lon: 25.29, tz: "Europe/Vilnius" },
+  ja: { label: "Японія · Фудзі", lat: 35.361, lon: 138.727, tz: "Asia/Tokyo" },
+  fa: { label: "Іран · вежа Азаді", lat: 35.7, lon: 51.338, tz: "Asia/Tehran" },
+  so: { label: "Сомалі · узбережжя", lat: 2.046, lon: 45.318, tz: "Africa/Mogadishu" },
+  qu: { label: "Перу · Мачу-Пікчу", lat: -13.163, lon: -72.545, tz: "America/Lima" },
 };
 
 // Перефарбування готових мальків, щоб землі різних країн не зливались:

@@ -5,9 +5,7 @@ import horse from "../../media/backgrounds/scenes/white-horse.webp";
 import theorytwo from "../../media/backgrounds/scenes/black-hole.webp";
 import fingerdash from "../../media/third-party/dinofroz/nitseron-castle.webp";
 import electrodynamix from "../../media/backgrounds/scenes/thunderstorm.webp";
-import deserttwo from "../../media/backgrounds/desert/mirages.webp";
 import desertthree from "../../media/backgrounds/desert/cacti.webp";
-import desertfour from "../../media/backgrounds/desert/pyramid.webp";
 import desertone from "../../media/backgrounds/desert/ships-in-desert.webp";
 import unity from "../../media/third-party/music/thefatrat-unity-cover.webp";
 import mecha from "../../media/backgrounds/scenes/gears.webp";
@@ -39,12 +37,7 @@ import swampeight from "../../media/backgrounds/swamp/swamp-dragon.webp";
 import swampnine from "../../media/backgrounds/swamp/lake-of-freedom.webp";
 import theory from "../../media/backgrounds/scenes/campfire.webp";
 import deadlocked from "../../media/backgrounds/swamp/swamp-of-torment.webp";
-import horrortwo from "../../media/backgrounds/horror/trap-house.webp";
-import horrorthree from "../../media/backgrounds/horror/basement.webp";
-import horrorfour from "../../media/backgrounds/horror/evil-garden.webp";
-import horror from "../../media/backgrounds/horror/fighting-dog.webp";
-import horrorsix from "../../media/backgrounds/horror/escape.webp";
-import horroreight from "../../media/backgrounds/horror/escape-finale.webp";
+import horror from "../../media/backgrounds/scenes/fighting-dog.webp";
 import dinofrozone from "../../media/third-party/dinofroz/emperor-nitseron.webp";
 import dinofrozthree from "../../media/third-party/dinofroz/preview.webp";
 import dinofrozfour from "../../media/third-party/dinofroz/dragemon-s2.webp";
@@ -73,9 +66,7 @@ export const assetMap = {
   theorytwo,
   fingerdash,
   electrodynamix,
-  deserttwo,
   desertthree,
-  desertfour,
   desertone,
   unity,
   mecha,
@@ -107,12 +98,7 @@ export const assetMap = {
   swampnine,
   theory,
   deadlocked,
-  horrortwo,
-  horrorthree,
-  horrorfour,
   horror,
-  horrorsix,
-  horroreight,
   dinofrozone,
   dinofrozthree,
   dinofrozfour,

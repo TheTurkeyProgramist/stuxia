@@ -10,6 +10,7 @@ import { TbBrandWindy } from "react-icons/tb";
 import { TiWeatherPartlySunny } from "react-icons/ti";
 import { RiGeminiFill } from "react-icons/ri";
 import hostingerLogo from "../../media/_unused/logos/logo-iq.webp";
+import { LOADER_POWERED_BY_KEY, usePrefValue } from "../../utils/betaFeatures";
 const DOTS_CONFIG = [
   { r: 1, c: 1, delay: "0s" },
   { r: 1, c: 2, delay: "0.1s" },
@@ -219,6 +220,11 @@ const Dot = styled.div`
 `;
 
 export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
+  // «Працює на базі»: повністю, лише іконки або сховано (Параметри → Режими та застосунки)
+  const poweredBy = usePrefValue(LOADER_POWERED_BY_KEY, "full");
+  const showTitle = poweredBy !== "icons" && poweredBy !== "hidden";
+  const showIcons = poweredBy !== "hidden";
+
   useEffect(() => {
     const img = new Image();
     img.src = loadtwo;
@@ -243,19 +249,23 @@ export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
       </ImageContainer>
 
       <UIOverlay>
-        <PoweredByWrapper>
-          <span>Працює на базі:</span>
-          <IconsGrid>
-            {TECH_STACK.map(({ Icon, src, color, title }) =>
-              src ? (
-                <img key={title} src={src} alt={title} title={title} />
-              ) : (
-                <Icon key={title} style={{ color }} title={title} />
-              )
+        {(showIcons || randomPhrase) && (
+          <PoweredByWrapper>
+            {showTitle && <span>Працює на базі:</span>}
+            {showIcons && (
+              <IconsGrid>
+                {TECH_STACK.map(({ Icon, src, color, title }) =>
+                  src ? (
+                    <img key={title} src={src} alt={title} title={title} />
+                  ) : (
+                    <Icon key={title} style={{ color }} title={title} />
+                  )
+                )}
+              </IconsGrid>
             )}
-          </IconsGrid>
-          {randomPhrase && <PhraseText>{randomPhrase}</PhraseText>}
-        </PoweredByWrapper>
+            {randomPhrase && <PhraseText>{randomPhrase}</PhraseText>}
+          </PoweredByWrapper>
+        )}
 
         <CopyrightText>
           2026 Stuxia™. Всі права захищені. Автор: TheTurkeyProgramist

@@ -8,6 +8,7 @@
 //   [data-settings-head="desc"]   — опис вкладки (у пошуку не враховується, лише показується)
 //   [data-scroll-hint]            — заголовок підрозділу (збіг показує весь підрозділ)
 //   [data-settings-item]          — картка налаштування
+//   [data-level-hint]             — підказка «це з режиму …» (у пошуку не враховується)
 
 export const SEARCH_HIDDEN_ATTR = "data-search-hidden";
 export const SEARCH_HIGHLIGHT = "settings-search";
@@ -26,11 +27,19 @@ const hasAll = (text, words) => words.every((w) => text.includes(w));
 const hasAny = (text, words) => words.some((w) => text.includes(w));
 
 // Текст картки + підказки кнопок/полів (title, placeholder, aria-label)
+// Підказку режиму (settingsLevels.js) не враховуємо — інакше «режим» знаходив би кожну таку картку.
+const LEVEL_HINT = "[data-level-hint]";
+
 const searchableText = (el) => {
   const extra = [...el.querySelectorAll("[title],[placeholder],[aria-label]")]
+    .filter((n) => !n.closest(LEVEL_HINT))
     .map((n) => `${n.getAttribute("title") || ""} ${n.getAttribute("placeholder") || ""} ${n.getAttribute("aria-label") || ""}`)
     .join(" ");
-  return normalizeSearchText(`${el.textContent} ${extra}`);
+  let text = el.textContent;
+  el.querySelectorAll(LEVEL_HINT).forEach((hint) => {
+    text = text.replace(hint.textContent, " ");
+  });
+  return normalizeSearchText(`${text} ${extra}`);
 };
 
 // Картка підходить, якщо всі слова є в ній разом із контекстом (назва вкладки / підрозділу),
@@ -61,7 +70,7 @@ function highlightMatches(root, words) {
     acceptNode: (node) => {
       const parent = node.parentElement;
       if (!parent || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
-      if (parent.closest(`[${SEARCH_HIDDEN_ATTR}], ${SKIP_TEXT_IN}`)) return NodeFilter.FILTER_REJECT;
+      if (parent.closest(`[${SEARCH_HIDDEN_ATTR}], ${SKIP_TEXT_IN}, ${LEVEL_HINT}`)) return NodeFilter.FILTER_REJECT;
       if (!parent.closest("[data-settings-tab]")) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     },

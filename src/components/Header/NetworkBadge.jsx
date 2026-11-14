@@ -34,12 +34,12 @@ export const useNetworkStatus = () => {
 };
 
 export const NETWORK_LABELS = {
-  good: "Чудовий сигнал",
+  good: "Стабільне з'єднання",
   weak: "Слабке з'єднання",
   offline: "Немає з'єднання",
 };
 
-const COLORS = {
+export const NETWORK_COLORS = {
   good: "#30D158",
   weak: "#FF9500",
   offline: "#FF3B30",
@@ -76,13 +76,16 @@ const Badge = styled.span`
   }
 `;
 
-const NetworkBadge = ({ status, isDarkMode }) => {
-  const color = COLORS[status];
-  const bg = isDarkMode ? "#1a1b21" : "#ffffff";
+/*
+  Іконка сигналу (стовпчики) — окремо від бейджа, щоб її можна було
+  показати й деінде (напр. у модалці профілю). `bg` — колір фону під іконкою,
+  потрібен для "вирізу" перекреслення в стані offline.
+*/
+export const NetworkIcon = ({ status, bg, size }) => {
+  const color = NETWORK_COLORS[status];
 
   return (
-    <Badge $color={color} $isDarkMode={isDarkMode} aria-hidden="true">
-      <svg viewBox="0 0 16 16">
+    <svg viewBox="0 0 16 16" width={size} height={size} aria-hidden="true">
         {status === "good" &&
           BARS.map((b) => (
             <rect key={b.x} x={b.x} y={14.5 - b.h} width="2.6" height={b.h} rx="0.8" fill={color} />
@@ -109,7 +112,16 @@ const NetworkBadge = ({ status, isDarkMode }) => {
             <line x1="1.5" y1="1.5" x2="14.5" y2="14.5" stroke={color} strokeWidth="2" strokeLinecap="round" />
           </>
         )}
-      </svg>
+    </svg>
+  );
+};
+
+const NetworkBadge = ({ status, isDarkMode }) => {
+  const bg = isDarkMode ? "#1a1b21" : "#ffffff";
+
+  return (
+    <Badge $color={NETWORK_COLORS[status]} $isDarkMode={isDarkMode} aria-hidden="true">
+      <NetworkIcon status={status} bg={bg} />
     </Badge>
   );
 };

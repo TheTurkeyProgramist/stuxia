@@ -2,6 +2,10 @@
   "hero": {
     "language": "Language"
   },
+  "frameGuard": {
+    "text": "Stykhiia can't be opened inside another site.",
+    "open": "Open Stykhiia"
+  },
   "common": {
     "close": "Close"
   },
@@ -32,11 +36,13 @@
       "alertsSubtitle": "Ukraine air raid alert map",
       "airTargetsTitle": "Air targets",
       "airTargetsSubtitle": "Drones, missiles (approximate)",
+      "airTargetsNote": "Targets require Diia login",
+      "airTargetsAltTitle": "Target radar",
+      "airTargetsAltSubtitle": "Tryvoha.online · unofficial, no Diia",
       "excalidrawSubtitle": "Online whiteboard",
       "saveEcoBotSubtitle": "Air quality",
       "airTrafficTitle": "Flight radar",
       "deepStateSubtitle": "Map of events in Ukraine",
-      "rainViewerSubtitle": "Precipitation radar",
       "blitzortungSubtitle": "Lightning map"
     },
     "options": {
@@ -67,6 +73,7 @@
     },
     "invalidUrl": "Please enter a valid link (https://...)",
     "frameBlocked": "{{host}} doesn't allow being shown in a frame, so it can't be added.",
+    "selfFrame": "Stykhiia can't be embedded inside itself. Please choose another site.",
     "frameChecking": "Checking…",
     "confirmDeleteFrame": "Remove “{{title}}” from the sidebar?",
     "locationPinned": "Location pinned! It will load on your next visit.",
@@ -115,6 +122,7 @@
     "checkInternet": "Check your internet connection to use the map",
     "clickToActivate": "Click the map to activate it",
     "loading": "Loading...",
+    "voiceWarning": "Kate and Domino suggest: this map can read alerts out loud on its own, and the sound may come unexpectedly. Before using it, lower the volume or turn off the voice with the speaker button on the map or on your device.",
     "credits": "Interactive maps are provided by Windy, Ventusky and others (they use cookies)",
     "settingsHint": "The “Elements settings” button gives free access to map switching, fullscreen mode, mini player and other features!",
     "secondFrame": "second frame",

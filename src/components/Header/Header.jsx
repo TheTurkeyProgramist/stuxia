@@ -11,10 +11,16 @@ import { BsMoonStarsFill } from "react-icons/bs";
 import { GiShop, GiExitDoor } from "react-icons/gi";
 import relax from "../../mp3/modals/relax.mp3";
 import { FaSun } from "react-icons/fa";
-import { MdSettingsSuggest, MdMore, MdWallpaper } from "react-icons/md";
+import { MdSettingsSuggest, MdMore, MdWallpaper, MdManageAccounts, MdCalendarMonth } from "react-icons/md";
+import { loadFirebase } from "../../firebaseLazy.js";
 import { FaBookOpen } from "react-icons/fa6";
 import { IoColorPalette } from "react-icons/io5";
-import NetworkBadge, { useNetworkStatus, NETWORK_LABELS } from "./NetworkBadge.jsx";
+import NetworkBadge, {
+  useNetworkStatus,
+  NETWORK_LABELS,
+  NETWORK_COLORS,
+  NetworkIcon,
+} from "./NetworkBadge.jsx";
 import { ACCENT_COLORS, AccentSwatches, useAccentColor, getAccentLabel } from "./AccentColorPicker.jsx";
 import bell from "../../mp3/modals/bell.mp3";
 import conimg from "../../mp3/modals/concierge.mp3";
@@ -99,7 +105,22 @@ const HeaderDiv = styled.div`
     box-shadow 0.35s ease,
     backdrop-filter 0.4s ease;
   box-sizing: border-box;
-  animation: ${fadeInHeader} 0.8s ease-out 4.3s both;
+  /* Виїжджає, щойно лоадер почав зникати ($ready), а не за фіксованим таймером */
+  ${(p) =>
+    p.$ready
+      ? css`
+          animation: ${fadeInHeader} 0.6s ease-out 0.15s both;
+        `
+      : css`
+          opacity: 0;
+          transform: translateY(-100%);
+          pointer-events: none;
+        `}
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
   margin: 0;
 `;
 
@@ -123,9 +144,10 @@ const IconButton = styled.button`
   align-items: center;
   height: 26px;
   justify-content: center;
-  padding: 4px 25%;
+  /* розтягується на всю свою комірку в ButtonsGroup */
+  flex: 1;
+  padding: 4px 0;
   border-radius: 6px;
-  flex-shrink: 0;
   transition: outline 0.15s ease, transform 0.15s ease;
 
   &:focus-visible {
@@ -218,6 +240,11 @@ const ProfileButtonWrap = styled.div`
   position: relative;
   display: flex;
   align-items: center;
+
+  /* аватарка не розтягується, як кнопки — займає лише свою ширину */
+  && {
+    flex: 0 0 auto;
+  }
 `;
 
 const ProfileButton = styled.button`
@@ -247,6 +274,7 @@ const ProfileModal = styled.div`
   right: 0;
   z-index: 2001;
   min-width: 290px;
+  max-width: min(340px, calc(100vw - 20px));
   background: ${(props) =>
     props.$isDarkMode ? "rgba(14, 14, 14, 0.96)" : "rgba(255, 255, 255, 0.96)"};
   border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)")};
@@ -254,6 +282,23 @@ const ProfileModal = styled.div`
   border-radius: 14px;
   padding: 12px 14px;
   color: ${(props) => (props.$isDarkMode ? "#fff" : "#111")};
+
+  /* Плавна поява/зникнення: модалка завжди в DOM, ховається через opacity + visibility.
+     visibility з затримкою при закритті — щоб анімація встигла програтися,
+     а приховані кнопки не ловили клік і Tab. */
+  transform-origin: top right;
+  opacity: ${(p) => (p.$open ? 1 : 0)};
+  transform: ${(p) => (p.$open ? "translateY(0) scale(1)" : "translateY(-6px) scale(0.97)")};
+  visibility: ${(p) => (p.$open ? "visible" : "hidden")};
+  pointer-events: ${(p) => (p.$open ? "auto" : "none")};
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0s linear ${(p) => (p.$open ? "0s" : "0.2s")};
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 
 const ProfileModalBody = styled.div`
@@ -262,14 +307,87 @@ const ProfileModalBody = styled.div`
   gap: 10px;
 `;
 
-const ProfileModalName = styled.div`
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.2;
+const ProfileModalInfo = styled.div`
+  flex: 1;
+  min-width: 0; /* щоб довга пошта обрізалася «…», а не розпирала модалку */
 `;
 
-const ProfileModalLabel = styled.div`
+const ProfileModalName = styled.div`
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const ProfileModalEmail = styled.div`
   font-size: 12px;
+  opacity: 0.7;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const ProfileModalJoined = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  opacity: 0.6;
+  margin-top: 3px;
+
+  svg {
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+`;
+
+// Рядок зі станом мережі — та сама іконка-стовпчики, що й на аватарці
+const ProfileNetworkRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: ${(p) => p.$color};
+  background: ${(p) => `${p.$color}1a`};
+  border: 1px solid ${(p) => `${p.$color}40`};
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+`;
+
+// Перехід до налаштувань акаунта (вкладка «Безпека»)
+const ProfileSettingsButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)")};
+  background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)")};
+  color: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  svg {
+    font-size: 17px;
+  }
+  &:hover {
+    background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)")};
+  }
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
 `;
 
 // Вихід з акаунта — кнопка внизу спливного вікна профілю
@@ -338,10 +456,10 @@ const SupporterChip = styled.div`
 const ButtonsGroup = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
   flex: 1;
-  gap: 4px;
+  /* проміжки між кнопками: ~6px на телефоні, до 24px на широкому екрані */
+  gap: clamp(6px, 1.5vw, 24px);
     & > * {
     flex: 1;
     display: flex;
@@ -351,8 +469,8 @@ const ButtonsGroup = styled.div`
 
 /*
   Обгортка кнопки теми (потрібна для позиціювання міні-модалки).
-  Падінг IconButton у відсотках рахується від ширини батька — тож внутрішній
-  span тултіпа має розтягнутися на всю комірку, як в інших кнопок, інакше кнопка стає квадратом.
+  IconButton розтягується на всю комірку — тож внутрішній span тултіпа
+  теж має розтягнутися, як в інших кнопок, інакше кнопка стає квадратом.
 */
 const ThemePickerWrap = styled.div`
   position: relative;
@@ -669,6 +787,7 @@ const { refs, floatingStyles, context } = useFloating({
   );
 };
 const Header = ({
+  isIntroDone = true, // false, поки лоадер на екрані — хедер чекає і не виїжджає
   sfxVolume = 0.2,
   onOpenRegister,
   onOpenSettings,
@@ -704,6 +823,38 @@ const Header = ({
   const supporter = isSupporter(user);
   const inviter = isInviter(user);
   const invitee = isInvitee(user);
+
+  // Ім'я для модалки профілю. firstName при вході через Google може бути
+  // просто поштою — тоді беремо частину пошти до «@».
+  const profileEmail = user?.email || user?.account || "";
+  const profileName =
+    (user?.firstName && user.firstName !== profileEmail && user.firstName) ||
+    user?.displayName ||
+    profileEmail.split("@")[0] ||
+    "Користувач";
+
+  // «З нами з …» — дата створення акаунта з Firebase (однакова на всіх пристроях).
+  // Firebase SDK вантажиться ліниво, тож питаємо лише коли профіль відкрили.
+  // Зберігаємо разом з uid, щоб після зміни акаунта не показати чужу дату.
+  const [joined, setJoined] = useState(null); // { uid, at }
+  const joinedAt = joined && joined.uid === user?.uid ? joined.at : null;
+
+  useEffect(() => {
+    if (!isProfileModalOpen || !user?.uid || joinedAt) return;
+    let cancelled = false;
+    loadFirebase()
+      .then(async (fb) => {
+        await fb.auth.authStateReady();
+        const current = fb.auth.currentUser;
+        if (!current || current.uid !== user.uid) return;
+        const at = Date.parse(current.metadata?.creationTime || "");
+        if (!cancelled && Number.isFinite(at)) setJoined({ uid: user.uid, at });
+      })
+      .catch(() => {}); // офлайн / Firebase не завантажився — просто без дати
+    return () => {
+      cancelled = true;
+    };
+  }, [isProfileModalOpen, user?.uid, joinedAt]);
 
   // Helper to play sound effects with current volume
   // Оголошено ТУТ — до useEffect-ів, щоб вони могли її викликати
@@ -896,6 +1047,15 @@ const Header = ({
     if (onOpenSettings) onOpenSettings();
   };
 
+  // 8.1 Налаштування акаунта з модалки профілю — одразу на вкладці «Безпека»
+  const handleAccountSettingsClick = () => {
+    playSfx(relax);
+    setIsProfileModalOpen(false);
+    window.dispatchEvent(
+      new CustomEvent("stykhiia:open-settings", { detail: { tab: "security" } }),
+    );
+  };
+
   // 9. Вихід з акаунту
   const handleLogoutClick = () => {
     playSfx(relax);
@@ -922,6 +1082,7 @@ const Header = ({
 
   return (
     <><HeaderDiv
+  $ready={isIntroDone}
   $isDarkMode={isDarkMode}
   $isStickyBgMode={isStickyBgMode}
   $accentColor={accentColor}
@@ -1063,10 +1224,11 @@ const Header = ({
             <NetworkBadge status={networkStatus} isDarkMode={isDarkMode} />
           </ProfileButton>
          </Tooltip>
-          {isProfileModalOpen && (
             <ProfileModal
               id="header-profile-modal"
               $isDarkMode={isDarkMode}
+              $open={isProfileModalOpen}
+              aria-hidden={!isProfileModalOpen}
             >
               <ProfileModalBody>
                 <RecoveringAvatar
@@ -1074,9 +1236,22 @@ const Header = ({
                   $bColor={user.borderColor}
                   style={{ width: "42px", height: "42px" }}
                 />
-                <div>
-                  <ProfileModalLabel>Профіль</ProfileModalLabel>
-                   <ProfileModalName>Електронна пошта: {user.email || user.account}</ProfileModalName>
+                <ProfileModalInfo>
+                   <ProfileModalName title={profileName}>{profileName}</ProfileModalName>
+                   {profileEmail && profileEmail !== profileName && (
+                     <ProfileModalEmail title={profileEmail}>{profileEmail}</ProfileModalEmail>
+                   )}
+                   {joinedAt && (
+                     <ProfileModalJoined>
+                       <MdCalendarMonth aria-hidden="true" />
+                       З нами з{" "}
+                       {new Date(joinedAt).toLocaleDateString("uk-UA", {
+                         day: "numeric",
+                         month: "long",
+                         year: "numeric",
+                       })}
+                     </ProfileModalJoined>
+                   )}
                    {supporter && (
                      <SupporterChip title="Дякуємо, що підтримуєте Стихію!">🦃 Друг індиків</SupporterChip>
                    )}
@@ -1086,8 +1261,27 @@ const Header = ({
                    {invitee && (
                      <SupporterChip title="Ви прийшли у Стихію за запрошенням друга!">🌱 Паросток Стихії</SupporterChip>
                    )}
-                </div>
+                </ProfileModalInfo>
               </ProfileModalBody>
+
+              <ProfileNetworkRow $color={NETWORK_COLORS[networkStatus]} role="status">
+                <NetworkIcon
+                  status={networkStatus}
+                  size={14}
+                  bg={isDarkMode ? "#0e0e0e" : "#ffffff"}
+                />
+                {NETWORK_LABELS[networkStatus]}
+              </ProfileNetworkRow>
+
+              <ProfileSettingsButton
+                type="button"
+                $isDarkMode={isDarkMode}
+                onClick={handleAccountSettingsClick}
+              >
+                <MdManageAccounts aria-hidden="true" />
+                Налаштування акаунта
+              </ProfileSettingsButton>
+
               <LogoutButton
                 type="button"
                 $isDarkMode={isDarkMode}
@@ -1100,7 +1294,6 @@ const Header = ({
                 Вийти з акаунта
               </LogoutButton>
             </ProfileModal>
-          )}
         </ProfileButtonWrap>
         </ButtonsGroup>
       </>
@@ -1213,6 +1406,7 @@ const Header = ({
         <button
           onClick={handleRegisterClick}
           style={{
+            flex: "0 0 auto",
             fontSize: "14px",
             cursor: "pointer",
             background: "none",

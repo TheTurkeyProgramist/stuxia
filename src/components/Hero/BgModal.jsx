@@ -4,19 +4,37 @@ import styled, { keyframes } from "styled-components";
 import localforage from "localforage";
 import toast from "react-hot-toast";
 import {
+  FiCalendar,
   FiClock,
   FiDownload,
   FiDroplet,
+  FiFilm,
   FiGrid,
   FiImage,
   FiMaximize2,
   FiRefreshCw,
   FiSearch,
   FiShuffle,
+  FiSliders,
+  FiSun,
   FiUploadCloud,
   FiX,
 } from "react-icons/fi";
 import { DEFAULT_BGS } from "./defaultBgs";
+import CityScene from "./CityScene.jsx";
+import { WALLPAPERS, WALLPAPER_GROUPS, useMinuteNow } from "./WallpaperScene.jsx";
+import PixabaySearch from "./PixabaySearch.jsx";
+import { isAnimationsDisabled } from "../../utils/animationsPref.js";
+import {
+  WALLPAPER_ANIMATIONS,
+  WALLPAPER_SEASONS,
+  WALLPAPER_TIMES,
+  getWallpaperSettings,
+  isWallpaperSrc,
+  setWallpaperSettings,
+  toWallpaperSrc,
+  useWallpaperSettingsMap,
+} from "../../utils/wallpaperPrefs.js";
 import village from "../../media/third-party/games/dragon-village-3.webp";
 import faded from "../../media/backgrounds/scenes/resort.webp";
 import { Tooltip } from "./Hero.jsx";
@@ -305,6 +323,21 @@ const BgSquare = styled.img`
   display: block;
 `;
 
+// Мініатюра фону: завантажені картинки зберігаються як Blob, тож для них
+// створюємо тимчасове посилання (рядок-адресу показуємо як є)
+const BlobAwareSquare = ({ src, ...props }) => {
+  const [objectUrl, setObjectUrl] = useState(null);
+  React.useEffect(() => {
+    if (!(src instanceof Blob)) return undefined;
+    const url = URL.createObjectURL(src);
+    setObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [src]);
+  const url = src instanceof Blob ? objectUrl : src;
+  if (!url) return <BgSquare as="div" {...props} />;
+  return <BgSquare src={url} loading="lazy" {...props} />;
+};
+
 const RatingOverlay = styled.div`
   position: absolute;
   top: 6px;
@@ -387,24 +420,8 @@ const DropZone = styled.div`
   align-items: center;
   justify-content: center;
   gap: 6px;
-  &:hover { background: rgba(255, 179, 108, 0.06); border-color: #ffb36c; color: #fff; box-shadow: 0 0 15px rgba(255, 179, 108, 0.15); }
-`;
-
-const SearchActionButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 38px;
-  padding: 8px 14px;
-  border: 1px solid rgba(255, 179, 108, 0.55);
-  border-radius: 8px;
-  color: #17120d;
-  background: linear-gradient(135deg, #ffca91, #ff9d48);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  &:disabled { cursor: wait; opacity: 0.65; }
+  /* Підкладка лишається непрозорою й при наведенні: панель липка й лежить над картками */
+  &:hover { background: linear-gradient(rgba(255, 179, 108, 0.07), rgba(255, 179, 108, 0.07)), #0a0e1a; border-color: #ffb36c; color: #fff; box-shadow: 0 0 15px rgba(255, 179, 108, 0.15); }
 `;
 
 const CloseBtn = styled.button`
@@ -423,6 +440,50 @@ const CloseBtn = styled.button`
   gap: 4px;
   &:hover { background: ${(props) => (props.$danger ? "rgba(255, 107, 107, 0.25)" : "rgba(255, 179, 108, 0.25)")}; transform: translateY(-1px); box-shadow: 0 4px 12px ${(props) => (props.$danger ? "rgba(255, 107, 107, 0.2)" : "rgba(255, 179, 108, 0.2)")}; }
   &:active { transform: translateY(0); }
+`;
+
+// Липка навігація між розділами модалки (-20px компенсують padding вікна, як і в DropZone;
+// flex-shrink: 0 — інакше у flex-колонці з прокруткою панель стискається й обрізає кнопки)
+const SectionNav = styled.nav`
+  position: sticky;
+  top: -20px;
+  z-index: 25;
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+  margin: -4px -20px 0;
+  padding: 8px 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: rgba(10, 13, 23, 0.98);
+  border-bottom: 1px solid rgba(255, 179, 108, 0.18);
+  &::-webkit-scrollbar { display: none; }
+`;
+
+const NavButton = styled.button`
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid ${(p) => (p.$active ? "#ffb36c" : "rgba(255, 179, 108, 0.25)")};
+  background: ${(p) => (p.$active ? "linear-gradient(135deg, #ffca91, #ff9d48)" : "rgba(255, 255, 255, 0.03)")};
+  color: ${(p) => (p.$active ? "#17120d" : "#d8dae0")};
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  &:hover { border-color: #ffb36c; }
+  small { font-weight: 600; opacity: 0.75; }
+`;
+
+const ModalSection = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scroll-margin-top: 44px;
 `;
 
 const ModalSearchInput = styled.input`
@@ -600,6 +661,291 @@ const VideoThumbnail = React.memo(({ bg, onClick }) => {
   );
 });
 
+const WallpaperGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+`;
+
+const WallpaperCard = styled.div`
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 400 / 220;
+  border: 2px solid ${(p) => (p.$active ? "#ffb36c" : "rgba(255, 255, 255, 0.1)")};
+  box-shadow: ${(p) => (p.$active ? "0 0 16px rgba(255, 179, 108, 0.5)" : "0 4px 12px rgba(0, 0, 0, 0.35)")};
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  &:hover { transform: translateY(-3px); border-color: ${(p) => (p.$active ? "#ffb36c" : "rgba(255, 179, 108, 0.6)")}; }
+`;
+
+const WallpaperPick = styled.button`
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 0 ${(p) => (p.$hasSlots ? "22px" : "0")};
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  span {
+    width: 100%;
+    padding: 4px 6px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: left;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.75), transparent);
+  }
+`;
+
+const wallpaperSelectStyle = { background: "rgba(10, 14, 26, 0.95)", color: "#fff", fontSize: "12px", fontWeight: "500", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 6px", width: "100%", outline: "none" };
+
+const WallpaperTools = styled.div`
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 4;
+  display: flex;
+  gap: 4px;
+`;
+
+const optionLabel = (options, value) => options.find((option) => option.value === value)?.label;
+
+// Коротко про налаштування для підпису картки: «Ніч · Зима · Без анімацій» (типові не показуємо)
+const settingsBadge = ({ time, season, animations }) =>
+  [
+    time !== "auto" && optionLabel(WALLPAPER_TIMES, time),
+    season !== "auto" && optionLabel(WALLPAPER_SEASONS, season),
+    animations === "off" && "Без анімацій",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+const SelectBox = styled.label`
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: rgba(10, 12, 22, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  input { width: 15px; height: 15px; margin: 0; accent-color: #ffb36c; cursor: pointer; }
+  &:hover { border-color: #ffb36c; }
+`;
+
+const SmallButton = styled.button`
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 179, 108, 0.35);
+  background: rgba(255, 179, 108, 0.08);
+  color: #ffc996;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover { background: rgba(255, 179, 108, 0.2); }
+  &:disabled { opacity: 0.45; cursor: default; }
+`;
+
+const MIXED = "";
+
+// Спільне значення поля для вибраних шпалер або MIXED, якщо вони різні
+const commonValue = (settingsList, field) =>
+  settingsList.length && settingsList.every((s) => s[field] === settingsList[0][field])
+    ? settingsList[0][field]
+    : MIXED;
+
+// Повноекранний перегляд живої шпалери (портал у body, як і FullscreenViewer)
+const WallpaperFullscreen = ({ wallpaper, settings, onClose, onSelect }) => {
+  const now = useMinuteNow();
+
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const btnStyle = { background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "8px", height: "40px", minWidth: "40px", padding: "0 12px", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" };
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Перегляд шпалер: ${wallpaper.label}`}
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "#000", zIndex: 300000 }}
+    >
+      <CityScene timezone={wallpaper.scene} now={now} timeOfDay={settings.time} season={settings.season} still={settings.animations === "off"} fit="contain" />
+      <div style={{ position: "absolute", top: "12px", left: "16px", zIndex: 5, color: "#fff", fontSize: "18px", fontWeight: 700, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>
+        {wallpaper.label}
+        {settingsBadge(settings) && <span style={{ marginLeft: "10px", fontSize: "13px", fontWeight: 500, color: "#ffd9b0" }}>{settingsBadge(settings)}</span>}
+      </div>
+      <div style={{ position: "absolute", top: "12px", right: "12px", zIndex: 5, display: "flex", gap: "8px" }}>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onSelect(); onClose(); }} style={btnStyle}>Встановити фоном</button>
+        <button type="button" onClick={onClose} style={btnStyle} aria-label="Закрити"><FiX /></button>
+      </div>
+    </div>,
+    document.body,
+  );
+};
+
+// Живі шпалери: сцени міст і країн із рухом сонця й порами року.
+// Кожна шпалера має власні час доби, пору року й анімації; налаштовувати
+// можна одну, кілька (галочками) або всі одразу. Прев'ю одразу все показують.
+const WallpaperSection = ({ heroBg, heroBg2, heroBg3, heroBgMode, onSelect }) => {
+  const settingsMap = useWallpaperSettingsMap();
+  const now = useMinuteNow();
+  const slots = heroBgMode === "slideshow-2" ? 2 : heroBgMode === "slideshow-3" ? 3 : 0;
+  const layers = [heroBg, heroBg2, heroBg3];
+
+  // Які шпалери налаштовуємо: спершу — встановлену зараз (або першу)
+  const activeId = layers.find(isWallpaperSrc)?.slice(toWallpaperSrc("").length);
+  const [selectedIds, setSelectedIds] = useState(() => [
+    WALLPAPERS.some((wallpaper) => wallpaper.id === activeId) ? activeId : WALLPAPERS[0].id,
+  ]);
+  const selectedSet = new Set(selectedIds);
+  const selectedSettings = selectedIds.map((id) => getWallpaperSettings(settingsMap, id));
+  const [fullscreenId, setFullscreenId] = useState(null);
+  const fullscreenWallpaper = WALLPAPERS.find((wallpaper) => wallpaper.id === fullscreenId);
+
+  const toggleSelected = (id) =>
+    setSelectedIds((previous) => (previous.includes(id) ? previous.filter((x) => x !== id) : [...previous, id]));
+  const selectGroup = (ids) =>
+    setSelectedIds((previous) => {
+      const allIn = ids.every((id) => previous.includes(id));
+      return allIn ? previous.filter((id) => !ids.includes(id)) : [...new Set([...previous, ...ids])];
+    });
+
+  // Клік по картці ставить фон; якщо вибрано не більше однієї — вибір переходить на неї,
+  // а зібраний галочками набір не скидаємо
+  const pick = (wallpaper, slot) => {
+    if (selectedIds.length <= 1) setSelectedIds([wallpaper.id]);
+    onSelect(toWallpaperSrc(wallpaper.id), slot);
+  };
+
+  const applyToSelected = (patch) => {
+    if (selectedIds.length) setWallpaperSettings(selectedIds, patch);
+  };
+
+  const selectionLabel =
+    selectedIds.length === 0
+      ? "Нічого не вибрано — поставте галочки на картках"
+      : selectedIds.length === WALLPAPERS.length
+        ? `Усі шпалери (${WALLPAPERS.length})`
+        : selectedIds.length === 1
+          ? WALLPAPERS.find((wallpaper) => wallpaper.id === selectedIds[0])?.label
+          : `Вибрано: ${selectedIds.length}`;
+
+  const settingSelect = (field, options, label, Icon) => {
+    const value = commonValue(selectedSettings, field);
+    return (
+      <ConfigRow>
+        <label><Icon /> {label}:</label>
+        <select
+          aria-label={`${label} для вибраних шпалер`}
+          value={value}
+          disabled={!selectedIds.length}
+          onChange={(e) => applyToSelected({ [field]: e.target.value })}
+          style={{ ...wallpaperSelectStyle, opacity: selectedIds.length ? 1 : 0.5 }}
+        >
+          {value === MIXED && <option value={MIXED} disabled>— різні —</option>}
+          {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+      </ConfigRow>
+    );
+  };
+
+  return (
+    <>
+      <ModalSectionTitle><FiSun /> Живі шпалери</ModalSectionTitle>
+      <span style={{ fontSize: "11px", color: "#8a8d9b", marginTop: "-6px" }}>
+        Сцени міст і країн: сонце й місяць рухаються за реальним часом місця, трава й дерева змінюються з порами року.
+        Галочками на картках виберіть одну, кілька або всі шпалери — налаштування нижче застосуються до вибраних.
+        Острови, тропіки й снігові місця зелені (або засніжені) цілий рік.
+      </span>
+      <ModalConfigGrid>
+        <ConfigRow>
+          <label><FiSliders /> Налаштування для:</label>
+          <div style={{ fontSize: "12px", fontWeight: 600, color: selectedIds.length ? "#fff" : "#8a8d9b", minHeight: "18px" }}>{selectionLabel}</div>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            <SmallButton type="button" disabled={selectedIds.length === WALLPAPERS.length} onClick={() => setSelectedIds(WALLPAPERS.map((wallpaper) => wallpaper.id))}>Усі</SmallButton>
+            <SmallButton type="button" disabled={!selectedIds.length} onClick={() => setSelectedIds([])}>Зняти</SmallButton>
+          </div>
+        </ConfigRow>
+        {settingSelect("time", WALLPAPER_TIMES, "Час доби", FiClock)}
+        {settingSelect("season", WALLPAPER_SEASONS, "Пора року", FiCalendar)}
+        {settingSelect("animations", WALLPAPER_ANIMATIONS, "Анімації", FiFilm)}
+      </ModalConfigGrid>
+      {WALLPAPER_GROUPS.map((group) => {
+        const items = WALLPAPERS.filter((wallpaper) => wallpaper.group === group.value);
+        const groupIds = items.map((wallpaper) => wallpaper.id);
+        const groupSelected = groupIds.every((id) => selectedSet.has(id));
+        return (
+          <React.Fragment key={group.value}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffc996" }}>{group.label} · {items.length}</span>
+              <SmallButton type="button" onClick={() => selectGroup(groupIds)}>
+                {groupSelected ? "Зняти групу" : "Вибрати групу"}
+              </SmallButton>
+            </div>
+            <WallpaperGrid>
+              {items.map((wallpaper) => {
+                const src = toWallpaperSrc(wallpaper.id);
+                const settings = getWallpaperSettings(settingsMap, wallpaper.id);
+                const badge = settingsBadge(settings);
+                const selected = selectedSet.has(wallpaper.id);
+                return (
+                  <WallpaperCard key={wallpaper.id} $active={layers.includes(src)} style={selected ? { outline: "2px dashed rgba(255, 179, 108, 0.7)", outlineOffset: "2px" } : undefined}>
+                    <CityScene timezone={wallpaper.scene} now={now} timeOfDay={settings.time} season={settings.season} still={settings.animations === "off"} />
+                    <WallpaperPick type="button" $hasSlots={slots > 0} onClick={() => pick(wallpaper)} aria-label={`Встановити шпалери: ${wallpaper.label}`}>
+                      <span>
+                        {wallpaper.label}
+                        {badge && <span style={{ display: "block", padding: 0, background: "none", fontSize: "10px", fontWeight: 500, color: "#ffd9b0" }}>{badge}</span>}
+                      </span>
+                    </WallpaperPick>
+                    <SelectBox title={selected ? "Прибрати з вибраних" : "Додати до вибраних"}>
+                      <input type="checkbox" checked={selected} onChange={() => toggleSelected(wallpaper.id)} aria-label={`Вибрати для налаштування: ${wallpaper.label}`} />
+                    </SelectBox>
+                    <WallpaperTools>
+                      <Tooltip content="Налаштувати лише цю">
+                        <HeartIcon type="button" $color="#ffda79" aria-label={`Налаштувати лише: ${wallpaper.label}`} onClick={() => setSelectedIds([wallpaper.id])}><FiSliders /></HeartIcon>
+                      </Tooltip>
+                      <Tooltip content="На весь екран">
+                        <HeartIcon type="button" $color="#aef" aria-label={`На весь екран: ${wallpaper.label}`} onClick={() => setFullscreenId(wallpaper.id)}><FiMaximize2 /></HeartIcon>
+                      </Tooltip>
+                    </WallpaperTools>
+                    {slots > 0 && (
+                      <SlotButtons style={{ zIndex: 3 }}>
+                        {Array.from({ length: slots }, (_, i) => (
+                          <SlotBtn key={i} $active={layers[i] === src} onClick={() => pick(wallpaper, i + 1)}>Слот {i + 1}</SlotBtn>
+                        ))}
+                      </SlotButtons>
+                    )}
+                  </WallpaperCard>
+                );
+              })}
+            </WallpaperGrid>
+          </React.Fragment>
+        );
+      })}
+      {fullscreenWallpaper && (
+        <WallpaperFullscreen
+          wallpaper={fullscreenWallpaper}
+          settings={getWallpaperSettings(settingsMap, fullscreenWallpaper.id)}
+          onClose={() => setFullscreenId(null)}
+          onSelect={() => pick(fullscreenWallpaper)}
+        />
+      )}
+    </>
+  );
+};
+
 const bgCardThumbnails = {
   [village]: {
     src: village,
@@ -647,13 +993,35 @@ const BgModal = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [sortType, setSortType] = useState("az");
   const [visibleBgCount, setVisibleBgCount] = useState(300);
-  const [pixabayQuery, setPixabayQuery] = useState("");
-  const [pixabayResults, setPixabayResults] = useState([]);
-  const [pixabayStatus, setPixabayStatus] = useState("idle");
-  const [pixabayPage, setPixabayPage] = useState(1);
   const [fullscreenBg, setFullscreenBg] = useState(null);
   const MAX_DAILY_HERO_CARDS = 50;
   const fileInputRef = useRef(null);
+  const contentRef = useRef(null);
+  const [activeSection, setActiveSection] = useState("look");
+
+  // Підсвічуємо розділ, верх якого вже під навігацією (унизу вікна — останній)
+  const handleContentScroll = () => {
+    const root = contentRef.current;
+    if (!root) return;
+    const sections = [...root.querySelectorAll("[data-bg-section]")];
+    if (!sections.length) return;
+    const line = root.getBoundingClientRect().top + 80;
+    let current = sections[0].dataset.bgSection;
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top <= line) current = section.dataset.bgSection;
+    }
+    if (root.scrollTop + root.clientHeight >= root.scrollHeight - 4) {
+      current = sections[sections.length - 1].dataset.bgSection;
+    }
+    setActiveSection(current);
+  };
+
+  const goToSection = (id) => {
+    setActiveSection(id);
+    contentRef.current
+      ?.querySelector(`[data-bg-section="${id}"]`)
+      ?.scrollIntoView({ behavior: isAnimationsDisabled() ? "auto" : "smooth", block: "start" });
+  };
 
   const allBgs = useMemo(
     () => [...DEFAULT_BGS, ...(customHeroBgs || [])],
@@ -695,69 +1063,6 @@ const BgModal = ({
       const next = (current + 1) % 3;
       return { ...prev, [src]: next };
     });
-  };
-
-  const translatePixabayQuery = async (query) => {
-    try {
-      const response = await fetch(
-        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=uk&tl=en&dt=t&q=${encodeURIComponent(query)}`,
-      );
-      if (!response.ok) throw new Error(`Translation failed: ${response.status}`);
-      const data = await response.json();
-      return data[0].map((item) => item[0]).join("");
-    } catch (error) {
-      console.error("Pixabay query translation failed:", error);
-      return query;
-    }
-  };
-
-  const handleSearchPixabay = async (page = 1) => {
-    const query = pixabayQuery.trim();
-    if (!query || pixabayStatus === "loading") return;
-    setPixabayStatus("loading");
-    try {
-      const translatedQuery = await translatePixabayQuery(query);
-      const params = new URLSearchParams({
-        key: "50977795-feb18de71b048a02e0c824e54",
-        q: translatedQuery,
-        image_type: "photo",
-        per_page: "12",
-        page: String(page),
-        safesearch: "true",
-      });
-      const response = await fetch(`https://pixabay.com/api/?${params}`);
-      if (!response.ok) throw new Error(`Pixabay request failed: ${response.status}`);
-      const data = await response.json();
-      const results = (data.hits || []).map((hit) => ({
-        id: hit.id,
-        previewURL: hit.previewURL,
-        largeImageURL: hit.largeImageURL,
-        name: hit.tags || query,
-        source: "Pixabay",
-      }));
-      setPixabayResults((previous) => page === 1 ? results : [...previous, ...results]);
-      setPixabayPage(page);
-      setPixabayStatus(results.length ? "idle" : "no-results");
-    } catch (error) {
-      console.error("Pixabay image search failed:", error);
-      setPixabayStatus("error");
-      toast.error("Не вдалося виконати пошук Pixabay. Спробуйте ще раз.");
-    }
-  };
-
-  const handleAddPixabayBackground = (image) => {
-    const src = image.largeImageURL || image.previewURL;
-    const existing = customHeroBgs.find(
-      (background) => background.id === image.id || background.src === src,
-    );
-    if (!existing) {
-      setCustomHeroBgs((previous) => [
-        { id: `pixabay-${image.id}`, src, name: image.name, category: "Ваші картинки", source: image.source },
-        ...previous,
-      ]);
-    }
-    handleSelectBg(existing?.src || src);
-    toast.success("Фон встановлено.");
   };
 
   const handleFileUpload = async (file) => {
@@ -858,9 +1163,16 @@ const BgModal = ({
 
   if (!isOpen) return null;
 
+  const navItems = [
+    { id: "look", label: "Вигляд", Icon: FiDroplet },
+    { id: "wallpapers", label: "Живі шпалери", count: WALLPAPERS.length, Icon: FiSun },
+    { id: "pixabay", label: "Pixabay", Icon: FiSearch },
+    { id: "library", label: "Бібліотека", count: sortedBgs.length, Icon: FiImage },
+  ];
+
   return (
     <ModalOverlay $isClosing={isClosing} onClick={onClose}>
-      <ModalContent $isClosing={isClosing} onClick={(e) => e.stopPropagation()}>
+      <ModalContent ref={contentRef} onScroll={handleContentScroll} $isClosing={isClosing} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "10px", borderBottom: "1px solid rgba(255, 179, 108, 0.2)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div>
@@ -875,6 +1187,17 @@ const BgModal = ({
             <CloseBtn $danger onClick={onClose}><FiX /> Закрити</CloseBtn>
           </div>
         </div>
+        <SectionNav aria-label="Розділи налаштувань фону">
+          {navItems.map(({ id, label, count, Icon }) => (
+            <NavButton key={id} type="button" $active={activeSection === id} aria-current={activeSection === id ? "true" : undefined} onClick={() => goToSection(id)}>
+              <Icon aria-hidden="true" /> {label}{count != null && <small>{count}</small>}
+            </NavButton>
+          ))}
+          <NavButton type="button" onClick={() => fileInputRef.current?.click()}>
+            <FiUploadCloud aria-hidden="true" /> Завантажити свій
+          </NavButton>
+        </SectionNav>
+        <ModalSection data-bg-section="look">
         <ModalConfigGrid>
           <ConfigRow>
             <label><FiImage /> Режим фону:</label>
@@ -932,37 +1255,35 @@ const BgModal = ({
             <input type="range" min="0" max="20" step="0.2" value={heroBgPixelation} onChange={(e) => setHeroBgPixelation(parseFloat(e.target.value))} />
           </ConfigRow>
         </ModalConfigGrid>
+        </ModalSection>
 
         <ModalDivider />
-        <ModalSectionTitle><FiImage /> Бібліотека зображень</ModalSectionTitle>
-        <form onSubmit={(event) => { event.preventDefault(); handleSearchPixabay(1); }} style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          <ModalSearchInput aria-label="Пошук фонів на Pixabay" placeholder="Пошук зображень на Pixabay..." value={pixabayQuery} onChange={(event) => setPixabayQuery(event.target.value)} style={{ flex: "1 1 240px" }} />
-          <SearchActionButton type="submit" disabled={pixabayStatus === "loading"}>
-            <FiSearch />{pixabayStatus === "loading" ? "Шукаємо..." : "Pixabay"}
-          </SearchActionButton>
-        </form>
-        {pixabayStatus === "no-results" && <span style={{ color: "#c5c8d0", fontSize: 12 }}>Нічого не знайдено. Спробуйте інший запит.</span>}
-        {pixabayStatus === "error" && <span role="alert" style={{ color: "#ff8a80", fontSize: 12 }}>Пошук не вдався. Спробуйте ще раз.</span>}
-        {pixabayResults.length > 0 && (
-          <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(105px, 1fr))", gap: 8 }}>
-              {pixabayResults.map((image) => (
-                <button key={image.id} type="button" onClick={() => handleAddPixabayBackground(image)} title={`Встановити фон: ${image.name}`} style={{ position: "relative", aspectRatio: "1", overflow: "hidden", padding: 0, border: "1px solid rgba(255, 179, 108, 0.4)", borderRadius: 8, background: "#10131b", cursor: "pointer" }}>
-                  <img src={image.previewURL} alt={image.name} loading="lazy" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
-                  <span style={{ position: "absolute", inset: "auto 0 0", padding: "4px", overflow: "hidden", color: "#fff", background: "rgba(0,0,0,.72)", fontSize: 10, textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{image.name}</span>
-                </button>
-              ))}
-            </div>
-            {pixabayResults.length === pixabayPage * 12 && (
-              <SearchActionButton type="button" disabled={pixabayStatus === "loading"} onClick={() => handleSearchPixabay(pixabayPage + 1)}>
-                {pixabayStatus === "loading" ? "Завантажуємо..." : "Ще з Pixabay"}
-              </SearchActionButton>
-            )}
-          </>
-        )}
+        <ModalSection data-bg-section="wallpapers">
+          <WallpaperSection
+            heroBg={heroBg}
+            heroBg2={heroBg2}
+            heroBg3={heroBg3}
+            heroBgMode={heroBgMode}
+            onSelect={handleSelectBg}
+          />
+        </ModalSection>
 
+        <ModalDivider />
+        <ModalSection data-bg-section="pixabay">
+          <ModalSectionTitle><FiSearch /> Нові фони з Pixabay</ModalSectionTitle>
+          <PixabaySearch
+            customHeroBgs={customHeroBgs}
+            setCustomHeroBgs={setCustomHeroBgs}
+            onSelect={handleSelectBg}
+            onPreview={setFullscreenBg}
+          />
+        </ModalSection>
+
+        <ModalDivider />
+        <ModalSection data-bg-section="library">
+        <ModalSectionTitle><FiImage /> Бібліотека зображень</ModalSectionTitle>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-          <ModalSearchInput placeholder="Фільтр наявних фонів за назвою..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setVisibleBgCount(300); }} />
+          <ModalSearchInput aria-label="Фільтр наявних фонів за назвою" placeholder="Фільтр наявних фонів за назвою..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setVisibleBgCount(300); }} />
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
               <label style={{ fontSize: "12px", color: "#ffc996", fontWeight: "600" }}>Категорія:</label>
@@ -1020,7 +1341,7 @@ const BgModal = ({
                 {isVideoSource(bg.src) ? (
                   <VideoThumbnail bg={bg} onClick={() => handleSelectBg(bg.src)} />
                 ) : (
-                  <BgSquare src={cardThumbnail?.src || bg.src} loading="lazy" onClick={() => handleSelectBg(bg.src)} title={bg.name} />
+                  <BlobAwareSquare src={cardThumbnail?.src || bg.src} onClick={() => handleSelectBg(bg.src)} title={bg.name} />
                 )}
                 {heroBgMode === "slideshow-2" && (<SlotButtons><SlotBtn $active={heroBg === bg.src} onClick={() => handleSelectBg(bg.src, 1)}>Слот 1</SlotBtn><SlotBtn $active={heroBg2 === bg.src} onClick={() => handleSelectBg(bg.src, 2)}>Слот 2</SlotBtn></SlotButtons>)}
                 {heroBgMode === "slideshow-3" && (<SlotButtons><SlotBtn $active={heroBg === bg.src} onClick={() => handleSelectBg(bg.src, 1)}>Слот 1</SlotBtn><SlotBtn $active={heroBg2 === bg.src} onClick={() => handleSelectBg(bg.src, 2)}>Слот 2</SlotBtn><SlotBtn $active={heroBg3 === bg.src} onClick={() => handleSelectBg(bg.src, 3)}>Слот 3</SlotBtn></SlotButtons>)}
@@ -1032,6 +1353,7 @@ const BgModal = ({
         {sortedBgs.length > visibleBgCount && (
           <LoadMoreButton onClick={() => setVisibleBgCount((prev) => prev + 300)}>Завантажити ще</LoadMoreButton>
         )}
+        </ModalSection>
 
         <ModalDivider />
         <DropZone onDragOver={handleDragOver} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()}>

@@ -86,8 +86,14 @@ const DEFAULT_CONFIG = {
 // Впровадження CSS анімацій для спеціальних ефектів
 if (typeof document !== "undefined") {
   const style = document.createElement("style");
-  style.id = "visual-filters-animations-v2";
+  style.id = "visual-filters-animations-v3";
+  document.getElementById("visual-filters-animations-v2")?.remove();
   style.innerHTML = `
+    /* Firefox: веселка через обертання кольору шару змішування */
+    @keyframes vf-hue-spin {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
     @keyframes ultrachaos-anim {
       0% { backdrop-filter: brightness(var(--v-bright)) contrast(var(--v-contrast-min)) saturate(var(--v-saturate-min)) hue-rotate(0deg); }
       50% { backdrop-filter: brightness(var(--v-bright)) contrast(var(--v-contrast-max)) saturate(var(--v-saturate-max)) hue-rotate(180deg) blur(var(--v-blur-max)); }
@@ -173,16 +179,23 @@ const setPixelSize = (filterIntensity) => {
   dilate.setAttribute("radius", String(radius));
 };
 
+// Firefox визнає backdrop-filter (і url() у ньому) підтримуваним, але часто його не малює
+// (напр. без апаратного WebRender). Тому там усе, що можна, робимо шарами з mix-blend-mode.
+const IS_FIREFOX = typeof navigator !== "undefined" && /firefox/i.test(navigator.userAgent);
+
 // url() у backdrop-filter підтримують не всі браузери — без нього весь фільтр став би невалідним
 const supportsBackdropUrl = () =>
+  !IS_FIREFOX &&
   typeof CSS !== "undefined" && CSS.supports?.("backdrop-filter", "url(#visual-filters-pixelate)");
+
+// біля 50% invert дає суцільний сірий, тому середину пропускаємо
+const invertAmount = (intensity) => (intensity <= 50 ? intensity * 0.6 : 70 + (intensity - 50) * 0.6);
 
 const filterPart = (type, intensity) => {
   switch (type) {
     case "grayscale": return `grayscale(${intensity}%)`;
     case "sepia": return `sepia(${intensity}%)`;
-    // біля 50% invert дає суцільний сірий, тому середину пропускаємо
-    case "invert": return `invert(${intensity <= 50 ? intensity * 0.6 : 70 + (intensity - 50) * 0.6}%)`;
+    case "invert": return `invert(${invertAmount(intensity)}%)`;
     case "matrix":
       setPixelSize(intensity);
       // contrast після SVG-фільтра в Chrome перетворює темні блоки на чорні — лишаємо його лише як запасний варіант
@@ -237,6 +250,106 @@ const setLayerFilter = (layer, value) => {
   layer.style.webkitBackdropFilter = value;
 };
 
+// ── Шари змішування (mix-blend-mode) ──
+// Кожен шар — div на весь екран із фоном і режимом змішування; сила — через opacity.
+// Firefox малює їх завжди, на відміну від backdrop-filter.
+// Контейнер звичайний (не fixed), щоб шари змішувались з усією сторінкою, а не лише між собою.
+const GRAY = "rgb(128, 128, 128)";
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+
+const getBlendContainer = () => {
+  document.getElementById("visual-filters-grayscale")?.remove(); // шар з попередньої версії
+  let box = document.getElementById("visual-filters-blends");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "visual-filters-blends";
+    box.setAttribute("aria-hidden", "true");
+  }
+  // Має йти після основного шару, щоб лягати поверх його фільтра
+  const base = document.getElementById("visual-filters-layer");
+  if (base && box.previousElementSibling !== base) base.after(box);
+  else if (!box.isConnected) document.body.appendChild(box);
+  return box;
+};
+
+const setBlends = (specs) => {
+  const box = getBlendContainer();
+  const active = specs.filter((s) => clamp01(s.opacity) > 0);
+  while (box.children.length > active.length) box.lastElementChild.remove();
+  active.forEach((spec, i) => {
+    let el = box.children[i];
+    if (!el) {
+      el = document.createElement("div");
+      Object.assign(el.style, {
+        position: "fixed",
+        inset: "0",
+        zIndex: "1899",
+        pointerEvents: "none",
+        transition: "opacity 0.4s ease-in-out",
+      });
+      box.appendChild(el);
+    }
+    el.style.background = spec.color;
+    el.style.mixBlendMode = spec.mode;
+    el.style.opacity = String(clamp01(spec.opacity));
+    el.style.animation = spec.animation || "none";
+  });
+};
+
+// Чорно-білий — у всіх браузерах: сірий фон у режимі "saturation" забирає насиченість
+const grayscaleBlend = (intensity) => ({ color: GRAY, mode: "saturation", opacity: intensity / 100 });
+
+// Firefox: як відтворити фільтр шарами змішування.
+// backdrop — те, що інакше не зробити (розмиття, посилення контрасту): лишається на backdrop-filter
+const firefoxEffect = (type, intensity) => {
+  const p = intensity / 100;
+  switch (type) {
+    case "sepia":
+      // режим "color" бере відтінок шару, а яскравість — сторінки, як і sepia()
+      return { blends: [{ color: "rgb(173, 154, 120)", mode: "color", opacity: p }] };
+    case "invert":
+      // різниця з білим = інверсія; з opacity — рівно invert(x%)
+      return { blends: [{ color: "#fff", mode: "difference", opacity: invertAmount(intensity) / 100 }] };
+    case "uv":
+      return {
+        blends: [
+          { color: "rgb(150, 0, 255)", mode: "hue", opacity: 0.4 + p * 0.6 },
+          { color: "rgb(255, 0, 255)", mode: "saturation", opacity: p * 0.5 },
+        ],
+      };
+    case "saturate":
+      // saturate(x) = intensity * 2 %: нижче 50 — вицвітання, вище — насичення
+      return {
+        blends: [
+          p < 0.5
+            ? { color: GRAY, mode: "saturation", opacity: 1 - 2 * p }
+            : { color: "rgb(255, 0, 0)", mode: "saturation", opacity: (2 * p - 1) * 0.5 },
+        ],
+      };
+    case "contrast":
+      // зменшення контрасту = змішування із сірим; посилення шарами не зробити
+      return p < 0.5
+        ? { blends: [{ color: GRAY, mode: "normal", opacity: 1 - 2 * p }] }
+        : { backdrop: filterPart("contrast", intensity), blends: [] };
+    case "warm":
+      // кремовий "multiply" зігріває білий і світлі кольори, відтінки лишаються
+      return { blends: [{ color: "rgb(255, 235, 190)", mode: "multiply", opacity: p }] };
+    case "noir":
+      return {
+        backdrop: `contrast(${100 + intensity * 1.5}%)`,
+        blends: [grayscaleBlend(100), { color: "#000", mode: "normal", opacity: p * 0.2 }],
+      };
+    case "matrix":
+      // SVG-пікселізацію Firefox у backdrop-filter не малює — як і раніше, запасний варіант
+      return {
+        backdrop: `contrast(${110 + intensity * 0.7}%)`,
+        blends: [{ color: "rgb(255, 0, 0)", mode: "saturation", opacity: p * 0.4 }],
+      };
+    default:
+      return { backdrop: filterPart(type, intensity), blends: [] };
+  }
+};
+
 export const applyFilterEffect = (config) => {
   if (!config) return;
   const layer = getFilterLayer();
@@ -244,10 +357,20 @@ export const applyFilterEffect = (config) => {
   document.documentElement.style.filter = "";
   document.documentElement.style.animation = "";
 
-  const brightness = 100 - (config.darkIntensity || 0) * 0.6;
+  const darkBrightness = 100 - (config.darkIntensity || 0) * 0.6;
   const { filterType, filterIntensity = 50 } = config;
   layer.style.animation = "none";
   layer.style.display = "";
+
+  // Затемнення: у Firefox — чорний напівпрозорий шар (рівно те саме, що brightness()),
+  // в інших браузерах — brightness() у backdrop-filter
+  const blends = IS_FIREFOX ? [{ color: "#000", mode: "normal", opacity: 1 - darkBrightness / 100 }] : [];
+  const brightness = IS_FIREFOX ? 100 : darkBrightness;
+
+  const hideLayer = () => {
+    setLayerFilter(layer, "");
+    layer.style.display = "none";
+  };
 
   // Обробка спеціальних анімованих фільтрів
   if (filterType === "ultrachaos") {
@@ -266,13 +389,30 @@ export const applyFilterEffect = (config) => {
     // Статичний кадр на випадок, коли анімація вимкнена — інакше лишався б попередній фільтр
     setLayerFilter(layer, `brightness(${brightness}%) contrast(${contrastMax}%) saturate(${saturateMax}%) hue-rotate(180deg)`);
     layer.style.animation = "ultrachaos-anim 4s infinite linear";
+    if (IS_FIREFOX) {
+      // Те, що Firefox точно намалює: кольори, що мчать по колу, і перенасичення
+      blends.push(
+        { color: "rgb(255, 0, 0)", mode: "hue", opacity: 0.5 + filterIntensity / 200, animation: "vf-hue-spin 2s infinite linear" },
+        { color: "rgb(255, 0, 0)", mode: "saturation", opacity: filterIntensity / 100 },
+      );
+    }
+    setBlends(blends);
     return;
   }
 
   if (filterType === "hue") {
-    layer.style.setProperty("--v-bright", `${brightness}%`);
     // Чим більша інтенсивність, тим швидше обертання (50 → 4 с)
     const duration = filterIntensity > 0 ? (200 / filterIntensity) : 0;
+    if (IS_FIREFOX) {
+      hideLayer();
+      if (duration > 0) {
+        blends.push({ color: "rgb(255, 0, 0)", mode: "hue", opacity: 0.6, animation: `vf-hue-spin ${duration}s infinite linear` });
+      }
+      setBlends(blends);
+      return;
+    }
+    setBlends(blends);
+    layer.style.setProperty("--v-bright", `${brightness}%`);
     // Статичний кадр на випадок, коли анімація вимкнена — інакше лишався б попередній фільтр
     setLayerFilter(layer, duration > 0 ? `brightness(${brightness}%) hue-rotate(180deg)` : `brightness(${brightness}%)`);
     if (duration > 0) layer.style.animation = `rainbow-anim ${duration}s infinite linear`;
@@ -280,10 +420,22 @@ export const applyFilterEffect = (config) => {
   }
 
   const types = filterType === "combo" ? (config.combo || []) : [filterType];
-  const parts = types.map((t) => filterPart(t, filterIntensity)).filter(Boolean);
+  const parts = [];
+  types.forEach((t) => {
+    if (t === "grayscale") {
+      blends.push(grayscaleBlend(filterIntensity));
+      return;
+    }
+    const effect = IS_FIREFOX
+      ? firefoxEffect(t, filterIntensity)
+      : { backdrop: filterPart(t, filterIntensity), blends: [] };
+    if (effect.backdrop) parts.push(effect.backdrop);
+    blends.push(...effect.blends);
+  });
+  setBlends(blends);
+
   if (brightness === 100 && parts.length === 0) {
-    setLayerFilter(layer, "");
-    layer.style.display = "none";
+    hideLayer();
     return;
   }
   setLayerFilter(layer, [`brightness(${brightness}%)`, ...parts].join(" "));

@@ -10,7 +10,10 @@ import {
   NIGHT_LANGUAGES,
   LANGUAGE_CLIMATES,
   LANGUAGE_CITY_RECOLOR,
+  EVERGREEN_LANGUAGES,
+  SEASONAL_SNOW_LANGUAGES,
 } from './languageScenes.js';
+import { applySeason, getSeason } from '../../utils/sceneSeasons.js';
 
 // Статична сцена без руху сонця: день, світанок або (для Китаю) ніч
 const SKIES = {
@@ -49,11 +52,18 @@ const mixHex = (a, b, t) => {
 const sceneCache = new Map();
 
 const buildSceneSrc = (code) => {
-  if (sceneCache.has(code)) return sceneCache.get(code);
+  const climate = LANGUAGE_CLIMATES[code];
+  // Сніговим країнам пори року не потрібні (там і так зима), тропікам — теж.
+  // Виняток — снігові сцени із зеленою травою (Білорусь).
+  // Решта країн мов — у північній півкулі.
+  const evergreen =
+    (climate === 'snow' && !SEASONAL_SNOW_LANGUAGES.has(code)) || EVERGREEN_LANGUAGES.has(code);
+  const season = evergreen ? 'summer' : getSeason(new Date());
+  const cacheKey = `${code}:${season}`;
+  if (sceneCache.has(cacheKey)) return sceneCache.get(cacheKey);
 
   const phase = NIGHT_LANGUAGES.has(code) ? 'night' : DAWN_LANGUAGES.has(code) ? 'dawn' : 'day';
   const sky = SKIES[phase];
-  const climate = LANGUAGE_CLIMATES[code];
   let markup =
     LANGUAGE_SCENES[code] ??
     CITY_SVGS[`./images/timezones/${LANGUAGE_CITY_SVGS[code]}.svg`] ??
@@ -61,7 +71,7 @@ const buildSceneSrc = (code) => {
   for (const [from, to] of Object.entries(LANGUAGE_CITY_RECOLOR[code] ?? {})) {
     markup = markup.replaceAll(from, to);
   }
-  markup = markup
+  markup = applySeason(markup, season)
     .replace(/^<svg[^>]*>/, '')
     .replace(/<\/svg>\s*$/, '')
     .replace(/color-mix\(in srgb,(#[0-9a-f]{6}),var\(--shade\) var\(--night\)\)/gi, (_, c) =>
@@ -96,7 +106,7 @@ const buildSceneSrc = (code) => {
     '</svg>';
 
   const src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-  sceneCache.set(code, src);
+  sceneCache.set(cacheKey, src);
   return src;
 };
 

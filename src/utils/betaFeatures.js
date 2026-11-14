@@ -24,6 +24,9 @@ export const CITY_SIDEBAR_HIDDEN_KEY = "city_sidebar_hidden";
 export const CAROUSEL_ARROWS_HIDDEN_KEY = "carousel_arrows_hidden";
 export const CAROUSEL_NUMBERS_HIDDEN_KEY = "carousel_numbers_hidden";
 
+/** Блок «Працює на базі» на заставці завантаження: "full" | "icons" | "hidden". */
+export const LOADER_POWERED_BY_KEY = "loader_powered_by";
+
 /** Перемикач «true»/«false» налаштування з prefsStore. */
 export const togglePrefFlag = (key) =>
   setPref(key, getPref(key) === "true" ? "false" : "true");

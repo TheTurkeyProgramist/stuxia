@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from "react";
+import { Fragment, createContext, useContext, useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from "react";
 import avatarPlaceholder from "../../media/characters/domino-avatar.webp";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -86,14 +86,13 @@ import {
   FiHeart,
   FiCloudLightning,
 } from "react-icons/fi";
-import { useBeta, setBetaOn, usePrefValue } from "../../utils/betaFeatures";
+import { useBeta, setBetaOn, usePrefValue, LOADER_POWERED_BY_KEY } from "../../utils/betaFeatures";
 import BetaVoiceSettings from "./BetaVoiceSettings.jsx";
 import {
   TbFlask,
   TbAutomation,
   TbMenuOrder,
   TbClock24,
-  TbHourglass,
   TbHandFinger,
   TbFlipVertical,
   TbSchool,
@@ -102,7 +101,7 @@ import {
   TbWand,
   TbSpeakerphone,
 } from "react-icons/tb";
-import { GiPalette } from "react-icons/gi";
+import { GiPalette, GiSun, GiBlackHoleBolas, GiGalaxy } from "react-icons/gi";
 import { ACCENT_COLORS, AccentSwatches, useAccentColor, getAccentLabel } from "../Header/AccentColorPicker.jsx";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { FaSun as FaSunIcon, FaEye, FaEyeSlash, FaWindows, FaAndroid, FaLinux, FaApple } from "react-icons/fa";
@@ -188,6 +187,19 @@ import { MUTE_SYNC_DAILY_LIMIT } from "../../utils/muteSync";
 import { applySiteMirror, getSiteMirror } from "../../utils/siteMirror";
 import { getPref, setPref, removePref } from "../../utils/prefsStore.js";
 import { applySettingsSearch, clearSettingsSearch, getSearchWords } from "./settingsSearch";
+import {
+  SETTINGS_LEVELS,
+  DEFAULT_SETTINGS_LEVEL,
+  STYKHIIA_VERSION,
+  getLevelInfo,
+  levelCountLabel,
+  levelFullName,
+  levelRank,
+  maxLevel,
+  setSettingsLevel,
+  useSettingsLevel,
+  useSettingsLevelChosen,
+} from "./settingsLevels";
 import { STYKHIIA_FONTS, getStykhiiaFont } from "../../utils/stykhiiaFont";
 
 // Keyframe Animations
@@ -411,7 +423,6 @@ const ICON_ANIMS = {
   swing: { kf: keyframes`0%,100%{transform:rotate(0)}20%{transform:rotate(-18deg)}45%{transform:rotate(14deg)}70%{transform:rotate(-7deg)}85%{transform:rotate(3deg)}`, dur: "0.8s" },
   spin: { kf: keyframes`from{transform:rotate(0)}to{transform:rotate(360deg)}`, dur: "0.9s", ease: "cubic-bezier(0.45,0,0.25,1)" },
   tick: { kf: keyframes`from{transform:rotate(0)}to{transform:rotate(360deg)}`, dur: "1s", ease: "steps(8, end)" },
-  hourglass: { kf: keyframes`0%{transform:rotate(0)}40%,60%{transform:rotate(180deg)}100%{transform:rotate(360deg)}`, dur: "1.1s" },
   ring: { kf: keyframes`0%,70%,100%{transform:rotate(0)}10%,30%,50%{transform:rotate(-14deg)}20%,40%,60%{transform:rotate(14deg)}`, dur: "0.7s" },
   drop: { kf: keyframes`0%,100%{transform:translateY(0)}35%{transform:translateY(4px)}55%{transform:translateY(-2px)}75%{transform:translateY(1px)}`, dur: "0.6s" },
   lift: { kf: keyframes`0%,100%{transform:translateY(0)}35%{transform:translateY(-4px)}60%{transform:translateY(1px)}`, dur: "0.55s" },
@@ -426,7 +437,7 @@ const ICON_ANIMS = {
 };
 
 const ICON_ANIM_BY_TYPE = new Map([
-  [FiWatch, "tick"], [TbClock24, "tick"], [TbHourglass, "hourglass"], [FiCalendar, "flip"],
+  [FiWatch, "tick"], [TbClock24, "tick"], [FiCalendar, "flip"],
   [FiPauseCircle, "pop"], [TbSpeakerphone, "ring"], [FiMoreVertical, "lift"], [FiType, "pop"],
   [TbHandFinger, "tap"], [FiMousePointer, "tap"], [TbFlipVertical, "flipX"], [TbMenuOrder, "lift"],
   [FiLink, "swing"], [FiKey, "turn"], [FiFilter, "drop"], [FiBellOff, "ring"], [FiEye, "blink"],
@@ -526,6 +537,11 @@ const MainContent = styled.div`
   [data-search-hidden] { display: none !important; }
   & ::highlight(settings-search) { background-color: rgba(96,205,255,0.35); color: #ffffff; }
   [data-search-flash] { animation: ${searchFlash} 1.8s ease-out; }
+
+  /* ── Режими (settingsLevels.js): поза пошуком ховаємо налаштування важчих режимів ── */
+  &:not([data-searching])[data-view-level="simple"] [data-level="medium"],
+  &:not([data-searching])[data-view-level="simple"] [data-level="pro"],
+  &:not([data-searching])[data-view-level="medium"] [data-level="pro"] { display: none !important; }
 
   &[data-searching] {
     [data-settings-tab]:not([data-search-hidden]) ~ [data-settings-tab]:not([data-search-hidden]) {
@@ -646,8 +662,83 @@ const SubSectionTitle = styled.h4.attrs({ "data-scroll-hint": "" })`
 
 const CardGroup = styled.div`display: flex; flex-direction: column; gap: 8px;`;
 
+// ── Режими налаштувань (див. settingsLevels.js) ────────────────────────────
+// Рівень кожної вкладки; окремі картки всередині можуть бути «важчими» (проп level у Card)
+const TAB_LEVEL = {
+  security: "simple",
+  personalization: "simple",
+  siteSections: "simple",
+  modes: "simple",
+  filters: "medium",
+  bgMusic: "medium",
+  beta: "pro",
+};
+
+// Зоря → квазар (чорна діра) → галактика
+const LEVEL_ICONS = { simple: GiSun, medium: GiBlackHoleBolas, pro: GiGalaxy };
+
+// { level, viewLevel, isSearching, switchLevel }
+const SettingsLevelContext = createContext(null);
+
+const LevelHintBar = styled.div.attrs({ "data-level-hint": "" })`
+  --lvl: ${(p) => p.$color};
+  flex: 0 0 auto; width: 100%; box-sizing: border-box;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px;
+  padding: 6px 8px 6px 10px; border-radius: 6px;
+  font-size: 12px; line-height: 1.4; color: #d4d4d8;
+  background: color-mix(in srgb, var(--lvl) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lvl) 32%, transparent);
+  /* Працює й усередині вимкненої (сірої) групи */
+  pointer-events: auto;
+  & > svg { color: var(--lvl); flex-shrink: 0; }
+  strong { color: var(--lvl); font-weight: 600; }
+`;
+
+const LevelHintButton = styled.button`
+  margin-left: auto; padding: 3px 10px; border-radius: 999px;
+  font: inherit; font-size: 12px; font-weight: 600; color: var(--lvl); cursor: pointer;
+  background: color-mix(in srgb, var(--lvl) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lvl) 45%, transparent);
+  &:hover { background: color-mix(in srgb, var(--lvl) 26%, transparent); }
+  &:focus-visible { outline: 2px solid rgba(96,205,255,0.6); outline-offset: 2px; }
+`;
+
+// «Це налаштування з режиму Професійний · Андромеда» + кнопка. scope="tab" — плашка під заголовком вкладки
+const LevelHint = ({ level, scope = "item" }) => {
+  const ctx = useContext(SettingsLevelContext);
+  const isTab = scope === "tab";
+  return (
+    <LevelHintBar $color={getLevelInfo(level).color} {...(isTab ? { "data-settings-head": "level" } : {})}>
+      {(() => {
+        const Icon = LEVEL_ICONS[level] || GiSun;
+        return <Icon aria-hidden="true" />;
+      })()}
+      <span>
+        {isTab ? "Цей розділ" : "Це налаштування"} з режиму <strong>{levelFullName(level)}</strong>. Перемкнути?
+      </span>
+      <LevelHintButton
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          ctx?.switchLevel(level);
+        }}
+      >
+        Перемкнути
+      </LevelHintButton>
+    </LevelHintBar>
+  );
+};
+
+// Плашка вкладки, «важчої» за обраний режим (видно в пошуку або коли розділ відкрито напряму)
+const TabLevelHint = ({ tab }) => {
+  const ctx = useContext(SettingsLevelContext);
+  const level = TAB_LEVEL[tab];
+  if (!ctx || levelRank(level) <= levelRank(ctx.level)) return null;
+  return <LevelHint level={level} scope="tab" />;
+};
+
 // data-settings-item: одиниця загального пошуку в параметрах (див. settingsSearch.js)
-const Card = styled.div.attrs({ "data-settings-item": "" })`
+const CardBase = styled.div.attrs({ "data-settings-item": "" })`
   background: #27272a;
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 8px; padding: 14px 16px;
@@ -655,7 +746,21 @@ const Card = styled.div.attrs({ "data-settings-item": "" })`
   transition: background 0.15s ease, border-color 0.15s ease;
   &:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); }
   @media (max-width: 550px) { flex-direction: column; align-items: flex-start; }
+  ${(p) => p.$hinted && css`flex-wrap: wrap; row-gap: 10px;`}
 `;
+
+// level — з якого режиму налаштування ("medium" | "pro"); без нього — «Простий».
+// Поза пошуком важчі картки ховає CSS, а видимі «важчі» отримують підказку з кнопкою «Перемкнути».
+const Card = ({ level, children, ...rest }) => {
+  const ctx = useContext(SettingsLevelContext);
+  const hinted = !!level && !!ctx && levelRank(level) > levelRank(ctx.level);
+  return (
+    <CardBase data-level={level} $hinted={hinted} {...rest}>
+      {hinted && <LevelHint level={level} />}
+      {children}
+    </CardBase>
+  );
+};
 
 const CardExpanded = styled(Card)`
   flex-direction: column; align-items: stretch; gap: 12px;
@@ -714,7 +819,7 @@ const CardIconBoxBase = styled.div`
 
   & > svg { transform-origin: center; }
 
-  ${Card}:hover & > svg,
+  [data-settings-item]:hover & > svg,
   *:hover > & > svg {
     ${(p) => iconAnimRule(p.$anim)}
   }
@@ -772,6 +877,11 @@ const SegmentBtn = styled.button`
   transition: background 0.15s ease, color 0.15s ease;
   &:hover { color: #ffffff; }
 `;
+const LOADER_POWERED_BY_OPTIONS = [
+  { id: "full", label: "Повністю" },
+  { id: "icons", label: "Іконки" },
+  { id: "hidden", label: "Сховати" },
+];
 const FontDownloads = styled.div`display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;`;
 const FontDownloadLink = styled.a`
   display: inline-flex; align-items: center; gap: 4px;
@@ -1105,6 +1215,285 @@ const ResetConfirmDialog = ({ onConfirm, onCancel, loading }) => {
   );
 };
 
+// ── Режим налаштувань: кнопка в бічній панелі, меню та вибір при першому відкритті ──
+const LevelIconBox = styled.span`
+  width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 16px; color: var(--lvl);
+  background: color-mix(in srgb, var(--lvl) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lvl) 35%, transparent);
+  ${(p) => p.$plain && css`
+    width: 28px; height: 28px; font-size: 24px;
+    background: none; border: none;
+  `}
+`;
+const LevelIcon = ({ level, plain = false }) => {
+  const Icon = LEVEL_ICONS[level] || GiSun;
+  return (
+    <LevelIconBox aria-hidden="true" $plain={plain}>
+      <Icon />
+    </LevelIconBox>
+  );
+};
+
+const LevelButton = styled.button`
+  --lvl: ${(p) => p.$color};
+  margin-top: auto; flex-shrink: 0; box-sizing: border-box; min-width: 0;
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 8px 8px 8px 10px; border-radius: 8px; cursor: pointer; text-align: left;
+  font: inherit; color: #ffffff;
+  background: color-mix(in srgb, var(--lvl) 9%, rgba(255,255,255,0.03));
+  border: 1px solid color-mix(in srgb, var(--lvl) 32%, transparent);
+  transition: background 0.15s ease, border-color 0.15s ease;
+  &:hover, &[aria-expanded="true"] {
+    background: color-mix(in srgb, var(--lvl) 17%, rgba(255,255,255,0.03));
+    border-color: color-mix(in srgb, var(--lvl) 50%, transparent);
+  }
+  &:focus-visible { outline: 2px solid rgba(96,205,255,0.6); outline-offset: 2px; }
+  & > svg { margin-left: auto; flex-shrink: 0; color: #a0a0a0; font-size: 15px; }
+  @media (max-width: 768px) { margin-top: 0; padding: 7px 8px 7px 10px; }
+`;
+const LevelButtonText = styled.span`
+  flex: 1; display: flex; flex-direction: column; min-width: 0; line-height: 1.3;
+  small, b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  small { font-size: 11px; color: #8a8a90; }
+  small em { font-style: normal; color: var(--lvl); }
+  b { font-size: 13px; font-weight: 600; }
+`;
+
+const LevelMenuBox = styled.div`
+  position: fixed; z-index: 100002;
+  padding: 4px; border-radius: 10px;
+  background: #2a2a2e; color: #f3f3f3;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6), 0 0 1px rgba(255,255,255,0.2);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  animation: ${confirmPopIn} 0.16s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+`;
+const LevelMenuHead = styled.div`
+  padding: 5px 8px 4px; font-size: 12px; font-weight: 600; color: #8a8a90;
+`;
+const LevelMenuItem = styled.button`
+  --lvl: ${(p) => p.$color};
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 6px 10px 6px 8px; border-radius: 8px;
+  color: #f3f3f3; font: inherit; text-align: left; cursor: pointer;
+  background: ${(p) => (p.$active ? "color-mix(in srgb, var(--lvl) 12%, transparent)" : "transparent")};
+  border: 1px solid ${(p) => (p.$active ? "color-mix(in srgb, var(--lvl) 60%, transparent)" : "transparent")};
+  transition: background 0.15s ease, border-color 0.15s ease;
+  & + & { margin-top: 1px; }
+  &:hover, &:focus-visible {
+    outline: none;
+    ${(p) => !p.$active && css`background: rgba(255,255,255,0.07);`}
+  }
+  &:focus-visible { border-color: color-mix(in srgb, var(--lvl) 60%, transparent); }
+  b { display: block; font-size: 14px; font-weight: 500; }
+  b em { font-style: normal; color: var(--lvl); }
+  small { display: block; margin-top: 1px; font-size: 12px; color: #a0a0a0; line-height: 1.35; }
+  small strong { color: #d4d4d8; font-weight: 500; }
+`;
+// Підпис під варіантами: як часто змінюються версії налаштувань
+const LevelUpdateNote = styled.div`
+  margin-top: 4px; padding: 6px 8px 3px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 12px; color: #8a8a90; line-height: 1.45;
+`;
+
+const LEVEL_UPDATE_NOTE = "Версії налаштувань змінюються раз на 3–6 тижнів. Чекайте на оновлення!";
+
+// Меню на кшталт вибору моделі: обраний режим обведений; 1/2/3 — швидкі клавіші
+const LevelMenu = ({ anchorRef, level, isGuest = false, onSelect, onClose }) => {
+  const boxRef = useRef(null);
+  const [pos, setPos] = useState(null);
+
+  // Кнопка внизу бічної панелі — меню відкривається вгору; на телефоні кнопка вгорі — вниз
+  useLayoutEffect(() => {
+    const place = () => {
+      const r = anchorRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const width = Math.min(340, window.innerWidth - 16);
+      const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8));
+      setPos(
+        r.top > window.innerHeight / 2
+          ? { left, width, bottom: window.innerHeight - r.top + 6 }
+          : { left, width, top: r.bottom + 6 },
+      );
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [anchorRef]);
+
+  useEffect(() => {
+    const items = () => [...(boxRef.current?.querySelectorAll("[data-level-item]") || [])];
+    const frame = requestAnimationFrame(() => {
+      (items().find((el) => el.getAttribute("aria-checked") === "true") || items()[0])?.focus();
+    });
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose(true);
+        return;
+      }
+      if (e.key === "Tab") {
+        onClose(false);
+        return;
+      }
+      const n = Number(e.key);
+      if (n >= 1 && n <= SETTINGS_LEVELS.length && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        onSelect(SETTINGS_LEVELS[n - 1].key);
+        return;
+      }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const list = items();
+        const i = list.indexOf(document.activeElement);
+        list[(i + (e.key === "ArrowDown" ? 1 : -1) + list.length) % list.length]?.focus();
+      }
+    };
+    const onDown = (e) => {
+      if (!boxRef.current?.contains(e.target) && !anchorRef.current?.contains(e.target)) onClose(false);
+    };
+    window.addEventListener("keydown", onKey, true);
+    document.addEventListener("mousedown", onDown);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", onKey, true);
+      document.removeEventListener("mousedown", onDown);
+    };
+  }, [anchorRef, onClose, onSelect]);
+
+  return createPortal(
+    <LevelMenuBox
+      ref={boxRef}
+      role="menu"
+      aria-label="Режим налаштувань"
+      data-active-overlay=""
+      style={pos || { visibility: "hidden" }}
+    >
+      <LevelMenuHead>Стихія {STYKHIIA_VERSION} · Режим налаштувань</LevelMenuHead>
+      {SETTINGS_LEVELS.map(({ key, label, star, story, about, color }) => {
+        const isActive = key === level;
+        return (
+          <LevelMenuItem
+            key={key}
+            type="button"
+            role="menuitemradio"
+            aria-checked={isActive}
+            data-level-item=""
+            $color={color}
+            $active={isActive}
+            onClick={() => onSelect(key)}
+          >
+            <LevelIcon level={key} plain />
+            <span>
+              <b>{label} · <em>{star}</em></b>
+              <small>{story} <strong>{levelCountLabel(key, isGuest)} · {about}</strong></small>
+            </span>
+          </LevelMenuItem>
+        );
+      })}
+      <LevelUpdateNote>{LEVEL_UPDATE_NOTE}</LevelUpdateNote>
+    </LevelMenuBox>,
+    document.body,
+  );
+};
+
+const OnboardingSub = styled.p`
+  margin: 4px 0 0; font-size: 13px; color: #a0a0a0; line-height: 1.45;
+`;
+const OnboardingList = styled.div`display: flex; flex-direction: column; gap: 6px;`;
+const OnboardingOption = styled.button`
+  --lvl: ${(p) => p.$color};
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 8px 12px 8px 10px; border-radius: 10px; cursor: pointer; text-align: left;
+  font: inherit; color: #f3f3f3;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+  transition: background 0.15s ease, border-color 0.15s ease;
+  &:hover, &:focus-visible {
+    background: color-mix(in srgb, var(--lvl) 12%, transparent);
+    border-color: color-mix(in srgb, var(--lvl) 50%, transparent);
+    outline: none;
+  }
+  b { font-size: 14px; font-weight: 600; line-height: 1.35; }
+  b em { font-style: normal; color: var(--lvl); }
+  small { display: block; margin-top: 2px; font-size: 12.5px; color: #a0a0a0; line-height: 1.35; }
+  small strong { color: #d4d4d8; font-weight: 500; }
+`;
+const OnboardingBadge = styled.span`
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; vertical-align: 1px; white-space: nowrap;
+  color: var(--lvl);
+  background: color-mix(in srgb, var(--lvl) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lvl) 35%, transparent);
+`;
+
+// Перше відкриття «Параметрів»: який режим обрати. Закрили без вибору — лишаємо «Простий».
+const LevelOnboarding = ({ isGuest = false, onChoose }) => {
+  const firstRef = useRef(null);
+  useEffect(() => {
+    firstRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onChoose(DEFAULT_SETTINGS_LEVEL);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onChoose]);
+
+  return (
+    <ConfirmOverlay
+      data-active-overlay=""
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onChoose(DEFAULT_SETTINGS_LEVEL);
+      }}
+    >
+      <ConfirmBox
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="level-onboarding-title"
+        style={{ width: "min(500px, 100%)" }}
+      >
+        <ConfirmHeader style={{ alignItems: "flex-start" }}>
+          <ConfirmIcon style={{ background: "rgba(96,205,255,0.16)", color: "#60cdff" }}>
+            <FiLayers aria-hidden="true" />
+          </ConfirmIcon>
+          <div>
+            <ConfirmTitle id="level-onboarding-title">Який режим налаштувань обрати?</ConfirmTitle>
+            <OnboardingSub>
+              Від режиму залежить, скільки налаштувань видно. Змінити його можна будь-коли кнопкою
+              внизу бічної панелі, а пошук завжди шукає в усіх режимах.
+            </OnboardingSub>
+          </div>
+        </ConfirmHeader>
+        <OnboardingList>
+          {SETTINGS_LEVELS.map(({ key, label, star, story, about, color }, i) => (
+            <OnboardingOption
+              key={key}
+              ref={i === 0 ? firstRef : undefined}
+              type="button"
+              $color={color}
+              onClick={() => onChoose(key)}
+            >
+              <LevelIcon level={key} plain />
+              <span>
+                <b>Стихія {STYKHIIA_VERSION} · {label} · <em>{star}</em></b>
+                {key === DEFAULT_SETTINGS_LEVEL && <OnboardingBadge>Для початку</OnboardingBadge>}
+                <small>{story} <strong>{levelCountLabel(key, isGuest)} · {about}</strong></small>
+              </span>
+            </OnboardingOption>
+          ))}
+        </OnboardingList>
+        <LevelUpdateNote style={{ marginTop: 10, padding: "8px 2px 0" }}>{LEVEL_UPDATE_NOTE}</LevelUpdateNote>
+      </ConfirmBox>
+    </ConfirmOverlay>
+  );
+};
+
 // Тиха «небезпечна» кнопка поруч з угодою: не кричить, але помітна при наведенні
 const ResetLink = styled.button`
   display: inline-flex; align-items: center; gap: 5px;
@@ -1230,8 +1619,6 @@ const UserSettingsModal = ({
   isDarkMode = false,
   onToggleTheme = () => {},
   onUpdateLayout,
-  showUpdateTimer,
-  setShowUpdateTimer,
   // Site sections props
   siteSections = [],
   moveSiteSection = () => {},
@@ -1274,6 +1661,17 @@ const UserSettingsModal = ({
   const [activeTab, setActiveTab] = useState(initialTab || "personalization");
   // Загальний пошук: поки рядок не порожній, показуються всі вкладки, відфільтровані за запитом
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Режим налаштувань (Простий / Середній / Професійний) — живе в prefsStore цього браузера.
+  const settingsLevel = useSettingsLevel();
+  const loaderPoweredBy = usePrefValue(LOADER_POWERED_BY_KEY, "full");
+  // «Підглядання»: розділ відкрили напряму (з новин — до «Моїх стрічок», або з пошуку), а він з важчого режиму.
+  // Показуємо його з підказкою «Перемкнути?», сам режим не змінюємо.
+  const [peekLevel, setPeekLevel] = useState(() => {
+    if (!initialTab) return null;
+    return maxLevel(TAB_LEVEL[initialTab], initialTab === "siteSections" ? "medium" : "simple");
+  });
+  const viewLevel = peekLevel ? maxLevel(settingsLevel, peekLevel) : settingsLevel;
 
   // Слот для панелі «Мої стрічки»: її рендерить News.jsx через портал (там уся логіка стрічок).
   // Елемент кладемо у window, щоб News підхопив його навіть якщо змонтується пізніше.
@@ -1925,7 +2323,6 @@ const UserSettingsModal = ({
     dateDisplayMode: user?.dateDisplayMode || "both",
     hour12: user?.hour12 === true,
     voiceActingMode: user?.voiceActingMode || "malyatko",
-    showUpdateTimer: showUpdateTimer !== false,
     newsAutoScroll: user?.newsAutoScroll || false,
     syncMutedNews: user?.syncMutedNews || false,
     gestureSensitivity: user?.gestureSensitivity ?? 1.5,
@@ -1962,20 +2359,18 @@ const UserSettingsModal = ({
       dateDisplayMode: user?.dateDisplayMode || "both",
       hour12: user?.hour12 === true,
       voiceActingMode: user?.voiceActingMode || "malyatko",
-      showUpdateTimer: showUpdateTimer !== false,
       newsAutoScroll: user?.newsAutoScroll || false,
       syncMutedNews: user?.syncMutedNews || false,
       gestureSensitivity: user?.gestureSensitivity ?? 1.5,
       fastClicks: user?.fastClicks ?? false,
     });
-  }, [user, showUpdateTimer]);
+  }, [user]);
 
   const getActiveAvatarUrl = () => savedGoogleAvatar || avatarPlaceholder;
 
   const updateLivePreview = (updates) => {
     const newFormData = { ...formData, ...updates };
     setFormData(newFormData);
-    if (updates.hasOwnProperty("showUpdateTimer")) setShowUpdateTimer(updates.showUpdateTimer);
     if (!user) return;
 
     const newAvatar = getActiveAvatarUrl();
@@ -1991,7 +2386,6 @@ const UserSettingsModal = ({
       dateDisplayMode: newFormData.dateDisplayMode,
       hour12: newFormData.hour12,
       voiceActingMode: newFormData.voiceActingMode,
-      showUpdateTimer: newFormData.showUpdateTimer,
       newsLayout: updates.newsLayout || newsLayout,
       newsAutoScroll: updates.newsAutoScroll ?? newFormData.newsAutoScroll,
       syncMutedNews: updates.syncMutedNews ?? newFormData.syncMutedNews,
@@ -2081,7 +2475,6 @@ const UserSettingsModal = ({
       dateDisplayMode: formData.dateDisplayMode,
       hour12: formData.hour12,
       voiceActingMode: formData.voiceActingMode,
-      showUpdateTimer: formData.showUpdateTimer,
       newsLayout,
       newsAutoScroll: formData.newsAutoScroll,
       syncMutedNews: formData.syncMutedNews,
@@ -2271,6 +2664,41 @@ const UserSettingsModal = ({
   const [searchStats, setSearchStats] = useState({ counts: {}, total: 0 });
   const showTab = (key) => isSearching || activeTab === key;
 
+  const switchLevel = useCallback((key) => {
+    setSettingsLevel(key);
+    setPeekLevel(null);
+  }, []);
+
+  const levelChosen = useSettingsLevelChosen();
+  const [levelMenuOpen, setLevelMenuOpen] = useState(false);
+  const levelButtonRef = useRef(null);
+  const closeLevelMenu = useCallback((refocus) => {
+    setLevelMenuOpen(false);
+    if (refocus) levelButtonRef.current?.focus();
+  }, []);
+  const chooseLevelFromMenu = useCallback((key) => {
+    switchLevel(key);
+    setLevelMenuOpen(false);
+    levelButtonRef.current?.focus();
+  }, [switchLevel]);
+  // Перший вибір не скидає «підглядання» (напр. відкрили «Мої стрічки» з новин)
+  const chooseFirstLevel = useCallback((key) => setSettingsLevel(key), []);
+
+  const levelContext = useMemo(
+    () => ({ level: settingsLevel, viewLevel, isSearching, switchLevel }),
+    [settingsLevel, viewLevel, isSearching, switchLevel],
+  );
+
+  // Обрали легший режим, а відкрита вкладка — з важчого: повертаємось на «Персоналізацію»
+  useEffect(() => {
+    if (levelRank(TAB_LEVEL[activeTab]) > levelRank(viewLevel)) setActiveTab("personalization");
+  }, [activeTab, viewLevel]);
+
+  // Пошук шукає в усіх режимах, тож вкладки важчих режимів видно лише під час пошуку
+  const visibleNavItems = navItems.filter(
+    ({ key }) => isSearching || key === activeTab || levelRank(TAB_LEVEL[key]) <= levelRank(viewLevel),
+  );
+
   // Фільтруємо DOM після кожної зміни вмісту (розгортання блоків, оновлення лічильників тощо)
   useLayoutEffect(() => {
     const root = mainContentRef.current;
@@ -2321,6 +2749,9 @@ const UserSettingsModal = ({
   // Перехід із результатів пошуку до самої вкладки; target — картка, до якої прокрутити
   const openFromSearch = (tab, target = null) => {
     pendingJumpRef.current = target;
+    // Налаштування з важчого режиму відкриваємо «підгляданням», не змінюючи сам режим
+    const need = maxLevel(TAB_LEVEL[tab], target?.getAttribute("data-level") || "simple");
+    setPeekLevel(levelRank(need) > levelRank(settingsLevel) ? need : null);
     setSearchQuery("");
     setActiveTab(tab);
   };
@@ -2459,7 +2890,7 @@ const UserSettingsModal = ({
                 )}
               </SearchBox>
               <NavList ref={navListRef}>
-              {navItems.map(({ key, icon, label, locked }) => {
+              {visibleNavItems.map(({ key, icon, label, locked }) => {
                 const isActive = !isSearching && activeTab === key;
                 const count = searchStats.counts[key] || 0;
                 const item = (
@@ -2472,6 +2903,7 @@ const UserSettingsModal = ({
                     onClick={() => {
                       if (locked) return;
                       setSearchQuery("");
+                      if (key !== activeTab) setPeekLevel(null);
                       setActiveTab(key);
                     }}
                   >
@@ -2495,12 +2927,41 @@ const UserSettingsModal = ({
                 ) : item;
               })}
               </NavList>
+
+              <LevelButton
+                ref={levelButtonRef}
+                type="button"
+                $color={getLevelInfo(settingsLevel).color}
+                aria-haspopup="menu"
+                aria-expanded={levelMenuOpen}
+                title={`Стихія ${STYKHIIA_VERSION} · ${levelFullName(settingsLevel)}: ${getLevelInfo(settingsLevel).about}`}
+                aria-label={`Режим налаштувань: ${levelFullName(settingsLevel)}`}
+                onClick={() => setLevelMenuOpen((open) => !open)}
+              >
+                <LevelIcon level={settingsLevel} />
+                <LevelButtonText>
+                  <small>Стихія {STYKHIIA_VERSION} · <em>{getLevelInfo(settingsLevel).star}</em></small>
+                  <b>{getLevelInfo(settingsLevel).label}</b>
+                </LevelButtonText>
+                <FiChevronDown aria-hidden="true" />
+              </LevelButton>
+              {levelMenuOpen && (
+                <LevelMenu
+                  anchorRef={levelButtonRef}
+                  level={settingsLevel}
+                  isGuest={isGuest}
+                  onSelect={chooseLevelFromMenu}
+                  onClose={closeLevelMenu}
+                />
+              )}
             </Sidebar>
 
             <MainContentWrap>
+            <SettingsLevelContext.Provider value={levelContext}>
             <MainContent
               ref={mainContentRef}
               data-searching={isSearching ? "" : undefined}
+              data-view-level={viewLevel}
               onClick={handleSearchResultClick}
             >
               {isSearching && searchStats.total > 0 && (
@@ -2701,7 +3162,7 @@ const UserSettingsModal = ({
                     </CardControl>
                   </Card>
 
-                  <Card>
+                  <Card level="medium">
                     <CardLeft>
                       <CardIconBox $color="#34d399"><FiCalendar /></CardIconBox>
                       <CardInfo>
@@ -2746,7 +3207,7 @@ const UserSettingsModal = ({
                   </Card>
 
                   {/* AntiHeader Tips Toggle — тимчасово приховано
-                  <Card>
+                  <Card level="medium">
                     <CardLeft>
                       <CardIconBox $color="#fb923c"><TbSpeakerphone /></CardIconBox>
                       <CardInfo>
@@ -2769,7 +3230,7 @@ const UserSettingsModal = ({
                   </Card>
                   */}
 
-                  <Card>
+                  <Card level="pro">
                     <CardLeft>
                       <CardIconBox $color="#a3e635"><FiMoreVertical /></CardIconBox>
                       <CardInfo>
@@ -2791,23 +3252,7 @@ const UserSettingsModal = ({
                     </CardControl>
                   </Card>
 
-                  <Card>
-                    <CardLeft>
-                      <CardIconBox $color="#2dd4bf"><TbHourglass /></CardIconBox>
-                      <CardInfo>
-                        <CardTitle>Таймер оновлення погоди</CardTitle>
-                        <CardDescription>Показувати відлік до наступного оновлення даних</CardDescription>
-                      </CardInfo>
-                    </CardLeft>
-                    <CardControl>
-                      <ToggleWrapper onClick={() => updateLivePreview({ showUpdateTimer: !formData.showUpdateTimer })}>
-                        <ToggleStatusLabel $checked={formData.showUpdateTimer}>{formData.showUpdateTimer ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
-                        <SwitchPill $checked={formData.showUpdateTimer} />
-                      </ToggleWrapper>
-                    </CardControl>
-                  </Card>
-
-                  <Card>
+                  <Card level="pro">
                     <CardLeft>
                       <CardIconBox $color="#4ade80"><FiType /></CardIconBox>
                       <CardInfo>
@@ -2848,7 +3293,7 @@ const UserSettingsModal = ({
                   </Card>
 
                   {!getStykhiiaFont(formData.fontFamily) && (
-                  <Card>
+                  <Card level="pro">
                     <CardLeft>
                       <CardIconBox $color="#f472b6"><FiType /></CardIconBox>
                       <CardInfo>
@@ -2862,7 +3307,7 @@ const UserSettingsModal = ({
                   </Card>
                   )}
 
-                  <Card>
+                  <Card level="pro">
                     <CardLeft>
                       <CardIconBox $color="#fb7185"><TbHandFinger /></CardIconBox>
                       <CardInfo>
@@ -2876,7 +3321,7 @@ const UserSettingsModal = ({
                     </CardControl>
                   </Card>
 
-                  <Card>
+                  <Card level="pro">
                     <CardLeft>
                       <CardIconBox $color="#facc15"><FiMousePointer /></CardIconBox>
                       <CardInfo>
@@ -2892,7 +3337,7 @@ const UserSettingsModal = ({
                     </CardControl>
                   </Card>
 
-                  <CardExpanded>
+                  <CardExpanded level="pro">
                     <CardLeft>
                       <CardIconBox $color="#818cf8"><TbFlipVertical /></CardIconBox>
                       <CardInfo>
@@ -2936,7 +3381,7 @@ const UserSettingsModal = ({
                     const isDarkTheme = sectionThemes?.[sec.key] ?? isDarkMode;
 
                     return (
-                      <CardExpanded key={sec.key}>
+                      <CardExpanded level="medium" key={sec.key}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
                           <CardLeft>
                             <CardIconBox $color={SECTION_COLORS[sec.key] || "#94a3b8"}>{SECTION_ICONS[sec.key] || <FiGrid />}</CardIconBox>
@@ -2976,7 +3421,7 @@ const UserSettingsModal = ({
                     );
                   })}
 
-                  <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                  <div data-level="medium" style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
                     <WinButton onClick={onResetSectionThemes} style={{ flex: 1 }}>
                       Скинути теми секцій
                     </WinButton>
@@ -2984,7 +3429,7 @@ const UserSettingsModal = ({
 
                   <SubSectionTitle><FiGlobe /> Новини</SubSectionTitle>
 
-                  <Card>
+                  <Card level="medium">
                     <CardLeft>
                       <CardIconBox $color="#f97316"><FiFilter /></CardIconBox>
                       <CardInfo>
@@ -3001,9 +3446,9 @@ const UserSettingsModal = ({
                   </Card>
 
                   {/* Під-опції фільтра: завжди видно, але сірі й неактивні, коли фільтр вимкнено */}
-                  <FilterSubGroup $disabled={!isNewsFilterOn} aria-disabled={!isNewsFilterOn}>
+                  <FilterSubGroup data-level="medium" $disabled={!isNewsFilterOn} aria-disabled={!isNewsFilterOn}>
                     {/* 1. М'який режим */}
-                    <Card>
+                    <Card level="pro">
                       <CardInfo>
                         <CardTitle>Не видаляти, а показувати плашку</CardTitle>
                         <CardDescription>
@@ -3019,7 +3464,7 @@ const UserSettingsModal = ({
                     </Card>
 
                     {/* 2. Категорії: не рекомендувати / показувати */}
-                    <CardExpanded>
+                    <CardExpanded level="medium">
                       <CardInfo>
                         <CardTitle>Які теми бачити</CardTitle>
                         <CardDescription>Для кожної теми оберіть: не рекомендувати (фільтр її ховає) чи показувати</CardDescription>
@@ -3059,7 +3504,7 @@ const UserSettingsModal = ({
                     </CardExpanded>
 
                     {/* 3. Власні слова та правила */}
-                    <CardExpanded>
+                    <CardExpanded level="pro">
                       <CardInfo>
                         <FilterSubTitle>Власні слова та правила ({newsFilterWords.length}/{NEWS_FILTER_MAX_WORDS})</FilterSubTitle>
                         <CardDescription>
@@ -3179,12 +3624,12 @@ const UserSettingsModal = ({
 
                     <FilterNotes>
                       <span><FiInfo aria-hidden="true" /> Нові налаштування, як і сам фільтр, діють після оновлення новин.</span>
-                      <span><FiInfo aria-hidden="true" /> Розглушена плашка відкрита лише до перезавантаження сторінки.</span>
+                      <span data-level="pro"><FiInfo aria-hidden="true" /> Розглушена плашка відкрита лише до перезавантаження сторінки.</span>
                     </FilterNotes>
                   </FilterSubGroup>
 
                   {/* Вигляд новин: блоки-картки в каруселі або список (фото ліворуч, заголовок праворуч) */}
-                  <Card>
+                  <Card level="medium">
                     <CardLeft>
                       <CardIconBox $color="#ffaa00">{newsViewMode === "list" ? <FiList /> : <FiGrid />}</CardIconBox>
                       <CardInfo>
@@ -3221,7 +3666,7 @@ const UserSettingsModal = ({
                   </Card>
 
                   {/* Додавання стрічок і чорний список — вміст підставляє News.jsx */}
-                  <CardExpanded>
+                  <CardExpanded level="medium">
                     <CardLeft>
                       <CardIconBox $color="#ffaa00"><FiRss /></CardIconBox>
                       <CardInfo>
@@ -3259,8 +3704,8 @@ const UserSettingsModal = ({
                     </CardControl>
                   </Card>
 
-                  <FilterSubGroup>
-                    <CardExpanded>
+                  <FilterSubGroup data-level="pro">
+                    <CardExpanded level="pro">
                       <CardInfo>
                         <FilterSubTitle>Слова термінових новин ({urgentWords.length}/{URGENT_MAX_WORDS})</FilterSubTitle>
                         <CardDescription>
@@ -3380,7 +3825,7 @@ const UserSettingsModal = ({
                   </FilterSubGroup>
 
                   {/* Персональні рекомендації: обрані теми + що користувач відкриває */}
-                  <Card>
+                  <Card level="medium">
                     <CardLeft>
                       <CardIconBox $color="#f472b6"><FiHeart /></CardIconBox>
                       <CardInfo>
@@ -3398,8 +3843,8 @@ const UserSettingsModal = ({
                     </CardControl>
                   </Card>
 
-                  <FilterSubGroup $disabled={!isRecsOn} aria-disabled={!isRecsOn}>
-                    <CardExpanded>
+                  <FilterSubGroup data-level="pro" $disabled={!isRecsOn} aria-disabled={!isRecsOn}>
+                    <CardExpanded level="pro">
                       <CardInfo>
                         <FilterSubTitle>Мої теми</FilterSubTitle>
                         <CardDescription>Новини на ці теми показуються першими</CardDescription>
@@ -3424,7 +3869,7 @@ const UserSettingsModal = ({
                       </WordChips>
                     </CardExpanded>
 
-                    <CardExpanded>
+                    <CardExpanded level="pro">
                       <CardInfo>
                         <FilterSubTitle>Що Стихія вже знає про ваші інтереси</FilterSubTitle>
                         <CardDescription>
@@ -3449,7 +3894,7 @@ const UserSettingsModal = ({
                   </FilterSubGroup>
 
                   {!isGuest ? (
-                    <Card>
+                    <Card level="pro">
                       <CardLeft>
                         <CardIconBox $color="#e879f9"><FiBellOff /></CardIconBox>
                         <CardInfo>
@@ -3470,7 +3915,7 @@ const UserSettingsModal = ({
                       </CardControl>
                     </Card>
                   ) : (
-                    <Card style={{ opacity: 0.45 }}>
+                    <Card level="pro" style={{ opacity: 0.45 }}>
                       <CardLeft>
                         <CardIconBox $color="#e879f9"><FiBellOff /></CardIconBox>
                         <CardInfo>
@@ -3481,7 +3926,7 @@ const UserSettingsModal = ({
                     </Card>
                   )}
 
-                  <CardExpanded>
+                  <CardExpanded level="pro">
                     <CardLeft>
                       <CardIconBox $color="#c4b5fd"><FiEye /></CardIconBox>
                       <CardInfo>
@@ -3551,7 +3996,7 @@ const UserSettingsModal = ({
                   </Card>
 
                   {/* Accent color */}
-                  <CardExpanded>
+                  <CardExpanded level="medium">
                     <CardLeft>
                       <CardIconBox $color={accentColor || "#60cdff"}><GiPalette /></CardIconBox>
                       <CardInfo>
@@ -3570,7 +4015,7 @@ const UserSettingsModal = ({
                   </CardExpanded>
 
                   {/* Sticky BG */}
-                  <Card>
+                  <Card level="pro">
                     <CardLeft>
                       <CardIconBox $color="#5eead4"><FiAnchor /></CardIconBox>
                       <CardInfo>
@@ -3587,7 +4032,7 @@ const UserSettingsModal = ({
                   </Card>
 
                   {/* Loading Strategy */}
-                  <CardExpanded>
+                  <CardExpanded level="pro">
                     <CardLeft>
                       <CardIconBox $color="#93c5fd"><FiDownloadCloud /></CardIconBox>
                       <CardInfo>
@@ -3616,8 +4061,45 @@ const UserSettingsModal = ({
                     </div>
                   </CardExpanded>
 
+                  {/* Блок «Працює на базі» на заставці завантаження */}
+                  <Card level="pro">
+                    <CardLeft>
+                      <CardIconBox $color="#a3e635"><FiLayers /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>«Працює на базі» на заставці</CardTitle>
+                        <CardDescription>
+                          {loaderPoweredBy === "hidden"
+                            ? "Під час завантаження сайту видно лише фразу, без сервісів та іконок"
+                            : loaderPoweredBy === "icons"
+                              ? "Лише іконки сервісів, без підпису — назву видно при наведенні"
+                              : "Підпис «Працює на базі» та іконки сервісів, на яких зроблена Стихія"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <Segmented role="radiogroup" aria-label="«Працює на базі» на заставці">
+                        {LOADER_POWERED_BY_OPTIONS.map((option) => {
+                          const active = loaderPoweredBy === option.id;
+                          return (
+                            <SegmentBtn
+                              key={option.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              $active={active}
+                              $tone={option.id === "hidden" ? "hide" : "show"}
+                              onClick={() => setPref(LOADER_POWERED_BY_KEY, option.id)}
+                            >
+                              {option.label}
+                            </SegmentBtn>
+                          );
+                        })}
+                      </Segmented>
+                    </CardControl>
+                  </Card>
+
                   {/* Decorator Mode */}
-                  <CardExpanded>
+                  <CardExpanded level="pro">
                     <CardLeft>
                       <CardIconBox $color="#d946ef"><FiPenTool /></CardIconBox>
                       <CardInfo>
@@ -3782,10 +4264,11 @@ const UserSettingsModal = ({
                     Затемнення, кольорові фільтри для зору та збереження власних пресетів.
                     {isFiltersPreviewOn && <WideScreenOnly as="span"> Результат видно на сторінці ліворуч</WideScreenOnly>}
                   </SectionDescription>
+                  <TabLevelHint tab="filters" />
 
                   {/* Side-by-side preview */}
                   <WideScreenOnly>
-                  <Card>
+                  <Card level="pro">
                     <CardLeft>
                       <CardIconBox $color="#fdba74"><FiColumns /></CardIconBox>
                       <CardInfo>
@@ -3808,7 +4291,7 @@ const UserSettingsModal = ({
                   </Card>
 
                   {isFiltersPreviewOn && (
-                    <Card>
+                    <Card level="pro">
                       <CardLeft>
                         <CardIconBox $color="#fcd34d"><FiMaximize2 /></CardIconBox>
                         <CardInfo>
@@ -3872,7 +4355,7 @@ const UserSettingsModal = ({
 
                   {/* Filter Intensity */}
                   {visualConfig.filterType !== "none" && (
-                    <Card>
+                    <Card level="pro">
                       <CardLeft>
                         <CardIconBox $color="#fca5a5"><FiSlidersIcon /></CardIconBox>
                         <CardInfo>
@@ -3908,7 +4391,7 @@ const UserSettingsModal = ({
                   </FilterExampleCard>
 
                   {/* Combo builder */}
-                  <CardExpanded>
+                  <CardExpanded level="pro">
                     <CardLeft>
                       <CardIconBox $color="#a5b4fc"><FiLayers /></CardIconBox>
                       <CardInfo>
@@ -3930,7 +4413,7 @@ const UserSettingsModal = ({
                   </CardExpanded>
 
                   {/* Presets Manager */}
-                  <CardExpanded>
+                  <CardExpanded level="pro">
                     <CardLeft>
                       <CardIconBox $color="#f9a8d4"><TbWand /></CardIconBox>
                       <CardInfo>
@@ -4006,6 +4489,7 @@ const UserSettingsModal = ({
                 <CardGroup data-settings-tab="bgMusic">
                   <SectionHeaderTitle><FiMusic /> Фонова музика</SectionHeaderTitle>
                   <SectionDescription>Гучність, швидкість і режим відтворення, бібліотека треків та власні файли</SectionDescription>
+                  <TabLevelHint tab="bgMusic" />
 
                   {/* Main toggle */}
                   <Card>
@@ -4181,6 +4665,7 @@ const UserSettingsModal = ({
                     Нові можливості, які ще допрацьовуються. Можуть поводитись несподівано — якщо щось не так,
                     просто вимкніть. Налаштування діють лише в цьому браузері.
                   </SectionDescription>
+                  <TabLevelHint tab="beta" />
 
                   <Card>
                     <CardLeft>
@@ -4250,6 +4735,7 @@ const UserSettingsModal = ({
               )}
 
             </MainContent>
+            </SettingsLevelContext.Provider>
 
             {/* Натяк, що нижче є ще налаштування */}
             <AnimatePresence>
@@ -4314,6 +4800,8 @@ const UserSettingsModal = ({
       )}
 
       {ageGate}
+
+      {!levelChosen && !showResetDialog && <LevelOnboarding isGuest={isGuest} onChoose={chooseFirstLevel} />}
 
       {showResetDialog && (
         <ResetConfirmDialog

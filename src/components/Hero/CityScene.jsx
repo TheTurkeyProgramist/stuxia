@@ -1,7 +1,8 @@
 import React, { memo, useLayoutEffect, useMemo, useRef } from "react";
 import * as SunCalc from "suncalc";
 import styled from "styled-components";
-import { Lanterns } from "./SceneParticles.jsx";
+import { Lanterns, Petals } from "./SceneParticles.jsx";
+import { applySeason, getSeason } from "../../utils/sceneSeasons.js";
 
 // SVG-мальки міст: небо прозоре, кольори суші змішуються з --shade на --night,
 // вікна мають клас "win" ("win off" — вночі не світиться).
@@ -28,6 +29,23 @@ const CLIMATES = {
   asia_almaty: "snow",
   europe_london: "fog",
 };
+
+// Острови й тропіки зелені цілий рік — пори року їх не перефарбовують
+// (як і міста зі сніговим кліматом)
+const EVERGREEN = new Set([
+  "indian_maldives",
+  "pacific_fiji",
+  "pacific_guadalcanal",
+  "pacific_honolulu",
+  "pacific_pago_pago",
+  "atlantic_azores",
+  "asia_bangkok",
+  "asia_kolkata",
+  "asia_dubai",
+  "america_caracas",
+  "america_mexico_city",
+  "america_sao_paulo",
+]);
 
 const tile = (w, h, body) =>
   `url("data:image/svg+xml,${encodeURIComponent(
@@ -141,6 +159,11 @@ const getOrbitAngle = (timezone, now) => {
   return (steppedHour / 24) * 360 - 180;
 };
 
+// Зафіксований час доби (для живих шпалер): кут сонця на орбіті.
+// Ранок і вечір — сонце щойно над горизонтом (рожево-помаранчеве небо),
+// день — високо ліворуч, ніч — місяць угорі.
+const FIXED_ANGLES = { morning: -84, day: -30, evening: 84, night: 180 };
+
 const easeInOut = (p) => (p < 0.5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2);
 
 const seededStars = (seedText) => {
@@ -179,6 +202,42 @@ const SceneRoot = styled.span`
     display: block;
     width: 100%;
     height: 100%;
+  }
+
+  /* Сцена-«сцена» внизу по центру: висота — уся висота фону, але на вузьких
+     екранах не менше 60% ширини малюнка лишається видимою (решта обрізається з боків) */
+  /* Анімації вимкнено для цієї сцени: усе стоїть, частинки ховаємо
+     (без руху вони зависли б купкою на старті) */
+  &[data-still] *,
+  &[data-still] *::before,
+  &[data-still] *::after {
+    animation: none !important;
+  }
+
+  &[data-still] .particles-layer {
+    display: none !important;
+  }
+
+  &[data-fit="contain"] {
+    container-type: size;
+    --stage-h: min(100cqh, 91.667cqw);
+  }
+
+  &[data-fit="contain"] > svg,
+  &[data-fit="contain"] > .city-layer {
+    inset: auto;
+    bottom: 0;
+    left: 50%;
+    height: var(--stage-h);
+    width: calc(var(--stage-h) * 400 / 220);
+    transform: translateX(-50%);
+  }
+
+  .band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
   }
 
   .stars {
@@ -425,19 +484,44 @@ const CityLayer = styled.span`
   inset: 0;
 `;
 
-const CityScene = ({ timezone, now }) => {
+// timeOfDay: "auto" (реальний рух сонця) або morning / day / evening / night.
+// season: "auto" (за датою) або spring / summer / autumn / winter;
+// острови, тропіки й снігові міста лишаються незмінними за будь-якого вибору.
+// fit: "cover" — сцена заповнює картку з обрізанням (картки модалок);
+// "contain" — сцена вписується цілком, а смуги землі й води тягнуться до країв
+// (шпалери на широкому фоні Hero, де "cover" відрізав би вежі та сонце).
+// still: анімації вимкнено (дерева, хвилі, погода, частинки й плавний рух сонця).
+const CityScene = ({ timezone, now, timeOfDay = "auto", season: seasonChoice = "auto", fit = "cover", still = false }) => {
   const rootRef = useRef(null);
   const sunRef = useRef(null);
   const sunCoreRef = useRef(null);
   const moonRef = useRef(null);
   const angleRef = useRef(null);
-  const slug = timezone.value.toLowerCase().replace(/\//g, "_");
+  // Сцени країн (живі шпалери з мов) приносять власні розмітку, клімат і частинки
+  const slug = timezone.slug ?? timezone.value.toLowerCase().replace(/\//g, "_");
   const svgKey = `./images/timezones/${slug}.svg`;
-  const climate = CLIMATES[slug];
-  const cityMarkup = CITY_SVGS[svgKey] ?? "";
-  const cityHtml = useMemo(() => ({ __html: cityMarkup }), [cityMarkup]);
+  const climate = "climate" in timezone ? timezone.climate : CLIMATES[slug];
+  const seasonal = timezone.seasonal ?? (climate !== "snow" && !EVERGREEN.has(slug));
+  const season = !seasonal
+    ? "summer"
+    : seasonChoice !== "auto"
+      ? seasonChoice
+      : getSeason(now, timezone.lat < 0);
+  const cityMarkup = timezone.markup ?? CITY_SVGS[svgKey] ?? "";
+  const contain = fit === "contain";
+  const aspect = contain ? "xMidYMax meet" : "xMidYMax slice";
+  const { cityHtml, bands } = useMemo(() => {
+    let markup = applySeason(cityMarkup, season);
+    if (!contain) return { cityHtml: { __html: markup }, bands: [] };
+    markup = markup.replace('preserveAspectRatio="xMidYMax slice"', 'preserveAspectRatio="xMidYMax meet"');
+    // Смуги на всю ширину (земля, вода): y і колір — щоб продовжити їх за краї сцени
+    const found = [...markup.matchAll(/<rect x="-20" y="([\d.]+)" width="440"[^>]*?(#[0-9a-f]{6})/gi)].map(
+      ([, y, color]) => ({ y: Number(y), color }),
+    );
+    return { cityHtml: { __html: markup }, bands: found };
+  }, [cityMarkup, season, contain]);
   const stars = useMemo(() => seededStars(slug), [slug]);
-  const targetAngle = getOrbitAngle(timezone, now);
+  const targetAngle = FIXED_ANGLES[timeOfDay] ?? getOrbitAngle(timezone, now);
 
   // Layout-ефект: небо й сонце на місці вже в першому кадрі, без блимання
   useLayoutEffect(() => {
@@ -468,7 +552,10 @@ const CityScene = ({ timezone, now }) => {
     };
 
     const from = angleRef.current;
-    if (from === null) {
+    // Без анімацій (налаштування шпалери чи сайту) сонце одразу стає на місце
+    const noMotion =
+      still || (typeof document !== "undefined" && document.documentElement.hasAttribute("data-animations-off"));
+    if (from === null || noMotion) {
       angleRef.current = targetAngle;
       paint(targetAngle);
       return undefined;
@@ -488,16 +575,29 @@ const CityScene = ({ timezone, now }) => {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [targetAngle]);
+  }, [targetAngle, still]);
 
   return (
     <SceneRoot
       ref={rootRef}
       aria-hidden="true"
       data-climate={climate}
+      data-fit={fit}
+      data-still={still ? "" : undefined}
       style={climate === "heat" ? { "--heat-filter": `url(#heat-${slug})` } : undefined}
     >
-      <svg viewBox="0 0 400 220" preserveAspectRatio="xMidYMax slice">
+      {/* Висота смуги = її частка від висоти сцени (--stage-h) */}
+      {bands.map((band, i) => (
+        <span
+          key={i}
+          className="band"
+          style={{
+            height: `calc(var(--stage-h) * ${((220 - band.y) / 220).toFixed(4)})`,
+            background: `color-mix(in srgb,${band.color},var(--shade) var(--night))`,
+          }}
+        />
+      ))}
+      <svg viewBox="0 0 400 220" preserveAspectRatio={aspect}>
         <defs>
           <radialGradient id={`glow-${slug}`}>
             <stop offset="0%" stopColor="#fff6c8" stopOpacity="0.9" />
@@ -506,12 +606,14 @@ const CityScene = ({ timezone, now }) => {
           {climate === "heat" && (
             <filter id={`heat-${slug}`} x="0" y="0" width="100%" height="100%">
               <feTurbulence type="fractalNoise" baseFrequency="0.012 0.06" numOctaves="1" seed="3">
-                <animate
-                  attributeName="baseFrequency"
-                  dur="4s"
-                  values="0.012 0.06;0.013 0.066;0.012 0.06"
-                  repeatCount="indefinite"
-                />
+                {!still && (
+                  <animate
+                    attributeName="baseFrequency"
+                    dur="4s"
+                    values="0.012 0.06;0.013 0.066;0.012 0.06"
+                    repeatCount="indefinite"
+                  />
+                )}
               </feTurbulence>
               <feDisplacementMap in="SourceGraphic" scale="3" />
             </filter>
@@ -535,7 +637,8 @@ const CityScene = ({ timezone, now }) => {
         </g>
       </svg>
       {cityMarkup && <CityLayer className="city-layer" dangerouslySetInnerHTML={cityHtml} />}
-      {slug === "asia_shanghai" && <Lanterns className="lanterns" />}
+      {slug === "asia_shanghai" && <Lanterns className="lanterns particles-layer" />}
+      {timezone.particles === "petals" && <Petals className="particles-layer" />}
       {climate === "heat" && <span className="fx fx-heat" />}
       {climate === "rain" && (
         <>
