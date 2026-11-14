@@ -3110,9 +3110,23 @@ const HOLIDAYS_2027 = {
     setPref(tabAutoplayCardKey(card.id), serializeTabAutoplay(value));
   const resetCardTabAutoplay = () => removePref(tabAutoplayCardKey(card.id));
 
+  // Сенсорні екрани не мають наведення: дотик чи прокрутка картки ставлять
+  // автоперемикання на паузу (щонайменше хвилина) і заново відлічують інтервал.
+  const [touchPauseTick, setTouchPauseTick] = useState(0);
+  const touchPausedUntilRef = useRef(0);
+  const pauseAutoplayOnTouch = useCallback((event) => {
+    if (event.type === "pointerdown" && event.pointerType === "mouse") return;
+    const now = Date.now();
+    // Прокрутка шле десятки подій — оновлюємо паузу не частіше ніж раз на 2 с
+    if (touchPausedUntilRef.current - now > 58_000) return;
+    touchPausedUntilRef.current = now + 60_000;
+    setTouchPauseTick((tick) => tick + 1);
+  }, []);
+
   useEffect(() => {
     if (isBannerHovered || !(tabAutoplaySeconds > 0)) return;
     const interval = setInterval(() => {
+      if (Date.now() < touchPausedUntilRef.current) return;
       if (window.innerWidth >= 768) {
         setActiveTab((prev) => {
           const order = ["current", "hourly", "daily", "ai"];
@@ -3122,7 +3136,7 @@ const HOLIDAYS_2027 = {
       }
     }, tabAutoplaySeconds * 1000);
     return () => clearInterval(interval);
-  }, [isBannerHovered, tabAutoplaySeconds]);
+  }, [isBannerHovered, tabAutoplaySeconds, touchPauseTick]);
 
   const renderHourlyTable = () => {
     if (!visibleHourly || visibleHourly.length === 0) {
@@ -3662,6 +3676,8 @@ const HOLIDAYS_2027 = {
           $isDarkMode={isDarkMode}
           onMouseEnter={() => setIsBannerHovered(true)}
           onMouseLeave={() => setIsBannerHovered(false)}
+          onPointerDown={tabAutoplaySeconds > 0 ? pauseAutoplayOnTouch : undefined}
+          onScrollCapture={tabAutoplaySeconds > 0 ? pauseAutoplayOnTouch : undefined}
         >
           {/* data-weather-card-main: у низ цієї частини на планшеті/ПК стають номери карток 1, 2, 3… */}
           <MainBannerArea $image={cityImage || card.cityImage} data-weather-card-main="">

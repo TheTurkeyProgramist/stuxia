@@ -31,7 +31,9 @@ export const TAB_AUTOPLAY_KEY = "tab_autoplay_seconds";
 export const tabAutoplayCardKey = (cardId) => `tab_autoplay_seconds_card_${cardId}`;
 // Кроки шкали: від 10 с до 5 хв (довгі — щоб встигнути детально роздивитись вкладку)
 export const TAB_AUTOPLAY_STEPS = [10, 15, 20, 30, 45, 60, 90, 120, 180, 240, 300];
-export const TAB_AUTOPLAY_DEFAULT = { on: true, seconds: 10 };
+// За замовчуванням вимкнено: на сенсорних екранах немає наведення, яке ставить
+// на паузу, і вкладка могла перемкнутись посеред читання прогнозу.
+export const TAB_AUTOPLAY_DEFAULT = { on: false, seconds: 10 };
 
 const nearestAutoplayStep = (seconds) =>
   TAB_AUTOPLAY_STEPS.reduce((best, s) => (Math.abs(s - seconds) < Math.abs(best - seconds) ? s : best));

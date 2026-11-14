@@ -7,24 +7,20 @@ import styled, { keyframes, css } from "styled-components";
 import InfoModal from "./UserSearchModal.jsx";
 import KatSceneModal from "./KatSceneModal";
 import { Tooltip } from "../Tooltip/Tooltip";
-import { auth } from "../../firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
 import { factoryReset } from "../../utils/factoryReset";
 import { useAgeGate } from "./AgeGateModal";
 import { GAMBLING_MIN_AGE } from "../../utils/ageGate";
 import localforage from "localforage";
 import { useAnimationsDisabled, useAnimationsAutoDisabled, setAnimationsDisabled } from "../../utils/animationsPref";
-import {
-  GoogleAuthProvider,
-  EmailAuthProvider,
-  linkWithPopup,
-  unlink,
-  verifyBeforeUpdateEmail,
-  reauthenticateWithPopup,
-  reauthenticateWithCredential,
-  deleteUser,
-} from "firebase/auth";
 import { loadFirebase } from "../../firebaseLazy";
+
+// Firebase Auth (~200 КБ разом із SDK) вантажимо лише коли він справді потрібен —
+// для дій з акаунтом, а не просто з відкриттям налаштувань.
+const loadAuth = () =>
+  Promise.all([loadFirebase(), import("firebase/auth")]).then(([fb, authSdk]) => ({
+    ...authSdk,
+    auth: fb.auth,
+  }));
 import {
   FiUser,
   FiClock,
@@ -2073,8 +2069,23 @@ const UserSettingsModal = ({
   // ── Account Relinking Handlers ───────────────────────────────────────────
   const [relinkEmail, setRelinkEmail] = useState(user?.email || user?.account || "");
   const [relinkStatus, setRelinkStatus] = useState("");
-  const [firebaseUserState, setFirebaseUserState] = useState(auth.currentUser);
-  useEffect(() => onAuthStateChanged(auth, setFirebaseUserState), []);
+  const [firebaseUserState, setFirebaseUserState] = useState(null);
+  const hasUser = Boolean(user);
+  useEffect(() => {
+    // Гостю хмарна сесія не потрібна — не тягнемо Firebase даремно
+    if (!hasUser) return undefined;
+    let cancelled = false;
+    let unsubscribe = null;
+    loadAuth()
+      .then(({ auth, onAuthStateChanged }) => {
+        if (!cancelled) unsubscribe = onAuthStateChanged(auth, setFirebaseUserState);
+      })
+      .catch((error) => console.warn("Firebase Auth не завантажився:", error));
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [hasUser]);
 
   const providerIds = (firebaseUserState?.providerData || []).map((p) => p.providerId);
   const isLinkedGoogle = providerIds.includes("google.com");
@@ -2088,6 +2099,7 @@ const UserSettingsModal = ({
   const isGoogleAccount = isLinkedGoogle && !hasPasswordProvider;
 
   const handleRelinkGoogle = async () => {
+    const { auth, GoogleAuthProvider, unlink, linkWithPopup, reauthenticateWithPopup } = await loadAuth();
     const currentFbUser = auth.currentUser;
     if (!currentFbUser) {
       alert("Хмарний акаунт неактивний. Вийдіть і увійдіть знову, щоб активувати прив'язки.");
@@ -2138,6 +2150,7 @@ const UserSettingsModal = ({
 
 
   const handleUnlinkGoogle = async () => {
+    const { auth, unlink } = await loadAuth();
     if (!auth.currentUser) return;
     if (providerIds.length <= 1) {
       alert("Google — єдиний спосіб входу в цей профіль, відв'язати його не можна, інакше ви втратите доступ.");
@@ -2171,6 +2184,7 @@ const UserSettingsModal = ({
       return;
     }
 
+    const { auth, verifyBeforeUpdateEmail } = await loadAuth();
     const cu = auth.currentUser;
     if (!cu) {
       setRelinkStatus("⚠️ Хмарний акаунт неактивний — вийдіть та увійдіть знову, потім спробуйте ще раз.");
@@ -2224,7 +2238,7 @@ const UserSettingsModal = ({
 
   const confirmFactoryReset = async () => {
     setResetLoading(true);
-    await factoryReset(() => signOut(auth));
+    await factoryReset(() => loadAuth().then(({ auth, signOut }) => signOut(auth)));
   };
 
   // Лічильники лімітів правила Firestore стерти не дозволяють
@@ -2237,6 +2251,14 @@ const UserSettingsModal = ({
   ];
 
   const handleDeleteAccount = async () => {
+    const {
+      auth,
+      GoogleAuthProvider,
+      EmailAuthProvider,
+      reauthenticateWithPopup,
+      reauthenticateWithCredential,
+      deleteUser,
+    } = await loadAuth();
     const cu = auth.currentUser;
     if (!cu) {
       setDeleteStatus("⚠️ Хмарний акаунт неактивний — вийдіть та увійдіть знову, потім спробуйте ще раз.");
@@ -3230,7 +3252,7 @@ const UserSettingsModal = ({
                         <CardTitle>Автоперемикання вкладок картки</CardTitle>
                         <CardDescription>
                           {tabAutoplay.on
-                            ? `Картка погоди сама гортає «Зараз → Годинна → 16 днів → Смарт» кожні ${formatTabAutoplay(tabAutoplay.seconds)} (пауза, поки курсор над карткою). Довгий інтервал — щоб детально роздивитись кожну вкладку. Для окремої картки можна задати своє в її меню ⚙`
+                            ? `Картка погоди сама гортає «Зараз → Годинна → 16 днів → Смарт» кожні ${formatTabAutoplay(tabAutoplay.seconds)} (пауза, поки курсор над карткою, і хвилину після дотику чи прокрутки). Довгий інтервал — щоб детально роздивитись кожну вкладку. Для окремої картки можна задати своє в її меню ⚙`
                             : "Вкладки картки погоди не перемикаються самі. Для окремої картки можна увімкнути в її меню ⚙"}
                         </CardDescription>
                       </CardInfo>

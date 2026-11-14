@@ -23,7 +23,7 @@ import {
 import { DEFAULT_BGS } from "./defaultBgs";
 import CityScene from "./CityScene.jsx";
 import { WALLPAPERS, WALLPAPER_GROUPS, useMinuteNow } from "./WallpaperScene.jsx";
-import PixabaySearch from "./PixabaySearch.jsx";
+import CommonsSearch from "./CommonsSearch.jsx";
 import { isAnimationsDisabled } from "../../utils/animationsPref.js";
 import {
   WALLPAPER_ANIMATIONS,
@@ -1166,7 +1166,7 @@ const BgModal = ({
   const navItems = [
     { id: "look", label: "Вигляд", Icon: FiDroplet },
     { id: "wallpapers", label: "Живі шпалери", count: WALLPAPERS.length, Icon: FiSun },
-    { id: "pixabay", label: "Pixabay", Icon: FiSearch },
+    { id: "commons", label: "Wikimedia", Icon: FiSearch },
     { id: "library", label: "Бібліотека", count: sortedBgs.length, Icon: FiImage },
   ];
 
@@ -1269,9 +1269,9 @@ const BgModal = ({
         </ModalSection>
 
         <ModalDivider />
-        <ModalSection data-bg-section="pixabay">
-          <ModalSectionTitle><FiSearch /> Нові фони з Pixabay</ModalSectionTitle>
-          <PixabaySearch
+        <ModalSection data-bg-section="commons">
+          <ModalSectionTitle><FiSearch /> Нові фони з Wikimedia Commons</ModalSectionTitle>
+          <CommonsSearch
             customHeroBgs={customHeroBgs}
             setCustomHeroBgs={setCustomHeroBgs}
             onSelect={handleSelectBg}

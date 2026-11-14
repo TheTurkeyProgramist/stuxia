@@ -3,27 +3,33 @@ import styled from "styled-components";
 import toast from "react-hot-toast";
 import { FiCheck, FiFilm, FiImage, FiLoader, FiMaximize2, FiSearch } from "react-icons/fi";
 
-// Пошук нових фонів на Pixabay: фото, ілюстрації або відео.
-// Вибрана картинка завантажується в браузер (Blob): її посилання тимчасове,
-// а Pixabay і так просить не тримати постійних посилань; файл працює й офлайн.
+// Пошук нових фонів у Wikimedia Commons: фото, картини або відео.
+// API відкрите й не потребує ключа; файли віддаються з CORS, тож вибране
+// завантажуємо в браузер (Blob) — фон працює й офлайн.
 
-const PIXABAY_KEY = "50977795-feb18de71b048a02e0c824e54";
+const COMMONS_API = "https://commons.wikimedia.org/w/api.php";
 const PER_PAGE = 24;
+const FULL_WIDTH = 1920; // стандартний розмір мініатюр Wikimedia — досить для фону
 const MAX_VIDEO_BYTES = 20 * 1024 * 1024; // як і для власних відео
 const NO_RESULTS = "no-results";
 
 const TYPES = [
   { value: "photo", label: "Фото", Icon: FiImage },
-  { value: "illustration", label: "Ілюстрації", Icon: FiImage },
+  { value: "painting", label: "Картини", Icon: FiImage },
   { value: "video", label: "Відео", Icon: FiFilm },
 ];
 
 const ORDERS = [
-  { value: "popular", label: "Популярні" },
-  { value: "latest", label: "Нові" },
+  { value: "relevance", label: "Найкращі" },
+  { value: "create_timestamp_desc", label: "Нові" },
 ];
 
 const SUGGESTIONS = ["ліс", "гори", "море", "космос", "нічне місто", "осінь", "зима", "водоспад", "північне сяйво", "пустеля", "дощ", "туман"];
+
+// Commons не має «безпечного пошуку», тож відсіюємо очевидне за назвою файлу
+const UNSAFE_WORDS = ["nude", "naked", "nudity", "erotic", "nsfw", "porn", "sex", "topless", "genitals"];
+const UNSAFE_RE = new RegExp(`\\b(${UNSAFE_WORDS.join("|")})`, "i");
+const SAFE_FILTER = UNSAFE_WORDS.map((word) => `-intitle:${word}`).join(" ");
 
 const hasCyrillic = (text) => /[а-яіїєґё]/i.test(text);
 
@@ -37,41 +43,117 @@ const translateQuery = async (query) => {
     const data = await response.json();
     return data[0].map((item) => item[0]).join("");
   } catch (error) {
-    console.error("Pixabay query translation failed:", error);
+    console.error("Background search query translation failed:", error);
     return query;
   }
 };
 
-const formatDuration = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+const formatDuration = (seconds) => {
+  const total = Math.round(seconds || 0);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+};
 
-const mapImageHit = (hit) => ({
-  key: `img-${hit.id}`,
-  kind: "image",
-  thumb: hit.webformatURL || hit.previewURL,
-  full: hit.largeImageURL || hit.webformatURL,
-  name: hit.tags,
-  author: hit.user,
-  meta: `${hit.imageWidth}×${hit.imageHeight}`,
-});
+// «<a href=…>Ім'я</a>» → «Ім'я»
+const stripHtml = (html = "") => {
+  const text = new DOMParser().parseFromString(String(html), "text/html").body.textContent || "";
+  return text.replace(/\s+/g, " ").trim();
+};
 
-// Найбільша якість, що вкладається в ліміт 20 МБ
-const pickVideo = (videos) =>
-  ["large", "medium", "small", "tiny"]
-    .map((size) => videos?.[size])
-    .find((video) => video?.url && (!video.size || video.size <= MAX_VIDEO_BYTES));
+const fileTitle = (page) => page.title.replace(/^File:/, "").replace(/\.[a-z0-9]+$/i, "").replace(/_/g, " ");
 
-const mapVideoHit = (hit) => {
-  const video = pickVideo(hit.videos);
+const describe = (page, info) => {
+  const meta = info.extmetadata || {};
+  return {
+    name: stripHtml(meta.ObjectName?.value) || fileTitle(page),
+    author: stripHtml(meta.Artist?.value).slice(0, 80) || info.user || "Wikimedia Commons",
+    license: stripHtml(meta.LicenseShortName?.value),
+    page: info.descriptionurl,
+  };
+};
+
+// Мініатюра потрібної ширини: …/500px-Name.jpg → …/1920px-Name.jpg
+const resizeThumb = (thumbUrl, width) => thumbUrl?.replace(/\/\d+px-/, `/${width}px-`);
+
+const fullImageUrl = (info) => {
+  if (info.width > FULL_WIDTH && info.thumburl) return resizeThumb(info.thumburl, FULL_WIDTH);
+  // Невеликі JPEG/PNG/WebP беремо як є; TIFF тощо браузер не покаже — лише мініатюра
+  if (/^image\/(jpeg|png|webp)$/.test(info.mime)) return info.url;
+  return info.thumburl || info.url;
+};
+
+const mapImagePage = (page) => {
+  const info = page.imageinfo?.[0];
+  if (!info) return null;
+  return {
+    key: `img-${page.pageid}`,
+    kind: "image",
+    thumb: info.thumburl || info.url,
+    full: fullImageUrl(info),
+    width: info.width,
+    height: info.height,
+    ...describe(page, info),
+    meta: `${info.width}×${info.height}`,
+  };
+};
+
+// Найкраща готова версія відео (WebM до 1080p), що вкладається в ліміт 20 МБ
+const pickVideo = (info) => {
+  const duration = info.duration || 0;
+  const estimate = (derivative) => (derivative.bandwidth && duration ? (derivative.bandwidth * duration) / 8 : 0);
+  const best = (info.derivatives || [])
+    .filter((d) => /webm/.test(d.type) && Math.min(d.width, d.height) <= 1080 && estimate(d) <= MAX_VIDEO_BYTES)
+    .sort((a, b) => b.width * b.height - a.width * a.height)[0];
+  if (best) return { url: best.src, width: best.width, height: best.height };
+  if (/^video\/(webm|mp4)/.test(info.mime) && info.size <= MAX_VIDEO_BYTES) {
+    return { url: info.url, width: info.width, height: info.height };
+  }
+  return null;
+};
+
+const mapVideoPage = (page) => {
+  const info = page.videoinfo?.[0];
+  if (!info) return null;
+  const video = pickVideo(info);
   if (!video) return null;
   return {
-    key: `vid-${hit.id}`,
+    key: `vid-${page.pageid}`,
     kind: "video",
-    thumb: hit.videos?.medium?.thumbnail || hit.videos?.small?.thumbnail || hit.videos?.tiny?.thumbnail || "",
+    thumb: info.thumburl || "",
     full: video.url,
-    name: hit.tags,
-    author: hit.user,
-    meta: `${formatDuration(hit.duration || 0)} · ${video.width}×${video.height}`,
+    width: info.width,
+    height: info.height,
+    ...describe(page, info),
+    meta: `${formatDuration(info.duration)} · ${video.width}×${video.height}`,
   };
+};
+
+const buildSearchUrl = ({ text, type, horizontal, order, offset }) => {
+  const isVideo = type === "video";
+  const terms = [
+    type === "painting" ? `${text} (painting OR artwork)` : text,
+    isVideo ? "filetype:video" : "filetype:bitmap",
+    // Достатньо великі — щоб фон не був розмитим на весь екран
+    horizontal ? `filew:>${isVideo ? 1279 : 1599}` : "",
+    SAFE_FILTER,
+  ].filter(Boolean);
+  const prefix = isVideo ? "vi" : "ii";
+  const params = new URLSearchParams({
+    action: "query",
+    format: "json",
+    formatversion: "2",
+    origin: "*",
+    generator: "search",
+    gsrnamespace: "6",
+    gsrsearch: terms.join(" "),
+    gsrlimit: String(PER_PAGE),
+    gsroffset: String(offset),
+    gsrsort: order,
+    prop: isVideo ? "videoinfo" : "imageinfo",
+    [`${prefix}prop`]: `url|size|mime|user|extmetadata${isVideo ? "|derivatives" : ""}`,
+    [`${prefix}extmetadatafilter`]: "ObjectName|Artist|LicenseShortName",
+    [`${prefix}urlwidth`]: "500",
+  });
+  return `${COMMONS_API}?${params}`;
 };
 
 const Panel = styled.section`
@@ -279,12 +361,12 @@ const ZoomButton = styled.button`
 `;
 
 const Spinner = styled(FiLoader)`
-  animation: pixabay-spin 1s linear infinite;
-  @keyframes pixabay-spin { to { transform: rotate(360deg); } }
+  animation: bg-search-spin 1s linear infinite;
+  @keyframes bg-search-spin { to { transform: rotate(360deg); } }
 `;
 
-// Відео-картка — лише кадр-прев'ю: навіть найменша версія відео важить ~10 МБ,
-// тож не програємо її при наведенні (переглянути можна кнопкою «на весь екран»)
+// Відео-картка — лише кадр-прев'ю, щоб не тягнути мегабайти відео при прокрутці
+// (переглянути можна кнопкою «на весь екран»)
 const VideoThumb = ({ item }) =>
   item.thumb ? (
     <img src={item.thumb} alt={item.name} loading="lazy" />
@@ -292,56 +374,46 @@ const VideoThumb = ({ item }) =>
     <video src={`${item.full}#t=0.1`} muted playsInline preload="metadata" />
   );
 
-const PixabaySearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPreview }) => {
+const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPreview }) => {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("photo");
   const [horizontal, setHorizontal] = useState(true);
-  const [order, setOrder] = useState("popular");
+  const [order, setOrder] = useState("relevance");
   const [results, setResults] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [nextOffset, setNextOffset] = useState(null);
   const [status, setStatus] = useState("idle");
   const [addingKey, setAddingKey] = useState(null);
   const requestRef = useRef(0);
 
   const search = async (overrides = {}) => {
-    const options = { query, type, horizontal, order, page: 1, ...overrides };
+    const options = { query, type, horizontal, order, offset: 0, ...overrides };
     const text = options.query.trim();
     if (!text) return;
     // Застарілі відповіді (швидко змінили фільтр) не перезаписують нові
     const requestId = ++requestRef.current;
-    setStatus(options.page === 1 ? "loading" : "loading-more");
+    const firstPage = options.offset === 0;
+    setStatus(firstPage ? "loading" : "loading-more");
     try {
       const translated = await translateQuery(text);
-      const isVideo = options.type === "video";
-      const params = new URLSearchParams({
-        key: PIXABAY_KEY,
-        q: translated,
-        per_page: String(PER_PAGE),
-        page: String(options.page),
-        safesearch: "true",
-        order: options.order,
-      });
-      if (!isVideo) {
-        params.set("image_type", options.type);
-        // Горизонтальні й достатньо великі — щоб фон не був розмитим на весь екран
-        if (options.horizontal) {
-          params.set("orientation", "horizontal");
-          params.set("min_width", "1600");
-        }
-      }
-      const response = await fetch(`https://pixabay.com/api/${isVideo ? "videos/" : ""}?${params}`);
-      if (!response.ok) throw new Error(`Pixabay request failed: ${response.status}`);
+      const response = await fetch(buildSearchUrl({ ...options, text: translated }));
+      if (!response.ok) throw new Error(`Commons request failed: ${response.status}`);
       const data = await response.json();
+      if (data.error) throw new Error(data.error.info || data.error.code);
       if (requestId !== requestRef.current) return;
-      const items = (data.hits || []).map(isVideo ? mapVideoHit : mapImageHit).filter(Boolean);
-      setResults((previous) => (options.page === 1 ? items : [...previous, ...items]));
-      setTotal(data.totalHits || 0);
-      setPage(options.page);
-      setStatus(options.page === 1 && !items.length ? NO_RESULTS : "idle");
+      const isVideo = options.type === "video";
+      const items = (data.query?.pages || [])
+        .sort((a, b) => a.index - b.index)
+        .map(isVideo ? mapVideoPage : mapImagePage)
+        .filter(Boolean)
+        .filter((item) => !UNSAFE_RE.test(item.name))
+        // Для фону потрібні горизонтальні кадри
+        .filter((item) => !options.horizontal || item.width >= item.height);
+      setResults((previous) => (firstPage ? items : [...previous, ...items]));
+      setNextOffset(data.continue?.gsroffset ?? null);
+      setStatus(firstPage && !items.length ? NO_RESULTS : "idle");
     } catch (error) {
       if (requestId !== requestRef.current) return;
-      console.error("Pixabay search failed:", error);
+      console.error("Commons search failed:", error);
       setStatus("error");
     }
   };
@@ -354,8 +426,7 @@ const PixabaySearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
     if (query.trim()) search(patch);
   };
 
-  const findSaved = (item) =>
-    customHeroBgs.find((bg) => bg.id === `pixabay-${item.key}` || bg.id === `pixabay-${item.key.replace(/^img-/, "")}`);
+  const findSaved = (item) => customHeroBgs.find((bg) => bg.id === `commons-${item.key}`);
 
   const addBackground = async (item) => {
     const saved = findSaved(item);
@@ -366,27 +437,27 @@ const PixabaySearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
     }
     setAddingKey(item.key);
     let src = item.full;
-    // Посилання на картинки Pixabay тимчасові (pixabay.com/get/…), тож картинку
-    // зберігаємо файлом. Посилання на відео постійні (cdn.pixabay.com/video/…),
-    // а CDN відео не дозволяє завантаження з інших сайтів — їх лишаємо посиланням.
-    if (item.kind === "image") {
-      try {
-        const response = await fetch(item.full);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        src = await response.blob();
-      } catch (error) {
-        // Не вдалось завантажити — лишаємо посилання, фон однаково з'явиться
-        console.warn("Pixabay download failed, keeping URL:", error);
-      }
+    // Commons віддає файли з CORS, тож зберігаємо їх у браузері: фон не зникне,
+    // навіть якщо файл перейменують, і працюватиме офлайн.
+    try {
+      const response = await fetch(item.full);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      if (item.kind === "video" && blob.size > MAX_VIDEO_BYTES) throw new Error("Video is too large");
+      src = blob;
+    } catch (error) {
+      // Не вдалось завантажити — лишаємо посилання, фон однаково з'явиться
+      console.warn("Commons download failed, keeping URL:", error);
     }
     setCustomHeroBgs((previous) => [
       {
-        id: `pixabay-${item.key}`,
+        id: `commons-${item.key}`,
         src,
         name: item.name,
         category: item.kind === "video" ? "Ваші відео" : "Ваші картинки",
-        source: "Pixabay",
+        source: item.license ? `Wikimedia Commons · ${item.license}` : "Wikimedia Commons",
         author: item.author,
+        sourceUrl: item.page,
       },
       ...previous,
     ]);
@@ -396,13 +467,13 @@ const PixabaySearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
   };
 
   const loading = status === "loading";
-  const hasMore = results.length > 0 && results.length < total;
+  const hasMore = results.length > 0 && nextOffset !== null;
 
   return (
-    <Panel aria-label="Пошук нових фонів на Pixabay">
+    <Panel aria-label="Пошук нових фонів у Wikimedia Commons">
       <PanelTitle>
-        <span>Фото, ілюстрації та відео для фону</span>
-        <a href="https://pixabay.com/" target="_blank" rel="noopener noreferrer">Зображення та відео з Pixabay</a>
+        <span>Фото, картини та відео для фону</span>
+        <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener noreferrer">Вільні файли з Wikimedia Commons</a>
       </PanelTitle>
 
       <SearchRow onSubmit={(event) => { event.preventDefault(); search(); }}>
@@ -410,7 +481,7 @@ const PixabaySearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
           <FiSearch aria-hidden="true" />
           <input
             type="search"
-            aria-label="Пошук фонів на Pixabay"
+            aria-label="Пошук фонів у Wikimedia Commons"
             placeholder="Що шукаємо? Наприклад: гори в тумані"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -437,12 +508,10 @@ const PixabaySearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
             </SegmentButton>
           ))}
         </Segmented>
-        {type !== "video" && (
-          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-            <input type="checkbox" checked={horizontal} onChange={(event) => changeFilter({ horizontal: event.target.checked })} style={{ accentColor: "#ffb36c" }} />
-            Лише широкі й чіткі (від 1600 px)
-          </label>
-        )}
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+          <input type="checkbox" checked={horizontal} onChange={(event) => changeFilter({ horizontal: event.target.checked })} style={{ accentColor: "#ffb36c" }} />
+          {type === "video" ? "Лише горизонтальні й чіткі (від 1280 px)" : "Лише широкі й чіткі (від 1600 px)"}
+        </label>
       </Toolbar>
 
       <Chips>
@@ -459,7 +528,7 @@ const PixabaySearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
       {results.length > 0 && (
         <>
           <span style={{ fontSize: 11, color: "#8a8d9b" }}>
-            Знайдено {total.toLocaleString("uk-UA")} · натисніть на картку, щоб зробити фоном
+            Показано {results.length.toLocaleString("uk-UA")} · натисніть на картку, щоб зробити фоном · автор і ліцензія — на картці
           </span>
           <Grid>
             {results.map((item) => {
@@ -481,14 +550,17 @@ const PixabaySearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
                   </ZoomButton>
                   <CardInfo className="info">
                     <div>{item.name}</div>
-                    <div><span>{item.meta}</span> · {item.author}</div>
+                    <div>
+                      <span>{item.meta}</span> · {item.author}
+                      {item.license && <> · {item.license}</>}
+                    </div>
                   </CardInfo>
                 </Card>
               );
             })}
           </Grid>
           {hasMore && (
-            <SearchButton type="button" disabled={status === "loading-more"} onClick={() => search({ page: page + 1 })} style={{ alignSelf: "center" }}>
+            <SearchButton type="button" disabled={status === "loading-more"} onClick={() => search({ offset: nextOffset })} style={{ alignSelf: "center" }}>
               {status === "loading-more" ? <><Spinner /> Завантажуємо...</> : "Показати ще"}
             </SearchButton>
           )}
@@ -498,4 +570,4 @@ const PixabaySearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
   );
 };
 
-export default PixabaySearch;
+export default CommonsSearch;

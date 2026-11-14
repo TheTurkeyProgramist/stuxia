@@ -2297,13 +2297,12 @@ const App = () => {
     initPhrase();
   }, []);
 
+  // Лише те, що видно одразу. Модалки (ШІ, магазин, вхід, налаштування) вантажаться
+  // при відкритті: інакше разом з ними на старті тягнулись Firebase (~200 КБ gzip),
+  // UserSettingsModal (~45 КБ) і freeWebSearch (~41 КБ).
   const preloadComponents = useCallback(async () => {
     await Promise.all([
-    import("./components/Aihelp/Aihelp.jsx"),
-    import("./components/Modals/ShopModal.jsx"),
       import("./components/News/News.jsx"),
-      import("./components/Modals/Modal.jsx"),
-      import("./components/Modals/UserSettingsModal.jsx"),
       import("./components/Modals/UserSearchModal.jsx"),
     ]);
   }, []);

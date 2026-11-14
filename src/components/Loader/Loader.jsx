@@ -4,7 +4,7 @@ import { BiLogoVisualStudio } from "react-icons/bi";
 import { SiBun, SiGithub, SiCloudflare } from "react-icons/si";
 import { TbBrandVite } from "react-icons/tb";
 import { IoLogoFirebase } from "react-icons/io5";
-import { SiPixabay } from "react-icons/si";
+import { SiWikimediacommons } from "react-icons/si";
 import loadtwo from "../../media/backgrounds/scenes/foggy-forest-loader.webp";
 import { TbBrandWindy } from "react-icons/tb";
 import { TiWeatherPartlySunny } from "react-icons/ti";
@@ -27,7 +27,7 @@ const TECH_STACK = [
   { Icon: TbBrandWindy, color: "#00c6ff", title: "Windy API" },
   { Icon: TiWeatherPartlySunny, color: "#FFB300", title: "WeatherAPI" },
   { Icon: RiGeminiFill, color: "#8E75FF", title: "Gemini AI" },
-  { Icon: SiPixabay, color: "#2EC66D", title: "Pixabay API" },
+  { Icon: SiWikimediacommons, color: "#339966", title: "Wikimedia Commons" },
   { Icon: SiBun, color: "#FBF0DF", title: "Bun" },
   { Icon: SiGithub, color: "#FFFFFF", title: "GitHub" },
   { Icon: SiCloudflare, color: "#F38020", title: "Cloudflare" },
