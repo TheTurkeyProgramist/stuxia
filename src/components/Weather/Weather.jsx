@@ -35,8 +35,14 @@ import {
   CITY_SIDEBAR_HIDDEN_KEY,
   CAROUSEL_ARROWS_HIDDEN_KEY,
   CAROUSEL_NUMBERS_HIDDEN_KEY,
+  TAB_AUTOPLAY_KEY,
+  TAB_AUTOPLAY_DEFAULT,
+  tabAutoplayCardKey,
+  parseTabAutoplay,
+  serializeTabAutoplay,
 } from "../../utils/betaFeatures";
-import { setPref } from "../../utils/prefsStore";
+import TabAutoplayControl from "./TabAutoplayControl";
+import { setPref, removePref } from "../../utils/prefsStore";
 import { useAnimationsDisabled } from "../../utils/animationsPref";
 import { buildForecastSpeech, getVoiceSettings, speak, stopSpeaking } from "../../utils/weatherSpeech";
 import {
@@ -85,7 +91,7 @@ import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, Cl
 import { WeatherIcon, stripEmoji } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
 import { BiWind } from "react-icons/bi"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
-import { MdOutlineSpeed, MdClose, MdStraighten, MdNotificationsActive, MdNotificationsOff } from "react-icons/md"; //Тиск
+import { MdOutlineSpeed, MdClose, MdStraighten, MdNotificationsActive, MdNotificationsOff, MdAutorenew } from "react-icons/md"; //Тиск
 import { isWeatherAlertsEnabled, isCardWeatherAlertsOn, setCardWeatherAlerts } from "../../utils/emergencyAlerts";
 import { FaSnowflake, FaSun, FaExclamationTriangle } from "react-icons/fa"; //Іконки
 import { GiSunRadiations, GiSnowing, GiWaterRecycling, GiIceCube } from "react-icons/gi";//Сонячна радіація
@@ -395,7 +401,8 @@ const DesktopLayoutWrapper = styled.div`
   @media (min-width: 768px) {
     display: grid;
     /* Права колонка меню вузька: іконки стоять над заголовками, а не збоку */
-    grid-template-columns: minmax(0, 1fr) 190px;
+    /* Планшет: вузька права колонка, щоб графіку лишалось більше місця */
+    grid-template-columns: minmax(0, 1fr) 150px;
     gap: 8px;
     padding: 10px;
     height: 570px;
@@ -589,6 +596,10 @@ overflow: hidden;
 text-overflow: ellipsis;
 max-width: 100%;
 color: ${(props) => (props.$active ? "#00eeff" : "#fff")};
+/* Планшет: колонка вузька (150px) — дрібніший шрифт */
+@media (min-width: 768px) and (max-width: 1023px) {
+  font-size: 13px;
+}
 `;
 const SubNameCardItem = styled.div`
 font-size: 13px;
@@ -598,6 +609,9 @@ overflow: hidden;
 text-overflow: ellipsis;
 max-width: 100%;
 color: ${(props) => (props.$active ? "#00eeff" : "#fff")};
+@media (min-width: 768px) and (max-width: 1023px) {
+  font-size: 11px;
+}
 `;
 const SideCardItem = styled.div`
   position: relative;
@@ -625,6 +639,9 @@ const SideCardItem = styled.div`
     min-height: 0;
     /* Менші відступи: іконка + заголовок + підпис мають влізти навіть коли плиток шість */
     padding: 6px 10px;
+  }
+  @media (min-width: 768px) and (max-width: 1023px) {
+    padding: 4px 6px;
   }
 
   &:hover {
@@ -748,8 +765,10 @@ const chartActionButtonStyle = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "30px",
-  height: "28px",
+  // Висота як у підказки вітру (WindCompassHint) — один рівень у рядку легенди
+  boxSizing: "border-box",
+  width: "34px",
+  height: "34px",
   padding: 0,
   border: "1px solid rgba(0, 190, 235, 0.7)",
   borderRadius: "4px",
@@ -947,6 +966,109 @@ const ViewToggleButton = styled.button`
   box-shadow: ${(props) => (props.$active ? "0 2px 8px rgba(138, 43, 226, 0.4)" : "none")};
 `;
 
+// Вибір дня погодинного прогнозу — у парі з перемикачем вигляду (та сама висота й акцент)
+const DaySelect = styled.select`
+  flex: 1 1 150px;
+  min-width: 0;
+  max-width: 240px;
+  height: 33px;
+  box-sizing: border-box;
+  padding: 0 6px 0 3px;
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.2)")};
+  background-color: ${(p) => (p.$isDarkMode ? "rgba(20, 20, 28, 0.85)" : "rgba(255, 255, 255, 0.92)")};
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a970ff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  color: ${(p) => (p.$isDarkMode ? "#fff" : "#111")};
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: #a970ff;
+  }
+  &:focus-visible {
+    border-color: #8a2be2;
+    box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.35);
+  }
+  option {
+    color: #000;
+    background: #fff;
+  }
+`;
+
+/* Чекбокс-«пігулка» (напр. «Показати вчора») — висота й акцент як у вибору дня та перемикача вигляду */
+const PillCheckbox = styled.label`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 12px 0 8px;
+  border-radius: 10px;
+  border: 1px solid
+    ${(p) => (p.$checked ? "#a970ff" : p.$isDarkMode ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.2)")};
+  background: ${(p) =>
+    p.$checked
+      ? "linear-gradient(135deg, rgba(138, 43, 226, 0.35), rgba(138, 43, 226, 0.12))"
+      : p.$isDarkMode
+        ? "rgba(20, 20, 28, 0.85)"
+        : "rgba(255, 255, 255, 0.92)"};
+  color: ${(p) => (p.$isDarkMode ? "#fff" : "#111")};
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: #a970ff;
+  }
+  &:focus-within {
+    box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.35);
+  }
+
+  /* Справжній чекбокс — невидимий, але доступний з клавіатури */
+  input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+  }
+
+  .box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 2px solid ${(p) => (p.$checked ? "#a970ff" : "rgba(160, 160, 160, 0.8)")};
+    background: ${(p) => (p.$checked ? "#8a2be2" : "transparent")};
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .box svg {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 16;
+    stroke-dashoffset: ${(p) => (p.$checked ? 0 : 16)};
+    transition: stroke-dashoffset 0.25s ease;
+  }
+`;
+
 const SettingsDropdownMenu = styled.div`
   position: absolute;
   top: calc(100% + 6px);
@@ -969,10 +1091,10 @@ const SettingsDropdownMenu = styled.div`
   overflow-y: auto;
   height: calc(522px - 100% - 6px);
 grid-template-columns: repeat(2, 1fr);
-  /* Перший ряд («Одиниці виміру» + «Прикріпити до ШІ») за висотою вмісту,
-     решта ділять простір порівну */
-  grid-template-rows: auto;
-  grid-auto-rows: 1fr;
+  /* Ряди за висотою вмісту (а не всі як найвищий), вільне місце ділиться між ними —
+     так усі пункти влазять без прокрутки */
+  grid-auto-rows: auto;
+  align-content: stretch;
   /* Останній пункт, що лишився сам у ряду, розтягується на всю ширину */
   & > :last-child:nth-child(odd) {
     grid-column: 1 / -1;
@@ -1011,39 +1133,131 @@ const SettingsIconSwap = styled.span`
     transform: rotate(${(props) => (props.$open ? "0deg" : "90deg")});
   }
 `;
+/* Іконки пунктів меню: «вистрибують» при відкритті й погойдуються при наведенні.
+   Вимикаються разом з усіма анімаціями (html[data-animations-off]) і при reduced-motion */
+const menuIconPop = keyframes`
+  0% { transform: scale(0.4) rotate(-25deg); opacity: 0; }
+  65% { transform: scale(1.15) rotate(6deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+`;
+const menuIconWiggle = keyframes`
+  0%, 100% { transform: rotate(0) scale(1); }
+  25% { transform: rotate(-12deg) scale(1.08); }
+  75% { transform: rotate(12deg) scale(1.08); }
+`;
+const iconSpin = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
 const SettingsDropdownItem = styled.button`
  text-align: center;
- padding:8px 5px;
+ padding: 4px 4px;
  display: flex;
  flex-direction: column;
  align-items: center;
  justify-content: center;
   background: transparent;
   font-size: 16px;
- gap: 6px;
+ gap: 2px;
   color: ${(props) => (props.$isDarkMode ? "#020202" : "#f1eeee")};
 border: 1px solid ${(props) => (props.$isDarkMode ? "#020202" : "#f1eeee")};
   @media (max-width: 767px) {
-    padding: 6px 4px;
-    gap: 3px;
+    padding: 4px 4px;
+    gap: 2px;
     font-size: 14px;
     line-height: 1.2;
   }
   @media (min-width: 768px) {
-     padding:6px 20px;
-      gap: 4px;
+     /* Компактно: усі пункти мають влізти в меню без прокрутки */
+     padding: 2px 8px;
+     gap: 1px;
+     font-size: 14px;
+     line-height: 1.2;
   }
 svg {
     font-size: 24px;
     flex-shrink: 0;
+    animation: ${menuIconPop} 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.15s both;
    @media (max-width: 767px) {
     font-size: 20px;
   }
    @media (min-width: 768px) {
-    font-size: 30px;
+    font-size: 20px;
   }
 }
+  &:hover svg {
+    animation: ${menuIconWiggle} 0.5s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    svg, &:hover svg { animation: none; }
+  }
 `;
+
+/* Маленька кнопка-«пігулка» в пункті меню «Стиль графіка» (Годинний / 16 днів) */
+const ChartStyleChip = styled.button`
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(192, 132, 252, 0.6);
+  background: rgba(192, 132, 252, 0.12);
+  color: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  &:hover,
+  &:focus-visible {
+    background: rgba(192, 132, 252, 0.3);
+    border-color: #c084fc;
+    outline: none;
+  }
+`;
+
+/* Іконка автоперемикання крутиться, поки воно увімкнене: що частіше — то швидше */
+const SpinningIcon = styled.span`
+  display: inline-flex;
+  ${(p) =>
+    p.$on &&
+    css`
+      animation: ${iconSpin} ${Math.min(12, Math.max(2, p.$seconds / 10))}s linear infinite;
+    `}
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
+/* Підпис «Одиниці виміру»: по черзі показує, що в яких одиницях (як плитка в правій панелі),
+   поточна одиниця виділена, поруч — інші можливі варіанти.
+   items: [{ title, current, others: [] }] */
+const UNITS_CYCLE_MS = 2600;
+const UNIT_SHORT_TITLES = {
+  temp: "Температура",
+  wind: "Вітер",
+  pressure: "Тиск",
+  distance: "Відстань",
+  precip: "Опади",
+};
+const UnitsCycleHint = ({ items }) => {
+  const animationsDisabled = useAnimationsDisabled();
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (animationsDisabled || items.length < 2) return undefined;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % items.length), UNITS_CYCLE_MS);
+    return () => clearInterval(timer);
+  }, [animationsDisabled, items.length]);
+
+  if (animationsDisabled) {
+    return <SettingsItemHint>{items.map((it) => it.current).join(" · ")}</SettingsItemHint>;
+  }
+  const item = items[index % items.length];
+  return (
+    <SettingsItemHint aria-live="off">
+      <SettingsCycleText key={index}>
+        {item.title}: <b style={{ color: "#ffb36c", fontWeight: 700 }}>{item.current}</b>
+        {item.others.length > 0 && <> · також {item.others.join(", ")}</>}
+      </SettingsCycleText>
+    </SettingsItemHint>
+  );
+};
 // Фон картки погоди за замовчуванням
 export const DEFAULT_CARD_BG =
   DEFAULT_BGS.find((bg) => bg.name === "Туманний ліс")?.src || DEFAULT_BGS[0].src;
@@ -1053,14 +1267,16 @@ export const CARD_BG_CHANGE_EVENT = "weather-card-bg-change";
 /* Дрібне пояснення під назвою пункту налаштувань */
 const SettingsItemHint = styled.span`
   font-size: 11px;
-  line-height: 1.25;
-  font-weight: 400;
-  opacity: 0.65;
+  line-height: 1.3;
+  font-weight: 500;
+  /* Розбірливіше: майже повна непрозорість; колір — від пункту (GPS зелений/червоний тощо) */
+  opacity: 0.88;
   @media (max-width: 767px) {
-    font-size: 10px;
+    font-size: 11px;
   }
   @media (min-width: 768px) {
-    font-size: 12px;
+    font-size: 11.5px;
+    line-height: 1.2;
   }
 `;
 /* Підказка під назвою головної картки, коли показано Київ замість GPS-локації */
@@ -1141,6 +1357,32 @@ const CHART_PLUGINS = [valueLabelsPlugin];
 
 // Підказка над графіком: як читати стрілки вітру й підписи біля точок
 // Підказка-компас стоїть у рядку легенди між кнопками, тож висоту графіка не забирає
+/** Чи перенісся flex-рядок на 2+ ряди: останній дочірній елемент нижче за перший.
+    Повертає [callback-ref для контейнера, wrapped] */
+const useFlexWrapped = () => {
+  const [wrapped, setWrapped] = useState(false);
+  const observerRef = useRef(null);
+  const ref = useCallback((el) => {
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const check = () => {
+      const kids = el.children;
+      if (kids.length < 2) return;
+      setWrapped(kids[kids.length - 1].offsetTop > kids[0].offsetTop + 4);
+    };
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    // Діти теж: перенос міг статися через зміну вмісту (бейдж тренду, шрифти)
+    Array.from(el.children).forEach((child) => observer.observe(child));
+    observerRef.current = observer;
+    check();
+  }, []);
+  // Окремого useEffect-очищення не треба: при розмонтуванні React сам
+  // викликає ref(null) — там і disconnect.
+  return [ref, wrapped];
+};
+
 const WindCompassHint = ({ isDarkMode, windUnit, tempSuffix, gusts, showLabels = true }) => {
   const text = isDarkMode ? "#e5f6ff" : "#0f172a";
   const muted = isDarkMode ? "rgba(229, 246, 255, 0.7)" : "rgba(15, 23, 42, 0.7)";
@@ -1155,10 +1397,11 @@ const WindCompassHint = ({ isDarkMode, windUnit, tempSuffix, gusts, showLabels =
         // Стискається першою (текст обрізається трикрапкою), щоб легенда не переносилась
         flex: "0 100 auto",
         minWidth: 0,
-        margin: "0 auto",
+        // Притиснута вправо, до кнопок дій
+        margin: "0 0 0 auto",
         padding: "0 8px 0 1px",
         overflow: "hidden",
-        borderRadius: "10px",
+        borderRadius: "5px",
         background: isDarkMode ? "rgba(8, 12, 20, 0.75)" : "rgba(255, 255, 255, 0.85)",
         border: "1px solid rgba(56, 189, 248, 0.35)",
         fontSize: "11px",
@@ -1177,15 +1420,21 @@ const WindCompassHint = ({ isDarkMode, windUnit, tempSuffix, gusts, showLabels =
           <text x="7.5" y="31">Зх</text>
         </g>
       </svg>
-      <div style={{ display: "flex", flexDirection: "column", gap: "1px", lineHeight: 1.2, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-        <span style={{ color: text, fontWeight: 700 }}>Стрілка показує, куди дме вітер</span>
-        {showLabels ? (
-          <span>
-            Під стрілкою — {gusts ? "пориви" : "швидкість"}, {windUnit} · біля точок — температура, {tempSuffix}
-          </span>
-        ) : (
-          <span>Вітер — {windUnit} · цифри біля точок вмикає кнопка «123»</span>
-        )}
+      {/* Коли тісно — текст переноситься на 2 рядки (вміщаються у 34px), а не обрізається */}
+      <div style={{ minWidth: 0, lineHeight: 1.15, overflow: "hidden" }}>
+        <span
+          style={{
+            color: text,
+            fontWeight: 700,
+            fontSize: "11px",
+            display: "-webkit-box",
+            WebkitBoxOrient: "vertical",
+            WebkitLineClamp: 2,
+            overflow: "hidden",
+          }}
+        >
+          Стрілка показує, куди дме вітер!
+        </span>
       </div>
     </div>
   );
@@ -1452,6 +1701,9 @@ const WeatherCardComponent = ({
   const dailyChartRef = useRef(null);
   const dailyChartPanelRef = useRef(null);
   const dailyChartInstanceRef = useRef(null);
+  // Чи шапка 16-денного графіка в 2 ряди (тоді кнопка тренду — у рядку легенди)
+  const [dailyHeaderRef, dailyHeaderWrapped] = useFlexWrapped();
+  const [dailyFsHeaderRef, dailyFsHeaderWrapped] = useFlexWrapped();
   const [fullscreenChart, setFullscreenChart] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
   
@@ -1756,11 +2008,36 @@ const WeatherCardComponent = ({
     link.click();
   };
 
-  const renderChartActions = (chartKey, panelRef) => (
+  // Кнопка лінії тренду (лише 16-денний графік). Стоїть серед кнопок дій,
+  // а коли шапка перенеслась на 2 ряди — у рядку легенди
+  const renderTrendButton = () => (
+    <Tooltip content={showDailyTrend ? `Сховати лінію тренду. ${dailyTrendText}` : "Показати лінію тренду температури"} isDarkMode={isDarkMode}>
+    <button
+      type="button"
+      onClick={toggleDailyTrend}
+      aria-label={showDailyTrend ? "Сховати лінію тренду" : "Показати лінію тренду"}
+      aria-pressed={showDailyTrend}
+      style={{
+        ...chartActionButtonStyle,
+        width: "auto",
+        gap: "4px",
+        padding: "0 6px",
+        fontSize: "11px",
+        fontWeight: "bold",
+        background: showDailyTrend ? "rgba(0, 190, 235, 0.25)" : chartActionButtonStyle.background,
+      }}
+    >
+      <BiTrendingUp size={16} />
+      {showDailyTrend && dailyTrendBadge}
+    </button>
+    </Tooltip>
+  );
+
+  const renderChartActions = (chartKey, panelRef, trendInLegend = false) => (
     <div
       style={{
         display: "flex",
-        gap: "6px",
+        gap: "3px",
         alignItems: "center",
         flexShrink: 0,
       }}
@@ -1800,28 +2077,7 @@ const WeatherCardComponent = ({
           </Tooltip>
         );
       })()}
-      {chartKey === "daily" && (
-        <Tooltip content={showDailyTrend ? `Сховати лінію тренду. ${dailyTrendText}` : "Показати лінію тренду температури"} isDarkMode={isDarkMode}>
-        <button
-          type="button"
-          onClick={toggleDailyTrend}
-          aria-label={showDailyTrend ? "Сховати лінію тренду" : "Показати лінію тренду"}
-          aria-pressed={showDailyTrend}
-          style={{
-            ...chartActionButtonStyle,
-            width: "auto",
-            gap: "4px",
-            padding: "0 6px",
-            fontSize: "11px",
-            fontWeight: "bold",
-            background: showDailyTrend ? "rgba(0, 190, 235, 0.25)" : chartActionButtonStyle.background,
-          }}
-        >
-          <BiTrendingUp size={16} />
-          {showDailyTrend && dailyTrendBadge}
-        </button>
-        </Tooltip>
-      )}
+      {chartKey === "daily" && !trendInLegend && renderTrendButton()}
       <Tooltip content={fullscreenChart === chartKey ? "Вийти з повного екрана" : "На весь екран"} isDarkMode={isDarkMode}>
       <button
         type="button"
@@ -1845,12 +2101,17 @@ const WeatherCardComponent = ({
     </div>
   );
 
-  const renderChartLegend = (items) => (
+  // extra — додатковий елемент у кінці легенди (кнопка тренду, коли шапка в 2 ряди)
+  const renderChartLegend = (items, extra = null) => (
     <div
       style={{
         display: "flex",
-        gap: "8px",
+        gap: "3px",
         flexWrap: "wrap",
+        // Не стискаємо легенду — місце віддає підказка вітру (обрізається трикрапкою),
+        // інакше «Вітер» переносився на другий рядок
+        flexShrink: 0,
+        maxWidth: "100%",
         fontSize: `${Math.max(10, legendFontSize - 1)}px`,
         alignItems: "center",
       }}
@@ -1861,6 +2122,8 @@ const WeatherCardComponent = ({
           style={{
             display: "inline-flex",
             alignItems: "center",
+            boxSizing: "border-box",
+            height: "34px",
             border: `1px solid ${rightMeta.color}`,
             borderRadius: "4px",
             background: isDarkMode ? "#222" : "#fff",
@@ -1900,7 +2163,9 @@ const WeatherCardComponent = ({
             display: "inline-flex",
             alignItems: "center",
             gap: "4px",
-            padding: "3px 6px",
+            boxSizing: "border-box",
+            height: "34px",
+            padding: "0 8px",
             border: `1px solid ${item.color}`,
             borderRadius: "4px",
             background: isDarkMode ? "#222" : "#fff",
@@ -1924,27 +2189,49 @@ const WeatherCardComponent = ({
         </button>
         </Tooltip>
       ))}
+      {extra}
     </div>
   );
 
-  // Легенда + кнопки дій — один рядок
-  // middle — необов'язковий вміст між легендою й кнопками (підказка-компас)
-  const renderChartHeader = (chartKey, panelRef, items, middle = null) => (
+  // Стилі рядка шапки графіка — спільні для звичайної (sticky) і повноекранної шапки
+  const chartHeaderRowStyle = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "3px",
+    flexWrap: "wrap",
+  };
+
+  // Права група шапки: підказка-компас + кнопки дій (переходить на 2-й ряд цілком)
+  const renderChartHeaderTools = (chartKey, panelRef, middle = null, trendInLegend = false) => (
     <div
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        gap: "8px",
-        flexWrap: "nowrap",
-        marginBottom: "4px",
+        justifyContent: "flex-end",
+        gap: "3px",
+        flex: "1 1 auto",
+        minWidth: 0,
       }}
     >
-      {renderChartLegend(items)}
       {middle}
-      {renderChartActions(chartKey, panelRef)}
+      {renderChartActions(chartKey, panelRef, trendInLegend)}
     </div>
   );
+
+  // Легенда + (підказка-компас і кнопки дій). Якщо в один рядок не влазить —
+  // друга група цілком переходить на 2-й ряд, де підказка стискається, а кнопки ні.
+  // У 2 ряди кнопка тренду (16 днів) переїжджає в рядок легенди.
+  // headerRef/wrapped — з useFlexWrapped для цієї шапки.
+  const renderChartHeader = (chartKey, panelRef, items, middle = null, headerRef = undefined, wrapped = false) => {
+    const trendInLegend = chartKey === "daily" && wrapped;
+    return (
+      <div ref={headerRef} style={{ ...chartHeaderRowStyle, marginBottom: "4px" }}>
+        {renderChartLegend(items, trendInLegend ? renderTrendButton() : null)}
+        {renderChartHeaderTools(chartKey, panelRef, middle, trendInLegend)}
+      </div>
+    );
+  };
 
   // Підказка-компас у рядку легенди (лише коли на правій осі вітер)
   const renderWindHint = (chartKey) =>
@@ -2813,8 +3100,18 @@ const HOLIDAYS_2027 = {
 
   const [isBannerHovered, setIsBannerHovered] = useState(false);
 
+  // Автоперемикання вкладок: своє для картки або загальне ({ on, seconds })
+  const tabAutoplayGlobal =
+    parseTabAutoplay(usePrefValue(TAB_AUTOPLAY_KEY, null)) || TAB_AUTOPLAY_DEFAULT;
+  const tabAutoplayCard = parseTabAutoplay(usePrefValue(tabAutoplayCardKey(card.id), null));
+  const tabAutoplay = tabAutoplayCard || tabAutoplayGlobal;
+  const tabAutoplaySeconds = tabAutoplay.on ? tabAutoplay.seconds : 0;
+  const setCardTabAutoplay = (value) =>
+    setPref(tabAutoplayCardKey(card.id), serializeTabAutoplay(value));
+  const resetCardTabAutoplay = () => removePref(tabAutoplayCardKey(card.id));
+
   useEffect(() => {
-    if (isBannerHovered) return;
+    if (isBannerHovered || !(tabAutoplaySeconds > 0)) return;
     const interval = setInterval(() => {
       if (window.innerWidth >= 768) {
         setActiveTab((prev) => {
@@ -2823,9 +3120,9 @@ const HOLIDAYS_2027 = {
           return order[nextIndex];
         });
       }
-    }, 6500);
+    }, tabAutoplaySeconds * 1000);
     return () => clearInterval(interval);
-  }, [isBannerHovered]);
+  }, [isBannerHovered, tabAutoplaySeconds]);
 
   const renderHourlyTable = () => {
     if (!visibleHourly || visibleHourly.length === 0) {
@@ -2837,8 +3134,9 @@ const HOLIDAYS_2027 = {
     }
 
     return (
-      <div style={{ marginTop: "12px", width: "100%", overflowX: "auto" }}>
-        <div style={{ display: "flex", gap: "3px", paddingBottom: "10px", minWidth: "min-content" }}>
+      <div style={{ marginTop: "12px", width: "100%" }}>
+        {/* Картки переносяться на новий рядок, якщо не влазять — без горизонтального скролу */}
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "3px", paddingBottom: "10px" }}>
           {visibleHourly.map((item, idx) => {
             const windDeg = item.wind_direction_10m || 0;
             const windText = getWindDirectionText(windDeg);
@@ -2848,7 +3146,7 @@ const HOLIDAYS_2027 = {
               <div
                 key={idx}
                 style={{
-                  flex: "0 0 120px",
+                  flex: "1 0 120px",
                   background: isDarkMode ? "rgba(25, 25, 35, 0.88)" : "rgba(255, 255, 255, 0.95)",
                   backdropFilter: "blur(8px)",
                   border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.1)",
@@ -3206,8 +3504,9 @@ const HOLIDAYS_2027 = {
       );
     }
     return (
-      <div style={{ marginTop: "12px", width: "100%", overflowX: "auto" }}>
-        <div style={{ display: "flex", gap: "5px", minWidth: "min-content" }}>
+      <div style={{ marginTop: "12px", width: "100%" }}>
+        {/* Перенос на новий рядок; неповний останній ряд розтягується на всю ширину */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
           {list.map((d, idx) => {
             const isPast = isPastDay(d) || d.isPast;
             const dateType = getDateType(d.date, d.day, d.fullDate);
@@ -3269,7 +3568,7 @@ const HOLIDAYS_2027 = {
               <div
                 key={idx}
                 style={{
-                  flex: "0 0 125px",
+                  flex: "1 0 125px",
                   background: isPast
                     ? (isDarkMode ? "rgba(20, 20, 26, 0.85)" : "rgba(230, 230, 235, 0.85)")
                     : (isDarkMode ? "rgba(25, 25, 35, 0.88)" : "rgba(255, 255, 255, 0.95)"),
@@ -3549,9 +3848,17 @@ const HOLIDAYS_2027 = {
                 >
                   <MdStraighten style={{ color: "#ffb36c" }} />
                   <span>Одиниці виміру</span>
-                  <span style={{ fontSize: "12px", opacity: 0.65 }}>
-                    {tempLabel(units.temp)} · {windLabel(units.wind)} · {pressureLabel(units.pressure)}
-                  </span>
+                  <UnitsCycleHint
+                    items={UNIT_GROUPS.map((group) => {
+                      const current =
+                        group.options.find((o) => o.key === units[group.key]) || group.options[0];
+                      return {
+                        title: UNIT_SHORT_TITLES[group.key] || group.title,
+                        current: current.label,
+                        others: group.options.filter((o) => o !== current).map((o) => o.label),
+                      };
+                    })}
+                  />
                 </SettingsDropdownItem>
                 {/* У першому ряду поруч з «Одиниці виміру» */}
                 <SettingsDropdownItem
@@ -3634,6 +3941,33 @@ const HOLIDAYS_2027 = {
                       : "Спершу увімкніть у Налаштуваннях → Секції та новини"}
                   </SettingsItemHint>
                 </SettingsDropdownItem>
+                {/* Автоперемикання вкладок для цієї картки: перемикач + шкала 10 с – 5 хв */}
+                <SettingsDropdownItem as="div" role="group" aria-label="Автоперемикання вкладок">
+                  <SpinningIcon $on={tabAutoplaySeconds > 0} $seconds={tabAutoplay.seconds}>
+                    <MdAutorenew style={{ color: "#00eeff", opacity: tabAutoplaySeconds > 0 ? 1 : 0.6 }} />
+                  </SpinningIcon>
+                  <TabAutoplayControl
+                    title="Автоперемикання вкладок"
+                    value={tabAutoplay}
+                    onChange={setCardTabAutoplay}
+                  />
+                  <SettingsItemHint>
+                    {tabAutoplayCard === null ? (
+                      "Як у загальних налаштуваннях"
+                    ) : (
+                      <>
+                        Лише для цієї картки ·{" "}
+                        <button
+                          type="button"
+                          onClick={resetCardTabAutoplay}
+                          style={{ background: "none", border: "none", padding: 0, color: "#00eeff", textDecoration: "underline", cursor: "pointer", font: "inherit" }}
+                        >
+                          як у загальних
+                        </button>
+                      </>
+                    )}
+                  </SettingsItemHint>
+                </SettingsDropdownItem>
                 {/* Кнопки гортання карток — спільні для всіх карток, вмикаються окремо */}
                 {totalCards > 1 && (
                   <>
@@ -3668,8 +4002,8 @@ const HOLIDAYS_2027 = {
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
-                    gap: "4px",
-                    padding: "6px",
+                    gap: "0",
+                    padding: "2px 6px",
                     minWidth: 0,
                   borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.98)' : 'rgb(0, 0, 0)'}`,
                  }}
@@ -3713,6 +4047,27 @@ const HOLIDAYS_2027 = {
                     Зробити нижче картку
                   </button>
                 </div>
+                {/* Стиль ліній графіка — у ряду з GPS / «Видалити»; два графіки на вибір */}
+                <SettingsDropdownItem as="div" role="group" aria-label="Стиль графіка">
+                  <BiPalette style={{ color: "#c084fc" }} /> Стиль графіка
+                  <div style={{ display: "flex", gap: "4px", marginTop: "2px" }}>
+                    {[
+                      { key: "hourly", label: "Годинний" },
+                      { key: "daily", label: "16 днів" },
+                    ].map(({ key, label }) => (
+                      <ChartStyleChip
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          setStyleModalChart(key);
+                          handleCloseDropdown();
+                        }}
+                      >
+                        {label}
+                      </ChartStyleChip>
+                    ))}
+                  </div>
+                </SettingsDropdownItem>
                 {card.isMain ? (
                   <SettingsDropdownItem
                     onClick={handleGpsToggle}
@@ -3934,12 +4289,26 @@ const HOLIDAYS_2027 = {
                   justifyContent: "space-between",
                   alignItems: "center",
                   flexWrap: "wrap",
-                  gap: "10px",
-                  marginBottom: "8px",
+                  gap: "6px",
+                  marginBottom: "6px",
                 }}
               >
-                <h4 style={{ margin: 0, fontSize: "14px" }}>Годинний прогноз</h4>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {/* Вибір дня зліва, перемикач вигляду справа — в одному рядку */}
+                {hourlyDayGroups.length > 1 && (
+                  <DaySelect
+                    $isDarkMode={isDarkMode}
+                    value={selectedHourlyDay}
+                    onChange={(event) => setSelectedHourlyDay(Number(event.target.value))}
+                    aria-label="День погодинного прогнозу"
+                  >
+                    {hourlyDayGroups.map((group, index) => (
+                      <option key={group.label} value={index}>
+                        {group.title || group.label}
+                      </option>
+                    ))}
+                  </DaySelect>
+                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
                   <ViewToggleGroup $isDarkMode={isDarkMode}>
                     <ViewToggleButton
                       $active={effectiveHourlyViewMode === "charts"}
@@ -3976,34 +4345,6 @@ const HOLIDAYS_2027 = {
                   </ViewToggleGroup>
                 </div>
               </div>
-
-              {hourlyDayGroups.length > 1 && (
-                <div style={{ marginTop: "8px", marginBottom: "8px" }}>
-                  <select
-                    value={selectedHourlyDay}
-                    onChange={(event) => setSelectedHourlyDay(Number(event.target.value))}
-                    aria-label="День погодинного прогнозу"
-                    style={{
-                      width: "100%",
-                      maxWidth: "260px",
-                      padding: "8px 10px",
-                      borderRadius: "8px",
-                      border: isDarkMode ? "1px solid #555" : "1px solid #ccc",
-                      background: isDarkMode ? "#1f1f1f" : "#fff",
-                      color: isDarkMode ? "#fff" : "#000",
-                      fontSize: "13px",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {hourlyDayGroups.map((group, index) => (
-                      <option key={group.label} value={index}>
-                        {group.title || group.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
 
               {effectiveHourlyViewMode === "charts" ? (
                 visibleHourly && visibleHourly.length > 0 && (
@@ -4097,16 +4438,17 @@ const HOLIDAYS_2027 = {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "8px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-                  <h4 style={{ margin: 0, fontSize: "14px" }}>Прогноз на 16 днів</h4>
-                  <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer", userSelect: "none", opacity: 0.9 }}>
+                  <PillCheckbox $isDarkMode={isDarkMode} $checked={showPastDay}>
                     <input
                       type="checkbox"
                       checked={showPastDay}
                       onChange={(e) => setShowPastDay(e.target.checked)}
-                      style={{ cursor: "pointer", accentColor: "#00eeff" }}
                     />
+                    <span className="box" aria-hidden="true">
+                      <svg viewBox="0 0 16 16"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5" /></svg>
+                    </span>
                     Показати вчора
-                  </label>
+                  </PillCheckbox>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <ViewToggleGroup $isDarkMode={isDarkMode}>
@@ -4142,13 +4484,10 @@ const HOLIDAYS_2027 = {
 
               {effectiveDailyViewMode === "charts" ? (
                 <>
-                  <div style={{
+                  <div ref={dailyHeaderRef} style={{
+                    ...chartHeaderRowStyle,
                     position: "sticky",
                     top: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "8px",
                     padding: "6px 8px",
                     background: isDarkMode ? "rgba(0, 0, 0, 0.7)" : "rgba(255, 255, 255, 0.7)",
                     backdropFilter: "blur(4px)",
@@ -4159,9 +4498,8 @@ const HOLIDAYS_2027 = {
                       { key: "day", label: "День", color: "#ffb36c", icon: <FaSun /> },
                       { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
                       { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
-                    ])}
-                    {renderWindHint("daily")}
-                    {renderChartActions("daily", dailyChartPanelRef)}
+                    ], dailyHeaderWrapped ? renderTrendButton() : null)}
+                    {renderChartHeaderTools("daily", dailyChartPanelRef, renderWindHint("daily"), dailyHeaderWrapped)}
                   </div>
                   <div
                     ref={dailyChartPanelRef}
@@ -4180,7 +4518,7 @@ const HOLIDAYS_2027 = {
                       { key: "day", label: "День", color: "#ffb36c", icon: <FaSun /> },
                       { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
                       { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
-                    ], renderWindHint("daily"))}
+                    ], renderWindHint("daily"), dailyFsHeaderRef, dailyFsHeaderWrapped)}
                     <div style={{ position: "relative", width: "100%" }}>
                       <ChartScrollWrapper ref={dailyChartRef}>
                         <ChartInnerContainer

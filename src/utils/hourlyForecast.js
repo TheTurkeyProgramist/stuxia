@@ -70,17 +70,22 @@ const aggregatePartsOfDay = (items) =>
     return result;
   }).filter(Boolean);
 
-// День 1: щогодини; дні 2–3: кожні 3 год; далі: 00/06/12/18 (без графіка).
+// Завтра щогодини до цієї години включно, далі — кожні 3 год
+const NEXT_DAY_HOURLY_UNTIL = 11;
+
+// День 1: щогодини; день 2: щогодини до 11:00, потім кожні 3 год;
+// день 3: кожні 3 год; далі: 00/06/12/18 (без графіка).
 export const getHourlyForecastDetailGroups = (hourly = []) =>
   getHourlyForecastDayGroups(hourly).map((group, index) => {
     if (index < DETAILED_DAYS) return { ...group, chartAvailable: true };
 
     if (index < THREE_HOUR_DAYS) {
+      const hourlyUntil = index === DETAILED_DAYS ? NEXT_DAY_HOURLY_UNTIL : -1;
       return {
         ...group,
         items: group.items.filter((item) => {
           const hour = getItemHour(item);
-          return hour === null || hour % 3 === 0;
+          return hour === null || hour <= hourlyUntil || hour % 3 === 0;
         }),
         chartAvailable: true,
       };

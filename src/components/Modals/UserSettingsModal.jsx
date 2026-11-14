@@ -86,7 +86,19 @@ import {
   FiHeart,
   FiCloudLightning,
 } from "react-icons/fi";
-import { useBeta, setBetaOn, usePrefValue, LOADER_POWERED_BY_KEY } from "../../utils/betaFeatures";
+import {
+  useBeta,
+  setBetaOn,
+  usePrefValue,
+  LOADER_POWERED_BY_KEY,
+  TAB_AUTOPLAY_KEY,
+  TAB_AUTOPLAY_DEFAULT,
+  parseTabAutoplay,
+  serializeTabAutoplay,
+  formatTabAutoplay,
+} from "../../utils/betaFeatures";
+import TabAutoplayControl from "../Weather/TabAutoplayControl";
+import GlobalChartStyleModal from "./GlobalChartStyleModal";
 import BetaVoiceSettings from "./BetaVoiceSettings.jsx";
 import {
   TbFlask,
@@ -1665,6 +1677,10 @@ const UserSettingsModal = ({
   // Режим налаштувань (Простий / Середній / Професійний) — живе в prefsStore цього браузера.
   const settingsLevel = useSettingsLevel();
   const loaderPoweredBy = usePrefValue(LOADER_POWERED_BY_KEY, "full");
+  // Загальне автоперемикання вкладок карток погоди ({ on, seconds })
+  const tabAutoplay = parseTabAutoplay(usePrefValue(TAB_AUTOPLAY_KEY, null)) || TAB_AUTOPLAY_DEFAULT;
+  // Відкрите вікно стилю ліній для всіх карток: "hourly" | "daily" | null
+  const [globalStyleChart, setGlobalStyleChart] = useState(null);
   // «Підглядання»: розділ відкрили напряму (з новин — до «Моїх стрічок», або з пошуку), а він з важчого режиму.
   // Показуємо його з підказкою «Перемкнути?», сам режим не змінюємо.
   const [peekLevel, setPeekLevel] = useState(() => {
@@ -3205,6 +3221,57 @@ const UserSettingsModal = ({
                       </ToggleWrapper>
                     </CardControl>
                   </Card>
+
+                  {/* Автоперемикання вкладок карток погоди (Зараз → Годинна → 16 днів → Смарт) */}
+                  <CardExpanded>
+                    <CardLeft>
+                      <CardIconBox $color="#00eeff"><FiRepeat /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Автоперемикання вкладок картки</CardTitle>
+                        <CardDescription>
+                          {tabAutoplay.on
+                            ? `Картка погоди сама гортає «Зараз → Годинна → 16 днів → Смарт» кожні ${formatTabAutoplay(tabAutoplay.seconds)} (пауза, поки курсор над карткою). Довгий інтервал — щоб детально роздивитись кожну вкладку. Для окремої картки можна задати своє в її меню ⚙`
+                            : "Вкладки картки погоди не перемикаються самі. Для окремої картки можна увімкнути в її меню ⚙"}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", marginTop: "4px" }}>
+                      <TabAutoplayControl
+                        value={tabAutoplay}
+                        accent="#60cdff"
+                        onChange={(value) => setPref(TAB_AUTOPLAY_KEY, serializeTabAutoplay(value))}
+                      />
+                    </div>
+                  </CardExpanded>
+
+                  {/* Стиль ліній графіків — одразу для всіх карток погоди */}
+                  <CardExpanded level="medium">
+                    <CardLeft>
+                      <CardIconBox $color="#c084fc"><GiPalette /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Стиль графіків</CardTitle>
+                        <CardDescription>
+                          Форма, тип і товщина ліній, цифри біля точок — для всіх карток погоди одразу.
+                          Окремій картці можна задати своє через ⚙ → «Стиль графіка»
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
+                      {[
+                        { key: "hourly", label: "Погодинний графік" },
+                        { key: "daily", label: "Графік на 16 днів" },
+                      ].map(({ key, label }) => (
+                        <WinButton
+                          key={key}
+                          type="button"
+                          onClick={() => setGlobalStyleChart(key)}
+                          style={{ flex: 1, minWidth: "140px" }}
+                        >
+                          {label}
+                        </WinButton>
+                      ))}
+                    </div>
+                  </CardExpanded>
 
                   {/* AntiHeader Tips Toggle — тимчасово приховано
                   <Card level="medium">
@@ -4800,6 +4867,14 @@ const UserSettingsModal = ({
       )}
 
       {ageGate}
+
+      {globalStyleChart && (
+        <GlobalChartStyleModal
+          chartKey={globalStyleChart}
+          isDarkMode
+          onClose={() => setGlobalStyleChart(null)}
+        />
+      )}
 
       {!levelChosen && !showResetDialog && <LevelOnboarding isGuest={isGuest} onChoose={chooseFirstLevel} />}
 

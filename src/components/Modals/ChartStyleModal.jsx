@@ -6,38 +6,41 @@ import { BiPalette, BiLayer, BiSliderAlt, BiTrendingUp, BiInfoCircle, BiCheck } 
 import { MdOutlineFormatColorFill, MdScatterPlot, MdNumbers } from "react-icons/md";
 import { CURVES, DASHES, WIDTH_MIN, WIDTH_MAX, DIM_MAX, DEFAULT_DIM, WIND_LABELS } from "../../utils/chartLineStyles.js";
 
+/* ---------- Мінімалістичний вигляд: менше рамок, сегментовані групи, тонкі повзунки ---------- */
+
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(3px);
-  z-index: 3000;
+  z-index: ${(p) => p.$zIndex || 3000};
   display: flex;
   justify-content: center;
   align-items: center;
 `;
 
 const ModalContent = styled.div`
-  background: ${(p) => (p.$isDarkMode ? "#1c1c1f" : "#fff")};
-  color: ${(p) => (p.$isDarkMode ? "#fff" : "#111")};
-  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)")};
-  border-radius: 14px;
+  background: ${(p) => (p.$isDarkMode ? "#18181b" : "#fff")};
+  color: ${(p) => (p.$isDarkMode ? "#f4f4f5" : "#111")};
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)")};
+  border-radius: 16px;
   box-sizing: border-box;
   width: 95vw;
+  max-width: 1040px;
   max-height: 92vh;
   overflow-y: auto;
-  padding: 20px 22px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
 
   & > * {
     flex-shrink: 0;
   }
 
   @media (max-width: 600px) {
-    padding: 16px;
+    padding: 14px;
   }
 `;
 
@@ -46,17 +49,17 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   position: sticky;
-  top: -20px;
+  top: -18px;
   z-index: 2;
-  margin: -20px -22px 0;
-  padding: 14px 22px;
+  margin: -18px -20px 0;
+  padding: 12px 20px;
   background: inherit;
-  border-bottom: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)")};
+  border-bottom: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)")};
 
   @media (max-width: 600px) {
-    top: -16px;
-    margin: -16px -16px 0;
-    padding: 12px 16px;
+    top: -14px;
+    margin: -14px -14px 0;
+    padding: 10px 14px;
   }
 `;
 
@@ -64,13 +67,12 @@ const TitleIcon = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  font-size: 18px;
   color: #00eeff;
-  background: rgba(0, 238, 255, 0.12);
-  border: 1px solid rgba(0, 238, 255, 0.3);
+  background: rgba(0, 238, 255, 0.1);
   flex-shrink: 0;
 `;
 
@@ -78,30 +80,30 @@ const CloseButton = styled.button`
   background: transparent;
   border: none;
   color: inherit;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
-  opacity: 0.7;
+  opacity: 0.6;
   display: inline-flex;
-  padding: 6px;
-  border-radius: 6px;
+  padding: 8px;
+  border-radius: 8px;
   &:hover {
     opacity: 1;
-    background: rgba(128, 128, 128, 0.2);
+    background: rgba(128, 128, 128, 0.18);
   }
 `;
 
 const SectionLabel = styled.div`
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.6;
+  opacity: 0.55;
   margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 6px;
   svg {
-    font-size: 15px;
+    font-size: 14px;
   }
 `;
 
@@ -111,73 +113,105 @@ const SectionHeader = styled.div`
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   & > ${SectionLabel} {
     margin-bottom: 0;
   }
 `;
 
+/* «Для всіх карток» — маленький перемикач замість чекбокса */
 const AllCardsToggle = styled.label`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid ${(p) => (p.$active ? "#00eeff" : p.$isDarkMode ? "#444" : "#ccc")};
-  background: ${(p) => (p.$active ? (p.$isDarkMode ? "rgba(0,238,255,0.12)" : "rgba(0,140,255,0.1)") : "transparent")};
+  user-select: none;
+  opacity: ${(p) => (p.$active ? 1 : 0.75)};
   input {
-    accent-color: #00eeff;
-    width: 16px;
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+  }
+  .switch {
+    position: relative;
+    width: 30px;
     height: 16px;
-    margin: 0;
+    border-radius: 999px;
+    background: ${(p) => (p.$active ? "#00eeff" : "rgba(150,150,150,0.45)")};
+    transition: background 0.2s ease;
+  }
+  .switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: ${(p) => (p.$active ? "16px" : "2px")};
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.2s ease;
+  }
+  &:focus-within .switch {
+    outline: 2px solid #00eeff;
+    outline-offset: 2px;
   }
 `;
 
 const AllLinesPanel = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   padding: 14px 16px;
   border-radius: 12px;
-  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(0,238,255,0.18)" : "rgba(0,140,255,0.2)")};
-  background: ${(p) =>
-    p.$isDarkMode
-      ? "linear-gradient(135deg, rgba(0,238,255,0.06), rgba(255,255,255,0.02))"
-      : "linear-gradient(135deg, rgba(0,140,255,0.06), rgba(0,0,0,0.015))"};
+  background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.025)")};
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)")};
 `;
 
 const CardsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: 12px;
 `;
 
 const Hint = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
-  opacity: 0.65;
+  font-size: 11.5px;
+  opacity: 0.8;
   text-transform: none;
   letter-spacing: 0;
   font-weight: 500;
 `;
 
 const LineCard = styled.div`
-  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)")};
-  background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)")};
-  border-top: 3px solid ${(p) => p.$color};
+  position: relative;
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)")};
+  background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.025)" : "rgba(0,0,0,0.015)")};
   border-radius: 12px;
-  padding: 12px 16px 14px;
+  padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+  transition: border-color 0.15s;
+  /* Тонка кольорова смужка зліва замість товстої рамки зверху */
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: ${(p) => p.$color};
+  }
   &:hover {
-    box-shadow: 0 6px 22px ${(p) => p.$color}22;
+    border-color: ${(p) => p.$color}55;
   }
 `;
 
@@ -185,39 +219,32 @@ const LineHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: ${(p) => p.$color};
-  padding-bottom: 10px;
-  border-bottom: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)")};
   .icon {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    background: ${(p) => p.$color}22;
-    font-size: 17px;
+    font-size: 16px;
   }
 `;
 
 const PreviewBox = styled.span`
   margin-left: auto;
-  padding: 6px 10px;
+  padding: 4px 6px;
   border-radius: 8px;
-  background: ${(p) => (p.$isDarkMode ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.04)")};
-  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)")};
+  background: ${(p) => (p.$isDarkMode ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.04)")};
 `;
 
 const Row = styled.div`
   display: grid;
-  grid-template-columns: 92px 1fr;
+  grid-template-columns: 104px 1fr;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 10px;
+  font-size: 12.5px;
   .name {
-    opacity: 0.7;
+    opacity: 0.6;
+    white-space: nowrap;
   }
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
@@ -225,75 +252,149 @@ const Row = styled.div`
   }
 `;
 
-const Divider = styled.div`
-  height: 1px;
-  background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)")};
-`;
-
+/* Сегментована група: варіанти в одній «капсулі», активний — підсвічений */
 const Options = styled.div`
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 6px;
+  justify-self: start;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: ${(p) => (p.$isDarkMode === false ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.05)")};
 `;
 
 const OptionButton = styled.button`
+  --accent: ${(p) => p.$accent || "#00eeff"};
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 10px;
-  font-size: 12.5px;
-  border-radius: 8px;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 7px;
   cursor: pointer;
-  border: 1px solid ${(p) => (p.$active ? "#00eeff" : p.$isDarkMode ? "#3a3a40" : "#d4d4d8")};
-  background: ${(p) => (p.$active ? (p.$isDarkMode ? "rgba(0,238,255,0.14)" : "rgba(0,140,255,0.1)") : p.$isDarkMode ? "rgba(255,255,255,0.02)" : "#fff")};
-  box-shadow: ${(p) => (p.$active ? "0 0 0 2px rgba(0,238,255,0.15)" : "none")};
-  color: inherit;
+  border: none;
+  background: ${(p) => (p.$active ? "color-mix(in srgb, var(--accent) 18%, transparent)" : "transparent")};
+  box-shadow: ${(p) => (p.$active ? "inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent)" : "none")};
+  color: ${(p) => (p.$active ? "var(--accent)" : "inherit")};
+  opacity: ${(p) => (p.$active ? 1 : 0.75)};
   font-weight: ${(p) => (p.$active ? 700 : 500)};
-  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  transition: background 0.15s, opacity 0.15s, transform 0.1s;
   &:hover {
-    border-color: #00eeff;
+    opacity: 1;
+    background: ${(p) => (p.$active ? "color-mix(in srgb, var(--accent) 22%, transparent)" : "rgba(128,128,128,0.15)")};
   }
   &:active {
     transform: scale(0.97);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
   }
   svg {
     flex-shrink: 0;
   }
 `;
 
+/* Тонкий повзунок: доріжка зліва від повзунка — колір лінії (через --fill) */
+const SliderInput = styled.input`
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 240px;
+  height: 14px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  &::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      ${(p) => p.$color} 0%,
+      ${(p) => p.$color} var(--fill),
+      rgba(128, 128, 128, 0.3) var(--fill)
+    );
+  }
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    margin-top: -4.5px;
+    border-radius: 50%;
+    border: none;
+    background: ${(p) => p.$color};
+  }
+  &::-moz-range-track {
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(128, 128, 128, 0.3);
+  }
+  &::-moz-range-progress {
+    height: 3px;
+    border-radius: 999px;
+    background: ${(p) => p.$color};
+  }
+  &::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    background: ${(p) => p.$color};
+  }
+  &:focus-visible {
+    outline: none;
+  }
+  &:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px ${(p) => p.$color}55;
+  }
+`;
+
+const Slider = ({ min, max, step, value, color, label, onChange }) => (
+  <SliderInput
+    type="range"
+    min={min}
+    max={max}
+    step={step}
+    value={value}
+    $color={color}
+    style={{ "--fill": `${((value - min) / (max - min)) * 100}%` }}
+    aria-label={label}
+    onChange={(e) => onChange(Number(e.target.value))}
+  />
+);
+
 const WidthValue = styled.span`
-  min-width: 44px;
-  text-align: center;
-  padding: 3px 8px;
-  border-radius: 6px;
+  min-width: 48px;
   font-size: 12px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: ${(p) => p.$color};
-  background: ${(p) => p.$color}1f;
 `;
 
 const Toggles = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding-top: 2px;
+  gap: 6px;
 `;
 
 const ToggleChip = styled.label`
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 12px;
+  gap: 6px;
+  padding: 5px 11px;
   border-radius: 999px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   user-select: none;
-  border: 1px solid ${(p) => (p.$active ? p.$color : p.$isDarkMode ? "#3a3a40" : "#d4d4d8")};
-  background: ${(p) => (p.$active ? `${p.$color}1f` : "transparent")};
+  border: 1px solid ${(p) => (p.$active ? `${p.$color}88` : p.$isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)")};
+  background: ${(p) => (p.$active ? `${p.$color}1a` : "transparent")};
   color: ${(p) => (p.$active ? p.$color : "inherit")};
-  opacity: ${(p) => (p.$active ? 1 : 0.75)};
+  opacity: ${(p) => (p.$active ? 1 : 0.7)};
   transition: all 0.15s;
   &:hover {
     opacity: 1;
@@ -308,15 +409,15 @@ const ToggleChip = styled.label`
     outline-offset: 2px;
   }
   svg {
-    font-size: 15px;
+    font-size: 14px;
   }
 `;
 
 const Footer = styled.div`
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  border-top: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)")};
+  gap: 8px;
+  border-top: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)")};
   padding-top: 14px;
 `;
 
@@ -324,16 +425,16 @@ const DoneButton = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 18px;
+  padding: 7px 18px;
   font-size: 13px;
   font-weight: 700;
-  border-radius: 8px;
+  border-radius: 9px;
   cursor: pointer;
-  border: 1px solid #00eeff;
-  background: rgba(0, 238, 255, 0.15);
-  color: ${(p) => (p.$isDarkMode ? "#00eeff" : "#006b80")};
+  border: none;
+  background: #00eeff;
+  color: #04212a;
   &:hover {
-    background: rgba(0, 238, 255, 0.25);
+    background: #5cf4ff;
   }
 `;
 
@@ -341,13 +442,18 @@ const ResetButton = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 7px 12px;
   font-size: 13px;
-  border-radius: 8px;
+  border-radius: 9px;
   cursor: pointer;
-  border: 1px solid #ffb36c;
+  border: none;
   background: transparent;
-  color: ${(p) => (p.$isDarkMode ? "#ffb36c" : "#333")};
+  color: ${(p) => (p.$isDarkMode ? "#ffb36c" : "#b45309")};
+  opacity: 0.85;
+  &:hover {
+    opacity: 1;
+    background: rgba(255, 179, 108, 0.12);
+  }
 `;
 
 const SAMPLE = [28, 10, 22, 6, 16, 12];
@@ -423,18 +529,17 @@ const dimLabel = (v) => (v === 0 ? "сховати" : `${Math.round(v * 100)}%`)
 
 // Прозорість лінії, коли її вимкнено в легенді
 const DimSlider = ({ value, color, label, onChange }) => (
-  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-    <input
-      type="range"
-      min="0"
+  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+    <Slider
+      min={0}
       max={DIM_MAX * 100}
-      step="5"
+      step={5}
       value={Math.round(value * 100)}
-      onChange={(e) => onChange(Number(e.target.value) / 100)}
-      aria-label={label}
-      style={{ flex: 1, maxWidth: "260px", accentColor: color, cursor: "pointer" }}
+      color={color}
+      label={label}
+      onChange={(v) => onChange(v / 100)}
     />
-    <WidthValue $color={color} style={{ minWidth: "64px", opacity: value === 0 ? 0.7 : Math.max(0.45, value + 0.3) }}>
+    <WidthValue $color={color} style={{ minWidth: "56px", opacity: value === 0 ? 0.7 : 1 }}>
       {dimLabel(value)}
     </WidthValue>
   </div>
@@ -471,6 +576,7 @@ const ChartStyleModal = ({
   allCards,
   onToggleAllCards,
   isDarkMode,
+  zIndex,
 }) => {
   useEffect(() => {
     const onKey = (e) => {
@@ -501,17 +607,25 @@ const ChartStyleModal = ({
           {l.icon && <span className="icon">{l.icon}</span>}
           {l.label}
           <PreviewBox $isDarkMode={isDarkMode}>
-            <LinePreview style={l.trend ? { ...s, curve: "straight", points: false } : s} color={l.color} fill={!l.trend && effectiveFill} />
+            <LinePreview style={l.trend ? { ...s, curve: "straight", points: false } : s} color={l.color} fill={!l.trend && effectiveFill} w={120} h={28} />
           </PreviewBox>
         </LineHeader>
 
+        {/* У картці лінії — лише іконки (назва в підказці), щоб усе вміщалось в один рядок */}
         {!l.trend && (
           <Row>
             <span className="name">Форма</span>
-            <Options>
+            <Options $isDarkMode={isDarkMode}>
               {Object.entries(CURVES).map(([k, c]) => (
-                <OptionButton key={k} $active={s.curve === k} $isDarkMode={isDarkMode} title={c.hint} onClick={() => set({ curve: k })}>
-                  <CurveSwatch curve={k} color={l.color} /> {c.label}
+                <OptionButton
+                  key={k}
+                  $active={s.curve === k}
+                  $accent={l.color}
+                  title={`${c.label}${c.hint ? ` — ${c.hint}` : ""}`}
+                  aria-label={c.label}
+                  onClick={() => set({ curve: k })}
+                >
+                  <CurveSwatch curve={k} color={l.color} />
                 </OptionButton>
               ))}
             </Options>
@@ -520,12 +634,12 @@ const ChartStyleModal = ({
 
         <Row>
           <span className="name">Тип лінії</span>
-          <Options>
+          <Options $isDarkMode={isDarkMode}>
             {Object.entries(DASHES).map(([k, d]) => (
               <OptionButton
                 key={k}
                 $active={s.dash === k}
-                $isDarkMode={isDarkMode}
+                $accent={l.color}
                 title={d.label}
                 aria-label={d.label}
                 onClick={() => set({ dash: k })}
@@ -538,16 +652,15 @@ const ChartStyleModal = ({
 
         <Row>
           <span className="name">Товщина</span>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <input
-              type="range"
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Slider
               min={WIDTH_MIN}
               max={WIDTH_MAX}
-              step="1"
+              step={1}
               value={s.width}
-              onChange={(e) => set({ width: Number(e.target.value) })}
-              aria-label={`Товщина лінії ${l.label}`}
-              style={{ flex: 1, maxWidth: "260px", accentColor: l.color, cursor: "pointer" }}
+              color={l.color}
+              label={`Товщина лінії ${l.label}`}
+              onChange={(v) => set({ width: v })}
             />
             <WidthValue $color={l.color}>{s.width} px</WidthValue>
           </div>
@@ -590,9 +703,9 @@ const ChartStyleModal = ({
         {l.wind && s.windLabel !== undefined && s.labels && (
           <Row title="Що писати маленьким текстом під кожною стрілкою вітру">
             <span className="name">Під стрілкою</span>
-            <Options>
+            <Options $isDarkMode={isDarkMode}>
               {Object.entries(WIND_LABELS).map(([k, w]) => (
-                <OptionButton key={k} $active={s.windLabel === k} $isDarkMode={isDarkMode} onClick={() => set({ windLabel: k })}>
+                <OptionButton key={k} $active={s.windLabel === k} $accent={l.color} onClick={() => set({ windLabel: k })}>
                   {w.label}
                 </OptionButton>
               ))}
@@ -607,7 +720,7 @@ const ChartStyleModal = ({
   const container = document.fullscreenElement || document.body;
 
   return createPortal(
-    <ModalOverlay onClick={onClose}>
+    <ModalOverlay $zIndex={zIndex} onClick={onClose}>
       <ModalContent
         $isDarkMode={isDarkMode}
         role="dialog"
@@ -620,8 +733,8 @@ const ChartStyleModal = ({
               <BiPalette />
             </TitleIcon>
             <div>
-              <h3 style={{ margin: 0, fontSize: "18px" }}>{title}</h3>
-              <div style={{ fontSize: "12px", opacity: 0.6, marginTop: "2px" }}>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700 }}>{title}</h3>
+              <div style={{ fontSize: "12px", opacity: 0.55, marginTop: "2px" }}>
                 Форма, тип і товщина кожної лінії. Графік оновлюється одразу.
               </div>
             </div>
@@ -640,15 +753,19 @@ const ChartStyleModal = ({
                 {allCards ? "зміни застосовуються до графіків усіх карток" : "зміни діють лише для цієї картки"}
               </Hint>
             </SectionLabel>
-            <AllCardsToggle $active={allCards} $isDarkMode={isDarkMode}>
-              <input type="checkbox" checked={allCards} onChange={(e) => onToggleAllCards(e.target.checked)} />
-              Для всіх карток
-            </AllCardsToggle>
+            {/* Без onToggleAllCards (загальні налаштування) — перемикача немає: там завжди всі картки */}
+            {onToggleAllCards && (
+              <AllCardsToggle $active={allCards} $isDarkMode={isDarkMode}>
+                <input type="checkbox" checked={allCards} onChange={(e) => onToggleAllCards(e.target.checked)} />
+                <span className="switch" aria-hidden="true" />
+                Для всіх карток
+              </AllCardsToggle>
+            )}
           </SectionHeader>
           <AllLinesPanel $isDarkMode={isDarkMode}>
             <Row>
               <span className="name">Форма</span>
-              <Options>
+              <Options $isDarkMode={isDarkMode}>
                 {Object.entries(CURVES).map(([k, c]) => (
                   <OptionButton
                     key={k}
@@ -662,10 +779,9 @@ const ChartStyleModal = ({
                 ))}
               </Options>
             </Row>
-            <Divider $isDarkMode={isDarkMode} />
             <Row>
               <span className="name">Тип лінії</span>
-              <Options>
+              <Options $isDarkMode={isDarkMode}>
                 {Object.entries(DASHES).map(([k, d]) => (
                   <OptionButton key={k} $active={sameDash === k} $isDarkMode={isDarkMode} onClick={() => onApplyAll({ dash: k })}>
                     <DashSwatch dashKey={k} color={swatchColor} /> {d.label}
@@ -673,7 +789,6 @@ const ChartStyleModal = ({
                 ))}
               </Options>
             </Row>
-            <Divider $isDarkMode={isDarkMode} />
             <Row title="Наскільки видно лінію, коли її вимкнено в легенді над графіком">
               <span className="name">Коли вимкнено</span>
               <DimSlider
@@ -683,10 +798,9 @@ const ChartStyleModal = ({
                 onChange={(v) => onApplyAll({ dimOpacity: v })}
               />
             </Row>
-            <Divider $isDarkMode={isDarkMode} />
             <Row title="Маленькі числа біля точок: температура, вітер тощо">
               <span className="name">Цифри</span>
-              <Options>
+              <Options $isDarkMode={isDarkMode}>
                 <OptionButton $active={anyLabels} $isDarkMode={isDarkMode} onClick={() => onApplyAll({ labels: true })}>
                   Показувати
                 </OptionButton>

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import styled, { keyframes, css } from "styled-components";
 import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaSatelliteDish, FaBolt } from "react-icons/fa";
-import { FiCheck, FiPlay, FiPlus, FiSearch, FiX } from "react-icons/fi";
+import { FiCheck, FiEdit2, FiPlay, FiPlus, FiSearch, FiX } from "react-icons/fi";
 import { Tooltip } from "../Header/Header.jsx";
 import { MdDragIndicator } from "react-icons/md";
 import { Reorder, motion, useDragControls } from "framer-motion";
@@ -25,6 +25,7 @@ import coverSaveEcoBot from "../../media/third-party/services/saveecobot.webp";
 import coverAirTraffic from "../../media/third-party/services/air-traffic.webp";
 import coverDeepState from "../../media/third-party/services/deepstate.webp";
 import { usePageActive } from "../../utils/pageActivity.js";
+import FunTicker from "./FunTicker";
 // Ctrl + Alt + M: Активувати/деактивувати мапу
 // Ctrl + Alt + F: Відкрити на весь екран
 // Ctrl + Alt + P: Відкрити/закрити міні-плеєр
@@ -158,8 +159,10 @@ const MobileSettingsOverlay = styled.div`
   position: absolute;
   inset: 0;
   z-index: 30;
-  align-items: flex-start;
-  justify-content: center;
+  /* $stack: панель зверху, під нею рядок із жартами/фактами на все вільне місце */
+  flex-direction: ${(p) => (p.$stack ? "column" : "row")};
+  align-items: ${(p) => (p.$stack ? "center" : "flex-start")};
+  justify-content: ${(p) => (p.$stack ? "flex-start" : "center")};
   background: ${(p) => p.$isDarkMode ? "rgba(2, 5, 12, 0.55)" : "rgba(0, 0, 0, 0.3)"};
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -191,6 +194,9 @@ const MobileSettingsPanel = styled.div`
     ? "0 -8px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03) inset"
     : "0 -8px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.8) inset"};
   ${PanelScrollbar}
+
+  /* Під панеллю рядок із фразами (FunTicker) — нижню рамку малює вже він, щоб вийшло одне ціле */
+  ${(p) => p.$joined && "flex-shrink: 1; border-bottom: none;"}
 `;
 
 const MobileSettingsHeading = styled.div`
@@ -681,7 +687,7 @@ const SourceSearch = styled.label`
 
   svg {
     position: absolute;
-    left: 12px;
+    left: 6px;
     font-size: 15px;
     color: ${(p) => p.$isDarkMode ? "rgba(255,179,108,0.7)" : "rgba(160,80,0,0.6)"};
     pointer-events: none;
@@ -690,12 +696,14 @@ const SourceSearch = styled.label`
   input {
     width: 100%;
     box-sizing: border-box;
-    padding: 9px 34px 9px 36px;
-    border-radius: 10px;
+    padding: 9px 6px 9px 26px;
+    border-radius: 5px;
     border: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"};
     background: ${(p) => p.$isDarkMode ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.85)"};
     color: ${(p) => p.$isDarkMode ? "white" : "#1a0800"};
     font-size: 13px;
+    /* Довгий плейсхолдер на вузькій панелі обрізаємо трикрапкою */
+    text-overflow: ellipsis;
     outline: none;
     transition: border-color 0.18s;
     &::placeholder { color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.35)" : "rgba(100,50,0,0.4)"}; }
@@ -897,7 +905,7 @@ const SPLIT_QUERY =
 
 const MapLayout = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(190px, 22%, 260px);
+  grid-template-columns: minmax(0, 1fr) clamp(143px, 16.5%, 195px);
   gap: 5px;
   width: 100%;
   max-width: 1200px;
@@ -939,15 +947,16 @@ const SidebarHeader = styled.div`
   z-index: 4;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px 8px 7px;
+  gap: 5px;
+  padding: 6px 6px 6px;
   background: ${(p) => p.$isDarkMode ? "#1b1c1f" : "#f6f7f9"};
   border-bottom: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"};
 `;
 
 const SidebarTitle = styled.h2`
   margin: 0;
-  padding: 2px 4px;
+  padding: 0 3px;
+  overflow-wrap: anywhere;
   font-family: var(--font-family);
   font-size: 15px;
   font-weight: 700;
@@ -955,19 +964,48 @@ const SidebarTitle = styled.h2`
   color: ${(p) => p.$isDarkMode ? "#ffffff" : "#111111"};
 `;
 
+// Підказка «Закрити · Esc» замість змінних підказок, поки налаштування відкриті
+const SettingsCloseHint = styled.span`
+  display: block;
+  font-size: 11.5px;
+  font-weight: 500;
+  opacity: 0.85;
+`;
+
 const SidebarSettingsButton = styled(MobileSettingsButton)`
   justify-content: center;
   width: 100%;
-  min-height: 46px;
-  padding: 8px 10px;
+  min-height: 0;
+  padding: 5px 8px;
   font-size: 13px;
   line-height: 1.25;
   text-align: center;
+  /* Вузька панель: довгі слова (de, el, fi…) переносимо, а не випускаємо за рамку */
+  overflow-wrap: anywhere;
+
+  & > span { min-width: 0; max-width: 100%; gap: 1px; }
+  /* Підказка змінюється кожні 3 с — один рядок з трикрапкою, щоб панель не стрибала по висоті */
+  ${SettingsHint}, ${SettingsCloseHint} {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Налаштування відкриті: заповнена кнопка — видно, що вона зараз активна */
+  ${(p) => p.$active && `
+    border-color: #ffb36c;
+    background: ${p.$isDarkMode
+      ? "linear-gradient(135deg, rgba(255, 179, 108, 0.28), rgba(255, 140, 40, 0.18))"
+      : "linear-gradient(135deg, rgba(255, 210, 160, 0.95), rgba(255, 190, 120, 0.95))"};
+    box-shadow: 0 0 0 1px rgba(255, 179, 108, 0.35), 0 4px 20px rgba(255, 140, 0, 0.3);
+    ${p.$isDarkMode ? "" : "& > span { color: #7a3a00; }"}
+  `}
 `;
 
 const SourcesScroll = styled.div`
   box-sizing: border-box;
-  padding: 7px 8px 12px;
+  padding: 6px 6px 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -996,6 +1034,30 @@ const CardDelete = styled.button`
 
   &:hover { background: rgba(220, 50, 50, 0.9); }
   &:focus-visible { opacity: 1; }
+  /* Сенсорні екрани не мають наведення — кнопки власних фреймів видно завжди */
+  @media (hover: none) { opacity: 1; }
+
+  @container source-card (max-width: 239.98px) {
+    top: 5px;
+    right: 35px;
+    width: 22px;
+    height: 22px;
+    margin-top: 2px;
+    font-size: 13px;
+  }
+`;
+
+// Редагування власного фрейму — ліворуч від кнопки видалення
+const CardEdit = styled(CardDelete)`
+  right: 74px;
+  font-size: 13px;
+
+  &:hover { background: rgba(255, 179, 108, 0.9); color: #1b1c1f; }
+
+  @container source-card (max-width: 239.98px) {
+    right: 61px;
+    font-size: 11px;
+  }
 `;
 
 const DragHandle = styled.button`
@@ -1020,13 +1082,21 @@ const DragHandle = styled.button`
 
   &:hover { background: rgba(0, 0, 0, 0.8); }
   &:active { cursor: grabbing; }
+
+  @container source-card (max-width: 239.98px) {
+    top: 5px;
+    right: 5px;
+    width: 26px;
+    height: 26px;
+    font-size: 18px;
+  }
 `;
 
 // Вгорі між трикутником і ручкою (та кнопкою видалення, якщо вона є), щоб не закривати підпис
 const SplitCheck = styled.label`
   position: absolute;
   top: 6px;
-  right: ${(p) => (p.$withDelete ? "76px" : "44px")};
+  right: ${(p) => (p.$withDelete ? "104px" : "44px")};
   z-index: 3;
   display: flex;
   align-items: center;
@@ -1057,6 +1127,27 @@ const SplitCheck = styled.label`
   }
   input:disabled { cursor: not-allowed; }
   input:disabled ~ * { opacity: 0.55; }
+
+  /* Вузька картка (бічна панель): компактна плашка 26px з підписом.
+     На власних фреймах праворуч ще ✏️ і ✕ — там лише квадрат (назва в підказці та aria-label) */
+  @container source-card (max-width: 239.98px) {
+    top: 5px;
+    right: ${(p) => (p.$withDelete ? "87px" : "35px")};
+    height: 26px;
+    padding: ${(p) => (p.$withDelete ? "0" : "0 8px 0 6px")};
+    ${(p) => p.$withDelete && "width: 26px;"}
+    border-radius: 13px;
+    font-size: 10px;
+  }
+`;
+
+const SplitLabelText = styled.span`
+  margin-inline-start: 6px;
+
+  @container source-card (max-width: 239.98px) {
+    margin-inline-start: 5px;
+    ${(p) => p.$iconOnly && "display: none;"}
+  }
 `;
 
 const SplitBox = styled.span`
@@ -1085,8 +1176,10 @@ const SourceCardWrap = styled(Reorder.Item)`
   position: relative;
   flex-shrink: 0;
   list-style: none;
+  /* Розмір кнопок і тексту залежить від ширини картки, а не екрана (бічна панель вузька) */
+  container: source-card / inline-size;
 
-  &:hover ${CardDelete} { opacity: 1; }
+  &:hover ${CardDelete}, &:hover ${CardEdit} { opacity: 1; }
 `;
 
 const CardCorner = styled.span`
@@ -1106,6 +1199,19 @@ const CardCorner = styled.span`
     left: 9px;
     font-size: 17px;
     color: ${(p) => p.$active ? "#ffffff" : "#202124"};
+  }
+
+  @container source-card (max-width: 239.98px) {
+    width: 40px;
+    height: 40px;
+
+    svg { top: 6px; left: 6px; font-size: 14px; }
+  }
+  @container source-card (max-width: 149.98px) {
+    width: 32px;
+    height: 32px;
+
+    svg { top: 4px; left: 4px; font-size: 12px; }
   }
 `;
 
@@ -1195,11 +1301,31 @@ const CardText = styled.span`
   }
   strong { font-size: 15px; font-weight: 700; }
   small { font-size: 11px; opacity: 0.85; }
+
+  @container source-card (max-width: 239.98px) {
+    left: 9px;
+    right: 9px;
+    bottom: 7px;
+
+    strong { font-size: 13px; }
+    small { font-size: 10px; }
+  }
+  /* Дуже вузька картка з приміткою: підпис ховаємо, щоб примітка не залазила під кнопки вгорі */
+  @container source-card (max-width: 199.98px) {
+    &:has(> span) small { display: none; }
+  }
+  /* Найвужча панель (екрани 768–870px): лише назва і примітка, примітка не заходить під ручку */
+  @container source-card (max-width: 149.98px) {
+    small { display: none; }
+    & > span { max-width: calc(100% - 26px); margin-bottom: 2px; }
+  }
 `;
 
 // Примітка над назвою картки (наприклад, «Потрібна Дія»)
 const CardNote = styled.span`
   align-self: flex-start;
+  /* Завжди ліворуч (і в ar/fa), бо кнопки картки стоять праворуч фізично */
+  margin-right: auto;
   max-width: 100%;
   margin-bottom: 4px;
   padding: 2px 8px;
@@ -1331,11 +1457,21 @@ const VOICE_SOURCES = new Set(["trivoga-online"]);
 const UKRAINE_ONLY_SOURCES = new Set(["alerts-ua", "ukrainealarm", "trivoga-online", "saveecobot", "deepstate"]);
 
 // Картка джерела; перетягується лише за ручку, щоб не заважати прокрутці на дотик
-const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSplitChecked, splitLocked, onToggleSplit, isDarkMode }) => {
+// editForm — форма редагування власного фрейму, що показується замість картки
+const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, splitAvailable, isSplitChecked, splitLocked, onToggleSplit, isDarkMode }) => {
   const { t } = useTranslation();
   const controls = useDragControls();
   const { id, title, subtitle, note, Icon, bg, frame, cover, favicon } = item;
-  const [faviconFailed, setFaviconFailed] = useState(false);
+  // Пам'ятаємо, яка саме іконка не завантажилась: після зміни адреси фрейму пробуємо нову
+  const [failedFavicon, setFailedFavicon] = useState(null);
+  const faviconFailed = failedFavicon === favicon;
+  if (editForm) {
+    return (
+      <SourceCardWrap value={id} forwardedAs="div" dragListener={false} dragControls={controls}>
+        {editForm}
+      </SourceCardWrap>
+    );
+  }
   return (
     <SourceCardWrap
       value={id}
@@ -1363,7 +1499,7 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSpli
                 alt=""
                 draggable={false}
                 referrerPolicy="no-referrer"
-                onError={() => setFaviconFailed(true)}
+                onError={() => setFailedFavicon(favicon)}
               />
             </CardFavicon>
           </>
@@ -1398,19 +1534,29 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, splitAvailable, isSpli
               onChange={() => onToggleSplit(id)}
             />
             <SplitBox aria-hidden="true"><FiCheck /></SplitBox>
-            <span style={{ marginLeft: 6 }}>{t("climateMap.splitLabel")}</span>
+            <SplitLabelText $iconOnly={!!frame}>{t("climateMap.splitLabel")}</SplitLabelText>
           </Tooltip>
         </SplitCheck>
       )}
       {frame && (
-        <CardDelete
-          type="button"
-          aria-label={t("climateMap.deleteItem", { title })}
-          title={t("climateMap.delete")}
-          onClick={() => onDelete(frame)}
-        >
-          <FiX />
-        </CardDelete>
+        <>
+          <CardEdit
+            type="button"
+            aria-label={t("climateMap.editItem", { title })}
+            title={t("climateMap.edit")}
+            onClick={() => onEdit(frame)}
+          >
+            <FiEdit2 />
+          </CardEdit>
+          <CardDelete
+            type="button"
+            aria-label={t("climateMap.deleteItem", { title })}
+            title={t("climateMap.delete")}
+            onClick={() => onDelete(frame)}
+          >
+            <FiX />
+          </CardDelete>
+        </>
       )}
     </SourceCardWrap>
   );
@@ -1586,6 +1732,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [isWideLayout, setIsWideLayout] = useState(() =>
     typeof window !== "undefined" && window.matchMedia(WIDE_LAYOUT_QUERY).matches,
   );
+  // Жарти/факти/поради є лише українською; на телефоні панель налаштувань і так на всю висоту
+  const showFunTicker = isWideLayout && isUkrainian;
   const [isSplitEnabled, setIsSplitEnabled] = useState(false);
   const [secondProvider, setSecondProvider] = useState("windy");
   const [isLoadingSecond, setIsLoadingSecond] = useState(true);
@@ -1634,6 +1782,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [customFrames, setCustomFrames] = useState([]);
   const [newFrameTitle, setNewFrameTitle] = useState("");
   const [newFrameUrl, setNewFrameUrl] = useState("");
+  const [editingFrameId, setEditingFrameId] = useState(null);
+  // Де відкрили редагування: "sidebar" — форма на місці картки, "settings" — у панелі налаштувань
+  const [editingFrom, setEditingFrom] = useState(null);
   const [isCheckingFrame, setIsCheckingFrame] = useState(false);
 
   const orderedSources = useMemo(() => {
@@ -1887,6 +2038,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const handleDeleteFrame = (id) => {
     const next = customFrames.filter((f) => f.id !== id);
     saveCustomFrames(next);
+    if (editingFrameId === id) handleCancelAddFrame();
     if (provider === id) {
       handleSetProvider("ventusky");
     }
@@ -1895,11 +2047,10 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     }
   };
 
-  const handleAddFrame = async (e) => {
-    e.preventDefault();
-    if (!newFrameUrl.trim() || isCheckingFrame) return;
-
-    let targetUrl = newFrameUrl.trim();
+  // Перевіряє адресу фрейму: повертає посилання або null (і показує, що не так).
+  // Незмінену адресу при редагуванні повторно на вбудовування не перевіряємо.
+  const resolveFrameUrl = async (raw, unchangedUrl) => {
+    let targetUrl = raw.trim();
     const matchSrc = targetUrl.match(/src=["']([^"']+)["']/i);
     if (matchSrc) {
       targetUrl = matchSrc[1];
@@ -1907,15 +2058,17 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
     if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
       toast.error(t("climateMap.invalidUrl"));
-      return;
+      return null;
     }
 
     // Стихію саму в себе не вкладаємо (і будь-яку її сторінку)
     const targetHost = (getFrameHost(targetUrl) || "").replace(/^www\./, "");
     if (targetHost === "stuxia.com" || targetHost === window.location.hostname.replace(/^www\./, "")) {
       toast.error(t("climateMap.selfFrame"));
-      return;
+      return null;
     }
+
+    if (targetUrl === unchangedUrl) return targetUrl;
 
     // Сайти з X-Frame-Options / CSP frame-ancestors у фреймі показують лише порожнє вікно
     setIsCheckingFrame(true);
@@ -1923,29 +2076,55 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     setIsCheckingFrame(false);
     if (embeddable === false) {
       toast.error(t("climateMap.frameBlocked", { host: getFrameHost(targetUrl) || targetUrl }), { duration: 6000 });
-      return;
+      return null;
     }
+    return targetUrl;
+  };
+
+  // Одна форма і для додавання, і для редагування (editingFrameId ≠ null)
+  const handleAddFrame = async (e) => {
+    e.preventDefault();
+    if (!newFrameUrl.trim() || isCheckingFrame) return;
+
+    const editing = editingFrameId ? customFrames.find((f) => f.id === editingFrameId) : null;
+    const targetUrl = await resolveFrameUrl(newFrameUrl, editing?.url);
+    if (!targetUrl) return;
 
     const title = newFrameTitle.trim() || t("climateMap.customWidget");
 
-    const newFrame = {
-      id: "custom-" + Date.now(),
-      title,
-      url: targetUrl,
-    };
-
-    const updated = [...customFrames, newFrame];
-    saveCustomFrames(updated);
-    setProvider(newFrame.id);
-    setNewFrameTitle("");
-    setNewFrameUrl("");
-    setIsAddingFrame(false);
+    if (editing) {
+      saveCustomFrames(customFrames.map((f) => (f.id === editing.id ? { ...f, title, url: targetUrl } : f)));
+    } else {
+      const newFrame = {
+        id: "custom-" + Date.now(),
+        title,
+        url: targetUrl,
+      };
+      saveCustomFrames([...customFrames, newFrame]);
+      setProvider(newFrame.id);
+    }
+    handleCancelAddFrame();
   };
 
   const handleCancelAddFrame = () => {
     setIsAddingFrame(false);
+    setEditingFrameId(null);
+    setEditingFrom(null);
     setNewFrameTitle("");
     setNewFrameUrl("");
+  };
+
+  const handleStartAddFrame = () => {
+    handleCancelAddFrame();
+    setIsAddingFrame(true);
+  };
+
+  const handleStartEditFrame = (frame, from = "sidebar") => {
+    setIsAddingFrame(false);
+    setEditingFrameId(frame.id);
+    setEditingFrom(from);
+    setNewFrameTitle(frame.title);
+    setNewFrameUrl(frame.url);
   };
 
   const handleReorderSources = async (ids) => {
@@ -1982,6 +2161,44 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         </button>
       )}
     </SourceSearch>
+  );
+
+  // Форма бічної панелі: внизу списку — додавання, на місці картки — редагування
+  const sidebarFrameForm = (
+    <SidebarAddForm
+      $isDarkMode={isDarkMode}
+      onSubmit={handleAddFrame}
+      onKeyDown={(e) => e.key === "Escape" && handleCancelAddFrame()}
+    >
+      <FormInput
+        $isDarkMode={isDarkMode}
+        type="text"
+        placeholder={t("climateMap.titlePlaceholderShort")}
+        aria-label={t("climateMap.titlePlaceholderShort")}
+        value={newFrameTitle}
+        onChange={(e) => setNewFrameTitle(e.target.value)}
+        autoFocus
+      />
+      <FormInput
+        $isDarkMode={isDarkMode}
+        type="text"
+        placeholder={t("climateMap.urlPlaceholderShort")}
+        aria-label={t("climateMap.urlPlaceholderShort")}
+        value={newFrameUrl}
+        onChange={(e) => setNewFrameUrl(e.target.value)}
+        required
+      />
+      <div style={{ display: "flex", gap: "6px" }}>
+        <FormButton type="submit" style={{ flex: 1 }} disabled={isCheckingFrame}>
+          {isCheckingFrame
+            ? t("climateMap.frameChecking")
+            : t(editingFrameId ? "climateMap.save" : "climateMap.add")}
+        </FormButton>
+        <FormCancelButton $isDarkMode={isDarkMode} type="button" onClick={handleCancelAddFrame}>
+          {t("climateMap.cancel")}
+        </FormCancelButton>
+      </div>
+    </SidebarAddForm>
   );
 
   // Галочка на картці: додає джерело праворуч (максимум 2); повторна — повертає один фрейм
@@ -2359,17 +2576,25 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         onClick={() => !isMapActive && handleActivateMap()}
       >
         {isControlsOpen && (
-          <MobileSettingsOverlay $isDarkMode={isDarkMode} onClick={() => setIsControlsOpen(false)}>
-            <MobileSettingsPanel $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
+          <MobileSettingsOverlay $isDarkMode={isDarkMode} $stack={showFunTicker} onClick={() => setIsControlsOpen(false)}>
+            <MobileSettingsPanel $isDarkMode={isDarkMode} $joined={showFunTicker} onClick={(e) => e.stopPropagation()}>
               <MobileSettingsHeading $isDarkMode={isDarkMode}>
                 <div>
                   <h2>
                     <span style={{ color: "#ffb36c" }}>{settingsTitle}</span>
                   </h2>
                 </div>
-                <MobileSettingsClose $isDarkMode={isDarkMode} type="button" onClick={() => setIsControlsOpen(false)}>
-                  ×
-                </MobileSettingsClose>
+                <Tooltip content={`${t("common.close")} · Esc`} placement="left" isDarkMode={isDarkMode}>
+                  <MobileSettingsClose
+                    $isDarkMode={isDarkMode}
+                    type="button"
+                    aria-label={t("common.close")}
+                    aria-keyshortcuts="Escape"
+                    onClick={() => setIsControlsOpen(false)}
+                  >
+                    ×
+                  </MobileSettingsClose>
+                </Tooltip>
               </MobileSettingsHeading>
               <SettingsGrid>
               <KeyboardSettingRow $isDarkMode={isDarkMode}>
@@ -2516,16 +2741,32 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                       padding: "6px 14px",
                     }}
                   >
-                    {isCheckingFrame ? t("climateMap.frameChecking") : t("climateMap.add")}
+                    {isCheckingFrame
+                      ? t("climateMap.frameChecking")
+                      : t(editingFrameId ? "climateMap.save" : "climateMap.add")}
                   </FormButton>
                 </InputContainer>
+                {editingFrameId && (
+                  <FormCancelButton $isDarkMode={isDarkMode} type="button" onClick={handleCancelAddFrame}>
+                    {t("climateMap.cancel")}
+                  </FormCancelButton>
+                )}
 
                 {customFrames.length > 0 && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                     <span style={{ fontSize: "10px", color: isDarkMode ? "rgba(255,255,255,0.35)" : "rgba(100,50,0,0.45)", letterSpacing: "0.05em", textTransform: "uppercase" }}>{t("climateMap.saved")}</span>
                     {customFrames.map((frame) => (
-                      <div key={frame.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)", padding: "6px 10px", borderRadius: "7px", border: isDarkMode ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(0,0,0,0.08)" }}>
-                        <span style={{ fontSize: "12px", color: isDarkMode ? "rgba(255,255,255,0.8)" : "rgba(30,10,0,0.8)" }}>{frame.title}</span>
+                      <div key={frame.id} style={{ display: "flex", alignItems: "center", gap: "4px", background: isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)", padding: "6px 10px", borderRadius: "7px", border: frame.id === editingFrameId ? "1px solid rgba(255,179,108,0.7)" : isDarkMode ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(0,0,0,0.08)" }}>
+                        <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "12px", color: isDarkMode ? "rgba(255,255,255,0.8)" : "rgba(30,10,0,0.8)" }}>{frame.title}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditFrame(frame, "settings")}
+                          style={{ background: "transparent", border: "none", color: "#ffb36c", cursor: "pointer", fontSize: "13px", padding: "2px 4px", borderRadius: "4px", display: "flex" }}
+                          title={t("climateMap.edit")}
+                          aria-label={t("climateMap.editItem", { title: frame.title })}
+                        >
+                          <FiEdit2 />
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteFrame(frame.id)}
@@ -2542,6 +2783,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               </>)}
 
             </MobileSettingsPanel>
+            {showFunTicker && <FunTicker isDarkMode={isDarkMode} />}
           </MobileSettingsOverlay>
         )}
 
@@ -2650,17 +2892,26 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         <SourcesSidebar $isDarkMode={isDarkMode} aria-label={t("climateMap.sourcesAria")} layoutScroll>
           <SidebarHeader $isDarkMode={isDarkMode}>
             <SidebarTitle $isDarkMode={isDarkMode}>{t("climateMap.title")}</SidebarTitle>
+            {/* Поки налаштування відкриті, кнопка підсвічена і закриває їх повторним натисканням */}
             <SidebarSettingsButton
               $isDarkMode={isDarkMode}
+              $active={isControlsOpen}
               type="button"
-              onClick={() => setIsControlsOpen(true)}
+              onClick={() => setIsControlsOpen((open) => !open)}
               aria-label={settingsTitle}
+              aria-expanded={isControlsOpen}
             >
-              {settingsButtonContent}
+              {isControlsOpen ? (
+                <SettingsButtonLabel>
+                  <strong>{settingsTitle}</strong>
+                  <SettingsCloseHint>{t("common.close")} · Esc</SettingsCloseHint>
+                </SettingsButtonLabel>
+              ) : settingsButtonContent}
             </SidebarSettingsButton>
+            {/* Пошук у липкій шапці — лишається видимим під час прокрутки карток */}
+            {sourceSearchField}
           </SidebarHeader>
           <SourcesScroll>
-            {sourceSearchField}
             {filteredSources.length === 0 && (
               <SourcesEmpty $isDarkMode={isDarkMode}>{t("climateMap.noSourcesFound")}</SourcesEmpty>
             )}
@@ -2669,7 +2920,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               as="div"
               values={filteredSources.map((item) => item.id)}
               onReorder={handleReorderVisibleSources}
-              style={{ display: "flex", flexDirection: "column", gap: "16px", margin: 0, padding: 0 }}
+              style={{ display: "flex", flexDirection: "column", gap: "10px", margin: 0, padding: 0 }}
             >
               {filteredSources.map((item) => (
                 <SourceItem
@@ -2678,6 +2929,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   isActive={provider === item.id || (isSplitActive && secondProvider === item.id)}
                   onSelect={handleSelectSource}
                   onDelete={handleConfirmDeleteFrame}
+                  onEdit={handleStartEditFrame}
+                  editForm={item.frame && item.id === editingFrameId && editingFrom === "sidebar" ? sidebarFrameForm : null}
                   splitAvailable={canSplit}
                   isSplitChecked={isSplitActive && (item.id === provider || item.id === secondProvider)}
                   splitLocked={!isSplitActive && item.id === provider}
@@ -2688,43 +2941,14 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
             </Reorder.Group>
 
             {isAddingFrame ? (
-              <SidebarAddForm
-                $isDarkMode={isDarkMode}
-                onSubmit={handleAddFrame}
-                onKeyDown={(e) => e.key === "Escape" && handleCancelAddFrame()}
-              >
-                <FormInput
-                  $isDarkMode={isDarkMode}
-                  type="text"
-                  placeholder={t("climateMap.titlePlaceholderShort")}
-                  value={newFrameTitle}
-                  onChange={(e) => setNewFrameTitle(e.target.value)}
-                  autoFocus
-                />
-                <FormInput
-                  $isDarkMode={isDarkMode}
-                  type="text"
-                  placeholder={t("climateMap.urlPlaceholderShort")}
-                  value={newFrameUrl}
-                  onChange={(e) => setNewFrameUrl(e.target.value)}
-                  required
-                />
-                <div style={{ display: "flex", gap: "6px" }}>
-                  <FormButton type="submit" style={{ flex: 1 }} disabled={isCheckingFrame}>
-                    {isCheckingFrame ? t("climateMap.frameChecking") : t("climateMap.add")}
-                  </FormButton>
-                  <FormCancelButton $isDarkMode={isDarkMode} type="button" onClick={handleCancelAddFrame}>
-                    {t("climateMap.cancel")}
-                  </FormCancelButton>
-                </div>
-              </SidebarAddForm>
+              sidebarFrameForm
             ) : (
               <AddSourceTile
                 $isDarkMode={isDarkMode}
                 type="button"
                 aria-label={t("climateMap.addOwnFrame")}
                 title={t("climateMap.addOwnFrame")}
-                onClick={() => setIsAddingFrame(true)}
+                onClick={handleStartAddFrame}
               >
                 <FiPlus />
                 <span>{t("climateMap.addYourFrame")}</span>
