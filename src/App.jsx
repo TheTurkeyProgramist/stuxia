@@ -331,6 +331,57 @@ const WeatherCardsContainer = styled.div`
   }
 `;
 
+/* Заглушка картки, поки перший прогноз ще не прийшов. Висота — як у справжньої картки
+   (Weather.jsx: MainBannerArea / DesktopLayoutWrapper + рамка WeatherCard), інакше картка
+   з'являлась пізніше й штовхала кліматичну карту вниз (зсув макета, CLS) */
+const weatherSkeletonPulse = keyframes`
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+`;
+
+const WeatherCardSkeletonBox = styled.div`
+  box-sizing: border-box;
+  width: 100%;
+  height: 629px;
+  border-radius: 5px;
+  border: 1.5px solid #004cff;
+  background: ${(props) => (props.$isDarkMode ? "#0000009e" : "#f5f5f5aa")};
+  animation: ${weatherSkeletonPulse} 1.6s ease-in-out infinite;
+
+  @media (min-width: 768px) {
+    height: 573px;
+    border-radius: 8px;
+  }
+  @media (min-width: 1024px) {
+    height: 598px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+  html[data-animations-off] & {
+    animation: none;
+  }
+`;
+
+// Якщо прогноз так і не прийшов (немає мережі) — прибираємо порожню заглушку
+const WEATHER_SKELETON_MAX_MS = 20000;
+
+const WeatherCardSkeleton = ({ isDarkMode }) => {
+  const [isExpired, setIsExpired] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setIsExpired(true), WEATHER_SKELETON_MAX_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  if (isExpired) return null;
+  return (
+    <WeatherCardSkeletonBox
+      $isDarkMode={isDarkMode}
+      role="status"
+      aria-label="Завантажуємо прогноз погоди"
+    />
+  );
+};
+
 /* Плавне зникнення/поява стрілок і номерів, коли їх вимикають у налаштуваннях */
 const CAROUSEL_TOGGLE_TRANSITION = "0.3s ease";
 
@@ -1881,8 +1932,10 @@ const LazyClimateMap = (props) => {
     return () => observer.disconnect();
   }, [isNearViewport]);
 
+  // Висота й нижній відступ — як у MapLayout у ClimateMap.jsx (карта min-height 560 + margin 30),
+  // щоб поява карти не зсувала вміст нижче
   const placeholder = (
-    <div ref={placeholderRef} style={{ minHeight: "560px" }} />
+    <div ref={placeholderRef} style={{ minHeight: "560px", marginBottom: "30px" }} />
   );
 
   if (!isNearViewport) return placeholder;
@@ -1950,6 +2003,11 @@ const SectionContent = memo(
             }))}
             onReorder={onReorderCards}
           >
+            {weatherCards.length === 0 && !hideGpsCard && (
+              <div key="weather-skeleton">
+                <WeatherCardSkeleton isDarkMode={isDarkMode} />
+              </div>
+            )}
             {weatherCards.map((card, index) => {
               const isExtremeTemp =
                 card.current.tempNum > 30 || card.current.tempNum < -30;

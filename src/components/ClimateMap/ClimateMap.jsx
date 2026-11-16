@@ -1198,7 +1198,7 @@ const SplitBox = styled.span`
   input:focus-visible + & { outline: 2px solid #fff; outline-offset: 2px; }
 `;
 
-const SourceCardWrap = styled(Reorder.Item)`
+const sourceCardWrapStyles = css`
   position: relative;
   flex-shrink: 0;
   list-style: none;
@@ -1207,6 +1207,19 @@ const SourceCardWrap = styled(Reorder.Item)`
 
   &:hover ${CardDelete}, &:hover ${CardEdit} { opacity: 1; }
 `;
+
+const SourceCardWrap = styled(Reorder.Item)`
+  ${sourceCardWrapStyles}
+`;
+
+// Та сама картка без перетягування. Reorder.Item міряє розміри всіх карток при кожному
+// перемальовуванні, і під час завантаження сторінки це блокувало її на сотні мілісекунд.
+// Тому перетягування вмикається, лише коли на панель навели мишу, торкнулися чи перейшли клавіатурою
+const SourceCardPlain = styled.div`
+  ${sourceCardWrapStyles}
+`;
+
+const SOURCES_LIST_STYLE = { display: "flex", flexDirection: "column", gap: "10px", margin: 0, padding: 0 };
 
 const CardCorner = styled.span`
   position: absolute;
@@ -1484,27 +1497,32 @@ const UKRAINE_ONLY_SOURCES = new Set(["alerts-ua", "ukrainealarm", "trivoga-onli
 
 // Картка джерела; перетягується лише за ручку, щоб не заважати прокрутці на дотик
 // editForm — форма редагування власного фрейму, що показується замість картки
-const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, splitAvailable, isSplitChecked, splitLocked, onToggleSplit, isDarkMode }) => {
+// reorderReady — чи вже ввімкнено перетягування (див. SourceCardPlain).
+// onNeedReorder(id, e) — увімкнути його, запам'ятавши натискання на ручку;
+// takePendingDrag(id) — забрати це натискання. Зберігає його ClimateMap, бо при ввімкненні
+// список змінює обгортку (div → Reorder.Group) і картки монтуються наново
+const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, splitAvailable, isSplitChecked, splitLocked, onToggleSplit, isDarkMode, reorderReady, onNeedReorder, takePendingDrag }) => {
   const { t } = useTranslation();
   const controls = useDragControls();
   const { id, title, subtitle, note, Icon, bg, frame, cover, favicon } = item;
   // Пам'ятаємо, яка саме іконка не завантажилась: після зміни адреси фрейму пробуємо нову
   const [failedFavicon, setFailedFavicon] = useState(null);
   const faviconFailed = failedFavicon === favicon;
+  // Ручку затиснули ще до ввімкнення перетягування — починаємо тягнути, щойно картка стала Reorder.Item
+  useEffect(() => {
+    if (!reorderReady) return;
+    const pendingEvent = takePendingDrag?.(id);
+    if (pendingEvent) controls.start(pendingEvent);
+  }, [reorderReady, controls, id, takePendingDrag]);
+  const wrapProps = reorderReady
+    ? { value: id, forwardedAs: "div", dragListener: false, dragControls: controls }
+    : {};
+  const Wrap = reorderReady ? SourceCardWrap : SourceCardPlain;
   if (editForm) {
-    return (
-      <SourceCardWrap value={id} forwardedAs="div" dragListener={false} dragControls={controls}>
-        {editForm}
-      </SourceCardWrap>
-    );
+    return <Wrap {...wrapProps}>{editForm}</Wrap>;
   }
   return (
-    <SourceCardWrap
-      value={id}
-      forwardedAs="div"
-      dragListener={false}
-      dragControls={controls}
-    >
+    <Wrap {...wrapProps}>
       <SourceCard
         type="button"
         $bg={bg}
@@ -1544,7 +1562,10 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, spli
         type="button"
         aria-label={t("climateMap.dragItem", { title })}
         title={t("climateMap.dragHint")}
-        onPointerDown={(e) => controls.start(e)}
+        onPointerDown={(e) => {
+          if (reorderReady) controls.start(e);
+          else onNeedReorder?.(id, e);
+        }}
       >
         <MdDragIndicator />
       </DragHandle>
@@ -1584,7 +1605,7 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, spli
           </CardDelete>
         </>
       )}
-    </SourceCardWrap>
+    </Wrap>
   );
 };
 
@@ -1778,6 +1799,20 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [isAddingFrame, setIsAddingFrame] = useState(false);
   const [sourceOrder, setSourceOrder] = useState([]);
   const [sourceQuery, setSourceQuery] = useState("");
+  // Перетягування карток у бічній панелі — лише після першої взаємодії з нею (див. SourceCardPlain)
+  const [isSourcesReorderReady, setIsSourcesReorderReady] = useState(false);
+  const pendingSourceDragRef = useRef(null);
+  const enableSourcesReorder = () => setIsSourcesReorderReady(true);
+  const requestSourcesReorder = (id, event) => {
+    pendingSourceDragRef.current = { id, event };
+    setIsSourcesReorderReady(true);
+  };
+  const takePendingSourceDrag = (id) => {
+    const pending = pendingSourceDragRef.current;
+    if (!pending || pending.id !== id) return null;
+    pendingSourceDragRef.current = null;
+    return pending.event;
+  };
 
   useEffect(() => {
     const wideQuery = window.matchMedia(WIDE_LAYOUT_QUERY);
@@ -2915,7 +2950,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       </MapWrapper>
 
       {isWideLayout && (
-        <SourcesSidebar $isDarkMode={isDarkMode} aria-label={t("climateMap.sourcesAria")} layoutScroll>
+        <SourcesSidebar
+          $isDarkMode={isDarkMode}
+          aria-label={t("climateMap.sourcesAria")}
+          layoutScroll={isSourcesReorderReady}
+          onPointerEnter={isSourcesReorderReady ? undefined : enableSourcesReorder}
+          onFocus={isSourcesReorderReady ? undefined : enableSourcesReorder}
+        >
           <SidebarHeader $isDarkMode={isDarkMode}>
             <SidebarTitle $isDarkMode={isDarkMode}>{t("climateMap.title")}</SidebarTitle>
             {/* Поки налаштування відкриті, кнопка підсвічена і закриває їх повторним натисканням */}
@@ -2941,14 +2982,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
             {filteredSources.length === 0 && (
               <SourcesEmpty $isDarkMode={isDarkMode}>{t("climateMap.noSourcesFound")}</SourcesEmpty>
             )}
-            <Reorder.Group
-              axis="y"
-              as="div"
-              values={filteredSources.map((item) => item.id)}
-              onReorder={handleReorderVisibleSources}
-              style={{ display: "flex", flexDirection: "column", gap: "10px", margin: 0, padding: 0 }}
-            >
-              {filteredSources.map((item) => (
+            {(() => {
+              const cards = filteredSources.map((item) => (
                 <SourceItem
                   key={item.id}
                   item={item}
@@ -2962,9 +2997,25 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   splitLocked={!isSplitActive && item.id === provider}
                   onToggleSplit={handleToggleSplitSource}
                   isDarkMode={isDarkMode}
+                  reorderReady={isSourcesReorderReady}
+                  onNeedReorder={requestSourcesReorder}
+                  takePendingDrag={takePendingSourceDrag}
                 />
-              ))}
-            </Reorder.Group>
+              ));
+              return isSourcesReorderReady ? (
+                <Reorder.Group
+                  axis="y"
+                  as="div"
+                  values={filteredSources.map((item) => item.id)}
+                  onReorder={handleReorderVisibleSources}
+                  style={SOURCES_LIST_STYLE}
+                >
+                  {cards}
+                </Reorder.Group>
+              ) : (
+                <div style={SOURCES_LIST_STYLE}>{cards}</div>
+              );
+            })()}
 
             {isAddingFrame ? (
               sidebarFrameForm
