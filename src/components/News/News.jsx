@@ -159,6 +159,21 @@ const NewsDiv = styled.div`
   box-sizing: border-box;
 `;
 
+// Поки новини вантажаться — займаємо ту саму висоту, що й карусель з кнопками під нею
+// (заміряно: 247px на телефоні, 251px з 768px). Інакше після завантаження блок виростав
+// на ~60px, і через центрування в Hero весь його вміст стрибав угору (зсув макета, CLS)
+const NewsLoadingBox = styled.div`
+  box-sizing: border-box;
+  min-height: 247px;
+  padding: 60px 20px;
+  text-align: center;
+  color: gray;
+
+  @media (min-width: 768px) {
+    min-height: 251px;
+  }
+`;
+
 const AihelpTitle = styled.div`
   font-size: 25px;
   text-align: center;
@@ -4101,9 +4116,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       </Decoder>
 
       {loading ? (
-        <div
-          style={{ textAlign: "center", color: "gray", padding: "60px 20px" }}
-        >
+        <NewsLoadingBox>
           <div
             style={{
               marginBottom: "15px",
@@ -4123,7 +4136,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           <ProgressBar $isDarkMode={$isDarkMode}>
             <ProgressBarFill $progress={loadProgress} $isError={hasError} />
           </ProgressBar>
-        </div>
+        </NewsLoadingBox>
       ) : filteredItems.length > 0 ? (
         <div
           style={{ position: "relative", maxWidth: "1400px", margin: "0 auto" }}

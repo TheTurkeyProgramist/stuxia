@@ -46,7 +46,8 @@ import village from "../../media/third-party/games/dragon-village-3.webp"
 import villagePreview from "../../media/third-party/games/dragon-village-3.webp?w=128&format=webp&quality=50";
 import faded from "../../media/backgrounds/scenes/resort.webp";
 import fadedPreview from "../../media/backgrounds/scenes/resort.webp?w=128&format=webp&quality=50";
-import { DEFAULT_BGS } from "./defaultBgs";
+import { DEFAULT_BGS, DEFAULT_HERO_BG, MOBILE_CONTAIN_BGS } from "./defaultBgs";
+import { HeroVersionBadge } from "./HeroCredits";
 import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
 import News from "../News/News.jsx";
 // ШІ-помічник (Gemini + markdown) вантажиться лише при відкритті модалки
@@ -275,6 +276,30 @@ const BgLayerStyled = styled.div`
   z-index: ${(props) => (props.$isStickyBgMode ? "-10" : "-2")} !important;
   will-change: opacity;
   backface-visibility: hidden;
+
+  /* Телефон: фото з MOBILE_CONTAIN_BGS видно цілим, а смуги над і під ним
+     заповнює розмита копія (як було на заставці завантаження) */
+  .hero-bg-blur {
+    display: none;
+  }
+  @media (max-width: 480px) {
+    overflow: hidden;
+
+    .hero-bg-blur {
+      display: block;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: blur(28px) saturate(1.3) brightness(0.8);
+      transform: scale(1.2);
+    }
+    img[data-fit-mobile="contain"] {
+      position: relative;
+      object-fit: contain !important;
+    }
+  }
 `;
 
 const AiModalBackdrop = styled.div`
@@ -452,6 +477,11 @@ const BgLayer = React.memo((props) => {
   // збереження чи синхронізації), показуємо стандартний «Туманний ліс»
   const [failedSrc, setFailedSrc] = useState(null);
   const hasFailed = Boolean(url) && failedSrc === url;
+  // Фон не обрано або він не завантажився — стандартний «Ліс TheTurkeyStudio»
+  const shownSrc = hasFailed || !url ? DEFAULT_HERO_BG : url;
+  const containOnMobile = MOBILE_CONTAIN_BGS.has(shownSrc);
+  // Завантажене фото (Blob) ще готується — не показуємо на мить стандартний фон замість нього
+  const isUploadPending = $image instanceof Blob && !url && !hasFailed;
   const markFailed = () => {
     if (url && failedSrc !== url) {
       console.warn("Фон не завантажився, показуємо заглушку:", url);
@@ -467,10 +497,14 @@ const BgLayer = React.memo((props) => {
         {known ? (
           <WallpaperScene src={$image} />
         ) : (
-          <img src={hills} alt="Геройський фон" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          <img src={DEFAULT_HERO_BG} alt="Геройський фон" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         )}
       </BgLayerStyled>
     );
+  }
+
+  if (isUploadPending) {
+    return <BgLayerStyled ref={layerRef} data-page-bg="" {...props} />;
   }
 
   return (
@@ -513,15 +547,27 @@ const BgLayer = React.memo((props) => {
           }}
         />
       ) : (
+        <>
+        {containOnMobile && (
+          <img
+            className="hero-bg-blur"
+            src={shownSrc}
+            alt=""
+            aria-hidden="true"
+            loading={$active ? "eager" : "lazy"}
+            decoding="async"
+          />
+        )}
         <img
-          src={hasFailed || !url ? hills : url}
+          src={shownSrc}
           alt="Геройський фон"
+          data-fit-mobile={containOnMobile ? "contain" : undefined}
           fetchPriority={$active ? "high" : "low"}
           loading={$active ? "eager" : "lazy"}
           decoding="async"
           onError={() => {
             // Не зациклюємось, якщо раптом не вантажиться і сама заглушка
-            if (!hasFailed && url && url !== hills) markFailed();
+            if (!hasFailed && url && url !== DEFAULT_HERO_BG) markFailed();
           }}
           onLoad={(e) => {
             // Одразу декодуємо картинку, щоб текстура була готова для GPU
@@ -536,6 +582,7 @@ const BgLayer = React.memo((props) => {
             display: "block",
           }}
         />
+        </>
       )}
     </BgLayerStyled>
   );
@@ -1216,6 +1263,8 @@ const imageMap = {
 
 const Hero = ({
   isStickyBgMode,
+  // false, поки App не прочитав збережений фон — тоді фон не малюємо зовсім
+  bgReady = true,
   heroDateString,
   onAddCity,
   cardLimits,
@@ -2008,6 +2057,7 @@ const Hero = ({
           <feMorphology operator="dilate" radius={heroBgPixelation} />
         </filter>
       </svg>
+      {bgReady && (<>
       <BgLayer
         $isStickyBgMode={isStickyBgMode}
         $image={heroBg}
@@ -2051,6 +2101,7 @@ const Hero = ({
         $videoStart={allBgs.find((b) => b.src === heroBg3)?.start}
         $videoEnd={allBgs.find((b) => b.src === heroBg3)?.end}
       />
+      </>)}
       <ChangeBgButton
         ref={(el) => registerRef("changeBgButton", el)}
         onClick={() => setIsModalOpen(true)}
@@ -2066,6 +2117,7 @@ const Hero = ({
           ))}
         </ChangeBgPreviewGroup>
       </ChangeBgButton>
+      <HeroVersionBadge />
       <HeroDecors $image={herotext} $start={startAnimation} />
       <DelayedContent $start={startAnimation}>
         <BrowserSearchPanel $isDarkMode={isDarkMode}>
@@ -2390,7 +2442,9 @@ const Hero = ({
           )}
           </SearchWrapper>
         </BrowserSearchPanel>
-        <div style={{ marginTop: "0px", zIndex: 90 }}>
+        {/* width: 100% — інакше обгортка стискалась до ширини напису «Шукаємо новини…»,
+            а після завантаження розширювалась під карусель (зсув макета) */}
+        <div style={{ marginTop: "0px", zIndex: 90, width: "100%" }}>
           <News user={user} isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
         </div>
       </DelayedContent>
@@ -2429,7 +2483,7 @@ const Hero = ({
         setRandomBgsList={setRandomBgsList}
         randomCurrentIndex={randomCurrentIndex}
         setRandomCurrentIndex={setRandomCurrentIndex}
-        hills={hills}
+        hills={DEFAULT_HERO_BG}
       />
       </React.Suspense>
       )}

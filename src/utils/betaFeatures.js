@@ -61,8 +61,11 @@ export const formatTabAutoplay = (seconds) => {
   return rest ? `${min} хв ${rest} с` : `${min} хв`;
 };
 
-/** Блок «Працює на базі» на заставці завантаження: "full" | "icons" | "hidden". */
+/** Картка «Працює на базі» при відкритті сайту (HeroCredits): "full" | "icons" | "hidden" (лише фраза) | "off". */
 export const LOADER_POWERED_BY_KEY = "loader_powered_by";
+
+/** До якого часу (мс від 1970, рядком) картку «Працює на базі» сховано натисканням на неї — на тиждень. */
+export const CREDITS_HIDDEN_UNTIL_KEY = "credits_hidden_until";
 
 /** Перемикач «true»/«false» налаштування з prefsStore. */
 export const togglePrefFlag = (key) =>

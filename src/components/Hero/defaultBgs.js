@@ -3,6 +3,7 @@ import mountains from "../../media/backgrounds/scenes/mountains.webp";
 import art from "../../media/backgrounds/scenes/art-studio.webp";
 import penny from "../../media/third-party/films/pennywise-it-2017.webp";
 import hills from "../../media/backgrounds/scenes/foggy-forest.webp";
+import turkeyStudioForest from "../../media/backgrounds/scenes/foggy-forest-loader.webp";
 import hillsVideo from "../../media/videos/foggy-forest.webm";
 import dinofrozVideo from "../../media/third-party/dinofroz/emperor-nitseron.webm";
 import harmony from "../../media/backgrounds/asium/japanese-temple.webp";
@@ -76,6 +77,13 @@ import loft from "../../media/backgrounds/scenes/loft.webp";
 import secret from "../../media/backgrounds/scenes/egyptian-hieroglyphs.webp";
 import slivkishow from "../../media/third-party/youtube/slivkishow-cookie-flight.webp";
 import iceage from "../../media/third-party/films/the-day-after-tomorrow.webp";
+// Фон головної, поки користувач не обрав свій (і заглушка, якщо обраний не завантажився)
+export const DEFAULT_HERO_BG = turkeyStudioForest;
+
+// Фото з написом по центру: на телефоні показуємо цілим (contain), а порожні смуги
+// заповнює розмита копія — як колись на заставці завантаження. Інакше напис обрізається
+export const MOBILE_CONTAIN_BGS = new Set([turkeyStudioForest]);
+
 export const DEFAULT_BGS = [
   {
     src: sirenhead,
@@ -104,6 +112,12 @@ export const DEFAULT_BGS = [
     source: "Фільм 'Післязавтра'",
     start: 0,
     end: 300,
+  },
+  {
+    src: turkeyStudioForest,
+    name: "Ліс TheTurkeyStudio",
+    category: "Темрява та Містика",
+    author: "TheTurkeyStudio",
   },
   {
     src: hills,

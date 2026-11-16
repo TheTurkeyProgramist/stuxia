@@ -914,7 +914,8 @@ const SegmentBtn = styled.button`
 const LOADER_POWERED_BY_OPTIONS = [
   { id: "full", label: "Повністю" },
   { id: "icons", label: "Іконки" },
-  { id: "hidden", label: "Сховати" },
+  { id: "hidden", label: "Лише фраза" },
+  { id: "off", label: "Вимкнути" },
 ];
 const FontDownloads = styled.div`display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;`;
 const FontDownloadLink = styled.a`
@@ -4196,15 +4197,18 @@ const UserSettingsModal = ({
                     </div>
                   </CardExpanded>
 
-                  {/* Блок «Працює на базі» на заставці завантаження */}
-                  <Card level="pro">
+                  {/* Картка «Працює на базі» внизу екрана при відкритті сайту (HeroCredits).
+                      Режим «Простий · Бетельгейзе» — щоб вимкнути її міг кожен */}
+                  <Card>
                     <CardLeft>
                       <CardIconBox $color="#a3e635"><FiLayers /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>«Працює на базі» на заставці</CardTitle>
+                        <CardTitle>«Працює на базі» при відкритті</CardTitle>
                         <CardDescription>
-                          {loaderPoweredBy === "hidden"
-                            ? "Під час завантаження сайту видно лише фразу, без сервісів та іконок"
+                          {loaderPoweredBy === "off"
+                            ? "Картку вимкнено — при відкритті сайту вона не з'являється"
+                            : loaderPoweredBy === "hidden"
+                            ? "У картці лише фраза дня, без сервісів та іконок"
                             : loaderPoweredBy === "icons"
                               ? "Лише іконки сервісів, без підпису — назву видно при наведенні"
                               : "Підпис «Працює на базі» та іконки сервісів, на яких зроблена Стихія"}
@@ -4212,7 +4216,7 @@ const UserSettingsModal = ({
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
-                      <Segmented role="radiogroup" aria-label="«Працює на базі» на заставці">
+                      <Segmented role="radiogroup" aria-label="«Працює на базі» при відкритті">
                         {LOADER_POWERED_BY_OPTIONS.map((option) => {
                           const active = loaderPoweredBy === option.id;
                           return (
@@ -4222,7 +4226,7 @@ const UserSettingsModal = ({
                               role="radio"
                               aria-checked={active}
                               $active={active}
-                              $tone={option.id === "hidden" ? "hide" : "show"}
+                              $tone={option.id === "off" ? "hide" : "show"}
                               onClick={() => setPref(LOADER_POWERED_BY_KEY, option.id)}
                             >
                               {option.label}

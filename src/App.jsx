@@ -26,8 +26,8 @@ import {
   INVITE_WINDOW_DAYS,
 } from "./utils/referral.js";
 import { GiSnowing } from "react-icons/gi";
+import HeroCredits from "./components/Hero/HeroCredits.jsx";
 //import { useSelector } from "react-redux";
-import Loader from "./components/Loader/Loader.jsx";
 import WeatherCardComponent, {
   AihelpTitle,
   CARD_BG_CHANGE_EVENT,
@@ -2056,10 +2056,7 @@ const SectionContent = memo(
 
 const App = () => {
   useLanguageEffect();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isFadingOut, setIsFadingOut] = useState(false);
-  const [areInitialModulesReady, setAreInitialModulesReady] = useState(false);
-  const [minimumLoaderTimePassed, setMinimumLoaderTimePassed] = useState(false);
+  // Фраза дня, що раніше була на заставці завантаження, — тепер у блоці «Працює на базі» на головній
   const [phraseData, setPhraseData] = useState({ text: "", isNew: false });
   const [isDarkMode, setIsDarkMode] = useState(true);
   // Тема скролбара на <html> (App.css: світлий повзунок у темній темі, темний у світлій).
@@ -2084,6 +2081,8 @@ const App = () => {
   }, [user]);
 
   const [heroBg, setHeroBg] = useState(null);
+  // Збережений фон головної вже прочитано (до цього Hero фон не малює — див. hydrate)
+  const [isHeroBgHydrated, setIsHeroBgHydrated] = useState(false);
   const [customHeroBgs, setCustomHeroBgs] = useState([]);
   const [heroBg2, setHeroBg2] = useState(null);
   const [heroBg3, setHeroBg3] = useState(null);
@@ -2199,11 +2198,48 @@ const App = () => {
   useEffect(() => {
     const hydrate = async () => {
       try {
-        const savedDarkMode = await localforage.getItem("isDarkMode");
+        // Тема й фон головної — першими й одним запитом: поки їх не прочитано, Hero фон не малює.
+        // Раніше фон читався через ~1 с після старту (після десятків інших налаштувань):
+        // спершу видно стандартний фон, потім чорний кадр, поки вантажився свій, і лише тоді він
+        const [
+          savedDarkMode,
+          savedStickyBgMode,
+          savedHeroBg,
+          savedHeroBg2,
+          savedHeroBg3,
+          savedMode,
+          savedBlur,
+          savedPixelation,
+          savedFocal1,
+          savedFocal2,
+          savedFocal3,
+        ] = await Promise.all(
+          [
+            "isDarkMode",
+            "isStickyBgMode",
+            "hero_background",
+            "hero_background_2",
+            "hero_background_3",
+            "hero_bg_mode",
+            "hero_bg_blur",
+            "hero_bg_pixelation",
+            "hero_bg_focal1",
+            "hero_bg_focal2",
+            "hero_bg_focal3",
+          ].map((key) => localforage.getItem(key).catch(() => null)),
+        );
         if (savedDarkMode !== null) setIsDarkMode(savedDarkMode);
-
-        const savedStickyBgMode = await localforage.getItem("isStickyBgMode");
         if (savedStickyBgMode !== null) setIsStickyBgMode(savedStickyBgMode);
+        if (savedHeroBg) setHeroBg(savedHeroBg);
+        if (savedHeroBg2) setHeroBg2(savedHeroBg2);
+        if (savedHeroBg3) setHeroBg3(savedHeroBg3);
+        if (savedMode) setHeroBgMode(normalizeHeroBgMode(savedMode));
+        if (savedBlur !== null) setHeroBgBlur(savedBlur);
+        if (savedPixelation !== null) setHeroBgPixelation(savedPixelation);
+        if (savedFocal1) setHeroBgFocal1(savedFocal1);
+        if (savedFocal2) setHeroBgFocal2(savedFocal2);
+        if (savedFocal3) setHeroBgFocal3(savedFocal3);
+        setIsHeroBgHydrated(true);
 
         const savedSectionThemes = await localforage.getItem("sectionThemes");
         if (savedSectionThemes) setSectionThemes(savedSectionThemes);
@@ -2269,12 +2305,6 @@ const App = () => {
           setSiteSections(filteredOrder);
         }
 
-        const savedHeroBg = await localforage.getItem("hero_background");
-        if (savedHeroBg) setHeroBg(savedHeroBg);
-        const savedHeroBg2 = await localforage.getItem("hero_background_2");
-        if (savedHeroBg2) setHeroBg2(savedHeroBg2);
-        const savedHeroBg3 = await localforage.getItem("hero_background_3");
-        if (savedHeroBg3) setHeroBg3(savedHeroBg3);
         const savedCustomBgs = await localforage.getItem(
           "custom_hero_backgrounds",
         );
@@ -2286,8 +2316,6 @@ const App = () => {
           savedFanArtImages,
         );
         if (mergedBackgrounds.length) setCustomHeroBgs(mergedBackgrounds);
-        const savedMode = await localforage.getItem("hero_bg_mode");
-        if (savedMode) setHeroBgMode(normalizeHeroBgMode(savedMode));
         const savedInterval = await localforage.getItem(
           "hero_slideshow_interval",
         );
@@ -2297,17 +2325,6 @@ const App = () => {
           "hero_bg_filter_category",
         );
         if (savedHeroFilter) setHeroBgFilterCategory(savedHeroFilter);
-        const savedBlur = await localforage.getItem("hero_bg_blur");
-        if (savedBlur !== null) setHeroBgBlur(savedBlur);
-        const savedPixelation = await localforage.getItem("hero_bg_pixelation");
-        if (savedPixelation !== null) setHeroBgPixelation(savedPixelation);
-
-        const savedFocal1 = await localforage.getItem("hero_bg_focal1");
-        if (savedFocal1) setHeroBgFocal1(savedFocal1);
-        const savedFocal2 = await localforage.getItem("hero_bg_focal2");
-        if (savedFocal2) setHeroBgFocal2(savedFocal2);
-        const savedFocal3 = await localforage.getItem("hero_bg_focal3");
-        if (savedFocal3) setHeroBgFocal3(savedFocal3);
 
         const savedCustomHolidayName = await localforage.getItem(
           "custom_holiday_name",
@@ -2329,10 +2346,14 @@ const App = () => {
         setIsHydrated(true);
       } catch (err) {
         console.error("Помилка завантаження з localforage:", err);
+        setIsHeroBgHydrated(true);
         setIsHydrated(true);
       }
     };
     hydrate();
+    // Сховище «зависло» (буває в приватному режимі) — не лишаємо головну без фону
+    const fallback = setTimeout(() => setIsHeroBgHydrated(true), 1500);
+    return () => clearTimeout(fallback);
   }, []);
 
   useEffect(() => {
@@ -2403,11 +2424,9 @@ const App = () => {
 
   useEffect(() => {
     if (!isHydrated) return;
-    preloadComponents()
-      .catch((error) => {
-        console.error("Помилка попереднього завантаження модулів:", error);
-      })
-      .finally(() => setAreInitialModulesReady(true));
+    preloadComponents().catch((error) => {
+      console.error("Помилка попереднього завантаження модулів:", error);
+    });
   }, [isHydrated, preloadComponents]);
 
   const phraseParticles = useMemo(() => {
@@ -4068,21 +4087,8 @@ const App = () => {
   const cancelGpsCardReturn = useCallback(() => setGpsReturnRequest(null), []);
 
   useEffect(() => {
-    const fadeTimer = setTimeout(() => setMinimumLoaderTimePassed(true), 3500);
     syncClock();
-
-    return () => {
-      clearTimeout(fadeTimer);
-    };
   }, []);
-
-  useEffect(() => {
-    if (!areInitialModulesReady || !minimumLoaderTimePassed) return;
-
-    setIsFadingOut(true);
-    const removeTimer = setTimeout(() => setIsLoading(false), 1800);
-    return () => clearTimeout(removeTimer);
-  }, [areInitialModulesReady, minimumLoaderTimePassed]);
   const handleLogout = () => {
     loadFirebase()
       .then(({ signOut, auth }) => signOut(auth))
@@ -4147,7 +4153,8 @@ const App = () => {
             daily: user ? dailyCardAdditions : null,
             maxDaily: MAX_DAILY_CARD_ADDITIONS,
           }}
-          startAnimation={!isLoading}
+          startAnimation
+          bgReady={isHeroBgHydrated}
           user={user}
           isDarkMode={isDarkMode}
           checkWeatherDanger={checkWeatherDanger}
@@ -4182,6 +4189,26 @@ const App = () => {
           customHolidayName={customHolidayName}
           isStickyBgMode={isStickyBgMode}
           setCustomHolidayName={setCustomHolidayName}
+        />
+        <HeroCredits
+          randomPhrase={
+            phraseData.text && (
+              <LoadingPhraseWrapper $isNew={phraseData.isNew}>
+                {phraseData.text}
+                {phraseParticles.map((p) => (
+                  <ParticleSymbol
+                    key={p.id}
+                    $x={p.x}
+                    $y={p.y}
+                    $delay={p.delay}
+                    $isNew={phraseData.isNew}
+                  >
+                    ✧
+                  </ParticleSymbol>
+                ))}
+              </LoadingPhraseWrapper>
+            )
+          }
         />
       </div>
       <div className="container">
@@ -4224,29 +4251,6 @@ const App = () => {
       <SiteContextMenu isDarkMode={isDarkMode} onToggleTheme={toggleTheme}>
       <DominoTutorial user={user} />
       <GlobalFilterLock $locked={isFsActive && lockFiltersInFs} />
-      <Loader
-        isLoading={isLoading}
-        isFadingOut={isFadingOut}
-        randomPhrase={
-          phraseData.text && (
-            <LoadingPhraseWrapper $isNew={phraseData.isNew}>
-              {phraseData.text}
-              {phraseParticles.map((p) => (
-                <ParticleSymbol
-                  key={p.id}
-                  $x={p.x}
-                  $y={p.y}
-                  $delay={p.delay}
-                  $isNew={phraseData.isNew}
-                >
-                  ✧
-                </ParticleSymbol>
-              ))}
-            </LoadingPhraseWrapper>
-          )
-        }
-      />
-
       <ThemeWrapper $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
         <div className="App">
           <audio ref={bgAudioRef} onEnded={handleBgMusicEnded} preload="auto" />
@@ -4257,7 +4261,6 @@ const App = () => {
           />
           <div className="container">
             <Header
-              isIntroDone={isFadingOut || !isLoading}
               sfxVolume={sfxVolume}
               onOpenRegister={() => setIsModalOpen(true)}
               onOpenSettings={() => setIsSettingsModalOpen(true)}
