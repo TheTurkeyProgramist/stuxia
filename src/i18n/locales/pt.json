@@ -105,6 +105,8 @@
     "sourcesAria": "Fontes do mapa",
     "searchSources": "Pesquisar mapas e quadros",
     "noSourcesFound": "Nada encontrado",
+    "prevMap": "Mapa anterior",
+    "nextMap": "Próximo mapa",
     "clearSearch": "Limpar pesquisa",
     "customFrame": "Quadro / widget próprio",
     "titlePlaceholder": "Nome (ex. Radar, Webcam...)",

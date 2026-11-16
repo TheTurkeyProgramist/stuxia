@@ -89,6 +89,8 @@ const fadeIn = keyframes`
 const Ticker = styled.button`
   flex: 1 1 0;
   min-height: 0;
+  /* Не більше ~4 рядків тексту + підпис: на великому екрані не роздувається в порожній блок */
+  max-height: 120px;
   width: min(100%, 1200px);
   margin: 0;
   padding: 4px 6px;

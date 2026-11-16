@@ -109,6 +109,8 @@
     "sourcesAria": "Map sources",
     "searchSources": "Search maps and frames",
     "noSourcesFound": "Nothing found",
+    "prevMap": "Previous map",
+    "nextMap": "Next map",
     "clearSearch": "Clear search",
     "customFrame": "Custom frame / widget",
     "titlePlaceholder": "Name (e.g. Radar, Webcam...)",

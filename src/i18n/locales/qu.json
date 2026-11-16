@@ -105,6 +105,8 @@
     "sourcesAria": "Mapap pukyunkuna",
     "searchSources": "Mapakunata, frame-kunata maskay",
     "noSourcesFound": "Manam imapas tarikunchu",
+    "prevMap": "Ñawpaq mapa",
+    "nextMap": "Qatiq mapa",
     "clearSearch": "Maskayta pichay",
     "customFrame": "Kikin marco / widget",
     "titlePlaceholder": "Suti (kayhina Radar, Webcam...)",

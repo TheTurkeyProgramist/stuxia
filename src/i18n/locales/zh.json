@@ -105,6 +105,8 @@
     "sourcesAria": "地图来源",
     "searchSources": "搜索地图和框架",
     "noSourcesFound": "未找到任何内容",
+    "prevMap": "上一张地图",
+    "nextMap": "下一张地图",
     "clearSearch": "清除搜索",
     "customFrame": "自定义框架 / 小组件",
     "titlePlaceholder": "名称（如：雷达、摄像头...）",

@@ -105,6 +105,8 @@
     "sourcesAria": "Πηγές χάρτη",
     "searchSources": "Αναζήτηση χαρτών και πλαισίων",
     "noSourcesFound": "Δεν βρέθηκε τίποτα",
+    "prevMap": "Προηγούμενος χάρτης",
+    "nextMap": "Επόμενος χάρτης",
     "clearSearch": "Εκκαθάριση αναζήτησης",
     "customFrame": "Δικό σας πλαίσιο / widget",
     "titlePlaceholder": "Όνομα (π.χ. Ραντάρ, Κάμερα...)",

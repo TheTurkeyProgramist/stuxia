@@ -105,6 +105,8 @@
     "sourcesAria": "Zdroje mapy",
     "searchSources": "Hledat mapy a rámce",
     "noSourcesFound": "Nic nenalezeno",
+    "prevMap": "Předchozí mapa",
+    "nextMap": "Další mapa",
     "clearSearch": "Vymazat hledání",
     "customFrame": "Vlastní rám / widget",
     "titlePlaceholder": "Název (např. Radar, Webkamera...)",

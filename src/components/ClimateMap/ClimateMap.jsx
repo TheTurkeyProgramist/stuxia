@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import styled, { keyframes, css } from "styled-components";
 import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaSatelliteDish, FaBolt } from "react-icons/fa";
-import { FiCheck, FiEdit2, FiPlay, FiPlus, FiSearch, FiX } from "react-icons/fi";
+import { FiCheck, FiEdit2, FiPlay, FiPlus, FiSearch, FiSettings, FiX } from "react-icons/fi";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { MdDragIndicator } from "react-icons/md";
 import { Reorder, motion, useDragControls } from "framer-motion";
@@ -158,6 +158,7 @@ const MobileSettingsOverlay = styled.div`
   display: flex;
   position: absolute;
   inset: 0;
+  bottom: ${(p) => p.$bottomInset || 0}px;
   z-index: 30;
   /* $stack: панель зверху, під нею рядок із жартами/фактами на все вільне місце */
   flex-direction: ${(p) => (p.$stack ? "column" : "row")};
@@ -573,8 +574,14 @@ const MiniHeaderTitle = styled.div`
 `;
 
 const MiniHeaderButtons = styled.div`
+  /* Перемикач карти розтягується на вільне місце, назва вікна обрізається трикрапкою */
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 6px;
+  margin-left: 8px;
 `;
 
 const MiniPlayerBody = styled.div`
@@ -772,8 +779,9 @@ const MobileSourceSlide = styled.div`
 
 // Ряд джерел унизу карти в повноекранному режимі: бічна панель тоді поза екраном.
 // Без прилипання — інакше прокрутка коліщатком дрібними кроками відскакує назад
-const FULLSCREEN_STRIP_HEIGHT = 124;
-const FullscreenSourcesStrip = styled(MobileSourceSlider)`
+const FULLSCREEN_STRIP_HEIGHT = 132;
+// Нижня панель повноекранного режиму: ліворуч — налаштування й пошук, праворуч — картки з прокруткою
+const FullscreenStripBar = styled.div`
   position: absolute;
   left: 0;
   right: 0;
@@ -781,11 +789,84 @@ const FullscreenSourcesStrip = styled(MobileSourceSlider)`
   z-index: 6;
   box-sizing: border-box;
   height: ${FULLSCREEN_STRIP_HEIGHT}px;
-  align-items: center;
-  scroll-snap-type: none;
+  display: flex;
+  align-items: stretch;
   background: ${(p) => p.$isDarkMode ? "rgba(16, 17, 20, 0.94)" : "rgba(246, 247, 249, 0.94)"};
+  border-top: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)"};
+`;
+const FullscreenStripTools = styled.div`
+  flex: 0 0 210px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 10px 12px;
+  box-sizing: border-box;
+`;
+const FullscreenSettingsButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid ${(p) => p.$isDarkMode ? "rgba(255, 179, 108, 0.55)" : "rgba(200, 100, 0, 0.5)"};
+  background: ${(p) => p.$isDarkMode
+    ? "linear-gradient(135deg, rgba(20, 14, 6, 0.92), rgba(30, 20, 8, 0.88))"
+    : "linear-gradient(135deg, rgba(255, 248, 235, 0.97), rgba(255, 235, 200, 0.97))"};
+  color: ${(p) => p.$isDarkMode ? "#ffb36c" : "#8a4300"};
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  svg { flex-shrink: 0; font-size: 16px; }
+  &:hover {
+    border-color: ${(p) => p.$isDarkMode ? "rgba(255, 179, 108, 0.9)" : "rgba(200, 100, 0, 0.8)"};
+    box-shadow: 0 4px 18px rgba(255, 140, 0, 0.25);
+  }
+  &:focus-visible { outline: 2px solid #ffb36c; outline-offset: 2px; }
+`;
+// Плитка «+ Додати фрейм» у кінці рядка — розміром як картки джерел
+const FullscreenAddTile = styled.button`
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 12px;
+  border: 2px dashed ${(p) => p.$isDarkMode ? "rgba(255, 179, 108, 0.55)" : "rgba(200, 100, 0, 0.5)"};
+  background: ${(p) => p.$isDarkMode ? "rgba(255, 179, 108, 0.06)" : "rgba(255, 179, 108, 0.12)"};
+  color: ${(p) => p.$isDarkMode ? "#ffb36c" : "#8a4300"};
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  svg { font-size: 22px; }
+  &:hover {
+    border-color: ${(p) => p.$isDarkMode ? "rgba(255, 179, 108, 0.9)" : "rgba(200, 100, 0, 0.8)"};
+    background: ${(p) => p.$isDarkMode ? "rgba(255, 179, 108, 0.14)" : "rgba(255, 179, 108, 0.22)"};
+  }
+  &:focus-visible { outline: 2px solid #ffb36c; outline-offset: 2px; }
+`;
+// Без прилипання — інакше прокрутка коліщатком дрібними кроками відскакує назад.
+// Смужка прокрутки видима (у звичайному слайдері вона схована)
+const FullscreenSourcesStrip = styled(MobileSourceSlider)`
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  align-items: center;
+  border-top: none;
+  scroll-snap-type: none;
+  ${PanelScrollbar}
+  &::-webkit-scrollbar { display: block; height: 8px; }
 
   & > ${MobileSourceSlide} { flex-basis: 176px; }
+  & > ${SourcesEmpty} { flex: 1 0 100%; }
 `;
 
 const KeyboardSettingRow = styled.div`
@@ -1697,6 +1778,70 @@ const MiniFrameSwitch = ({ value, onChange, titles }) => (
   </div>
 );
 
+// Перемикач джерела в міні-плеєрі: ‹ [список] ›, стрілки — по колу.
+// Лише inline-стилі: у вікні «картинка в картинці» немає стилів сторінки (styled-components туди не потрапляють).
+// Кольори select і option задані явно — інакше список у системній темі стає білим із білим текстом
+const MINI_BTN_STYLE = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  width: 28,
+  height: 28,
+  padding: 0,
+  border: "1px solid rgba(255,255,255,0.18)",
+  borderRadius: 6,
+  background: "rgba(255,255,255,0.08)",
+  color: "#ffffff",
+  fontSize: 18,
+  cursor: "pointer",
+};
+const MINI_OPTION_STYLE = { background: "#1e1e24", color: "#ffffff" };
+const MiniSourceSwitch = ({ sources, value, onChange, labels }) => {
+  if (!sources.length) return null;
+  const index = Math.max(0, sources.findIndex((item) => item.id === value));
+  const go = (step) => onChange(sources[(index + step + sources.length) % sources.length].id);
+  const stop = (e) => e.stopPropagation();
+  return (
+    <div
+      role="group"
+      aria-label={labels.group}
+      onPointerDown={stop}
+      onDoubleClick={stop}
+      style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0, flex: "1 1 auto" }}
+    >
+      <button type="button" style={MINI_BTN_STYLE} onClick={(e) => { stop(e); go(-1); }} aria-label={labels.prev} title={labels.prev}>‹</button>
+      <select
+        value={sources[index].id}
+        onChange={(e) => onChange(e.target.value)}
+        onClick={stop}
+        aria-label={labels.group}
+        title={sources[index].title}
+        style={{
+          flex: "1 1 auto",
+          minWidth: 0,
+          maxWidth: 220,
+          height: 28,
+          padding: "0 6px",
+          border: "1px solid rgba(255,179,108,0.55)",
+          borderRadius: 6,
+          background: "#1e1e24",
+          color: "#ffffff",
+          colorScheme: "dark",
+          font: "600 12px system-ui, sans-serif",
+          cursor: "pointer",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {sources.map((item) => (
+          <option key={item.id} value={item.id} style={MINI_OPTION_STYLE}>{item.title}</option>
+        ))}
+      </select>
+      <button type="button" style={MINI_BTN_STYLE} onClick={(e) => { stop(e); go(1); }} aria-label={labels.next} title={labels.next}>›</button>
+    </div>
+  );
+};
+
 const customFrameBg = (id) => {
   let hash = 0;
   for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
@@ -2180,6 +2325,19 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     setIsAddingFrame(true);
   };
 
+  // Повноекранний режим: «+ Додати фрейм» відкриває налаштування одразу на формі власного фрейму
+  const settingsFrameFormRef = useRef(null);
+  const handleAddFrameFromStrip = () => {
+    handleCancelAddFrame();
+    setIsControlsOpen(true);
+    setTimeout(() => {
+      const form = settingsFrameFormRef.current;
+      if (!form) return;
+      form.scrollIntoView({ block: "center", behavior: "smooth" });
+      form.querySelector("input")?.focus({ preventScroll: true });
+    }, 60);
+  };
+
   const handleStartEditFrame = (frame, from = "sidebar") => {
     setIsAddingFrame(false);
     setEditingFrameId(frame.id);
@@ -2579,6 +2737,43 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     <MiniFrameSwitch value={miniFrame} onChange={setMiniFrame} titles={miniFrameTitles} />
   );
 
+  // Перемикання джерела прямо в міні-плеєрі: змінює той фрейм, що в ньому показано.
+  // У режимі двох фреймів джерело іншого фрейму зі списку прибираємо — щоб не стало два однакових
+  const miniCurrentId = miniShowsSecond ? secondProvider : provider;
+  const miniOtherId = isSplitActive ? (miniShowsSecond ? provider : secondProvider) : null;
+  const miniSources = orderedSources.filter((item) => item.id !== miniOtherId);
+  const handleMiniSelectSource = (id) => {
+    if (id === miniCurrentId) return;
+    if (miniShowsSecond) handleSetSecondProvider(id);
+    else handleSetProvider(id);
+  };
+  const miniSourceSwitch = (
+    <MiniSourceSwitch
+      sources={miniSources}
+      value={miniCurrentId}
+      onChange={handleMiniSelectSource}
+      labels={{ group: t("climateMap.mapSource"), prev: `${t("climateMap.prevMap")} (←)`, next: `${t("climateMap.nextMap")} (→)` }}
+    />
+  );
+
+  // Стрілки ← → у вікні «картинка в картинці» теж перемикають карту (коли фокус не в iframe)
+  const miniSwitchRef = useRef(null);
+  miniSwitchRef.current = (step) => {
+    if (!miniSources.length) return;
+    const index = Math.max(0, miniSources.findIndex((item) => item.id === miniCurrentId));
+    handleMiniSelectSource(miniSources[(index + step + miniSources.length) % miniSources.length].id);
+  };
+  useEffect(() => {
+    if (!pipWindow) return undefined;
+    const onKey = (e) => {
+      if (e.target?.tagName === "SELECT" || e.altKey || e.ctrlKey || e.metaKey) return;
+      if (e.key === "ArrowLeft") miniSwitchRef.current?.(-1);
+      if (e.key === "ArrowRight") miniSwitchRef.current?.(1);
+    };
+    pipWindow.document.addEventListener("keydown", onKey);
+    return () => pipWindow.document.removeEventListener("keydown", onKey);
+  }, [pipWindow]);
+
   useEffect(() => {
     setIsMiniLoading(isOnline);
   }, [miniEmbedUrl, isOnline, isMiniPlayerOpen]);
@@ -2637,7 +2832,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         onClick={() => !isMapActive && handleActivateMap()}
       >
         {isControlsOpen && (
-          <MobileSettingsOverlay $isDarkMode={isDarkMode} $stack={showFunTicker} onClick={() => setIsControlsOpen(false)}>
+          <MobileSettingsOverlay
+            $isDarkMode={isDarkMode}
+            $stack={showFunTicker}
+            // Повноекранний режим: нижня панель (джерела, пошук) лишається доступною під налаштуваннями
+            $bottomInset={showFullscreenStrip ? FULLSCREEN_STRIP_HEIGHT : 0}
+            onClick={() => setIsControlsOpen(false)}
+          >
             <MobileSettingsPanel $isDarkMode={isDarkMode} $joined={showFunTicker} onClick={(e) => e.stopPropagation()}>
               <MobileSettingsHeading $isDarkMode={isDarkMode}>
                 <div>
@@ -2769,11 +2970,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   ))}
                 </MobileSourceSlider>
               </MobileSettingSelectGroup>
+              </>)}
 
-              {/* ── Власні фрейми ── */}
+              {/* ── Власні фрейми: телефон, а також повноекранний режим (бічна панель тоді поза екраном) ── */}
+              {(!isWideLayout || isMapFullscreen) && (<>
               <SettingLabel $isDarkMode={isDarkMode}>{t("climateMap.customFrame")}</SettingLabel>
 
-              <AddFrameForm $isDarkMode={isDarkMode} onSubmit={handleAddFrame} onClick={(e) => e.stopPropagation()}>
+              <AddFrameForm ref={settingsFrameFormRef} $isDarkMode={isDarkMode} onSubmit={handleAddFrame} onClick={(e) => e.stopPropagation()}>
                 <FormInput
                   $isDarkMode={isDarkMode}
                   type="text"
@@ -2930,22 +3133,53 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         )}
 
         {showFullscreenStrip && (
-          <FullscreenSourcesStrip
-            $isDarkMode={isDarkMode}
-            aria-label={t("climateMap.sourcesAria")}
-            onWheel={(e) => {
-              if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY;
-            }}
-          >
-            {orderedSources.map((item) => (
-              <MobileSourceCard
-                key={item.id}
-                item={item}
-                isActive={provider === item.id || (isSplitActive && secondProvider === item.id)}
-                onSelect={handleSelectSource}
-              />
-            ))}
-          </FullscreenSourcesStrip>
+          <FullscreenStripBar $isDarkMode={isDarkMode}>
+            {/* Бічна панель у повноекранному режимі поза екраном — налаштування й пошук тут */}
+            <FullscreenStripTools>
+              <FullscreenSettingsButton
+                $isDarkMode={isDarkMode}
+                type="button"
+                onClick={() => setIsControlsOpen(true)}
+                aria-label={settingsTitle}
+                title={settingsTitle}
+              >
+                <FiSettings />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{settingsTitle}</span>
+              </FullscreenSettingsButton>
+              {sourceSearchField}
+            </FullscreenStripTools>
+            <FullscreenSourcesStrip
+              $isDarkMode={isDarkMode}
+              aria-label={t("climateMap.sourcesAria")}
+              onWheel={(e) => {
+                if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY;
+              }}
+            >
+              {filteredSources.length === 0 && (
+                <SourcesEmpty $isDarkMode={isDarkMode}>{t("climateMap.noSourcesFound")}</SourcesEmpty>
+              )}
+              {filteredSources.map((item) => (
+                <MobileSourceCard
+                  key={item.id}
+                  item={item}
+                  isActive={provider === item.id || (isSplitActive && secondProvider === item.id)}
+                  onSelect={handleSelectSource}
+                />
+              ))}
+              <MobileSourceSlide>
+                <FullscreenAddTile
+                  $isDarkMode={isDarkMode}
+                  type="button"
+                  onClick={handleAddFrameFromStrip}
+                  aria-label={t("climateMap.addOwnFrame")}
+                  title={t("climateMap.addOwnFrame")}
+                >
+                  <FiPlus />
+                  <span>{t("climateMap.addYourFrame")}</span>
+                </FullscreenAddTile>
+              </MobileSourceSlide>
+            </FullscreenSourcesStrip>
+          </FullscreenStripBar>
         )}
       </MapWrapper>
 
@@ -3039,11 +3273,11 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       {pipWindow ? (
         createPortal(
           <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-            {miniFrameSwitch && (
-              <div style={{ display: "flex", justifyContent: "center", padding: 6, background: "#111" }}>
-                {miniFrameSwitch}
-              </div>
-            )}
+            {/* Панель міні-плеєра: перемикач карти ‹ [список] › і (якщо два фрейми) «1 / 2» */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: 6, background: "#111" }}>
+              {miniSourceSwitch}
+              {miniFrameSwitch}
+            </div>
             <StyledIframe
               aria-label="Weather Map (PiP)"
               src={miniEmbedUrl}
@@ -3074,6 +3308,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               {t("climateMap.miniMapTitle")}
             </MiniHeaderTitle>
             <MiniHeaderButtons>
+              {miniSourceSwitch}
               {miniFrameSwitch}
               <ActionButton
                 onClick={(e) => {

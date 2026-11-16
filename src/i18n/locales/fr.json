@@ -105,6 +105,8 @@
     "sourcesAria": "Sources de la carte",
     "searchSources": "Rechercher cartes et cadres",
     "noSourcesFound": "Aucun résultat",
+    "prevMap": "Carte précédente",
+    "nextMap": "Carte suivante",
     "clearSearch": "Effacer la recherche",
     "customFrame": "Cadre / widget personnalisé",
     "titlePlaceholder": "Nom (ex. Radar, Webcam...)",

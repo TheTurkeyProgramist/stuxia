@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useDecorator } from "./DecoratorContext";
+import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
+import { ModalSuspense } from "../Loader/ModalLoading.jsx";
 
 // Модалка декоратора потрібна лише після вибору елемента
-const DecoratorModal = lazy(() => import("./DecoratorModal"));
+const DecoratorModal = lazyWithRetry(() => import("./DecoratorModal"));
 
 const HIGHLIGHT_STYLE = {
   outline: "2px dashed #ffb36c",
@@ -130,12 +132,12 @@ const DecoratorOverlay = ({ isStickyBgMode }) => {
   return (
     <>
       {selectedEl && (
-        <Suspense fallback={null}>
+        <ModalSuspense onCancel={() => setSelectedEl(null)}>
           <DecoratorModal
             targetElement={selectedEl}
             onClose={() => setSelectedEl(null)}
           />
-        </Suspense>
+        </ModalSuspense>
       )}
     </>
   );

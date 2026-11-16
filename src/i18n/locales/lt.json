@@ -105,6 +105,8 @@
     "sourcesAria": "Žemėlapio šaltiniai",
     "searchSources": "Ieškoti žemėlapių ir rėmelių",
     "noSourcesFound": "Nieko nerasta",
+    "prevMap": "Ankstesnis žemėlapis",
+    "nextMap": "Kitas žemėlapis",
     "clearSearch": "Išvalyti paiešką",
     "customFrame": "Savas rėmelis / valdiklis",
     "titlePlaceholder": "Pavadinimas (pvz. Radaras, Kamera...)",

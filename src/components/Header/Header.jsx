@@ -11,7 +11,9 @@ import { BsMoonStarsFill } from "react-icons/bs";
 import { GiShop, GiExitDoor } from "react-icons/gi";
 import relax from "../../mp3/modals/relax.mp3";
 import { FaSun } from "react-icons/fa";
-import { MdSettingsSuggest, MdMore, MdWallpaper, MdManageAccounts, MdCalendarMonth, MdClose } from "react-icons/md";
+import herotext from "../../media/brand/wordmark-stykhiia.webp";
+import { prefetchProps } from "../../utils/modalChunks.js";
+import { MdSettingsSuggest, MdMenu, MdAccountCircle, MdWallpaper, MdManageAccounts, MdCalendarMonth, MdClose } from "react-icons/md";
 import { loadFirebase } from "../../firebaseLazy.js";
 import { FaBookOpen } from "react-icons/fa6";
 import { IoColorPalette } from "react-icons/io5";
@@ -43,7 +45,7 @@ const fadeInHeader = keyframes`
 `;
 
 const HeaderDiv = styled.div`
-  height: 37px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -113,15 +115,23 @@ const IconButton = styled.button`
   cursor: pointer;
   display: flex;
   color: ${(props) => (props.$isDarkMode ? "#fff" : "#1a1a1a")};
-  background-color: ${(props) => (props.$isDarkMode ? "#090909" : "#fefbfb")};
   align-items: center;
-  height: 26px;
+  /* іконка + підпис під нею */
+  flex-direction: column;
+  gap: 1px;
+  height: 40px;
+  min-width: 0;
   justify-content: center;
-  /* розтягується на всю свою комірку в ButtonsGroup */
+  /* займає свою комірку в ButtonsGroup (до 76px) */
   flex: 1;
-  padding: 4px 0;
-  border-radius: 6px;
-  transition: outline 0.15s ease, transform 0.15s ease;
+  padding: 2px 0;
+  border-radius: 8px;
+  transition: background-color 0.15s ease, outline 0.15s ease;
+
+  &:hover,
+  &[aria-expanded="true"] {
+    background-color: ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.06)")};
+  }
 
   &:focus-visible {
     outline: 2px solid #00afce;
@@ -132,6 +142,188 @@ const IconButton = styled.button`
 const EmojiWrapper = styled.span`
   display: inline-block;
   font-size: 21px;
+  line-height: 1;
+`;
+
+// Підпис під іконкою в шапці — щоб новий відвідувач знав, що за кнопкою (повна назва — у підказці)
+const IconLabel = styled.span`
+  display: block;
+  max-width: 100%;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.85;
+
+  @media (max-width: 340px) {
+    font-size: 9px;
+  }
+`;
+
+// З цієї ширини всі кнопки вміщаються в шапку — бургер не потрібен.
+// Пороги showFrom у headerActions підібрані так, щоб у бургері ніколи не лишався один пункт:
+// бургер з однією кнопкою гірший за саму кнопку.
+const BURGER_HIDE_FROM = 1280;
+
+const LogoButton = styled.button`
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 6px;
+
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+`;
+
+const LogoImg = styled.img`
+  display: block;
+  height: 40px;
+  width: auto;
+
+  @media (max-width: 380px) {
+    height: 32px;
+  }
+`;
+
+// Кнопка в шапці, що з'являється лише з ширини $showFrom (до того — пункт бургера)
+const BarSlot = styled.div`
+  && {
+    display: none;
+  }
+  & > span:first-child {
+    flex: 1;
+    justify-content: center;
+  }
+  @media (min-width: ${(p) => p.$showFrom}px) {
+    && {
+      display: flex;
+    }
+  }
+`;
+
+const BurgerWrap = styled.div`
+  position: relative;
+  @media (min-width: ${(p) => p.$hideFrom}px) {
+    && {
+      display: none;
+    }
+  }
+`;
+
+const BurgerMenu = styled.div`
+  position: absolute;
+  top: 50px;
+  right: 0;
+  z-index: 2100;
+  min-width: 230px;
+  max-width: calc(100vw - 16px);
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  gap: 2px;
+  border-radius: 12px;
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)")};
+  background: ${(p) => (p.$isDarkMode ? "rgba(18, 19, 24, 0.97)" : "rgba(255, 255, 255, 0.98)")};
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+`;
+
+const BurgerItem = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: ${(p) => (p.$isDarkMode ? "#fff" : "#1a1a1a")};
+  font-family: var(--font-family);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)")};
+    outline: none;
+  }
+
+  @media (min-width: ${(p) => p.$hideFrom}px) {
+    display: none;
+  }
+`;
+
+const BurgerIcon = styled.span`
+  display: inline-flex;
+  justify-content: center;
+  width: 22px;
+  font-size: 20px;
+  line-height: 1;
+`;
+
+const BurgerState = styled.span`
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.65;
+`;
+
+// Вхід для гостя: пігулка тієї ж форми, що й кнопка профілю, з акцентом сайту
+const AccountButton = styled.button`
+  && {
+    flex: 0 0 auto;
+    margin-left: 6px;
+  }
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 175, 206, 0.65);
+  background: ${(p) => (p.$isDarkMode ? "rgba(0, 175, 206, 0.16)" : "rgba(0, 175, 206, 0.1)")};
+  color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#0b3b47")};
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: background 0.15s ease, transform 0.15s ease;
+
+  svg {
+    font-size: 20px;
+    flex: 0 0 auto;
+  }
+
+  &:hover {
+    background: ${(p) => (p.$isDarkMode ? "rgba(0, 175, 206, 0.28)" : "rgba(0, 175, 206, 0.18)")};
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+
+  /* вузькі телефони: лишаємо лише іконку */
+  @media (max-width: 420px) {
+    padding: 0 7px;
+    span {
+      display: none;
+    }
+  }
 `;
 
 const HeaderAvatar = styled.img`
@@ -217,6 +409,7 @@ const ProfileButtonWrap = styled.div`
   /* аватарка не розтягується, як кнопки — займає лише свою ширину */
   && {
     flex: 0 0 auto;
+    margin-left: 6px;
   }
 `;
 
@@ -429,12 +622,14 @@ const SupporterChip = styled.div`
 const ButtonsGroup = styled.div`
   display: flex;
   align-items: center;
-  width: 100%;
+  justify-content: flex-end;
   flex: 1;
-  /* проміжки між кнопками: ~6px на телефоні, до 24px на широкому екрані */
-  gap: clamp(6px, 1.5vw, 24px);
-    & > * {
-    flex: 1;
+  min-width: 0;
+  gap: 4px;
+  /* однакові комірки до 76px; на вузьких телефонах стискаються */
+  & > * {
+    flex: 0 1 76px;
+    min-width: 0;
     display: flex;
     justify-content: center;
   }
@@ -521,7 +716,7 @@ const themePickerIn = keyframes`
 
 const ThemePickerModal = styled.div`
   position: absolute;
-  top: 42px;
+  top: 50px;
   left: 0;
   z-index: 2100;
   background: ${(props) =>
@@ -539,10 +734,21 @@ const ThemePickerModal = styled.div`
   padding: 14px;
   color: ${(props) => (props.$isDarkMode ? "#e8eaf0" : "#111")};
   min-width: 232px;
+  max-width: calc(100vw - 16px);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 10px;
   outline: none;
+
+  /* телефон: кнопка теми стоїть посередині шапки — вікно притискаємо до правого краю екрана
+     (шапка має backdrop-filter, тож fixed рахується від неї, тобто від верху екрана) */
+  @media (max-width: 767px) {
+    position: fixed;
+    top: 52px;
+    left: auto;
+    right: 8px;
+  }
   animation: ${themePickerIn} 0.16s ease-out;
 `;
 
@@ -757,6 +963,9 @@ const Header = ({
   const [showUltra, setShowUltra] = useState(false);
   const [showVisualSettings, setShowVisualSettings] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [isBurgerOpen, setIsBurgerOpen] = useState(false);
+  const burgerRef = useRef(null);
+  const burgerBtnRef = useRef(null);
   const [accentColor, setAccentColor] = useAccentColor(); // null = без накладення
   const themePickerRef = useRef(null);
   const themePickerBtnRef = useRef(null);
@@ -827,6 +1036,42 @@ const Header = ({
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [isProfileModalOpen]);
+
+  // Бургер: закривається кліком поза ним, Esc і коли екран став ширшим за поріг бургера
+  useEffect(() => {
+    if (!isBurgerOpen) return undefined;
+    const handlePointerDown = (event) => {
+      if (burgerRef.current && !burgerRef.current.contains(event.target)) setIsBurgerOpen(false);
+    };
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setIsBurgerOpen(false);
+        burgerBtnRef.current?.focus();
+      }
+    };
+    const wide = window.matchMedia(`(min-width: ${BURGER_HIDE_FROM}px)`);
+    const handleWide = () => wide.matches && setIsBurgerOpen(false);
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+    wide.addEventListener("change", handleWide);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+      wide.removeEventListener("change", handleWide);
+    };
+  }, [isBurgerOpen]);
+
+  // Стрілки вгору/вниз — між пунктами бургера (стрілки шапки тут не діють)
+  const handleBurgerKeyDown = (e) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    e.stopPropagation();
+    const items = Array.from(e.currentTarget.querySelectorAll("button")).filter((b) => b.offsetWidth > 0);
+    if (!items.length) return;
+    const i = items.indexOf(document.activeElement);
+    const next = e.key === "ArrowDown" ? (i + 1) % items.length : (i - 1 + items.length) % items.length;
+    items[next]?.focus();
+  };
 
   // isSettingsPaused removed — AntiHeaderAd manages its own pause state independently
 
@@ -899,6 +1144,9 @@ const Header = ({
   const handleHeaderKeyDown = (e) => {
     // Якщо модалка теми відкрита і фокус всередині — модалка має свій обробник
     if (themePickerRef.current && themePickerRef.current.contains(document.activeElement)) {
+      return;
+    }
+    if (document.getElementById("header-burger-menu")?.contains(document.activeElement)) {
       return;
     }
 
@@ -1023,6 +1271,54 @@ const Header = ({
     setVisualConfig(config);
   };
 
+  // 14. Кнопки, що на вузьких екранах живуть у бургері. showFrom — з якої ширини кнопка
+  //     стоїть просто в шапці (і зникає з бургера). Тема й Параметри — завжди в шапці.
+  const headerActions = [
+    {
+      key: "help",
+      label: "Довідка",
+      menuLabel: user ? "Довідка" : "Довідка й навчання",
+      tooltip: user ? "Допомога з сайтом" : "Навчання",
+      icon: "?",
+      iconStyle: { fontWeight: 900 },
+      onClick: handleHelpClick,
+      prefetch: "help",
+      showFrom: 768,
+    },
+    {
+      key: "stickyBg",
+      label: "Фон",
+      menuLabel: "Фон на увесь сайт",
+      tooltip: "Фон на увесь сайт",
+      icon: <MdWallpaper style={{ color: isStickyBgMode ? "#ff005d" : "inherit" }} />,
+      state: isStickyBgMode ? "увімкнено" : "вимкнено",
+      onClick: handleStickyBgToggle,
+      showFrom: 1024,
+    },
+    {
+      key: "shop",
+      label: "Магазин",
+      menuLabel: "Магазин і підтримка",
+      tooltip: "Станьте нашим спосором, та підтримайте інші екологічні компанії!",
+      icon: <GiShop />,
+      iconStyle: { fontSize: "19px" },
+      onClick: handleShopClick,
+      prefetch: "shop",
+      showFrom: BURGER_HIDE_FROM,
+    },
+    {
+      key: "authors",
+      label: "Подяка",
+      menuLabel: "Подяка",
+      tooltip: "Подяка авторам і джерелам",
+      icon: <FaBookOpen />,
+      iconStyle: { fontSize: "18px" },
+      onClick: () => onOpenAuthorsDirectory?.(),
+      prefetch: "authors",
+      showFrom: BURGER_HIDE_FROM,
+    },
+  ];
+
   return (
     <><HeaderDiv
   $ready={isIntroDone}
@@ -1032,120 +1328,136 @@ const Header = ({
   data-decorator-ignore="true"
 >
   <HeaderFix>
-    {user ? (
-      <>
-        <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)} onKeyDown={handleHeaderKeyDown}>
-          {/* Тема — відкриває міні-модалку вибору теми */}
-          <ThemePickerWrap>
-            <Tooltip content="Вибір теми" isDarkMode={isDarkMode}>
-              <IconButton
-                ref={themePickerBtnRef}
-                onClick={() => { playSfx(bell); setShowThemePicker(p => !p); }}
-                onKeyDown={(e) => {
-                  if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
-                    if (e.key === "ArrowDown") e.preventDefault();
-                    setShowThemePicker(true);
-                  }
-                }}
-                $isDarkMode={isDarkMode}
-                aria-label="Вибір теми (Alt + T)"
-                style={{ position: "relative" }}
-              >
-                <EmojiWrapper style={{ fontSize: "19px" }}>
-                  <IoColorPalette />
-                </EmojiWrapper>
-                {/* маленька крапка акценту */}
-                {accentColor && (
-                  <span style={{
-                    position: "absolute",
-                    bottom: 1, right: 1,
-                    width: 6, height: 6,
-                    borderRadius: "50%",
-                    background: accentColor,
-                    border: "1px solid rgba(0,0,0,0.3)"
-                  }} />
-                )}
-              </IconButton>
-            </Tooltip>
+    {/* Логотип — як у погодних сайтах: зліва в шапці, веде на початок сторінки */}
+    <LogoButton
+      type="button"
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      aria-label="Стихія — на початок сторінки"
+    >
+      <LogoImg src={herotext} alt="Стихія" width="212" height="78" decoding="async" />
+    </LogoButton>
 
-            {showThemePicker && (
-              <ThemePickerModal
-                ref={themePickerRef}
-                $isDarkMode={isDarkMode}
-                tabIndex={-1}
-                onKeyDown={handleModalKeyDown}
-              >
-                <ThemePickerContent
-                  isDarkMode={isDarkMode}
-                  accentColor={accentColor}
-                  onPickTheme={(dark) => { if (dark !== isDarkMode) { playSfx(bell); toggleTheme(); } }}
-                  onPickAccent={(c) => { playSfx(relax); setAccentColor(c); }}
-                onClose={() => setShowThemePicker(false)}
-                />
-              </ThemePickerModal>
+    <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)} onKeyDown={handleHeaderKeyDown}>
+      {/* Тема — завжди в шапці (її міні-модалка прив'язана до кнопки) */}
+      <ThemePickerWrap>
+        <Tooltip content="Вибір теми" isDarkMode={isDarkMode}>
+          <IconButton
+            ref={themePickerBtnRef}
+            onClick={() => { playSfx(bell); setShowThemePicker(p => !p); }}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+                if (e.key === "ArrowDown") e.preventDefault();
+                setShowThemePicker(true);
+              }
+            }}
+            $isDarkMode={isDarkMode}
+            aria-label="Вибір теми (Alt + T)"
+            aria-expanded={showThemePicker}
+            style={{ position: "relative" }}
+          >
+            <EmojiWrapper style={{ fontSize: "19px" }}>
+              <IoColorPalette />
+            </EmojiWrapper>
+            {/* маленька крапка акценту */}
+            {accentColor && (
+              <span style={{
+                position: "absolute",
+                top: 3, right: "calc(50% - 15px)", pointerEvents: "none",
+                width: 6, height: 6,
+                borderRadius: "50%",
+                background: accentColor,
+                border: "1px solid rgba(0,0,0,0.3)"
+              }} />
             )}
-          </ThemePickerWrap>
+            <IconLabel aria-hidden="true">Тема</IconLabel>
+          </IconButton>
+        </Tooltip>
 
-          {/* Липкий фон */}
-          <Tooltip content="Фон на увесь сайт" isDarkMode={isDarkMode}>
+        {showThemePicker && (
+          <ThemePickerModal
+            ref={themePickerRef}
+            $isDarkMode={isDarkMode}
+            tabIndex={-1}
+            onKeyDown={handleModalKeyDown}
+          >
+            <ThemePickerContent
+              isDarkMode={isDarkMode}
+              accentColor={accentColor}
+              onPickTheme={(dark) => { if (dark !== isDarkMode) { playSfx(bell); toggleTheme(); } }}
+              onPickAccent={(c) => { playSfx(relax); setAccentColor(c); }}
+              onClose={() => setShowThemePicker(false)}
+            />
+          </ThemePickerModal>
+        )}
+      </ThemePickerWrap>
+
+      {/* Кнопки, що виходять з бургера, коли екран ширшає (пороги — showFrom у headerActions) */}
+      {headerActions.map((action) => (
+        <BarSlot key={action.key} $showFrom={action.showFrom}>
+          <Tooltip content={action.tooltip} isDarkMode={isDarkMode}>
             <IconButton
-              onClick={handleStickyBgToggle}
+              onClick={action.onClick}
+              {...(action.prefetch ? prefetchProps(action.prefetch) : null)}
               $isDarkMode={isDarkMode}
-              aria-label="Фон на увесь сайт"
+              aria-label={action.tooltip}
             >
-              <EmojiWrapper>
-                <MdWallpaper
-                  style={{ color: isStickyBgMode ? "#ff005d" : "inherit" }}
-                />
-              </EmojiWrapper>
+              <EmojiWrapper style={action.iconStyle}>{action.icon}</EmojiWrapper>
+              <IconLabel aria-hidden="true">{action.label}</IconLabel>
             </IconButton>
           </Tooltip>
-          {/* Допомога (?) */}
-          <Tooltip content="Допомога з сайтом" isDarkMode={isDarkMode}>
-            <IconButton 
-              onClick={handleHelpClick} 
-              $isDarkMode={isDarkMode}
-              aria-label="Допомога з сайтом"
-            >
-              <EmojiWrapper style={{ fontWeight: 900 }}>?</EmojiWrapper>
-            </IconButton>
-          </Tooltip>
+        </BarSlot>
+      ))}
 
-          {/* Магазин */}
-          <Tooltip content="Станьте нашим спосором, та підтримайте інші екологічні компанії!" isDarkMode={isDarkMode}>
-            <IconButton
-              onClick={handleShopClick}
-              $isDarkMode={isDarkMode}
-              aria-label="Станьте нашим спосором, та підтримайте інші екологічні компанії!"
-            >
-              <GiShop />
-            </IconButton>
-          </Tooltip>
+      {/* Параметри — завжди в шапці; доступні й гостям (вкладка «Безпека» для них заблокована) */}
+      <Tooltip content="Налаштування" isDarkMode={isDarkMode}>
+        <IconButton
+          onClick={handleSettingsClick}
+          {...prefetchProps("settings")}
+          $isDarkMode={isDarkMode}
+          aria-label="Налаштування"
+        >
+          <EmojiWrapper>
+            <MdSettingsSuggest />
+          </EmojiWrapper>
+          <IconLabel aria-hidden="true">Параметри</IconLabel>
+        </IconButton>
+      </Tooltip>
 
-          {/* Автори / джерела */}
-          <Tooltip content="Автори та джерела" isDarkMode={isDarkMode}>
-            <IconButton
-              onClick={() => onOpenAuthorsDirectory?.()}
-              $isDarkMode={isDarkMode}
-              aria-label="Автори та джерела"
-            >
-              <EmojiWrapper style={{ fontSize: "18px" }}><FaBookOpen/></EmojiWrapper>
-            </IconButton>
-          </Tooltip>
+      {/* Бургер — усе, що не вмістилось у шапку; на найширших екранах зникає */}
+      <BurgerWrap ref={burgerRef} $hideFrom={BURGER_HIDE_FROM}>
+        <IconButton
+          ref={burgerBtnRef}
+          onClick={() => { playSfx(relax); setIsBurgerOpen((p) => !p); }}
+          $isDarkMode={isDarkMode}
+          aria-label="Меню"
+          aria-expanded={isBurgerOpen}
+          aria-controls="header-burger-menu"
+        >
+          <EmojiWrapper>{isBurgerOpen ? <MdClose /> : <MdMenu />}</EmojiWrapper>
+          <IconLabel aria-hidden="true">Меню</IconLabel>
+        </IconButton>
+        {isBurgerOpen && (
+          <BurgerMenu id="header-burger-menu" role="menu" $isDarkMode={isDarkMode} onKeyDown={handleBurgerKeyDown}>
+            {headerActions.map((action) => (
+              <BurgerItem
+                key={action.key}
+                type="button"
+                role="menuitem"
+                $hideFrom={action.showFrom}
+                $isDarkMode={isDarkMode}
+                onClick={() => { setIsBurgerOpen(false); action.onClick(); }}
+                {...(action.prefetch ? prefetchProps(action.prefetch) : null)}
+              >
+                <BurgerIcon style={action.iconStyle}>{action.icon}</BurgerIcon>
+                <span>{action.menuLabel}</span>
+                {action.state && <BurgerState>{action.state}</BurgerState>}
+              </BurgerItem>
+            ))}
+          </BurgerMenu>
+        )}
+      </BurgerWrap>
 
-          {/* Налаштування */}
-          <Tooltip content="Налаштування" isDarkMode={isDarkMode}>
-            <IconButton 
-              onClick={handleSettingsClick} 
-              $isDarkMode={isDarkMode}
-              aria-label="Налаштування"
-            >
-              <EmojiWrapper>
-                <MdSettingsSuggest />
-              </EmojiWrapper>
-            </IconButton>
-          </Tooltip>
-
+      {user ? (
         <ProfileButtonWrap>
           <Tooltip
             content={`Ваш профіль${supporter ? " · Друг індиків" : ""}${inviter ? " · Посол Стихії" : ""}${invitee ? " · Паросток Стихії" : ""} ·${NETWORK_LABELS[networkStatus]}`}
@@ -1239,132 +1551,13 @@ const Header = ({
               </LogoutButton>
             </ProfileModal>
         </ProfileButtonWrap>
-        </ButtonsGroup>
-      </>
-    ) : (
-      <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)} onKeyDown={handleHeaderKeyDown}>
-        {/* Незалогінений користувач */}
-        {/* Тема — міні-модалка вибору */}
-        <ThemePickerWrap>
-          <Tooltip content="Вибір теми" isDarkMode={isDarkMode}>
-            <IconButton
-              ref={themePickerBtnRef}
-              onClick={() => { playSfx(bell); setShowThemePicker(p => !p); }}
-              onKeyDown={(e) => {
-                if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
-                  if (e.key === "ArrowDown") e.preventDefault();
-                  setShowThemePicker(true);
-                }
-              }}
-              $isDarkMode={isDarkMode}
-              aria-label="Вибір теми (Alt + T)"
-              style={{ position: "relative" }}
-            >
-              <EmojiWrapper style={{ fontSize: "18px" }}>
-                <IoColorPalette />
-              </EmojiWrapper>
-              {accentColor && (
-                <span style={{
-                  position: "absolute", bottom: 1, right: 1,
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: accentColor, border: "1px solid rgba(0,0,0,0.3)"
-                }} />
-              )}
-            </IconButton>
-          </Tooltip>
-
-          {showThemePicker && (
-            <ThemePickerModal
-              ref={themePickerRef}
-              $isDarkMode={isDarkMode}
-              tabIndex={-1}
-              onKeyDown={handleModalKeyDown}
-            >
-              <ThemePickerContent
-                isDarkMode={isDarkMode}
-                accentColor={accentColor}
-                onPickTheme={(dark) => { if (dark !== isDarkMode) { playSfx(bell); toggleTheme(); } }}
-                onPickAccent={(c) => { playSfx(relax); setAccentColor(c); }}
-                onClose={() => setShowThemePicker(false)}
-              />
-            </ThemePickerModal>
-          )}
-        </ThemePickerWrap>
-
-        <Tooltip content="Фон на увесь сайт" isDarkMode={isDarkMode}>
-          <IconButton
-            onClick={handleStickyBgToggle}
-            $isDarkMode={isDarkMode}
-            aria-label="Фон на увесь сайт"
-          >
-            <EmojiWrapper>
-              <MdWallpaper
-                style={{ color: isStickyBgMode ? "#ff005d" : "inherit" }}
-              />
-            </EmojiWrapper>
-          </IconButton>
-        </Tooltip>
-        <Tooltip content="Навчання" isDarkMode={isDarkMode}>
-          <IconButton
-            onClick={handleHelpClick}
-            $isDarkMode={isDarkMode}
-            aria-label="Навчання"
-          >
-            <EmojiWrapper style={{ fontWeight: 900 }}>?</EmojiWrapper>
-          </IconButton>
-        </Tooltip>
-        
-          {/* Магазин */}
-          <Tooltip content="Станьте нашим спосором, та підтримайте інші екологічні компанії!" isDarkMode={isDarkMode}>
-            <IconButton
-              onClick={handleShopClick}
-              $isDarkMode={isDarkMode}
-              aria-label="Станьте нашим спосором, та підтримайте інші екологічні компанії!"
-            >
-              <GiShop />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip content="Автори та джерела" isDarkMode={isDarkMode}>
-            <IconButton
-              onClick={() => onOpenAuthorsDirectory?.()}
-              $isDarkMode={isDarkMode}
-              aria-label="Автори та джерела"
-            >
-              <EmojiWrapper style={{ fontSize: "18px" }}><FaBookOpen/></EmojiWrapper>
-            </IconButton>
-          </Tooltip>
-
-          {/* Налаштування — доступні й гостям (вкладка «Безпека» для них заблокована) */}
-          <Tooltip content="Налаштування" isDarkMode={isDarkMode}>
-            <IconButton
-              onClick={handleSettingsClick}
-              $isDarkMode={isDarkMode}
-              aria-label="Налаштування"
-            >
-              <EmojiWrapper>
-                <MdSettingsSuggest />
-              </EmojiWrapper>
-            </IconButton>
-          </Tooltip>
-
-        <button
-          onClick={handleRegisterClick}
-          style={{
-            flex: "0 0 auto",
-            fontSize: "14px",
-            cursor: "pointer",
-            background: "none",
-            border: "none",
-            marginRight: "15px",
-            textDecoration: "underline",
-            color: isDarkMode ? "#fff" : "#000",
-          }}
-        >
-          Акаунт
-        </button>
-      </ButtonsGroup>
-    )}
+      ) : (
+        <AccountButton type="button" onClick={handleRegisterClick} {...prefetchProps("register")} $isDarkMode={isDarkMode} aria-label="Увійти в акаунт">
+          <MdAccountCircle aria-hidden="true" />
+          <span>Увійти</span>
+        </AccountButton>
+      )}
+    </ButtonsGroup>
   </HeaderFix>
   {showVisualSettings && (
     <VisualSettingsPanel $isDarkMode={isDarkMode}>

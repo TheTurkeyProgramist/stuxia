@@ -292,6 +292,108 @@ const HighlightOutline = styled.div`
   @media (prefers-reduced-motion: reduce) { animation: none; }
 `;
 
+// Пасхалка: у пошуку міста одна буква й тиша → Доміно жартує. Лише один раз на пристрої.
+const QUIP_SEEN_KEY = 'domino_quip_speechless_seen';
+const QUIP_IDLE_MS = 8000;
+const QUIP_VISIBLE_MS = 6500;
+const QUIP_TEXT = 'Бачу, Стихія тебе вразила — аж слів забракло?';
+
+const QuipBubble = styled.div`
+  ${panelSurface}
+  position: fixed;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(320px, calc(100vw - 20px));
+  box-sizing: border-box;
+  padding: 8px 12px 8px 8px;
+  border-radius: 14px;
+  cursor: pointer;
+  animation: ${fadeIn} 0.25s ease-out;
+
+  /* Хвостик до поля пошуку */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 22px;
+    width: 10px;
+    height: 10px;
+    background: rgba(28, 20, 12, 0.95);
+    border-left: 1px solid rgba(255, 179, 108, 0.55);
+    border-top: 1px solid rgba(255, 179, 108, 0.55);
+    transform: rotate(45deg);
+  }
+
+  b { display: block; font-size: 12px; color: ${ACCENT}; }
+  span { font-size: 13px; line-height: 1.4; color: #f3eee8; }
+
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+`;
+
+const getHeroInput = () => document.querySelector('input[name="hero-city-search"]');
+
+const DominoQuip = () => {
+  const [pos, setPos] = useState(null);
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(QUIP_SEEN_KEY) === '1') return;
+    } catch { /* приватний режим — просто покажемо */ }
+
+    let idleTimer;
+    let hideTimer;
+    const hide = () => {
+      clearTimeout(hideTimer);
+      setPos(null);
+    };
+
+    const show = () => {
+      const input = getHeroInput();
+      // Перевіряємо ще раз: значення могло змінитися без події (вибір підказки, очищення)
+      if (!input || [...input.value.trim()].length !== 1) return;
+      const rect = input.getBoundingClientRect();
+      if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+      doneRef.current = true;
+      try { localStorage.setItem(QUIP_SEEN_KEY, '1'); } catch { /* ignore */ }
+      setPos({ top: rect.bottom + 10, left: Math.max(10, rect.left) });
+      hideTimer = setTimeout(hide, QUIP_VISIBLE_MS);
+    };
+
+    const onInput = (e) => {
+      clearTimeout(idleTimer);
+      hide();
+      if (doneRef.current) return;
+      if ([...(e.detail?.value || '').trim()].length === 1) idleTimer = setTimeout(show, QUIP_IDLE_MS);
+    };
+
+    window.addEventListener('domino-hero-input-change', onInput);
+    // capture — сторінка може гортатися не у window, а у власному контейнері
+    document.addEventListener('scroll', hide, { capture: true, passive: true });
+    window.addEventListener('resize', hide);
+    return () => {
+      clearTimeout(idleTimer);
+      clearTimeout(hideTimer);
+      window.removeEventListener('domino-hero-input-change', onInput);
+      document.removeEventListener('scroll', hide, { capture: true });
+      window.removeEventListener('resize', hide);
+    };
+  }, []);
+
+  if (!pos) return null;
+  return (
+    <QuipBubble style={pos} role="status" aria-live="polite" onClick={() => setPos(null)}>
+      <DominoMascot size={40} />
+      <div>
+        <b>Доміно</b>
+        <span>{QUIP_TEXT}</span>
+      </div>
+    </QuipBubble>
+  );
+};
+
 const DominoMascot = ({ size }) => {
   const [failed, setFailed] = useState(!canPlayAlphaWebm);
   return (
@@ -552,7 +654,7 @@ const DominoTutorial = ({ user }) => {
     );
   }
 
-  if (!isActive) return null;
+  if (!isActive) return <DominoQuip />;
   const currentStepData = steps.find(s => s.step === currentStep);
   if (!currentStepData) return null;
   const showHighlight = highlightStyle.display !== 'none';

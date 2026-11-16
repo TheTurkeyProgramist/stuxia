@@ -8,6 +8,7 @@ import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { store } from "./app/store.js";
 import App from "./App.jsx";
+import { eagerChunksReady } from "./utils/eagerChunks.js";
 import { Toaster } from "react-hot-toast";
 
 // Глобальна зупинка всіх відео при зміні вкладки/згортанні
@@ -44,7 +45,9 @@ window.addEventListener("unhandledrejection", (e) => {
 const isFramed = window.self !== window.top && !import.meta.env.DEV;
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
+// На ПК чекаємо новини й картку погоди (eagerChunks.js), щоб вони вже були в першому
+// малюванні; на телефоні проміс виконаний одразу
+eagerChunksReady().then(() => root.render(
   isFramed ? (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: 16, textAlign: "center", fontFamily: "system-ui, sans-serif", background: "#0b1426", color: "#fff" }}>
       <p style={{ margin: 0 }}>{i18n.t("frameGuard.text")}</p>
@@ -58,4 +61,4 @@ root.render(
       <Toaster position="bottom-right" reverseOrder={false} />
     </Provider>
   ),
-);
+));

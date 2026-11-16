@@ -109,6 +109,8 @@
     "sourcesAria": "Джерела карти",
     "searchSources": "Пошук карт і фреймів",
     "noSourcesFound": "Нічого не знайдено",
+    "prevMap": "Попередня карта",
+    "nextMap": "Наступна карта",
     "clearSearch": "Очистити пошук",
     "customFrame": "Власний фрейм / віджет",
     "titlePlaceholder": "Назва (напр. Радар, Вебкамера...)",

@@ -13,7 +13,6 @@ import { FaSnowflake, FaWind } from "react-icons/fa";
 import { FaMapLocationDot } from "react-icons/fa6";
 import planes from "../../media/third-party/services/planes.webp";
 import castle from "../../media/backgrounds/scenes/turkey-in-dragon-museum.webp"
-import { GiPalette } from "react-icons/gi";
 import {
   FiClock,
   FiDownload,
@@ -33,7 +32,7 @@ import {
 } from "react-icons/fi";
 import styled, { keyframes, css } from "styled-components";
 import { useSelector, useDispatch } from "react-redux";
-import { MdSettingsSuggest, MdMore, MdSearch, MdWallpaper, MdAutoAwesome, MdClose, MdTranslate } from "react-icons/md";
+import { MdAccessTime, MdMore, MdSearch, MdWallpaper, MdAutoAwesome, MdTranslate } from "react-icons/md";
 import { useTranslation } from "react-i18next";
 import {
   addCustomDay,
@@ -43,28 +42,34 @@ import localforage from "localforage";
 import hills from "../../media/backgrounds/scenes/foggy-forest.webp";
 import herotext from "../../media/brand/wordmark-stykhiia.webp";
 import village from "../../media/third-party/games/dragon-village-3.webp"
-import villagePreview from "../../media/third-party/games/dragon-village-3.webp?w=128&format=webp&quality=50";
 import faded from "../../media/backgrounds/scenes/resort.webp";
-import fadedPreview from "../../media/backgrounds/scenes/resort.webp?w=128&format=webp&quality=50";
 import { DEFAULT_BGS, DEFAULT_HERO_BG, MOBILE_CONTAIN_BGS } from "./defaultBgs";
 import { HeroVersionBadge } from "./HeroCredits";
+import QuickWeather, { ADD_CITY_OPTION } from "./QuickWeather.jsx";
+import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
+import { ModalSuspense } from "../Loader/ModalLoading.jsx";
+import { OPEN_BG_MODAL_EVENT, OPEN_TIMEZONE_EVENT } from "./heroEvents.js";
+import { getEagerChunk, loadNews } from "../../utils/eagerChunks.js";
 import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
-// Новини (~120 КБ) — окремим файлом після першого показу сторінки, щоб не затримувати фон Hero (LCP)
-const News = React.lazy(() => import("../News/News.jsx"));
+// Новини (~120 КБ) — окремим файлом. Телефон: після першого показу сторінки, щоб не затримувати
+// фон Hero (LCP). ПК: уже завантажені до першого малювання (eagerChunks.js)
+const LazyNews = React.lazy(loadNews);
+const News = (props) => {
+  const EagerNews = getEagerChunk("News");
+  return EagerNews ? <EagerNews {...props} /> : <LazyNews {...props} />;
+};
 // ШІ-помічник (Gemini + markdown) вантажиться лише при відкритті модалки
-const React_lazy_Aihelp = React.lazy(() => import("../Aihelp/Aihelp.jsx"));
+const React_lazy_Aihelp = lazyWithRetry(() => import("../Aihelp/Aihelp.jsx"));
 import AiAttachBadges from "../AiShared/AiAttachBadges.jsx";
 import toast, { Toaster } from 'react-hot-toast';
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
-import turkeytwoPreview from "../../media/turkeys/small-but-confident.webp?w=128&format=webp&quality=50";
-import niceronePreview from "../../media/third-party/dinofroz/nitseron-alt.webp?w=128&format=webp&quality=50";
 import { Tooltip } from "../Tooltip/Tooltip";
 import WallpaperScene, { findWallpaper } from "./WallpaperScene.jsx";
 import { isWallpaperSrc } from "../../utils/wallpaperPrefs.js";
 // Модалки вантажаться при першому відкритті, а не на старті
-const TimezoneModal = React.lazy(() => import("./TimezoneModal.jsx"));
-const BgModal = React.lazy(() => import("./BgModal.jsx"));
-const LanguageModal = React.lazy(() => import("../Modals/LanguageModal.jsx"));
+const TimezoneModal = lazyWithRetry(() => import("./TimezoneModal.jsx"));
+const BgModal = lazyWithRetry(() => import("./BgModal.jsx"));
+const LanguageModal = lazyWithRetry(() => import("../Modals/LanguageModal.jsx"));
 
 // true з першого разу, коли flag став true, і далі назавжди: модалка після
 // першого відкриття лишається змонтованою й зберігає свій стан, як і раніше
@@ -74,16 +79,6 @@ const useOpenedOnce = (flag) => {
   return opened || flag;
 };
 import { usePageActive } from "../../utils/pageActivity.js";
-const CHANGE_BG_PREVIEW_IMAGES = [
-  villagePreview,
-  fadedPreview,
-  niceronePreview,
-  turkeytwoPreview,
-];
-const bgPreviewSwap = keyframes`
-  from { opacity: 0.35; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-`;
 const bgCardThumbnails = {
   [village]: {
     src: village,
@@ -127,54 +122,37 @@ const slideOut = keyframes`
   0% { transform: translateY(0%) scale(1); opacity: 1; }
   100% { transform: translateY(100%) scale(0.5); opacity: 0; }
 `;
-const slideUpHero = keyframes`
-  0% { transform: translateY(120px) scale(1.5); opacity: 0; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
-`;
 const fadeInContent = keyframes`
   0% { opacity: 0; }
   100% { opacity: 1; }
 `;
+const modeSwapIn = keyframes`
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+`;
+const modeSwapAnimation = css`
+  animation: ${modeSwapIn} 260ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+  html[data-animations-off] & {
+    animation: none;
+  }
+`;
 const HeroDiv = styled.div`
   position: relative;
   width: 100%;
-  height: 632px;
+  /* висота — за вмістом: фіксовані 632px після переїзду логотипа в шапку лишали порожнечу внизу */
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* одразу під фіксованою шапкою (48px), логотип тепер у шапці */
+  justify-content: flex-start;
+  padding-top: 58px;
+  padding-bottom: 12px;
+  box-sizing: border-box;
   align-items: center;
   overflow: hidden;
   z-index: 1;
-`;
-const HeroDecors = styled.div`
-  display: block;
-  width: 212px;
-  margin-top: 35px;
-  height: 78px;
-  background-image: url(${(props) => props.$image});
-  background-size: cover;
-  background-position: top center;
-  background-repeat: no-repeat;
-  opacity: 0;
-  transform: translateY(120px) scale(1.5);
-  animation: ${(props) =>
-    props.$start
-      ? css`
-          ${slideUpHero} 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards
-        `
-      : "none"};
-
-  /* на вузьких екранах по центру напис ховається під кнопкою «Змінити фон?»,
-     тож переносимо його у вільний правий куток */
-  @media (max-width: 560px) {
-    align-self: flex-end;
-    margin-right: 8px;
-  }
-
-  @media (max-width: 380px) {
-    width: 160px;
-    height: 59px;
-  }
 `;
 const DelayedContent = styled.div`
   display: flex;
@@ -189,7 +167,7 @@ const DelayedContent = styled.div`
           ${fadeInContent} 1s ease-out forwards
         `
       : "none"};
-  animation-delay: ${(props) => (props.$start ? "1.5s" : "0s")};
+  animation-delay: ${(props) => (props.$start ? "0.15s" : "0s")};
 `;
 // Тривалість плавної зміни слайдів (налаштування прибрано)
 const SLIDESHOW_TRANSITION = 1;
@@ -641,35 +619,6 @@ const HeroDate = styled.div`
   }
 `;
 
-const HeroControls = styled.div`
- display: flex;
- flex: 0 0 auto;
- flex-direction: column;
- align-items: flex-start;
- gap: 2px;
-`;
-
-const TimezoneButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  border: none;
-  gap: 3px;
-  border-radius: 4px;
-  padding: 2px 5px;
-  background: transparent;
-  color: ${(props) => (props.$isDarkMode ? "#fff" : "#30343b")};
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: ${(props) =>
-      props.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)"};
-  }
-`;
-
 const SearchWrapper = styled.div`
   position: relative;
   display: flex;
@@ -714,10 +663,10 @@ const modeIconEnter = keyframes`
 
 const ModePreviewIcon = styled.span`
   display: grid;
-  width: 22px;
-  height: 22px;
-  font-size: 18px;
-  flex: 0 0 22px;
+  width: 18px;
+  height: 18px;
+  font-size: 16px;
+  flex: 0 0 18px;
   place-items: center;
   animation: ${modeIconEnter} 300ms ease both;
 `;
@@ -730,7 +679,7 @@ const ModePreviewText = styled.span`
 const ModeIconBtn = styled.button`
   width: 100%;
   box-sizing: border-box;
-  height: 39px;
+  height: 32px;
   border-radius: 6px;
   border: none;
   background: ${(props) =>
@@ -740,8 +689,9 @@ const ModeIconBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 15px;
+  gap: 6px;
+  font-size: 13px;
+  font-family: var(--font-family);
   padding: 0 8px;
   flex-shrink: 0;
   transition: background 0.2s ease;
@@ -785,106 +735,8 @@ const LanguageBtn = styled(ModeIconBtn)`
   }
 `;
 
-const overlayIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
-
-const overlayOut = keyframes`
-  from { opacity: 1; }
-  to { opacity: 0; }
-`;
-
-const optionOut = keyframes`
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(24px); }
-`;
-
-const optionIn = keyframes`
-  from { opacity: 0; transform: translateX(-24px); }
-  to { opacity: 1; transform: translateX(0); }
-`;
-
-const iconSpinIn = keyframes`
-  from { transform: rotate(-120deg) scale(0.4); opacity: 0; }
-  to { transform: rotate(0) scale(1); opacity: 1; }
-`;
-
-const ModeOverlay = styled.div`
-  && {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: 4px;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 43px;
-    z-index: 5;
-    padding: 0;
-    box-sizing: border-box;
-    border-radius: 10px;
-    background: ${(props) =>
-      props.$isDarkMode ? "rgb(18, 22, 29)" : "rgb(248, 250, 252)"};
-    animation: ${(props) =>
-      props.$closing
-        ? css`${overlayOut} 260ms ease-in both`
-        : css`${overlayIn} 280ms cubic-bezier(0.22, 1, 0.36, 1) both`};
-  }
-`;
-
-const ModeOptionBtn = styled(ModeIconBtn)`
-  flex: none;
-  width: 100%;
-  height: 39px;
-  font-size: 16px;
-
-  ${ModePreviewIcon} {
-    width: 24px;
-    height: 24px;
-    font-size: 20px;
-    flex: 0 0 24px;
-  }
-
-  animation: ${(props) =>
-    props.$closing
-      ? css`${optionOut} 200ms ease-in both`
-      : css`${optionIn} 320ms cubic-bezier(0.22, 1, 0.36, 1) both`};
-  animation-delay: ${(props) => props.$delay || "0ms"};
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: translateY(-1px) scale(1.01);
-    box-shadow: 0 6px 18px rgba(53, 57, 136, 0.45);
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
-
-  svg {
-    transition: transform 0.25s ease;
-  }
-
-  &:hover svg {
-    transform: scale(1.2) rotate(-6deg);
-  }
-`;
-
-const CancelModeBtn = styled(ModeIconBtn)`
-  height: 39px;
-  font-size: 16px;
-  &:hover {
-    background: #8a2b3a;
-  }
-
-  & > span:first-child {
-    animation: ${iconSpinIn} 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-`;
-
 const CoordinatesContainer = styled.div`
+  ${modeSwapAnimation}
   display: flex;
   width: 100%;
   box-sizing: border-box;
@@ -962,19 +814,14 @@ const HeroFormater = styled.div`
   align-items: center;
   position: relative;
   width: 100%;
-  gap: 8px;
+  gap: 6px;
 
   /* на вузьких екранах поля координат переносяться у 2 рядки (46+8+46),
-     тому обидва режими мають однакову мінімальну висоту */
+     тому обидва режими мають однакову мінімальну висоту (+ кнопка режиму 32+4) */
   @media (max-width: 503px) {
-    min-height: 148px;
+    min-height: 142px;
   }
 
-  /* накладка вибору режиму (2 кнопки + «Відмінити» + проміжки) має вміщатися
-     без зміни висоти блоку при відкритті */
-  @media (min-width: 504px) {
-    min-height: 125px;
-  }
 `;
 
 const SearchBorder = styled.svg`
@@ -1001,6 +848,7 @@ const SearchBorder = styled.svg`
 `;
 
 const SearchContainer = styled.div`
+  ${modeSwapAnimation}
   position: relative;
   display: flex;
   width: 100%;
@@ -1035,24 +883,6 @@ const HeroInput = styled.input`
   }
   &::placeholder {
     color: ${(p) => (p.$isDarkMode ? "#f3efef" : "#000000")};
-  }
-`;
-const HeroInfo = styled.div`
-  display: ${(props) => (props.$desktopOnly ? "none" : "block")};
-  width: 100%;
-  color: ${(props) => (props.$isDarkMode ? "#f4f7fb" : "#30343b")};
-  font-size: 12px;
-  height: 40px; 
-  line-height: 1.4;
-  text-align: center;
-
-  @media (min-width: 560px) {
-    display: block;
-    height: 20px;
-  }
-
-  @media (max-width: 559px) {
-    display: ${(props) => (props.$desktopOnly ? "none" : "block")};
   }
 `;
 const SuggestionsList = styled.div`
@@ -1198,11 +1028,44 @@ const DoneButton = styled.button`
 `;
 
 
-const Tag = styled.span`
-    color: ${(props) => (props.$isDarkMode ? "#fbfbfb" : "#060606")};
-  flex: 1;
-  text-align: right;
+// Дата й час над пошуком — натиснув і вибрав часовий пояс
+const DateButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: ${(props) => (props.$isDarkMode ? "#fbfbfb" : "#060606")};
+  font-family: var(--font-family);
   font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  svg {
+    font-size: 14px;
+    opacity: 0.7;
+  }
+
+  &:hover,
+  &[aria-expanded="true"] {
+    background: ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)")};
+  }
+
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+`;
+// ШІ-асистент ліворуч від дати
+const AiButton = styled(DateButton)`
+  color: ${(props) => (props.$isDarkMode ? "#c4b5fd" : "#6d28d9")};
+
+  svg {
+    opacity: 1;
+  }
 `;
 const LoadMoreButton = styled.button`
   width: 100%;
@@ -1218,49 +1081,14 @@ const LoadMoreButton = styled.button`
   }
 `;
 
-const ChangeBgButton = styled.button`
-  position: absolute;
-  top: 40px;
-  gap: 6px;
-  left: 4px;
-  background: rgba(0, 0, 0, 0.4);
-  color: white;
-  width: 128px;
-  height: 70px;
-  border-radius: 5px;
-  cursor: pointer;
-  padding: 4px 6px;
-  z-index: 100;
-  transition: all 0.3s;
-  font-size: 14px;
-  backdrop-filter: blur(5px);
-  &:hover {
-    background: #1d5b69;
-    transform: scale(1.1);
-  }
-`;
-
-const ChangeBgPreviewGroup = styled.span`
-  display: flex;
-  gap: 2px;
-  flex: 0 0 auto;
-`;
-
-const ChangeBgPreview = styled.img`
-  width: 116px;
-  height: 35px;
-  object-fit: cover;
-  border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  animation: ${bgPreviewSwap} 0.45s ease-out both;
-`;
 // Місце під новини, поки вантажиться їхній файл: висота як у News із заголовком і
-// блоком «Шукаємо цікаві новини…» (заміряно: 287px на телефоні, 291px з 768px) — без зсуву макета
+// блоком «Шукаємо цікаві новини…» (заміряно: 287px на телефоні, 291px з 768px) — без зсуву макета.
+// Мінус ~32px: рядок «За сьогодні відфільтровано…» переїхав у заголовок новин
 const NewsLazyPlaceholder = styled.div`
-  min-height: 287px;
+  min-height: 255px;
 
   @media (min-width: 768px) {
-    min-height: 291px;
+    min-height: 259px;
   }
 `;
 
@@ -1313,8 +1141,34 @@ const Hero = ({
   setSelectedTimezone,
   customHolidayName,
   setCustomHolidayName,
+  // Картка, з якої показуємо коротку погоду під пошуком (null — ще вантажиться)
+  quickWeatherCard,
+  // GPS-картку вимкнено і власних карток немає — коротку погоду не показуємо
+  hideQuickWeather = false,
+  onOpenQuickWeather,
+  quickWeatherCities,
+  onSelectQuickWeatherCity,
 }) => {
   const dispatch = useDispatch();
+  // «Додати інше місто…» — до пошуку; нове місто саме стане на головний екран (автовибір — останнє додане)
+  const handleQuickWeatherCity = (value) => {
+    if (value === ADD_CITY_OPTION) {
+      onSelectQuickWeatherCity?.(null);
+      setSearchMode("city");
+      setTimeout(() => document.querySelector('input[name="hero-city-search"]')?.focus(), 0);
+      return;
+    }
+    onSelectQuickWeatherCity?.(value);
+  };
+  const quickWeather = hideQuickWeather ? null : (
+    <QuickWeather
+      card={quickWeatherCard}
+      cities={quickWeatherCities}
+      isDarkMode={isDarkMode}
+      onOpen={onOpenQuickWeather}
+      onSelectCity={handleQuickWeatherCity}
+    />
+  );
   const { registerRef, isActive } = useTutorial?.() || { registerRef: () => {} };
   const customDays = useSelector((state) => state.calendar?.customDays || []);
   const [newDayInput, setNewDayInput] = useState({ date: "", reason: "" });
@@ -1340,20 +1194,23 @@ const Hero = ({
     addedCityKeysRef.current = new Set();
     setAddedCityKeys([]);
   };
-  const [backgroundPreviewPair, setBackgroundPreviewPair] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBackgroundPreviewPair((index) => (index + 1) % CHANGE_BG_PREVIEW_IMAGES.length);
-    }, 2400);
-    return () => clearInterval(interval);
-  }, []);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const bgModalMounted = useOpenedOnce(isModalOpen);
   const [showTimezoneMenu, setShowTimezoneMenu] = useState(false);
   const timezoneModalMounted = useOpenedOnce(showTimezoneMenu);
+
+  // «Фон» і «Часовий пояс» тепер відкриваються з налаштувань (шестерня), а не кнопками на першому екрані
+  useEffect(() => {
+    const openBg = () => setIsModalOpen(true);
+    const openTimezone = () => setShowTimezoneMenu(true);
+    window.addEventListener(OPEN_BG_MODAL_EVENT, openBg);
+    window.addEventListener(OPEN_TIMEZONE_EVENT, openTimezone);
+    return () => {
+      window.removeEventListener(OPEN_BG_MODAL_EVENT, openBg);
+      window.removeEventListener(OPEN_TIMEZONE_EVENT, openTimezone);
+    };
+  }, []);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const languageModalMounted = useOpenedOnce(isLanguageModalOpen);
   const { t, i18n } = useTranslation();
@@ -1362,117 +1219,44 @@ const Hero = ({
     i18n.resolvedLanguage === "en" ? "Language" : `Language (${t("hero.language")})`;
   const [hasMore, setHasMore] = useState(true);
   const [searchMode, setSearchMode] = useState("city");
-  const [searchModeOptionIndex, setSearchModeOptionIndex] = useState(0);
-  const [isSearchModeModalOpen, setIsSearchModeModalOpen] = useState(false);
-  const [isModeClosing, setIsModeClosing] = useState(false);
-  const [pickerBaseMode, setPickerBaseMode] = useState("city");
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
-  const searchModePrompts = [
-    "ШІ-асистент",
-    "Змінити режим пошуку?",
-    searchMode === "coordinates" ? "За назвою міста" : "Координати (шир/дов)",
-    "Змінити режим пошуку?",
-  ];
-  const rotatingSearchPrompt = searchModePrompts[searchModeOptionIndex];
-  const rotatingSearchModeIcon =
-    searchModeOptionIndex === 0
-      ? "ai"
-      : searchModeOptionIndex === 2
-        ? searchMode === "coordinates"
-          ? "city"
-          : "coordinates"
-        : searchMode;
-
-  useEffect(() => {
-    setSearchModeOptionIndex(0);
-    const interval = setInterval(() => {
-      setSearchModeOptionIndex((index) => (index + 1) % searchModePrompts.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [searchMode, searchModePrompts.length]);
-
-  const modeOptions = [
-    { id: "ai", label: "ШІ-асистент", Icon: MdAutoAwesome },
-    { id: "city", label: "За назвою міста", Icon: FaMountainCity },
-    { id: "coordinates", label: "Координати (шир/дов)", Icon: FaMapLocationDot },
-  ].filter(({ id }) => id !== pickerBaseMode);
-
-  const MODE_CLOSE_MS = 260;
-
-  const closeModePicker = (afterClose) => {
-    if (isModeClosing) return;
-    setIsModeClosing(true);
-    setTimeout(() => {
-      setIsSearchModeModalOpen(false);
-      setIsModeClosing(false);
-      afterClose?.();
-    }, MODE_CLOSE_MS);
+  // Режим пошуку: кнопка одразу перемикає «за назвою міста» ↔ «за координатами»
+  // (ШІ-асистент тепер окремою кнопкою ліворуч від часу)
+  const nextModeIsCoordinates = searchMode === "city";
+  const switchSearchMode = () => {
+    const mode = nextModeIsCoordinates ? "coordinates" : "city";
+    setSearchMode(mode);
+    if (mode === "city") {
+      setLatitude("");
+      setLongitude("");
+    } else {
+      setInputValue("");
+      setShowCoordinateSuggestions(false);
+    }
+    setSuggestions([]);
+    setShowList(false);
   };
 
-  const searchModePicker = isSearchModeModalOpen ? (
-    <>
-      <ModeOverlay $isDarkMode={isDarkMode} $closing={isModeClosing}>
-        {modeOptions.map(({ id, label, Icon }, index) => (
-          <ModeOptionBtn
-            key={id}
-            type="button"
-            $closing={isModeClosing}
-            $delay={`${(isModeClosing ? modeOptions.length - 1 - index : index) * 70}ms`}
-            onClick={() => handleSearchModeSelect(id)}
-            $isDarkMode={isDarkMode}
-          >
-            <ModePreviewIcon>
-              <Icon />
-            </ModePreviewIcon>
-            <ModePreviewText>{label}</ModePreviewText>
-            {id === "ai" && <AiAttachBadges isDarkMode={isDarkMode} />}
-          </ModeOptionBtn>
-        ))}
-      </ModeOverlay>
-      <ModePicker style={{ paddingTop: 0 }}>
-      <CancelModeBtn
-        type="button"
-        onClick={() => closeModePicker()}
-        aria-label="Відмінити вибір режиму пошуку"
-        $isDarkMode={isDarkMode}
-      >
-        <ModePreviewIcon>
-          <MdClose />
-        </ModePreviewIcon>
-        <ModePreviewText>Відмінити</ModePreviewText>
-      </CancelModeBtn>
-      </ModePicker>
-    </>
-  ) : (
+  const searchModePicker = (
     <ModeRow>
     <ModePicker>
       <Tooltip
-        content="Натисніть, щоб відкрити вибір режиму пошуку"
+        content={nextModeIsCoordinates ? "Шукати за широтою й довготою" : "Шукати за назвою міста чи села"}
         isDarkMode={isDarkMode}
       >
         <ModeIconBtn
-          onClick={() => {
-            setPickerBaseMode(searchMode);
-            setIsSearchModeModalOpen(true);
-          }}
-          aria-label="Відкрити вибір режиму пошуку"
+          type="button"
+          onClick={switchSearchMode}
+          aria-label={nextModeIsCoordinates ? "Перейти на пошук за координатами" : "Перейти на пошук за назвою міста"}
           $isDarkMode={isDarkMode}
         >
-          <ModePreviewIcon key={`${searchModeOptionIndex}-${rotatingSearchModeIcon}`}>
-            {rotatingSearchModeIcon === "coordinates" ? (
-              <FaMapLocationDot />
-            ) : rotatingSearchModeIcon === "ai" ? (
-              <MdAutoAwesome />
-            ) : (
-              <FaMountainCity />
-            )}
+          <ModePreviewIcon key={`icon-${searchMode}`}>
+            {nextModeIsCoordinates ? <FaMapLocationDot /> : <FaMountainCity />}
           </ModePreviewIcon>
-          <ModePreviewText key={`${searchModeOptionIndex}-${rotatingSearchPrompt}`}>
-            {rotatingSearchPrompt}
+          <ModePreviewText key={`text-${searchMode}`}>
+            {nextModeIsCoordinates ? "Режим координат" : "За назвою міста"}
           </ModePreviewText>
-          {rotatingSearchModeIcon === "ai" && <AiAttachBadges isDarkMode={isDarkMode} />}
         </ModeIconBtn>
       </Tooltip>
     </ModePicker>
@@ -1491,31 +1275,6 @@ const Hero = ({
     </ModeRow>
   );
 
-  const handleSearchModeSelect = (mode) => {
-    if (mode === "ai") {
-      closeModePicker(() => setIsAiModalOpen(true));
-      return;
-    }
-
-    // режим міняємо одразу: накладка ще закриває вміст, тож під час
-    // зникання не видно попередній режим
-    setSearchMode(mode);
-
-    if (mode === "city") {
-      setLatitude("");
-      setLongitude("");
-    } else {
-      setInputValue("");
-    }
-
-    setSuggestions([]);
-    setShowList(false);
-
-    if (mode !== "city") setShowCoordinateSuggestions(false);
-
-    closeModePicker();
-  };
-
   // Блокування прокрутки при відкритій модалці
   useEffect(() => {
     if (isModalOpen || showTimezoneMenu || isAiModalOpen) {
@@ -1531,14 +1290,11 @@ const Hero = ({
   // Закриття по Escape
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === "Escape") {
-        if (isAiModalOpen) { setIsAiModalOpen(false); return; }
-        if (isSearchModeModalOpen) closeModePicker();
-      }
+      if (e.key === "Escape" && isAiModalOpen) setIsAiModalOpen(false);
     };
     document.addEventListener("keydown", handleEsc);
     return () => document.removeEventListener("keydown", handleEsc);
-  }, [isAiModalOpen, isSearchModeModalOpen, isModeClosing]);
+  }, [isAiModalOpen]);
 
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
@@ -1549,8 +1305,6 @@ const Hero = ({
     () => [...DEFAULT_BGS, ...(customHeroBgs || [])],
     [customHeroBgs],
   );
-  // Одне прев'ю фону, що по черзі змінюється
-  const currentBgPreviewImages = [CHANGE_BG_PREVIEW_IMAGES[backgroundPreviewPair]];
 
   const handleSelectBg = useCallback(
     (src, targetLayer = 1) => {
@@ -2113,44 +1867,39 @@ const Hero = ({
         $videoEnd={allBgs.find((b) => b.src === heroBg3)?.end}
       />
       </>)}
-      <ChangeBgButton
-        ref={(el) => registerRef("changeBgButton", el)}
-        onClick={() => setIsModalOpen(true)}
-        aria-label="Змінити фон"
-      >
-        <span style={{ display: "flex", gap: "5px" }}>
-          <GiPalette size={27} />
-          <span style={{ fontSize: "14px" }}>Змінити фон?</span>
-        </span>
-                <ChangeBgPreviewGroup aria-hidden="true">
-          {currentBgPreviewImages.map((src) => (
-            <ChangeBgPreview key={src} src={src} alt="" />
-          ))}
-        </ChangeBgPreviewGroup>
-      </ChangeBgButton>
       <HeroVersionBadge />
-      <HeroDecors $image={herotext} $start={startAnimation} />
       <DelayedContent $start={startAnimation}>
         <BrowserSearchPanel $isDarkMode={isDarkMode}>
           <HeroDecor>
             <HeroFix>
               <HeroFi>
                 <HeroDate ref={timezoneMenuRef} $isDarkMode={isDarkMode}>
-                <HeroControls>
-                  <TimezoneButton
-                    ref={(el) => registerRef('timezoneButton', el)}
-                    onClick={() => setShowTimezoneMenu(!showTimezoneMenu)}
-                    aria-label="Змінити часовий пояс?"
+                <Tooltip content="ШІ-асистент: спитайте про погоду чи сайт" isDarkMode={isDarkMode}>
+                  <AiButton
+                    type="button"
                     $isDarkMode={isDarkMode}
+                    onClick={() => setIsAiModalOpen(true)}
+                    aria-label="Відкрити ШІ-асистента"
                   >
-                    <MdSettingsSuggest size={18} /> Змінити часов. пояс?
-                  </TimezoneButton>
-                </HeroControls>
-                <Tag $isDarkMode={isDarkMode} style={{ flex: 1, textAlign: "right" }}>
-                  {heroDateString}
-                </Tag>
+                    <MdAutoAwesome aria-hidden="true" />
+                    ШІ-асистент
+                    <AiAttachBadges isDarkMode={isDarkMode} />
+                  </AiButton>
+                </Tooltip>
+                <Tooltip content="Змінити часовий пояс" isDarkMode={isDarkMode} wrapperStyle={{ marginLeft: "auto" }}>
+                  <DateButton
+                    type="button"
+                    $isDarkMode={isDarkMode}
+                    onClick={() => setShowTimezoneMenu(!showTimezoneMenu)}
+                    aria-expanded={showTimezoneMenu}
+                    aria-label="Змінити часовий пояс"
+                  >
+                    <MdAccessTime aria-hidden="true" />
+                    {heroDateString}
+                  </DateButton>
+                </Tooltip>
                 {timezoneModalMounted && (
-                  <React.Suspense fallback={null}>
+                  <ModalSuspense active={showTimezoneMenu} onCancel={() => setShowTimezoneMenu(false)}>
                     <TimezoneModal
                       isOpen={showTimezoneMenu}
                       onClose={() => setShowTimezoneMenu(false)}
@@ -2158,7 +1907,7 @@ const Hero = ({
                       setSelectedTimezone={setSelectedTimezone}
                       isDarkMode={isDarkMode}
                     />
-                  </React.Suspense>
+                  </ModalSuspense>
                 )}
                 </HeroDate>
               </HeroFi>
@@ -2308,10 +2057,7 @@ const Hero = ({
                   </SuggestionsList>
                 )}
               </SearchContainer>
-              <HeroInfo $isDarkMode={isDarkMode}>
-                Ви заслуговуєте на багатофункціональний прогноз, де немає політики та реклами!
-                Гарної погоди!
-              </HeroInfo>
+              {quickWeather}
               {searchModePicker}
             </HeroFormater>
           ) : (
@@ -2356,10 +2102,7 @@ const Hero = ({
                   Знайти
                 </CoordinateSearchButton>
               </CoordinatesContainer>
-              <HeroInfo $isDarkMode={isDarkMode} $desktopOnly>
-                Ви заслуговуєте на багатофункціональний прогноз, де немає політики та реклами!
-                Гарної погоди!
-              </HeroInfo>
+              {quickWeather}
               {nearbySearchStatus && (
                 <div style={{
                   color: nearbySearchStatus.startsWith("✅") ? "#00e676"
@@ -2462,7 +2205,7 @@ const Hero = ({
         </div>
       </DelayedContent>
       {bgModalMounted && (
-      <React.Suspense fallback={null}>
+      <ModalSuspense active={isModalOpen} onCancel={() => setIsModalOpen(false)}>
       <BgModal
         isOpen={isModalOpen}
         isClosing={isClosing}
@@ -2498,16 +2241,16 @@ const Hero = ({
         setRandomCurrentIndex={setRandomCurrentIndex}
         hills={DEFAULT_HERO_BG}
       />
-      </React.Suspense>
+      </ModalSuspense>
       )}
       {languageModalMounted && (
-        <React.Suspense fallback={null}>
+        <ModalSuspense active={isLanguageModalOpen} onCancel={() => setIsLanguageModalOpen(false)}>
           <LanguageModal
             isOpen={isLanguageModalOpen}
             onClose={() => setIsLanguageModalOpen(false)}
             isDarkMode={isDarkMode}
           />
-        </React.Suspense>
+        </ModalSuspense>
       )}
 
 
@@ -2517,13 +2260,13 @@ const Hero = ({
         <AiModalBackdrop onClick={() => setIsAiModalOpen(false)}>
           <AiModalContainer onClick={(e) => e.stopPropagation()}>
             <AiModalBody $isDarkMode={isDarkMode}>
-              <React.Suspense fallback={null}>
+              <ModalSuspense onCancel={() => setIsAiModalOpen(false)}>
                 <React_lazy_Aihelp
                   isDarkMode={isDarkMode}
                   isStickyBgMode={false}
                   onClose={() => setIsAiModalOpen(false)}
                 />
-              </React.Suspense>
+              </ModalSuspense>
             </AiModalBody>
           </AiModalContainer>
         </AiModalBackdrop>,

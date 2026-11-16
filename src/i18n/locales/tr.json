@@ -105,6 +105,8 @@
     "sourcesAria": "Harita kaynakları",
     "searchSources": "Harita ve çerçeve ara",
     "noSourcesFound": "Hiçbir şey bulunamadı",
+    "prevMap": "Önceki harita",
+    "nextMap": "Sonraki harita",
     "clearSearch": "Aramayı temizle",
     "customFrame": "Özel çerçeve / widget",
     "titlePlaceholder": "Ad (ör. Radar, Web kamerası...)",

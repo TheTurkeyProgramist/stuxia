@@ -105,6 +105,8 @@
     "sourcesAria": "Térképforrások",
     "searchSources": "Térképek és keretek keresése",
     "noSourcesFound": "Nincs találat",
+    "prevMap": "Előző térkép",
+    "nextMap": "Következő térkép",
     "clearSearch": "Keresés törlése",
     "customFrame": "Saját keret / widget",
     "titlePlaceholder": "Név (pl. Radar, Webkamera...)",

@@ -105,6 +105,8 @@
     "sourcesAria": "منابع نقشه",
     "searchSources": "جستجوی نقشه‌ها و فریم‌ها",
     "noSourcesFound": "چیزی یافت نشد",
+    "prevMap": "نقشه قبلی",
+    "nextMap": "نقشه بعدی",
     "clearSearch": "پاک کردن جستجو",
     "customFrame": "قاب / ویجت سفارشی",
     "titlePlaceholder": "نام (مثلاً رادار، وب‌کم...)",

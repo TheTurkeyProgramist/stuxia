@@ -118,6 +118,31 @@ const Conten = styled.div`
   z-index: 10;
 `;
 
+// Тиха примітка в самому низу угоди: як повернути одноразову пасхалку Доміно (DominoTutorial → DominoQuip)
+const EasterEggNote = styled.p`
+  margin: 18px auto 6px;
+  max-width: 560px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.6;
+  color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#111111")};
+
+  code {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 6px auto 0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    word-break: break-all;
+    user-select: all;
+    background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)")};
+  }
+`;
+
 const ScrollArea = styled.div`
   flex: 1;
   overflow-y: auto;
@@ -897,6 +922,13 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                 );
                 })}
               </AccordionWrapper>
+              {!searchQuery && (
+                <EasterEggNote $isDarkMode={isDarkMode}>
+                  🦃 Доміно вже дивувався, що ви замовкли на одній букві? Щоб він пожартував ще раз,
+                  виконайте в консолі браузера (F12 → Console) і оновіть сторінку:
+                  <code>localStorage.removeItem('domino_quip_speechless_seen')</code>
+                </EasterEggNote>
+              )}
           </>
         </ScrollArea>
       </Content>

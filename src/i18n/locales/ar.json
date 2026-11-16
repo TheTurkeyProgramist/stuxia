@@ -105,6 +105,8 @@
     "sourcesAria": "مصادر الخريطة",
     "searchSources": "البحث في الخرائط والإطارات",
     "noSourcesFound": "لم يتم العثور على شيء",
+    "prevMap": "الخريطة السابقة",
+    "nextMap": "الخريطة التالية",
     "clearSearch": "مسح البحث",
     "customFrame": "إطار / أداة مخصصة",
     "titlePlaceholder": "الاسم (مثل: رادار، كاميرا ويب...)",

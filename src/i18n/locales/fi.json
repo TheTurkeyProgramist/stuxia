@@ -105,6 +105,8 @@
     "sourcesAria": "Kartan lähteet",
     "searchSources": "Hae karttoja ja kehyksiä",
     "noSourcesFound": "Mitään ei löytynyt",
+    "prevMap": "Edellinen kartta",
+    "nextMap": "Seuraava kartta",
     "clearSearch": "Tyhjennä haku",
     "customFrame": "Oma kehys / widget",
     "titlePlaceholder": "Nimi (esim. Tutka, Verkkokamera...)",

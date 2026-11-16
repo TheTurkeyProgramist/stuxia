@@ -176,10 +176,10 @@ const VersionBadgeBox = styled.div`
   }
 `;
 
-// ПК і планшет: праворуч угорі Hero, навпроти кнопки «Змінити фон?» (та сама висота, top: 40px)
+// ПК і планшет: праворуч унизу Hero (вгорі тепер одразу починається панель пошуку)
 const HeroCornerBadge = styled(VersionBadgeBox)`
   position: absolute;
-  top: 40px;
+  bottom: 8px;
   right: 4px;
   z-index: 2;
 

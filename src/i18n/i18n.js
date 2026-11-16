@@ -58,8 +58,9 @@ i18n
     load: 'languageOnly',
     react: { useSuspense: false },
     interpolation: { escapeValue: false },
+    // Мову браузера не беремо: за замовчуванням українська, інша — лише якщо людина сама її вибрала
     detection: {
-      order: ['prefs', 'navigator', 'htmlTag'],
+      order: ['prefs'],
       caches: ['prefs'],
     },
   });

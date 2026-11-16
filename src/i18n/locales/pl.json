@@ -105,6 +105,8 @@
     "sourcesAria": "Źródła mapy",
     "searchSources": "Szukaj map i ramek",
     "noSourcesFound": "Nic nie znaleziono",
+    "prevMap": "Poprzednia mapa",
+    "nextMap": "Następna mapa",
     "clearSearch": "Wyczyść wyszukiwanie",
     "customFrame": "Własna ramka / widżet",
     "titlePlaceholder": "Nazwa (np. Radar, Kamera...)",

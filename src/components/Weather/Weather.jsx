@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from "react";
+import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
+import { ModalSuspense } from "../Loader/ModalLoading.jsx";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
@@ -29,6 +31,7 @@ import {
   BiVolumeFull,
   BiStopCircle,
   BiSidebar,
+  BiListUl,
 } from "react-icons/bi";
 import { FiPlus } from "react-icons/fi";
 import toast from "react-hot-toast";
@@ -56,7 +59,7 @@ import {
 import { getHourlyForecastDetailGroups } from "../../utils/hourlyForecast";
 import { generateRuleBasedForecast } from "../../utils/ruleBasedForecast";
 import { DEFAULT_CARD_BG, CARD_BG_CHANGE_EVENT } from "./weatherShared";
-import { getWindDirectionText } from "../../utils/windUtils";
+import { getWindDirectionText, getWindDirectionShort } from "../../utils/windUtils";
 import { linearTrend } from "../../utils/chartTrend";
 import { DEFAULT_LINE_STYLES, DEFAULT_DIM, mergeLineStyles, lineStyleProps } from "../../utils/chartLineStyles";
 import CardSettingsModal from "../Modals/CardSettingsModal";
@@ -78,13 +81,14 @@ import {
   FaGaugeHigh,
 } from "react-icons/fa6";
 // Модалки картки вантажаться лише при відкритті, а не на старті
-const ChartStyleModal = lazy(() => import("../Modals/ChartStyleModal"));
-const ForecastReportModal = lazy(() => import("../Modals/ForecastReportModal"));
-const WeatherBgModal = lazy(() => import("../Modals/WeatherBgModal"));
-const CustomDatesModal = lazy(() => import("../Modals/CustomDatesModal"));
-const UnitsModal = lazy(() => import("../Modals/UnitsModal"));
+const ChartStyleModal = lazyWithRetry(() => import("../Modals/ChartStyleModal"));
+const ForecastReportModal = lazyWithRetry(() => import("../Modals/ForecastReportModal"));
+const WeatherBgModal = lazyWithRetry(() => import("../Modals/WeatherBgModal"));
+const CustomDatesModal = lazyWithRetry(() => import("../Modals/CustomDatesModal"));
+const UnitsModal = lazyWithRetry(() => import("../Modals/UnitsModal"));
 import { loadCardUnits, isUnitsEventForCard, cardUnitsKey, UNITS_GLOBAL_KEY, UNITS_USE_GLOBAL_KEY } from "../../utils/unitsStorage";
-import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, tempLabel, windLabel, pressureLabel, visibilityLabel, convertVisibility } from "../../utils/units.js";
+import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, tempLabel, windLabel, pressureLabel, visibilityLabel, convertVisibility, precipLabel, convertTemp, convertWind, convertPrecip, convertPressure, convertSnow } from "../../utils/units.js";
+import WeatherRows, { windCellStyle, uvCellStyle, precipCellStyle, chanceColor, tempColor } from "./WeatherRows.jsx";
 import { CONSENSUS_MODEL_LABELS } from "../../utils/weatherConsensus";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { PiThermometerFill } from "react-icons/pi"; //Нормальна температура
@@ -917,8 +921,12 @@ const ViewToggleButton = styled.button`
   background: ${(props) => (props.$active ? (props.$isDarkMode ? "#8a2be2" : "#7000df") : "transparent")};
   color: ${(props) => (props.$active ? "#ffffff" : props.$isDarkMode ? "#cccccc" : "#f9f3f3")};
   border: none;
-  padding: 4px 14px;
-  font-size: 15px;
+  /* Однакова висота для кнопок-іконок і кнопок із текстом («Усі», «2 дні») */
+  height: 28px;
+  box-sizing: border-box;
+  line-height: 1;
+  padding: 0 12px;
+  font-size: 14px;
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
@@ -1318,8 +1326,8 @@ const BlockStatValue = styled.div`
   }
 `;
 // Блоки 16 днів: "all" — усі в ряд, "2" — по 2 дні на сторінку
-const DAILY_BLOCKS_PAGING_KEY = "daily_blocks_paging";
-const DAILY_BLOCKS_GAP = 10; // px між картками днів
+const DAILY_BLOCKS_GAP = 10; // px між картками днів (і годин)
+const HOURLY_BLOCKS_PAGING = 2; // блоки годин гортаються парами, як дні
 
 // Панель гортання блоків 16 днів: ‹ 15.11 – 16.11 · 1 з 8 ›
 const DailyPager = styled.div`
@@ -1327,7 +1335,6 @@ const DailyPager = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 5px;
   font-size: 13px;
   font-weight: 700;
   color: ${(p) => (p.$isDarkMode ? "#fff" : "#1a1a1a")};
@@ -1335,6 +1342,54 @@ const DailyPager = styled.div`
   small {
     font-weight: 500;
     opacity: 0.7;
+  }
+
+  /* Підпис пари днів — кнопка-список (невидимий select поверх) */
+  .jump {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
+    padding: 4px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    > svg {
+      flex-shrink: 0;
+      font-size: 16px;
+      opacity: 0.8;
+    }
+    &:hover {
+      background: ${(p) => (p.$isDarkMode ? "rgba(138, 43, 226, 0.3)" : "rgba(138, 43, 226, 0.12)")};
+    }
+    &:focus-within {
+      outline: 2px solid #a970ff;
+      outline-offset: 1px;
+    }
+    select {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      font-size: 14px;
+      /* Випадний список — під тему. Колір і фон задаємо ЯВНО і для select, і для option:
+         інакше пункти успадковують білий текст панелі й зливаються з білим списком */
+      color-scheme: ${(p) => (p.$isDarkMode ? "dark" : "light")};
+      color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#1a1a1a")};
+      background: ${(p) => (p.$isDarkMode ? "#1e1e2a" : "#ffffff")};
+    }
+    option {
+      color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#1a1a1a")};
+      background: ${(p) => (p.$isDarkMode ? "#1e1e2a" : "#ffffff")};
+      font-weight: 600;
+    }
+    option:checked {
+      color: #ffffff;
+      background: #8a2be2;
+    }
   }
 
   button {
@@ -1614,7 +1669,9 @@ const WeatherCardComponent = ({
 
   // Блоки 16 днів: «all» — усі в ряд із прокруткою, «2» — по 2 дні на сторінку з гортанням.
   // Вибір спільний для всіх карток і запам'ятовується
-  const dailyBlocksPaging = usePrefValue(DAILY_BLOCKS_PAGING_KEY, "all") === "2" ? 2 : 0;
+  // Блоки 16 днів — завжди «по 2 дні»: усі дні в ряду (можна гортати скролом),
+  // а стрілки ‹ › швидко перескакують на наступну пару
+  const dailyBlocksPaging = 2;
   const [dailyBlocksPage, setDailyBlocksPage] = useState(0);
   const dailyBlocksPages = dailyBlocksPaging ? Math.max(1, Math.ceil(dailyList.length / dailyBlocksPaging)) : 1;
   const safeDailyBlocksPage = Math.min(dailyBlocksPage, dailyBlocksPages - 1);
@@ -2452,6 +2509,46 @@ const formatChartTempLabel = (value, suffix) => {
 
   const hourlyDayGroups = getHourlyForecastDetailGroups(card.hourly || []);
   const visibleHourly = hourlyDayGroups[selectedHourlyDay]?.items || [];
+
+  // Блоки годин — «по 2», як у 16 днях: усі години в ряду (скрол), стрілки ‹ › і список пар
+  const [hourlyBlocksPage, setHourlyBlocksPage] = useState(0);
+  const hourlyBlocksPages = Math.max(1, Math.ceil(visibleHourly.length / HOURLY_BLOCKS_PAGING));
+  const safeHourlyBlocksPage = Math.min(hourlyBlocksPage, hourlyBlocksPages - 1);
+  const hourlyBlocksScrollRef = useRef(null);
+  const hourlyBlocksScrollRaf = useRef(0);
+
+  const getHourlyBlocksStep = () => {
+    const firstCard = hourlyBlocksScrollRef.current?.firstElementChild?.firstElementChild;
+    return firstCard ? (firstCard.offsetWidth + DAILY_BLOCKS_GAP) * HOURLY_BLOCKS_PAGING : 0;
+  };
+
+  const goToHourlyBlocksPage = (page) => {
+    const target = Math.max(0, Math.min(page, hourlyBlocksPages - 1));
+    setHourlyBlocksPage(target);
+    const el = hourlyBlocksScrollRef.current;
+    if (!el) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollTo({ left: target * getHourlyBlocksStep(), behavior: reduce ? "auto" : "smooth" });
+  };
+
+  // Прокрутка мишею/пальцем — підпис годин встигає за нею
+  const handleHourlyBlocksScroll = () => {
+    cancelAnimationFrame(hourlyBlocksScrollRaf.current);
+    hourlyBlocksScrollRaf.current = requestAnimationFrame(() => {
+      const el = hourlyBlocksScrollRef.current;
+      const step = getHourlyBlocksStep();
+      if (!el || !step) return;
+      const atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 2;
+      setHourlyBlocksPage(atEnd ? hourlyBlocksPages - 1 : Math.round(el.scrollLeft / step));
+    });
+  };
+
+  // Інший день — починаємо з перших годин
+  useEffect(() => {
+    setHourlyBlocksPage(0);
+    hourlyBlocksScrollRef.current?.scrollTo({ left: 0 });
+  }, [selectedHourlyDay]);
+  useEffect(() => () => cancelAnimationFrame(hourlyBlocksScrollRaf.current), []);
   const hourlyChartAvailable = hourlyDayGroups[selectedHourlyDay]?.chartAvailable !== false;
   // Графіки на телефонах заблоковані — показуємо блоки
   const canShowHourlyChart = hourlyChartAvailable && !isNarrowScreen;
@@ -3200,88 +3297,6 @@ const HOLIDAYS_2027 = {
     return () => clearInterval(interval);
   }, [isBannerHovered, tabAutoplaySeconds, touchPauseTick]);
 
-  const renderHourlyTable = () => {
-    if (!visibleHourly || visibleHourly.length === 0) {
-      return (
-        <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
-          Немає даних годинного прогнозу.
-        </div>
-      );
-    }
-
-    return (
-      <div style={{ marginTop: "12px", width: "100%" }}>
-        {/* Картки переносяться на новий рядок, якщо не влазять — без горизонтального скролу */}
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "3px", paddingBottom: "10px" }}>
-          {visibleHourly.map((item, idx) => {
-            const windDeg = item.wind_direction_10m || 0;
-            const windText = getWindDirectionText(windDeg);
-            const tempVal = parseInt(item.temp);
-            const tempColor = tempVal > 25 ? "#ff4d4d" : tempVal < 5 ? "#4da6ff" : "#ffb36c";
-            return (
-              <div
-                key={idx}
-                style={{
-                  flex: "1 0 120px",
-                  background: isDarkMode ? "rgba(25, 25, 35, 0.88)" : "rgba(255, 255, 255, 0.95)",
-                  backdropFilter: "blur(8px)",
-                  border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.1)",
-                  borderRadius: "7px",
-                  padding: "4px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  textAlign: "center",
-                  color: isDarkMode ? "#fff" : "#1a1a1a",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
-                }}
-              >
-                <div style={{ fontSize: "12px", fontWeight: "bold", opacity: 0.85 }}>
-                  {item.time || item.label || `${idx}:00`}
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", margin: "2px 0" }}>
-                  <div style={{ fontSize: "24px" }}>
-                    <WeatherIcon isDarkMode={isDarkMode} item={item} />
-                  </div>
-                  <TextContent $size="11px" $lh="1.2">
-                    {item.description || getWeatherDescription(item.weather_code) || stripEmoji(item.iconPlaceholder) || "Погода"}
-                  </TextContent>
-                </div>
-
-                <div style={{ fontSize: "16px", fontWeight: "800", color: tempColor }}>
-                  {formatTemp(item.tempNum ?? item.temp)}
-                </div>
-
-                {item.feels_like && (
-                  <div style={{ fontSize: "10px", opacity: 0.75 }}>
-                    Відчувається: {formatTemp(item.feels_like)}
-                  </div>
-                )}
-                <div style={{ width: "80%", height: "1px", background: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)", margin: "4px 0" }} />
-
-                <div style={{ fontSize: "10px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: "700", color: "#0099ff" }}>
-                   Сила вітру: <span>{fmt.wind(item.windNum ?? item.wind_speed ?? item.windSpeed ?? 0)}</span>
-                  </div>
-                  <div style={{ fontSize: "9px", opacity: 0.8 }}>
-                    Напрямок: <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "12px" }}>⬇</span>
-                  </div>
-                   <div style={{ fontSize: "9px", opacity: 0.8 }}> {windText} ({Math.round(windDeg)}°)</div>
-                  {(item.wind_gusts_10m || item.wind_gusts) && parseFloat(item.wind_gusts_10m || item.wind_gusts) > 0 && (
-                    <div style={{ fontSize: "9px", color: "#ff9900", fontWeight: "600" }}>
-                      Пориви: {fmt.wind(item.wind_gusts_10m || item.wind_gusts)}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
   // Значення з % (дані можуть уже містити знак %)
   const formatPercent = (val) =>
     val === undefined || val === null || val === "" ? "—" : `${String(val).replace(/%/g, "")}%`;
@@ -3310,8 +3325,19 @@ const HOLIDAYS_2027 = {
     }
 
     return (
-      <div style={{ marginTop: "6px", width: "100%", overflowX: "auto" }}>
-        <div style={{ display: "flex", gap: "10px", paddingBottom: "2px", minWidth: isNarrowScreen ? "min-content" : undefined }}>
+      <div
+        ref={hourlyBlocksScrollRef}
+        onScroll={handleHourlyBlocksScroll}
+        style={{
+          width: "100%",
+          overflowX: "auto",
+          // Планшет і комп'ютер: ряд займає решту висоти вкладки — горизонтальний скролбар завжди видно
+          ...(hourlyBlocksFitArea && { flex: "1 1 auto", minHeight: 0, overflowY: "auto" }),
+          // Ряд притягується до пари годин і при прокрутці мишею/пальцем
+          scrollSnapType: "x mandatory",
+        }}
+      >
+        <div style={{ display: "flex", gap: `${DAILY_BLOCKS_GAP}px`, paddingBottom: "2px", minWidth: isNarrowScreen ? "min-content" : undefined }}>
           {visibleHourly.map((item, idx) => {
             const windDeg = item.wind_direction_10m || 0;
             const windText = getWindDirectionText(windDeg);
@@ -3322,8 +3348,10 @@ const HOLIDAYS_2027 = {
               <div
                 key={idx}
                 style={{
-                  // Планшет і комп'ютер: блок у 1.6 раза ширший за третину області (~1.9 блока видно)
-                  flex: isNarrowScreen ? "0 0 200px" : "0 0 calc((100% - 20px) / 3 * 1.6)",
+                  // По 2 години на «сторінку»: картка рівно пів ширини (телефон — не вужче 200px)
+                  flex: `0 0 max(200px, calc((100% - ${DAILY_BLOCKS_GAP}px) / 2))`,
+                  minWidth: 0,
+                  scrollSnapAlign: idx % HOURLY_BLOCKS_PAGING === 0 ? "start" : undefined,
                   boxSizing: "border-box",
                   background: isDarkMode ? "rgba(20, 20, 30, 0.92)" : "rgba(255, 255, 255, 0.95)",
                   backdropFilter: "blur(8px)",
@@ -3393,6 +3421,272 @@ const HOLIDAYS_2027 = {
     );
   };
 
+  /* ---------- Режим «Рядки» (як на метеосайтах) ---------- */
+  const rowsNum = (v) => {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const rowsTemp = (c) => {
+    const v = convertTemp(c, fmt.units.temp);
+    return v === null ? "—" : `${Math.round(v)}°`;
+  };
+  const rowsWind = (ms) => {
+    const v = convertWind(ms, fmt.units.wind);
+    return v === null ? "—" : String(Math.round(v));
+  };
+  const rowsPrecip = (mm) => {
+    const v = convertPrecip(mm, fmt.units.precip);
+    if (v === null) return "—";
+    if (v === 0) return "0";
+    return fmt.units.precip === "in" ? v.toFixed(2) : String(Math.round(v * 10) / 10);
+  };
+  const rowsPressure = (hpa) => {
+    const v = convertPressure(hpa, fmt.units.pressure);
+    if (v === null) return "—";
+    const d = fmt.units.pressure === "inhg" ? 2 : fmt.units.pressure === "kpa" ? 1 : 0;
+    return v.toFixed(d);
+  };
+  const rowsPercent = (v) => (rowsNum(v) === null ? "—" : `${Math.round(rowsNum(v))}`);
+  const windDirCell = (deg) =>
+    deg == null
+      ? { deg: null, label: "" }
+      : // Стрілка показує, КУДИ дме вітер (напрям «звідки» + 180°)
+        { deg: (Number(deg) + 180) % 360, label: getWindDirectionShort(deg), title: `${getWindDirectionText(deg)} (${Math.round(deg)}°)` };
+  const rowsFit = (mode) => !isNarrowScreen && mode === "rows" && !isCapturing;
+  // Телефон: власна висота, щоб липка шапка працювала всередині прокрутки
+  const ROWS_PHONE_MAX_HEIGHT = isCapturing ? undefined : "70vh";
+
+  const renderHourlyRows = () => {
+    const list = visibleHourly;
+    if (!list || list.length === 0) {
+      return (
+        <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
+          Немає даних годинного прогнозу.
+        </div>
+      );
+    }
+    // Поточна година в часовому поясі міста — підсвічується в шапці
+    const offset = Number.isFinite(card.utcOffsetSeconds) ? card.utcOffsetSeconds : -new Date().getTimezoneOffset() * 60;
+    const nowKey = new Date(Date.now() + offset * 1000).toISOString().slice(0, 13);
+    const dark = isDarkMode;
+    const columns = list.map((h, i) => ({
+      key: h.fullTime || i,
+      top: h.time || h.label || `${i}:00`,
+      icon: <WeatherIcon isDarkMode={isDarkMode} item={h} />,
+      current: typeof h.fullTime === "string" && h.fullTime.slice(0, 13) === nowKey,
+    }));
+    const rows = [
+      {
+        key: "temp", title: "Температура", icon: <PiThermometerFill style={{ color: "#ff9d3b" }} />, unit: tempLabel(fmt.units.temp), variant: "plain",
+        cells: list.map((h) => { const c = rowsNum(h.tempNum ?? h.temp); return { text: rowsTemp(c), fg: tempColor(c, dark) }; }),
+      },
+      {
+        key: "feels", title: "Відчувається", icon: <PiThermometerFill style={{ color: "#ff6fa8" }} />, unit: tempLabel(fmt.units.temp), variant: "plain",
+        cells: list.map((h) => { const c = rowsNum(h.feels_like); return { text: rowsTemp(c), fg: tempColor(c, dark) }; }),
+      },
+      {
+        key: "chance", title: "Ймовірність опадів", icon: <FaDroplet style={{ color: "#4da6ff" }} />, unit: "%", variant: "plain",
+        cells: list.map((h) => ({ text: rowsPercent(h.precipitation_probability), fg: chanceColor(h.precipitation_probability, dark) })),
+      },
+      {
+        key: "precip", title: "Опади", icon: <FaCloudRain style={{ color: "#3399ff" }} />, unit: precipLabel(fmt.units.precip), variant: "skew",
+        cells: list.map((h) => ({ text: rowsPrecip(h.precipitation ?? 0), ...precipCellStyle(h.precipitation, dark) })),
+      },
+      {
+        key: "wind", title: "Вітер", icon: <BiWind style={{ color: "#00c8e6" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
+        cells: list.map((h) => { const ms = rowsNum(h.windNum ?? h.wind_speed); return { text: rowsWind(ms), ...windCellStyle(ms, dark) }; }),
+      },
+      {
+        key: "gusts", title: "Пориви вітру", icon: <BiWind style={{ color: "#ff9900" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
+        cells: list.map((h) => { const ms = rowsNum(h.wind_gusts_10m ?? h.wind_gusts); return { text: rowsWind(ms), ...windCellStyle(ms, dark) }; }),
+      },
+      { key: "dir", title: "Напрямок вітру", icon: <BsCompass style={{ color: "#be90d4" }} />, variant: "arrow", cells: list.map((h) => windDirCell(h.wind_direction_10m)) },
+      {
+        key: "uv", title: "УФ-індекс", icon: <FaSun style={{ color: "#ffd700" }} />, variant: "skew",
+        cells: list.map((h) => { const v = rowsNum(h.uv_index); return { text: v === null ? "—" : String(Math.round(v)), ...uvCellStyle(v, dark) }; }),
+      },
+      { key: "hum", title: "Вологість", icon: <FaDroplet style={{ color: "#00ccff" }} />, unit: "%", variant: "plain", cells: list.map((h) => ({ text: rowsPercent(h.relative_humidity_2m ?? h.humidity) })) },
+      { key: "clouds", title: "Хмарність", icon: <FaCloud style={{ color: "#9fb3c8" }} />, unit: "%", variant: "plain", cells: list.map((h) => ({ text: rowsPercent(h.cloud_cover) })) },
+      {
+        key: "pressure", title: "Тиск", icon: <MdOutlineSpeed style={{ color: "#ffb36c" }} />, unit: pressureLabel(fmt.units.pressure), variant: "plain",
+        cells: list.map((h) => ({ text: rowsPressure(h.pressure_msl ?? h.pressure) })),
+      },
+    ];
+    return (
+      <WeatherRows
+        columns={columns}
+        rows={rows}
+        isDarkMode={isDarkMode}
+        fit={rowsFit(effectiveHourlyViewMode)}
+        maxHeight={ROWS_PHONE_MAX_HEIGHT}
+        ariaLabel="Погодинний прогноз рядками"
+      />
+    );
+  };
+
+  const renderDailyRows = () => {
+    const list = dailyList;
+    if (!list || list.length === 0) {
+      return (
+        <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
+          Немає даних 16-денного прогнозу.
+        </div>
+      );
+    }
+    const dark = isDarkMode;
+    const columns = list.map((d, i) => {
+      const dateType = getDateType(d.date, d.day, d.fullDate);
+      const isWeekend = d.day === "Сб" || d.day === "Нд" || d.day === "сб" || d.day === "нд" || dateType.type === "weekend";
+      return {
+        key: d.fullDate || i,
+        top: d.date,
+        sub: d.day,
+        icon: <WeatherIcon isDarkMode={isDarkMode} item={d} />,
+        // Свята/події — їхній колір, вихідні — помаранчевий
+        accent: dateType.color || (isWeekend ? "#ff9d3b" : undefined),
+        past: isPastDay(d),
+        current: d.fullDate === todayIso,
+      };
+    });
+    const rows = [
+      {
+        key: "day", title: "Вдень", unit: tempLabel(fmt.units.temp), variant: "plain", icon: <FaSun style={{ color: "#ff9d3b" }} />,
+        cells: list.map((d) => { const c = rowsNum(d.temp_day ?? d.temp); return { text: rowsTemp(c), fg: tempColor(c, dark) }; }),
+      },
+      {
+        key: "night", title: "Вночі", unit: tempLabel(fmt.units.temp), variant: "plain", icon: <BsMoonStarsFill style={{ color: "#ff3399" }} />,
+        cells: list.map((d) => { const c = rowsNum(d.temp_night ?? d.nightTemp); return { text: rowsTemp(c), fg: tempColor(c, dark) }; }),
+      },
+      {
+        key: "chance", title: "Ймовірність опадів", icon: <FaDroplet style={{ color: "#4da6ff" }} />, unit: "%", variant: "plain",
+        cells: list.map((d) => { const p = d.precipitation_probability_max ?? d.pop; return { text: rowsPercent(p), fg: chanceColor(p, dark) }; }),
+      },
+      {
+        key: "precip", title: "Опади", icon: <FaCloudRain style={{ color: "#3399ff" }} />, unit: precipLabel(fmt.units.precip), variant: "skew",
+        cells: list.map((d) => { const mm = d.precipitation_sum ?? d.rain_sum ?? 0; return { text: rowsPrecip(mm), ...precipCellStyle(mm, dark) }; }),
+      },
+      {
+        key: "snow", title: "Сніг", icon: <FaSnowflake style={{ color: "#80d4ff" }} />, unit: fmt.units.precip === "in" ? "in" : "см", variant: "plain",
+        cells: list.map((d) => {
+          const v = convertSnow(d.snowfall_sum, fmt.units.precip);
+          return { text: v === null ? "—" : v === 0 ? "0" : String(Math.round(v * 10) / 10), fg: v > 0 ? (dark ? "#9fdcff" : "#1f78b4") : undefined };
+        }),
+      },
+      {
+        key: "wind", title: "Вітер (макс.)", icon: <BiWind style={{ color: "#00c8e6" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
+        cells: list.map((d) => { const ms = rowsNum(d.wind_speed); return { text: rowsWind(ms), ...windCellStyle(ms, dark) }; }),
+      },
+      {
+        key: "gusts", title: "Пориви вітру", icon: <BiWind style={{ color: "#ff9900" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
+        cells: list.map((d) => { const ms = rowsNum(d.wind_gusts_max); return { text: rowsWind(ms), ...windCellStyle(ms, dark) }; }),
+      },
+      { key: "dir", title: "Напрямок вітру", icon: <BsCompass style={{ color: "#be90d4" }} />, variant: "arrow", cells: list.map((d) => windDirCell(d.wind_direction_10m)) },
+      {
+        key: "uv", title: "УФ-індекс", icon: <FaSun style={{ color: "#ffd700" }} />, variant: "skew",
+        cells: list.map((d) => { const v = rowsNum(d.uv_index); return { text: v === null ? "—" : String(Math.round(v)), ...uvCellStyle(v, dark) }; }),
+      },
+      { key: "clouds", title: "Хмарність", icon: <FaCloud style={{ color: "#9fb3c8" }} />, unit: "%", variant: "plain", cells: list.map((d) => ({ text: rowsPercent(d.cloud_cover_mean) })) },
+    ];
+    return (
+      <WeatherRows
+        columns={columns}
+        rows={rows}
+        isDarkMode={isDarkMode}
+        fit={rowsFit(effectiveDailyViewMode)}
+        maxHeight={ROWS_PHONE_MAX_HEIGHT}
+        ariaLabel="Прогноз на 16 днів рядками"
+      />
+    );
+  };
+
+  // Блоки 16 днів і годин на планшеті/комп'ютері вписуються у висоту вкладки (див. renderDailyBlocks)
+  const dailyBlocksFitArea = !isNarrowScreen && effectiveDailyViewMode === "blocks" && !isCapturing;
+  const hourlyBlocksFitArea = !isNarrowScreen && effectiveHourlyViewMode === "blocks" && !isCapturing;
+
+  // Панель гортання блоків (16 днів і години): ‹ [підпис-список ▾] ›.
+  // Підпис поточної пари — він же список: натиск відкриває всі пари, вибір — перехід до неї.
+  // Невидимий нативний select поверх підпису (зручний і на телефоні)
+  const renderBlocksPager = ({ page, pages, onGo, current, options, prevButton, what }) => (
+    <DailyPager $isDarkMode={isDarkMode}>
+      {prevButton || (
+        <button type="button" onClick={() => onGo(page - 1)} disabled={page === 0} aria-label={`Попередні ${what}`}>
+          <BiChevronLeft />
+        </button>
+      )}
+      <label className="jump" title={`Перейти до: ${what}`}>
+        <span aria-live="polite">
+          {current}
+          <small> · {page + 1} з {pages}</small>
+        </span>
+        <BiChevronDown aria-hidden="true" />
+        <select value={page} onChange={(e) => onGo(Number(e.target.value))} aria-label={`Перейти до: ${what}`}>
+          {options.map((text, p) => (
+            <option key={p} value={p}>{text}</option>
+          ))}
+        </select>
+      </label>
+      <button type="button" onClick={() => onGo(page + 1)} disabled={page >= pages - 1} aria-label={`Наступні ${what}`}>
+        <BiChevronRight />
+      </button>
+    </DailyPager>
+  );
+
+  // Підписи пар для списку: [a, b] → «a – b»
+  const pairLabels = (list, perPage, fmt) =>
+    Array.from({ length: Math.max(1, Math.ceil(list.length / perPage)) }, (_, p) => {
+      const a = list[p * perPage];
+      const b = list[Math.min((p + 1) * perPage, list.length) - 1];
+      return `${fmt(a)}${b && b !== a ? ` – ${fmt(b)}` : ""}`;
+    });
+
+  // Гортання «по 2 дні» — стоїть в одному рядку з перемикачами вигляду (компактніше по висоті)
+  const renderDailyPager = () => {
+    const list = dailyList;
+    if (!dailyBlocksPaging || !list || list.length === 0) return null;
+    // Усі дні лишаються в ряду (скролбар не зникає), картка — пів ширини,
+    // а сторінка — це позиція прокрутки. Підпис — дати поточної пари
+    const fmtDay = (x) => `${x.date} ${x.day || ""}`.trim();
+    const options = pairLabels(list, dailyBlocksPaging, fmtDay).map((text, p) =>
+      isPastDay(list[p * dailyBlocksPaging]) ? `${text} (учора)` : text
+    );
+    const start = safeDailyBlocksPage * dailyBlocksPaging;
+    const first = list[start];
+    const last = list[Math.min(start + dailyBlocksPaging, list.length) - 1];
+    return renderBlocksPager({
+      page: safeDailyBlocksPage,
+      pages: dailyBlocksPages,
+      onGo: goToDailyBlocksPage,
+      current: `${first?.date}${last && last !== first ? ` – ${last.date}` : ""}`,
+      options,
+      what: "дні",
+      // На першій сторінці «назад» веде до вчорашнього дня (якщо він є й ще схований)
+      prevButton:
+        safeDailyBlocksPage === 0 && hasPastDay && !showPastDay ? (
+          <button type="button" className="wide" onClick={() => setShowPastDay(true)} aria-label="Показати вчорашній день">
+            <BiChevronLeft /> Вчора
+          </button>
+        ) : null,
+    });
+  };
+
+  // Гортання годин «по 2» — як у блоках 16 днів, для орієнтації в добі
+  const renderHourlyPager = () => {
+    const list = visibleHourly;
+    if (!list || list.length === 0) return null;
+    const fmtHour = (x) => x?.time || x?.label || "";
+    const start = safeHourlyBlocksPage * HOURLY_BLOCKS_PAGING;
+    const first = list[start];
+    const last = list[Math.min(start + HOURLY_BLOCKS_PAGING, list.length) - 1];
+    return renderBlocksPager({
+      page: safeHourlyBlocksPage,
+      pages: hourlyBlocksPages,
+      onGo: goToHourlyBlocksPage,
+      current: `${fmtHour(first)}${last && last !== first ? ` – ${fmtHour(last)}` : ""}`,
+      options: pairLabels(list, HOURLY_BLOCKS_PAGING, fmtHour),
+      what: "години",
+    });
+  };
+
   const renderDailyBlocks = () => {
     const list = dailyList;
     if (!list || list.length === 0) {
@@ -3403,56 +3697,18 @@ const HOLIDAYS_2027 = {
       );
     }
 
-    // Режим «по 2 дні»: усі дні лишаються в ряду (скролбар не зникає), картка — пів ширини,
-    // а сторінка — це позиція прокрутки. Підпис — дати поточної пари
-    const start = dailyBlocksPaging ? safeDailyBlocksPage * dailyBlocksPaging : 0;
-    const first = list[start];
-    const last = dailyBlocksPaging ? list[Math.min(start + dailyBlocksPaging, list.length) - 1] : null;
-
+    // Планшет і комп'ютер: ряд блоків займає рівно решту висоти вкладки й прокручується
+    // всередині — горизонтальний скролбар завжди внизу видимої частини
+    const fit = dailyBlocksFitArea ? { flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column" } : null;
     return (
-      <div style={{ marginTop: "6px", width: "100%" }}>
-        {dailyBlocksPaging > 0 && (
-          <DailyPager $isDarkMode={isDarkMode}>
-            {/* На першій сторінці «назад» веде до вчорашнього дня (якщо він є й ще схований) */}
-            {safeDailyBlocksPage === 0 && hasPastDay && !showPastDay ? (
-              <button
-                type="button"
-                className="wide"
-                onClick={() => setShowPastDay(true)}
-                aria-label="Показати вчорашній день"
-              >
-                <BiChevronLeft /> Вчора
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => goToDailyBlocksPage(safeDailyBlocksPage - 1)}
-                disabled={safeDailyBlocksPage === 0}
-                aria-label="Попередні дні"
-              >
-                <BiChevronLeft />
-              </button>
-            )}
-            <span aria-live="polite">
-              {first?.date}{last && last !== first ? ` – ${last.date}` : ""}
-              <small> · {safeDailyBlocksPage + 1} з {dailyBlocksPages}</small>
-            </span>
-            <button
-              type="button"
-              onClick={() => goToDailyBlocksPage(safeDailyBlocksPage + 1)}
-              disabled={safeDailyBlocksPage >= dailyBlocksPages - 1}
-              aria-label="Наступні дні"
-            >
-              <BiChevronRight />
-            </button>
-          </DailyPager>
-        )}
+      <div style={{ width: "100%", ...fit }}>
       <div
         ref={dailyBlocksScrollRef}
         onScroll={dailyBlocksPaging ? handleDailyBlocksScroll : undefined}
         style={{
           width: "100%",
           overflowX: "auto",
+          ...(fit && { flex: "1 1 auto", minHeight: 0, overflowY: "auto" }),
           // «По 2 дні»: ряд притягується до пари днів і при прокрутці мишею/пальцем
           scrollSnapType: dailyBlocksPaging ? "x mandatory" : undefined,
         }}
@@ -3555,13 +3811,14 @@ const HOLIDAYS_2027 = {
                     icon: <AnimWind><BiWind style={{ color: "#00eeff" }} /></AnimWind>,
                     label: "Вітер",
                     value: fmt.wind(d.wind_speed ?? 0),
+                    // Напрям — скорочено (Пд-Сх), повна назва в підказці
                     sub: (
-                      <>
-                        {windText}
+                      <span title={windText}>
+                        {getWindDirectionShort(windDeg)}
                         {d.wind_gusts_max != null && (
-                          <div style={{ color: "#ff9900", fontWeight: 600, opacity: 1 }}>Пориви: {fmt.wind(d.wind_gusts_max)}</div>
+                          <span style={{ display: "block", color: "#ff9900", fontWeight: 600, opacity: 1, whiteSpace: "nowrap" }}>пор. {fmt.wind(d.wind_gusts_max)}</span>
                         )}
-                      </>
+                      </span>
                     ),
                   },
                   { icon: <AnimSpin><FaSun style={{ color: "#ffd700" }} /></AnimSpin>, label: "УФ-індекс", value: d.uv_index ?? "—" },
@@ -4456,7 +4713,7 @@ const HOLIDAYS_2027 = {
 
           {/* Годинний прогноз */}
           {activeTab === "hourly" && (
-            <div>
+            <div style={hourlyBlocksFitArea || rowsFit(effectiveHourlyViewMode) ? { flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column" } : undefined}>
               <div
                 style={{
                   display: "flex",
@@ -4465,6 +4722,7 @@ const HOLIDAYS_2027 = {
                   flexWrap: "wrap",
                   gap: "6px",
                   marginBottom: "6px",
+                  flexShrink: 0,
                 }}
               >
                 {/* Вибір дня зліва, перемикач вигляду справа — в одному рядку */}
@@ -4481,6 +4739,10 @@ const HOLIDAYS_2027 = {
                       </option>
                     ))}
                   </DaySelect>
+                )}
+                {/* Блоки — гортання годин парами, як у 16 днях */}
+                {effectiveHourlyViewMode === "blocks" && visibleHourly.length > 0 && (
+                  <div style={{ flex: "1 1 220px", minWidth: 0 }}>{renderHourlyPager()}</div>
                 )}
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
                   <ViewToggleGroup $isDarkMode={isDarkMode}>
@@ -4501,20 +4763,20 @@ const HOLIDAYS_2027 = {
                       <BiLineChart size={18} />
                     </ViewToggleButton>
                     <ViewToggleButton
-                      $active={effectiveHourlyViewMode === "table"}
-                      $isDarkMode={isDarkMode}
-                      onClick={() => setHourlyViewMode("table")}
-                      title="Таблиця"
-                    >
-                      <BiTable size={18} />
-                    </ViewToggleButton>
-                    <ViewToggleButton
                       $active={effectiveHourlyViewMode === "blocks"}
                       $isDarkMode={isDarkMode}
                       onClick={() => setHourlyViewMode("blocks")}
                       title="Блоки"
                     >
                       <BiGridAlt size={18} />
+                    </ViewToggleButton>
+                    <ViewToggleButton
+                      $active={effectiveHourlyViewMode === "rows"}
+                      $isDarkMode={isDarkMode}
+                      onClick={() => setHourlyViewMode("rows")}
+                      title="Рядки"
+                    >
+                      <BiListUl size={18} />
                     </ViewToggleButton>
                   </ViewToggleGroup>
                 </div>
@@ -4599,8 +4861,8 @@ const HOLIDAYS_2027 = {
                     </div>
                   </div>
                 )
-              ) : effectiveHourlyViewMode === "table" ? (
-                renderHourlyTable()
+              ) : effectiveHourlyViewMode === "rows" ? (
+                renderHourlyRows()
               ) : (
                 renderHourlyBlocks()
               )}
@@ -4609,8 +4871,33 @@ const HOLIDAYS_2027 = {
 
           {/* Прогноз на 16 днів */}
           {activeTab === "daily" && (
-            <div>
-              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "8px" }}>
+            <div style={dailyBlocksFitArea || rowsFit(effectiveDailyViewMode) ? { flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column" } : undefined}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  gap: "8px",
+                  flexWrap: "wrap",
+                  marginBottom: "6px",
+                  flexShrink: 0,
+                  // Таблиця: перемикачі липнуть зверху при прокрутці. Фон темний в обох темах —
+                  // кнопки розраховані на темне фото (світлий текст неактивних)
+                  ...(effectiveDailyViewMode === "table" && !isCapturing && {
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 5,
+                    padding: "4px 6px",
+                    borderRadius: "10px",
+                    background: "rgba(10, 10, 18, 0.72)",
+                    backdropFilter: "blur(6px)",
+                  }),
+                }}
+              >
+                {/* «По 2 дні» — гортання ліворуч у тому ж рядку, щоб нижній скролбар блоків був видно */}
+                {effectiveDailyViewMode === "blocks" && dailyBlocksPaging > 0 && (
+                  <div style={{ flex: "1 1 240px", minWidth: 0 }}>{renderDailyPager()}</div>
+                )}
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
                   {/* Вчорашній день — маленький перемикач-іконка (замість великого чекбокса) */}
                   {hasPastDay && (
@@ -4629,33 +4916,6 @@ const HOLIDAYS_2027 = {
                         </ViewToggleButton>
                       </ViewToggleGroup>
                     </Tooltip>
-                  )}
-                  {effectiveDailyViewMode === "blocks" && (
-                    <ViewToggleGroup $isDarkMode={isDarkMode} role="group" aria-label="Скільки днів показувати">
-                      <ViewToggleButton
-                        type="button"
-                        $active={!dailyBlocksPaging}
-                        $isDarkMode={isDarkMode}
-                        aria-pressed={!dailyBlocksPaging}
-                        onClick={() => setPref(DAILY_BLOCKS_PAGING_KEY, "all")}
-                        title="Усі дні в ряд із прокруткою"
-                      >
-                        Усі
-                      </ViewToggleButton>
-                      <ViewToggleButton
-                        type="button"
-                        $active={!!dailyBlocksPaging}
-                        $isDarkMode={isDarkMode}
-                        aria-pressed={!!dailyBlocksPaging}
-                        onClick={() => {
-                          setPref(DAILY_BLOCKS_PAGING_KEY, "2");
-                          setDailyBlocksPage(0);
-                        }}
-                        title="По 2 дні на сторінку"
-                      >
-                        2 дні
-                      </ViewToggleButton>
-                    </ViewToggleGroup>
                   )}
                   <ViewToggleGroup $isDarkMode={isDarkMode}>
                     <ViewToggleButton
@@ -4683,6 +4943,14 @@ const HOLIDAYS_2027 = {
                       title="Блоки"
                     >
                       <BiGridAlt size={18} />
+                    </ViewToggleButton>
+                    <ViewToggleButton
+                      $active={effectiveDailyViewMode === "rows"}
+                      $isDarkMode={isDarkMode}
+                      onClick={() => setDailyViewMode("rows")}
+                      title="Рядки"
+                    >
+                      <BiListUl size={18} />
                     </ViewToggleButton>
                   </ViewToggleGroup>
                 </div>
@@ -4787,6 +5055,8 @@ const HOLIDAYS_2027 = {
                 </>
               ) : effectiveDailyViewMode === "table" ? (
                 renderDailyTable()
+              ) : effectiveDailyViewMode === "rows" ? (
+                renderDailyRows()
               ) : (
                 renderDailyBlocks()
               )}
@@ -5209,7 +5479,17 @@ const HOLIDAYS_2027 = {
         </DesktopLayoutWrapper>
       </WeatherCard>
 
-      <Suspense fallback={null}>
+      <ModalSuspense
+        active={isAiModalOpen || isCustomDatesModalOpen || !!styleModalChart || isUnitsModalOpen || isCardSettingsOpen || isBgModalOpen}
+        onCancel={() => {
+          setIsAiModalOpen(false);
+          setIsCustomDatesModalOpen(false);
+          setStyleModalChart(null);
+          setIsUnitsModalOpen(false);
+          setIsCardSettingsOpen(false);
+          setIsBgModalOpen(false);
+        }}
+      >
       {isAiModalOpen && (
         <ForecastReportModal
           ruleForecast={ruleForecast}
@@ -5283,7 +5563,7 @@ const HOLIDAYS_2027 = {
           onClose={() => setIsBgModalOpen(false)}
         />
       )}
-      </Suspense>
+      </ModalSuspense>
     </div>
   );
 };

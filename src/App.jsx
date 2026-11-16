@@ -11,7 +11,7 @@ import React, {
 } from "react";
 import styled, { keyframes, css, createGlobalStyle } from "styled-components";
 import localforage from "localforage";
-import { getPref, setPref } from "./utils/prefsStore.js";
+import { getPref, setPref, removePref } from "./utils/prefsStore.js";
 import { notifyWeatherHazardsLocal } from "./utils/emergencyAlerts.js";
 import {
   initPushNotifications,
@@ -27,10 +27,18 @@ import {
 } from "./utils/referral.js";
 import { GiSnowing } from "react-icons/gi";
 import HeroCredits from "./components/Hero/HeroCredits.jsx";
+import { getEagerChunk, loadWeather } from "./utils/eagerChunks.js";
+import { lazyWithRetry } from "./utils/lazyWithRetry.js";
+import { modalLoaders } from "./utils/modalChunks.js";
+import { ModalSuspense } from "./components/Loader/ModalLoading.jsx";
 //import { useSelector } from "react-redux";
-// Картка погоди (~90 КБ) — окремим файлом після першого показу сторінки;
-// поки вантажиться, на її місці WeatherCardSkeleton тієї ж висоти
-const WeatherCardComponent = lazy(() => import("./components/Weather/Weather.jsx"));
+// Картка погоди (~90 КБ) — окремим файлом. Телефон: після першого показу сторінки (поки вантажиться,
+// на її місці WeatherCardSkeleton тієї ж висоти). ПК: уже завантажена до першого малювання (eagerChunks.js)
+const LazyWeatherCard = lazy(loadWeather);
+const WeatherCardComponent = (props) => {
+  const EagerWeatherCard = getEagerChunk("Weather");
+  return EagerWeatherCard ? <EagerWeatherCard {...props} /> : <LazyWeatherCard {...props} />;
+};
 import {
   AihelpTitle,
   CARD_BG_CHANGE_EVENT,
@@ -54,7 +62,8 @@ import axios from "axios";
 import "./App.css";
 import Header from "./components/Header/Header.jsx";
 // Довідник авторів (~10 КБ gzip) — лише при відкритті
-const AuthorsDirectoryModal = lazy(() => import("./components/Header/AuthorsDirectoryModal.jsx"));
+// Модалки: повторні спроби завантаження + попереднє завантаження з кнопок шапки (utils/modalChunks.js)
+const AuthorsDirectoryModal = lazyWithRetry(modalLoaders.authors);
 import SupportBanner from "./components/Support/SupportBanner.jsx";
 import { notifySupportMoment } from "./components/Support/supportNudge.js";
 import Hero from "./components/Hero/Hero.jsx";
@@ -107,6 +116,7 @@ import { aggregateHourlyByDay } from "./utils/dailyAggregates";
 import { buildConsensusUrl, blendWithConsensus } from "./utils/weatherConsensus";
 import { deriveFromHourly } from "./utils/openMeteoDerive";
 import { getStykhiiaFont } from "./utils/stykhiiaFont";
+import { getFontPackId, ensureFontPack } from "./utils/customFonts";
 import { FaMagnifyingGlass, FaGripVertical, FaArrowsUpDown } from "react-icons/fa6";
 import { LOADING_PHRASES } from "./utils/funPhrases";
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
@@ -170,16 +180,12 @@ const cardLimitMessage = (hideGpsCard) =>
 // Понад цю кількість — попередження про навантаження на пристрій
 const SOFT_CUSTOM_WEATHER_CARDS = 5;
 const MAX_DAILY_CARD_ADDITIONS = 20;
-const Aihelp = lazy(() => import("./components/Aihelp/Aihelp.jsx"));
-const ShopModal = lazy(() => import("./components/Modals/ShopModal.jsx"));
-const ClimateMap = lazy(() => import("./components/ClimateMap/ClimateMap.jsx"));
-const Modal = lazy(() => import("./components/Modals/Modal.jsx"));
-const UserSettingsModal = lazy(
-  () => import("./components/Modals/UserSettingsModal.jsx"),
-);
-const TermsModal = lazy(
-  () => import("./components/Modals/UserSearchModal.jsx"),
-);
+const Aihelp = lazyWithRetry(() => import("./components/Aihelp/Aihelp.jsx"));
+const ShopModal = lazyWithRetry(modalLoaders.shop);
+const ClimateMap = lazyWithRetry(() => import("./components/ClimateMap/ClimateMap.jsx"));
+const Modal = lazyWithRetry(modalLoaders.register);
+const UserSettingsModal = lazyWithRetry(modalLoaders.settings);
+const TermsModal = lazyWithRetry(modalLoaders.help);
 
 const GlobalFilterLock = createGlobalStyle`
   ${(props) =>
@@ -725,6 +731,20 @@ const ReorderRow = ({ item, index, isDarkMode, onDragEnd }) => {
 /* Ряд «перемикач анімацій + заголовок Погода» над картками.
    З 768px пошук міст — бокова панель зліва від карток, на телефоні — випадаючий список над ними */
 const WIDE_WEATHER_ROW_QUERY = "(min-width: 768px)";
+// Коротка погода під пошуком → прокрутити карусель до цієї картки (detail: { id })
+const WEATHER_CAROUSEL_JUMP_EVENT = "weather-carousel-jump";
+// Місто, яке людина сама вибрала для короткої погоди на головному екрані (id картки)
+const QUICK_WEATHER_CITY_KEY = "quick_weather_card_id";
+
+// Яке місто показати коротко під пошуком: справжня GPS-локація → останнє додане місто → Київ (запасна GPS-картка)
+const pickQuickWeatherCard = (cards) => {
+  const ready = (cards || []).filter((card) => card?.current);
+  const main = ready.find((card) => card.isMain);
+  if (main && !main.isFallbackLocation) return main;
+  const custom = ready.filter((card) => !card.isMain);
+  if (custom.length > 0) return custom[custom.length - 1];
+  return main || null;
+};
 
 /* z-index: над каруселлю (1800), але під фіксованою шапкою сайту (1900),
    інакше при прокрутці «Анімації» й «Погода» налазять на шапку */
@@ -1353,6 +1373,17 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
     setIsCityJumpOpen(false);
     setCityQuery("");
   };
+
+  useEffect(() => {
+    const handleJump = (e) => {
+      const index = items.findIndex((item) => item.id === e.detail?.id);
+      if (index === -1) return;
+      setActiveIndex(index);
+      scrollToIndex(index);
+    };
+    window.addEventListener(WEATHER_CAROUSEL_JUMP_EVENT, handleJump);
+    return () => window.removeEventListener(WEATHER_CAROUSEL_JUMP_EVENT, handleJump);
+  }, [items, scrollToIndex]);
 
   const handleReorderPreview = (ids) => {
     reorderIdsRef.current = ids;
@@ -2453,7 +2484,17 @@ const App = () => {
   // Підключення власного шрифту
   useEffect(() => {
     const stykhiiaFont = getStykhiiaFont(user?.fontFamily);
-    if (stykhiiaFont) {
+    const fontPackId = getFontPackId(user?.fontFamily);
+    let cancelled = false;
+    if (fontPackId) {
+      // Власний пакет з IndexedDB; якщо на цьому пристрої його немає — звичайний шрифт
+      document.getElementById("custom-google-font")?.remove();
+      ensureFontPack(fontPackId).then((stack) => {
+        if (cancelled) return;
+        if (stack) document.documentElement.style.setProperty("--font-family", stack);
+        else document.documentElement.style.removeProperty("--font-family");
+      });
+    } else if (stykhiiaFont) {
       // Шрифти Стихії лежать локально (media/fonts/stykhiia) — Google Fonts не потрібні
       document.getElementById("custom-google-font")?.remove();
       document.documentElement.style.setProperty("--font-family", stykhiiaFont.stack);
@@ -2480,6 +2521,9 @@ const App = () => {
       document.getElementById("custom-google-font")?.remove();
       document.documentElement.style.removeProperty("--font-family");
     }
+    return () => {
+      cancelled = true;
+    };
   }, [user?.fontFamily]);
 
   // Відстеження взаємодії (клік або скрол)
@@ -4145,10 +4189,80 @@ const App = () => {
     });
   };
 
+  // Плашка «Доміно й Кейт», поки вантажиться файл модалки: показуємо, лише коли модалка справді відкрита
+  const isAnyModalOpen =
+    isModalOpen ||
+    isSettingsModalOpen ||
+    isOtherOptionsOpen ||
+    isVipModalOpen ||
+    isShopOpen ||
+    isAchivmentsOpen ||
+    isUserSearchOpen ||
+    isFirstTimeHelpOpen ||
+    isInfoOpen ||
+    isAuthorsDirectoryOpen;
+  // «Закрити» на плашці — людина не хоче чекати: закриваємо все, що вантажилось
+  const closeAllModals = useCallback(() => {
+    setIsModalOpen(false);
+    setIsSettingsModalOpen(false);
+    setIsOtherOptionsOpen(false);
+    setSettingsInitialTab(null);
+    setIsVipModalOpen(false);
+    setIsShopOpen(false);
+    setIsAchivmentsOpen(false);
+    setIsUserSearchOpen(false);
+    setIsFirstTimeHelpOpen(false);
+    setIsInfoOpen(false);
+    setIsAuthorsDirectoryOpen(false);
+  }, []);
+
+  const quickWeatherChosenId = usePrefValue(QUICK_WEATHER_CITY_KEY, "");
+  // Вибране вручну місто (якщо його картку не видалили), інакше — автоматичний вибір
+  const quickWeatherCard = useMemo(
+    () =>
+      weatherCards.find((card) => card.current && String(card.id) === quickWeatherChosenId) ||
+      pickQuickWeatherCard(weatherCards),
+    [weatherCards, quickWeatherChosenId],
+  );
+  const quickWeatherCities = useMemo(
+    () =>
+      weatherCards
+        .filter((card) => card.current)
+        .map((card) => ({
+          id: String(card.id),
+          label:
+            card.isMain && !card.isFallbackLocation
+              ? `${card.locationName || "Ваша локація"} (GPS)`
+              : card.isMain
+                ? `${card.locationName || "Київ"} (без GPS)`
+                : card.locationName || "Місто",
+        })),
+    [weatherCards],
+  );
+  // null — повернутись до автоматичного вибору (GPS → останнє додане → Київ)
+  const handleSelectQuickWeatherCity = useCallback((id) => {
+    if (id) setPref(QUICK_WEATHER_CITY_KEY, String(id));
+    else removePref(QUICK_WEATHER_CITY_KEY);
+  }, []);
+  const quickWeatherCardId = quickWeatherCard?.id;
+  const handleOpenQuickWeather = useCallback(() => {
+    document.getElementById("weather")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (quickWeatherCardId != null) {
+      window.dispatchEvent(
+        new CustomEvent(WEATHER_CAROUSEL_JUMP_EVENT, { detail: { id: quickWeatherCardId } }),
+      );
+    }
+  }, [quickWeatherCardId]);
+
   const LandingPage = (
     <>
       <div id="hero">
         <Hero
+          quickWeatherCard={quickWeatherCard}
+          quickWeatherCities={quickWeatherCities}
+          onSelectQuickWeatherCity={handleSelectQuickWeatherCity}
+          hideQuickWeather={hideGpsCard && weatherCards.length === 0}
+          onOpenQuickWeather={handleOpenQuickWeather}
           heroDateString={heroDateString}
           onAddCity={handleAddCityFromHero}
           cardLimits={{
@@ -4295,7 +4409,7 @@ const App = () => {
               {LandingPage}
             </Suspense>
           </main>
-          <Suspense fallback={null}>
+          <ModalSuspense active={isAnyModalOpen} onCancel={closeAllModals}>
             {isModalOpen && (
               <Modal
                 onClose={() => setIsModalOpen(false)}
@@ -4407,7 +4521,7 @@ const App = () => {
               />
             )}
 
-          </Suspense>
+          </ModalSuspense>
           <DecoratorOverlay isStickyBgMode={isStickyBgMode} />
           <SupportBanner
             isDarkMode={isDarkMode}

@@ -105,6 +105,8 @@
     "sourcesAria": "Ilaha khariidadda",
     "searchSources": "Raadi khariidado iyo qaab-dhismeedyo",
     "noSourcesFound": "Waxba lama helin",
+    "prevMap": "Khariidadii hore",
+    "nextMap": "Khariidadda xigta",
     "clearSearch": "Tirtir raadinta",
     "customFrame": "Qaab / widget gaar ah",
     "titlePlaceholder": "Magac (tusaale Raadaar, Kaamirad...)",

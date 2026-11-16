@@ -105,6 +105,8 @@
     "sourcesAria": "Kartkällor",
     "searchSources": "Sök kartor och ramar",
     "noSourcesFound": "Inget hittades",
+    "prevMap": "Föregående karta",
+    "nextMap": "Nästa karta",
     "clearSearch": "Rensa sökning",
     "customFrame": "Egen ram / widget",
     "titlePlaceholder": "Namn (t.ex. Radar, Webbkamera...)",

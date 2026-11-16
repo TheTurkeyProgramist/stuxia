@@ -198,6 +198,7 @@ import { MUTE_SYNC_DAILY_LIMIT } from "../../utils/muteSync";
 import { applySiteMirror, getSiteMirror } from "../../utils/siteMirror";
 import { getPref, setPref, removePref } from "../../utils/prefsStore.js";
 import { applySettingsSearch, clearSettingsSearch, getSearchWords } from "./settingsSearch";
+import { OPEN_BG_MODAL_EVENT, OPEN_TIMEZONE_EVENT } from "../Hero/heroEvents.js";
 import {
   SETTINGS_LEVELS,
   DEFAULT_SETTINGS_LEVEL,
@@ -212,6 +213,21 @@ import {
   useSettingsLevelChosen,
 } from "./settingsLevels";
 import { STYKHIIA_FONTS, getStykhiiaFont } from "../../utils/stykhiiaFont";
+import {
+  getFontPackId,
+  fontPackValue,
+  listFontPacks,
+  ensureFontPack,
+  saveFontPack,
+  deleteFontPack,
+} from "../../utils/customFonts";
+import { readFontPack } from "../../utils/customFontImport";
+
+// Підказка в картці «Мої пакети шрифтів»: готовий запит до Claude, щоб підібрати вільний шрифт
+const CLAUDE_FONT_PROMPT =
+  "Допоможи підібрати вільний шрифт (ліцензія OFL) з повною підтримкою кирилиці для погодного сайту. " +
+  "Дай 3–5 варіантів: настрій шрифту, для заголовків чи тексту, і посилання, де викачати ZIP-пакет.";
+const CLAUDE_FONT_URL = `https://claude.ai/new?q=${encodeURIComponent(CLAUDE_FONT_PROMPT)}`;
 
 // Keyframe Animations
 const fadeIn = keyframes`
@@ -930,6 +946,28 @@ const FontDownloadLink = styled.a`
   transition: background 0.15s ease;
   &:hover { background: rgba(var(--s-accent-rgb),0.22); }
   &:focus-visible { outline: 2px solid rgba(var(--s-accent-rgb),0.6); outline-offset: 2px; }
+`;
+const FontPackList = styled.div`display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;`;
+const FontPackChip = styled.span`
+  display: inline-flex; align-items: center; border-radius: 999px; overflow: hidden;
+  border: 1px solid ${(p) => (p.$active ? "rgba(52,211,153,0.6)" : "rgba(var(--s-ink),0.15)")};
+  background: ${(p) => (p.$active ? "rgba(52,211,153,0.15)" : "rgba(var(--s-ink),0.05)")};
+  & > button {
+    border: none; background: transparent; cursor: pointer; color: var(--s-text);
+    font-size: 14px; padding: 4px 6px 4px 12px; max-width: 180px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  & > button + button {
+    display: grid; place-items: center; padding: 4px 10px 4px 4px;
+    font-size: 12px; color: var(--s-muted);
+    &:hover { color: var(--s-red); }
+  }
+  & > button:focus-visible { outline: 2px solid rgba(var(--s-accent-rgb),0.6); outline-offset: -2px; }
+`;
+const FontPackTip = styled.span`
+  display: block; margin-top: 8px; font-size: 12px; color: var(--s-muted); line-height: 1.45;
+  a { color: var(--s-accent); font-weight: 600; text-decoration: none; }
+  a:hover { text-decoration: underline; }
 `;
 const WordChips = styled.div`display: flex; flex-wrap: wrap; gap: 6px;`;
 // Слово — жовтий чип, правило (регулярка) — блакитний моноширинний
@@ -2489,6 +2527,59 @@ const UserSettingsModal = ({
     });
   };
 
+  // Власні пакети шрифтів — файли лише на цьому пристрої (utils/customFonts.js)
+  const [fontPacks, setFontPacks] = useState([]);
+  const [fontPackStacks, setFontPackStacks] = useState({});
+  const [fontPackBusy, setFontPackBusy] = useState(false);
+  const [fontPackError, setFontPackError] = useState("");
+  const fontPackInputRef = useRef(null);
+  const activeFontPackId = getFontPackId(formData.fontFamily);
+
+  useEffect(() => {
+    let alive = true;
+    listFontPacks().then(async (packs) => {
+      if (!alive) return;
+      setFontPacks(packs);
+      // Реєструємо шрифти, щоб назва кожного пакета показувалась його ж шрифтом
+      const entries = await Promise.all(packs.map(async (p) => [p.id, await ensureFontPack(p.id)]));
+      if (alive) setFontPackStacks(Object.fromEntries(entries));
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const handleFontPackFiles = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length) return;
+    setFontPackBusy(true);
+    setFontPackError("");
+    try {
+      const meta = await saveFontPack(await readFontPack(files));
+      const stack = await ensureFontPack(meta.id);
+      setFontPacks((prev) => [...prev, meta]);
+      setFontPackStacks((prev) => ({ ...prev, [meta.id]: stack }));
+      updateLivePreview({ fontFamily: fontPackValue(meta.id) });
+    } catch (err) {
+      setFontPackError(err?.message || "Не вдалося додати пакет.");
+    } finally {
+      setFontPackBusy(false);
+    }
+  };
+
+  const handleDeleteFontPack = async (pack) => {
+    if (!window.confirm(`Видалити пакет «${pack.name}» з цього пристрою?`)) return;
+    try {
+      await deleteFontPack(pack.id);
+    } catch {
+      setFontPackError("Не вдалося видалити пакет.");
+      return;
+    }
+    setFontPacks((prev) => prev.filter((p) => p.id !== pack.id));
+    if (activeFontPackId === pack.id) updateLivePreview({ fontFamily: "" });
+  };
+
   const finishClosing = () => {
     setIsClosing(true);
     setTimeout(() => onClose(), 250);
@@ -2497,6 +2588,12 @@ const UserSettingsModal = ({
   const handleCancel = () => {
     if (user) onUpdate(initialUser);
     finishClosing();
+  };
+
+  // Вікна фону й часового поясу живуть у Hero: закриваємо налаштування (зміни прев'ю лишаються) і відкриваємо їх
+  const openHeroWindow = (eventName) => {
+    finishClosing();
+    window.dispatchEvent(new Event(eventName));
   };
 
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
@@ -3238,9 +3335,41 @@ const UserSettingsModal = ({
               {showTab("personalization") && (
                 <CardGroup data-settings-tab="personalization">
                   <SectionHeaderTitle><FiSliders /> Персоналізація та інтерфейс</SectionHeaderTitle>
-                  <SectionDescription>Формат часу й дати, анімації та розмиття, підказки, шрифт, жести та дзеркальність сайту</SectionDescription>
+                  <SectionDescription>Фон сайту, часовий пояс, формат часу й дати, анімації та розмиття, підказки, шрифт, жести та дзеркальність сайту</SectionDescription>
+
+                  <SubSectionTitle><FiImage /> Фон сайту</SubSectionTitle>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#f472b6"><GiPalette /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Фон</CardTitle>
+                        <CardDescription>Картинка на першому екрані: вибрати свою, слайд-шоу, розмиття</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinButton type="button" onClick={() => openHeroWindow(OPEN_BG_MODAL_EVENT)}>
+                        Змінити фон
+                      </WinButton>
+                    </CardControl>
+                  </Card>
 
                   <SubSectionTitle><FiClock /> Час та дата</SubSectionTitle>
+
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#38bdf8"><FiGlobe /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Часовий пояс</CardTitle>
+                        <CardDescription>За яким часом показувати годинник на першому екрані</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <WinButton type="button" onClick={() => openHeroWindow(OPEN_TIMEZONE_EVENT)}>
+                        Змінити часовий пояс
+                      </WinButton>
+                    </CardControl>
+                  </Card>
 
                   <Card>
                     <CardLeft>
@@ -3449,10 +3578,66 @@ const UserSettingsModal = ({
                       </CardInfo>
                     </CardLeft>
                     <CardControl style={{ minWidth: "200px" }}>
-                      <WinInput placeholder="Назва шрифту" value={formData.fontFamily} onChange={(e) => updateLivePreview({ fontFamily: e.target.value })} />
+                      <WinInput placeholder="Назва шрифту" value={activeFontPackId ? "" : formData.fontFamily} onChange={(e) => updateLivePreview({ fontFamily: e.target.value })} />
                     </CardControl>
                   </Card>
                   )}
+
+                  <Card level="pro">
+                    <CardLeft>
+                      <CardIconBox $color="#38bdf8"><FiUpload /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Мої пакети шрифтів</CardTitle>
+                        <CardDescription>
+                          {fontPackBusy
+                            ? "Читаю шрифти…"
+                            : fontPackError || "TTF, OTF, WOFF2 або ZIP-архів. Файли лишаються лише на цьому пристрої."}
+                        </CardDescription>
+                        {fontPacks.length > 0 && (
+                          <FontPackList role="radiogroup" aria-label="Мої пакети шрифтів">
+                            {fontPacks.map((p) => {
+                              const active = activeFontPackId === p.id;
+                              return (
+                                <FontPackChip key={p.id} $active={active}>
+                                  <button
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={active}
+                                    style={{ fontFamily: fontPackStacks[p.id] || "inherit" }}
+                                    title={`${p.count} файл(ів), ${(p.size / 1024 / 1024).toFixed(1)} МБ`}
+                                    onClick={() => updateLivePreview({ fontFamily: active ? "" : fontPackValue(p.id) })}
+                                  >
+                                    {p.name}
+                                  </button>
+                                  <button type="button" aria-label={`Видалити пакет ${p.name}`} title="Видалити з пристрою" onClick={() => handleDeleteFontPack(p)}>
+                                    <FiTrash2 />
+                                  </button>
+                                </FontPackChip>
+                              );
+                            })}
+                          </FontPackList>
+                        )}
+                        <FontPackTip>
+                          💡 Не знаєте, який шрифт узяти?{" "}
+                          <a href={CLAUDE_FONT_URL} target="_blank" rel="noopener noreferrer">Спитайте Claude</a>
+                          {" "}— він підбере вільні шрифти з кирилицею й підкаже, де викачати пакет.
+                        </FontPackTip>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <input
+                        ref={fontPackInputRef}
+                        type="file"
+                        multiple
+                        accept=".ttf,.otf,.woff,.woff2,.zip,font/*,application/zip"
+                        style={{ display: "none" }}
+                        onChange={handleFontPackFiles}
+                      />
+                      <WinButton type="button" disabled={fontPackBusy} onClick={() => fontPackInputRef.current?.click()}>
+                        <FiUpload /> Додати
+                      </WinButton>
+                    </CardControl>
+                  </Card>
 
                   <Card level="pro">
                     <CardLeft>

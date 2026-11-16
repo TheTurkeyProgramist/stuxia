@@ -105,6 +105,8 @@
     "sourcesAria": "지도 소스",
     "searchSources": "지도 및 프레임 검색",
     "noSourcesFound": "결과 없음",
+    "prevMap": "이전 지도",
+    "nextMap": "다음 지도",
     "clearSearch": "검색 지우기",
     "customFrame": "사용자 프레임 / 위젯",
     "titlePlaceholder": "이름 (예: 레이더, 웹캠...)",

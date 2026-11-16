@@ -105,6 +105,8 @@
     "sourcesAria": "Surse hartă",
     "searchSources": "Caută hărți și cadre",
     "noSourcesFound": "Nu s-a găsit nimic",
+    "prevMap": "Harta anterioară",
+    "nextMap": "Harta următoare",
     "clearSearch": "Șterge căutarea",
     "customFrame": "Cadru / widget propriu",
     "titlePlaceholder": "Nume (ex. Radar, Cameră web...)",

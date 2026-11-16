@@ -105,6 +105,8 @@
     "sourcesAria": "Kaartbronnen",
     "searchSources": "Kaarten en frames zoeken",
     "noSourcesFound": "Niets gevonden",
+    "prevMap": "Vorige kaart",
+    "nextMap": "Volgende kaart",
     "clearSearch": "Zoekopdracht wissen",
     "customFrame": "Eigen frame / widget",
     "titlePlaceholder": "Naam (bijv. Radar, Webcam...)",

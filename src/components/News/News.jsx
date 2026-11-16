@@ -1,4 +1,6 @@
-import React, { Fragment, useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
+import React, { Fragment, useEffect, useState, useCallback, useRef } from "react";
+import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
+import { ModalSuspense } from "../Loader/ModalLoading.jsx";
 import { createPortal } from "react-dom";
 import styled, { keyframes, css } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,7 +29,7 @@ import swampnineThumb from "../../media/thumbs/swamp-lake-of-freedom.webp";
 import { DEFAULT_BGS } from "../Hero/defaultBgs.js";
 import { NEWS_SOURCES, NEWS_DESC_TRANSLATE_MAX, cleanNewsDescription } from "../../../firebase-functions/newsSources.js";
 // ШІ та markdown підвантажуються лише при відкритті модалки
-const NewsAiModal = lazy(() => import("./NewsAiModal"));
+const NewsAiModal = lazyWithRetry(() => import("./NewsAiModal"));
 import InfoModal from "../Modals/UserSearchModal.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { MdReport } from "react-icons/md"; //Поскаржитися
@@ -1961,15 +1963,13 @@ const ProgressBarFill = styled.div`
     ${(props) => (props.$isError ? "rgba(255, 77, 77, 0.7)" : "rgba(255, 179, 108, 0.5)")};
 `;
 
-const FilteredNewsCounter = styled.p`
-  color: ${themed("rgb(255, 255, 255)", "#1a1a1a")};
-  background: ${themed("#0000008b", "rgba(255, 255, 255, 0.75)")};
-  border-radius: 10px;
-  font-weight: 600;
-  padding:7px;
-  font-size: 13px;
-  line-height: 1.4;
-  text-align: center;
+// Скільки небажаних новин фільтр сховав за сьогодні — дрібно, в дужках після заголовка
+const FilteredInTitle = styled.span`
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.7;
+  white-space: nowrap;
+  cursor: help;
 `;
 
 // ── Скарги ───────────────────────────────────────────────────────────────
@@ -4044,7 +4044,10 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             ref={(el) => registerRef('newsHeader', el)}
             style={{ marginLeft: "5px", padding: "2px", fontSize: "15px", fontWeight: "600" }}
           >
-            Новини: України, світу, клімату!
+            Новини світу та клімату!
+            <FilteredInTitle title={`За сьогодні фільтр сховав небажаних новин: ${filteredNewsCount}`}>
+              {" "}(сьогодні сховано: {filteredNewsCount})
+            </FilteredInTitle>
           </span>
         </AihelpTitle>
         <AnimatePresence>
@@ -4270,9 +4273,6 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
               )}
             </MoreNewsButton>
           </MoreNewsActions>
-          <FilteredNewsCounter $isDarkMode={$isDarkMode}>
-            За сьогодні відфільтровано {filteredNewsCount} небажаних новин.
-          </FilteredNewsCounter>
         </div>
       ) : (
         <div style={{ textAlign: "center", color: "white", padding: "14px", background: "#0000009c", marginTop: "20px", fontSize: "12px" }}>
@@ -4285,14 +4285,14 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       )}
 
       {selectedNews && isAiModalOpen && (
-        <Suspense fallback={null}>
+        <ModalSuspense onCancel={() => setIsAiModalOpen(false)}>
           <NewsAiModal
             isOpen={isAiModalOpen}
             onClose={() => setIsAiModalOpen(false)}
             newsItem={selectedNews}
             isDarkMode={$isDarkMode}
           />
-        </Suspense>
+        </ModalSuspense>
       )}
       {isHelpModalOpen && (
         <InfoModal
