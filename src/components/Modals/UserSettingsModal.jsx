@@ -141,6 +141,9 @@ import {
   setNewsFilterEnabled,
   isNewsFilterSoftMode,
   setNewsFilterSoftMode,
+  isNewsFilterThorough,
+  setNewsFilterThorough,
+  NEWS_FILTER_FAST_DESCRIPTION_CHARS,
   getNewsFilterCategoryModes,
   setNewsFilterCategoryModes,
   getNewsFilterCustomWords,
@@ -1959,6 +1962,14 @@ const UserSettingsModal = ({
     queueNewsFilterSync();
   };
 
+  // Ретельна перевірка всього опису — лише для цього браузера, у хмару не йде (див. contentFilter.js)
+  const [isNewsFilterThoroughOn, setIsNewsFilterThoroughOn] = useState(isNewsFilterThorough);
+  const toggleNewsFilterThorough = () => {
+    const nextVal = !isNewsFilterThoroughOn;
+    setIsNewsFilterThoroughOn(nextVal);
+    setNewsFilterThorough(nextVal);
+  };
+
   const setNewsFilterCategoryMode = async (key, mode) => {
     if (newsFilterModes[key] === mode) return;
     if (mode === "show") {
@@ -3581,6 +3592,29 @@ const UserSettingsModal = ({
                     </CardControl>
                   </Card>
 
+                  {/* Ретельна перевірка: весь опис замість заголовка й початку.
+                      Окремою групою без рівня — видно навіть у «Простий · Бетельгейзе»,
+                      де сам перемикач «Фільтр новин» схований (фільтр увімкнений за замовчуванням) */}
+                  <FilterSubGroup $disabled={!isNewsFilterOn} aria-disabled={!isNewsFilterOn}>
+                    <Card>
+                      <CardInfo>
+                        <CardTitle>Ретельна перевірка новин</CardTitle>
+                        <CardDescription>
+                          {isNewsFilterThoroughOn
+                            ? "Фільтр небажаних новин читає весь опис — надійніше, але сторінка може підвисати, поки новини перевіряються."
+                            : `Фільтр небажаних новин читає заголовок і перші ${NEWS_FILTER_FAST_DESCRIPTION_CHARS} символів опису — швидко. Увімкніть, щоб перевіряти весь опис (надійніше).`}
+                          {" "}Лише на цьому пристрої, діє з наступного оновлення новин
+                        </CardDescription>
+                      </CardInfo>
+                      <CardControl>
+                        <ToggleWrapper onClick={toggleNewsFilterThorough}>
+                          <ToggleStatusLabel $checked={isNewsFilterThoroughOn}>{isNewsFilterThoroughOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                          <SwitchPill $checked={isNewsFilterThoroughOn} />
+                        </ToggleWrapper>
+                      </CardControl>
+                    </Card>
+                  </FilterSubGroup>
+
                   {/* Під-опції фільтра: завжди видно, але сірі й неактивні, коли фільтр вимкнено */}
                   <FilterSubGroup data-level="medium" $disabled={!isNewsFilterOn} aria-disabled={!isNewsFilterOn}>
                     {/* 1. М'який режим */}
@@ -3598,6 +3632,7 @@ const UserSettingsModal = ({
                         </ToggleWrapper>
                       </CardControl>
                     </Card>
+
 
                     {/* 2. Категорії: не рекомендувати / показувати */}
                     <CardExpanded level="medium">

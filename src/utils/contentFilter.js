@@ -719,6 +719,41 @@ export const isNewsFilterSoftMode = () => {
 export const setNewsFilterSoftMode = (enabled) =>
   writeValue(NEWS_FILTER_SOFT_KEY, enabled ? "true" : "false");
 
+/*
+ * Ретельна перевірка: фільтр читає весь опис новини (разом з HTML).
+ * За замовчуванням — швидкий режим: заголовок і перші NEWS_FILTER_FAST_DESCRIPTION_CHARS
+ * символів опису без HTML-тегів. Довгі описи інакше підвішували сторінку при завантаженні новин.
+ * Лише для цього браузера: у хмару не синхронізується (firestore.rules дозволяють у newsFilter
+ * тільки enabled / softMode / categories / customWords).
+ */
+const NEWS_FILTER_THOROUGH_KEY = "news_filter_thorough";
+export const NEWS_FILTER_FAST_DESCRIPTION_CHARS = 500;
+const HTML_TAGS = /<[^>]*>/g;
+
+export const isNewsFilterThorough = () => {
+  try {
+    return getPref(NEWS_FILTER_THOROUGH_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
+
+export const setNewsFilterThorough = (enabled) =>
+  writeValue(NEWS_FILTER_THOROUGH_KEY, enabled ? "true" : "false");
+
+/** Текст новини, який перевіряє фільтр: заголовок + опис (у швидкому режимі — лише початок опису). */
+export const getNewsFilterText = (item, thorough = isNewsFilterThorough()) => {
+  const title = item?.title || "";
+  const description = item?.description || "";
+  if (thorough) return `${title} ${description}`;
+  const short = description
+    .replace(HTML_TAGS, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, NEWS_FILTER_FAST_DESCRIPTION_CHARS);
+  return `${title} ${short}`;
+};
+
 /** Режим кожної категорії: "hide" (не рекомендувати, за замовчуванням) або "show" (показувати). */
 export const getNewsFilterCategoryModes = () => {
   const saved = readJson(NEWS_FILTER_CATEGORIES_KEY, {});
@@ -812,6 +847,30 @@ export const hasBannedContent = (text) => {
  */
 export const getNewsBlockReason = (text, prefs = getNewsFilterPrefs()) => {
   if (!text || !prefs.enabled) return null;
+  // Перевірка дорога (кілька великих регулярок на кожну категорію), а при оновленні стрічки
+  // більшість новин ті самі — тож пам'ятаємо результат для пари «налаштування + текст»
+  const cacheKey = `${prefsSignature(prefs)}\u0000${text}`;
+  if (blockReasonCache.has(cacheKey)) return blockReasonCache.get(cacheKey);
+  const reason = computeNewsBlockReason(text, prefs);
+  if (blockReasonCache.size >= BLOCK_REASON_CACHE_LIMIT) blockReasonCache.clear();
+  blockReasonCache.set(cacheKey, reason);
+  return reason;
+};
+
+const BLOCK_REASON_CACHE_LIMIT = 3000;
+const blockReasonCache = new Map();
+// Один і той самий об'єкт налаштувань News передає для всіх новин — рядок рахуємо раз на об'єкт
+const prefsSignatures = new WeakMap();
+const prefsSignature = (prefs) => {
+  let signature = prefsSignatures.get(prefs);
+  if (signature === undefined) {
+    signature = JSON.stringify([prefs.categories, prefs.customWords]);
+    prefsSignatures.set(prefs, signature);
+  }
+  return signature;
+};
+
+const computeNewsBlockReason = (text, prefs) => {
   const variants = [normalizeText(text), normalizeObfuscatedText(text)];
 
   for (const { key, label } of NEWS_FILTER_CATEGORIES) {

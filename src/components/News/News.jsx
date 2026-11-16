@@ -42,7 +42,12 @@ import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
 import { FiPlus, FiList, FiLink, FiShield, FiMoreVertical, FiAlertTriangle } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
 import toast from "react-hot-toast";
-import { getNewsBlockReason, getNewsFilterPrefs } from "../../utils/contentFilter";
+import {
+  getNewsBlockReason,
+  getNewsFilterPrefs,
+  getNewsFilterText,
+  isNewsFilterThorough,
+} from "../../utils/contentFilter";
 import { subscribePrefs } from "../../utils/prefsStore.js";
 import { isPushSubscribed } from "../../utils/pushNotifications.js";
 import {
@@ -647,6 +652,14 @@ const Card = styled.a`
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
   }
 `;
+// Фільтр новин перевіряє стрічку порціями не довше за стільки мс (довга задача — від 50 мс)
+const FILTER_SLICE_MS = 25;
+// Віддати потік браузеру між порціями: scheduler.yield, де є, інакше setTimeout(0)
+const yieldToMain = () =>
+  typeof globalThis.scheduler?.yield === "function"
+    ? globalThis.scheduler.yield()
+    : new Promise((resolve) => setTimeout(resolve, 0));
+
 // Фото новин із чужих сайтів часто 1920 px і понад 100 КБ, а картка — ~350 px.
 // Пропускаємо їх через безкоштовний сервіс зменшення wsrv.nl: WebP потрібної ширини (~15–20 КБ)
 // з довгим кешем. Не відповів wsrv.nl — картка вантажить оригінал напряму (див. onError у NewsCard)
@@ -3297,10 +3310,20 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       // Фільтр новин з урахуванням категорій і власних слів користувача.
       // У «м'якому» режимі заблоковані новини лишаються у стрічці під плашкою.
       const filterPrefs = getNewsFilterPrefs();
+      // Швидкий режим (заголовок + початок опису) чи ретельний (весь опис) — Налаштування → фільтр новин
+      const thoroughFilter = isNewsFilterThorough();
       const clean = [];
       const filteredNews = [];
+      // Перевірка всіх новин одним шматком блокувала сторінку на ~0,7 с (TBT).
+      // Тепер — порціями: щойно порція триває довше за FILTER_SLICE_MS, віддаємо потік браузеру
+      let sliceStart = performance.now();
       for (const i of allItems) {
-        const reason = getNewsBlockReason(i.title + " " + (i.description || ""), filterPrefs);
+        if (performance.now() - sliceStart > FILTER_SLICE_MS) {
+          await yieldToMain();
+          if (signal.aborted) return;
+          sliceStart = performance.now();
+        }
+        const reason = getNewsBlockReason(getNewsFilterText(i, thoroughFilter), filterPrefs);
         if (!reason) {
           clean.push(i);
           continue;

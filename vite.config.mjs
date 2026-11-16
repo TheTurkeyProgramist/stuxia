@@ -347,6 +347,9 @@ export default defineConfig(({ mode }) => {
     if (/\/node_modules\/(react|react-dom|scheduler)\//.test(id)) {
       return 'vendor-react';
     }
+    // react-icons лишаємо тут. Пробували прибрати (2026-11-16) — виграшу 0: кожен набір іконок
+    // (fa, gi, fa6…) — один модуль, який не ріжеться між частинами, тож іконки просто
+    // переїжджали в окремі файли й однаково вантажились на старті (+9 запитів)
     if (/\/node_modules\/(react-icons|@floating-ui|@radix-ui)\//.test(id)) {
       return 'vendor-ui';
     }
