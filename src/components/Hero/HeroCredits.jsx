@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import styled, { keyframes } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { BiLogoVisualStudio } from "react-icons/bi";
 import { SiBun, SiGithub, SiCloudflare, SiWikimediacommons } from "react-icons/si";
 import { TbBrandVite, TbBrandWindy } from "react-icons/tb";
@@ -195,6 +195,18 @@ const InlineBadge = styled(VersionBadgeBox)`
   @media ${PHONE_QUERY} {
     display: flex;
   }
+
+  /* $gone — з'їхала і схована, але місце в картці лишається: інакше картка ставала нижчою
+     й стрибала (зсув макета). Індик при цьому не анімується */
+  ${(p) =>
+    p.$gone &&
+    css`
+      visibility: hidden;
+      opacity: 0;
+      svg {
+        animation: none !important;
+      }
+    `}
 `;
 
 // Скільки картка «Працює на базі» висить на екрані, і скільки триває її з'їжджання вниз
@@ -368,12 +380,13 @@ export function HeroVersionBadge() {
   );
 }
 
-// Та сама версія всередині картки на телефоні
+// Та сама версія всередині картки на телефоні. Після з'їжджання не видаляється, а лише
+// ховається на своєму місці ($gone) — щоб картка не міняла висоту
 function InlineVersionBadge() {
   const [phase] = useTimedExit(BADGE_SHOW_MS, BADGE_SLIDE_MS);
-  if (phase === "gone") return null;
+  const gone = phase === "gone";
   return (
-    <InlineBadge $hiding={phase === "hiding"}>
+    <InlineBadge $hiding={phase === "hiding"} $gone={gone} aria-hidden={gone || undefined}>
       <span>{VERSION_TEXT}</span>
       <TurkeyDot />
     </InlineBadge>

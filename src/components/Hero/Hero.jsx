@@ -49,7 +49,8 @@ import fadedPreview from "../../media/backgrounds/scenes/resort.webp?w=128&forma
 import { DEFAULT_BGS, DEFAULT_HERO_BG, MOBILE_CONTAIN_BGS } from "./defaultBgs";
 import { HeroVersionBadge } from "./HeroCredits";
 import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
-import News from "../News/News.jsx";
+// Новини (~120 КБ) — окремим файлом після першого показу сторінки, щоб не затримувати фон Hero (LCP)
+const News = React.lazy(() => import("../News/News.jsx"));
 // ШІ-помічник (Gemini + markdown) вантажиться лише при відкритті модалки
 const React_lazy_Aihelp = React.lazy(() => import("../Aihelp/Aihelp.jsx"));
 import AiAttachBadges from "../AiShared/AiAttachBadges.jsx";
@@ -1253,6 +1254,16 @@ const ChangeBgPreview = styled.img`
   border: 1px solid rgba(255, 255, 255, 0.75);
   animation: ${bgPreviewSwap} 0.45s ease-out both;
 `;
+// Місце під новини, поки вантажиться їхній файл: висота як у News із заголовком і
+// блоком «Шукаємо цікаві новини…» (заміряно: 287px на телефоні, 291px з 768px) — без зсуву макета
+const NewsLazyPlaceholder = styled.div`
+  min-height: 287px;
+
+  @media (min-width: 768px) {
+    min-height: 291px;
+  }
+`;
+
 const imageMap = {
   planes: planes,
   village: village,
@@ -2445,7 +2456,9 @@ const Hero = ({
         {/* width: 100% — інакше обгортка стискалась до ширини напису «Шукаємо новини…»,
             а після завантаження розширювалась під карусель (зсув макета) */}
         <div style={{ marginTop: "0px", zIndex: 90, width: "100%" }}>
-          <News user={user} isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
+          <React.Suspense fallback={<NewsLazyPlaceholder aria-hidden="true" />}>
+            <News user={user} isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
+          </React.Suspense>
         </div>
       </DelayedContent>
       {bgModalMounted && (

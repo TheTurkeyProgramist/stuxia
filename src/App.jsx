@@ -28,11 +28,14 @@ import {
 import { GiSnowing } from "react-icons/gi";
 import HeroCredits from "./components/Hero/HeroCredits.jsx";
 //import { useSelector } from "react-redux";
-import WeatherCardComponent, {
+// Картка погоди (~90 КБ) — окремим файлом після першого показу сторінки;
+// поки вантажиться, на її місці WeatherCardSkeleton тієї ж висоти
+const WeatherCardComponent = lazy(() => import("./components/Weather/Weather.jsx"));
+import {
   AihelpTitle,
   CARD_BG_CHANGE_EVENT,
   DEFAULT_CARD_BG,
-} from "./components/Weather/Weather.jsx";
+} from "./components/Weather/weatherShared.js";
 import Maintenance from "./components/Maintenance.jsx";
 import { getMaintenanceStatus, loadFirebase } from "./firebaseLazy.js";
 import fogBackground from "./media/backgrounds/scenes/foggy-forest-loader.webp";
@@ -2015,6 +2018,7 @@ const SectionContent = memo(
               const isExtremeUV = card.current.uv_index > 7;
               return (
                 <div key={card.id}>
+                  <Suspense fallback={<WeatherCardSkeleton isDarkMode={isDarkMode} />}>
                   <WeatherCardComponent
                     isStickyBgMode={isStickyBgMode}
                     user={user}
@@ -2035,6 +2039,7 @@ const SectionContent = memo(
                     layout={weatherCardLayout}
                     currentTimeString={heroDateString}
                   />
+                  </Suspense>
                 </div>
               );
             })}

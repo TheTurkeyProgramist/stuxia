@@ -1,5 +1,7 @@
 # Cloudflare Pages: статична збірка з dist + функції з папки functions/
 # (functions/api/news-feed.js → /api/news-feed, functions/api/frame-check.js → /api/frame-check)
+# Які адреси взагалі запускають функції — public/_routes.json (/api/* і маніфести для ШІ-агентів,
+# на які functions/_middleware.js відповідає 404). Нова функція поза /api/ — додай її туди.
 name = "stuxia"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"

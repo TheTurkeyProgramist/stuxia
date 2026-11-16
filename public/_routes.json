@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "include": ["/api/*", "/.well-known/ai-catalog.json", "/.well-known/ard.json"],
+  "exclude": []
+}
