@@ -647,6 +647,31 @@ const Card = styled.a`
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
   }
 `;
+// Фото новин із чужих сайтів часто 1920 px і понад 100 КБ, а картка — ~350 px.
+// Пропускаємо їх через безкоштовний сервіс зменшення wsrv.nl: WebP потрібної ширини (~15–20 КБ)
+// з довгим кешем. Не відповів wsrv.nl — картка вантажить оригінал напряму (див. onError у NewsCard)
+const NEWS_IMAGE_PROXY = "https://wsrv.nl/";
+const BLANK_IMG = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+
+const canProxyNewsImage = (src) =>
+  typeof src === "string" &&
+  /^https?:\/\//i.test(src) &&
+  !src.startsWith(window.location.origin);
+
+// we — не збільшувати, якщо оригінал і так менший
+const proxiedNewsImage = (src, width) =>
+  `${NEWS_IMAGE_PROXY}?url=${encodeURIComponent(src)}&w=${width}&output=webp&q=72&we`;
+
+// src / srcSet / sizes для <img>: через wsrv.nl, якщо можна, інакше — як є
+const newsImageProps = (src, useProxy, widths, sizes) =>
+  useProxy
+    ? {
+        src: proxiedNewsImage(src, widths[0]),
+        srcSet: widths.map((w) => `${proxiedNewsImage(src, w)} ${w}w`).join(", "),
+        sizes,
+      }
+    : { src: src || BLANK_IMG };
+
 const NewsImg = styled.img`
   width: 100%;
   height: 100%;
@@ -1196,6 +1221,20 @@ const NewsCard = ({
   // Lazy-load: показуємо реальне зображення лише коли картка входить у viewport
   const [imgSrc, setImgSrc] = useState(null);
   const [isFallbackImg, setIsFallbackImg] = useState(false);
+  // Фото, яке wsrv.nl не віддав, — його вантажимо напряму
+  const [proxyFailedSrc, setProxyFailedSrc] = useState(null);
+  const useImageProxy =
+    !isFallbackImg && canProxyNewsImage(imgSrc) && proxyFailedSrc !== imgSrc;
+  const handleImgError = () => {
+    if (useImageProxy) {
+      setProxyFailedSrc(imgSrc);
+      return;
+    }
+    // Не завантажилось і напряму — підставляємо обкладинку з природи (свій файл, не зациклиться)
+    if (isFallbackImg) return;
+    setImgSrc(getNewsFallbackImage(item.link || item.title || ""));
+    setIsFallbackImg(true);
+  };
 
   useEffect(() => {
     const checkKey = async () => {
@@ -1473,16 +1512,12 @@ const NewsCard = ({
         {showImage && (
           <CompactThumb $isDarkMode={$isDarkMode}>
             <NewsImg
-              src={imgSrc || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
+              {...newsImageProps(imgSrc, useImageProxy, [120, 240], "104px")}
               alt=""
               loading="lazy"
               decoding="async"
               $fallback={isFallbackImg}
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = getNewsFallbackImage(item.link || item.title || "");
-                setIsFallbackImg(true);
-              }}
+              onError={handleImgError}
             />
             {isVisible && <CompactNewBadge>Нове</CompactNewBadge>}
           </CompactThumb>
@@ -1580,17 +1615,17 @@ const NewsCard = ({
         </NewsSettingsMenu>
         {showImage && (
           <NewsImg
-            src={imgSrc || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
+            {...newsImageProps(
+              imgSrc,
+              useImageProxy,
+              [400, 800],
+              "(max-width: 767px) 92vw, 420px",
+            )}
             alt=""
             loading="lazy"
             decoding="async"
             $fallback={isFallbackImg}
-            onError={(e) => {
-              // Зображення не завантажилось — підставляємо обкладинку з природи
-              e.target.onerror = null;
-              e.target.src = getNewsFallbackImage(item.link || item.title || "");
-              setIsFallbackImg(true);
-            }}
+            onError={handleImgError}
           />
         )}
         {(showTitle || showDescription) && (
