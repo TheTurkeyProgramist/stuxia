@@ -141,19 +141,42 @@ button {
   }
 }
 
+/* Ширина для старіших браузерів (::-webkit-*). Була 3px — з рамкою 2+2px
+   повзунок мав нульову ширину й не було видно */
 ::-webkit-scrollbar {
-  width: 3px;
-background: transparent;
+  width: 10px;
+  background: transparent;
   height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* Світла тема (денна) — чорний скролбар */
+/* Скролбар сторінки — завжди білий (сторінка на темному фото-фоні в обох темах).
+   Браузер бере колір скролбара сторінки саме з <html>. */
 html {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.5) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.85) transparent;
+  /* Внутрішні скролбари — під тему (у білих картках світлої теми білий не видно).
+     Тему ставить App.jsx: <html data-scroll-theme="dark|light"> */
+  --inner-scroll-thumb: rgba(20, 30, 45, 0.7);
+}
+html[data-scroll-theme="dark"] {
+  --inner-scroll-thumb: rgba(255, 255, 255, 0.75);
+}
+
+/* scrollbar-color успадковується — усе всередині body отримує колір під тему */
+body {
+  scrollbar-color: var(--inner-scroll-thumb) transparent;
+}
+
+/* Дзеркальний режим: сторінку прокручує body — його скролбар теж білий,
+   а вкладені елементи знову під тему */
+html.site-mirrored body {
+  scrollbar-color: rgba(255, 255, 255, 0.85) transparent;
+}
+html.site-mirrored body > * {
+  scrollbar-color: var(--inner-scroll-thumb) transparent;
 }
 
 ::-webkit-scrollbar-thumb {

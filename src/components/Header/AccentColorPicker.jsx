@@ -62,7 +62,7 @@ export const getAccentLabel = (color) =>
 const AccentRow = styled.div`
   display: grid;
   grid-template-columns: repeat(${(p) => p.$columns}, 28px);
-  gap: 10px;
+  gap: ${(p) => p.$gap}px;
   justify-content: ${(p) => (p.$columns >= ACCENT_COLORS.length ? "flex-start" : "space-between")};
   padding: 2px 4px;
 `;
@@ -96,10 +96,10 @@ const AccentDot = styled.button`
  * Ряд кружечків для вибору акценту.
  * wrapItem(ac, node) — необов'язкова обгортка (наприклад, Tooltip).
  */
-export const AccentSwatches = ({ isDarkMode, accentColor, onPick, columns = 4, wrapItem }) => {
+export const AccentSwatches = ({ isDarkMode, accentColor, onPick, columns = 4, gap = 10, wrapItem }) => {
   const ring = accentColor || "#00afce";
   return (
-    <AccentRow $columns={columns}>
+    <AccentRow $columns={columns} $gap={gap}>
       {ACCENT_COLORS.map((ac) => {
         const active = accentColor === ac.color;
         const isNone = ac.id === "none";

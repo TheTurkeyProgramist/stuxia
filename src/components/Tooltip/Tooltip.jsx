@@ -29,7 +29,10 @@ const TooltipBox = styled.div`
   /* Вище за всі модалки (налаштування — 100001, мова/AI — 200000…300001) */
   z-index: 300010;
   pointer-events: none;
-  white-space: nowrap;
+  /* Короткі підказки — в один рядок; довгі переносяться й не вилазять за екран */
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+  overflow-wrap: anywhere;
 `;
 
 export const Tooltip = ({
@@ -88,7 +91,10 @@ export const Tooltip = ({
     <>
       <span
         ref={refs.setReference}
-        {...getReferenceProps()}
+        {...getReferenceProps({
+          // Після кліку підказка ховається, щоб не заступала результат дії
+          onClick: () => setIsOpen(false),
+        })}
         style={{ display: "inline-flex", ...wrapperStyle }}
       >
         {children}

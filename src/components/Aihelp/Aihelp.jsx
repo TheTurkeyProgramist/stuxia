@@ -17,6 +17,20 @@ import { useGeminiKey } from "../AiShared/useGeminiKey";
 import { useSharedCooldown } from "../AiShared/useSharedCooldown";
 import { useVoiceInput } from "../AiShared/useVoiceInput";
 import { useStarterCarousel } from "../AiShared/useStarterCarousel";
+import {
+  useAiAttachments,
+  removeAiAttachment,
+  clearAiAttachments,
+} from "../AiShared/aiAttachments";
+import {
+  OFFLINE_MODELS,
+  DEFAULT_OFFLINE_MODEL,
+  getOfflineModel,
+  checkOfflineSupport,
+  isOfflineModelCached,
+  streamOfflineChat,
+  unloadOffline,
+} from "../AiShared/offlineLlm";
 import { RiDeleteBack2Fill } from "react-icons/ri";
 import { hasBannedContent } from "../../utils/contentFilter";
 import { fetchFreeWebSearch } from "../../utils/freeWebSearch";
@@ -48,117 +62,8 @@ import { IoIosCloudyNight } from "react-icons/io";
 import { PiNewspaperClippingFill } from "react-icons/pi";
 import { FaClapperboard } from "react-icons/fa6";
 import VoiceWaveform from "./VoiceWaveform";
-import {
-  useFloating,
-  autoUpdate,
-  offset,
-  flip,
-  shift,
-  arrow,
-  useHover,
-  useFocus,
-  useDismiss,
-  useRole,
-  useInteractions,
-  useTransitionStyles,
-  FloatingArrow,
-} from "@floating-ui/react";
-import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
+import { Tooltip } from "../Tooltip/Tooltip";
 import { getPref, setPref } from "../../utils/prefsStore.js";
-const TooltipBox = styled.div`
-  background-color: ${(props) => (props.$isDarkMode ? "#0c0c0ceb" : "#fdff98e7")};
-  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
-  border: 2px solid #00afce;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, ${(props) => (props.$isDarkMode ? "0.5" : "0.15")});
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 9px;
-  z-index: 300001; /* вище за AiModalBackdrop (200000) і модалки Aihelp */
-  pointer-events: none;
-`;
-export const Tooltip = ({
-  content,
-  children,
-  placement = "bottom",
-  isDarkMode = true,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const arrowRef = useRef(null);
-  const { refs, floatingStyles, context } = useFloating({
-    open: isOpen,
-    onOpenChange: setIsOpen,
-    placement,
-    strategy: "fixed",
-    transform: false,
-    whileElementsMounted: autoUpdate,
-    middleware: [
-      offset(8),
-      flip(),
-      shift({ padding: 5 }),
-      arrow({ element: arrowRef }),
-    ],
-  });
-  const { isMounted, styles: transitionStyles } = useTransitionStyles(context, {
-    duration: 150,
-    initial: {
-      opacity: 0,
-      transform: "scale(0.9)",
-    },
-    open: {
-      opacity: 1,
-      transform: "scale(1)",
-    },
-  });
-
-  const hover = useHover(context, { move: false });
-  const focus = useFocus(context);
-  const dismiss = useDismiss(context);
-  const role = useRole(context, { role: "tooltip" });
-
-  const { getReferenceProps, getFloatingProps } = useInteractions([
-    hover,
-    focus,
-    dismiss,
-    role,
-  ]);
-
-  if (!content) return children;
-
-  const bgTheme = isDarkMode ? "#111111" : "#ffffff";
-  const borderTheme = "#00acb9";
-
-  return (
-    <>
-      <span
-        ref={refs.setReference}
-        {...getReferenceProps()}
-        style={{ display: "inline-flex" }}
-      >
-        {children}
-      </span>
-      {isMounted && (
-        <MirrorFloatingPortal>
-          <TooltipBox
-            ref={refs.setFloating}
-            $isDarkMode={isDarkMode}
-            style={{ ...floatingStyles, ...transitionStyles }}
-            {...getFloatingProps()}
-          >
-            <MirrorText>{content}</MirrorText>
-            <FloatingArrow
-              ref={arrowRef}
-              context={context}
-              fill={bgTheme}
-              stroke={borderTheme}
-              strokeWidth={1}
-            />
-          </TooltipBox>
-        </MirrorFloatingPortal>
-      )}
-    </>
-  );
-};
 //<Tooltip content="Змінити тему" isDarkMode={isDarkMode}>
 /* ── Animations ── */
 const fadeIn = keyframes`
@@ -254,7 +159,7 @@ const SidebarTitle = styled.div`
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)")};
+  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.62)")};
   padding: 2px 4px 4px;
   flex-shrink: 0;
 `;
@@ -287,7 +192,7 @@ const SidebarChatItem = styled.div`
   font-weight: ${(p) => (p.$active ? "700" : "500")};
   color: ${(p) =>
     p.$active
-      ? "#ff9500"
+      ? p.$isDarkMode ? "#ff9500" : "#a35400"
       : p.$isDarkMode
         ? "rgba(255,255,255,0.75)"
         : "rgba(0,0,0,0.7)"};
@@ -352,15 +257,14 @@ const SidebarNewChatBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   flex-shrink: 0;
   width: 100%;
   padding: 8px;
   border-radius: 5px;
-  border: 1px dashed rgba(255, 149, 0, 0.5);
-  background: rgba(255, 149, 0, 0.06);
-  color: #ff9500;
-  font-size: 12px;
+  border: 1px dashed ${(p) => (p.$isDarkMode === false ? "rgba(180, 90, 0, 0.6)" : "rgba(255, 149, 0, 0.5)")};
+  background: ${(p) => (p.$isDarkMode === false ? "rgba(255, 149, 0, 0.1)" : "rgba(255, 149, 0, 0.06)")};
+  color: ${(p) => (p.$isDarkMode === false ? "#a35400" : "#ff9500")};
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -528,6 +432,55 @@ const SettingsPanel = styled.div`
     background 0.4s ease,
     backdrop-filter 0.4s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+`;
+
+const ProviderSwitch = styled.div`
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 160, 0, 0.45);
+  background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(255,160,0,0.08)")};
+`;
+
+const ProviderOption = styled.button`
+  border: none;
+  cursor: pointer;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: ${(p) => (p.$active ? "#1a1000" : "inherit")};
+  background: ${(p) => (p.$active ? "#ffa000" : "transparent")};
+  transition: background 0.2s ease;
+  &:focus-visible {
+    outline: 2px solid #ff9500;
+    outline-offset: 2px;
+  }
+`;
+
+const OfflineModelBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  select {
+    max-width: 100%;
+    font-size: 12px;
+    padding: 4px 6px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 160, 0, 0.45);
+    background: transparent;
+    color: inherit;
+  }
+  option {
+    color: black;
+  }
+`;
+
+const OfflineHint = styled.span`
+  font-size: 11px;
+  opacity: 0.75;
 `;
 
 const ProviderRow = styled.div`
@@ -806,7 +759,7 @@ const TextArea = styled.textarea`
   line-height: 1.5;
   &::placeholder {
     color: ${(p) =>
-    p.$isDarkMode ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.35)"};
+    p.$isDarkMode ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.55)"};
     font-size: 13px;
   }
 `;
@@ -827,8 +780,8 @@ const MessageCounter = styled.span`
     p.$isLimitReached
       ? "#ff6b6b"
       : p.$isDarkMode
-        ? "rgba(255,255,255,0.55)"
-        : "rgba(0,0,0,0.5)"};
+        ? "rgba(255,255,255,0.65)"
+        : "rgba(0,0,0,0.62)"};
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 `;
@@ -1217,18 +1170,29 @@ const EmptyChatWelcome = styled.div`
   text-align: center;
   gap: 12px;
   animation: ${fadeIn} 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+  /* Заголовок зменшується відносно ширини чату, а не всього екрана */
+  container-type: inline-size;
 `;
 
 const WelcomeTitle = styled.div`
-  font-size: 22px;
+  /* Завжди один рядок: шрифт підлаштовується під ширину чату */
+  font-size: clamp(13px, 5.4cqi, 22px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
   font-weight: 800;
   letter-spacing: 0.2px;
-  background: linear-gradient(90deg, #ffb347, #ff7a00);
+  background: ${(p) =>
+    p.$isDarkMode === false
+      ? "linear-gradient(90deg, #d96500, #a34400)"
+      : "linear-gradient(90deg, #ffb347, #ff7a00)"};
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: #ff9500;
-  max-width: 640px;
   line-height: 1.3;
 `;
 
@@ -1364,18 +1328,49 @@ const MessageMeta = styled.div`
   font-size: 10px;
 `;
 
+/* Бульбашка користувача завжди темна, тож кнопка світла незалежно від теми */
 const EditQuestionButton = styled.button`
-  margin-top: 6px;
-  padding: 3px 8px;
-  border: 1px solid rgba(255, 149, 0, 0.4);
-  border-radius: 6px;
-  background: transparent;
-  color: ${(p) => (p.$isDarkMode ? "#ffcf9e" : "#d96500")};
-  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  margin: 8px -6px -4px auto;
+  padding: 4px 10px 4px 8px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
   cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+
+  svg {
+    flex-shrink: 0;
+    font-size: 13px;
+  }
 
   &:hover {
-    background: rgba(255, 149, 0, 0.12);
+    background: rgba(255, 149, 0, 0.22);
+    color: #ffcf9e;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #ff9500;
+    outline-offset: 2px;
+    opacity: 1;
+  }
+
+  /* На ПК з мишкою — ледь помітна, проявляється при наведенні на питання */
+  @media (hover: hover) {
+    opacity: 0.55;
+    ${Message}:hover & {
+      opacity: 1;
+    }
   }
 `;
 
@@ -1425,7 +1420,7 @@ const getSystemPrompt = (suggestedQuestionsCount) => {
 • Погода — якщо надано актуальні дані погодного API або віджета, обов'язково давай конкретну відповідь із цифрами (температура, опади, вітер, стан неба).
 • Новини — RSS-стрічки з автоматичним фільтром.
 • Карта клімату — інтерактивна кліматична карта.
-• Допомога ШІ (це ти) — чат з Gemini, аналіз фото/відео/аудіо, скріншот сторінки.
+• Допомога ШІ (це ти) — чат з Gemini (онлайн) або Gemma (офлайн, прямо в браузері), аналіз фото/відео/аудіо (лише Gemini), скріншот сторінки.
 
 АВТОР: TheTurkeyStudio. Email: theturkeystudio@gmail.com
 Вікові обмеження: 14+ (і для сайту, і для акаунта).
@@ -1445,6 +1440,20 @@ const getSystemPrompt = (suggestedQuestionsCount) => {
 ${suggestionsInstruction}`;
 };
 
+const formatModelSize = (mb) => (mb >= 1000 ? `${(mb / 1000).toFixed(1)} ГБ` : `${mb} МБ`);
+
+// Малі офлайн-моделі мають вікно ~4K токенів, тому промпт стислий
+const getOfflineSystemPrompt = (suggestedQuestionsCount) =>
+  `Ти — ШІ-асистент сайту «Стихія» (погода, новини, карта клімату, музика). Автор: TheTurkeyStudio.
+Ти працюєш офлайн прямо в браузері користувача, тому не маєш доступу до інтернету, якщо контекст не надано нижче.
+Правила:
+1. Відповідай українською, якщо запит не іншою мовою.
+2. Якщо є погодний контекст — давай конкретику з цифрами (температура, опади, вітер).
+3. Не вигадуй фактів, дат і назв. Якщо не впевнений — так і скажи.
+4. Будь стриманим і предметним, без лестощів і порожніх вступів.
+5. Не генеруй шкідливий контент або матеріали 18+.
+6. ${getSuggestionsInstruction(suggestedQuestionsCount)}`;
+
 const createDefaultChatObject = (index = 1, initialMessages = []) => ({
   id: `chat_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
   title: `Чат ${index}`,
@@ -1458,6 +1467,11 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState("");
   const [geminiModel, setGeminiModel] = useState("gemini-3.5-flash-lite");
+  // "gemini" — онлайн за ключем; "offline" — модель у браузері (WebGPU)
+  const [aiProvider, setAiProvider] = useState("gemini");
+  const [offlineModelKey, setOfflineModelKey] = useState(DEFAULT_OFFLINE_MODEL);
+  const [offlineSupport, setOfflineSupport] = useState(null);
+  const [offlineCached, setOfflineCached] = useState(false);
   // Спільне з «ШІ Викладом новини»: ключ (+18+), перезарядка
   const {
     apiKey: personalApiKey,
@@ -1488,34 +1502,14 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     });
   };
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [attachedCards, setAttachedCards] = useState([]);
+  // Прикріплені картки погоди/новин — у спільному сховищі (їх рахує й кнопка в Hero)
+  const attachedCards = useAiAttachments();
   const [loading, setLoading] = useState(false);
   const [googleSearchEnabled, setGoogleSearchEnabled] = useState(true);
 
   // Mobile drawer swipe state
   const swipeTouchStartX = useRef(null);
   const swipeTouchStartY = useRef(null);
-
-  useEffect(() => {
-    const handleAttachCard = (e) => {
-      if (e.detail) {
-        setAttachedCards((prev) => {
-          if (prev.some((c) => c.id === e.detail.id)) {
-            toast.error("Цю картку вже прикріплено!");
-            return prev;
-          }
-          if (prev.length >= 4) {
-            toast.error("Максимум 4 прикріплення.");
-            return prev;
-          }
-          toast.success(`Прикріплено: ${e.detail.title}`);
-          return [...prev, e.detail];
-        });
-      }
-    };
-    window.addEventListener("attachCardToAiHelp", handleAttachCard);
-    return () => window.removeEventListener("attachCardToAiHelp", handleAttachCard);
-  }, []);
 
   const [status, setStatus] = useState("");
   const [streamingText, setStreamingText] = useState("");
@@ -1723,6 +1717,12 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
         await localforage.getItem(SUGGESTED_COUNT_KEY),
       );
       if (gM) setGeminiModel(gM);
+      const savedProvider = await localforage.getItem("ai_provider");
+      const savedOfflineModel = await localforage.getItem("offline_model");
+      if (savedOfflineModel && OFFLINE_MODELS.some((m) => m.key === savedOfflineModel)) {
+        setOfflineModelKey(savedOfflineModel);
+      }
+      if (savedProvider === "offline") setAiProvider("offline");
       if (savedGoogleSearch !== null) setGoogleSearchEnabled(savedGoogleSearch);
       if (savedSuggestedQuestionsCount !== null) {
         setSuggestedQuestionsCount(savedSuggestedQuestionsCount);
@@ -1754,6 +1754,34 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     loadSettingsAndChats();
   }, []);
 
+  // Офлайн-режим: перевіряємо WebGPU і чи модель уже в кеші браузера
+  useEffect(() => {
+    if (aiProvider !== "offline") return;
+    let cancelled = false;
+    (async () => {
+      const support = await checkOfflineSupport();
+      if (cancelled) return;
+      setOfflineSupport(support);
+      const cached = support.ok ? await isOfflineModelCached(offlineModelKey) : false;
+      if (!cancelled) setOfflineCached(cached);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [aiProvider, offlineModelKey]);
+
+  const changeAiProvider = async (next) => {
+    setAiProvider(next);
+    await localforage.setItem("ai_provider", next).catch(() => {});
+    // Повертаємось до Gemini — звільняємо відеопам'ять
+    if (next === "gemini") unloadOffline();
+  };
+
+  const changeOfflineModel = async (key) => {
+    setOfflineModelKey(key);
+    await localforage.setItem("offline_model", key).catch(() => {});
+  };
+
   useEffect(() => {
     return () => {
       objectURLs.current.forEach((url) => URL.revokeObjectURL(url));
@@ -1773,7 +1801,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     objectURLs.current.forEach((url) => URL.revokeObjectURL(url));
     objectURLs.current = [];
     setSelectedFiles([]);
-    setAttachedCards([]);
+    clearAiAttachments();
     setTotalFilesSize(0);
   };
 
@@ -1903,17 +1931,33 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     ) return;
 
     const targetChatId = activeChatId;
+    const isOffline = aiProvider === "offline";
 
-    if (!personalApiKey) {
-      updateChatMessages(targetChatId, (prev) => [
-        ...prev,
-        { text: "Будь ласка, вставте ключ Gemini — натисніть кнопку з ключем угорі.", isBot: true },
-      ]);
-      openKeyModal();
-      return;
+    if (isOffline) {
+      const support = offlineSupport || (await checkOfflineSupport());
+      if (!support.ok) {
+        updateChatMessages(targetChatId, (prev) => [
+          ...prev,
+          { text: `Офлайн-ШІ недоступний на цьому пристрої: ${support.reason} Перемкніться на Gemini.`, isBot: true },
+        ]);
+        return;
+      }
+      if (selectedFiles.length > 0) {
+        toast.error("Офлайн-ШІ розуміє лише текст. Для фото, відео й аудіо перемкніться на Gemini.");
+        return;
+      }
+    } else {
+      if (!personalApiKey) {
+        updateChatMessages(targetChatId, (prev) => [
+          ...prev,
+          { text: "Будь ласка, вставте ключ Gemini — натисніть кнопку з ключем угорі.", isBot: true },
+        ]);
+        openKeyModal();
+        return;
+      }
+      // Ключ могли зберегти ще до появи підтвердження віку — питаємо перед першим запитом
+      if (!(await ensureAge())) return;
     }
-    // Ключ могли зберегти ще до появи підтвердження віку — питаємо перед першим запитом
-    if (!(await ensureAge())) return;
     if (originalPrompt && hasBannedContent(originalPrompt)) {
       updateChatMessages(targetChatId, (prev) => [
         ...prev,
@@ -1922,8 +1966,8 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       return;
     }
 
-    // Перезарядку могли запустити в «ШІ Викладі новини»
-    const remainingSec = await cooldown.sync();
+    // Перезарядку могли запустити в «ШІ Викладі новини» (офлайн-моделі квота не потрібна)
+    const remainingSec = isOffline ? 0 : await cooldown.sync();
     if (remainingSec > 0) {
       toast.error(`Зачекайте ще ${remainingSec} с перед наступним запитом.`);
       return;
@@ -1951,10 +1995,6 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
         }
       }
 
-      setStatus("З'єднання з Google Gemini...");
-      const cleanedKey = (personalApiKey || "").trim().replace(/^["']|["']$/g, "");
-      const genAI = new GoogleGenerativeAI(cleanedKey);
-
       const { instruction: lengthInstr } = getResponseLengthInstruction(responseLength);
       const suggestionCount = Number(suggestedQuestionsCount);
       let cardContext = "";
@@ -1976,6 +2016,57 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
         .slice(-6)
         .map((message) => `${message.isBot ? "Асистент" : "Користувач"}: ${message.text}`)
         .join("\n");
+
+      if (isOffline) {
+        const offlineModel = getOfflineModel(offlineModelKey);
+        setStatus(offlineCached ? "Запускаю офлайн-ШІ..." : `Завантажую офлайн-модель (~${formatModelSize(offlineModel.sizeMB)}, один раз)...`);
+        // Вікно контексту мале: беремо коротку історію й обрізаємо інтернет-контекст
+        const history = messages.slice(-4).map((m) => ({
+          role: m.isBot ? "assistant" : "user",
+          content: parseSuggestedQuestions(m.text).cleanText.slice(0, 1200),
+        }));
+        // Мала модель плутається від голого «Нормально.» перед питанням,
+        // тому довжину пояснюємо словами, а сам запит позначаємо явно
+        const offlineLength =
+          responseLength === "detailed"
+            ? "Відповідай розгорнуто, з конкретними прикладами."
+            : responseLength === "normal"
+              ? "Відповідай середньо за обсягом: 4–8 речень або короткий список."
+              : "Відповідай коротко: 1–3 речення.";
+        const extraContext = `${webContext ? `${webInstruction}\n` : ""}${cardContext.slice(0, 2000)}${webContext.slice(0, 2500)}`.trim();
+        const userContent = `${offlineLength} Виконай прохання напряму: якщо просять порадити — назви конкретні варіанти, а не став зустрічні питання.${extraContext ? `\n\nКонтекст:\n${extraContext}` : ""}\n\nЗапит користувача: ${originalPrompt || "Проаналізуй прикріплений контент."}`;
+        let generating = false;
+        const { text, usage } = await streamOfflineChat({
+          key: offlineModelKey,
+          messages: [
+            { role: "system", content: getOfflineSystemPrompt(suggestionCount) },
+            ...history,
+            { role: "user", content: userContent },
+          ],
+          onProgress: ({ progress }) => {
+            if (!generating) setStatus(`Підготовка офлайн-моделі: ${Math.round(progress * 100)}%`);
+          },
+          onDelta: (acc) => {
+            if (!generating) {
+              generating = true;
+              setOfflineCached(true);
+              setStatus("");
+            }
+            setStreamingText(acc);
+          },
+        });
+        updateChatMessages(targetChatId, (prev) => [
+          ...prev,
+          { text, isBot: true, usage, model: offlineModel.label },
+        ]);
+        setStreamingText("");
+        clearFiles();
+        return;
+      }
+
+      setStatus("З'єднання з Google Gemini...");
+      const cleanedKey = (personalApiKey || "").trim().replace(/^["']|["']$/g, "");
+      const genAI = new GoogleGenerativeAI(cleanedKey);
       const fullPrompt = `${lengthInstr}\n${webInstruction}${cardContext}${webContext}\n${conversationContext ? `Попередній діалог:\n${conversationContext}\n` : ""}${originalPrompt || "Проаналізуй прикріплений контент."}`;
       const parts = [{ text: fullPrompt }];
       for (const fileObj of selectedFiles) {
@@ -2029,6 +2120,17 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       await cooldown.start(getCooldownSeconds(suggestionCount));
     } catch (err) {
       setStreamingText("");
+      if (isOffline) {
+        const msg = err?.message || "";
+        const isMemoryError = /memory|OOM|device.?lost|allocat/i.test(msg);
+        setError(
+          isMemoryError
+            ? "Відеокарті не вистачило пам'яті. Оберіть легшу офлайн-модель або перемкніться на Gemini."
+            : `Помилка офлайн-ШІ: ${msg || "невідома помилка"}`,
+        );
+        clearFiles();
+        return;
+      }
       const errorMessage = err?.message || "Невідома помилка Gemini.";
       const isQuotaError = /429|quota|rate.?limit|RESOURCE_EXHAUSTED/i.test(errorMessage);
       setError(
@@ -2045,7 +2147,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     }
   };
 
-  const canSend = !loading && cooldownSeconds === 0 && (!!prompt.trim() || selectedFiles.length > 0 || attachedCards.length > 0);
+  const canSend = !loading && (aiProvider === "offline" || cooldownSeconds === 0) &&(!!prompt.trim() || selectedFiles.length > 0 || attachedCards.length > 0);
 
   return (
     <>
@@ -2108,11 +2210,61 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
 
       <SettingsPanel $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
         <ProviderRow $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-          <GeminiKeyButton
-            hasKey={Boolean(personalApiKey)}
-            onClick={openKeyModal}
-            isDarkMode={isDarkMode}
-          />
+          <ProviderSwitch role="radiogroup" aria-label="Який ШІ відповідає" $isDarkMode={isDarkMode}>
+            <ProviderOption
+              type="button"
+              role="radio"
+              aria-checked={aiProvider === "gemini"}
+              $active={aiProvider === "gemini"}
+              onClick={() => changeAiProvider("gemini")}
+            >
+              Gemini
+            </ProviderOption>
+            <ProviderOption
+              type="button"
+              role="radio"
+              aria-checked={aiProvider === "offline"}
+              $active={aiProvider === "offline"}
+              onClick={() => changeAiProvider("offline")}
+            >
+              Офлайн-ШІ
+            </ProviderOption>
+          </ProviderSwitch>
+          {aiProvider === "gemini" ? (
+            <GeminiKeyButton
+              hasKey={Boolean(personalApiKey)}
+              onClick={openKeyModal}
+              isDarkMode={isDarkMode}
+            />
+          ) : (
+            <OfflineModelBox>
+              {OFFLINE_MODELS.length > 1 ? (
+                <select
+                  value={offlineModelKey}
+                  onChange={(e) => changeOfflineModel(e.target.value)}
+                  disabled={loading}
+                  aria-label="Офлайн-модель"
+                >
+                  {OFFLINE_MODELS.map((m) => (
+                    <option key={m.key} value={m.key}>
+                      {m.label} — {m.note}, ~{formatModelSize(m.sizeMB)}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <strong style={{ fontSize: 12 }}>
+                  {getOfflineModel(offlineModelKey).label} · ~{formatModelSize(getOfflineModel(offlineModelKey).sizeMB)}
+                </strong>
+              )}
+              <OfflineHint>
+                {offlineSupport && !offlineSupport.ok
+                  ? `Недоступно: ${offlineSupport.reason}`
+                  : offlineCached
+                    ? "Готово · працює без інтернету"
+                    : "Завантажиться один раз при першому питанні"}
+              </OfflineHint>
+            </OfflineModelBox>
+          )}
           <Tooltip content="Безкоштовний онлайн-пошук фактів та інформації без використання квоти Gemini" isDarkMode={isDarkMode}>
             <label
               style={{
@@ -2174,6 +2326,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
           </SidebarChatsList>
           <SidebarNewChatBtn
             type="button"
+            $isDarkMode={isDarkMode}
             onClick={handleCreateNewChat}
             disabled={chats.length >= 10}
             title="Новий чат"
@@ -2188,7 +2341,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
           <ChatHistory ref={chatContainerRef}>
             {messages.length === 0 && (
               <EmptyChatWelcome $isDarkMode={isDarkMode}>
-                <WelcomeTitle>Запитайте будь-що або оберіть одне з популярних питань:</WelcomeTitle>
+                <WelcomeTitle $isDarkMode={isDarkMode}>Запитайте або оберіть питання:</WelcomeTitle>
                 <StarterQuestionsCarousel
                   isDarkMode={isDarkMode}
                   onAsk={handleAsk}
@@ -2245,8 +2398,9 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                     type="button"
                     $isDarkMode={isDarkMode}
                     onClick={() => restoreQuestion(i)}
+                    aria-label="Редагувати це питання"
                   >
-                    <TbPencil /> Редагувати це питання
+                    <TbPencil aria-hidden="true" /> Редагувати
                   </EditQuestionButton>
                 </Message>
               );
@@ -2316,7 +2470,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                       <button
                         type="button"
                         style={{ marginRight: 12 }}
-                        onClick={() => setAttachedCards((prev) => prev.filter((_, idx) => idx !== i))}
+                        onClick={() => removeAiAttachment(i)}
                         aria-label={actionText}
                       >
                         <TbX />

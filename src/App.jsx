@@ -102,11 +102,12 @@ import {
 import GpsCardReturnDialog from "./components/Weather/GpsCardReturnDialog.jsx";
 import { aggregateHourlyByDay } from "./utils/dailyAggregates";
 import { buildConsensusUrl, blendWithConsensus } from "./utils/weatherConsensus";
+import { deriveFromHourly } from "./utils/openMeteoDerive";
 import { getStykhiiaFont } from "./utils/stykhiiaFont";
 import { FaMagnifyingGlass, FaGripVertical, FaArrowsUpDown } from "react-icons/fa6";
 import { LOADING_PHRASES } from "./utils/funPhrases";
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
-// Консенсус — найдорожчий запит до Open-Meteo (~11 «викликів»), а моделі оновлюються
+// Консенсус — найдорожчий запит до Open-Meteo (≈6.3 «виклику»: 63 ряди), а моделі оновлюються
 // раз на 1–6 год, тож кешуємо його на годину. 55 хв, а не рівно 60: щогодинне
 // автооновлення карток має отримати свіжі дані, а не кеш віком 59:59.
 const CONSENSUS_CACHE_TTL_MS = 55 * 60 * 1000;
@@ -132,6 +133,27 @@ const fetchWeatherConsensus = async (lat, lon) => {
     console.warn("Консенсус моделей недоступний, лишаємо best_match:", error?.message);
     return null;
   }
+};
+// Сезонні моделі оновлюються раз на добу, а запит на 210 днів — один із найдорожчих
+// для квоти Open-Meteo (≈15 «викликів»). Тож тримаємо його 12 год на пару координат.
+const SEASONAL_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+const fetchSeasonalCached = async (lat, lon, url) => {
+  // Дата в ключі: запит починається «з сьогодні», вчорашній кеш після півночі не годиться
+  const today = new Date().toISOString().split("T")[0];
+  const cacheKey = `om_seasonal_v1_${today}_${Number(lat).toFixed(2)},${Number(lon).toFixed(2)}`;
+  try {
+    const cached = await localforage.getItem(cacheKey);
+    if (cached?.data && Date.now() - cached.time < SEASONAL_CACHE_TTL_MS) {
+      return cached.data;
+    }
+  } catch {
+    // кеш недоступний — просто йдемо в мережу
+  }
+  const res = await axios.get(url, { timeout: 8000 });
+  if (res.data?.daily?.time?.length) {
+    localforage.setItem(cacheKey, { time: Date.now(), data: res.data }).catch(() => {});
+  }
+  return res.data;
 };
 // Ліміти карток погоди: власні картки (без GPS) і нові створення на добу (лічильник у Firestore)
 const MAX_CUSTOM_WEATHER_CARDS = 9;
@@ -840,6 +862,11 @@ const CityJumpInput = styled.input`
   color: ${(props) => (props.$isDarkMode ? "#00ffe5" : "#000")};
   font-size: 14px;
   outline: none;
+
+  &::placeholder {
+    color: ${(props) => (props.$isDarkMode ? "rgba(0, 255, 229, 0.55)" : "#6b7280")};
+    opacity: 1;
+  }
 
   &:focus {
     border-color: #00ffe5;
@@ -1977,6 +2004,11 @@ const App = () => {
   const [minimumLoaderTimePassed, setMinimumLoaderTimePassed] = useState(false);
   const [phraseData, setPhraseData] = useState({ text: "", isNew: false });
   const [isDarkMode, setIsDarkMode] = useState(true);
+  // Тема скролбара на <html> (App.css: світлий повзунок у темній темі, темний у світлій).
+  // Окремий атрибут, а не data-theme — той вмикає color-scheme: dark для всіх полів форм.
+  useEffect(() => {
+    document.documentElement.dataset.scrollTheme = isDarkMode ? "dark" : "light";
+  }, [isDarkMode]);
   const [isStickyBgMode, setIsStickyBgMode] = useState(false);
   const [hiddenSections, setHiddenSections] = useState([]);
   const [sectionThemes, setSectionThemes] = useState({}); // { weather: false, aihelp: true, ... }
@@ -3213,7 +3245,9 @@ const App = () => {
           }
         }
 
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,surface_pressure,cloud_cover,visibility,dew_point_2m,temperature_80m,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm,uv_index,precipitation_probability&hourly=temperature_2m,uv_index,precipitation_probability,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,dew_point_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,is_day,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,wind_speed_10m_max,wind_direction_10m_dominant,precipitation_probability_max,rain_sum,precipitation_sum,et0_fao_evapotranspiration,sunrise,sunset,wind_gusts_10m_max,apparent_temperature_max,apparent_temperature_min,snowfall_sum&wind_speed_unit=ms&timezone=auto&past_days=1&forecast_days=16`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,is_day&hourly=temperature_2m,uv_index,precipitation_probability,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=temperature_2m_max,temperature_2m_min,snowfall_sum&wind_speed_unit=ms&timezone=auto&past_days=1&forecast_days=16`;
+        // Решту денних даних (максимуми, суми, схід/захід) і повільні величини «зараз»
+        // рахуємо з погодинного ряду — див. utils/openMeteoDerive.js
         console.log("Fetching weather from URL:", url);
         // Кеш відповіді Open-Meteo: 10 хв на пару координат
         // v2: вітер у м/с (раніше API віддавав км/год)
@@ -3250,6 +3284,9 @@ const App = () => {
             .setItem(cacheKey, { time: Date.now(), data: d })
             .catch(() => {});
         }
+
+        // Денні дані й повільні величини «зараз» — з погодинного ряду
+        d = deriveFromHourly(d);
 
         // Медіана 7 моделей замість однієї; сирий best_match лишаємо для попереджень
         // про небезпеку — там краще перестрахуватися, ніж згладити пік пориву
@@ -3396,6 +3433,8 @@ const App = () => {
                   : displayName,
             lat: targetLat,
             lon: targetLon,
+            // Зсув часового поясу міста — щоб знати, яке «вчора» там (див. ефект №2)
+            utcOffsetSeconds: Number.isFinite(d.utc_offset_seconds) ? d.utc_offset_seconds : null,
             // Скільки моделей звірено і наскільки вони розходяться (null — лише best_match)
             accuracy: forecastAccuracy,
             current: {
@@ -3403,7 +3442,8 @@ const App = () => {
               tempNum: Math.round(d.current.temperature_2m),
               feels_like: `${Math.round(d.current.apparent_temperature)}°C`,
               humidity: `${d.current.relative_humidity_2m}%`,
-              pressure: `${Math.round(d.current.surface_pressure)} hPa`,
+              // Тиск на рівні моря — як у погодинному списку (зі старого кешу — біля поверхні)
+              pressure: `${Math.round(d.current.pressure_msl ?? d.current.surface_pressure)} hPa`,
               wind_speed: `${d.current.wind_speed_10m ?? 0} м/с`,
               windNum: d.current.wind_speed_10m ?? 0,
               wind_direction_10m: d.current.wind_direction_10m ?? 0,
@@ -3412,7 +3452,6 @@ const App = () => {
               cloud_cover: d.current.cloud_cover ?? 0,
               visibility: d.current.visibility ?? 0,
               dew_point_2m: d.current.dew_point_2m ?? 0,
-              temperature_80m: d.current.temperature_80m ?? 0,
               snow_depth: d.current.snow_depth ?? 0,
               evapotranspiration: d.current.et0_fao_evapotranspiration ?? 0,
               freezing_level_height: d.current.freezing_level_height ?? 0,
@@ -3554,8 +3593,7 @@ const App = () => {
           endDate.setDate(endDate.getDate() + 210);
           const fmt = (d) => d.toISOString().split("T")[0];
           const seasonalUrl = `https://seasonal-api.open-meteo.com/v1/seasonal?latitude=${targetLat}&longitude=${targetLon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&wind_speed_unit=ms&start_date=${fmt(today)}&end_date=${fmt(endDate)}`;
-          const seasonalRes = await axios.get(seasonalUrl, { timeout: 8000 });
-          const sd = seasonalRes.data;
+          const sd = await fetchSeasonalCached(targetLat, targetLon, seasonalUrl);
           if (sd?.daily?.time?.length) {
             const seasonalData = sd.daily.time.map((t, i) => ({
               fullDate: t,
@@ -3832,8 +3870,14 @@ const App = () => {
 
     weatherCards.forEach((card) => {
       const firstDayDate = card.daily16?.[0]?.fullDate;
+      // Перший день картки — «вчора» в часовому поясі МІСТА. Якщо порівнювати з нашим
+      // «вчора», для Нью-Йорка чи Токіо дати не збігаються ніколи, і картка
+      // оновлювалась би по колу (зайві запити до Open-Meteo).
+      const cityYesterday = Number.isFinite(card.utcOffsetSeconds)
+        ? new Date(Date.now() + card.utcOffsetSeconds * 1000 - 86400000).toISOString().slice(0, 10)
+        : yesterdayStr; // старі картки без зсуву — до першого оновлення
       // Картки, збережені до виправлення одиниць вітру (км/год), оновлюємо одразу
-      if (firstDayDate !== yesterdayStr || card.windUnit !== "ms") {
+      if (firstDayDate !== cityYesterday || card.windUnit !== "ms") {
         handleRefreshCard(card);
       }
     });

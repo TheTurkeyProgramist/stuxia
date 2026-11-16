@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import styled, { keyframes, css } from "styled-components";
 import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaSatelliteDish, FaBolt } from "react-icons/fa";
 import { FiCheck, FiEdit2, FiPlay, FiPlus, FiSearch, FiX } from "react-icons/fi";
-import { Tooltip } from "../Header/Header.jsx";
+import { Tooltip } from "../Tooltip/Tooltip";
 import { MdDragIndicator } from "react-icons/md";
 import { Reorder, motion, useDragControls } from "framer-motion";
 import climate from "../../media/third-party/services/ventusky-map.webp";
@@ -140,7 +140,7 @@ const MobileSettingsButton = styled.button`
   background: ${(p) => p.$isDarkMode
     ? "linear-gradient(135deg, rgba(20, 14, 6, 0.92), rgba(30, 20, 8, 0.88))"
     : "linear-gradient(135deg, rgba(255, 248, 235, 0.97), rgba(255, 235, 200, 0.97))"};
-  color: ${(p) => p.$isDarkMode ? "#ffb36c" : "#a05000"};
+  color: ${(p) => p.$isDarkMode ? "#ffb36c" : "#8a4300"};
   cursor: pointer;
   z-index: 100;
   font-size: 14px;
@@ -168,14 +168,26 @@ const MobileSettingsOverlay = styled.div`
   -webkit-backdrop-filter: blur(14px);
 `;
 
-const PanelScrollbar = `
+// Помітна смужка прокрутки: насичений помаранчевий повзунок на ледь видимій доріжці
+const PanelScrollbar = css`
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 179, 108, 0.25) transparent;
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-track { background: transparent; }
+  scrollbar-color: ${(p) => p.$isDarkMode
+    ? "rgba(255, 166, 77, 0.85) rgba(255, 255, 255, 0.06)"
+    : "rgba(217, 101, 0, 0.75) rgba(0, 0, 0, 0.06)"};
+  &::-webkit-scrollbar { width: 8px; }
+  &::-webkit-scrollbar-track {
+    background: ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.06)")};
+    border-radius: 8px;
+  }
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 179, 108, 0.25);
-    border-radius: 4px;
+    background: ${(p) => (p.$isDarkMode ? "rgba(255, 166, 77, 0.85)" : "rgba(217, 101, 0, 0.75)")};
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: ${(p) => (p.$isDarkMode ? "#ffb347" : "#b85400")};
+    background-clip: padding-box;
   }
 `;
 
@@ -226,7 +238,9 @@ const MobileSettingsHeading = styled.div`
   }
   /* Градієнт на самому анімованому тексті: background-clip на h2 обрізав гліфи з transform */
   h2 > span {
-    background: linear-gradient(90deg, #ffb36c, #ffd49e);
+    background: ${(p) => p.$isDarkMode
+      ? "linear-gradient(90deg, #ffb36c, #ffd49e)"
+      : "linear-gradient(90deg, #a34400, #d96500)"};
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -319,6 +333,15 @@ const MobileSetting = styled.button`
   }
   &:active { transform: translateY(0); }
 
+  /* Підказка клавіш: у світлій темі світло-персиковий текст не видно */
+  ${(p) => !p.$isDarkMode && css`
+    ${KeyboardShortcut} {
+      border-color: rgba(160, 80, 0, 0.35);
+      background: rgba(255, 140, 0, 0.12);
+      color: #8a4300;
+    }
+  `}
+
   strong {
     font-size: 13px;
     font-weight: 600;
@@ -332,7 +355,7 @@ const MobileSetting = styled.button`
   }
 
   span {
-    color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.38)" : "rgba(100,50,0,0.5)"};
+    color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.62)" : "rgba(80,40,0,0.8)"};
     font-size: 10.5px;
     line-height: 1.4;
     display: block;
@@ -349,6 +372,9 @@ const StatusBadge = styled.span`
     font-size: 10px;
     line-height: 1.4;
     margin-top: 2px;
+    color: ${(p) => p.$isDarkMode === false
+      ? (p.$on ? "#1f7a32" : "#b03030")
+      : (p.$on ? "#5dca70" : "#e07070")};
   }
   align-items: center;
   gap: 4px;
@@ -581,7 +607,7 @@ const textCycleAnimation = keyframes`
 const AnimatedButtonText = styled.span`
   display: inline-block;
   animation: ${textCycleAnimation} 3s ease-in-out infinite;
-  color: #ffb36c;
+  color: inherit;
   font-weight: 700;
 `;
 
@@ -590,7 +616,7 @@ const SettingsButtonLabel = styled.span`
   display: flex;
   flex-direction: column;
   gap: 2px;
-  color: #ffb36c;
+  color: inherit;
 
   & > strong { font-weight: 700; }
 `;
@@ -689,7 +715,7 @@ const SourceSearch = styled.label`
     position: absolute;
     left: 6px;
     font-size: 15px;
-    color: ${(p) => p.$isDarkMode ? "rgba(255,179,108,0.7)" : "rgba(160,80,0,0.6)"};
+    color: ${(p) => p.$isDarkMode ? "rgba(255,179,108,0.85)" : "rgba(140,70,0,0.85)"};
     pointer-events: none;
   }
 
@@ -706,7 +732,7 @@ const SourceSearch = styled.label`
     text-overflow: ellipsis;
     outline: none;
     transition: border-color 0.18s;
-    &::placeholder { color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.35)" : "rgba(100,50,0,0.4)"}; }
+    &::placeholder { color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.55)" : "rgba(90,45,0,0.7)"}; }
     &:focus { border-color: rgba(255, 179, 108, 0.6); }
     &::-webkit-search-cancel-button { display: none; }
   }
@@ -788,7 +814,7 @@ const KeyboardSettingRow = styled.div`
     display: block;
   }
   span {
-    color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.38)" : "rgba(100,50,0,0.5)"};
+    color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.62)" : "rgba(80,40,0,0.8)"};
     font-size: 10.5px;
     line-height: 1.4;
     display: block;
@@ -2581,7 +2607,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               <MobileSettingsHeading $isDarkMode={isDarkMode}>
                 <div>
                   <h2>
-                    <span style={{ color: "#ffb36c" }}>{settingsTitle}</span>
+                    <span style={{ color: isDarkMode ? "#ffb36c" : "#8a4300" }}>{settingsTitle}</span>
                   </h2>
                 </div>
                 <Tooltip content={`${t("common.close")} · Esc`} placement="left" isDarkMode={isDarkMode}>
@@ -2631,7 +2657,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   <span>
                     {t(isMapActive ? "climateMap.deactivateMapDesc" : "climateMap.activateMapDesc")}
                   </span>
-                  <StatusBadge $on={isMapActive}>
+                  <StatusBadge $isDarkMode={isDarkMode} $on={isMapActive}>
                     {isMapActive ? `● ${t("climateMap.statusOn")}` : `○ ${t("climateMap.statusOff")}`}
                   </StatusBadge>
                 </Dov>
@@ -2650,7 +2676,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   <span>
                     {t(isPinned ? "climateMap.unpinLocationDesc" : "climateMap.pinLocationDesc")}
                   </span>
-                  <StatusBadge $on={isPinned}>
+                  <StatusBadge $isDarkMode={isDarkMode} $on={isPinned}>
                     {isPinned ? `● ${t("climateMap.statusPinned")}` : `○ ${t("climateMap.statusUnpinned")}`}
                   </StatusBadge>
                 </Dov>

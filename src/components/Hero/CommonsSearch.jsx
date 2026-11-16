@@ -2,6 +2,13 @@ import { useRef, useState } from "react";
 import styled from "styled-components";
 import toast from "react-hot-toast";
 import { FiCheck, FiFilm, FiImage, FiLoader, FiMaximize2, FiSearch } from "react-icons/fi";
+import {
+  MAX_CUSTOM_BGS,
+  MAX_VIDEO_BYTES,
+  MAX_VIDEO_SECONDS,
+  compressImageToLimit,
+  customBgLimitMessage,
+} from "./customBgLimits.js";
 
 // Пошук нових фонів у Wikimedia Commons: фото, картини або відео.
 // API відкрите й не потребує ключа; файли віддаються з CORS, тож вибране
@@ -10,7 +17,6 @@ import { FiCheck, FiFilm, FiImage, FiLoader, FiMaximize2, FiSearch } from "react
 const COMMONS_API = "https://commons.wikimedia.org/w/api.php";
 const PER_PAGE = 24;
 const FULL_WIDTH = 1920; // стандартний розмір мініатюр Wikimedia — досить для фону
-const MAX_VIDEO_BYTES = 20 * 1024 * 1024; // як і для власних відео
 const NO_RESULTS = "no-results";
 
 const TYPES = [
@@ -113,6 +119,8 @@ const pickVideo = (info) => {
 const mapVideoPage = (page) => {
   const info = page.videoinfo?.[0];
   if (!info) return null;
+  // Як і для власних відео: не довші за 2 хвилини
+  if (info.duration > MAX_VIDEO_SECONDS) return null;
   const video = pickVideo(info);
   if (!video) return null;
   return {
@@ -163,7 +171,7 @@ const Panel = styled.section`
   padding: 12px;
   border-radius: 14px;
   border: 1px solid rgba(255, 179, 108, 0.22);
-  background: linear-gradient(145deg, rgba(255, 179, 108, 0.06), rgba(255, 255, 255, 0.02));
+  background: linear-gradient(145deg, rgba(255, 179, 108, 0.06), rgba(var(--bm-ink, 255, 255, 255), 0.02));
 `;
 
 const PanelTitle = styled.div`
@@ -174,9 +182,9 @@ const PanelTitle = styled.div`
   gap: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: #ffc996;
+  color: var(--bm-label, #ffc996);
   a {
-    color: #8fd18f;
+    color: var(--bm-link, #8fd18f);
     font-size: 11px;
     font-weight: 600;
     text-decoration: none;
@@ -197,7 +205,7 @@ const SearchField = styled.label`
   svg {
     position: absolute;
     left: 12px;
-    color: #ffb36c;
+    color: var(--bm-accent-text, #ffb36c);
     pointer-events: none;
   }
   input {
@@ -205,12 +213,12 @@ const SearchField = styled.label`
     padding: 9px 14px 9px 36px;
     border-radius: 10px;
     border: 1px solid rgba(255, 179, 108, 0.35);
-    background: rgba(5, 8, 16, 0.6);
-    color: #fff;
+    background: var(--bm-input-bg, rgba(5, 8, 16, 0.6));
+    color: var(--bm-input-text, #fff);
     font-size: 13px;
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    &::placeholder { color: #7d8191; }
+    &::placeholder { color: var(--bm-muted, #7d8191); }
     &:focus { border-color: #ffb36c; box-shadow: 0 0 12px rgba(255, 179, 108, 0.25); }
   }
 `;
@@ -238,7 +246,7 @@ const Toolbar = styled.div`
   align-items: center;
   gap: 8px 14px;
   font-size: 12px;
-  color: #c5c8d0;
+  color: var(--bm-nav-text, #c5c8d0);
 `;
 
 const Segmented = styled.div`
@@ -257,7 +265,7 @@ const SegmentButton = styled.button`
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  color: ${(p) => (p.$active ? "#17120d" : "#d8dae0")};
+  color: ${(p) => (p.$active ? "#17120d" : "var(--bm-nav-text, #d8dae0)")};
   background: ${(p) => (p.$active ? "linear-gradient(135deg, #ffca91, #ff9d48)" : "transparent")};
   &:hover { background: ${(p) => (p.$active ? "linear-gradient(135deg, #ffca91, #ff9d48)" : "rgba(255, 179, 108, 0.15)")}; }
 `;
@@ -271,12 +279,12 @@ const Chips = styled.div`
 const Chip = styled.button`
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  color: #d8dae0;
+  border: 1px solid rgba(var(--bm-ink, 255, 255, 255), 0.14);
+  background: rgba(var(--bm-ink, 255, 255, 255), 0.04);
+  color: var(--bm-nav-text, #d8dae0);
   font-size: 11px;
   cursor: pointer;
-  &:hover { border-color: #ffb36c; color: #fff; }
+  &:hover { border-color: #ffb36c; color: var(--bm-text, #fff); }
 `;
 
 const Grid = styled.div`
@@ -290,7 +298,7 @@ const Card = styled.div`
   aspect-ratio: 3 / 2;
   border-radius: 10px;
   overflow: hidden;
-  background: #10131b;
+  background: var(--bm-thumb-bg, #10131b);
   border: 2px solid ${(p) => (p.$added ? "#6ee7a8" : "rgba(255, 255, 255, 0.1)")};
   transition: transform 0.2s ease, border-color 0.2s ease;
   &:hover { transform: translateY(-3px); border-color: ${(p) => (p.$added ? "#6ee7a8" : "rgba(255, 179, 108, 0.7)")}; }
@@ -435,6 +443,10 @@ const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
       toast.success("Фон встановлено.");
       return;
     }
+    if (customHeroBgs.length >= MAX_CUSTOM_BGS) {
+      toast.error(customBgLimitMessage());
+      return;
+    }
     setAddingKey(item.key);
     let src = item.full;
     // Commons віддає файли з CORS, тож зберігаємо їх у браузері: фон не зникне,
@@ -444,7 +456,8 @@ const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const blob = await response.blob();
       if (item.kind === "video" && blob.size > MAX_VIDEO_BYTES) throw new Error("Video is too large");
-      src = blob;
+      // Картинку зберігаємо стиснутою до 200 КБ, як і завантажені з пристрою
+      src = item.kind === "image" ? await compressImageToLimit(blob) : blob;
     } catch (error) {
       // Не вдалось завантажити — лишаємо посилання, фон однаково з'явиться
       console.warn("Commons download failed, keeping URL:", error);
@@ -522,12 +535,12 @@ const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
         ))}
       </Chips>
 
-      {status === NO_RESULTS && <span style={{ color: "#c5c8d0", fontSize: 12 }}>Нічого не знайдено. Спробуйте інший запит або зніміть фільтр «Лише широкі».</span>}
-      {status === "error" && <span role="alert" style={{ color: "#ff8a80", fontSize: 12 }}>Пошук не вдався. Перевірте з'єднання і спробуйте ще раз.</span>}
+      {status === NO_RESULTS && <span style={{ color: "var(--bm-nav-text, #c5c8d0)", fontSize: 12 }}>Нічого не знайдено. Спробуйте інший запит або зніміть фільтр «Лише широкі».</span>}
+      {status === "error" && <span role="alert" style={{ color: "var(--bm-danger, #ff8a80)", fontSize: 12 }}>Пошук не вдався. Перевірте з'єднання і спробуйте ще раз.</span>}
 
       {results.length > 0 && (
         <>
-          <span style={{ fontSize: 11, color: "#8a8d9b" }}>
+          <span style={{ fontSize: 11, color: "var(--bm-muted, #8a8d9b)" }}>
             Показано {results.length.toLocaleString("uk-UA")} · натисніть на картку, щоб зробити фоном · автор і ліцензія — на картці
           </span>
           <Grid>

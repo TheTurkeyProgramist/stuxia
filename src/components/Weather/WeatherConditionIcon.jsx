@@ -14,6 +14,10 @@ const CLOUD = "M7 20a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 12.5 3.8 3.8 0 0 1 17.5 
 const MOON_PATH = "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z";
 const SMALL_CLOUD = "translate(3 -1) scale(.75)";
 
+/** Темний ореол для іконок у світлій темі (спільний для іконок погоди й плиток). */
+export const ICON_HALO_FILTER =
+  "drop-shadow(0 0 1px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 2.5px rgba(0, 0, 0, 0.45))";
+
 const rotate = keyframes`from { transform: rotate(0deg); } to { transform: rotate(360deg); }`;
 const pulse = keyframes`0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); }`;
 const driftA = keyframes`from { transform: translateX(-1.4px); } to { transform: translateX(1.4px); }`;
@@ -46,6 +50,8 @@ const twinkle = keyframes`0%, 100% { opacity: 0.25; } 50% { opacity: 1; }`;
 const Svg = styled.svg`
   overflow: hidden;
   vertical-align: -0.125em;
+  /* Світла тема: темний ореол, бо блідий місяць, сніг і хмари зливаються з білим фоном */
+  ${(p) => p.$halo && `filter: ${ICON_HALO_FILTER};`}
   .rays { animation: ${rotate} 16s linear infinite; }
   .pulse { animation: ${pulse} 3s ease-in-out infinite; }
   .driftA { animation: ${driftA} 5s ease-in-out infinite alternate; }
@@ -183,7 +189,7 @@ const inferIsDay = (item) => {
 // Прибирає емодзі на початку підпису ("🌤️ Мінлива хмарність" -> "Мінлива хмарність").
 export const stripEmoji = (str) => (str || "").replace(/^[^\p{L}]+/u, "").trim();
 
-export const WeatherIcon = ({ item, code, isDay }) => {
+export const WeatherIcon = ({ item, code, isDay, isDarkMode = true }) => {
   const resolvedCode = code ?? item?.weather_code ?? inferCode(item);
   const day = isDay ?? inferIsDay(item);
   const kind = getWeatherKind(resolvedCode);
@@ -287,7 +293,7 @@ export const WeatherIcon = ({ item, code, isDay }) => {
   const scale = KIND_SCALE[kind] ?? 1;
 
   return (
-    <Svg width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true">
+    <Svg width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true" $halo={!isDarkMode}>
       {scale === 1 ? body : (
         <g transform={`translate(12 12) scale(${scale}) translate(-12 -12)`}>{body}</g>
       )}

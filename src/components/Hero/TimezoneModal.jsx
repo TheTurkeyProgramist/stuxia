@@ -14,27 +14,31 @@ import { TIMEZONES } from "./timezones.js";
 
 const TimezoneMenu = styled.div`
   position: fixed;
+  /* Від 5% згори до самого низу екрана — смуга прокрутки вміщується повністю */
   inset: 5% 0 0;
-  width: 100vw;
-  height: 97vh;
-  background: rgba(2, 2, 2, 0.97);
+  background: ${(p) => (p.$light ? "rgba(248, 250, 252, 0.98)" : "rgba(2, 2, 2, 0.97)")};
   border-top: 2px solid #ffb36c;
   padding: 0;
   overflow-y: auto;
   z-index: 99999;
-  box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 60px rgba(0, 0, 0, ${(p) => (p.$light ? 0.35 : 0.9)});
   display: flex;
   flex-direction: column;
 
+  /* Видимий скролбар. scrollbar-color з html (App.css) успадковується, і тоді Chrome
+     ігнорує ::-webkit-scrollbar — тож задаємо стандартні властивості явно */
+  scrollbar-width: auto;
+  scrollbar-color: ${(p) => (p.$light ? "#c46a00 rgba(0, 0, 0, 0.08)" : "#ffb36c rgba(255, 255, 255, 0.08)")};
+
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 10px;
   }
   &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: ${(p) => (p.$light ? "rgba(0, 0, 0, 0.08)" : "rgba(255, 255, 255, 0.08)")};
     border-radius: 10px;
   }
   &::-webkit-scrollbar-thumb {
-    background: #ffb36c;
+    background: ${(p) => (p.$light ? "#c46a00" : "#ffb36c")};
     border-radius: 10px;
   }
 `;
@@ -47,14 +51,14 @@ const TimezoneMenuHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: rgba(2, 2, 2, 0.98);
+  background: ${(p) => (p.$light ? "rgba(248, 250, 252, 0.98)" : "rgba(2, 2, 2, 0.98)")};
   border-bottom: 2px solid rgba(255, 179, 108, 0.4);
   backdrop-filter: blur(6px);
 `;
 
 const TimezoneMenuTitle = styled.div`
   font-weight: bold;
-  color: #ffb36c;
+  color: ${(p) => (p.$light ? "#8a4300" : "#ffb36c")};
   font-size: 16px;
   line-height: 1.2;
 `;
@@ -63,7 +67,7 @@ const TimezoneMenuCloseBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fb7a00;
+  color: ${(p) => (p.$light ? "#c25e00" : "#fb7a00")};
   font-size: 36px;
   font-weight: bold;
   cursor: pointer;
@@ -105,15 +109,21 @@ const TimezoneOption = styled.button`
   min-width: 0;
   min-height: ${(props) => (props.$decor ? "220px" : "110px")};
   padding: 9px;
-  color: ${(props) => (props.$selected ? "#ffb36c" : "#fff")};
+  color: ${(props) =>
+    props.$selected ? (props.$plain ? "#8a4300" : "#ffb36c") : props.$plain ? "#1a1a1a" : "#fff"};
   background: ${(props) =>
-    props.$selected ? "rgba(255, 179, 108, 0.12)" : "rgba(255, 255, 255, 0.035)"};
+    props.$selected
+      ? `rgba(255, 179, 108, ${props.$plain ? 0.18 : 0.12})`
+      : props.$plain
+        ? "#ffffff"
+        : "rgba(255, 255, 255, 0.035)"};
   border: 1px solid
-    ${(props) => (props.$selected ? "#ffb36c" : "rgba(255, 255, 255, 0.12)")};
+    ${(props) =>
+      props.$selected ? "#ffb36c" : props.$plain ? "rgba(0, 0, 0, 0.12)" : "rgba(255, 255, 255, 0.12)"};
   border-radius: 10px;
   cursor: pointer;
   text-align: left;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  text-shadow: ${(props) => (props.$plain ? "none" : "0 1px 3px rgba(0, 0, 0, 0.85)")};
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
@@ -155,8 +165,8 @@ const TimezoneDetails = styled.span`
 
 const UtcOffset = styled.span`
   padding: 2px 7px;
-  color: #ffcf9d;
-  background: rgba(0, 0, 0, 0.45);
+  color: ${(p) => (p.$plain ? "#8a4300" : "#ffcf9d")};
+  background: ${(p) => (p.$plain ? "rgba(255, 179, 108, 0.15)" : "rgba(0, 0, 0, 0.45)")};
   border: 1px solid rgba(255, 179, 108, 0.25);
   border-radius: 10px;
   font-size: 11px;
@@ -177,7 +187,7 @@ const TimeInfo = styled.span`
 
 const LocalDate = styled.span`
   margin-top: 2px;
-  color: #fff;
+  color: ${(p) => (p.$plain ? "#374151" : "#fff")};
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
@@ -337,9 +347,27 @@ const PHASES = {
   night: { label: "Ніч", color: "#90caf9", Icon: BsMoonStarsFill },
 };
 
-const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone }) => {
+// На білих картках (світла тема без декору) пастельні кольори фаз не читаються
+const PLAIN_PHASE_COLORS = { dawn: "#0e7490", day: "#b45309", dusk: "#be185d", night: "#1d4ed8" };
+
+const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone, isDarkMode = true }) => {
   const [now, setNow] = useState(getNow);
   const decorEnabled = useSceneDecor();
+  const isLight = !isDarkMode;
+  const plain = isLight && !decorEnabled;
+
+  // Поки список відкритий — без скролбару сайту (лишається лише скролбар списку)
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const { documentElement: html, body } = document;
+    const prev = [html.style.overflow, body.style.overflow];
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prev[0];
+      body.style.overflow = prev[1];
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -375,6 +403,7 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone 
               type="button"
               $selected={isSelected}
               $decor={decorEnabled}
+              $plain={plain}
               aria-label={`${timezone.label}${info ? `, ${info.timeStr}, ${info.dateStr}` : ""}${
                 info ? `, ${info.utcOffset}` : ""
               }${cities.length ? `. Інші міста: ${cities.join(", ")}` : ""}`}
@@ -387,10 +416,10 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone 
               {decorEnabled && <CityScene timezone={timezone} now={now} />}
               <TimezoneDetails>
                 <TimezoneName>{timezone.label}</TimezoneName>
-                {info && <UtcOffset>{info.utcOffset}</UtcOffset>}
+                {info && <UtcOffset $plain={plain}>{info.utcOffset}</UtcOffset>}
               </TimezoneDetails>
               {info && phase && PhaseIcon && (
-                <TimeInfo $color={phase.color}>
+                <TimeInfo $color={plain ? PLAIN_PHASE_COLORS[info.phase] : phase.color}>
                   <ClockReadout>
                     <AnalogClock
                       viewBox="0 0 24 24"
@@ -427,12 +456,12 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone 
                     </AnalogClock>
                     <LocalTime>{info.timeStr}</LocalTime>
                   </ClockReadout>
-                  <LocalDate>{info.dateStr}</LocalDate>
+                  <LocalDate $plain={plain}>{info.dateStr}</LocalDate>
                 </TimeInfo>
               )}
               {info && phase && PhaseIcon && (
                 <PhaseIndicator
-                  $color={phase.color}
+                  $color={plain ? PLAIN_PHASE_COLORS[info.phase] : phase.color}
                   title={phase.label}
                   aria-label={phase.label}
                 >
@@ -457,26 +486,28 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone 
         })}
       </TimezoneGrid>
     ),
-    [now, selectedTimezone, setSelectedTimezone],
+    [now, selectedTimezone, setSelectedTimezone, decorEnabled, plain],
   );
 
   if (!isOpen) return null;
 
   return createPortal(
-    <TimezoneMenu>
-      <TimezoneMenuHeader>
+    <TimezoneMenu $light={isLight}>
+      <TimezoneMenuHeader $light={isLight}>
         <TimezoneMenuCloseBtn
+          $light={isLight}
           type="button"
           onClick={onClose}
           aria-label="Закрити список часових поясів"
         >
           ×
         </TimezoneMenuCloseBtn>
-        <TimezoneMenuTitle>Часовий пояс</TimezoneMenuTitle>
+        <TimezoneMenuTitle $light={isLight}>Часовий пояс</TimezoneMenuTitle>
         <DecorToggle
           label="Декор"
           title="Малюнки міст і погодні ефекти (вимкніть для економії продуктивності)"
           accent="#ffb36c"
+          isDarkMode={isDarkMode}
         />
       </TimezoneMenuHeader>
       {grid}

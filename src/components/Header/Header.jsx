@@ -11,7 +11,7 @@ import { BsMoonStarsFill } from "react-icons/bs";
 import { GiShop, GiExitDoor } from "react-icons/gi";
 import relax from "../../mp3/modals/relax.mp3";
 import { FaSun } from "react-icons/fa";
-import { MdSettingsSuggest, MdMore, MdWallpaper, MdManageAccounts, MdCalendarMonth } from "react-icons/md";
+import { MdSettingsSuggest, MdMore, MdWallpaper, MdManageAccounts, MdCalendarMonth, MdClose } from "react-icons/md";
 import { loadFirebase } from "../../firebaseLazy.js";
 import { FaBookOpen } from "react-icons/fa6";
 import { IoColorPalette } from "react-icons/io5";
@@ -30,34 +30,7 @@ import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { isSupporter } from "../Support/supportConfig";
 import { isInviter, isInvitee } from "../../utils/referral.js";
 // import AntiHeaderAd from "./AntiHeaderAd";
-import {
-  useFloating,
-  autoUpdate,
-  offset,
-  flip,
-  shift,
-  arrow,                 
-  useHover,
-  useFocus,
-  useDismiss,
-  useRole,
-  useInteractions,
-  useTransitionStyles,  
-  FloatingArrow,         
-} from "@floating-ui/react";
-import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
-const TooltipBox = styled.div`
-  background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
-  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
-  border: 2px solid #00afce;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, ${(props) => (props.$isDarkMode ? "0.5" : "0.15")});
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 9px;
-  z-index: 10000;
-  pointer-events: none;
-`;
+import { Tooltip } from "../Tooltip/Tooltip";
 const flow = keyframes`
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -631,16 +604,20 @@ const ThemeBaseBtn = styled.button`
   }
 `;
 
-const AccentFooter = styled.div`
-  display: flex;
+// Стан акценту в дужках поруч із заголовком «Акцентний колір»
+const AccentState = styled.span`
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 2px;
-  padding-top: 10px;
-  border-top: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)")};
-  font-size: 11px;
-  opacity: 0.7;
+  margin-left: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
+
+  /* Кружечок кольору між «(» і назвою */
+  & > span {
+    margin: 0 5px 0 2px;
+  }
 `;
 
 const AccentChip = styled.span`
@@ -652,12 +629,56 @@ const AccentChip = styled.span`
   border: ${(props) => (props.$color ? "none" : "1px dashed currentColor")};
 `;
 
+// Заголовок «Базова тема» з хрестиком закриття праворуч
+const ThemePickerHead = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+`;
+
+const ThemePickerClose = styled.button`
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 18px;
+  opacity: 0.65;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  &:hover {
+    opacity: 1;
+    background: ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.07)")};
+  }
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+`;
+
 // Рендер вмісту модалки вибору теми (спільний для десктопу та мобільного)
-const ThemePickerContent = ({ isDarkMode, accentColor, onPickTheme, onPickAccent }) => {
+const ThemePickerContent = ({ isDarkMode, accentColor, onPickTheme, onPickAccent, onClose }) => {
   const ring = accentColor || "#00afce";
   return (
     <>
-      <ThemePickerSection>Базова тема</ThemePickerSection>
+      <ThemePickerHead>
+        <ThemePickerSection>Базова тема</ThemePickerSection>
+        <ThemePickerClose
+          type="button"
+          $isDarkMode={isDarkMode}
+          aria-label="Закрити вибір теми"
+          title="Закрити (Esc)"
+          onClick={onClose}
+        >
+          <MdClose aria-hidden="true" />
+        </ThemePickerClose>
+      </ThemePickerHead>
       <ThemeBaseRow $isDarkMode={isDarkMode}>
         <ThemeBaseBtn
           $isDarkMode={isDarkMode}
@@ -681,11 +702,19 @@ const ThemePickerContent = ({ isDarkMode, accentColor, onPickTheme, onPickAccent
         </ThemeBaseBtn>
       </ThemeBaseRow>
 
-      <ThemePickerSection>Акцентний колір</ThemePickerSection>
+      <ThemePickerSection>
+        Акцентний колір
+        <AccentState>
+          (<AccentChip $color={accentColor} />
+          {accentColor ? getAccentLabel(accentColor).toLowerCase() : "без кольору"})
+        </AccentState>
+      </ThemePickerSection>
       <AccentSwatches
         isDarkMode={isDarkMode}
         accentColor={accentColor}
         onPick={onPickAccent}
+        columns={ACCENT_COLORS.length}
+        gap={4}
         wrapItem={(ac, node) => (
           <Tooltip key={ac.id} content={ac.label} isDarkMode={isDarkMode} placement="top">
             {node}
@@ -693,10 +722,6 @@ const ThemePickerContent = ({ isDarkMode, accentColor, onPickTheme, onPickAccent
         )}
       />
 
-      <AccentFooter $isDarkMode={isDarkMode}>
-        <AccentChip $color={accentColor} />
-        {accentColor ? `Акцент: ${getAccentLabel(accentColor)}` : "Без накладення кольору"}
-      </AccentFooter>
     </>
   );
 };
@@ -704,88 +729,6 @@ const ThemePickerContent = ({ isDarkMode, accentColor, onPickTheme, onPickAccent
 
 
 
-export const Tooltip = ({
-  content,
-  children,
-  placement = "bottom",
-  isDarkMode = true,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const arrowRef = useRef(null);
-const { refs, floatingStyles, context } = useFloating({
-    open: isOpen,
-    onOpenChange: setIsOpen,
-    placement,
-    strategy: "fixed",
-    transform: false, 
-    whileElementsMounted: autoUpdate,
-    middleware: [
-      offset(8),
-      flip(),
-      shift({ padding: 5 }),
-      arrow({ element: arrowRef }),
-    ],
-  });
-  const { isMounted, styles: transitionStyles } = useTransitionStyles(context, {
-    duration: 150,
-    initial: {
-      opacity: 0,
-      transform: "scale(0.9)",
-    },
-    open: {
-      opacity: 1,
-      transform: "scale(1)",
-    },
-  });
-
-  const hover = useHover(context, { move: false });
-  const focus = useFocus(context);
-  const dismiss = useDismiss(context);
-  const role = useRole(context, { role: "tooltip" });
-
-  const { getReferenceProps, getFloatingProps } = useInteractions([
-    hover,
-    focus,
-    dismiss,
-    role,
-  ]);
-
-  if (!content) return children;
-
-  const bgTheme = isDarkMode ? "#111111" : "#ffffff";
-  const borderTheme = "#00acb9";
-
-  return (
-    <>
-      <span
-        ref={refs.setReference}
-        {...getReferenceProps()}
-        style={{ display: "inline-flex" }}
-      >
-        {children}
-      </span>
-      {isMounted && (
-        <MirrorFloatingPortal>
-          <TooltipBox
-            ref={refs.setFloating}
-            $isDarkMode={isDarkMode}
-            style={{ ...floatingStyles, ...transitionStyles }}
-            {...getFloatingProps()}
-          >
-            <MirrorText>{content}</MirrorText>
-            <FloatingArrow
-              ref={arrowRef}
-              context={context}
-              fill={bgTheme}
-              stroke={borderTheme}
-              strokeWidth={1}
-            />
-          </TooltipBox>
-        </MirrorFloatingPortal>
-      )}
-    </>
-  );
-};
 const Header = ({
   isIntroDone = true, // false, поки лоадер на екрані — хедер чекає і не виїжджає
   sfxVolume = 0.2,
@@ -1137,6 +1080,7 @@ const Header = ({
                   accentColor={accentColor}
                   onPickTheme={(dark) => { if (dark !== isDarkMode) { playSfx(bell); toggleTheme(); } }}
                   onPickAccent={(c) => { playSfx(relax); setAccentColor(c); }}
+                onClose={() => setShowThemePicker(false)}
                 />
               </ThemePickerModal>
             )}
@@ -1341,6 +1285,7 @@ const Header = ({
                 accentColor={accentColor}
                 onPickTheme={(dark) => { if (dark !== isDarkMode) { playSfx(bell); toggleTheme(); } }}
                 onPickAccent={(c) => { playSfx(relax); setAccentColor(c); }}
+                onClose={() => setShowThemePicker(false)}
               />
             </ThemePickerModal>
           )}

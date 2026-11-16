@@ -51,26 +51,12 @@ import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabas
 import News from "../News/News.jsx";
 // ШІ-помічник (Gemini + markdown) вантажиться лише при відкритті модалки
 const React_lazy_Aihelp = React.lazy(() => import("../Aihelp/Aihelp.jsx"));
+import AiAttachBadges from "../AiShared/AiAttachBadges.jsx";
 import toast, { Toaster } from 'react-hot-toast';
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import turkeytwoPreview from "../../media/turkeys/small-but-confident.webp?w=128&format=webp&quality=50";
 import niceronePreview from "../../media/third-party/dinofroz/nitseron-alt.webp?w=128&format=webp&quality=50";
-import {
-  useFloating,
-  autoUpdate,
-  offset,
-  flip,
-  shift,
-  arrow,                 
-  useHover,
-  useFocus,
-  useDismiss,
-  useRole,
-  useInteractions,
-  useTransitionStyles,  
-  FloatingArrow,         
-} from "@floating-ui/react";
-import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
+import { Tooltip } from "../Tooltip/Tooltip";
 import WallpaperScene, { findWallpaper } from "./WallpaperScene.jsx";
 import { isWallpaperSrc } from "../../utils/wallpaperPrefs.js";
 // Модалки вантажаться при першому відкритті, а не на старті
@@ -105,18 +91,6 @@ const bgCardThumbnails = {
   },
 };
 
-const TooltipBox = styled.div`
-  background-color: ${(props) => (props.$isDarkMode ? "#0c0c0ceb" : "#fdff98e7")};
-  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
-  border: 2px solid #00afce;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, ${(props) => (props.$isDarkMode ? "0.5" : "0.15")});
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 9px;
-  z-index: 10000;
-  pointer-events: none;
-`;
 const showThemeAlert = (message, isDarkMode) => {
   toast(message, {
     duration: 4000,
@@ -728,9 +702,39 @@ const ModeIconBtn = styled.button`
   }
 `;
 
-// Кнопка «Language (Мова)» під кнопкою вибору режиму пошуку
+// Ряд: «Змінити режим пошуку?» + «Language (Мова)» поруч
+const ModeRow = styled.div`
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  width: 100%;
+  margin-top: auto;
+
+  & > ${ModePicker} {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  ${ModePreviewText} {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+
+// Кнопка «Language (Мова)» праворуч від кнопки вибору режиму пошуку
 const LanguageBtn = styled(ModeIconBtn)`
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
   margin-top: 4px;
+
+  /* на вузьких екранах лише іконка, щоб режим пошуку мав місце */
+  @media (max-width: 559px) {
+    flex: 0 0 48px;
+    ${ModePreviewText} {
+      display: none;
+    }
+  }
 `;
 
 const overlayIn = keyframes`
@@ -1202,88 +1206,6 @@ const ChangeBgPreview = styled.img`
   border: 1px solid rgba(255, 255, 255, 0.75);
   animation: ${bgPreviewSwap} 0.45s ease-out both;
 `;
-export const Tooltip = ({
-  content,
-  children,
-  placement = "bottom",
-  isDarkMode = true,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const arrowRef = useRef(null);
-const { refs, floatingStyles, context } = useFloating({
-    open: isOpen,
-    onOpenChange: setIsOpen,
-    placement,
-    strategy: "fixed",
-    transform: false, 
-    whileElementsMounted: autoUpdate,
-    middleware: [
-      offset(8),
-      flip(),
-      shift({ padding: 5 }),
-      arrow({ element: arrowRef }),
-    ],
-  });
-  const { isMounted, styles: transitionStyles } = useTransitionStyles(context, {
-    duration: 150,
-    initial: {
-      opacity: 0,
-      transform: "scale(0.9)",
-    },
-    open: {
-      opacity: 1,
-      transform: "scale(1)",
-    },
-  });
-
-  const hover = useHover(context, { move: false });
-  const focus = useFocus(context);
-  const dismiss = useDismiss(context);
-  const role = useRole(context, { role: "tooltip" });
-
-  const { getReferenceProps, getFloatingProps } = useInteractions([
-    hover,
-    focus,
-    dismiss,
-    role,
-  ]);
-
-  if (!content) return children;
-
-  const bgTheme = isDarkMode ? "#111111" : "#ffffff";
-  const borderTheme = "#00acb9";
-
-  return (
-    <>
-      <span
-        ref={refs.setReference}
-        {...getReferenceProps()}
-        style={{ display: "inline-flex" }}
-      >
-        {children}
-      </span>
-      {isMounted && (
-        <MirrorFloatingPortal>
-          <TooltipBox
-            ref={refs.setFloating}
-            $isDarkMode={isDarkMode}
-            style={{ ...floatingStyles, ...transitionStyles }}
-            {...getFloatingProps()}
-          >
-            <MirrorText>{content}</MirrorText>
-            <FloatingArrow
-              ref={arrowRef}
-              context={context}
-              fill={bgTheme}
-              stroke={borderTheme}
-              strokeWidth={1}
-            />
-          </TooltipBox>
-        </MirrorFloatingPortal>
-      )}
-    </>
-  );
-};
 const imageMap = {
   planes: planes,
   village: village,
@@ -1387,7 +1309,7 @@ const Hero = ({
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   const searchModePrompts = [
-    "ШІ-асистент (Gemini)",
+    "ШІ-асистент",
     "Змінити режим пошуку?",
     searchMode === "coordinates" ? "За назвою міста" : "Координати (шир/дов)",
     "Змінити режим пошуку?",
@@ -1412,7 +1334,7 @@ const Hero = ({
   }, [searchMode, searchModePrompts.length]);
 
   const modeOptions = [
-    { id: "ai", label: "ШІ-асистент (Gemini)", Icon: MdAutoAwesome },
+    { id: "ai", label: "ШІ-асистент", Icon: MdAutoAwesome },
     { id: "city", label: "За назвою міста", Icon: FaMountainCity },
     { id: "coordinates", label: "Координати (шир/дов)", Icon: FaMapLocationDot },
   ].filter(({ id }) => id !== pickerBaseMode);
@@ -1445,6 +1367,7 @@ const Hero = ({
               <Icon />
             </ModePreviewIcon>
             <ModePreviewText>{label}</ModePreviewText>
+            {id === "ai" && <AiAttachBadges isDarkMode={isDarkMode} />}
           </ModeOptionBtn>
         ))}
       </ModeOverlay>
@@ -1463,6 +1386,7 @@ const Hero = ({
       </ModePicker>
     </>
   ) : (
+    <ModeRow>
     <ModePicker>
       <Tooltip
         content="Натисніть, щоб відкрити вибір режиму пошуку"
@@ -1488,9 +1412,23 @@ const Hero = ({
           <ModePreviewText key={`${searchModeOptionIndex}-${rotatingSearchPrompt}`}>
             {rotatingSearchPrompt}
           </ModePreviewText>
+          {rotatingSearchModeIcon === "ai" && <AiAttachBadges isDarkMode={isDarkMode} />}
         </ModeIconBtn>
       </Tooltip>
     </ModePicker>
+    <LanguageBtn
+      type="button"
+      onClick={() => setIsLanguageModalOpen(true)}
+      aria-label={languageButtonText}
+      title={languageButtonText}
+      $isDarkMode={isDarkMode}
+    >
+      <ModePreviewIcon>
+        <MdTranslate />
+      </ModePreviewIcon>
+      <ModePreviewText>{languageButtonText}</ModePreviewText>
+    </LanguageBtn>
+    </ModeRow>
   );
 
   const handleSearchModeSelect = (mode) => {
@@ -2450,17 +2388,6 @@ const Hero = ({
               )}
             </HeroFormater>
           )}
-          <LanguageBtn
-            type="button"
-            onClick={() => setIsLanguageModalOpen(true)}
-            aria-label={languageButtonText}
-            $isDarkMode={isDarkMode}
-          >
-            <ModePreviewIcon>
-              <MdTranslate />
-            </ModePreviewIcon>
-            <ModePreviewText>{languageButtonText}</ModePreviewText>
-          </LanguageBtn>
           </SearchWrapper>
         </BrowserSearchPanel>
         <div style={{ marginTop: "0px", zIndex: 90 }}>
@@ -2511,6 +2438,7 @@ const Hero = ({
           <LanguageModal
             isOpen={isLanguageModalOpen}
             onClose={() => setIsLanguageModalOpen(false)}
+            isDarkMode={isDarkMode}
           />
         </React.Suspense>
       )}

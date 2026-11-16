@@ -279,6 +279,8 @@ export default defineConfig(({ mode }) => {
         globIgnores: [
           '**/stats.html', '**/pohoda/**', 'og-image.png', 'icons/new/**',
           '**/vendor-firebase-*.js', '**/vendor-ai-*.js',
+          // Офлайн-ШІ (WebLLM ~7 МБ) качаємо лише тим, хто його ввімкне
+          '**/vendor-webllm-*.js', '**/offlineLlm.worker-*.js',
         ],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',
@@ -372,6 +374,9 @@ export default defineConfig(({ mode }) => {
     }
     if (id.includes('chart.js') || id.includes('fabric')) {
       return 'vendor-graphics';
+    }
+    if (id.includes('@mlc-ai/web-llm')) {
+      return 'vendor-webllm';
     }
     if (id.includes('@google/generative-ai')) {
       return 'vendor-ai';

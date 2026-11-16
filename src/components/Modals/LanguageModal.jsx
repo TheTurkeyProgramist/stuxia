@@ -11,19 +11,35 @@ const Backdrop = styled.div`
   inset: 0;
   z-index: 200000;
   /* Без backdrop-filter: розмиття відео хіро під модалкою перераховувалось щокадру й гальмувало прокрутку */
-  background: rgba(2, 2, 2, 0.92);
+  background: ${(p) => (p.$light ? "rgba(0, 0, 0, 0.45)" : "rgba(2, 2, 2, 0.92)")};
   display: flex;
   padding-top: 5vh;
 `;
 
 // На всю ширину знизу, як меню часових поясів
 const Panel = styled.div`
+  /* Кольори вікна й вибору мови (LanguagePicker бере їх звідси) */
+  ${(p) =>
+    p.$light
+      ? `
+    --lm-bg: #f8fafc; --lm-text: #111827; --lm-sub: rgba(0, 0, 0, 0.62); --lm-muted: #5b6270;
+    --lm-input: #ffffff; --lm-card: #ffffff; --lm-ink: 0, 0, 0;
+    --lm-accent: #0a7fb8; --lm-accent-rgb: 10, 127, 184; --lm-on-accent: #ffffff;
+    --lm-card-shadow: none; --lm-rtl: #8a4300;
+  `
+      : `
+    --lm-bg: #1f1f23; --lm-text: #ffffff; --lm-sub: rgba(255, 255, 255, 0.8); --lm-muted: #8a8a90;
+    --lm-input: #2b2b30; --lm-card: #2b2b30; --lm-ink: 255, 255, 255;
+    --lm-accent: #60cdff; --lm-accent-rgb: 96, 205, 255; --lm-on-accent: #000000;
+    --lm-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6); --lm-rtl: #ffb36c;
+  `}
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background: #1f1f23;
-  border-top: 2px solid #60cdff;
+  color: var(--lm-text);
+  background: var(--lm-bg);
+  border-top: 2px solid var(--lm-accent);
   border-radius: 14px 14px 0 0;
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
   overflow: hidden;
@@ -34,10 +50,10 @@ const Header = styled.div`
   align-items: center;
   gap: 8px;
   padding: 14px 16px;
-  color: #fff;
+  color: var(--lm-text);
   font-size: 16px;
   font-weight: 700;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(var(--lm-ink), 0.08);
 
   h2 {
     flex: 1;
@@ -50,14 +66,14 @@ const CloseButton = styled.button`
   display: flex;
   background: transparent;
   border: none;
-  color: #a0a0a0;
+  color: var(--lm-muted);
   cursor: pointer;
   padding: 4px;
   border-radius: 6px;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: rgba(var(--lm-ink), 0.1);
+    color: var(--lm-text);
   }
 `;
 
@@ -66,6 +82,11 @@ const Body = styled.div`
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 16px;
+
+  /* Видимий скролбар: scrollbar-color з html (App.css) успадковується, і тоді Chrome
+     ігнорує ::-webkit-scrollbar — тож задаємо стандартні властивості явно */
+  scrollbar-width: auto;
+  scrollbar-color: var(--lm-accent) rgba(var(--lm-ink), 0.08);
 
   @media (max-width: 768px) {
     padding: 12px;
@@ -76,8 +97,23 @@ const Body = styled.div`
   }
 `;
 
-const LanguageModal = ({ isOpen, onClose }) => {
+const LanguageModal = ({ isOpen, onClose, isDarkMode = true }) => {
   const { t } = useTranslation();
+  const isLight = !isDarkMode;
+
+  // Поки вікно відкрите — без скролбару сайту. Скролиться html, а в дзеркальному
+  // режимі (App.css, html.site-mirrored) — body, тож ховаємо на обох і повертаємо як було
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const { documentElement: html, body } = document;
+    const prev = [html.style.overflow, body.style.overflow];
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prev[0];
+      body.style.overflow = prev[1];
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -89,12 +125,16 @@ const LanguageModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return createPortal(
-    <Backdrop onClick={onClose}>
-      <Panel role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+    <Backdrop $light={isLight} onClick={onClose}>
+      <Panel $light={isLight} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <Header>
           <MdTranslate size={20} />
           <h2>{t('settings.language.title')}</h2>
-          <DecorToggle label={t('settings.decor.label')} title={t('settings.decor.title')} />
+          <DecorToggle
+            label={t('settings.decor.label')}
+            title={t('settings.decor.title')}
+            isDarkMode={isDarkMode}
+          />
           <CloseButton type="button" onClick={onClose} aria-label={t('common.close')}>
             <MdClose size={20} />
           </CloseButton>

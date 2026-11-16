@@ -8,9 +8,9 @@ const Toggle = styled.button`
   gap: 8px;
   flex-shrink: 0;
   padding: 6px 10px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: ${(p) => (p.$light ? "#1a1a1a" : "#fff")};
+  background: ${(p) => (p.$light ? "rgba(0, 0, 0, 0.04)" : "rgba(255, 255, 255, 0.06)")};
+  border: 1px solid ${(p) => (p.$light ? "rgba(0, 0, 0, 0.14)" : "rgba(255, 255, 255, 0.14)")};
   border-radius: 999px;
   font: inherit;
   font-size: 13px;
@@ -18,7 +18,7 @@ const Toggle = styled.button`
   cursor: pointer;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: ${(p) => (p.$light ? "rgba(0, 0, 0, 0.08)" : "rgba(255, 255, 255, 0.12)")};
   }
 
   @media (max-width: 480px) {
@@ -34,7 +34,7 @@ const Track = styled.span`
   height: 18px;
   flex-shrink: 0;
   border-radius: 999px;
-  background: ${(p) => (p.$on ? p.$accent : "rgba(255, 255, 255, 0.2)")};
+  background: ${(p) => (p.$on ? p.$accent : p.$light ? "rgba(0, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.2)")};
   transition: background 0.15s ease;
 
   &::after {
@@ -51,7 +51,7 @@ const Track = styled.span`
 `;
 
 // Перемикач декору карток для модалок часового поясу й мови
-const DecorToggle = ({ label, title, accent = "#60cdff" }) => {
+const DecorToggle = ({ label, title, accent = "#60cdff", isDarkMode = true }) => {
   const enabled = useSceneDecor();
   return (
     <Toggle
@@ -61,10 +61,11 @@ const DecorToggle = ({ label, title, accent = "#60cdff" }) => {
       aria-label={title}
       title={title}
       onClick={() => setSceneDecorEnabled(!enabled)}
+      $light={!isDarkMode}
     >
       <MdAutoAwesome size={16} color={enabled ? accent : "#a0a0a0"} />
       <span className="decor-label">{label}</span>
-      <Track $on={enabled} $accent={accent} />
+      <Track $on={enabled} $accent={accent} $light={!isDarkMode} />
     </Toggle>
   );
 };

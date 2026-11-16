@@ -77,120 +77,14 @@ import {
   toDayKey,
   MUTED_NEWS_MAX,
 } from "../../utils/muteSync";
-import {
-  useFloating,
-  autoUpdate,
-  offset,
-  flip,
-  shift,
-  arrow,                 
-  useHover,
-  useFocus,
-  useDismiss,
-  useRole,
-  useInteractions,
-  useTransitionStyles,  
-  FloatingArrow,         
-} from "@floating-ui/react";
-import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
-const TooltipBox = styled.div`
-  background-color: ${(props) => (props.$isDarkMode ? "#0c0c0ceb" : "#fdff98e7")};
-  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
-  border: 2px solid #00afce;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, ${(props) => (props.$isDarkMode ? "0.5" : "0.15")});
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 9px;
-  z-index: 10000;
-  pointer-events: none;
-`;
-export const Tooltip = ({
-  content,
-  children,
-  placement = "bottom",
-  isDarkMode = true,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const arrowRef = useRef(null);
-const { refs, floatingStyles, context } = useFloating({
-    open: isOpen,
-    onOpenChange: setIsOpen,
-    placement,
-    strategy: "fixed",
-    transform: false, 
-    whileElementsMounted: autoUpdate,
-    middleware: [
-      offset(8),
-      flip(),
-      shift({ padding: 5 }),
-      arrow({ element: arrowRef }),
-    ],
-  });
-  const { isMounted, styles: transitionStyles } = useTransitionStyles(context, {
-    duration: 150,
-    initial: {
-      opacity: 0,
-      transform: "scale(0.9)",
-    },
-    open: {
-      opacity: 1,
-      transform: "scale(1)",
-    },
-  });
-
-  const hover = useHover(context, { move: false });
-  const focus = useFocus(context);
-  const dismiss = useDismiss(context);
-  const role = useRole(context, { role: "tooltip" });
-
-  const { getReferenceProps, getFloatingProps } = useInteractions([
-    hover,
-    focus,
-    dismiss,
-    role,
-  ]);
-
-  if (!content) return children;
-
-  const bgTheme = isDarkMode ? "#111111" : "#ffffff";
-  const borderTheme = "#00acb9";
-
-  return (
-    <>
-      <span
-        ref={refs.setReference}
-        {...getReferenceProps()}
-        style={{ display: "inline-flex" }}
-      >
-        {children}
-      </span>
-      {isMounted && (
-        <MirrorFloatingPortal>
-          <TooltipBox
-            ref={refs.setFloating}
-            $isDarkMode={isDarkMode}
-            style={{ ...floatingStyles, ...transitionStyles }}
-            {...getFloatingProps()}
-          >
-            <MirrorText>{content}</MirrorText>
-            <FloatingArrow
-              ref={arrowRef}
-              context={context}
-              fill={bgTheme}
-              stroke={borderTheme}
-              strokeWidth={1}
-            />
-          </TooltipBox>
-        </MirrorFloatingPortal>
-      )}
-    </>
-  );
-};
+import { Tooltip } from "../Tooltip/Tooltip";
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
 `;
+// Колір за темою: перше значення — темна тема (типово), друге — світла
+const themed = (dark, light) => (props) => (props.$isDarkMode === false ? light : dark);
+
 const Decoder = styled.div`
   z-index: 100;
   position: relative;
@@ -198,7 +92,8 @@ const Decoder = styled.div`
   width: 100%;
   border-radius: 10px;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.81);
+  background: ${themed("rgba(0, 0, 0, 0.81)", "rgba(255, 255, 255, 0.82)")};
+  color: ${themed("#ffffff", "#1a1a1a")};
 `;
 
 // Вбудовані стрічки — спільний список із сервером і Cloudflare (firebase-functions/newsSources.js)
@@ -503,8 +398,8 @@ const MoreNewsButton = styled.button`
   padding: 6px 22px;
   border: 2px solid #ffaa00;
   border-radius: 6px;
-  background: #000;
-  color: #ffaa00;
+  background: ${themed("#000", "#ffffff")};
+  color: ${themed("#ffaa00", "#a35400")};
   font-family: var(--font-family);
   font-size: 14px;
   font-weight: 700;
@@ -526,22 +421,24 @@ const MoreNewsButton = styled.button`
   }
 
   /* Другорядна дія (налаштування): пунктир, напівпрозорий фон, без світіння */
-  ${({ $secondary }) =>
-    $secondary &&
-    `
+  ${({ $secondary, $isDarkMode }) => {
+    if (!$secondary) return "";
+    const light = $isDarkMode === false;
+    return `
     border-style: dashed;
     border-color: rgba(255, 170, 0, 0.75);
-    background: rgba(0, 0, 0, 0.45);
-    color: rgba(255, 170, 0, 0.9);
+    background: ${light ? "rgba(255, 255, 255, 0.94)" : "rgba(0, 0, 0, 0.45)"};
+    color: ${light ? "#8a4300" : "rgba(255, 170, 0, 0.9)"};
     box-shadow: none;
 
     &:hover {
       box-shadow: none;
-      background: rgba(0, 0, 0, 0.75);
+      background: ${light ? "rgba(255, 255, 255, 0.95)" : "rgba(0, 0, 0, 0.75)"};
       border-color: #ffaa00;
-      color: #ffaa00;
+      color: ${light ? "#8a4700" : "#ffaa00"};
     }
-  `}
+  `;
+  }}
 `;
 
 /* Лічильник новин на кнопці «Всі новини» */
@@ -593,12 +490,12 @@ const MoreNewsPanel = styled.div`
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  background: #111;
+  background: ${themed("#111", "#f8fafc")};
   border: 1px solid rgba(255, 170, 0, 0.4);
   border-radius: 10px;
   padding: 0 12px 12px;
   box-sizing: border-box;
-  color: #fff;
+  color: ${themed("#fff", "#1a1a1a")};
 `;
 
 /* Шапка «Всіх новин»: лишається вгорі під час прокрутки */
@@ -611,7 +508,7 @@ const MoreNewsHeader = styled.header`
   gap: 12px;
   margin: 0 -12px 12px;
   padding: 12px 14px;
-  background: rgba(17, 17, 17, 0.96);
+  background: ${themed("rgba(17, 17, 17, 0.96)", "rgba(248, 250, 252, 0.96)")};
   backdrop-filter: blur(6px);
   border-bottom: 1px solid rgba(255, 170, 0, 0.25);
   border-radius: 10px 10px 0 0;
@@ -638,12 +535,12 @@ const MoreNewsHeaderText = styled.div`
     font-size: 18px;
     font-weight: 800;
     line-height: 1.2;
-    color: #ffffff;
+    color: ${themed("#ffffff", "#1a1a1a")};
   }
   p {
     margin: 2px 0 0;
     font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
+    color: ${themed("rgba(255, 255, 255, 0.6)", "rgba(0, 0, 0, 0.6)")};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -659,8 +556,8 @@ const MoreNewsClose = styled.button`
   padding: 0;
   border: 2px solid rgba(255, 170, 0, 0.6);
   border-radius: 50%;
-  background: #000;
-  color: #ffaa00;
+  background: ${themed("#000", "#ffffff")};
+  color: ${themed("#ffaa00", "#a35400")};
   font-size: 20px;
   cursor: pointer;
   transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
@@ -685,7 +582,7 @@ const MoreNewsSection = styled.section`
   & + & {
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid ${themed("rgba(255, 255, 255, 0.12)", "rgba(0, 0, 0, 0.12)")};
   }
 `;
 
@@ -719,7 +616,7 @@ const MoreNewsAppear = styled(motion.div)`
 `;
 
 const Card = styled.a`
-  background: #1a1a1a;
+  background: ${themed("#1a1a1a", "#ffffff")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#000000")};
   text-decoration: none;
   border-radius: 8px;
@@ -1079,9 +976,9 @@ const CompactRow = styled.a`
   align-items: center;
   gap: 12px;
   padding: 10px 0;
-  color: #ffffff;
+  color: ${themed("#ffffff", "#1a1a1a")};
   text-decoration: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid ${themed("rgba(255, 255, 255, 0.12)", "rgba(0, 0, 0, 0.12)")};
 
   &:last-child {
     border-bottom: none;
@@ -1100,7 +997,7 @@ const CompactThumb = styled.div`
   height: 74px;
   border-radius: 12px;
   overflow: hidden;
-  background: #222;
+  background: ${themed("#222", "#e5e7eb")};
 
   /* На найвужчих телефонах (320–359px) лишаємо більше місця заголовку */
   @media (max-width: 359px) {
@@ -1134,7 +1031,7 @@ const CompactBody = styled.div`
 const CompactSource = styled.span`
   font-size: 11px;
   font-weight: 700;
-  color: #ffaa00;
+  color: ${themed("#ffaa00", "#a35400")};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1165,14 +1062,14 @@ const CompactMoreBtn = styled.button`
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: rgba(255, 255, 255, 0.75);
+  color: ${themed("rgba(255, 255, 255, 0.75)", "rgba(0, 0, 0, 0.6)")};
   font-size: 20px;
   cursor: pointer;
 
   &:hover,
   &:focus-visible {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    background: ${themed("rgba(255, 255, 255, 0.1)", "rgba(0, 0, 0, 0.08)")};
+    color: ${themed("#ffffff", "#000000")};
   }
   &:focus-visible {
     outline: 2px solid #ffaa00;
@@ -1220,7 +1117,7 @@ const NewsPairBlock = styled.div`
   height: ${NEWS_PAIR_HEIGHT}px;
   padding: 0 10px;
   border-radius: 8px;
-  background: rgba(20, 20, 20, 0.88);
+  background: ${themed("rgba(20, 20, 20, 0.88)", "rgba(255, 255, 255, 0.92)")};
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   box-sizing: border-box;
   overflow: hidden;
@@ -1551,6 +1448,7 @@ const NewsCard = ({
     return (
       <CompactRow
         ref={cardRef}
+        $isDarkMode={$isDarkMode}
         href={item.link}
         target="_blank"
         rel="noopener noreferrer"
@@ -1558,7 +1456,7 @@ const NewsCard = ({
         onAuxClick={() => recordNewsClick(item)}
       >
         {showImage && (
-          <CompactThumb>
+          <CompactThumb $isDarkMode={$isDarkMode}>
             <NewsImg
               src={imgSrc || "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="}
               alt=""
@@ -1575,7 +1473,7 @@ const NewsCard = ({
           </CompactThumb>
         )}
         <CompactBody>
-          <CompactSource>
+          <CompactSource $isDarkMode={$isDarkMode}>
             {item.isUrgent && <UrgentTag>Терміново</UrgentTag>}
             {item.sourceName}
           </CompactSource>
@@ -1583,6 +1481,7 @@ const NewsCard = ({
         </CompactBody>
         <CompactMoreBtn
           type="button"
+          $isDarkMode={$isDarkMode}
           aria-label={isNewsSettingsOpen ? "Закрити дії з новиною" : "Дії з новиною"}
           aria-expanded={isNewsSettingsOpen}
           onClick={(e) => {
@@ -2000,8 +1899,8 @@ const ProgressBarFill = styled.div`
 `;
 
 const FilteredNewsCounter = styled.p`
-  color: rgb(255, 255, 255);
-  background: #0000008b;
+  color: ${themed("rgb(255, 255, 255)", "#1a1a1a")};
+  background: ${themed("#0000008b", "rgba(255, 255, 255, 0.75)")};
   border-radius: 10px;
   font-weight: 600;
   padding:7px;
@@ -4252,7 +4151,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       >
         {isListView ? (
           // «Список»: той самий блок каруселі, але в ньому дві новини рядками
-          <NewsPairBlock>
+          <NewsPairBlock $isDarkMode={$isDarkMode}>
             {slide.map((item) => (
               <Fragment key={item.link}>{renderNewsCard(item, true)}</Fragment>
             ))}
@@ -4280,6 +4179,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           <MoreNewsActions>
             <MoreNewsButton
               $secondary
+              $isDarkMode={$isDarkMode}
               onClick={() =>
                 window.dispatchEvent(
                   new CustomEvent("stykhiia:open-settings", { detail: { tab: "siteSections" } }),
@@ -4289,7 +4189,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
               <FiPlus aria-hidden="true" />
               Додати стрічку
             </MoreNewsButton>
-            <MoreNewsButton onClick={() => setShowMoreNews(true)}>
+            <MoreNewsButton $isDarkMode={$isDarkMode} onClick={() => setShowMoreNews(true)}>
               <FiList aria-hidden="true" />
               Всі новини
               {moreNewsCount > 0 && (
@@ -4384,12 +4284,12 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
               onClick={() => setShowMoreNews(false)}
               style={{ alignItems: "center", justifyContent: "center", padding: "8px" }}
             >
-              <MoreNewsPanel onClick={(e) => e.stopPropagation()}>
-                <MoreNewsHeader>
+              <MoreNewsPanel $isDarkMode={$isDarkMode} onClick={(e) => e.stopPropagation()}>
+                <MoreNewsHeader $isDarkMode={$isDarkMode}>
                   <MoreNewsHeaderIcon aria-hidden="true">
                     <FiList />
                   </MoreNewsHeaderIcon>
-                  <MoreNewsHeaderText>
+                  <MoreNewsHeaderText $isDarkMode={$isDarkMode}>
                     <h2>Всі новини</h2>
                     <p>
                       {moreNewsCount} новин · {moreGroups.length} джерел
@@ -4400,7 +4300,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                         })}`}
                     </p>
                   </MoreNewsHeaderText>
-                  <MoreNewsClose
+                  <MoreNewsClose $isDarkMode={$isDarkMode}
                     type="button"
                     aria-label="Закрити «Всі новини»"
                     onClick={() => setShowMoreNews(false)}
@@ -4420,7 +4320,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                 ) : (
                   moreGroups.map((group) => (
                     // Назву джерела показує кожна новина, тож окремий заголовок групи не потрібен
-                    <MoreNewsSection key={group.sourceName} aria-label={group.sourceName}>
+                    <MoreNewsSection $isDarkMode={$isDarkMode} key={group.sourceName} aria-label={group.sourceName}>
                       <MoreNewsGrid>
                         {group.items.map((item) => (
                           <MoreNewsAppear

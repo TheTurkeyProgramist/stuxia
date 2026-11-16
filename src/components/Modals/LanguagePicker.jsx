@@ -19,15 +19,15 @@ const SearchRow = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #2b2b30;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--lm-input, #2b2b30);
+  border: 1px solid rgba(var(--lm-ink, 255, 255, 255), 0.12);
   border-radius: 8px;
   padding: 8px 12px;
   transition: border-color 0.15s;
 
   &:focus-within {
-    border-color: #60cdff;
-    box-shadow: 0 0 0 2px rgba(96, 205, 255, 0.15);
+    border-color: var(--lm-accent, #60cdff);
+    box-shadow: 0 0 0 2px rgba(var(--lm-accent-rgb, 96, 205, 255), 0.15);
   }
 `;
 
@@ -35,13 +35,13 @@ const SearchInput = styled.input`
   background: transparent;
   border: none;
   outline: none;
-  color: #ffffff;
+  color: var(--lm-text, #ffffff);
   font-size: 13px;
   font-family: inherit;
   flex: 1;
 
   &::placeholder {
-    color: #7a7a80;
+    color: var(--lm-muted, #8a8a90);
   }
 `;
 
@@ -112,19 +112,24 @@ const LangCard = styled.button`
   border: 1px solid
     ${(p) =>
       p.$active
-        ? '#60cdff'
-        : 'rgba(255, 255, 255, 0.12)'};
-  box-shadow: ${(p) => (p.$active ? '0 0 0 2px rgba(96, 205, 255, 0.35)' : 'none')};
-  background: #2b2b30;
+        ? 'var(--lm-accent, #60cdff)'
+        : 'rgba(var(--lm-ink, 255, 255, 255), 0.12)'};
+  box-shadow: ${(p) =>
+    p.$active ? '0 0 0 2px rgba(var(--lm-accent-rgb, 96, 205, 255), 0.35)' : 'none'};
+  background: var(--lm-card, #2b2b30);
   transition: border-color 0.15s ease;
   text-align: start;
   font-family: inherit;
-  text-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.9),
-    0 0 8px rgba(0, 0, 0, 0.6);
+  /* На малюнку міста текст завжди білий з тінню; на звичайній картці — за темою */
+  --lm-card-fg: ${(p) => (p.$decor ? '#ffffff' : 'var(--lm-text, #ffffff)')};
+  --lm-card-sub: ${(p) => (p.$decor ? 'rgba(255, 255, 255, 0.8)' : 'var(--lm-sub, rgba(255, 255, 255, 0.8))')};
+  text-shadow: ${(p) =>
+    p.$decor
+      ? '0 1px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6)'
+      : 'var(--lm-card-shadow, 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6))'};
 
   &:hover {
-    border-color: rgba(96, 205, 255, 0.6);
+    border-color: rgba(var(--lm-accent-rgb, 96, 205, 255), 0.6);
   }
 `;
 
@@ -138,7 +143,7 @@ const LangTextBlock = styled.div`
 const LangNative = styled.div`
   font-size: 15px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--lm-card-fg, #ffffff);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -147,7 +152,7 @@ const LangNative = styled.div`
 
 const LangEnglish = styled.span`
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--lm-card-sub, rgba(255, 255, 255, 0.8));
 `;
 
 const RtlBadge = styled.span`
@@ -155,7 +160,7 @@ const RtlBadge = styled.span`
   z-index: 1;
   font-size: 9px;
   background: rgba(255, 179, 108, 0.15);
-  color: #ffb36c;
+  color: ${(p) => (p.$decor ? '#ffb36c' : 'var(--lm-rtl, #ffb36c)')};
   border: 1px solid rgba(255, 179, 108, 0.3);
   border-radius: 3px;
   padding: 1px 4px;
@@ -169,20 +174,20 @@ const ActiveCheck = styled.div`
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #60cdff;
+  background: var(--lm-accent, #60cdff);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   font-size: 10px;
-  color: #000;
+  color: var(--lm-on-accent, #000);
 `;
 
 const InfoNote = styled.div`
   font-size: 11px;
-  color: #7a7a80;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--lm-muted, #8a8a90);
+  background: rgba(var(--lm-ink, 255, 255, 255), 0.03);
+  border: 1px solid rgba(var(--lm-ink, 255, 255, 255), 0.06);
   border-radius: 6px;
   padding: 8px 12px;
   line-height: 1.5;
@@ -222,7 +227,7 @@ const LanguagePicker = () => {
     <Container>
       {/* Search */}
       <SearchRow>
-        <FiSearch style={{ color: '#7a7a80', fontSize: '14px', flexShrink: 0 }} />
+        <FiSearch style={{ color: 'var(--lm-muted, #8a8a90)', fontSize: '14px', flexShrink: 0 }} />
         <SearchInput
           placeholder={t('settings.language.searchPlaceholder')}
           value={search}
@@ -236,7 +241,7 @@ const LanguagePicker = () => {
             style={{
               background: 'none',
               border: 'none',
-              color: '#7a7a80',
+              color: 'var(--lm-muted, #8a8a90)',
               cursor: 'pointer',
               padding: '0',
               fontSize: '14px',
@@ -271,7 +276,7 @@ const LanguagePicker = () => {
                   {lang.code !== 'en' && <LangEnglish> ({lang.name})</LangEnglish>}
                 </LangNative>
               </LangTextBlock>
-              {rtl && <RtlBadge>RTL</RtlBadge>}
+              {rtl && <RtlBadge $decor={decorEnabled}>RTL</RtlBadge>}
             </LangCard>
           );
         })}
@@ -286,7 +291,7 @@ const LanguagePicker = () => {
 
       {/* No results */}
       {filteredLanguages.length === 0 && (
-        <div style={{ color: '#7a7a80', fontSize: '13px', textAlign: 'center', padding: '20px' }}>
+        <div style={{ color: 'var(--lm-muted, #8a8a90)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>
           {t('settings.language.noResults')}: "{search}"
         </div>
       )}

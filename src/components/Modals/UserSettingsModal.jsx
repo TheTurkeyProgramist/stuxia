@@ -3,7 +3,7 @@ import avatarPlaceholder from "../../media/characters/domino-avatar.webp";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
-import styled, { keyframes, css } from "styled-components";
+import styled, { keyframes, css, createGlobalStyle } from "styled-components";
 import InfoModal from "./UserSearchModal.jsx";
 import KatSceneModal from "./KatSceneModal";
 import { Tooltip } from "../Tooltip/Tooltip";
@@ -239,6 +239,31 @@ const appearScale = keyframes`
 
 // ── Styled Components ────────────────────────────────────────────────────────
 
+// Кольори «Параметрів»: темна тема — типова, світла вмикається атрибутом на <body>
+// (меню режимів і діалоги рендеряться порталом у <body>, тож токени мають бути там)
+const SettingsThemeTokens = createGlobalStyle`
+  :root {
+    --s-ink: 255,255,255;
+    --s-accent: #60cdff; --s-accent-rgb: 96,205,255; --s-accent-hover: #70d4ff;
+    --s-accent-soft: #bfe9ff; --s-on-accent: #000000;
+    --s-bg: #1c1c1f; --s-bg-rgb: 28,28,31;
+    --s-panel: #202024; --s-card: #27272a; --s-menu: #2a2a2e;
+    --s-input: #2b2b30; --s-input-hover: #323238; --s-seg: #1f1f23;
+    --s-text: #f3f3f3; --s-text-2: #c5c5c5; --s-muted: #a0a0a0; --s-faint: #666;
+    --s-blue: #93c5fd; --s-yellow: #fde68a; --s-green: #34d399; --s-orange: #fb923c; --s-red: #ff8a8a;
+  }
+  body[data-settings-theme="light"] {
+    --s-ink: 0,0,0;
+    --s-accent: #0a7fb8; --s-accent-rgb: 10,127,184; --s-accent-hover: #0b8fd0;
+    --s-accent-soft: #075985; --s-on-accent: #ffffff;
+    --s-bg: #f4f5f7; --s-bg-rgb: 244,245,247;
+    --s-panel: #ffffff; --s-card: #ffffff; --s-menu: #ffffff;
+    --s-input: #ffffff; --s-input-hover: #f3f4f6; --s-seg: #eef0f3;
+    --s-text: #111827; --s-text-2: #374151; --s-muted: #5b6270; --s-faint: #9ca3af;
+    --s-blue: #1d4ed8; --s-yellow: #92400e; --s-green: #047857; --s-orange: #c2410c; --s-red: #c42b1c;
+  }
+`;
+
 // Ширина вікна в режимі перегляду — у відсотках від ширини екрана, але не вужче за FILTERS_PREVIEW_MIN_PX
 const FILTERS_PREVIEW_DEFAULT_WIDTH = 64;
 const FILTERS_PREVIEW_MIN_WIDTH = 64;
@@ -279,12 +304,13 @@ const NestedModalPortal = styled.div`
 `;
 
 const ModalWindow = styled.div`
-  background: #1c1c1f;
-  color: #f3f3f3;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 12px;
-  width: 95%;
-  height: 88vh; max-height: 850px;
+  background: var(--s-bg);
+  color: var(--s-text);
+  border: none;
+  /* На весь екран: уся ширина й висота під налаштування */
+  border-radius: 0;
+  width: 100%;
+  height: 100vh; height: 100dvh; max-height: none;
   transition: width 0.3s ease;
   ${(p) => p.$preview && css`
     @media (min-width: ${FILTERS_PREVIEW_BREAKPOINT}px) {
@@ -292,7 +318,7 @@ const ModalWindow = styled.div`
     }
   `}
   display: flex; flex-direction: column;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.7), 0 0 1px rgba(255,255,255,0.2);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.7), 0 0 1px rgba(var(--s-ink),0.2);
   overflow: hidden;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   animation: ${(p) => (p.$isClosing ? fadeOut : fadeIn)} 0.25s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
@@ -309,8 +335,8 @@ const WindowHeader = styled.div`
   @media (max-width: ${MOBILE_BP}px) {
     padding: calc(6px + env(safe-area-inset-top)) 8px 6px 10px;
   }
-  background: #202024;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: var(--s-panel);
+  border-bottom: 1px solid rgba(var(--s-ink),0.08);
   user-select: none;
 `;
 
@@ -320,8 +346,8 @@ const HeaderLeft = styled.div`
 
 const UserBadge = styled.div`
   display: flex; align-items: center; gap: 10px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(var(--s-ink),0.05);
+  border: 1px solid rgba(var(--s-ink),0.08);
   padding: 4px 12px 4px 6px; border-radius: 20px;
   min-width: 0; max-width: min(380px, 100%);
   & > div:last-child { min-width: 0; display: flex; flex-direction: column; }
@@ -359,23 +385,23 @@ const AccountName = ({ value }) => {
   );
 };
 
-const HeaderTitle = styled.h2`font-size: 16px; font-weight: 600; margin: 0; color: #ffffff;`;
+const HeaderTitle = styled.h2`font-size: 16px; font-weight: 600; margin: 0; color: var(--s-text);`;
 const HeaderSub = styled.span`
-  font-size: 11px; color: #a0a0a0;
+  font-size: 11px; color: var(--s-muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 `;
 
 const HeaderActions = styled.div`display: flex; align-items: center; gap: 8px; flex-shrink: 0;`;
 
 const HeaderButton = styled.button`
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #e0e0e0;
+  background: rgba(var(--s-ink),0.06);
+  border: 1px solid rgba(var(--s-ink),0.1);
+  color: var(--s-text);
   padding: 6px 12px; border-radius: 6px;
   font-size: 12px; font-weight: 500; cursor: pointer;
   display: flex; align-items: center; gap: 6px;
   transition: all 0.15s ease;
-  &:hover { background: rgba(255,255,255,0.12); color: #ffffff; }
+  &:hover { background: rgba(var(--s-ink),0.12); color: var(--s-text); }
   /* На телефоні — лише іконка */
   @media (max-width: ${MOBILE_BP}px) {
     width: 36px; height: 36px; padding: 0; justify-content: center; font-size: 16px;
@@ -384,7 +410,7 @@ const HeaderButton = styled.button`
 `;
 
 const CloseButton = styled.button`
-  background: transparent; border: none; color: #f4f2f2;
+  background: transparent; border: none; color: var(--s-text);
   width: 32px; height: 32px; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 28px; transition: all 0.15s ease; flex-shrink: 0;
@@ -399,13 +425,13 @@ const WindowBody = styled.div`
 
 const Sidebar = styled.div`
   width: 230px;
-  background: #202024;
-  border-right: 1px solid rgba(255,255,255,0.08);
+  background: var(--s-panel);
+  border-right: 1px solid rgba(var(--s-ink),0.08);
   padding: 12px; display: flex; flex-direction: column; gap: 2px;
   overflow-y: auto; flex-shrink: 0;
   @media (max-width: 768px) {
     width: 100%; gap: 8px; overflow: visible;
-    border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-right: none; border-bottom: 1px solid rgba(var(--s-ink),0.08);
     padding: 8px 10px;
   }
 `;
@@ -473,8 +499,8 @@ const NavItem = styled.div`
   display: flex; align-items: center; gap: 10px;
   padding: 9px 12px; border-radius: 6px; cursor: pointer;
   font-size: 13px; font-weight: ${(p) => (p.$active ? "600" : "400")};
-  color: ${(p) => (p.$active ? "#ffffff" : p.$locked ? "#666" : "#c5c5c5")};
-  background: ${(p) => (p.$active ? "rgba(255,255,255,0.08)" : "transparent")};
+  color: ${(p) => (p.$active ? "var(--s-text)" : p.$locked ? "var(--s-faint)" : "var(--s-text-2)")};
+  background: ${(p) => (p.$active ? "rgba(var(--s-ink),0.08)" : "transparent")};
   position: relative; transition: all 0.15s ease; white-space: nowrap;
   opacity: ${(p) => (p.$locked ? 0.45 : 1)};
   /* Заблокований пункт лишається «живим» для наведення — щоб показати підказку */
@@ -487,27 +513,27 @@ const NavItem = styled.div`
         content: "";
         position: absolute;
         left: 3px; top: 8px; bottom: 8px;
-        width: 3px; background: #60cdff; border-radius: 2px;
+        width: 3px; background: var(--s-accent); border-radius: 2px;
       }
     `}
 
   ${(p) =>
     !p.$locked &&
     css`
-      &:hover { background: rgba(255,255,255,0.06); color: #ffffff; }
+      &:hover { background: rgba(var(--s-ink),0.06); color: var(--s-text); }
     `}
 
   @media (max-width: 768px) {
     flex-shrink: 0; gap: 7px; padding: 7px 12px; border-radius: 999px;
-    background: ${(p) => (p.$active ? "rgba(96,205,255,0.16)" : "rgba(255,255,255,0.05)")};
-    border: 1px solid ${(p) => (p.$active ? "rgba(96,205,255,0.45)" : "rgba(255,255,255,0.08)")};
+    background: ${(p) => (p.$active ? "rgba(var(--s-accent-rgb),0.16)" : "rgba(var(--s-ink),0.05)")};
+    border: 1px solid ${(p) => (p.$active ? "rgba(var(--s-accent-rgb),0.45)" : "rgba(var(--s-ink),0.08)")};
     &::before { display: none; }
   }
 `;
 
 const NavIconBox = styled.span`
   font-size: 15px; display: flex; align-items: center; justify-content: center;
-  color: ${(p) => (p.$active ? "#60cdff" : p.$locked ? "#555" : "#a0a0a0")};
+  color: ${(p) => (p.$active ? "var(--s-accent)" : p.$locked ? "var(--s-faint)" : "var(--s-muted)")};
 
   & > svg { transform-origin: center; }
 
@@ -525,25 +551,25 @@ const NavIconBox = styled.span`
 `;
 
 const LockBadge = styled.span`
-  font-size: 10px; margin-left: auto; color: #555;
-  background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 4px;
+  font-size: 10px; margin-left: auto; color: var(--s-faint);
+  background: rgba(var(--s-ink),0.06); padding: 1px 5px; border-radius: 4px;
 `;
 
 const searchFlash = keyframes`
-  0%, 35% { box-shadow: 0 0 0 2px rgba(96,205,255,0.85); background-color: rgba(96,205,255,0.10); }
-  100% { box-shadow: 0 0 0 2px rgba(96,205,255,0); }
+  0%, 35% { box-shadow: 0 0 0 2px rgba(var(--s-accent-rgb),0.85); background-color: rgba(var(--s-accent-rgb),0.10); }
+  100% { box-shadow: 0 0 0 2px rgba(var(--s-accent-rgb),0); }
 `;
 
 const MainContent = styled.div`
   flex: 1; padding: 24px; overflow-y: auto;
-  background: #1c1c1f; display: flex; flex-direction: column; gap: 16px;
+  background: var(--s-bg); display: flex; flex-direction: column; gap: 16px;
   &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+  &::-webkit-scrollbar-thumb { background: rgba(var(--s-ink),0.15); border-radius: 3px; }
   @media (max-width: 768px) { padding: 16px 14px calc(16px + env(safe-area-inset-bottom)); gap: 12px; }
 
   /* ── Загальний пошук (settingsSearch.js) ── */
   [data-search-hidden] { display: none !important; }
-  & ::highlight(settings-search) { background-color: rgba(96,205,255,0.35); color: #ffffff; }
+  & ::highlight(settings-search) { background-color: rgba(var(--s-accent-rgb),0.35); color: var(--s-text); }
   [data-search-flash] { animation: ${searchFlash} 1.8s ease-out; }
 
   /* ── Режими (settingsLevels.js): поза пошуком ховаємо налаштування важчих режимів ── */
@@ -553,23 +579,23 @@ const MainContent = styled.div`
 
   &[data-searching] {
     [data-settings-tab]:not([data-search-hidden]) ~ [data-settings-tab]:not([data-search-hidden]) {
-      margin-top: 8px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08);
+      margin-top: 8px; padding-top: 20px; border-top: 1px solid rgba(var(--s-ink),0.08);
     }
     [data-settings-head="title"] { cursor: pointer; }
     [data-settings-head="title"]::after {
       content: "Відкрити розділ ›"; margin-left: auto;
-      font-size: 12px; font-weight: 600; color: #60cdff; opacity: 0.75;
+      font-size: 12px; font-weight: 600; color: var(--s-accent); opacity: 0.75;
     }
     [data-settings-head="title"]:hover::after { opacity: 1; }
     [data-settings-title] { cursor: pointer; }
-    [data-settings-title]:hover { color: #60cdff; text-decoration: underline; text-underline-offset: 3px; }
+    [data-settings-title]:hover { color: var(--s-accent); text-decoration: underline; text-underline-offset: 3px; }
   }
 `;
 
 const SearchBox = styled.div`
   position: relative; display: flex; align-items: center;
   margin-bottom: 8px; flex-shrink: 0;
-  & > svg { position: absolute; left: 10px; font-size: 14px; color: #8a8a90; pointer-events: none; }
+  & > svg { position: absolute; left: 10px; font-size: 14px; color: var(--s-muted); pointer-events: none; }
   @media (max-width: 768px) { margin: 0; }
 `;
 
@@ -577,28 +603,28 @@ const SearchClear = styled.button`
   position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
   display: flex; align-items: center; justify-content: center;
   width: 24px; height: 24px; padding: 0; border: none; border-radius: 4px;
-  background: transparent; color: #a0a0a0; cursor: pointer; font-size: 14px;
-  &:hover { background: rgba(255,255,255,0.08); color: #ffffff; }
-  &:focus-visible { outline: 2px solid rgba(96,205,255,0.6); }
+  background: transparent; color: var(--s-muted); cursor: pointer; font-size: 14px;
+  &:hover { background: rgba(var(--s-ink),0.08); color: var(--s-text); }
+  &:focus-visible { outline: 2px solid rgba(var(--s-accent-rgb),0.6); }
 `;
 
 const NavCount = styled.span`
   margin-left: auto; min-width: 20px; padding: 1px 6px; border-radius: 999px;
   font-size: 11px; font-weight: 600; text-align: center;
-  background: ${(p) => (p.$zero ? "transparent" : "rgba(96,205,255,0.16)")};
-  color: ${(p) => (p.$zero ? "#555" : "#60cdff")};
+  background: ${(p) => (p.$zero ? "transparent" : "rgba(var(--s-accent-rgb),0.16)")};
+  color: ${(p) => (p.$zero ? "var(--s-faint)" : "var(--s-accent)")};
 `;
 
 const SearchNote = styled.div`
-  font-size: 12px; color: #a0a0a0; line-height: 1.5;
-  strong { color: #ffffff; font-weight: 600; }
+  font-size: 12px; color: var(--s-muted); line-height: 1.5;
+  strong { color: var(--s-text); font-weight: 600; }
 `;
 
 const SearchEmpty = styled.div`
   display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 56px 16px; text-align: center; color: #a0a0a0; font-size: 13px;
+  padding: 56px 16px; text-align: center; color: var(--s-muted); font-size: 13px;
   & > svg { font-size: 30px; opacity: 0.45; }
-  strong { color: #ffffff; font-size: 15px; }
+  strong { color: var(--s-text); font-size: 15px; }
 `;
 
 // Обгортка області прокрутки — щоб натяк «прокрутіть нижче» лежав поверх, не зсуваючи вміст
@@ -613,7 +639,7 @@ const scrollHintBounce = keyframes`
 const ScrollHintFade = styled(motion.div)`
   position: absolute; left: 0; right: 6px; bottom: 0; height: 84px;
   display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px;
-  background: linear-gradient(to bottom, rgba(28,28,31,0), rgba(28,28,31,0.92) 60%, #1c1c1f);
+  background: linear-gradient(to bottom, rgba(var(--s-bg-rgb),0), rgba(var(--s-bg-rgb),0.92) 60%, var(--s-bg));
   pointer-events: none; z-index: 2;
   /* На телефоні мало висоти — натяк нижчий, щоб не закривав картки */
   @media (max-width: ${MOBILE_BP}px) { height: 52px; padding-bottom: 8px; }
@@ -621,19 +647,19 @@ const ScrollHintFade = styled(motion.div)`
 const ScrollHintButton = styled.button`
   pointer-events: auto;
   display: flex; align-items: center; gap: 6px;
-  font: inherit; font-size: 12px; font-weight: 600; color: #60cdff;
-  background: rgba(96,205,255,0.12); border: 1px solid rgba(96,205,255,0.35);
+  font: inherit; font-size: 12px; font-weight: 600; color: var(--s-accent);
+  background: rgba(var(--s-accent-rgb),0.12); border: 1px solid rgba(var(--s-accent-rgb),0.35);
   border-radius: 999px; padding: 5px 14px; cursor: pointer;
   box-shadow: 0 4px 14px rgba(0,0,0,0.35);
   transition: background 0.15s ease;
-  &:hover { background: rgba(96,205,255,0.22); }
-  &:focus-visible { outline: 2px solid rgba(96,205,255,0.6); outline-offset: 2px; }
+  &:hover { background: rgba(var(--s-accent-rgb),0.22); }
+  &:focus-visible { outline: 2px solid rgba(var(--s-accent-rgb),0.6); outline-offset: 2px; }
   svg { animation: ${scrollHintBounce} 1.4s ease-in-out infinite; }
   @media (max-width: ${MOBILE_BP}px) { font-size: 11px; padding: 4px 12px; }
 `;
 
 const SectionHeaderTitle = styled.h3.attrs({ "data-settings-head": "title" })`
-  font-size: 20px; font-weight: 600; color: #ffffff;
+  font-size: 20px; font-weight: 600; color: var(--s-text);
   margin: 0 0 12px 0; display: flex; align-items: center; gap: 10px;
   @media (max-width: ${MOBILE_BP}px) {
     font-size: 17px; gap: 8px; margin-bottom: 10px;
@@ -642,7 +668,7 @@ const SectionHeaderTitle = styled.h3.attrs({ "data-settings-head": "title" })`
 `;
 
 const SectionDescription = styled.p.attrs({ "data-settings-head": "desc" })`
-  font-size: 13px; color: #a0a0a0; line-height: 1.5;
+  font-size: 13px; color: var(--s-muted); line-height: 1.5;
   margin: -8px 0 10px 0;
   @media (max-width: ${MOBILE_BP}px) { font-size: 12px; margin-bottom: 6px; }
 `;
@@ -662,7 +688,7 @@ const SECTION_COLORS = { hero: "#60a5fa", weather: "#7dd3fc", map: "#4ade80" };
 
 // data-scroll-hint: заголовок підрозділу, який показує натяк «Нижче: …»
 const SubSectionTitle = styled.h4.attrs({ "data-scroll-hint": "" })`
-  font-size: 13px; font-weight: 600; color: #a0a0a0;
+  font-size: 13px; font-weight: 600; color: var(--s-muted);
   text-transform: uppercase; letter-spacing: 0.04em;
   margin: 14px 0 2px 2px; display: flex; align-items: center; gap: 8px;
   ${SectionHeaderTitle} + &, ${SectionDescription} + & { margin-top: 0; }
@@ -693,7 +719,7 @@ const LevelHintBar = styled.div.attrs({ "data-level-hint": "" })`
   flex: 0 0 auto; width: 100%; box-sizing: border-box;
   display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px;
   padding: 6px 8px 6px 10px; border-radius: 6px;
-  font-size: 12px; line-height: 1.4; color: #d4d4d8;
+  font-size: 12px; line-height: 1.4; color: var(--s-text-2);
   background: color-mix(in srgb, var(--lvl) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--lvl) 32%, transparent);
   /* Працює й усередині вимкненої (сірої) групи */
@@ -708,7 +734,7 @@ const LevelHintButton = styled.button`
   background: color-mix(in srgb, var(--lvl) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--lvl) 45%, transparent);
   &:hover { background: color-mix(in srgb, var(--lvl) 26%, transparent); }
-  &:focus-visible { outline: 2px solid rgba(96,205,255,0.6); outline-offset: 2px; }
+  &:focus-visible { outline: 2px solid rgba(var(--s-accent-rgb),0.6); outline-offset: 2px; }
 `;
 
 // «Це налаштування з режиму Професійний · Андромеда» + кнопка. scope="tab" — плашка під заголовком вкладки
@@ -747,12 +773,12 @@ const TabLevelHint = ({ tab }) => {
 
 // data-settings-item: одиниця загального пошуку в параметрах (див. settingsSearch.js)
 const CardBase = styled.div.attrs({ "data-settings-item": "" })`
-  background: #27272a;
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--s-card);
+  border: 1px solid rgba(var(--s-ink),0.07);
   border-radius: 8px; padding: 14px 16px;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   transition: background 0.15s ease, border-color 0.15s ease;
-  &:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.12); }
+  &:hover { background: rgba(var(--s-ink),0.05); border-color: rgba(var(--s-ink),0.12); }
   @media (max-width: 550px) { flex-direction: column; align-items: flex-start; }
   ${(p) => p.$hinted && css`flex-wrap: wrap; row-gap: 10px;`}
 `;
@@ -778,7 +804,7 @@ const CardExpanded = styled(Card)`
 const NewsFeedsSlot = styled.div`
   &:empty::before {
     content: "Увімкніть секцію новин вище, щоб керувати стрічками.";
-    font-size: 12px; color: #a0a0a0;
+    font-size: 12px; color: var(--s-muted);
   }
 `;
 
@@ -806,7 +832,7 @@ const CardLeft = styled.div`
 
 // Кожна картка має свій колір: тонований фон, рамка й легке світіння в тон іконки
 const CardIconBoxBase = styled.div`
-  --icon-color: ${(p) => p.$color || "#60cdff"};
+  --icon-color: ${(p) => p.$color || "var(--s-accent)"};
   width: 36px; height: 36px; min-width: 36px;
   border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
@@ -845,8 +871,8 @@ const CardIconBox = ({ $anim, children, ...rest }) => (
 );
 
 const CardInfo = styled.div`display: flex; flex-direction: column;`;
-const CardTitle = styled.span.attrs({ "data-settings-title": "" })`font-size: 14px; font-weight: 600; color: #ffffff;`;
-const CardDescription = styled.span`font-size: 12px; color: #a0a0a0; margin-top: 2px;`;
+const CardTitle = styled.span.attrs({ "data-settings-title": "" })`font-size: 14px; font-weight: 600; color: var(--s-text);`;
+const CardDescription = styled.span`font-size: 12px; color: var(--s-muted); margin-top: 2px;`;
 
 const CardControl = styled.div`
   display: flex; align-items: center; gap: 12px;
@@ -865,25 +891,25 @@ const FilterSubGroup = styled.div`
   @media (max-width: 550px) { margin-left: 6px; padding-left: 10px; }
 `;
 const FilterSubTitle = styled.span`
-  font-size: 13px; font-weight: 600; color: #ffffff;
+  font-size: 13px; font-weight: 600; color: var(--s-text);
 `;
 const FilterRow = styled.div`
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 6px 0; border-bottom: 1px solid rgba(var(--s-ink),0.05);
   &:last-child { border-bottom: none; }
   @media (max-width: 550px) { flex-wrap: wrap; }
 `;
 const Segmented = styled.div`
   display: inline-flex; gap: 2px; padding: 2px; flex-shrink: 0;
-  background: #1f1f23; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
+  background: var(--s-seg); border: 1px solid rgba(var(--s-ink),0.1); border-radius: 6px;
 `;
 const SegmentBtn = styled.button`
   border: none; border-radius: 4px; padding: 4px 10px;
   font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
   background: ${(p) => (!p.$active ? "transparent" : p.$tone === "hide" ? "rgba(249,115,22,0.2)" : "rgba(52,211,153,0.2)")};
-  color: ${(p) => (!p.$active ? "#a0a0a0" : p.$tone === "hide" ? "#fb923c" : "#34d399")};
+  color: ${(p) => (!p.$active ? "var(--s-muted)" : p.$tone === "hide" ? "var(--s-orange)" : "var(--s-green)")};
   transition: background 0.15s ease, color 0.15s ease;
-  &:hover { color: #ffffff; }
+  &:hover { color: var(--s-text); }
 `;
 const LOADER_POWERED_BY_OPTIONS = [
   { id: "full", label: "Повністю" },
@@ -894,12 +920,12 @@ const FontDownloads = styled.div`display: flex; flex-wrap: wrap; gap: 6px; margi
 const FontDownloadLink = styled.a`
   display: inline-flex; align-items: center; gap: 4px;
   font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11px; font-weight: 600;
-  color: #60cdff; text-decoration: none;
-  background: rgba(96,205,255,0.1); border: 1px solid rgba(96,205,255,0.3);
+  color: var(--s-accent); text-decoration: none;
+  background: rgba(var(--s-accent-rgb),0.1); border: 1px solid rgba(var(--s-accent-rgb),0.3);
   border-radius: 999px; padding: 2px 10px;
   transition: background 0.15s ease;
-  &:hover { background: rgba(96,205,255,0.22); }
-  &:focus-visible { outline: 2px solid rgba(96,205,255,0.6); outline-offset: 2px; }
+  &:hover { background: rgba(var(--s-accent-rgb),0.22); }
+  &:focus-visible { outline: 2px solid rgba(var(--s-accent-rgb),0.6); outline-offset: 2px; }
 `;
 const WordChips = styled.div`display: flex; flex-wrap: wrap; gap: 6px;`;
 // Слово — жовтий чип, правило (регулярка) — блакитний моноширинний
@@ -907,28 +933,28 @@ const WordChip = styled.span`
   display: inline-flex; align-items: center; gap: 4px; max-width: 100%;
   font-size: 12px; word-break: break-all;
   font-family: ${(p) => (p.$regex ? "Consolas, monospace" : "inherit")};
-  color: ${(p) => (p.$regex ? "#93c5fd" : "#fde68a")};
+  color: ${(p) => (p.$regex ? "var(--s-blue)" : "var(--s-yellow)")};
   background: ${(p) => (p.$regex ? "rgba(96,165,250,0.1)" : "rgba(250,204,21,0.1)")};
   border: 1px solid ${(p) => (p.$regex ? "rgba(96,165,250,0.3)" : "rgba(250,204,21,0.3)")};
   border-radius: 999px; padding: 2px 4px 2px 10px;
   button {
     display: flex; border: none; background: none; color: inherit;
     cursor: pointer; padding: 2px; border-radius: 50%;
-    &:hover { background: rgba(255,255,255,0.12); }
+    &:hover { background: rgba(var(--s-ink),0.12); }
   }
 `;
 
 const DraftHint = styled.span`
   font-size: 12px; margin-top: -4px;
-  color: ${(p) => (p.$tone === "invalid" ? "#f87171" : p.$tone === "regex" ? "#34d399" : "#a0a0a0")};
+  color: ${(p) => (p.$tone === "invalid" ? "var(--s-red)" : p.$tone === "regex" ? "var(--s-green)" : "var(--s-muted)")};
 `;
 const RegexHelp = styled.div`
-  font-size: 12px; color: #c8c8cc; line-height: 1.5;
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  font-size: 12px; color: var(--s-text-2); line-height: 1.5;
+  background: rgba(var(--s-ink),0.03); border: 1px solid rgba(var(--s-ink),0.07);
   border-radius: 6px; padding: 8px 12px;
   p { margin: 8px 0 0; }
   code {
-    font-family: Consolas, monospace; font-size: 12px; color: #93c5fd;
+    font-family: Consolas, monospace; font-size: 12px; color: var(--s-blue);
     background: rgba(96,165,250,0.1); border-radius: 4px; padding: 1px 5px;
     word-break: break-all;
   }
@@ -936,10 +962,10 @@ const RegexHelp = styled.div`
 const RegexHelpToggle = styled.button`
   display: flex; align-items: center; gap: 6px; width: 100%;
   background: none; border: none; padding: 0; text-align: left;
-  font: inherit; font-size: 12px; font-weight: 600; color: #60cdff;
+  font: inherit; font-size: 12px; font-weight: 600; color: var(--s-accent);
   cursor: pointer; user-select: none;
-  &:hover { color: #8fdcff; }
-  &:focus-visible { outline: 2px solid rgba(96,205,255,0.5); outline-offset: 2px; border-radius: 4px; }
+  &:hover { color: var(--s-accent); }
+  &:focus-visible { outline: 2px solid rgba(var(--s-accent-rgb),0.5); outline-offset: 2px; border-radius: 4px; }
 `;
 // Стрілка плавно повертається разом із розгортанням
 const RegexHelpChevron = styled.span`
@@ -960,20 +986,20 @@ const TopicChip = styled.button`
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 12px; font-family: inherit; cursor: pointer;
   border-radius: 999px; padding: 4px 10px;
-  color: ${(p) => (p.$active ? "#34d399" : "#c0c0c0")};
+  color: ${(p) => (p.$active ? "var(--s-green)" : "var(--s-text-2)")};
   background: ${(p) => (p.$active ? "rgba(52,211,153,0.15)" : "transparent")};
-  border: 1px solid ${(p) => (p.$active ? "rgba(52,211,153,0.45)" : "rgba(255,255,255,0.15)")};
+  border: 1px solid ${(p) => (p.$active ? "rgba(52,211,153,0.45)" : "rgba(var(--s-ink),0.15)")};
   transition: background 0.15s ease, color 0.15s ease;
-  &:hover:not(:disabled) { color: #ffffff; }
+  &:hover:not(:disabled) { color: var(--s-text); }
   &:disabled { cursor: default; }
-  &:focus-visible { outline: 2px solid #60cdff; outline-offset: 2px; }
+  &:focus-visible { outline: 2px solid var(--s-accent); outline-offset: 2px; }
 `;
 
 const FilterNotes = styled.div`
   display: flex; flex-direction: column; gap: 4px;
-  font-size: 12px; color: #a0a0a0; padding: 2px 4px;
+  font-size: 12px; color: var(--s-muted); padding: 2px 4px;
   span { display: flex; align-items: center; gap: 6px; }
-  svg { flex-shrink: 0; color: #60cdff; }
+  svg { flex-shrink: 0; color: var(--s-accent); }
 `;
 
 // Приклад правила для фільтра новин і пояснення кожної його частини
@@ -1006,41 +1032,41 @@ const ToggleWrapper = styled.div`
 `;
 const ToggleStatusLabel = styled.span`
   font-size: 13px;
-  color: ${(p) => (p.$checked ? "#ffffff" : "#a0a0a0")};
+  color: ${(p) => (p.$checked ? "var(--s-text)" : "var(--s-muted)")};
   font-weight: 500;
 `;
 const SwitchPill = styled.div`
   width: 40px; height: 20px; border-radius: 10px;
-  background: ${(p) => (p.$checked ? "#60cdff" : "rgba(255,255,255,0.1)")};
-  border: 1px solid ${(p) => (p.$checked ? "#60cdff" : "rgba(255,255,255,0.3)")};
+  background: ${(p) => (p.$checked ? "var(--s-accent)" : "rgba(var(--s-ink),0.1)")};
+  border: 1px solid ${(p) => (p.$checked ? "var(--s-accent)" : "rgba(var(--s-ink),0.3)")};
   position: relative; transition: all 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
   &::after {
     content: ""; position: absolute;
     top: 2px; left: ${(p) => (p.$checked ? "22px" : "2px")};
     width: 14px; height: 14px; border-radius: 50%;
-    background: ${(p) => (p.$checked ? "#000000" : "#ffffff")};
+    background: ${(p) => (p.$checked ? "var(--s-on-accent)" : "#ffffff")};
     transition: all 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
   }
 `;
 
 const WinSelect = styled.select`
-  background: #2b2b30; color: #ffffff;
-  border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;
+  background: var(--s-input); color: var(--s-text);
+  border: 1px solid rgba(var(--s-ink),0.15); border-radius: 6px;
   padding: 6px 12px; font-size: 13px; font-family: inherit;
   outline: none; cursor: pointer; transition: all 0.15s ease;
-  &:hover { background: #323238; border-color: rgba(255,255,255,0.25); }
-  &:focus { border-color: #60cdff; box-shadow: 0 0 0 2px rgba(96,205,255,0.25); }
-  option { background: #2b2b30; color: #ffffff; }
+  &:hover { background: var(--s-input-hover); border-color: rgba(var(--s-ink),0.25); }
+  &:focus { border-color: var(--s-accent); box-shadow: 0 0 0 2px rgba(var(--s-accent-rgb),0.25); }
+  option { background: var(--s-input); color: var(--s-text); }
 `;
 
 const WinInput = styled.input`
-  background: #2b2b30; color: #ffffff;
-  border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;
+  background: var(--s-input); color: var(--s-text);
+  border: 1px solid rgba(var(--s-ink),0.15); border-radius: 6px;
   padding: 6px 12px; font-size: 13px; font-family: inherit;
   outline: none; width: 100%; box-sizing: border-box; transition: all 0.15s ease;
-  &::placeholder { color: #7a7a80; }
-  &:hover { background: #323238; border-color: rgba(255,255,255,0.25); }
-  &:focus { border-color: #60cdff; box-shadow: 0 0 0 2px rgba(96,205,255,0.25); }
+  &::placeholder { color: var(--s-faint); }
+  &:hover { background: var(--s-input-hover); border-color: rgba(var(--s-ink),0.25); }
+  &:focus { border-color: var(--s-accent); box-shadow: 0 0 0 2px rgba(var(--s-accent-rgb),0.25); }
 `;
 
 const NameInputStyled = styled(WinInput)`
@@ -1063,15 +1089,15 @@ const NameInputStyled = styled(WinInput)`
 `;
 
 const WinButton = styled.button`
-  background: ${(p) => (p.$primary ? "#60cdff" : p.$danger ? "rgba(196,43,28,0.15)" : "rgba(255,255,255,0.08)")};
-  color: ${(p) => (p.$primary ? "#000000" : p.$danger ? "#ff6b6b" : "#ffffff")};
-  border: 1px solid ${(p) => (p.$primary ? "#60cdff" : p.$danger ? "rgba(196,43,28,0.5)" : "rgba(255,255,255,0.12)")};
+  background: ${(p) => (p.$primary ? "var(--s-accent)" : p.$danger ? "rgba(196,43,28,0.15)" : "rgba(var(--s-ink),0.08)")};
+  color: ${(p) => (p.$primary ? "var(--s-on-accent)" : p.$danger ? "var(--s-red)" : "var(--s-text)")};
+  border: 1px solid ${(p) => (p.$primary ? "var(--s-accent)" : p.$danger ? "rgba(196,43,28,0.5)" : "rgba(var(--s-ink),0.12)")};
   border-radius: 6px; padding: 6px 16px;
   font-size: 13px; font-weight: 600; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 6px;
   transition: all 0.15s ease;
   &:hover {
-    background: ${(p) => (p.$primary ? "#70d4ff" : p.$danger ? "rgba(196,43,28,0.3)" : "rgba(255,255,255,0.15)")};
+    background: ${(p) => (p.$primary ? "var(--s-accent-hover)" : p.$danger ? "rgba(196,43,28,0.3)" : "rgba(var(--s-ink),0.15)")};
   }
   &:disabled { opacity: 0.4; cursor: not-allowed; }
 `;
@@ -1084,12 +1110,12 @@ const PasswordStrengthBar = styled.div`
   transition: width 0.3s ease, background-color 0.3s ease; margin-top: 4px;
 `;
 const PasswordStrengthText = styled.span`
-  font-size: 11px; color: ${(p) => p.$color || "#a0a0a0"}; font-weight: 500; margin-top: 2px;
+  font-size: 11px; color: ${(p) => p.$color || "var(--s-muted)"}; font-weight: 500; margin-top: 2px;
 `;
 
 // Footer
 const WindowFooter = styled.div`
-  background: #202024; border-top: 1px solid rgba(255,255,255,0.08);
+  background: var(--s-panel); border-top: 1px solid rgba(var(--s-ink),0.08);
   padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
   /* Телефон: угода й «Скинути сайт» одним рядком, під ними — кнопки на всю ширину */
   @media (max-width: ${MOBILE_BP}px) {
@@ -1098,14 +1124,14 @@ const WindowFooter = styled.div`
   }
 `;
 const TermsRow = styled.div`
-  display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: #c5c5c5;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--s-text-2);
   @media (max-width: ${MOBILE_BP}px) {
     flex-wrap: nowrap; gap: 6px; font-size: 12px;
     & > svg { flex-shrink: 0; }
     & > :last-child { margin-left: auto; flex-shrink: 0; }
   }
 `;
-const TermsLink = styled.span`color: #60cdff; text-decoration: underline; cursor: pointer;`;
+const TermsLink = styled.span`color: var(--s-accent); text-decoration: underline; cursor: pointer;`;
 // ── Модалка підтвердження скидання ──────────────────────────────────────────
 const confirmFadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
 const confirmPopIn = keyframes`
@@ -1124,11 +1150,11 @@ const ConfirmOverlay = styled.div`
 const ConfirmBox = styled.div`
   width: min(440px, 100%);
   padding: 22px 22px 18px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(var(--s-ink),0.12);
   border-radius: 12px;
-  background: #1c1c1f;
-  color: #f3f3f3;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.7), 0 0 1px rgba(255,255,255,0.2);
+  background: var(--s-bg);
+  color: var(--s-text);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.7), 0 0 1px rgba(var(--s-ink),0.2);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   animation: ${confirmPopIn} 0.22s cubic-bezier(0.165, 0.84, 0.44, 1) both;
   @media (prefers-reduced-motion: reduce) { animation: none; }
@@ -1140,7 +1166,7 @@ const ConfirmIcon = styled.div`
   flex: 0 0 auto;
   display: grid; place-items: center;
   width: 40px; height: 40px; border-radius: 10px;
-  background: rgba(196,43,28,0.18); color: #ff8a8a; font-size: 19px;
+  background: rgba(196,43,28,0.18); color: var(--s-red); font-size: 19px;
 `;
 const ConfirmTitle = styled.h3`
   margin: 0; font-size: 17px; font-weight: 600; line-height: 1.3;
@@ -1148,17 +1174,17 @@ const ConfirmTitle = styled.h3`
 const ConfirmList = styled.ul`
   list-style: none; margin: 0 0 14px; padding: 0;
   display: flex; flex-direction: column; gap: 8px;
-  font-size: 13px; color: #d4d4d4; line-height: 1.4;
+  font-size: 13px; color: var(--s-text-2); line-height: 1.4;
   li { display: flex; align-items: flex-start; gap: 10px; }
-  svg { flex: 0 0 auto; margin-top: 2px; color: #a0a0a0; }
+  svg { flex: 0 0 auto; margin-top: 2px; color: var(--s-muted); }
 `;
 const ConfirmNote = styled.div`
   display: flex; align-items: flex-start; gap: 10px;
   padding: 10px 12px; margin-bottom: 18px;
   border-radius: 8px;
-  background: rgba(96,205,255,0.08); border: 1px solid rgba(96,205,255,0.2);
-  font-size: 12px; color: #bfe9ff; line-height: 1.45;
-  svg { flex: 0 0 auto; margin-top: 1px; color: #60cdff; }
+  background: rgba(var(--s-accent-rgb),0.08); border: 1px solid rgba(var(--s-accent-rgb),0.2);
+  font-size: 12px; color: var(--s-accent-soft); line-height: 1.45;
+  svg { flex: 0 0 auto; margin-top: 1px; color: var(--s-accent); }
 `;
 const ConfirmActions = styled.div`
   display: flex; justify-content: flex-end; gap: 10px;
@@ -1166,7 +1192,7 @@ const ConfirmActions = styled.div`
 const ConfirmDangerButton = styled(WinButton)`
   background: #c42b1c; border-color: #c42b1c; color: #ffffff;
   &:hover:not(:disabled) { background: #d83b2b; border-color: #d83b2b; }
-  &:focus-visible { outline: 2px solid #ff8a8a; outline-offset: 2px; }
+  &:focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; }
 `;
 
 const ResetConfirmDialog = ({ onConfirm, onCancel, loading }) => {
@@ -1248,22 +1274,22 @@ const LevelButton = styled.button`
   margin-top: auto; flex-shrink: 0; box-sizing: border-box; min-width: 0;
   display: flex; align-items: center; gap: 8px; width: 100%;
   padding: 8px 8px 8px 10px; border-radius: 8px; cursor: pointer; text-align: left;
-  font: inherit; color: #ffffff;
-  background: color-mix(in srgb, var(--lvl) 9%, rgba(255,255,255,0.03));
+  font: inherit; color: var(--s-text);
+  background: color-mix(in srgb, var(--lvl) 9%, rgba(var(--s-ink),0.03));
   border: 1px solid color-mix(in srgb, var(--lvl) 32%, transparent);
   transition: background 0.15s ease, border-color 0.15s ease;
   &:hover, &[aria-expanded="true"] {
-    background: color-mix(in srgb, var(--lvl) 17%, rgba(255,255,255,0.03));
+    background: color-mix(in srgb, var(--lvl) 17%, rgba(var(--s-ink),0.03));
     border-color: color-mix(in srgb, var(--lvl) 50%, transparent);
   }
-  &:focus-visible { outline: 2px solid rgba(96,205,255,0.6); outline-offset: 2px; }
-  & > svg { margin-left: auto; flex-shrink: 0; color: #a0a0a0; font-size: 15px; }
+  &:focus-visible { outline: 2px solid rgba(var(--s-accent-rgb),0.6); outline-offset: 2px; }
+  & > svg { margin-left: auto; flex-shrink: 0; color: var(--s-muted); font-size: 15px; }
   @media (max-width: 768px) { margin-top: 0; padding: 7px 8px 7px 10px; }
 `;
 const LevelButtonText = styled.span`
   flex: 1; display: flex; flex-direction: column; min-width: 0; line-height: 1.3;
   small, b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  small { font-size: 11px; color: #8a8a90; }
+  small { font-size: 11px; color: var(--s-muted); }
   small em { font-style: normal; color: var(--lvl); }
   b { font-size: 13px; font-weight: 600; }
 `;
@@ -1271,40 +1297,40 @@ const LevelButtonText = styled.span`
 const LevelMenuBox = styled.div`
   position: fixed; z-index: 100002;
   padding: 4px; border-radius: 10px;
-  background: #2a2a2e; color: #f3f3f3;
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.6), 0 0 1px rgba(255,255,255,0.2);
+  background: var(--s-menu); color: var(--s-text);
+  border: 1px solid rgba(var(--s-ink),0.12);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6), 0 0 1px rgba(var(--s-ink),0.2);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   animation: ${confirmPopIn} 0.16s cubic-bezier(0.165, 0.84, 0.44, 1) both;
   @media (prefers-reduced-motion: reduce) { animation: none; }
 `;
 const LevelMenuHead = styled.div`
-  padding: 5px 8px 4px; font-size: 12px; font-weight: 600; color: #8a8a90;
+  padding: 5px 8px 4px; font-size: 12px; font-weight: 600; color: var(--s-muted);
 `;
 const LevelMenuItem = styled.button`
   --lvl: ${(p) => p.$color};
   display: flex; align-items: center; gap: 10px; width: 100%;
   padding: 6px 10px 6px 8px; border-radius: 8px;
-  color: #f3f3f3; font: inherit; text-align: left; cursor: pointer;
+  color: var(--s-text); font: inherit; text-align: left; cursor: pointer;
   background: ${(p) => (p.$active ? "color-mix(in srgb, var(--lvl) 12%, transparent)" : "transparent")};
   border: 1px solid ${(p) => (p.$active ? "color-mix(in srgb, var(--lvl) 60%, transparent)" : "transparent")};
   transition: background 0.15s ease, border-color 0.15s ease;
   & + & { margin-top: 1px; }
   &:hover, &:focus-visible {
     outline: none;
-    ${(p) => !p.$active && css`background: rgba(255,255,255,0.07);`}
+    ${(p) => !p.$active && css`background: rgba(var(--s-ink),0.07);`}
   }
   &:focus-visible { border-color: color-mix(in srgb, var(--lvl) 60%, transparent); }
   b { display: block; font-size: 14px; font-weight: 500; }
   b em { font-style: normal; color: var(--lvl); }
-  small { display: block; margin-top: 1px; font-size: 12px; color: #a0a0a0; line-height: 1.35; }
-  small strong { color: #d4d4d8; font-weight: 500; }
+  small { display: block; margin-top: 1px; font-size: 12px; color: var(--s-muted); line-height: 1.35; }
+  small strong { color: var(--s-text-2); font-weight: 500; }
 `;
 // Підпис під варіантами: як часто змінюються версії налаштувань
 const LevelUpdateNote = styled.div`
   margin-top: 4px; padding: 6px 8px 3px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  font-size: 12px; color: #8a8a90; line-height: 1.45;
+  border-top: 1px solid rgba(var(--s-ink),0.08);
+  font-size: 12px; color: var(--s-muted); line-height: 1.45;
 `;
 
 const LEVEL_UPDATE_NOTE = "Версії налаштувань змінюються раз на 3–6 тижнів. Чекайте на оновлення!";
@@ -1410,15 +1436,15 @@ const LevelMenu = ({ anchorRef, level, isGuest = false, onSelect, onClose }) => 
 };
 
 const OnboardingSub = styled.p`
-  margin: 4px 0 0; font-size: 13px; color: #a0a0a0; line-height: 1.45;
+  margin: 4px 0 0; font-size: 13px; color: var(--s-muted); line-height: 1.45;
 `;
 const OnboardingList = styled.div`display: flex; flex-direction: column; gap: 6px;`;
 const OnboardingOption = styled.button`
   --lvl: ${(p) => p.$color};
   display: flex; align-items: center; gap: 10px; width: 100%;
   padding: 8px 12px 8px 10px; border-radius: 10px; cursor: pointer; text-align: left;
-  font: inherit; color: #f3f3f3;
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+  font: inherit; color: var(--s-text);
+  background: rgba(var(--s-ink),0.03); border: 1px solid rgba(var(--s-ink),0.1);
   transition: background 0.15s ease, border-color 0.15s ease;
   &:hover, &:focus-visible {
     background: color-mix(in srgb, var(--lvl) 12%, transparent);
@@ -1427,8 +1453,8 @@ const OnboardingOption = styled.button`
   }
   b { font-size: 14px; font-weight: 600; line-height: 1.35; }
   b em { font-style: normal; color: var(--lvl); }
-  small { display: block; margin-top: 2px; font-size: 12.5px; color: #a0a0a0; line-height: 1.35; }
-  small strong { color: #d4d4d8; font-weight: 500; }
+  small { display: block; margin-top: 2px; font-size: 12.5px; color: var(--s-muted); line-height: 1.35; }
+  small strong { color: var(--s-text-2); font-weight: 500; }
 `;
 const OnboardingBadge = styled.span`
   display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
@@ -1467,7 +1493,7 @@ const LevelOnboarding = ({ isGuest = false, onChoose }) => {
         style={{ width: "min(500px, 100%)" }}
       >
         <ConfirmHeader style={{ alignItems: "flex-start" }}>
-          <ConfirmIcon style={{ background: "rgba(96,205,255,0.16)", color: "#60cdff" }}>
+          <ConfirmIcon style={{ background: "rgba(var(--s-accent-rgb),0.16)", color: "var(--s-accent)" }}>
             <FiLayers aria-hidden="true" />
           </ConfirmIcon>
           <div>
@@ -1507,11 +1533,11 @@ const ResetLink = styled.button`
   display: inline-flex; align-items: center; gap: 5px;
   margin-left: 6px; padding: 3px 9px;
   border: 1px solid rgba(255,107,107,0.35); border-radius: 6px;
-  background: transparent; color: #ff8a8a;
+  background: transparent; color: var(--s-red);
   font: inherit; font-size: 12px; cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  &:hover:not(:disabled) { background: rgba(196,43,28,0.25); border-color: rgba(255,107,107,0.7); color: #ffffff; }
-  &:focus-visible { outline: 2px solid #ff8a8a; outline-offset: 2px; }
+  &:hover:not(:disabled) { background: rgba(196,43,28,0.25); border-color: rgba(255,107,107,0.7); color: var(--s-text); }
+  &:focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; }
   &:disabled { opacity: 0.6; cursor: progress; }
   @media (max-width: ${MOBILE_BP}px) { margin-left: auto; white-space: nowrap; flex-shrink: 0; }
 `;
@@ -1526,16 +1552,16 @@ const FooterButtons = styled.div`
 const MusicScrollList = styled.div`
   max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
   &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-thumb { background: rgba(96,205,255,0.3); border-radius: 2px; }
+  &::-webkit-scrollbar-thumb { background: rgba(var(--s-accent-rgb),0.3); border-radius: 2px; }
 `;
 
 const TrackRow = styled.div`
   display: flex; align-items: center; gap: 8px; padding: 6px 8px;
   border-radius: 6px; cursor: pointer;
-  background: ${(p) => (p.$active ? "rgba(96,205,255,0.12)" : "transparent")};
-  border: 1px solid ${(p) => (p.$active ? "rgba(96,205,255,0.3)" : "transparent")};
+  background: ${(p) => (p.$active ? "rgba(var(--s-accent-rgb),0.12)" : "transparent")};
+  border: 1px solid ${(p) => (p.$active ? "rgba(var(--s-accent-rgb),0.3)" : "transparent")};
   transition: all 0.15s ease;
-  &:hover { background: rgba(255,255,255,0.05); }
+  &:hover { background: rgba(var(--s-ink),0.05); }
 `;
 
 const TrackImg = styled.img`
@@ -1544,13 +1570,13 @@ const TrackImg = styled.img`
 
 const TrackInfo = styled.div`flex: 1; min-width: 0;`;
 const TrackName = styled.div`
-  font-size: 12px; font-weight: 500; color: #ffffff;
+  font-size: 12px; font-weight: 500; color: var(--s-text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 `;
-const TrackStatus = styled.div`font-size: 10px; color: #a0a0a0; margin-top: 1px;`;
+const TrackStatus = styled.div`font-size: 10px; color: var(--s-muted); margin-top: 1px;`;
 
 const EqBar = styled.div`
-  width: 2px; background: #60cdff; border-radius: 1px;
+  width: 2px; background: var(--s-accent); border-radius: 1px;
   animation: ${eqBarAnim} ${(p) => p.$dur}s ease-in-out infinite;
   animation-delay: ${(p) => p.$delay}s;
 `;
@@ -1566,29 +1592,29 @@ const Equalizer = () => (
 );
 
 const ProgressBar = styled.input`
-  width: 100%; accent-color: #60cdff; cursor: pointer;
-  &::-webkit-slider-thumb { background: #60cdff; }
+  width: 100%; accent-color: var(--s-accent); cursor: pointer;
+  &::-webkit-slider-thumb { background: var(--s-accent); }
 `;
 
 const CustomSlotCard = styled.div`
-  background: ${(p) => (p.$hasFile ? "rgba(96,205,255,0.06)" : "rgba(255,255,255,0.03)")};
-  border: 1px solid ${(p) => (p.$hasFile ? "rgba(96,205,255,0.2)" : "rgba(255,255,255,0.06)")};
+  background: ${(p) => (p.$hasFile ? "rgba(var(--s-accent-rgb),0.06)" : "rgba(var(--s-ink),0.03)")};
+  border: 1px solid ${(p) => (p.$hasFile ? "rgba(var(--s-accent-rgb),0.2)" : "rgba(var(--s-ink),0.06)")};
   border-radius: 8px; padding: 10px 12px;
   display: flex; align-items: center; gap: 10px;
 `;
 
 const SlotName = styled.div`
-  flex: 1; font-size: 12px; color: #c5c5c5;
+  flex: 1; font-size: 12px; color: var(--s-text-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 `;
 const SlotActions = styled.div`display: flex; gap: 6px; flex-shrink: 0;`;
 
 const IconBtn = styled.button`
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-  color: #ffffff; width: 28px; height: 28px; border-radius: 5px;
+  background: rgba(var(--s-ink),0.06); border: 1px solid rgba(var(--s-ink),0.1);
+  color: var(--s-text); width: 28px; height: 28px; border-radius: 5px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 13px; transition: all 0.15s ease;
-  &:hover { background: ${(p) => (p.$danger ? "rgba(196,43,28,0.3)" : "#60cdff")}; color: ${(p) => (p.$danger ? "#ff6b6b" : "#000")}; }
+  &:hover { background: ${(p) => (p.$danger ? "rgba(196,43,28,0.3)" : "var(--s-accent)")}; color: ${(p) => (p.$danger ? "var(--s-red)" : "var(--s-on-accent)")}; }
   &:disabled { opacity: 0.3; cursor: not-allowed; }
 `;
 
@@ -1598,13 +1624,13 @@ const FilterGrid = styled.div`
 `;
 
 const FilterCardBtn = styled.button`
-  background: ${(p) => (p.$active ? "rgba(96,205,255,0.15)" : "rgba(255,255,255,0.04)")};
-  color: ${(p) => (p.$active ? "#60cdff" : "#e0e0e0")};
-  border: 1px solid ${(p) => (p.$active ? "#60cdff" : "rgba(255,255,255,0.1)")};
+  background: ${(p) => (p.$active ? "rgba(var(--s-accent-rgb),0.15)" : "rgba(var(--s-ink),0.04)")};
+  color: ${(p) => (p.$active ? "var(--s-accent)" : "var(--s-text)")};
+  border: 1px solid ${(p) => (p.$active ? "var(--s-accent)" : "rgba(var(--s-ink),0.1)")};
   border-radius: 6px; padding: 8px 10px; font-size: 12px; font-weight: 500;
   cursor: pointer; transition: all 0.15s ease; text-align: center;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  &:hover { background: rgba(96,205,255,0.1); border-color: rgba(96,205,255,0.3); color: #ffffff; }
+  &:hover { background: rgba(var(--s-accent-rgb),0.1); border-color: rgba(var(--s-accent-rgb),0.3); color: var(--s-text); }
 `;
 
 const PresetGrid = styled.div`
@@ -1613,7 +1639,7 @@ const PresetGrid = styled.div`
 
 const CustomPresetCard = styled.div`
   display: flex; align-items: center; gap: 4px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(122,252,255,0.2);
+  background: rgba(var(--s-ink),0.04); border: 1px solid rgba(122,252,255,0.2);
   border-radius: 6px; padding: 4px 6px; animation: ${appearScale} 0.2s ease-out forwards;
 `;
 
@@ -1659,6 +1685,25 @@ const UserSettingsModal = ({
   onLogout = () => {},
   initialTab = null,
 }) => {
+  // Тема «Параметрів» (і порталів у <body>: меню режимів, діалоги) — поки вікно відкрите
+  useEffect(() => {
+    document.body.dataset.settingsTheme = isDarkMode ? "dark" : "light";
+    return () => { delete document.body.dataset.settingsTheme; };
+  }, [isDarkMode]);
+
+  // Поки «Параметри» відкриті — без скролбару сайту. Скролиться html, а в дзеркальному
+  // режимі (App.css, html.site-mirrored) — body, тож ховаємо на обох і повертаємо як було
+  useEffect(() => {
+    const { documentElement: html, body } = document;
+    const prev = [html.style.overflow, body.style.overflow];
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prev[0];
+      body.style.overflow = prev[1];
+    };
+  }, []);
+
   const isGuest = !user;
   const dispatch = useDispatch();
   const isHideGpsCardBeta = useBeta("hideGpsCard");
@@ -2848,6 +2893,7 @@ const UserSettingsModal = ({
 
   return createPortal(
     <>
+      <SettingsThemeTokens />
       {showKatScene && (
         <NestedModalPortal>
           <KatSceneModal onClose={() => setShowKatScene(false)} />
@@ -3025,7 +3071,7 @@ const UserSettingsModal = ({
                   {/* Account Relinking & Binding Controls */}
                   <CardExpanded>
                     <CardLeft>
-                      <CardIconBox $color="#60cdff"><FiLink /></CardIconBox>
+                      <CardIconBox $color="var(--s-accent)"><FiLink /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Керування прив'язками профілю</CardTitle>
                         <CardDescription>Зміна прив'язаного Google-акаунту або пошти</CardDescription>
@@ -3035,8 +3081,8 @@ const UserSettingsModal = ({
                       {/* Google Binding */}
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
                         <div style={{ display: "flex", flexDirection: "column", minWidth: 0, maxWidth: "100%" }}>
-                          <span style={{ fontSize: "13px", fontWeight: "600", color: "#ffffff" }}>Google Акаунт</span>
-                          <span style={{ fontSize: "11px", color: isLinkedGoogle ? "#60cdff" : "#a0a0a0", display: "flex", minWidth: 0 }}>
+                          <span style={{ fontSize: "13px", fontWeight: "600", color: "var(--s-text)" }}>Google Акаунт</span>
+                          <span style={{ fontSize: "11px", color: isLinkedGoogle ? "var(--s-accent)" : "var(--s-muted)", display: "flex", minWidth: 0 }}>
                             {!hasFirebaseSession
                               ? "Хмарний акаунт неактивний — увійдіть знову"
                               : isLinkedGoogle ? (
@@ -3062,15 +3108,15 @@ const UserSettingsModal = ({
 
                       {/* Email Re-binding */}
                       {!hasPasswordProvider ? (
-                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "10px", fontSize: "11px", color: "#888" }}>
+                        <div style={{ borderTop: "1px solid rgba(var(--s-ink),0.08)", paddingTop: "10px", fontSize: "11px", color: "var(--s-muted)" }}>
                           {hasFirebaseSession
                             ? "Пошта цього профілю керується Google і змінюється в налаштуваннях Google-акаунту."
                             : "Щоб змінити пошту, вийдіть та увійдіть знову."}
                         </div>
                       ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "10px" }}>
-                        <span style={{ fontSize: "13px", fontWeight: "600", color: "#ffffff" }}>Зміна прив'язаної пошти</span>
-                        <span style={{ fontSize: "11px", color: "#888" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderTop: "1px solid rgba(var(--s-ink),0.08)", paddingTop: "10px" }}>
+                        <span style={{ fontSize: "13px", fontWeight: "600", color: "var(--s-text)" }}>Зміна прив'язаної пошти</span>
+                        <span style={{ fontSize: "11px", color: "var(--s-muted)" }}>
                           На нову пошту буде надіслано лист підтвердження. Зміна набере чинності після кліку на посилання у листі.
                         </span>
                         <div style={{ display: "flex", gap: "8px" }}>
@@ -3091,8 +3137,8 @@ const UserSettingsModal = ({
                             color: relinkStatus.startsWith("✅") ? "#4caf50"
                               : relinkStatus.startsWith("❌") ? "#f44336"
                               : relinkStatus.startsWith("⚠️") ? "#ffb300"
-                              : relinkStatus.startsWith("📝") ? "#60cdff"
-                              : "#a0a0a0",
+                              : relinkStatus.startsWith("📝") ? "var(--s-accent)"
+                              : "var(--s-muted)",
                             lineHeight: "1.5"
                           }}>{relinkStatus}</span>
                         )}
@@ -3105,7 +3151,7 @@ const UserSettingsModal = ({
                   {!isGoogleAccount && (
                     <CardExpanded>
                       <CardLeft>
-                        <CardIconBox $color="#f87171"><FiKey /></CardIconBox>
+                        <CardIconBox $color="var(--s-red)"><FiKey /></CardIconBox>
                         <CardInfo>
                           <CardTitle>Зміна пароля</CardTitle>
                           <CardDescription>Введіть новий пароль для профілю</CardDescription>
@@ -3129,7 +3175,7 @@ const UserSettingsModal = ({
                   {/* Account Deletion */}
                   <CardExpanded>
                     <CardLeft>
-                      <CardIconBox $color="#ff6b6b"><FiTrash2 /></CardIconBox>
+                      <CardIconBox $color="var(--s-red)"><FiTrash2 /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Видалити акаунт</CardTitle>
                         <CardDescription>
@@ -3138,7 +3184,7 @@ const UserSettingsModal = ({
                       </CardInfo>
                     </CardLeft>
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "#c5c5c5", cursor: "pointer" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "var(--s-text-2)", cursor: "pointer" }}>
                         <input
                           type="checkbox"
                           checked={deleteWipeDevice}
@@ -3158,7 +3204,7 @@ const UserSettingsModal = ({
                         </WinButton>
                       </div>
                       {!hasFirebaseSession && (
-                        <span style={{ fontSize: "11px", color: "#888" }}>
+                        <span style={{ fontSize: "11px", color: "var(--s-muted)" }}>
                           Хмарний акаунт неактивний — вийдіть та увійдіть знову.
                         </span>
                       )}
@@ -3167,7 +3213,7 @@ const UserSettingsModal = ({
                           fontSize: "11px",
                           color: deleteStatus.startsWith("❌") ? "#f44336"
                             : deleteStatus.startsWith("⚠️") ? "#ffb300"
-                            : "#a0a0a0",
+                            : "var(--s-muted)",
                           lineHeight: "1.5",
                         }}>{deleteStatus}</span>
                       )}
@@ -3202,7 +3248,7 @@ const UserSettingsModal = ({
 
                   <Card level="medium">
                     <CardLeft>
-                      <CardIconBox $color="#34d399"><FiCalendar /></CardIconBox>
+                      <CardIconBox $color="var(--s-green)"><FiCalendar /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Режим відображення</CardTitle>
                         <CardDescription>Час, дата або обидва разом</CardDescription>
@@ -3298,7 +3344,7 @@ const UserSettingsModal = ({
                   {/* AntiHeader Tips Toggle — тимчасово приховано
                   <Card level="medium">
                     <CardLeft>
-                      <CardIconBox $color="#fb923c"><TbSpeakerphone /></CardIconBox>
+                      <CardIconBox $color="var(--s-orange)"><TbSpeakerphone /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Підказки в хедері</CardTitle>
                         <CardDescription>
@@ -3436,14 +3482,14 @@ const UserSettingsModal = ({
                     </CardLeft>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: "13px", color: "#e0e0e0" }}>По горизонталі (ліво ↔ право)</span>
+                        <span style={{ fontSize: "13px", color: "var(--s-text)" }}>По горизонталі (ліво ↔ право)</span>
                         <ToggleWrapper onClick={() => setMirrorX(!mirrorX)}>
                           <ToggleStatusLabel $checked={mirrorX}>{mirrorX ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
                           <SwitchPill $checked={mirrorX} />
                         </ToggleWrapper>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: "13px", color: "#e0e0e0" }}>По вертикалі (верх ↕ низ)</span>
+                        <span style={{ fontSize: "13px", color: "var(--s-text)" }}>По вертикалі (верх ↕ низ)</span>
                         <ToggleWrapper onClick={() => setMirrorY(!mirrorY)}>
                           <ToggleStatusLabel $checked={mirrorY}>{mirrorY ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
                           <SwitchPill $checked={mirrorY} />
@@ -3490,7 +3536,7 @@ const UserSettingsModal = ({
                               disabled={!isHidden && siteSections.length - (hiddenSections?.length || 0) <= 2}
                               title={isHidden ? "Показати секцію" : "Приховати секцію"}
                             >
-                              {isHidden ? <FaEyeSlash style={{ color: "#ff6b6b" }} /> : <FaEye style={{ color: "#60cdff" }} />}
+                              {isHidden ? <FaEyeSlash style={{ color: "var(--s-red)" }} /> : <FaEye style={{ color: "var(--s-accent)" }} />}
                             </IconBtn>
 
                             {/* Move Up/Down */}
@@ -3563,7 +3609,7 @@ const UserSettingsModal = ({
                           const mode = newsFilterModes[key] || "hide";
                           return (
                             <FilterRow key={key}>
-                              <span style={{ fontSize: "13px", color: "#e0e0e0" }}>{label}</span>
+                              <span style={{ fontSize: "13px", color: "var(--s-text)" }}>{label}</span>
                               <Segmented role="radiogroup" aria-label={label}>
                                 <SegmentBtn
                                   type="button"
@@ -4026,7 +4072,7 @@ const UserSettingsModal = ({
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
                       {newsLayout.filter((b) => b.key !== "image").map((block) => (
                         <div key={block.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                          <span style={{ fontSize: "13px", color: "#e0e0e0" }}>
+                          <span style={{ fontSize: "13px", color: "var(--s-text)" }}>
                             {block.key === "title" ? "Заголовок новини" : "Опис новини"}
                           </span>
                           <ToggleWrapper onClick={() => toggleNewsBlockVisibility(block.key)}>
@@ -4087,7 +4133,7 @@ const UserSettingsModal = ({
                   {/* Accent color */}
                   <CardExpanded level="medium">
                     <CardLeft>
-                      <CardIconBox $color={accentColor || "#60cdff"}><GiPalette /></CardIconBox>
+                      <CardIconBox $color={accentColor || "var(--s-accent)"}><GiPalette /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Акцентний колір шапки</CardTitle>
                         <CardDescription>
@@ -4123,7 +4169,7 @@ const UserSettingsModal = ({
                   {/* Loading Strategy */}
                   <CardExpanded level="pro">
                     <CardLeft>
-                      <CardIconBox $color="#93c5fd"><FiDownloadCloud /></CardIconBox>
+                      <CardIconBox $color="var(--s-blue)"><FiDownloadCloud /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Стратегія завантаження ресурсів</CardTitle>
                         <CardDescription>Оптимізація швидкості запуску та економія трафіку</CardDescription>
@@ -4140,8 +4186,8 @@ const UserSettingsModal = ({
                           onClick={() => onSetLoadingStrategy(key)}
                           style={{
                             flex: 1, minWidth: "120px",
-                            background: loadingStrategy === key ? "rgba(96,205,255,0.15)" : undefined,
-                            borderColor: loadingStrategy === key ? "#60cdff" : undefined,
+                            background: loadingStrategy === key ? "rgba(var(--s-accent-rgb),0.15)" : undefined,
+                            borderColor: loadingStrategy === key ? "var(--s-accent)" : undefined,
                           }}
                         >
                           {label}
@@ -4198,7 +4244,7 @@ const UserSettingsModal = ({
                     </CardLeft>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: "13px", color: "#e0e0e0" }}>Увімкнути режим Декоратора</span>
+                        <span style={{ fontSize: "13px", color: "var(--s-text)" }}>Увімкнути режим Декоратора</span>
                         <ToggleWrapper onClick={() => setIsDecoratorMode(!isDecoratorMode)}>
                           <ToggleStatusLabel $checked={isDecoratorMode}>{isDecoratorMode ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
                           <SwitchPill $checked={isDecoratorMode} />
@@ -4208,14 +4254,14 @@ const UserSettingsModal = ({
                       {isDecoratorMode && (
                         <>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <span style={{ fontSize: "13px", color: "#e0e0e0" }}>Зберігати зміни після оновлення</span>
+                            <span style={{ fontSize: "13px", color: "var(--s-text)" }}>Зберігати зміни після оновлення</span>
                             <ToggleWrapper onClick={() => setIsPersistent(!isPersistent)}>
                               <ToggleStatusLabel $checked={isPersistent}>{isPersistent ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
                               <SwitchPill $checked={isPersistent} />
                             </ToggleWrapper>
                           </div>
 
-                          <div style={{ fontSize: "12px", fontWeight: "600", color: "#60cdff", marginTop: "4px" }}>
+                          <div style={{ fontSize: "12px", fontWeight: "600", color: "var(--s-accent)", marginTop: "4px" }}>
                             Версія Декоратора (кожна зберігає свої окремі зміни)
                           </div>
                           <div style={{ display: "flex", gap: "6px" }}>
@@ -4223,28 +4269,28 @@ const UserSettingsModal = ({
                               <WinButton
                                 key={i}
                                 onClick={() => switchPreset(i)}
-                                style={{ flex: 1, outline: activePreset === i ? "2px solid #60cdff" : "none" }}
+                                style={{ flex: 1, outline: activePreset === i ? "2px solid var(--s-accent)" : "none" }}
                               >
                                 Пресет {i + 1}
                               </WinButton>
                             ))}
                           </div>
 
-                          <div style={{ fontSize: "12px", fontWeight: "600", color: "#60cdff", marginTop: "4px" }}>
+                          <div style={{ fontSize: "12px", fontWeight: "600", color: "var(--s-accent)", marginTop: "4px" }}>
                             Журнал змін ({changeLog.length})
                           </div>
 
                           {changeLog.length > 0 ? (
                             <div style={{ maxHeight: "140px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px" }}>
                               {changeLog.map((log) => (
-                                <div key={log.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", padding: "4px 8px", borderRadius: "4px", fontSize: "11px" }}>
-                                  <span><b style={{ color: "#60cdff" }}>{log.tagName}</b> {log.property}: {log.newValue}</span>
+                                <div key={log.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(var(--s-ink),0.04)", padding: "4px 8px", borderRadius: "4px", fontSize: "11px" }}>
+                                  <span><b style={{ color: "var(--s-accent)" }}>{log.tagName}</b> {log.property}: {log.newValue}</span>
                                   <WinButton style={{ padding: "2px 6px", fontSize: "10px" }} onClick={() => undoChange(log.id)}>Відмінити</WinButton>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <span style={{ fontSize: "11px", color: "#777", fontStyle: "italic" }}>Змін ще немає</span>
+                            <span style={{ fontSize: "11px", color: "var(--s-muted)", fontStyle: "italic" }}>Змін ще немає</span>
                           )}
 
                           {changeLog.length > 0 && (
@@ -4609,17 +4655,17 @@ const UserSettingsModal = ({
                       </CardLeft>
                       <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "4px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <span style={{ fontSize: "12px", color: "#a0a0a0", minWidth: "90px" }}>Гучність: {Math.round(bgMusicVolume * 100)}%</span>
+                          <span style={{ fontSize: "12px", color: "var(--s-muted)", minWidth: "90px" }}>Гучність: {Math.round(bgMusicVolume * 100)}%</span>
                           <ProgressBar type="range" min="0" max="1" step="0.01" value={bgMusicVolume}
                             onChange={(e) => setBgMusicVolume(parseFloat(e.target.value))} style={{ flex: 1 }} />
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <span style={{ fontSize: "12px", color: "#a0a0a0", minWidth: "90px" }}>Швидкість: {bgMusicSpeed}x</span>
+                          <span style={{ fontSize: "12px", color: "var(--s-muted)", minWidth: "90px" }}>Швидкість: {bgMusicSpeed}x</span>
                           <ProgressBar type="range" min="0.5" max="2" step="0.05" value={bgMusicSpeed}
                             onChange={(e) => applySpeedChange(parseFloat(e.target.value))} style={{ flex: 1 }} />
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <span style={{ fontSize: "12px", color: "#a0a0a0", minWidth: "90px" }}>Гучність SFX: {Math.round(sfxVolume * 100)}%</span>
+                          <span style={{ fontSize: "12px", color: "var(--s-muted)", minWidth: "90px" }}>Гучність SFX: {Math.round(sfxVolume * 100)}%</span>
                           <ProgressBar type="range" min="0" max="1" step="0.01" value={sfxVolume}
                             onChange={(e) => setSfxVolume(parseFloat(e.target.value))} style={{ flex: 1 }} />
                         </div>
@@ -4640,7 +4686,7 @@ const UserSettingsModal = ({
                         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                           {["loop", "order"].map((m) => (
                             <WinButton key={m} onClick={() => setBgMusicMode(m)}
-                              style={{ background: bgMusicMode === m ? "rgba(96,205,255,0.15)" : undefined, borderColor: bgMusicMode === m ? "#60cdff" : undefined }}>
+                              style={{ background: bgMusicMode === m ? "rgba(var(--s-accent-rgb),0.15)" : undefined, borderColor: bgMusicMode === m ? "var(--s-accent)" : undefined }}>
                               <FiRepeat /> {m === "loop" ? "Повтор" : "Порядок"}
                             </WinButton>
                           ))}
@@ -4657,7 +4703,7 @@ const UserSettingsModal = ({
                     <div style={{ display: "flex", gap: "4px", padding: "4px 0" }}>
                       {["library", "custom"].map((t) => (
                         <WinButton key={t} onClick={() => setMusicTab(t)}
-                          style={{ background: musicTab === t ? "rgba(96,205,255,0.15)" : undefined, borderColor: musicTab === t ? "#60cdff" : undefined }}>
+                          style={{ background: musicTab === t ? "rgba(var(--s-accent-rgb),0.15)" : undefined, borderColor: musicTab === t ? "var(--s-accent)" : undefined }}>
                           {t === "library" ? <><FiList /> Бібліотека</> : <><FiUpload /> Власні треки</>}
                         </WinButton>
                       ))}
@@ -4666,7 +4712,7 @@ const UserSettingsModal = ({
                     {musicTab === "library" && (
                       <CardExpanded>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                          <FiSearch style={{ color: "#a0a0a0" }} />
+                          <FiSearch style={{ color: "var(--s-muted)" }} />
                           <WinInput placeholder="Пошук треку..." value={libSearch} onChange={(e) => setLibSearch(e.target.value)} style={{ maxWidth: "280px" }} />
                         </div>
                         <MusicScrollList>
@@ -4685,8 +4731,8 @@ const UserSettingsModal = ({
                               >
                                 {track.image
                                   ? <TrackImg src={track.image} alt={track.name} />
-                                  : <div style={{ width: 32, height: 32, background: track.isCustom ? "rgba(96,205,255,0.1)" : "rgba(167,139,250,0.1)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                      {track.isCustom ? <FiUpload style={{ color: "#60cdff", fontSize: "14px" }} /> : <FiMusic style={{ color: "#a78bfa", fontSize: "14px" }} />}
+                                  : <div style={{ width: 32, height: 32, background: track.isCustom ? "rgba(var(--s-accent-rgb),0.1)" : "rgba(167,139,250,0.1)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                      {track.isCustom ? <FiUpload style={{ color: "var(--s-accent)", fontSize: "14px" }} /> : <FiMusic style={{ color: "#a78bfa", fontSize: "14px" }} />}
                                     </div>
                                 }
                                 <TrackInfo>
@@ -4701,7 +4747,7 @@ const UserSettingsModal = ({
                                     onClick={(e) => { e.stopPropagation(); toggleTrackHidden(track, isActive); }}
                                     title={track.hidden ? "Повернути в чергу" : "Пропускати в режимі «Порядок»"}
                                   >
-                                    {track.hidden ? <FaEyeSlash style={{ color: "#ff6b6b" }} /> : <FaEye style={{ color: "#60cdff" }} />}
+                                    {track.hidden ? <FaEyeSlash style={{ color: "var(--s-red)" }} /> : <FaEye style={{ color: "var(--s-accent)" }} />}
                                   </IconBtn>
                                 )}
                               </TrackRow>
@@ -4724,10 +4770,10 @@ const UserSettingsModal = ({
                           {(customTracks.length < MAX_CUSTOM_TRACKS ? [...customTracks, null] : customTracks).map((track, i) => (
                             <CustomSlotCard key={i} $hasFile={!!track?.file}>
                               {track?.file
-                                ? <div style={{ width: 28, height: 28, background: "rgba(96,205,255,0.1)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}><FiMusic style={{ color: "#60cdff", fontSize: "13px" }} /></div>
-                                : <div style={{ width: 28, height: 28, background: "rgba(255,255,255,0.04)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#555", fontSize: "12px" }}>{i + 1}</span></div>
+                                ? <div style={{ width: 28, height: 28, background: "rgba(var(--s-accent-rgb),0.1)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}><FiMusic style={{ color: "var(--s-accent)", fontSize: "13px" }} /></div>
+                                : <div style={{ width: 28, height: 28, background: "rgba(var(--s-ink),0.04)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "var(--s-faint)", fontSize: "12px" }}>{i + 1}</span></div>
                               }
-                              <SlotName>{track?.name || <span style={{ color: "#555" }}>Додати трек</span>}</SlotName>
+                              <SlotName>{track?.name || <span style={{ color: "var(--s-faint)" }}>Додати трек</span>}</SlotName>
                               <SlotActions>
                                 <IconBtn onClick={() => { activeSlotRef.current = i; fileInputRef.current.click(); }} title="Завантажити">
                                   <FiUpload />
@@ -4849,7 +4895,7 @@ const UserSettingsModal = ({
           {/* ── Footer ─────────────────────────────────────────────────── */}
           <WindowFooter>
             <TermsRow>
-              <FiInfo style={{ color: "#60cdff" }} />
+              <FiInfo style={{ color: "var(--s-accent)" }} />
               <span>
                 Ви погодились з{" "}
                 <TermsLink onClick={() => setShowTerms(true)}>Угодою</TermsLink>

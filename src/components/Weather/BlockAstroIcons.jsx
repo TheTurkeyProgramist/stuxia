@@ -77,23 +77,23 @@ export const MoonPhaseIcon = ({ phase = 0, size = 22 }) => {
 const ScaleTile = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 6px 8px;
-  margin-top: 2px;
+  gap: 2px;
+  padding: 4px 8px;
+  margin-top: 0;
   box-sizing: border-box;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   font-size: 11px;
-  line-height: 1.3;
+  line-height: 1.25;
 `;
 const ScaleHead = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-weight: 700;
   font-size: 12px;
   svg {
-    font-size: 22px;
+    font-size: 18px;
     flex-shrink: 0;
   }
 `;
@@ -105,7 +105,7 @@ const ScaleTimes = styled.div`
 const Track = styled.div`
   position: relative;
   height: 3px;
-  margin: 4px 4px 2px;
+  margin: 3px 4px 1px;
   border-radius: 2px;
   background: rgba(255, 255, 255, 0.18);
 `;

@@ -13,6 +13,7 @@ import {
   BiCurrentLocation,
   BiTrash,
   BiFullscreen,
+  BiExitFullscreen,
   BiDownload,
   BiCheck,
   BiX,
@@ -21,6 +22,9 @@ import {
   BiTrendingUp,
   BiPalette,
   BiChevronDown,
+  BiChevronLeft,
+  BiChevronRight,
+  BiHistory,
   BiLowVision,
   BiVolumeFull,
   BiStopCircle,
@@ -89,29 +93,14 @@ import { formatClock, getTwilightData, getDayLength, getMoonDetails, getDayLengt
 import { isFoggy } from "../../utils/dailyAggregates";
 import { AnimWind, AnimSpin, AnimHourglass, AnimTwinkle, AnimCompass, MoonPhaseIcon, AstroScale } from "./BlockAstroIcons.jsx";
 import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, CloudWithTrend, getCloudTrend, getSnowStyle } from "./AnimatedWeatherIcons.jsx"; //Анімовані іконки
-import { WeatherIcon, stripEmoji } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
+import { WeatherIcon, stripEmoji, ICON_HALO_FILTER } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
 import { BiWind } from "react-icons/bi"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
 import { MdOutlineSpeed, MdClose, MdStraighten, MdNotificationsActive, MdNotificationsOff, MdAutorenew } from "react-icons/md"; //Тиск
 import { isWeatherAlertsEnabled, isCardWeatherAlertsOn, setCardWeatherAlerts } from "../../utils/emergencyAlerts";
 import { FaSnowflake, FaSun, FaExclamationTriangle } from "react-icons/fa"; //Іконки
 import { GiSunRadiations, GiSnowing, GiWaterRecycling, GiIceCube } from "react-icons/gi";//Сонячна радіація
-import {
-  useFloating,
-  autoUpdate,
-  offset,
-  flip,
-  shift,
-  arrow,                 
-  useHover,
-  useFocus,
-  useDismiss,
-  useRole,
-  useInteractions,
-  useTransitionStyles,  
-  FloatingArrow,         
-} from "@floating-ui/react";
-import { MirrorFloatingPortal, MirrorText } from "../Tooltip/MirrorSafe";
+import { Tooltip } from "../Tooltip/Tooltip";
 import { createChartWeatherIcon, getChartIconKey, createChartWindArrow, valueLabelsPlugin } from "../../utils/chartWeatherIcon";
 
 // Кеш canvas-іконок для точок графіків: картка рендериться щосекунди, і без кешу
@@ -128,104 +117,7 @@ const Line = (props) => (
     <LazyLineChart {...props} />
   </Suspense>
 );
-const TooltipBox = styled.div`
-  background-color: ${(props) => (props.$isDarkMode ? "#0c0c0cbf" : "#fdff98bb")};
-  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
-  border: 2px solid #00afce;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, ${(props) => (props.$isDarkMode ? "0.5" : "0.15")});
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 9px;
-  z-index: 10000;
-  pointer-events: none;
-`;
 
-export const Tooltip = ({
-  content,
-  children,
-  placement = "bottom",
-  isDarkMode = true,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const arrowRef = useRef(null);
-const { refs, floatingStyles, context } = useFloating({
-    open: isOpen,
-    onOpenChange: setIsOpen,
-    placement,
-    strategy: "fixed",
-    transform: false, 
-    whileElementsMounted: autoUpdate,
-    middleware: [
-      offset(8),
-      flip(),
-      shift({ padding: 5 }),
-      arrow({ element: arrowRef }),
-    ],
-  });
-  const { isMounted, styles: transitionStyles } = useTransitionStyles(context, {
-    duration: 150,
-    initial: {
-      opacity: 0,
-      transform: "scale(0.9)",
-    },
-    open: {
-      opacity: 1,
-      transform: "scale(1)",
-    },
-  });
-
-  const hover = useHover(context, { move: false });
-  const focus = useFocus(context);
-  const dismiss = useDismiss(context);
-  const role = useRole(context, { role: "tooltip" });
-
-  const { getReferenceProps, getFloatingProps } = useInteractions([
-    hover,
-    focus,
-    dismiss,
-    role,
-  ]);
-
-  if (!content) return children;
-
-  const bgTheme = isDarkMode ? "#111111" : "#ffffff";
-  const borderTheme = "#00acb9";
-
-  return (
-    <>
-      <span
-        ref={refs.setReference}
-        {...getReferenceProps({
-          onMouseLeave: () => setIsOpen(false),
-          onClick: () => setIsOpen(false),
-        })}
-        style={{ display: "inline-flex" }}
-      >
-        {children}
-      </span>
-      {isMounted && (
-        <MirrorFloatingPortal>
-          <TooltipBox
-            ref={refs.setFloating}
-            $isDarkMode={isDarkMode}
-            style={{ ...floatingStyles, ...transitionStyles }}
-            {...getFloatingProps()}
-          >
-            <MirrorText>{content}</MirrorText>
-            <FloatingArrow
-              ref={arrowRef}
-              context={context}
-              fill={bgTheme}
-              stroke={borderTheme}
-              strokeWidth={1}
-            />
-          </TooltipBox>
-        </MirrorFloatingPortal>
-      )}
-    </>
-  );
-};
 const fadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
 const CustomTimersDisplay = ({ customDays, cardId }) => {
   const [now, setNow] = useState(new Date());
@@ -365,15 +257,16 @@ const ActionButtons = styled.div`
   align-items: stretch;
   gap: 4px;
   button {
-    background: #333;
+    background: ${(props) => (props.$isDarkMode === false ? "#e5e7eb" : "#333")};
     color: #fff;
     border: none;
     padding: 3px;
-    border-radius: 2px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 13px;
+    transition: background 0.2s ease;
     &:hover {
-      background: #555;
+      background: ${(props) => (props.$isDarkMode === false ? "#d1d5db" : "#555")};
     }
   }
 `;
@@ -444,6 +337,12 @@ const MainBannerArea = styled.div`
 const TabContentArea = styled.div`
   display: flex;
   flex-direction: column;
+  /* Власний вертикальний скролбар стоїть на темному фото-фоні картки — завжди білий.
+     Вкладеним (горизонтальні в білих картках) — колір під тему з App.css */
+  scrollbar-color: rgba(255, 255, 255, 0.85) transparent;
+  & > * {
+    scrollbar-color: var(--inner-scroll-thumb) transparent;
+  }
   @media (max-width: 767px) {
     flex: 1;
     min-height: 0;
@@ -762,21 +661,102 @@ const ChartInnerContainer = styled.div`
   height: ${(props) => props.$height || "200px"};
 `;
 
-const chartActionButtonStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  // Висота як у підказки вітру (WindCompassHint) — один рівень у рядку легенди
-  boxSizing: "border-box",
-  width: "34px",
-  height: "34px",
-  padding: 0,
-  border: "1px solid rgba(0, 190, 235, 0.7)",
-  borderRadius: "4px",
-  background: "rgba(0, 0, 0, 0.35)",
-  color: "#00bfff",
-  cursor: "pointer",
-};
+// Кнопки дій графіка: стиль, цифри, тренд, повний екран, скріншот.
+// aria-pressed="true" — увімкнений перемикач (суцільна блакитна заливка).
+// Світла тема — білі, як чипи легенди («Температура», «Вітер»); темна — темне скло.
+const chartBtnTheme = (dark) =>
+  dark
+    ? {
+        bg: "rgba(8, 14, 22, 0.55)",
+        border: "rgba(0, 190, 235, 0.45)",
+        color: "#5fd4ff",
+        hoverBg: "rgba(0, 190, 235, 0.18)",
+        hoverBorder: "rgba(0, 190, 235, 0.95)",
+        hoverColor: "#a6ecff",
+        offColor: "rgba(95, 212, 255, 0.6)",
+        glow: "rgba(0, 191, 255, 0.45)",
+      }
+    : {
+        bg: "#ffffff",
+        border: "rgba(0, 150, 210, 0.55)",
+        color: "#0778b0",
+        hoverBg: "#e8f6fd",
+        hoverBorder: "#0aa0e0",
+        hoverColor: "#05628f",
+        offColor: "rgba(7, 120, 176, 0.55)",
+        glow: "rgba(0, 150, 210, 0.3)",
+      };
+
+const ChartActionBtn = styled.button`
+  --btn-bg: ${(p) => chartBtnTheme(p.$isDarkMode).bg};
+  --btn-border: ${(p) => chartBtnTheme(p.$isDarkMode).border};
+  --btn-color: ${(p) => chartBtnTheme(p.$isDarkMode).color};
+  --btn-hover-bg: ${(p) => chartBtnTheme(p.$isDarkMode).hoverBg};
+  --btn-hover-border: ${(p) => chartBtnTheme(p.$isDarkMode).hoverBorder};
+  --btn-hover-color: ${(p) => chartBtnTheme(p.$isDarkMode).hoverColor};
+  --btn-off-color: ${(p) => chartBtnTheme(p.$isDarkMode).offColor};
+  --btn-glow: ${(p) => chartBtnTheme(p.$isDarkMode).glow};
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  /* Висота як у підказки вітру (WindCompassHint) — один рівень у рядку легенди */
+  box-sizing: border-box;
+  height: 34px;
+  min-width: 34px;
+  padding: ${(props) => (props.$wide ? "0 8px" : "0")};
+  border: 1px solid var(--btn-border);
+  border-radius: 8px;
+  background: var(--btn-bg);
+  color: var(--btn-color);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.1s ease;
+
+  svg {
+    width: 17px;
+    height: 17px;
+    max-width: none;
+    flex: none;
+  }
+
+  &:hover {
+    background: var(--btn-hover-bg);
+    border-color: var(--btn-hover-border);
+    color: var(--btn-hover-color);
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 191, 255, 0.9);
+  }
+
+  /* вимкнений перемикач — приглушений, щоб різниця з увімкненим була очевидна */
+  &[aria-pressed="false"] {
+    color: var(--btn-off-color);
+  }
+
+  &[aria-pressed="true"] {
+    background: #00bfff;
+    border-color: #00bfff;
+    color: #04202b;
+    box-shadow: 0 0 10px var(--btn-glow);
+  }
+
+  &[aria-pressed="true"]:hover {
+    background: #3fd0ff;
+    border-color: #3fd0ff;
+  }
+`;
 
 const AiSummaryBox = styled(motion.div)`
   /* Під тему: темна — чорний фон, світла — білий; рамка нейтральна */
@@ -1013,7 +993,6 @@ const PillCheckbox = styled.label`
   height: 36px;
   box-sizing: border-box;
   padding: 0 12px 0 8px;
-  border-radius: 10px;
   border: 1px solid
     ${(p) => (p.$checked ? "#a970ff" : p.$isDarkMode ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.2)")};
   background: ${(p) =>
@@ -1079,6 +1058,9 @@ const SettingsDropdownMenu = styled.div`
   max-width: 100%;
   min-width: 100%;
   background: ${(props) => (props.$isDarkMode ? "#222" : "#fff")};
+  /* Пункти беруть колір і межі звідси — меню завжди знає тему */
+  color: ${(props) => (props.$isDarkMode ? "#f1eeee" : "#1f2937")};
+  --settings-item-border: ${(props) => (props.$isDarkMode ? "#020202" : "#e5e7eb")};
   border: 1px solid #ffb36c;
   border-radius: 8px 8px 0 0;
   display: grid;
@@ -1160,8 +1142,8 @@ const SettingsDropdownItem = styled.button`
   background: transparent;
   font-size: 16px;
  gap: 2px;
-  color: ${(props) => (props.$isDarkMode ? "#020202" : "#f1eeee")};
-border: 1px solid ${(props) => (props.$isDarkMode ? "#020202" : "#f1eeee")};
+  color: inherit;
+  border: 1px solid var(--settings-item-border, #f1eeee);
   @media (max-width: 767px) {
     padding: 4px 4px;
     gap: 2px;
@@ -1287,15 +1269,15 @@ const LocationHintText = styled.p`
   gap: 3px;
   margin: 2px 0 0;
   font-size: 11px;
-  color: #fcfcfc;
+  color: ${(props) => (props.$isDarkMode ? "#fcfcfc" : "#555")};
   opacity: 0.85;
   svg {
     font-size: 13px;
     flex-shrink: 0;
   }
 `;
-const LocationHint = () => (
-  <LocationHintText>
+const LocationHint = ({ isDarkMode }) => (
+  <LocationHintText $isDarkMode={isDarkMode}>
     Натисніть <BiCog aria-label="шестерню" /> для своєї локації
   </LocationHintText>
 );
@@ -1303,7 +1285,7 @@ const LocationHint = () => (
 const BlockStatGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
+  gap: 3px;
   /* Планшет і комп'ютер: плитки по 4 в ряд; неповний останній ряд розтягується на всю ширину */
   @media (min-width: 768px) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1324,23 +1306,28 @@ const BlockStatTile = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
-  min-height: 56px;
-  padding: 5px 4px;
+  min-height: 44px;
+  padding: 3px 3px;
   box-sizing: border-box;
   text-align: center;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   svg {
-    font-size: 22px;
+    font-size: 19px;
     flex-shrink: 0;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
+  }
+  /* Світла тема: темний ореол навколо іконки (перший дочірній) — бліді кольори
+     (сніг, хмарність, видимість) інакше зливаються з білим фоном */
+  & > :first-child {
+    filter: ${(p) => (p.$halo ? ICON_HALO_FILTER : "none")};
   }
 `;
 const BlockStatLabel = styled.div`
   font-size: 10px;
-  line-height: 1.2;
+  line-height: 1.15;
   opacity: 0.75;
 `;
 const BlockStatValue = styled.div`
@@ -1353,6 +1340,70 @@ const BlockStatValue = styled.div`
     font-size: 12px;
   }
 `;
+// Блоки 16 днів: "all" — усі в ряд, "2" — по 2 дні на сторінку
+const DAILY_BLOCKS_PAGING_KEY = "daily_blocks_paging";
+const DAILY_BLOCKS_GAP = 10; // px між картками днів
+
+// Панель гортання блоків 16 днів: ‹ 15.11 – 16.11 · 1 з 8 ›
+const DailyPager = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: ${(p) => (p.$isDarkMode ? "#fff" : "#1a1a1a")};
+
+  small {
+    font-weight: 500;
+    opacity: 0.7;
+  }
+
+  button {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.15)")};
+    background: ${(p) => (p.$isDarkMode ? "rgba(20, 20, 28, 0.85)" : "rgba(255, 255, 255, 0.95)")};
+    color: inherit;
+    font-size: 20px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+
+    &:hover:not(:disabled) {
+      border-color: #a970ff;
+      background: ${(p) => (p.$isDarkMode ? "rgba(138, 43, 226, 0.3)" : "rgba(138, 43, 226, 0.12)")};
+    }
+    &:focus-visible {
+      outline: 2px solid #a970ff;
+      outline-offset: 1px;
+    }
+    &:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    svg {
+      max-width: none;
+    }
+    /* «‹ Вчора» — кнопка з підписом */
+    &.wide {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      width: auto;
+      padding: 0 10px 0 4px;
+      font-size: 13px;
+      font-weight: 700;
+      svg {
+        font-size: 20px;
+      }
+    }
+  }
+`;
+
 // Плагіни Chart.js для основних графіків (стабільний масив — щоб графік не перестворювався)
 const CHART_PLUGINS = [valueLabelsPlugin];
 
@@ -1581,6 +1632,52 @@ const WeatherCardComponent = ({
     const all = card.daily16 || card.daily || [];
     return showPastDay ? all : all.filter((d) => !(d?.fullDate && d.fullDate < todayIso));
   }, [card.daily16, card.daily, showPastDay, todayIso]);
+  // Чи є в даних учорашній день (інакше перемикач «вчора» не показуємо)
+  const hasPastDay = (card.daily16 || card.daily || []).some(isPastDay);
+
+  // Блоки 16 днів: «all» — усі в ряд із прокруткою, «2» — по 2 дні на сторінку з гортанням.
+  // Вибір спільний для всіх карток і запам'ятовується
+  const dailyBlocksPaging = usePrefValue(DAILY_BLOCKS_PAGING_KEY, "all") === "2" ? 2 : 0;
+  const [dailyBlocksPage, setDailyBlocksPage] = useState(0);
+  const dailyBlocksPages = dailyBlocksPaging ? Math.max(1, Math.ceil(dailyList.length / dailyBlocksPaging)) : 1;
+  const safeDailyBlocksPage = Math.min(dailyBlocksPage, dailyBlocksPages - 1);
+  const dailyBlocksScrollRef = useRef(null);
+  const dailyBlocksScrollRaf = useRef(0);
+
+  // Ширина однієї «сторінки» (пари карток із проміжками) у пікселях прокрутки
+  const getDailyBlocksStep = () => {
+    const firstCard = dailyBlocksScrollRef.current?.firstElementChild?.firstElementChild;
+    return firstCard ? (firstCard.offsetWidth + DAILY_BLOCKS_GAP) * dailyBlocksPaging : 0;
+  };
+
+  // Стрілки: плавно прокручуємо до потрібної пари днів
+  const goToDailyBlocksPage = (page) => {
+    const target = Math.max(0, Math.min(page, dailyBlocksPages - 1));
+    setDailyBlocksPage(target);
+    const el = dailyBlocksScrollRef.current;
+    if (!el) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollTo({ left: target * getDailyBlocksStep(), behavior: reduce ? "auto" : "smooth" });
+  };
+
+  // Прокрутка мишею/пальцем — номер сторінки й дати в підписі встигають за нею
+  const handleDailyBlocksScroll = () => {
+    cancelAnimationFrame(dailyBlocksScrollRaf.current);
+    dailyBlocksScrollRaf.current = requestAnimationFrame(() => {
+      const el = dailyBlocksScrollRef.current;
+      const step = getDailyBlocksStep();
+      if (!el || !step) return;
+      const atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 2;
+      setDailyBlocksPage(atEnd ? dailyBlocksPages - 1 : Math.round(el.scrollLeft / step));
+    });
+  };
+
+  // Перемкнули режим або вчорашній день — починаємо з першої пари
+  useEffect(() => {
+    setDailyBlocksPage(0);
+    dailyBlocksScrollRef.current?.scrollTo({ left: 0 });
+  }, [dailyBlocksPaging, showPastDay]);
+  useEffect(() => () => cancelAnimationFrame(dailyBlocksScrollRaf.current), []);
 
   // Астрономія для блоків 16-денного прогнозу (рахується лише при зміні даних картки)
   const dailyAstro = useMemo(
@@ -2013,101 +2110,81 @@ const WeatherCardComponent = ({
   // а коли шапка перенеслась на 2 ряди — у рядку легенди
   const renderTrendButton = () => (
     <Tooltip content={showDailyTrend ? `Сховати лінію тренду. ${dailyTrendText}` : "Показати лінію тренду температури"} isDarkMode={isDarkMode}>
-    <button
+    <ChartActionBtn $isDarkMode={isDarkMode}
       type="button"
       onClick={toggleDailyTrend}
       aria-label={showDailyTrend ? "Сховати лінію тренду" : "Показати лінію тренду"}
       aria-pressed={showDailyTrend}
-      style={{
-        ...chartActionButtonStyle,
-        width: "auto",
-        gap: "4px",
-        padding: "0 6px",
-        fontSize: "11px",
-        fontWeight: "bold",
-        background: showDailyTrend ? "rgba(0, 190, 235, 0.25)" : chartActionButtonStyle.background,
-      }}
+      $wide={showDailyTrend}
     >
-      <BiTrendingUp size={16} />
+      <BiTrendingUp />
       {showDailyTrend && dailyTrendBadge}
-    </button>
+    </ChartActionBtn>
     </Tooltip>
   );
 
-  const renderChartActions = (chartKey, panelRef, trendInLegend = false) => (
+  const renderChartActions = (chartKey, panelRef, trendInLegend = false) => {
+    // Швидко ввімкнути/вимкнути цифри біля точок для всіх ліній цього графіка
+    const labelsOn = Object.values(lineStyles[chartKey]).some((s) => s.labels === true);
+    const isFullscreen = fullscreenChart === chartKey;
+    return (
     <div
       style={{
         display: "flex",
-        gap: "3px",
+        gap: "2px",
         alignItems: "center",
         flexShrink: 0,
       }}
     >
       <Tooltip content="Стиль ліній графіка" isDarkMode={isDarkMode}>
-      <button
+      <ChartActionBtn $isDarkMode={isDarkMode}
         type="button"
         onClick={() => setStyleModalChart(chartKey)}
         aria-label="Стиль ліній графіка"
-        style={chartActionButtonStyle}
       >
-        <BiPalette size={16} />
-      </button>
+        <BiPalette />
+      </ChartActionBtn>
       </Tooltip>
-      {(() => {
-        // Швидко ввімкнути/вимкнути цифри біля точок для всіх ліній цього графіка
-        const labelsOn = Object.values(lineStyles[chartKey]).some((s) => s.labels === true);
-        return (
-          <Tooltip content={labelsOn ? "Сховати цифри біля точок" : "Показати цифри біля точок"} isDarkMode={isDarkMode}>
-            <button
-              type="button"
-              onClick={() => applyLineStyleToAll(chartKey, { labels: !labelsOn })}
-              aria-label={labelsOn ? "Сховати цифри біля точок" : "Показати цифри біля точок"}
-              aria-pressed={labelsOn}
-              style={{
-                ...chartActionButtonStyle,
-                width: "auto",
-                padding: "0 6px",
-                fontSize: "11px",
-                fontWeight: "bold",
-                textDecoration: labelsOn ? "none" : "line-through",
-                background: labelsOn ? "rgba(0, 190, 235, 0.25)" : chartActionButtonStyle.background,
-              }}
-            >
-              123
-            </button>
-          </Tooltip>
-        );
-      })()}
+      <Tooltip content={labelsOn ? "Сховати цифри біля точок" : "Показати цифри біля точок"} isDarkMode={isDarkMode}>
+        <ChartActionBtn $isDarkMode={isDarkMode}
+          type="button"
+          onClick={() => applyLineStyleToAll(chartKey, { labels: !labelsOn })}
+          aria-label={labelsOn ? "Сховати цифри біля точок" : "Показати цифри біля точок"}
+          aria-pressed={labelsOn}
+          $wide
+        >
+          123
+        </ChartActionBtn>
+      </Tooltip>
       {chartKey === "daily" && !trendInLegend && renderTrendButton()}
-      <Tooltip content={fullscreenChart === chartKey ? "Вийти з повного екрана" : "На весь екран"} isDarkMode={isDarkMode}>
-      <button
+      <Tooltip content={isFullscreen ? "Вийти з повного екрана" : "На весь екран"} isDarkMode={isDarkMode}>
+      <ChartActionBtn $isDarkMode={isDarkMode}
         type="button"
         onClick={() => toggleChartFullscreen(chartKey, panelRef)}
-        aria-label={fullscreenChart === chartKey ? "Вийти з повного екрана" : "На весь екран"}
-        style={chartActionButtonStyle}
+        aria-label={isFullscreen ? "Вийти з повного екрана" : "На весь екран"}
       >
-        <BiFullscreen size={16} />
-      </button>
+        {isFullscreen ? <BiExitFullscreen /> : <BiFullscreen />}
+      </ChartActionBtn>
       </Tooltip>
       <Tooltip content="Завантажити скріншот повноекранного графіка" isDarkMode={isDarkMode}>
-      <button
+      <ChartActionBtn $isDarkMode={isDarkMode}
         type="button"
         onClick={() => downloadChartScreenshot(chartKey, panelRef)}
         aria-label="Завантажити скріншот повноекранного графіка"
-        style={chartActionButtonStyle}
       >
-        <BiDownload size={16} />
-      </button>
+        <BiDownload />
+      </ChartActionBtn>
       </Tooltip>
     </div>
-  );
+    );
+  };
 
   // extra — додатковий елемент у кінці легенди (кнопка тренду, коли шапка в 2 ряди)
   const renderChartLegend = (items, extra = null) => (
     <div
       style={{
         display: "flex",
-        gap: "3px",
+        gap: "2px",
         flexWrap: "wrap",
         // Не стискаємо легенду — місце віддає підказка вітру (обрізається трикрапкою),
         // інакше «Вітер» переносився на другий рядок
@@ -2199,20 +2276,22 @@ const WeatherCardComponent = ({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: "3px",
+    gap: "2px",
     flexWrap: "wrap",
   };
 
-  // Права група шапки: підказка-компас + кнопки дій (переходить на 2-й ряд цілком)
+  // Права група шапки: підказка-компас + кнопки дій (переходить на 2-й ряд цілком).
+  // flex-basis 0 + мінімальна ширина «по вмісту»: перенос стається лише тоді, коли
+  // не влазять кнопки й стиснута підказка, а не підказка на всю довжину в один рядок.
   const renderChartHeaderTools = (chartKey, panelRef, middle = null, trendInLegend = false) => (
     <div
       style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-end",
-        gap: "3px",
-        flex: "1 1 auto",
-        minWidth: 0,
+        gap: "2px",
+        flex: "1 1 0",
+        minWidth: "min-content",
       }}
     >
       {middle}
@@ -2322,6 +2401,11 @@ const WeatherCardComponent = ({
     );
     setIsBgModalOpen(false);
   };
+
+  // Колір пункту GPS: на світлому тлі темніший, щоб читався
+  const gpsColor = isLocationEnabled
+    ? isDarkMode ? "#00c84d" : "#047a35"
+    : isDarkMode ? "#ff6b6b" : "#b30000";
 
   const handleGpsToggle = () => {
     const nextEnabled = !isLocationEnabled;
@@ -3171,17 +3255,17 @@ const HOLIDAYS_2027 = {
                   flexDirection: "column",
                   alignItems: "center",
                   textAlign: "center",
-                  color: "#fff",
+                  color: isDarkMode ? "#fff" : "#1a1a1a",
                   boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
                 }}
               >
-                <div style={{ fontSize: "12px", fontWeight: "bold", opacity: 0.85, color: "#fff" }}>
+                <div style={{ fontSize: "12px", fontWeight: "bold", opacity: 0.85 }}>
                   {item.time || item.label || `${idx}:00`}
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", margin: "2px 0" }}>
                   <div style={{ fontSize: "24px" }}>
-                    <WeatherIcon item={item} />
+                    <WeatherIcon isDarkMode={isDarkMode} item={item} />
                   </div>
                   <TextContent $size="11px" $lh="1.2">
                     {item.description || getWeatherDescription(item.weather_code) || stripEmoji(item.iconPlaceholder) || "Погода"}
@@ -3229,7 +3313,7 @@ const HOLIDAYS_2027 = {
   const renderBlockStats = (stats) => (
     <BlockStatGrid>
       {stats.map(({ icon, label, value, sub }) => (
-        <BlockStatTile key={label}>
+        <BlockStatTile key={label} $halo={!isDarkMode}>
           {icon}
           <BlockStatLabel>{label}</BlockStatLabel>
           <BlockStatValue>{value}</BlockStatValue>
@@ -3277,12 +3361,12 @@ const HOLIDAYS_2027 = {
                   fontSize: "11px",
                 }}
               >
-                <div style={{ fontSize: "13px", fontWeight: "bold", textAlign: "center", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
+                <div style={{ fontSize: "13px", fontWeight: "bold", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
                   <FaClock /> {item.time || item.label || `${idx}:00`}
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "24px" }}><WeatherIcon item={item} /></span>
+                  <span style={{ fontSize: "24px" }}><WeatherIcon isDarkMode={isDarkMode} item={item} /></span>
                   <span style={{ fontSize: "11px", fontWeight: "600", opacity: 0.9 }}>
                     {item.description || getWeatherDescription(item.weather_code) || stripEmoji(item.iconPlaceholder) || "Погода"}
                   </span>
@@ -3342,9 +3426,61 @@ const HOLIDAYS_2027 = {
       );
     }
 
+    // Режим «по 2 дні»: усі дні лишаються в ряду (скролбар не зникає), картка — пів ширини,
+    // а сторінка — це позиція прокрутки. Підпис — дати поточної пари
+    const start = dailyBlocksPaging ? safeDailyBlocksPage * dailyBlocksPaging : 0;
+    const first = list[start];
+    const last = dailyBlocksPaging ? list[Math.min(start + dailyBlocksPaging, list.length) - 1] : null;
+
     return (
-      <div style={{ marginTop: "6px", width: "100%", overflowX: "auto" }}>
-        <div style={{ display: "flex", gap: "10px", paddingBottom: "2px", minWidth: isNarrowScreen ? "min-content" : undefined }}>
+      <div style={{ marginTop: "6px", width: "100%" }}>
+        {dailyBlocksPaging > 0 && (
+          <DailyPager $isDarkMode={isDarkMode}>
+            {/* На першій сторінці «назад» веде до вчорашнього дня (якщо він є й ще схований) */}
+            {safeDailyBlocksPage === 0 && hasPastDay && !showPastDay ? (
+              <button
+                type="button"
+                className="wide"
+                onClick={() => setShowPastDay(true)}
+                aria-label="Показати вчорашній день"
+              >
+                <BiChevronLeft /> Вчора
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => goToDailyBlocksPage(safeDailyBlocksPage - 1)}
+                disabled={safeDailyBlocksPage === 0}
+                aria-label="Попередні дні"
+              >
+                <BiChevronLeft />
+              </button>
+            )}
+            <span aria-live="polite">
+              {first?.date}{last && last !== first ? ` – ${last.date}` : ""}
+              <small> · {safeDailyBlocksPage + 1} з {dailyBlocksPages}</small>
+            </span>
+            <button
+              type="button"
+              onClick={() => goToDailyBlocksPage(safeDailyBlocksPage + 1)}
+              disabled={safeDailyBlocksPage >= dailyBlocksPages - 1}
+              aria-label="Наступні дні"
+            >
+              <BiChevronRight />
+            </button>
+          </DailyPager>
+        )}
+      <div
+        ref={dailyBlocksScrollRef}
+        onScroll={dailyBlocksPaging ? handleDailyBlocksScroll : undefined}
+        style={{
+          width: "100%",
+          overflowX: "auto",
+          // «По 2 дні»: ряд притягується до пари днів і при прокрутці мишею/пальцем
+          scrollSnapType: dailyBlocksPaging ? "x mandatory" : undefined,
+        }}
+      >
+        <div style={{ display: "flex", gap: `${DAILY_BLOCKS_GAP}px`, paddingBottom: "2px", minWidth: isNarrowScreen ? "min-content" : undefined }}>
           {list.map((d, idx) => {
             const dateType = getDateType(d.date, d.day, d.fullDate);
             const windDeg = d.wind_direction_10m || 0;
@@ -3361,8 +3497,14 @@ const HOLIDAYS_2027 = {
               <div
                 key={idx}
                 style={{
-                  // Планшет і комп'ютер: блок у 1.6 раза ширший за третину області (~1.9 блока видно)
-                  flex: isNarrowScreen ? "0 0 210px" : "0 0 calc((100% - 20px) / 3 * 1.6)",
+                  // «По 2 дні» — картка рівно пів ширини (телефон — не вужче 210px);
+                  // «Усі»: планшет і комп'ютер — блок у 1.6 раза ширший за третину області (~1.9 блока видно)
+                  flex: dailyBlocksPaging
+                    ? `0 0 max(210px, calc((100% - ${DAILY_BLOCKS_GAP}px) / 2))`
+                    : isNarrowScreen ? "0 0 210px" : "0 0 calc((100% - 20px) / 3 * 1.6)",
+                  minWidth: 0,
+                  // Точки притягування — початок кожної пари днів
+                  scrollSnapAlign: dailyBlocksPaging && idx % dailyBlocksPaging === 0 ? "start" : undefined,
                   // Минулий день (вчора) — повністю чорно-білий
                   filter: isPastDay(d) ? "grayscale(1)" : "none",
                   boxSizing: "border-box",
@@ -3370,10 +3512,10 @@ const HOLIDAYS_2027 = {
                   backdropFilter: "blur(8px)",
                   border: dateType.color ? `2px solid ${dateType.color}` : isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid rgba(0,0,0,0.1)",
                   borderRadius: "12px",
-                  padding: "8px",
+                  padding: "5px",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "4px",
+                  gap: "3px",
                   color: isDarkMode ? "#fff" : "#1a1a1a",
                   boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
                   fontSize: "11px",
@@ -3381,11 +3523,11 @@ const HOLIDAYS_2027 = {
               >
                 {/* Дата й опис погоди — в один ряд */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", alignItems: "center", gap: "6px" }}>
-                  <div style={{ fontSize: "13px", fontWeight: "bold", color: dateType.color || "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
+                  <div style={{ fontSize: "13px", fontWeight: "bold", color: dateType.color || "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
                     <FaCalendarDays /> {d.date} {d.day}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", minWidth: 0 }}>
-                    <span style={{ fontSize: "26px", flexShrink: 0 }}><WeatherIcon item={d} /></span>
+                    <span style={{ fontSize: "22px", flexShrink: 0, lineHeight: 1 }}><WeatherIcon isDarkMode={isDarkMode} item={d} /></span>
                     <span style={{ fontSize: "11px", fontWeight: "600" }}>
                       {d.description || getWeatherDescription(d.weather_code) || stripEmoji(d.iconPlaceholder) || "Погода"}
                     </span>
@@ -3393,7 +3535,7 @@ const HOLIDAYS_2027 = {
                 </div>
 
                 {/* День і ніч — в один ряд; полярні примітки на всю ширину */}
-                <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px", display: "flex", flexWrap: "wrap", justifyContent: "space-around", alignItems: "center", gap: "2px 8px", fontSize: "13px" }}>
+                <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: "8px", padding: "3px 6px", display: "flex", flexWrap: "wrap", justifyContent: "space-around", alignItems: "center", gap: "2px 8px", fontSize: "13px", lineHeight: 1.3 }}>
                   {!isPolarNight && (
                     <div style={{ fontWeight: "800", color: "#ff9d3b", display: "flex", alignItems: "center", gap: "4px" }}>
                       <FaSun /> День: {formatTemp(d.temp_day || d.temp)}
@@ -3466,9 +3608,9 @@ const HOLIDAYS_2027 = {
                     value: d.visibility_min != null ? fmt.visibility(d.visibility_min / 1000) : "—",
                   },
                   { icon: <GiWaterRecycling style={{ color: "#00eeff" }} />, label: "Випаровування", value: d.evapotranspiration !== undefined ? fmt.precip(d.evapotranspiration, 2) : "—" },
-                  { icon: <BsBuildings style={{ color: "#ffb36c" }} />, label: "Цивільні сутінки", value: twilight ? `${twilight.civilDawn} — ${twilight.civilDusk}` : "—" },
-                  { icon: <AnimCompass><BsCompass style={{ color: "#be90d4" }} /></AnimCompass>, label: "Навігаційні сутінки", value: twilight ? `${twilight.nauticalDawn} — ${twilight.nauticalDusk}` : "—" },
-                  { icon: <AnimTwinkle><BsStars style={{ color: "#a855f7" }} /></AnimTwinkle>, label: "Астрономічні сутінки", value: twilight ? `${twilight.astroDawn} — ${twilight.astroDusk}` : "—" },
+                  { icon: <BsBuildings style={{ color: "#ffb36c" }} />, label: "Цивільні сутінки", value: twilight ? `${twilight.civilDawn}–${twilight.civilDusk}` : "—" },
+                  { icon: <AnimCompass><BsCompass style={{ color: "#be90d4" }} /></AnimCompass>, label: "Навігаційні сутінки", value: twilight ? `${twilight.nauticalDawn}–${twilight.nauticalDusk}` : "—" },
+                  { icon: <AnimTwinkle><BsStars style={{ color: "#a855f7" }} /></AnimTwinkle>, label: "Астрономічні сутінки", value: twilight ? `${twilight.astroDawn}–${twilight.astroDusk}` : "—" },
                 ])}
                 <AstroScale
                   icon={<AnimHourglass><BsHourglassSplit style={{ color: "#3498db" }} /></AnimHourglass>}
@@ -3507,8 +3649,52 @@ const HOLIDAYS_2027 = {
           })}
         </div>
       </div>
+      </div>
     );
   };
+  // Бейдж дня у плитках. hint — що за свято/подія: показується підказкою на «?»
+  const dayBadge = (text, color, bg, hint) => {
+    const el = (
+      <span
+        tabIndex={hint ? 0 : undefined}
+        aria-label={hint ? `${text} ${hint}` : undefined}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          fontSize: "9px",
+          background: bg,
+          color,
+          padding: "1px 4px 1px 6px",
+          borderRadius: "4px",
+          fontWeight: "bold",
+          cursor: hint ? "help" : undefined,
+        }}
+      >
+        {text}
+        {hint && (
+          <span
+            aria-hidden="true"
+            style={{
+              display: "inline-grid",
+              placeItems: "center",
+              width: "11px",
+              height: "11px",
+              borderRadius: "50%",
+              background: color,
+              color: "#fff",
+              fontSize: "8px",
+              lineHeight: 1,
+            }}
+          >
+            ?
+          </span>
+        )}
+      </span>
+    );
+    return hint ? <Tooltip content={hint} isDarkMode={isDarkMode}>{el}</Tooltip> : el;
+  };
+
   const renderDailyTable = () => {
     const list = dailyList;
     if (!list || list.length === 0) {
@@ -3533,7 +3719,8 @@ const HOLIDAYS_2027 = {
             const isPolarNight = d.isPolarNight || card.current?.isPolarNight;
             const isPolarDay = d.isPolarDay || card.current?.isPolarDay;
 
-            let headerColor = "#fff";
+            // Звичайний день — колір тексту під тему (білий на білій картці зникав)
+            let headerColor = isDarkMode ? "#fff" : "#1a1a1a";
             let borderColor = isDarkMode ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.1)";
             let badge = null;
 
@@ -3548,19 +3735,11 @@ const HOLIDAYS_2027 = {
             } else if (dateType.type === "holiday") {
               headerColor = "#ff4d4d";
               borderColor = "rgba(255, 77, 77, 0.7)";
-              badge = (
-                <span style={{ fontSize: "9px", background: "rgba(255, 77, 77, 0.25)", color: "#ff4d4d", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
-                 Вітаю зі святом!
-                </span>
-              );
+              badge = dayBadge("Вітаю зі святом!", "#ff4d4d", "rgba(255, 77, 77, 0.25)", dateType.label);
             } else if (dateType.type === "custom") {
               headerColor = "#00bfff";
               borderColor = "rgba(0, 191, 255, 0.7)";
-              badge = (
-                <span style={{ fontSize: "9px", background: "rgba(0, 191, 255, 0.25)", color: "#00bfff", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
-                  Ваша подія
-                </span>
-              );
+              badge = dayBadge("Ваша подія", "#00bfff", "rgba(0, 191, 255, 0.25)", dateType.label);
             } else if (dateType.type === "birthday") {
               headerColor = "#e066ff";
               borderColor = "rgba(224, 102, 255, 0.7)";
@@ -3589,12 +3768,12 @@ const HOLIDAYS_2027 = {
                     : (isDarkMode ? "rgba(25, 25, 35, 0.88)" : "rgba(255, 255, 255, 0.95)"),
                   backdropFilter: "blur(8px)",
                   border: isPast ? "1px dashed rgba(140, 140, 140, 0.4)" : `2px solid ${borderColor}`,
-                  borderRadius: "14px",
-                  padding: "12px 10px",
+                  borderRadius: "8px",
+                  padding: "7px 6px",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: "6px",
+                  gap: "3px",
                   textAlign: "center",
                   color: isDarkMode ? "#fff" : "#1a1a1a",
                   boxShadow: "0 4px 14px rgba(0,0,0,0.12)",
@@ -3611,9 +3790,9 @@ const HOLIDAYS_2027 = {
                   </span> 
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1px" }}>
                   <div style={{ fontSize: "28px" }}>
-                    <WeatherIcon item={d} />
+                    <WeatherIcon isDarkMode={isDarkMode} item={d} />
                   </div>
                   <div style={{ fontSize: "10px", lineHeight: 1.3, opacity: 0.8, color: headerColor, fontWeight: 600 }}>
                     {d.description || getWeatherDescription(d.weather_code ?? 0) || "Погода"}
@@ -3647,7 +3826,7 @@ const HOLIDAYS_2027 = {
                   )}
                 </div>
 
-                <div style={{ width: "85%", height: "1px", background: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)", margin: "4px 0" }} />
+                <div style={{ width: "85%", height: "1px", background: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)", margin: "1px 0" }} />
 
                 <div style={{ fontSize: "11px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: "700", color: "#0099ff" }}>
@@ -3788,8 +3967,8 @@ const HOLIDAYS_2027 = {
                 </h3>
               </Tooltip>
             )}
-            {card.isMain && card.isFallbackLocation && <LocationHint />}
-            <p style={{ fontSize: "10px", color: "#fcfcfc" }}>
+            {card.isMain && card.isFallbackLocation && <LocationHint isDarkMode={isDarkMode} />}
+            <p style={{ fontSize: "10px", color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : "#555" }}>
               Широта: {card.lat?.toFixed(2)}, Довгота: {card.lon?.toFixed(2)}
             </p>
           </div>
@@ -3803,7 +3982,7 @@ const HOLIDAYS_2027 = {
               minWidth: 0,
             }}
           >
-            <ActionButtons style={{ position: "relative", zIndex: 2 }}>
+            <ActionButtons $isDarkMode={isDarkMode} style={{ position: "relative", zIndex: 2 }}>
               {isVoiceBeta && (
                 <Tooltip content={isSpeaking ? "Зупинити озвучення" : "Озвучити прогноз (бета)"} isDarkMode={isDarkMode}>
                   <button
@@ -3900,6 +4079,7 @@ const HOLIDAYS_2027 = {
                     background: hasGeminiKey
                       ? "linear-gradient(135deg, #5c1d3c, #62123d)"
                       : "rgba(120,120,120,0.3)",
+                    color: hasGeminiKey ? "#ffffff" : undefined,
                     cursor: hasGeminiKey ? "pointer" : "default",
                   }}
                 >
@@ -4097,8 +4277,8 @@ const HOLIDAYS_2027 = {
                       background: isLocationEnabled
                         ? "rgba(0,200,80,0.12)"
                         : "rgba(180,0,0,0.08)",
-                      border: `1px solid ${isLocationEnabled ? "#00c84d" : "#b30000"}`,
-                      color: isLocationEnabled ? "#00c84d" : "#b30000",
+                      border: `1px solid ${gpsColor}`,
+                      color: gpsColor,
                       transition: "all 0.2s ease",
                     }}
                   >
@@ -4173,7 +4353,7 @@ const HOLIDAYS_2027 = {
               >
                 <DesktopTwoRowIndicators>
   <IndicatorCard aria-label={card.current.iconPlaceholder}>
-    <IconBox $size="32px" $lh="1"><WeatherIcon item={card.current} /></IconBox>
+    <IconBox $size="32px" $lh="1"><WeatherIcon isDarkMode={isDarkMode} item={card.current} /></IconBox>
     <TextContent $size="11px" $lh="1.2">
       {stripEmoji(card.current.iconPlaceholder) || "Мінлива хмарність"}
     </TextContent>
@@ -4453,21 +4633,53 @@ const HOLIDAYS_2027 = {
           {/* Прогноз на 16 днів */}
           {activeTab === "daily" && (
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "8px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-                  <PillCheckbox $isDarkMode={isDarkMode} $checked={showPastDay}>
-                    <input
-                      type="checkbox"
-                      checked={showPastDay}
-                      onChange={(e) => setShowPastDay(e.target.checked)}
-                    />
-                    <span className="box" aria-hidden="true">
-                      <svg viewBox="0 0 16 16"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5" /></svg>
-                    </span>
-                    Показати вчора
-                  </PillCheckbox>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                  {/* Вчорашній день — маленький перемикач-іконка (замість великого чекбокса) */}
+                  {hasPastDay && (
+                    <Tooltip content={showPastDay ? "Сховати вчорашній день" : "Показати вчорашній день"} isDarkMode={isDarkMode}>
+                      <ViewToggleGroup $isDarkMode={isDarkMode}>
+                        <ViewToggleButton
+                          type="button"
+                          $active={showPastDay}
+                          $isDarkMode={isDarkMode}
+                          aria-pressed={showPastDay}
+                          aria-label="Показати вчорашній день"
+                          onClick={() => setShowPastDay((v) => !v)}
+                          style={{ padding: "4px 10px" }}
+                        >
+                          <BiHistory size={18} />
+                        </ViewToggleButton>
+                      </ViewToggleGroup>
+                    </Tooltip>
+                  )}
+                  {effectiveDailyViewMode === "blocks" && (
+                    <ViewToggleGroup $isDarkMode={isDarkMode} role="group" aria-label="Скільки днів показувати">
+                      <ViewToggleButton
+                        type="button"
+                        $active={!dailyBlocksPaging}
+                        $isDarkMode={isDarkMode}
+                        aria-pressed={!dailyBlocksPaging}
+                        onClick={() => setPref(DAILY_BLOCKS_PAGING_KEY, "all")}
+                        title="Усі дні в ряд із прокруткою"
+                      >
+                        Усі
+                      </ViewToggleButton>
+                      <ViewToggleButton
+                        type="button"
+                        $active={!!dailyBlocksPaging}
+                        $isDarkMode={isDarkMode}
+                        aria-pressed={!!dailyBlocksPaging}
+                        onClick={() => {
+                          setPref(DAILY_BLOCKS_PAGING_KEY, "2");
+                          setDailyBlocksPage(0);
+                        }}
+                        title="По 2 дні на сторінку"
+                      >
+                        2 дні
+                      </ViewToggleButton>
+                    </ViewToggleGroup>
+                  )}
                   <ViewToggleGroup $isDarkMode={isDarkMode}>
                     <ViewToggleButton
                       $active={effectiveDailyViewMode === "charts"}
@@ -4904,7 +5116,7 @@ const HOLIDAYS_2027 = {
                 {/* Погодна іконка трохи більша, щоб на око була як інші;
                     від'ємний відступ не дає плитці вирости */}
                 <div style={{ ...SIDE_CARD_ICON_STYLE, fontSize: "30px", margin: "-3px 0" }}>
-                  <WeatherIcon item={card.current} />
+                  <WeatherIcon isDarkMode={isDarkMode} item={card.current} />
                 </div>
                 <div style={SIDE_CARD_TEXT_STYLE}>
                   <NameCardItem $active={activeTab === "current"}>Зараз: {formatTemp(card.current?.temp)}</NameCardItem>

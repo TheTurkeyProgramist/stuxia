@@ -24,6 +24,15 @@ import { DEFAULT_BGS } from "./defaultBgs";
 import CityScene from "./CityScene.jsx";
 import { WALLPAPERS, WALLPAPER_GROUPS, useMinuteNow } from "./WallpaperScene.jsx";
 import CommonsSearch from "./CommonsSearch.jsx";
+import {
+  MAX_CUSTOM_BGS,
+  MAX_VIDEO_BYTES,
+  MAX_VIDEO_SECONDS,
+  CUSTOM_BG_LIMITS_TEXT,
+  compressImageToLimit,
+  customBgLimitMessage,
+  getVideoDuration,
+} from "./customBgLimits.js";
 import { isAnimationsDisabled } from "../../utils/animationsPref.js";
 import {
   WALLPAPER_ANIMATIONS,
@@ -37,7 +46,7 @@ import {
 } from "../../utils/wallpaperPrefs.js";
 import village from "../../media/third-party/games/dragon-village-3.webp";
 import faded from "../../media/backgrounds/scenes/resort.webp";
-import { Tooltip } from "./Hero.jsx";
+import { Tooltip } from "../Tooltip/Tooltip";
 import { notifySupportMoment } from "../Support/supportNudge.js";
 
 const isVideoSource = (src) => {
@@ -163,8 +172,33 @@ const ModalOverlay = styled.div`
   animation: ${(props) => (props.$isClosing ? fadeOut : fadeIn)} 0.3s ease-out forwards;
 `;
 
+// Кольори вікна за темою (кнопки й підписи поверх мініатюр лишаються темними — вони на фото)
+const LIGHT_TOKENS = `
+  --bm-bg: linear-gradient(145deg, rgba(255, 252, 247, 0.98) 0%, rgba(250, 246, 240, 0.99) 100%);
+  --bm-text: #1a1a1a; --bm-muted: #5b6270; --bm-label: #8a4300; --bm-accent-text: #a34e00;
+  --bm-danger: #c42b1c; --bm-ink: 0, 0, 0;
+  --bm-input-bg: #ffffff; --bm-input-text: #111111;
+  --bm-sticky: rgba(252, 249, 244, 0.98); --bm-drop: #fff8ef; --bm-drop-text: #374151;
+  --bm-nav-text: #374151; --bm-thumb-bg: #e5e7eb;
+  --bm-title: linear-gradient(90deg, #a34400 0%, #d96500 100%);
+  --bm-scroll-thumb: #c46a00;
+  --bm-link: #2e7d32;
+`;
+const DARK_TOKENS = `
+  --bm-bg: linear-gradient(145deg, rgba(16, 20, 32, 0.97) 0%, rgba(8, 10, 18, 0.98) 100%);
+  --bm-text: #ffffff; --bm-muted: #8a8d9b; --bm-label: #ffc996; --bm-accent-text: #ffb36c;
+  --bm-danger: #ff6b6b; --bm-ink: 255, 255, 255;
+  --bm-input-bg: rgba(10, 14, 26, 0.95); --bm-input-text: #ffffff;
+  --bm-sticky: rgba(10, 13, 23, 0.98); --bm-drop: rgba(10, 14, 26, 0.98); --bm-drop-text: #dddddd;
+  --bm-nav-text: #d8dae0; --bm-thumb-bg: #0d0f19;
+  --bm-title: linear-gradient(90deg, #ffb36c 0%, #ffe3b8 100%);
+  --bm-scroll-thumb: #ffb36c;
+  --bm-link: #8fd18f;
+`;
+
 const ModalContent = styled.div`
-  background: linear-gradient(145deg, rgba(16, 20, 32, 0.97) 0%, rgba(8, 10, 18, 0.98) 100%);
+  ${(p) => (p.$light ? LIGHT_TOKENS : DARK_TOKENS)}
+  background: var(--bm-bg);
   padding: 20px;
   border-radius: 18px;
   width: 95%;
@@ -175,14 +209,14 @@ const ModalContent = styled.div`
   flex-direction: column;
   gap: 12px;
   border: 1px solid rgba(255, 179, 108, 0.35);
-  color: white;
+  color: var(--bm-text);
   position: relative;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 35px rgba(255, 179, 108, 0.12);
   animation: ${(props) => (props.$isClosing ? slideOut : slideIn)} 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 179, 108, 0.85) rgba(255, 255, 255, 0.05);
+  scrollbar-color: var(--bm-scroll-thumb) rgba(var(--bm-ink), 0.08);
   &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); border-radius: 10px; }
+  &::-webkit-scrollbar-track { background: rgba(var(--bm-ink), 0.05); border-radius: 10px; }
   &::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ffb36c 0%, #ff8c2b 100%); border-radius: 10px; }
 `;
 
@@ -273,13 +307,13 @@ const ConfigRow = styled.div`
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--bm-ink, 255, 255, 255), 0.04);
   border: 1px solid rgba(255, 179, 108, 0.15);
   padding: 8px 10px;
   border-radius: 10px;
   transition: all 0.2s ease;
-  &:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 179, 108, 0.35); }
-  label { font-size: 11px; font-weight: 700; color: #ffc996; display: flex; align-items: center; gap: 4px; }
+  &:hover { background: rgba(var(--bm-ink, 255, 255, 255), 0.07); border-color: rgba(255, 179, 108, 0.35); }
+  label { font-size: 11px; font-weight: 700; color: var(--bm-label, #ffc996); display: flex; align-items: center; gap: 4px; }
   input[type="range"] { accent-color: #ffb36c; cursor: pointer; }
 `;
 
@@ -306,7 +340,7 @@ const BgItem = styled.div`
   border: 2px solid ${(props) => (props.$active ? "#ffb36c" : "rgba(255, 255, 255, 0.1)")};
   box-shadow: ${(props) => (props.$active ? "0 0 16px rgba(255, 179, 108, 0.5), inset 0 0 0 1px #ffb36c" : "0 4px 12px rgba(0, 0, 0, 0.35)")};
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  background: #0d0f19;
+  background: var(--bm-thumb-bg, #0d0f19);
   &:hover {
     transform: translateY(-4px) scale(1.02);
     border-color: ${(props) => (props.$active ? "#ffb36c" : "rgba(255, 179, 108, 0.6)")};
@@ -409,10 +443,10 @@ const DropZone = styled.div`
   text-align: center;
   border-radius: 14px;
   cursor: pointer;
-  color: #ddd;
+  color: var(--bm-drop-text, #ddd);
   font-size: 13px;
   font-weight: 500;
-  background: rgba(10, 14, 26, 0.98);
+  background: var(--bm-drop, rgba(10, 14, 26, 0.98));
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
   display: flex;
@@ -421,12 +455,12 @@ const DropZone = styled.div`
   justify-content: center;
   gap: 6px;
   /* Підкладка лишається непрозорою й при наведенні: панель липка й лежить над картками */
-  &:hover { background: linear-gradient(rgba(255, 179, 108, 0.07), rgba(255, 179, 108, 0.07)), #0a0e1a; border-color: #ffb36c; color: #fff; box-shadow: 0 0 15px rgba(255, 179, 108, 0.15); }
+  &:hover { background: linear-gradient(rgba(255, 179, 108, 0.1), rgba(255, 179, 108, 0.1)), var(--bm-drop, #0a0e1a); border-color: #ffb36c; color: var(--bm-text, #fff); box-shadow: 0 0 15px rgba(255, 179, 108, 0.15); }
 `;
 
 const CloseBtn = styled.button`
   background: rgba(255, 179, 108, 0.1);
-  color: ${(props) => (props.$danger ? "#ff6b6b" : "#ffb36c")};
+  color: ${(props) => (props.$danger ? "var(--bm-danger, #ff6b6b)" : "var(--bm-accent-text, #ffb36c)")};
   border: 1px solid ${(props) => (props.$danger ? "rgba(255, 107, 107, 0.3)" : "rgba(255, 179, 108, 0.3)")};
   border-radius: 8px;
   padding: 5px 12px;
@@ -455,7 +489,7 @@ const SectionNav = styled.nav`
   padding: 8px 20px;
   overflow-x: auto;
   scrollbar-width: none;
-  background: rgba(10, 13, 23, 0.98);
+  background: var(--bm-sticky, rgba(10, 13, 23, 0.98));
   border-bottom: 1px solid rgba(255, 179, 108, 0.18);
   &::-webkit-scrollbar { display: none; }
 `;
@@ -468,8 +502,8 @@ const NavButton = styled.button`
   padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid ${(p) => (p.$active ? "#ffb36c" : "rgba(255, 179, 108, 0.25)")};
-  background: ${(p) => (p.$active ? "linear-gradient(135deg, #ffca91, #ff9d48)" : "rgba(255, 255, 255, 0.03)")};
-  color: ${(p) => (p.$active ? "#17120d" : "#d8dae0")};
+  background: ${(p) => (p.$active ? "linear-gradient(135deg, #ffca91, #ff9d48)" : "rgba(var(--bm-ink, 255, 255, 255), 0.03)")};
+  color: ${(p) => (p.$active ? "#17120d" : "var(--bm-nav-text, #d8dae0)")};
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
@@ -490,15 +524,15 @@ const ModalSearchInput = styled.input`
   padding: 7px 14px;
   border-radius: 20px;
   border: 1px solid rgba(255, 179, 108, 0.3);
-  background: rgba(255, 255, 255, 0.04);
-  color: white;
+  background: rgba(var(--bm-ink, 255, 255, 255), 0.04);
+  color: var(--bm-text, white);
   width: 100%;
   max-width: 320px;
   font-size: 12px;
   outline: none;
   transition: all 0.2s ease;
-  &::placeholder { color: #8a8d9b; }
-  &:focus { background: rgba(255, 255, 255, 0.1); border-color: #ffb36c; box-shadow: 0 0 12px rgba(255, 179, 108, 0.25); }
+  &::placeholder { color: var(--bm-muted, #8a8d9b); }
+  &:focus { background: rgba(var(--bm-ink, 255, 255, 255), 0.08); border-color: #ffb36c; box-shadow: 0 0 12px rgba(255, 179, 108, 0.25); }
 `;
 
 const ModalDivider = styled.hr`
@@ -511,7 +545,7 @@ const ModalDivider = styled.hr`
 
 const ModalSectionTitle = styled.h3`
   font-weight: 700;
-  color: #ffb36c;
+  color: var(--bm-accent-text, #ffb36c);
   margin: 4px 0;
   font-size: 15px;
   display: flex;
@@ -699,7 +733,7 @@ const WallpaperPick = styled.button`
   }
 `;
 
-const wallpaperSelectStyle = { background: "rgba(10, 14, 26, 0.95)", color: "#fff", fontSize: "12px", fontWeight: "500", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 6px", width: "100%", outline: "none" };
+const wallpaperSelectStyle = { background: "var(--bm-input-bg, rgba(10, 14, 26, 0.95))", color: "var(--bm-input-text, #fff)", fontSize: "12px", fontWeight: "500", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 6px", width: "100%", outline: "none" };
 
 const WallpaperTools = styled.div`
   position: absolute;
@@ -745,7 +779,7 @@ const SmallButton = styled.button`
   border-radius: 6px;
   border: 1px solid rgba(255, 179, 108, 0.35);
   background: rgba(255, 179, 108, 0.08);
-  color: #ffc996;
+  color: var(--bm-label, #ffc996);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
@@ -864,7 +898,7 @@ const WallpaperSection = ({ heroBg, heroBg2, heroBg3, heroBgMode, onSelect }) =>
   return (
     <>
       <ModalSectionTitle><FiSun /> Живі шпалери</ModalSectionTitle>
-      <span style={{ fontSize: "11px", color: "#8a8d9b", marginTop: "-6px" }}>
+      <span style={{ fontSize: "11px", color: "var(--bm-muted, #8a8d9b)", marginTop: "-6px" }}>
         Сцени міст і країн: сонце й місяць рухаються за реальним часом місця, трава й дерева змінюються з порами року.
         Галочками на картках виберіть одну, кілька або всі шпалери — налаштування нижче застосуються до вибраних.
         Острови, тропіки й снігові місця зелені (або засніжені) цілий рік.
@@ -872,7 +906,7 @@ const WallpaperSection = ({ heroBg, heroBg2, heroBg3, heroBgMode, onSelect }) =>
       <ModalConfigGrid>
         <ConfigRow>
           <label><FiSliders /> Налаштування для:</label>
-          <div style={{ fontSize: "12px", fontWeight: 600, color: selectedIds.length ? "#fff" : "#8a8d9b", minHeight: "18px" }}>{selectionLabel}</div>
+          <div style={{ fontSize: "12px", fontWeight: 600, color: selectedIds.length ? "var(--bm-text, #fff)" : "var(--bm-muted, #8a8d9b)", minHeight: "18px" }}>{selectionLabel}</div>
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
             <SmallButton type="button" disabled={selectedIds.length === WALLPAPERS.length} onClick={() => setSelectedIds(WALLPAPERS.map((wallpaper) => wallpaper.id))}>Усі</SmallButton>
             <SmallButton type="button" disabled={!selectedIds.length} onClick={() => setSelectedIds([])}>Зняти</SmallButton>
@@ -889,7 +923,7 @@ const WallpaperSection = ({ heroBg, heroBg2, heroBg3, heroBgMode, onSelect }) =>
         return (
           <React.Fragment key={group.value}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffc996" }}>{group.label} · {items.length}</span>
+              <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--bm-label, #ffc996)" }}>{group.label} · {items.length}</span>
               <SmallButton type="button" onClick={() => selectGroup(groupIds)}>
                 {groupSelected ? "Зняти групу" : "Вибрати групу"}
               </SmallButton>
@@ -999,6 +1033,20 @@ const BgModal = ({
   const contentRef = useRef(null);
   const [activeSection, setActiveSection] = useState("look");
 
+  // Поки вікно відкрите — без скролбару сайту. Скролиться html, а в дзеркальному
+  // режимі (App.css, html.site-mirrored) — body, тож ховаємо на обох і повертаємо як було
+  React.useEffect(() => {
+    if (!isOpen) return undefined;
+    const { documentElement: html, body } = document;
+    const prev = [html.style.overflow, body.style.overflow];
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prev[0];
+      body.style.overflow = prev[1];
+    };
+  }, [isOpen]);
+
   // Підсвічуємо розділ, верх якого вже під навігацією (унизу вікна — останній)
   const handleContentScroll = () => {
     const root = contentRef.current;
@@ -1065,79 +1113,70 @@ const BgModal = ({
     });
   };
 
+  const dailyCountKey = () => {
+    const uid = user?.uid || "guest";
+    const today = new Date().toISOString().split("T")[0];
+    return `hero_cards_${uid}_${today}`;
+  };
+
   const handleFileUpload = async (file) => {
     if (!file) return;
     const isImage = file.type.startsWith("image/");
     const isVideo = file.type.startsWith("video/");
     if (!isImage && !isVideo) return;
+    if ((customHeroBgs?.length || 0) >= MAX_CUSTOM_BGS) {
+      toast.error(customBgLimitMessage());
+      return;
+    }
     try {
-      const uid = user?.uid || "guest";
-      const today = new Date().toISOString().split("T")[0];
-      const key = `hero_cards_${uid}_${today}`;
-      const current = Number((await localforage.getItem(key)) || 0);
+      const current = Number((await localforage.getItem(dailyCountKey())) || 0);
       if (current >= MAX_DAILY_HERO_CARDS) {
-        alert(`Ліміт досягнуто — не більше ${MAX_DAILY_HERO_CARDS} карток на добу.`);
+        toast.error(`Ліміт досягнуто — не більше ${MAX_DAILY_HERO_CARDS} карток на добу.`);
         return;
       }
     } catch (err) {
       console.error("Failed to check hero daily limit:", err);
     }
+
+    let src = file;
     if (isVideo) {
-      if (file.size > 20 * 1024 * 1024) {
-        alert("Відео занадто велике! Максимум 20мб для стабільності.");
+      if (file.size > MAX_VIDEO_BYTES) {
+        toast.error("Відео завелике: максимум 20 МБ.");
         return;
       }
-      setCustomHeroBgs((prev) => [{ src: file, name: file.name, category: "Ваші відео" }, ...prev]);
-      setHeroBg(file);
-      notifySupportMoment("bg");
-      try {
-        const uid = user?.uid || "guest";
-        const today = new Date().toISOString().split("T")[0];
-        const key = `hero_cards_${uid}_${today}`;
-        const prevVal = Number((await localforage.getItem(key)) || 0);
-        await localforage.setItem(key, prevVal + 1);
-      } catch (err) {
-        console.error("Failed to update hero uploaded count:", err);
+      const duration = await getVideoDuration(file);
+      if (Number.isNaN(duration)) {
+        toast.error("Не вдалося прочитати відео. Спробуйте MP4 або WebM.");
+        return;
       }
-      return;
+      // Infinity буває у WebM із запису екрана — тривалість невідома, тож пропускаємо
+      if (Number.isFinite(duration) && duration > MAX_VIDEO_SECONDS) {
+        toast.error("Відео задовге: максимум 2 хвилини.");
+        return;
+      }
+    } else {
+      try {
+        src = await compressImageToLimit(file);
+      } catch (err) {
+        console.error("Failed to compress background image:", err);
+        toast.error("Не вдалося стиснути картинку до 200 КБ. Спробуйте іншу.");
+        return;
+      }
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.src = e.target.result;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 1200;
-        const scale = MAX_WIDTH / img.width;
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * scale;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(
-          async (blob) => {
-            try {
-              const uid = user?.uid || "guest";
-              const today = new Date().toISOString().split("T")[0];
-              const key = `hero_cards_${uid}_${today}`;
-              const prevVal = Number((await localforage.getItem(key)) || 0);
-              if (prevVal >= MAX_DAILY_HERO_CARDS) {
-                alert(`Ліміт досягнуто — не більше ${MAX_DAILY_HERO_CARDS} карток на добу.`);
-                return;
-              }
-              await localforage.setItem(key, prevVal + 1);
-            } catch (err) {
-              console.error("Failed to update hero uploaded count:", err);
-            }
-            setCustomHeroBgs((prev) => [{ src: blob, name: file.name, category: "Ваші картинки" }, ...prev]);
-            setHeroBg(blob);
-            notifySupportMoment("bg");
-          },
-          "image/jpeg",
-          0.7,
-        );
-      };
-    };
-    reader.readAsDataURL(file);
+
+    try {
+      const key = dailyCountKey();
+      const prevVal = Number((await localforage.getItem(key)) || 0);
+      await localforage.setItem(key, prevVal + 1);
+    } catch (err) {
+      console.error("Failed to update hero uploaded count:", err);
+    }
+    setCustomHeroBgs((prev) => [
+      { src, name: file.name, category: isVideo ? "Ваші відео" : "Ваші картинки" },
+      ...prev,
+    ]);
+    setHeroBg(src);
+    notifySupportMoment("bg");
   };
 
   const handleDragOver = (e) => e.preventDefault();
@@ -1172,14 +1211,14 @@ const BgModal = ({
 
   return (
     <ModalOverlay $isClosing={isClosing} onClick={onClose}>
-      <ModalContent ref={contentRef} onScroll={handleContentScroll} $isClosing={isClosing} onClick={(e) => e.stopPropagation()}>
+      <ModalContent ref={contentRef} onScroll={handleContentScroll} $isClosing={isClosing} $light={isDarkMode === false} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "10px", borderBottom: "1px solid rgba(255, 179, 108, 0.2)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div>
-              <h2 style={{ margin: 0, fontSize: "16px", fontWeight: "700", background: "linear-gradient(90deg, #ffb36c 0%, #ffe3b8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: "0.4px" }}>
+              <h2 style={{ margin: 0, fontSize: "16px", fontWeight: "700", background: "var(--bm-title, linear-gradient(90deg, #ffb36c 0%, #ffe3b8 100%))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: "0.4px" }}>
                 Налаштування фону та вигляду
               </h2>
-              <span style={{ fontSize: "11px", color: "#8a8d9b" }}>Персоналізуйте теми, слайд-шоу та візуальні ефекти</span>
+              <span style={{ fontSize: "11px", color: "var(--bm-muted, #8a8d9b)" }}>Персоналізуйте теми, слайд-шоу та візуальні ефекти</span>
             </div>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -1215,7 +1254,7 @@ const BgModal = ({
                   }
                   setActiveLayer(1);
                 }}
-                style={{ background: "rgba(10, 14, 26, 0.95)", color: "#fff", fontSize: "12px", fontWeight: "500", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 6px", flex: 1, outline: "none" }}
+                style={{ background: "var(--bm-input-bg, rgba(10, 14, 26, 0.95))", color: "var(--bm-input-text, #fff)", fontSize: "12px", fontWeight: "500", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 6px", flex: 1, outline: "none" }}
               >
                 <option value="static">Статичний (1 фото)</option>
                 <option value="slideshow-2">Слайд-шоу (2 фото)</option>
@@ -1286,8 +1325,8 @@ const BgModal = ({
           <ModalSearchInput aria-label="Фільтр наявних фонів за назвою" placeholder="Фільтр наявних фонів за назвою..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setVisibleBgCount(300); }} />
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <label style={{ fontSize: "12px", color: "#ffc996", fontWeight: "600" }}>Категорія:</label>
-              <select aria-label="Категорія фонів" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ background: "rgba(10, 14, 26, 0.95)", fontSize: "12px", color: "#fff", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
+              <label style={{ fontSize: "12px", color: "var(--bm-label, #ffc996)", fontWeight: "600" }}>Категорія:</label>
+              <select aria-label="Категорія фонів" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ background: "var(--bm-input-bg, rgba(10, 14, 26, 0.95))", fontSize: "12px", color: "var(--bm-input-text, #fff)", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
                 <option value="all">Усі зображення</option>
                 <option value="Природа та Стихії">Природа та Стихії</option>
                 <option value="Фентезі та Легенди">Фентезі та Легенди</option>
@@ -1296,8 +1335,8 @@ const BgModal = ({
               </select>
             </div>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <label style={{ fontSize: "12px", color: "#ffc996", fontWeight: "600" }}>Сортувати:</label>
-              <select aria-label="Сортування фонів" value={sortType} onChange={(e) => setSortType(e.target.value)} style={{ background: "rgba(10, 14, 26, 0.95)", color: "#fff", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", fontSize: "12px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
+              <label style={{ fontSize: "12px", color: "var(--bm-label, #ffc996)", fontWeight: "600" }}>Сортувати:</label>
+              <select aria-label="Сортування фонів" value={sortType} onChange={(e) => setSortType(e.target.value)} style={{ background: "var(--bm-input-bg, rgba(10, 14, 26, 0.95))", color: "var(--bm-input-text, #fff)", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", fontSize: "12px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
                 <option value="az">Назва А-Я</option>
                 <option value="za">Назва Я-А</option>
               </select>
@@ -1351,15 +1390,18 @@ const BgModal = ({
         </BgGrid>
 
         {sortedBgs.length > visibleBgCount && (
-          <LoadMoreButton onClick={() => setVisibleBgCount((prev) => prev + 300)}>Завантажити ще</LoadMoreButton>
+          <LoadMoreButton isDarkMode={isDarkMode} onClick={() => setVisibleBgCount((prev) => prev + 300)}>Завантажити ще</LoadMoreButton>
         )}
         </ModalSection>
 
         <ModalDivider />
         <DropZone onDragOver={handleDragOver} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()}>
           <FiUploadCloud size={24} aria-hidden="true" />
-          <div><span style={{ color: "#ffb36c", fontWeight: "bold" }}>Перетягніть сюди</span> картинку або відео</div>
-          <span style={{ fontSize: "11px", color: "#8a8d9b" }}>або натисніть для вибору файлу з вашого пристрою</span>
+          <div><span style={{ color: "var(--bm-accent-text, #ffb36c)", fontWeight: "bold" }}>Перетягніть сюди</span> картинку або відео</div>
+          <span style={{ fontSize: "11px", color: "var(--bm-muted, #8a8d9b)" }}>або натисніть для вибору файлу з вашого пристрою</span>
+          <span style={{ fontSize: "11px", color: "var(--bm-muted, #8a8d9b)" }}>
+            Ваші фони: {customHeroBgs?.length || 0}/{MAX_CUSTOM_BGS} · {CUSTOM_BG_LIMITS_TEXT}
+          </span>
           <input type="file" ref={fileInputRef} hidden accept="image/*,video/*" onChange={(e) => { handleFileUpload(e.target.files[0]); e.target.value = ""; }} />
         </DropZone>
 

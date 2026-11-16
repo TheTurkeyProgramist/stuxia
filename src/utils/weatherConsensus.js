@@ -51,6 +51,21 @@ const DAILY_VARS = [
   "precipitation_sum",
 ];
 
+// Із API беремо лише денні макс/мін температури: моделі рахують їх із даних, точніших за
+// погодинні (ECMWF — до 3 °C різниці). Решту DAILY_VARS згортаємо з погодинного ряду
+// кожної моделі — це −5 змінних × 7 моделей у квоті Open-Meteo (≈ −3.5 «виклику»).
+// Звірено 15.11.2026 на 5 містах: медіана моделей відрізняється в середньому на
+// 0.1–0.3 (вітер, «відчувається»), опади — 0.4 мм: ECMWF/JMA мають крок 3–6 год, і API
+// ділить їхні суми на доби інакше; погодинна сума узгоджена з графіком картки.
+const DAILY_API_VARS = ["temperature_2m_max", "temperature_2m_min"];
+const DAILY_FROM_HOURLY = {
+  apparent_temperature_max: ["apparent_temperature", "max"],
+  apparent_temperature_min: ["apparent_temperature", "min"],
+  wind_speed_10m_max: ["wind_speed_10m", "max"],
+  wind_gusts_10m_max: ["wind_gusts_10m", "max"],
+  precipitation_sum: ["precipitation", "sum"],
+};
+
 // Скільки змінних «поточної» погоди звіряємо (решту лишаємо з best_match)
 const CURRENT_VARS = [
   "temperature_2m",
@@ -74,7 +89,7 @@ const WET_DAY_MM = 0.5; // день з опадами
 export const buildConsensusUrl = (lat, lon) =>
   `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
   `&hourly=${HOURLY_VARS.join(",")}` +
-  `&daily=${DAILY_VARS.join(",")}` +
+  `&daily=${DAILY_API_VARS.join(",")}` +
   `&models=${CONSENSUS_MODELS.join(",")}` +
   `&wind_speed_unit=ms&timezone=auto&past_days=1&forecast_days=${CONSENSUS_FORECAST_DAYS}`;
 
@@ -177,10 +192,53 @@ const interpolateAt = (block, key, times, time) => {
  *   models: string[], tempSpread: number|null, dailyTempSpread: (number|null)[]
  * } }}
  */
-export const blendWithConsensus = (primary, consensus) => {
-  if (!primary || !consensus?.hourly?.time?.length) {
+const aggregate = (values, op) => {
+  if (op === "max") return Math.max(...values);
+  if (op === "min") return Math.min(...values);
+  return round1(values.reduce((s, v) => s + v, 0));
+};
+
+/**
+ * Дописує в consensus.daily ті DAILY_VARS, яких не запитували (див. DAILY_FROM_HOURLY),
+ * згортаючи погодинний ряд кожної моделі за місцевою добою. Лише повні доби (≥ 23 год,
+ * без пропусків): у кінці горизонту моделі мають кілька годин, і сума/максимум були б хибні.
+ * Поля, що вже є (старий кеш), не чіпає. Нічого не мутує.
+ */
+export const withDerivedDaily = (consensus) => {
+  const cH = consensus?.hourly;
+  if (!cH?.time?.length) return consensus;
+
+  const byDay = new Map();
+  cH.time.forEach((t, i) => {
+    const day = String(t).slice(0, 10);
+    if (!byDay.has(day)) byDay.set(day, []);
+    byDay.get(day).push(i);
+  });
+  const days = consensus.daily?.time?.length ? consensus.daily.time : [...byDay.keys()];
+  const daily = { ...(consensus.daily || {}), time: days };
+
+  for (const [variable, [hourlyVar, op]] of Object.entries(DAILY_FROM_HOURLY)) {
+    for (const model of CONSENSUS_MODELS) {
+      const key = `${variable}_${model}`;
+      const series = cH[`${hourlyVar}_${model}`];
+      if (Array.isArray(daily[key]) || !Array.isArray(series)) continue;
+      daily[key] = days.map((day) => {
+        const idx = byDay.get(day) || [];
+        const values = idx.map((i) => series[i]).filter(isNum);
+        if (idx.length < 23 || values.length < idx.length) return null;
+        return aggregate(values, op);
+      });
+    }
+  }
+
+  return { ...consensus, daily };
+};
+
+export const blendWithConsensus = (primary, rawConsensus) => {
+  if (!primary || !rawConsensus?.hourly?.time?.length) {
     return { data: primary, accuracy: null };
   }
+  const consensus = withDerivedDaily(rawConsensus);
 
   const copyArr = (a) => (Array.isArray(a) ? [...a] : a);
   const d = {
