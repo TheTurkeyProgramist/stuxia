@@ -95,6 +95,7 @@ const useOpenedOnce = (flag) => {
 import { usePageActive } from "../../utils/pageActivity.js";
 import { usePrefValue } from "../../utils/betaFeatures";
 import { setPref } from "../../utils/prefsStore.js";
+import { OPEN_HERO_MODAL_EVENT } from "../Commands/commandHost.js";
 
 const SCROLL_TO_NEW_CARD_KEY = "hero_scroll_to_new_card";
 const bgCardThumbnails = {
@@ -1478,6 +1479,16 @@ const Hero = ({
   const [hasMore, setHasMore] = useState(true);
   const [searchMode, setSearchMode] = useState("city");
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+
+  // Консоль команд: /open ai, /open language
+  useEffect(() => {
+    const open = (e) => {
+      if (e.detail?.name === "ai") setIsAiModalOpen(true);
+      if (e.detail?.name === "language") setIsLanguageModalOpen(true);
+    };
+    window.addEventListener(OPEN_HERO_MODAL_EVENT, open);
+    return () => window.removeEventListener(OPEN_HERO_MODAL_EVENT, open);
+  }, []);
 
   // Режим пошуку: кнопка одразу перемикає «за назвою міста» ↔ «за координатами»
   // (ШІ-асистент тепер окремою кнопкою ліворуч від часу)

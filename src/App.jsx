@@ -31,6 +31,7 @@ import { getEagerChunk, loadWeather } from "./utils/eagerChunks.js";
 import { lazyWithRetry } from "./utils/lazyWithRetry.js";
 import { modalLoaders } from "./utils/modalChunks.js";
 import { ModalSuspense } from "./components/Loader/ModalLoading.jsx";
+import { setCommandHost, OPEN_HERO_MODAL_EVENT } from "./components/Commands/commandHost.js";
 //import { useSelector } from "react-redux";
 // Картка погоди (~90 КБ) — окремим файлом. Телефон: після першого показу сторінки (поки вантажиться,
 // на її місці WeatherCardSkeleton тієї ж висоти). ПК: уже завантажена до першого малювання (eagerChunks.js)
@@ -3172,7 +3173,9 @@ const App = () => {
   }, [weatherCards]);
 
   const fetchWeather = useCallback(
-    async (cityData, isMain, lat = null, lon = null, insertAtFirst = false) => {
+    async (cityData, isMain, lat = null, lon = null, insertAtFirst = false, notify = null) => {
+      // notify(text) — куди повідомити про відмову (консоль команд); без нього — alert/toast як завжди
+      const report = notify || ((text) => alert(text));
       // GPS-картку вимкнено в бета-функціях — не робимо зайвих запитів
       if (isMain && hideGpsCardRef.current) return;
       try {
@@ -3205,8 +3208,8 @@ const App = () => {
               displayName = geo.data.results[0].name;
               cityData = { id: Date.now() }; // Створюємо об'єкт для нової картки
             } else {
-              alert("Місто не знайдено в базі Open-Meteo");
-              return;
+              report("Місто не знайдено в базі Open-Meteo");
+              return false;
             }
           }
         }
@@ -3223,6 +3226,10 @@ const App = () => {
             targetLon,
           );
           if (duplicateCard) {
+            if (notify) {
+              notify(`«${duplicateCard.locationName}» вже є серед ваших карток`);
+              return false;
+            }
             toast(`«${duplicateCard.locationName}» вже є серед ваших карток`, {
               id: "duplicate-city-card",
               icon: "📍",
@@ -3234,7 +3241,7 @@ const App = () => {
             (card) => !card.isMain,
           ).length;
           if (customCardsCount >= maxCustomCardsFor(hideGpsCardRef.current)) {
-            alert(cardLimitMessage(hideGpsCardRef.current));
+            report(cardLimitMessage(hideGpsCardRef.current));
             return false;
           }
           if (customCardsCount >= SOFT_CUSTOM_WEATHER_CARDS) {
@@ -3267,7 +3274,7 @@ const App = () => {
               });
               setDailyCardAdditions(counterRef.current.count);
               if (!result.ok) {
-                alert(`Ви досягли ліміту в ${MAX_DAILY_CARD_ADDITIONS} карток на добу.`);
+                report(`Ви досягли ліміту в ${MAX_DAILY_CARD_ADDITIONS} карток на добу.`);
                 return false;
               }
             } catch (e) {
@@ -3666,6 +3673,10 @@ const App = () => {
         }
       } catch (error) {
         console.error("Помилка завантаження погоди", error);
+        if (notify) {
+          notify("Не вдалося завантажити погоду. Перевірте інтернет і спробуйте ще раз");
+          return false;
+        }
       }
     },
     [],
@@ -3975,16 +3986,16 @@ const App = () => {
     [weatherCards],
   );
   const handleAddCityFromHero = useCallback(
-    (cityObj) => {
+    (cityObj, notify = null) => {
       const task = addCityQueueRef.current.then(async () => {
         const customCardsCount = weatherCardsRef.current.filter(
           (card) => !card.isMain,
         ).length;
         if (customCardsCount >= maxCustomCardsFor(hideGpsCardRef.current)) {
-          alert(cardLimitMessage(hideGpsCardRef.current));
+          (notify || alert)(cardLimitMessage(hideGpsCardRef.current));
           return false;
         }
-        const added = (await fetchWeather(cityObj, false)) !== false;
+        const added = (await fetchWeather(cityObj, false, null, null, false, notify)) !== false;
         // Приємний момент: людина вже стежить за 3+ містами
         if (added && customCardsCount + 1 >= 3) notifySupportMoment("cards");
         return added;
@@ -4130,6 +4141,69 @@ const App = () => {
     setIsInfoOpen(false);
     setIsAuthorsDirectoryOpen(false);
   }, []);
+
+  // Консоль команд у шапці (/open, /soundtrack, /create weather…) бере дії звідси.
+  // Оновлюємо після кожного рендеру — замикання завжди бачать свіжий стан.
+  useEffect(() => {
+    setCommandHost({
+      openModal: (name, { tab } = {}) => {
+        switch (name) {
+          case "settings":
+            setSettingsInitialTab(tab || null);
+            setIsSettingsModalOpen(true);
+            return true;
+          case "shop":
+            setIsShopOpen(true);
+            return true;
+          case "help":
+            setIsUserSearchOpen(true);
+            return true;
+          case "authors":
+            setIsAuthorsDirectoryOpen(true);
+            return true;
+          case "account":
+            if (user) {
+              setSettingsInitialTab("security");
+              setIsSettingsModalOpen(true);
+            } else {
+              setIsModalOpen(true);
+            }
+            return true;
+          case "ai":
+          case "language":
+            window.dispatchEvent(new CustomEvent(OPEN_HERO_MODAL_EVENT, { detail: { name } }));
+            return true;
+          default:
+            return false;
+        }
+      },
+      closeModals: closeAllModals,
+      getSoundtrack: () => ({ enabled: bgMusicEnabled, volume: bgMusicVolume }),
+      setSoundtrack: (enabled) => {
+        setHasInteracted(true);
+        setBgMusicEnabled(enabled);
+      },
+      setSoundtrackVolume: setBgMusicVolume,
+      getCards: () => weatherCardsRef.current,
+      // Причина відмови — у консоль, а не системним alert
+      addCity: async (name) => {
+        let message = "";
+        const added = await handleAddCityFromHero(name, (text) => {
+          message = text;
+        });
+        return { added: !!added, message };
+      },
+      deleteCard: handleDeleteCard,
+      isDarkMode: () => isDarkMode,
+      setDarkMode: (dark) => {
+        if (dark !== isDarkMode) toggleTheme();
+      },
+      scrollTo: (target) => {
+        if (target === "top") window.scrollTo({ top: 0, behavior: "smooth" });
+        else document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      },
+    });
+  });
 
   const quickWeatherChosenId = usePrefValue(QUICK_WEATHER_CITY_KEY, "");
   // Вибране вручну місто (якщо його картку не видалили), інакше — автоматичний вибір

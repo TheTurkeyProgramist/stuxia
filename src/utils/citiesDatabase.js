@@ -594,6 +594,14 @@ const CITY_LOCATIVE = {
   "Ізюм": "Ізюмі", "Звягель": "Звягелі",
 };
 
+/** Місто за формою місцевого відмінка: «львові» → «Львів» (для голосових команд). */
+export const findCityByLocative = (text) => {
+  const q = String(text || "").trim().toLowerCase().replace(/[’ʼ`]/g, "'");
+  if (!q) return null;
+  const hit = Object.entries(CITY_LOCATIVE).find(([, form]) => form.toLowerCase() === q);
+  return hit ? hit[0] : null;
+};
+
 /** «в Конотопі», «у Львові», «в Одесі» (милозвучність після слова «Погода»). */
 export const getCityLocative = (city) => {
   const form = CITY_LOCATIVE[city.name];

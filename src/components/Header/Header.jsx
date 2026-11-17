@@ -5,7 +5,7 @@
 //cd ~/projects/stuxia-linux-build
 //bun run --cwd Stuxia tauri build --bundles deb
 //bun run --cwd Stuxia tauri build --bundles deb - WSL(Linux)
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import styled, { keyframes, css } from "styled-components";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { GiShop, GiExitDoor } from "react-icons/gi";
@@ -33,6 +33,10 @@ import { isSupporter } from "../Support/supportConfig";
 import { isInviter, isInvitee } from "../../utils/referral.js";
 // import AntiHeaderAd from "./AntiHeaderAd";
 import { Tooltip } from "../Tooltip/Tooltip";
+import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
+// Консоль команд (/open, /soundtrack, /create…) — вантажиться лише при відкритті
+const CommandsModal = lazyWithRetry(() => import("../Commands/CommandsModal.jsx"));
+const prefetchCommands = () => import("../Commands/CommandsModal.jsx").catch(() => {});
 const flow = keyframes`
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -971,6 +975,7 @@ const Header = ({
   const themePickerBtnRef = useRef(null);
   const avatarSource = user?.photoURL || user?.avatar || currentAvatar || userDefault;
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isCommandsOpen, setIsCommandsOpen] = useState(false);
   const networkStatus = useNetworkStatus();
   const supporter = isSupporter(user);
   const inviter = isInviter(user);
@@ -1090,6 +1095,22 @@ const Header = ({
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [sfxVolume]);
+
+  // Клавіша «/» (як чат у грі) відкриває консоль команд, якщо людина не друкує в полі.
+  // e.code — щоб працювало й на українській розкладці, де там «.»
+  useEffect(() => {
+    const handleSlash = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
+      if (e.key !== "/" && !(e.code === "Slash" && !e.shiftKey)) return;
+      const el = e.target;
+      if (el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName || "")) return;
+      if (document.querySelector('[aria-modal="true"]')) return; // поверх інших модалок не відкриваємо
+      e.preventDefault();
+      setIsCommandsOpen(true);
+    };
+    window.addEventListener("keydown", handleSlash);
+    return () => window.removeEventListener("keydown", handleSlash);
+  }, []);
 
   // Фокус на першу кнопку при відкритті модалки
   useEffect(() => {
@@ -1307,6 +1328,17 @@ const Header = ({
       showFrom: BURGER_HIDE_FROM,
     },
     {
+      key: "commands",
+      label: "Команди",
+      menuLabel: "Команди",
+      tooltip: "Консоль команд (клавіша /)",
+      icon: "/",
+      iconStyle: { fontWeight: 900, fontFamily: "ui-monospace, Consolas, monospace" },
+      onClick: () => { playSfx(relax); setIsCommandsOpen(true); },
+      prefetchFn: prefetchCommands,
+      showFrom: BURGER_HIDE_FROM,
+    },
+    {
       key: "authors",
       label: "Подяка",
       menuLabel: "Подяка",
@@ -1397,7 +1429,7 @@ const Header = ({
           <Tooltip content={action.tooltip} isDarkMode={isDarkMode}>
             <IconButton
               onClick={action.onClick}
-              {...(action.prefetch ? prefetchProps(action.prefetch) : null)}
+              {...(action.prefetch ? prefetchProps(action.prefetch) : action.prefetchFn ? { onPointerEnter: action.prefetchFn, onFocus: action.prefetchFn, onTouchStart: action.prefetchFn } : null)}
               $isDarkMode={isDarkMode}
               aria-label={action.tooltip}
             >
@@ -1446,7 +1478,7 @@ const Header = ({
                 $hideFrom={action.showFrom}
                 $isDarkMode={isDarkMode}
                 onClick={() => { setIsBurgerOpen(false); action.onClick(); }}
-                {...(action.prefetch ? prefetchProps(action.prefetch) : null)}
+                {...(action.prefetch ? prefetchProps(action.prefetch) : action.prefetchFn ? { onPointerEnter: action.prefetchFn, onFocus: action.prefetchFn, onTouchStart: action.prefetchFn } : null)}
               >
                 <BurgerIcon style={action.iconStyle}>{action.icon}</BurgerIcon>
                 <span>{action.menuLabel}</span>
@@ -1671,6 +1703,12 @@ const Header = ({
     </VisualSettingsPanel>
   )}
   </HeaderDiv>
+
+  {isCommandsOpen && (
+    <Suspense fallback={null}>
+      <CommandsModal isDarkMode={isDarkMode} onClose={() => setIsCommandsOpen(false)} />
+    </Suspense>
+  )}
 
    {/* <AntiHeaderAd
     isDarkMode={isDarkMode}
