@@ -257,6 +257,8 @@ const appearScale = keyframes`
 `;
 
 // ── Styled Components ────────────────────────────────────────────────────────
+// Вікна «Параметрів» позначені data-decorator-ignore: це панель керування, тож режим
+// Декоратора не перехоплює в них кліки (інакше не натиснути ні меню, ні кнопки).
 
 // Кольори «Параметрів»: темна тема — типова, світла вмикається атрибутом на <body>
 // (меню режимів і діалоги рендеряться порталом у <body>, тож токени мають бути там)
@@ -293,7 +295,7 @@ const FILTERS_PREVIEW_BREAKPOINT = 768;
 // До цієї ширини «Параметри» відкриваються на весь екран (телефони)
 const MOBILE_BP = 600;
 
-const ModalOverlay = styled.div`
+const ModalOverlay = styled.div.attrs({ "data-decorator-ignore": "true" })`
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
@@ -316,7 +318,7 @@ const ModalOverlay = styled.div`
   animation: ${(p) => (p.$isClosing ? fadeOut : fadeIn)} 0.25s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
 `;
 
-const NestedModalPortal = styled.div`
+const NestedModalPortal = styled.div.attrs({ "data-decorator-ignore": "true" })`
   position: fixed;
   inset: 0;
   z-index: 100002;
@@ -819,6 +821,70 @@ const CardExpanded = styled(Card)`
   flex-direction: column; align-items: stretch; gap: 12px;
 `;
 
+// Декоратор: «Оригінал» і два шаблони — три мініатюри в ряд
+const DecoratorPresetRow = styled.div`
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;
+  @media (max-width: ${MOBILE_BP}px) { gap: 6px; }
+`;
+const DecoratorPresetBtn = styled.button`
+  display: flex; flex-direction: column; gap: 6px; min-width: 0;
+  padding: 6px; border-radius: 10px; cursor: pointer; text-align: left;
+  background: ${(p) => (p.$active ? "rgba(var(--s-ink),0.08)" : "rgba(var(--s-ink),0.03)")};
+  border: 2px solid ${(p) => (p.$active ? "var(--s-accent)" : "rgba(var(--s-ink),0.1)")};
+  color: var(--s-text);
+  transition: border-color 0.15s ease, background 0.15s ease;
+  &:hover { border-color: ${(p) => (p.$active ? "var(--s-accent)" : "rgba(var(--s-ink),0.3)")}; }
+  &:focus-visible { outline: 2px solid var(--s-accent); outline-offset: 2px; }
+  svg { display: block; width: 100%; height: auto; border-radius: 6px; }
+`;
+const DecoratorPresetName = styled.span`
+  font-size: 12px; font-weight: 600; line-height: 1.25;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  @media (max-width: ${MOBILE_BP}px) { font-size: 11px; white-space: normal; }
+`;
+const DecoratorPresetMeta = styled.span`
+  font-size: 11px; color: var(--s-muted); margin-top: -4px;
+`;
+
+// Мініатюра сторінки: шапка, банер і три картки. accent — колір шаблону (без нього — оригінал)
+const DecoratorPresetThumb = ({ accent, rounded = 2, variant = 0 }) => {
+  const ink = (a) => `rgba(var(--s-ink),${a})`;
+  const tint = accent || ink(0.22);
+  return (
+    <svg viewBox="0 0 160 96" aria-hidden="true" focusable="false">
+      <rect width="160" height="96" fill="var(--s-bg)" />
+      <rect width="160" height="96" fill={accent || "transparent"} opacity={accent ? 0.08 : 0} />
+      <rect x="0" y="0" width="160" height="14" fill={accent ? tint : ink(0.1)} opacity={accent ? 0.85 : 1} />
+      <circle cx="9" cy="7" r="3" fill={accent ? "#fff" : ink(0.35)} opacity="0.9" />
+      <rect x="16" y="5" width="30" height="4" rx="2" fill={accent ? "#fff" : ink(0.3)} opacity="0.8" />
+      <rect
+        x="8" y="20" width="144" height="28" rx={rounded * 2}
+        fill={accent ? tint : ink(0.08)} opacity={accent ? (variant ? 0.35 : 0.22) : 1}
+      />
+      <rect x="16" y="28" width="56" height="5" rx="2.5" fill={accent || ink(0.35)} />
+      <rect x="16" y="37" width="36" height="4" rx="2" fill={ink(0.25)} />
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          <rect
+            x={8 + i * 49} y="54" width="46" height="34" rx={rounded * 2}
+            fill={ink(0.06)}
+            stroke={accent ? tint : ink(0.14)} strokeWidth={accent ? 1.5 : 1}
+          />
+          <rect x={14 + i * 49} y="61" width={variant && i === 1 ? 20 : 28} height="4" rx="2" fill={accent && i === variant ? tint : ink(0.3)} />
+          <rect x={14 + i * 49} y="69" width="22" height="3" rx="1.5" fill={ink(0.2)} />
+          <rect x={14 + i * 49} y="76" width="16" height="6" rx={accent ? 3 : 1} fill={accent || ink(0.18)} opacity={accent ? 0.8 : 1} />
+        </g>
+      ))}
+    </svg>
+  );
+};
+
+const DECORATOR_PRESETS = [
+  { id: "original", label: "Оригінал", hint: "Без змін" },
+  { id: 0, label: "Декоративний шаблон 1", accent: "#d946ef", rounded: 4, variant: 0 },
+  { id: 1, label: "Декоративний шаблон 2", accent: "#f59e0b", rounded: 7, variant: 1 },
+];
+
 // Порожній, коли секція новин не змонтована (вимкнена) — тоді показуємо підказку
 const NewsFeedsSlot = styled.div`
   &:empty::before {
@@ -1180,7 +1246,7 @@ const confirmPopIn = keyframes`
   from { opacity: 0; transform: translateY(8px) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 `;
-const ConfirmOverlay = styled.div`
+const ConfirmOverlay = styled.div.attrs({ "data-decorator-ignore": "true" })`
   position: fixed; inset: 0; z-index: 100003;
   display: flex; align-items: center; justify-content: center;
   padding: 16px;
@@ -1336,7 +1402,7 @@ const LevelButtonText = styled.span`
   b { font-size: 13px; font-weight: 600; }
 `;
 
-const LevelMenuBox = styled.div`
+const LevelMenuBox = styled.div.attrs({ "data-decorator-ignore": "true" })`
   position: fixed; z-index: 100002;
   padding: 4px; border-radius: 10px;
   background: var(--s-menu); color: var(--s-text);
@@ -1800,6 +1866,9 @@ const UserSettingsModal = ({
     setIsPersistent = () => {},
     activePreset = 0,
     switchPreset = () => {},
+    showOriginal = false,
+    setShowOriginal = () => {},
+    presetChangeCounts = [],
   } = useDecorator();
 
   // Visual filters hook
@@ -4457,13 +4526,13 @@ const UserSettingsModal = ({
                     </CardControl>
                   </Card>
 
-                  {/* Decorator Mode */}
-                  <CardExpanded level="pro">
+                  {/* Decorator Mode. data-decorator-ignore — щоб кліки по цій картці не перехоплював сам Декоратор */}
+                  <CardExpanded level="pro" data-decorator-ignore="true">
                     <CardLeft>
                       <CardIconBox $color="#d946ef"><FiPenTool /></CardIconBox>
                       <CardInfo>
                         <CardTitle>Режим Декоратора (CSS Редактор)</CardTitle>
-                        <CardDescription>Візуальне редагування стилів елементів сторінки</CardDescription>
+                        <CardDescription>Закрийте Параметри й клацніть елемент сайту, щоб змінити його стиль. Alt + клік — звичайне натискання</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
@@ -4486,19 +4555,36 @@ const UserSettingsModal = ({
                           </div>
 
                           <div style={{ fontSize: "12px", fontWeight: "600", color: "var(--s-accent)", marginTop: "4px" }}>
-                            Версія Декоратора (кожна зберігає свої окремі зміни)
+                            Вигляд сайту (кожен шаблон зберігає свої окремі зміни)
                           </div>
-                          <div style={{ display: "flex", gap: "6px" }}>
-                            {[0, 1, 2].map((i) => (
-                              <WinButton
-                                key={i}
-                                onClick={() => switchPreset(i)}
-                                style={{ flex: 1, outline: activePreset === i ? "2px solid var(--s-accent)" : "none" }}
-                              >
-                                Пресет {i + 1}
-                              </WinButton>
-                            ))}
-                          </div>
+                          <DecoratorPresetRow role="radiogroup" aria-label="Вигляд сайту в Декораторі">
+                            {DECORATOR_PRESETS.map((preset) => {
+                              const isOriginal = preset.id === "original";
+                              const active = isOriginal ? showOriginal : !showOriginal && activePreset === preset.id;
+                              const count = isOriginal ? 0 : presetChangeCounts[preset.id] || 0;
+                              return (
+                                <DecoratorPresetBtn
+                                  key={preset.id}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={active}
+                                  $active={active}
+                                  onClick={() => (isOriginal ? setShowOriginal(true) : switchPreset(preset.id))}
+                                >
+                                  <DecoratorPresetThumb accent={preset.accent} rounded={preset.rounded} variant={preset.variant} />
+                                  <DecoratorPresetName title={preset.label}>{preset.label}</DecoratorPresetName>
+                                  <DecoratorPresetMeta>
+                                    {isOriginal ? preset.hint : count ? `Змін: ${count}` : "Порожній"}
+                                  </DecoratorPresetMeta>
+                                </DecoratorPresetBtn>
+                              );
+                            })}
+                          </DecoratorPresetRow>
+                          {showOriginal && (
+                            <span style={{ fontSize: "11px", color: "var(--s-muted)" }}>
+                              Зараз видно сайт без змін Декоратора. Шаблони збережені — оберіть один, щоб повернути його вигляд.
+                            </span>
+                          )}
 
                           <div style={{ fontSize: "12px", fontWeight: "600", color: "var(--s-accent)", marginTop: "4px" }}>
                             Журнал змін ({changeLog.length})

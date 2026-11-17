@@ -37,7 +37,7 @@ const DecoratorOverlay = ({ isStickyBgMode }) => {
 
   const handleMouseOver = useCallback(
     (e) => {
-      if (!isDecoratorMode || isIgnored(e.target)) return;
+      if (!isDecoratorMode || e.altKey || isIgnored(e.target)) return;
 
       // Прибираємо попереднє підсвічування
       if (hoveredEl && hoveredEl !== e.target) {
@@ -69,6 +69,7 @@ const DecoratorOverlay = ({ isStickyBgMode }) => {
     (e) => {
       if (!isDecoratorMode) return;
       if (!e.isTrusted) return; // Ігноруємо програмні кліки (напр., через "Виконати дію")
+      if (e.altKey) return; // Alt + клік — звичайний клік, без відкриття редактора
       if (isIgnored(e.target)) return;
 
       e.preventDefault();

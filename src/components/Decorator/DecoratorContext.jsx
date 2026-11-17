@@ -67,7 +67,8 @@ export const buildOverridesCss = (elId, modes) => {
   return css;
 };
 
-export const PRESET_COUNT = 3;
+// Два декоративні шаблони; «Оригінал» — окремий режим без змін Декоратора
+export const PRESET_COUNT = 2;
 
 export const DecoratorProvider = ({ children, isDarkMode }) => {
   const [isDecoratorMode, setIsDecoratorMode] = useState(false);
@@ -75,9 +76,11 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
   const [styleOverrides, setStyleOverrides] = useState({});
   const [changeLog, setChangeLog] = useState([]);
   const [isHydrated, setIsHydrated] = useState(false);
-  // Три незалежні версії декоратора: активна живе в styleOverrides/changeLog, решта — у slots
+  // Незалежні шаблони декоратора: активний живе в styleOverrides/changeLog, решта — у slots
   const [activePreset, setActivePreset] = useState(0);
   const [slots, setSlots] = useState({});
+  // «Оригінал»: сайт без жодних змін Декоратора (шаблони при цьому не втрачаються)
+  const [showOriginal, setShowOriginal] = useState(false);
 
   // Sync isDarkMode to body class for CSS selection
   useEffect(() => {
@@ -124,8 +127,18 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
             if (savedLog) setChangeLog(savedLog);
             const savedSlots = await localforage.getItem("decorator_slots");
             const savedActive = await localforage.getItem("decorator_active_preset");
+            const savedOriginal = await localforage.getItem("decorator_show_original");
             if (savedSlots) setSlots(savedSlots);
-            if (Number.isInteger(savedActive)) setActivePreset(savedActive);
+            if (Number.isInteger(savedActive) && savedActive < PRESET_COUNT) {
+              setActivePreset(savedActive);
+            } else if (Number.isInteger(savedActive)) {
+              // Колишній «Пресет 3» більше не існує — повертаємось до шаблону 1
+              const first = savedSlots?.[0] || { overrides: {}, log: [] };
+              setStyleOverrides(first.overrides || {});
+              setChangeLog(first.log || []);
+              setActivePreset(0);
+            }
+            if (savedOriginal === true) setShowOriginal(true);
           }
         }
       } catch (err) {
@@ -144,14 +157,16 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
       localforage.setItem("decorator_changelog", changeLog);
       localforage.setItem("decorator_slots", slots);
       localforage.setItem("decorator_active_preset", activePreset);
+      localforage.setItem("decorator_show_original", showOriginal);
     } else {
+      localforage.removeItem("decorator_show_original");
       localforage.removeItem("decorator_slots");
       localforage.removeItem("decorator_active_preset");
       localforage.removeItem("decorator_overrides");
       localforage.removeItem("decorator_changelog");
     }
     localforage.setItem("decorator_persistent", isPersistent);
-  }, [styleOverrides, changeLog, slots, activePreset, isPersistent, isHydrated]);
+  }, [styleOverrides, changeLog, slots, activePreset, showOriginal, isPersistent, isHydrated]);
 
   // Generate and inject global CSS
   useEffect(() => {
@@ -163,12 +178,14 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
     }
 
     let css = "";
-    Object.entries(styleOverrides).forEach(([elId, modes]) => {
-      css += buildOverridesCss(elId, modes);
-    });
+    if (!showOriginal) {
+      Object.entries(styleOverrides).forEach(([elId, modes]) => {
+        css += buildOverridesCss(elId, modes);
+      });
+    }
 
     styleTag.innerHTML = css;
-  }, [styleOverrides]);
+  }, [styleOverrides, showOriginal]);
 
   const applyStyle = useCallback(
     (
@@ -179,6 +196,8 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
       newValue,
       mode = "light_default",
     ) => {
+      // Редагування в «Оригіналі» повертає активний шаблон, щоб зміну було видно
+      setShowOriginal(false);
       setStyleOverrides((prev) => {
         const elStyles = { ...(prev[elementId] || {}) };
         const modeStyles = { ...(elStyles[mode] || {}) };
@@ -220,7 +239,9 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
 
   const switchPreset = useCallback(
     (index) => {
-      if (index === activePreset || index < 0 || index >= PRESET_COUNT) return;
+      if (index < 0 || index >= PRESET_COUNT) return;
+      setShowOriginal(false);
+      if (index === activePreset) return;
       const next = slots[index] || { overrides: {}, log: [] };
       setSlots((prev) => ({
         ...prev,
@@ -286,6 +307,11 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
     });
   }, []);
 
+  // Кількість змін у кожному шаблоні (для мініатюр у налаштуваннях)
+  const presetChangeCounts = Array.from({ length: PRESET_COUNT }, (_, i) =>
+    i === activePreset ? changeLog.length : slots[i]?.log?.length || 0,
+  );
+
   const getOverridesForElement = useCallback(
     (elementId) => styleOverrides[elementId] || {},
     [styleOverrides],
@@ -306,6 +332,9 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
         setIsPersistent,
         activePreset,
         switchPreset,
+        showOriginal,
+        setShowOriginal,
+        presetChangeCounts,
         isDarkMode,
       }}
     >
