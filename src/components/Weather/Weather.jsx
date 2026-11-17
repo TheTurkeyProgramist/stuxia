@@ -49,7 +49,7 @@ import {
   serializeTabAutoplay,
 } from "../../utils/betaFeatures";
 import TabAutoplayControl from "./TabAutoplayControl";
-import { setPref, removePref } from "../../utils/prefsStore";
+import { setPref, removePref, subscribePrefs } from "../../utils/prefsStore";
 import { useAnimationsDisabled } from "../../utils/animationsPref";
 import { buildForecastSpeech, getVoiceSettings, speak, stopSpeaking } from "../../utils/weatherSpeech";
 import {
@@ -100,8 +100,18 @@ import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, Cl
 import { WeatherIcon, stripEmoji, ICON_HALO_FILTER } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
 import { BiWind } from "react-icons/bi"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
-import { MdOutlineSpeed, MdClose, MdStraighten, MdNotificationsActive, MdNotificationsOff, MdAutorenew } from "react-icons/md"; //Тиск
-import { isWeatherAlertsEnabled, isCardWeatherAlertsOn, setCardWeatherAlerts } from "../../utils/emergencyAlerts";
+import { MdOutlineSpeed, MdClose, MdStraighten, MdNotificationsActive, MdNotificationsOff, MdAutorenew, MdWbTwilight } from "react-icons/md"; //Тиск
+import {
+  isWeatherAlertsEnabled,
+  isCardWeatherAlertsOn,
+  setCardWeatherAlerts,
+  isMorningBriefEnabled,
+  getMorningCardId,
+  setMorningCardId,
+  MORNING_CARD_KEY,
+  MORNING_ENABLED_KEY,
+  MORNING_BRIEF_HOUR,
+} from "../../utils/emergencyAlerts";
 import { FaSnowflake, FaSun, FaExclamationTriangle } from "react-icons/fa"; //Іконки
 import { GiSunRadiations, GiSnowing, GiWaterRecycling, GiIceCube } from "react-icons/gi";//Сонячна радіація
 import { Tooltip } from "../Tooltip/Tooltip";
@@ -1804,6 +1814,22 @@ const WeatherCardComponent = ({
     setCardAlertsOn(next);
     setCardWeatherAlerts(card.id, next);
   };
+  // Ранковий прогноз о 7:00: для якої картки (обрана в меню ⚙, інакше перша в списку)
+  const [morningPrefs, setMorningPrefs] = useState(() => ({
+    on: isMorningBriefEnabled(),
+    cardId: getMorningCardId(),
+  }));
+  useEffect(
+    () =>
+      subscribePrefs((e) => {
+        const key = e.detail?.key;
+        if (key === MORNING_CARD_KEY || key === MORNING_ENABLED_KEY) {
+          setMorningPrefs({ on: isMorningBriefEnabled(), cardId: getMorningCardId() });
+        }
+      }),
+    [],
+  );
+  const isMorningCard = morningPrefs.cardId ? morningPrefs.cardId === String(card.id) : index === 0;
   const [activeTab, setActiveTab] = useState("current");
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
@@ -4369,6 +4395,20 @@ const HOLIDAYS_2027 = {
                   <SettingsItemHint>
                     {isWeatherAlertsEnabled()
                       ? "Гроза, ураган, злива, ожеледь для цієї картки"
+                      : "Спершу увімкніть у Налаштуваннях → Секції та новини"}
+                  </SettingsItemHint>
+                </SettingsDropdownItem>
+                <SettingsDropdownItem
+                  isDarkMode={isDarkMode}
+                  role="radio"
+                  aria-checked={isMorningCard}
+                  onClick={() => setMorningCardId(card.id)}
+                >
+                  <MdWbTwilight style={{ color: "#fb923c", opacity: isMorningCard ? 1 : 0.6 }} />
+                  Ранковий прогноз о {MORNING_BRIEF_HOUR}:00: {isMorningCard ? "ця картка" : "обрати цю"}
+                  <SettingsItemHint>
+                    {morningPrefs.on
+                      ? "Щоранку: температура, опади й що вдягнути"
                       : "Спершу увімкніть у Налаштуваннях → Секції та новини"}
                   </SettingsItemHint>
                 </SettingsDropdownItem>

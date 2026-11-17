@@ -81,6 +81,7 @@ import {
   FiRss,
   FiHeart,
   FiCloudLightning,
+  FiSunrise,
 } from "react-icons/fi";
 import {
   useBeta,
@@ -191,6 +192,9 @@ import {
   setAlertDailyLimit,
   isWeatherAlertsEnabled,
   setWeatherAlertsEnabled,
+  isMorningBriefEnabled,
+  setMorningBriefEnabled,
+  MORNING_BRIEF_HOUR,
   GUST_STORM_MS,
   WEATHER_ALERT_HOURS,
 } from "../../utils/emergencyAlerts";
@@ -2203,6 +2207,51 @@ const UserSettingsModal = ({
   const [isWeatherAlertsOn, setIsWeatherAlertsOn] = useState(isWeatherAlertsEnabled);
   const toggleWeatherAlerts = () =>
     toggleEmergencyKind(isWeatherAlertsOn, setIsWeatherAlertsOn, setWeatherAlertsEnabled);
+  // Ранковий прогноз о 7:00 — лише справжній push: о сьомій ранку Стихія зазвичай закрита
+  const [isMorningOn, setIsMorningOn] = useState(isMorningBriefEnabled);
+  const toggleMorningBrief = async () => {
+    if (isUrgentBusy) return;
+    if (isMorningOn) {
+      setIsMorningOn(false);
+      setMorningBriefEnabled(false);
+      if (!wantsPush()) setUrgentDelivery("local");
+      return;
+    }
+    if (!isPushSupported()) {
+      alert("Цей браузер не отримує сповіщень, коли Стихія закрита, тож ранковий прогноз не дійде. На iPhone спершу додайте сайт на екран «Додому».");
+      return;
+    }
+    let permission = Notification.permission;
+    if (permission === "default") permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      alert("Сповіщення заблоковані в налаштуваннях браузера. Дозвольте їх для цього сайту й спробуйте ще раз.");
+      return;
+    }
+    // Спершу зберігаємо вибір: subscribePush бере профіль із налаштувань
+    setMorningBriefEnabled(true);
+    setIsMorningOn(true);
+    if (isPushSubscribed()) {
+      setUrgentDelivery("push"); // профіль на сервері оновить initPushNotifications
+      return;
+    }
+    setIsUrgentBusy(true);
+    const ok = await subscribePush();
+    setIsUrgentBusy(false);
+    if (ok) {
+      setUrgentDelivery("push");
+      return;
+    }
+    setMorningBriefEnabled(false);
+    setIsMorningOn(false);
+    const reason = getLastPushError();
+    alert(
+      reason === "limit"
+        ? "Сьогодні забагато нових підписок на сповіщення. Спробуйте ввімкнути ранковий прогноз завтра."
+        : reason === "captcha"
+          ? "Не вдалося пройти перевірку від ботів (Cloudflare). Спробуйте ввімкнути ранковий прогноз пізніше."
+          : "Не вдалося підключити сповіщення. Перевірте інтернет і спробуйте ще раз.",
+    );
+  };
   const [alertPause, setAlertPauseState] = useState(getAlertPause);
   const chooseAlertPause = (minutes) => {
     setAlertPauseState(minutes);
@@ -4231,6 +4280,29 @@ const UserSettingsModal = ({
                       <ToggleWrapper onClick={toggleWeatherAlerts}>
                         <ToggleStatusLabel $checked={isWeatherAlertsOn}>{isWeatherAlertsOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
                         <SwitchPill $checked={isWeatherAlertsOn} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  {/* Ранковий прогноз: щодня о 7:00 для обраної картки, лише push */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#fb923c"><FiSunrise /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>Ранковий прогноз о {MORNING_BRIEF_HOUR}:00</CardTitle>
+                        <CardDescription>
+                          {isUrgentBusy
+                            ? "Підключаємо сповіщення…"
+                            : `Щоранку одне сповіщення: «Конотоп: +3°, без дощу · Вдягни теплу куртку». Для першої картки погоди — іншу можна обрати в її меню ⚙. Приходить, навіть коли Стихія закрита, і не рахується в ліміт сповіщень на добу${
+                                isPushSupported() ? "" : ". Цей браузер не отримує сповіщень із закритого сайту"
+                              }`}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={toggleMorningBrief}>
+                        <ToggleStatusLabel $checked={isMorningOn}>{isMorningOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <SwitchPill $checked={isMorningOn} />
                       </ToggleWrapper>
                     </CardControl>
                   </Card>

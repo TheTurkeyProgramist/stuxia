@@ -9,6 +9,8 @@ import {
 import {
   isWeatherAlertsEnabled,
   isCardWeatherAlertsOn,
+  isMorningBriefEnabled,
+  getMorningCardId,
   getAlertPause,
   getAlertDailyLimit,
   ALERT_PREF_KEYS,
@@ -52,16 +54,33 @@ export const isPushSupported = () =>
 export const isPushSubscribed = () => Boolean(getPref(TOKEN_KEY));
 
 /** Чи хоче користувач хоч якісь екстрені сповіщення. */
-export const wantsPush = () => isUrgentNotifyEnabled() || isWeatherAlertsEnabled();
+export const wantsPush = () =>
+  isUrgentNotifyEnabled() || isWeatherAlertsEnabled() || isMorningBriefEnabled();
 
 // Картки погоди передає App.jsx (setPushPlaces) — сервер стереже їх від небезпечної погоди
 let knownPlaces = [];
 
 const round1 = (n) => Math.round(Number(n) * 10) / 10;
 
+const hasCoords = (p) => Number.isFinite(Number(p?.lat)) && Number.isFinite(Number(p?.lon));
+
+// Картка для ранкового прогнозу: обрана в її меню ⚙, інакше перша в списку
+const morningPlace = () => {
+  if (!isMorningBriefEnabled()) return null;
+  const saved = getMorningCardId();
+  const place = knownPlaces.find((p) => saved && String(p.id) === saved && hasCoords(p)) ||
+    knownPlaces.find(hasCoords);
+  return place
+    ? { lat: round1(place.lat), lon: round1(place.lon), name: String(place.name || "Ваша локація").slice(0, 60) }
+    : null;
+};
+
 const buildProfile = () => {
   const weatherAlerts = isWeatherAlertsEnabled();
+  const morning = morningPlace();
   return {
+    morningBrief: Boolean(morning),
+    morningPlace: morning,
     newsAlerts: isUrgentNotifyEnabled(),
     weatherAlerts,
     pauseMinutes: getAlertPause(),

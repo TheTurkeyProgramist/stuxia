@@ -12,7 +12,21 @@ import React, {
 import styled, { keyframes, css, createGlobalStyle } from "styled-components";
 import localforage from "localforage";
 import { getPref, setPref, removePref } from "./utils/prefsStore.js";
-import { notifyWeatherHazardsLocal } from "./utils/emergencyAlerts.js";
+import {
+  notifyWeatherHazardsLocal,
+  isWeatherAlertsEnabled,
+  isCardWeatherAlertsOn,
+} from "./utils/emergencyAlerts.js";
+import {
+  FULL_REFRESH_MS,
+  REFRESH_RETRY_MS,
+  applyLightCurrent,
+  buildLightCurrentUrl,
+  pickRefreshKind,
+} from "./utils/weatherRefresh.js";
+import { buildForecastUrl, buildSeasonalUrl } from "./utils/openMeteoUrls.js";
+import { findServerCity } from "./utils/serverCities.js";
+import { fetchServerForecast, fetchServerNow, fetchServerSeasonal } from "./utils/serverWeather.js";
 import {
   initPushNotifications,
   isPushSubscribed,
@@ -114,22 +128,43 @@ import {
 } from "./utils/betaFeatures";
 import GpsCardReturnDialog from "./components/Weather/GpsCardReturnDialog.jsx";
 import { aggregateHourlyByDay } from "./utils/dailyAggregates";
-import { buildConsensusUrl, blendWithConsensus } from "./utils/weatherConsensus";
+import {
+  buildConsensusUrl,
+  blendWithConsensus,
+  blendCurrentWithConsensus,
+} from "./utils/weatherConsensus";
 import { deriveFromHourly } from "./utils/openMeteoDerive";
 import { getStykhiiaFont } from "./utils/stykhiiaFont";
 import { getFontPackId, ensureFontPack } from "./utils/customFonts";
 import { FaMagnifyingGlass, FaGripVertical, FaArrowsUpDown } from "react-icons/fa6";
 import { LOADING_PHRASES } from "./utils/funPhrases";
+// Вартість однієї картки в квоті Open-Meteo (виміряно заголовком X-RateLimit-Cost, 17.11.2026):
+//   основний прогноз 3,64 + консенсус 7 моделей 5,6 + сезонний 1,51 = 10,75 «виклику» при першому
+//   відкритті; далі — повне оновлення (9,24) раз на ~3 год і легке «зараз» (1,0) щогодини,
+//   і лише для карток, які видно (див. utils/weatherRefresh.js). Геокодер у ліміт не рахується.
+// Ліміт рахується на IP відвідувача: 600/хв, 5 000/год, 10 000/добу.
 const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
-// Консенсус — найдорожчий запит до Open-Meteo (≈6.3 «виклику»: 63 ряди), а моделі оновлюються
-// раз на 1–6 год, тож кешуємо його на годину. 55 хв, а не рівно 60: щогодинне
-// автооновлення карток має отримати свіжі дані, а не кеш віком 59:59.
-const CONSENSUS_CACHE_TTL_MS = 55 * 60 * 1000;
+// Консенсус — найдорожчий запит до Open-Meteo (5,6 «виклику»: 56 рядів), а моделі оновлюються
+// раз на 3–6 год, тож живе стільки ж, скільки повне оновлення картки (2:55): на ньому
+// повне оновлення бере свіжі моделі, а легке «зараз» між ними — змішує з цим кешем.
+const CONSENSUS_CACHE_TTL_MS = FULL_REFRESH_MS;
+const consensusCacheKey = (lat, lon) =>
+  `om_consensus_v1_${Number(lat).toFixed(2)},${Number(lon).toFixed(2)}`;
+
+// Для легкого оновлення: лише кеш, без мережі (до 6 год — ще краще за чистий best_match)
+const readCachedConsensus = async (lat, lon) => {
+  try {
+    const cached = await localforage.getItem(consensusCacheKey(lat, lon));
+    return cached?.data && Date.now() - cached.time < 2 * FULL_REFRESH_MS ? cached.data : null;
+  } catch {
+    return null;
+  }
+};
 
 // Прогнози 7 незалежних моделей для звірки (див. utils/weatherConsensus.js).
 // Не вдалося — повертаємо null, і картка лишається на best_match.
 const fetchWeatherConsensus = async (lat, lon) => {
-  const cacheKey = `om_consensus_v1_${Number(lat).toFixed(2)},${Number(lon).toFixed(2)}`;
+  const cacheKey = consensusCacheKey(lat, lon);
   try {
     const cached = await localforage.getItem(cacheKey);
     if (cached?.data && Date.now() - cached.time < CONSENSUS_CACHE_TTL_MS) {
@@ -148,10 +183,11 @@ const fetchWeatherConsensus = async (lat, lon) => {
     return null;
   }
 };
-// Сезонні моделі оновлюються раз на добу, а запит на 210 днів — один із найдорожчих
-// для квоти Open-Meteo (≈15 «викликів»). Тож тримаємо його 12 год на пару координат.
+// Сезонні моделі оновлюються раз на добу, тож тримаємо запит 12 год на пару координат.
+// Квоту Open-Meteo він майже не їсть: виміряно X-RateLimit-Cost = 1,51 «виклику»
+// (для seasonal-api Open-Meteo ділить кількість змінних на 120). Найдорожчий — консенсус (6,3).
 const SEASONAL_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
-const fetchSeasonalCached = async (lat, lon, url) => {
+const fetchSeasonalCached = async (lat, lon, url, serverSlug = null) => {
   // Дата в ключі: запит починається «з сьогодні», вчорашній кеш після півночі не годиться
   const today = new Date().toISOString().split("T")[0];
   const cacheKey = `om_seasonal_v1_${today}_${Number(lat).toFixed(2)},${Number(lon).toFixed(2)}`;
@@ -163,11 +199,13 @@ const fetchSeasonalCached = async (lat, lon, url) => {
   } catch {
     // кеш недоступний — просто йдемо в мережу
   }
-  const res = await axios.get(url, { timeout: 8000 });
-  if (res.data?.daily?.time?.length) {
-    localforage.setItem(cacheKey, { time: Date.now(), data: res.data }).catch(() => {});
+  // Серверне місто — з нашого сервера (ліміт відвідувача не витрачається); не вдалося — напряму
+  const fromServer = serverSlug ? await fetchServerSeasonal(serverSlug) : null;
+  const data = fromServer || (await axios.get(url, { timeout: 8000 })).data;
+  if (data?.daily?.time?.length) {
+    localforage.setItem(cacheKey, { time: Date.now(), data }).catch(() => {});
   }
-  return res.data;
+  return data;
 };
 // Ліміти карток погоди: власні картки (без GPS) і нові створення на добу (лічильник у Firestore)
 const MAX_CUSTOM_WEATHER_CARDS = 9;
@@ -269,6 +307,24 @@ const getWeatherSummaryText = (code, isDay = 1) => {
   if (code >= 85 && code <= 86) return "Зливовий сніг";
   if (code >= 95 && code <= 99) return "Гроза";
   return "Хмарно";
+};
+
+// Системне сповіщення «Погода: Конотоп — температура, вітер…» — не частіше разу на годину
+const notifyWeatherSummary = (displayName, current) => {
+  if (!current || !("Notification" in window) || Notification.permission !== "granted") return;
+  const now = Date.now();
+  const lastNotificationMs = Number(getPref("weatherNotificationLastSentAt") || 0);
+  if (now - lastNotificationMs < 60 * 60 * 1000) return;
+  const temp = Math.round(current.temperature_2m);
+  const feelsLike = Math.round(current.apparent_temperature);
+  const wind = current.wind_speed_10m ?? 0;
+  const humidity = current.relative_humidity_2m ?? 0;
+  const weatherText = getWeatherSummaryText(current.weather_code, current.is_day);
+  const body = `Температура ${temp}°C${
+    feelsLike !== temp ? `, відчувається ${feelsLike}°C` : ""
+  }, ${weatherText}, вітер ${wind} м/с, вологість ${humidity}%.`;
+  new Notification(`Погода: ${displayName}`, { body, icon: "/favicon.ico" });
+  setPref("weatherNotificationLastSentAt", String(now));
 };
 
 export const getWeatherIconSymbol = (code, isDay = 1) => {
@@ -734,6 +790,11 @@ const ReorderRow = ({ item, index, isDarkMode, onDragEnd }) => {
 const WIDE_WEATHER_ROW_QUERY = "(min-width: 768px)";
 // Коротка погода під пошуком → прокрутити карусель до цієї картки (detail: { id })
 const WEATHER_CAROUSEL_JUMP_EVENT = "weather-carousel-jump";
+// Карусель → App: яку картку зараз видно (оновлюємо лише її, решту — коли догортають).
+// Остання відома — у змінній модуля: карусель (дочірня) повідомляє раніше, ніж App підпишеться.
+const WEATHER_ACTIVE_CARD_EVENT = "weather-carousel-active";
+let lastActiveWeatherCardId = null;
+const getLastActiveWeatherCardId = () => lastActiveWeatherCardId;
 // Місто, яке людина сама вибрала для короткої погоди на головному екрані (id картки)
 const QUICK_WEATHER_CITY_KEY = "quick_weather_card_id";
 
@@ -1225,6 +1286,12 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
 
   const childrenArray = React.Children.toArray(children);
   const childCount = childrenArray.length;
+
+  const activeItemId = items[activeIndex]?.id ?? null;
+  useEffect(() => {
+    lastActiveWeatherCardId = activeItemId;
+    window.dispatchEvent(new CustomEvent(WEATHER_ACTIVE_CARD_EVENT, { detail: { id: activeItemId } }));
+  }, [activeItemId]);
 
   const scrollToIndex = useCallback((index) => {
     const container = scrollRef.current;
@@ -3283,23 +3350,40 @@ const App = () => {
           }
         }
 
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${targetLat}&longitude=${targetLon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover,is_day&hourly=temperature_2m,uv_index,precipitation_probability,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,precipitation,rain,pressure_msl,cloud_cover,visibility,snow_depth,et0_fao_evapotranspiration,freezing_level_height,soil_temperature_0cm&daily=temperature_2m_max,temperature_2m_min,snowfall_sum&wind_speed_unit=ms&timezone=auto&past_days=1&forecast_days=16`;
-        // Решту денних даних (максимуми, суми, схід/захід) і повільні величини «зараз»
-        // рахуємо з погодинного ряду — див. utils/openMeteoDerive.js
-        console.log("Fetching weather from URL:", url);
+        const url = buildForecastUrl(targetLat, targetLon);
         // Кеш відповіді Open-Meteo: 10 хв на пару координат
         // v2: вітер у м/с (раніше API віддавав км/год)
         const cacheKey = `om_cache_v2_${Number(targetLat).toFixed(2)},${Number(targetLon).toFixed(2)}`;
+        // Серверне місто (усі міста бази, а GPS — у межах 5 км від них): прогноз і консенсус
+        // готує сервер Стихії, ліміт Open-Meteo відвідувача не витрачається.
+        // Сервер недоступний — далі звичайний шлях напряму до Open-Meteo.
+        const serverCity = findServerCity(targetLat, targetLon);
+        const serverData = serverCity ? await fetchServerForecast(serverCity.slug) : null;
+        if (serverData?.consensus?.hourly) {
+          // Легке оновлення «зараз» змішує з консенсусом із цього кешу
+          localforage
+            .setItem(consensusCacheKey(targetLat, targetLon), { time: Date.now(), data: serverData.consensus })
+            .catch(() => {});
+        }
         // Звірка з іншими моделями йде паралельно й ніколи не кидає помилку
-        const consensusPromise = fetchWeatherConsensus(targetLat, targetLon);
-        let d = null;
-        try {
-          const cached = await localforage.getItem(cacheKey);
-          if (cached?.data && Date.now() - cached.time < WEATHER_CACHE_TTL_MS) {
-            d = cached.data;
+        const consensusPromise = serverData
+          ? Promise.resolve(serverData.consensus?.hourly ? serverData.consensus : null)
+          : fetchWeatherConsensus(targetLat, targetLon);
+        let d = serverData?.main || null;
+        // Коли отримано повний прогноз — від цього рахуємо наступне повне оновлення (weatherRefresh.js).
+        // Для серверних — момент отримання: сервер сам стежить за свіжістю, а час його даних
+        // не має змушувати картку перепитувати щохвилини
+        let fetchedAt = Date.now();
+        if (!d) {
+          try {
+            const cached = await localforage.getItem(cacheKey);
+            if (cached?.data && Date.now() - cached.time < WEATHER_CACHE_TTL_MS) {
+              d = cached.data;
+              fetchedAt = cached.time;
+            }
+          } catch {
+            d = null;
           }
-        } catch {
-          d = null;
         }
 
         if (!d) {
@@ -3386,38 +3470,8 @@ const App = () => {
           });
         }
 
-        // Логіка сповіщень: один короткий огляд погоди на годину без спаму
-        if ("Notification" in window && Notification.permission === "granted") {
-          const now = Date.now();
-          const lastNotificationMs = Number(
-            getPref("weatherNotificationLastSentAt") || 0,
-          );
-
-          if (now - lastNotificationMs >= 60 * 60 * 1000) {
-            const temp = Math.round(d.current.temperature_2m);
-            const feelsLike = Math.round(d.current.apparent_temperature);
-            const wind = d.current.wind_speed_10m ?? 0;
-            const humidity = d.current.relative_humidity_2m ?? 0;
-            const weatherText = getWeatherSummaryText(
-              d.current.weather_code,
-              d.current.is_day,
-            );
-
-            const body = `Температура ${temp}°C${
-              feelsLike !== temp ? `, відчувається ${feelsLike}°C` : ""
-            }, ${weatherText}, вітер ${wind} м/с, вологість ${humidity}%.`;
-
-            new Notification(`Погода: ${displayName}`, {
-              body,
-              icon: "/favicon.ico",
-            });
-
-            setPref(
-              "weatherNotificationLastSentAt",
-              String(now),
-            );
-          }
-        }
+        // Один короткий огляд погоди на годину без спаму (спільне з легким оновленням)
+        notifyWeatherSummary(displayName, d.current);
         // Гроза, ураган, ожеледь… у найближчі години — поки Стихія відкрита.
         // Якщо пристрій підписаний на push, цю картку стереже сервер — не дублюємо.
         notifyWeatherHazardsLocal({
@@ -3459,6 +3513,10 @@ const App = () => {
             id: id,
             isMain: isMain,
             windUnit: "ms",
+            fetchedAt,
+            updatedAt: fetchedAt,
+            // Серверне місто (slug) — дані з нашого сервера, а не з ліміту відвідувача
+            serverCity: serverData ? serverCity.slug : null,
             // Київ за замовчуванням, коли GPS вимкнено або недоступний — картка покаже підказку
             isFallbackLocation: isMain && !!cityData?.isFallback,
             locationName:
@@ -3626,12 +3684,12 @@ const App = () => {
 
         // Сезонний прогноз (до ~210 днів) — окремий запит, не блокує основний
         try {
-          const today = new Date();
-          const endDate = new Date(today);
-          endDate.setDate(endDate.getDate() + 210);
-          const fmt = (d) => d.toISOString().split("T")[0];
-          const seasonalUrl = `https://seasonal-api.open-meteo.com/v1/seasonal?latitude=${targetLat}&longitude=${targetLon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&wind_speed_unit=ms&start_date=${fmt(today)}&end_date=${fmt(endDate)}`;
-          const sd = await fetchSeasonalCached(targetLat, targetLon, seasonalUrl);
+          const sd = await fetchSeasonalCached(
+            targetLat,
+            targetLon,
+            buildSeasonalUrl(targetLat, targetLon),
+            serverCity?.slug,
+          );
           if (sd?.daily?.time?.length) {
             const seasonalData = sd.daily.time.map((t, i) => ({
               fullDate: t,
@@ -3820,8 +3878,132 @@ const App = () => {
     [getInitialLocation, fetchWeather],
   );
 
+  // ── Економне автооновлення (utils/weatherRefresh.js) ──
+  // Легке оновлення: лише «зараз» — 1 «виклик» Open-Meteo замість 9,24 за повний прогноз.
+  // Змішуємо з консенсусом моделей із кешу (без мережі), прогноз на години й дні не чіпаємо.
+  const refreshCurrentLight = useCallback(
+    async (card) => {
+      const lat = Number(card?.lat);
+      const lon = Number(card?.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        handleRefreshCard(card);
+        return;
+      }
+      try {
+        const serverSlug = findServerCity(lat, lon)?.slug;
+        const [serverNow, consensus] = await Promise.all([
+          serverSlug ? fetchServerNow(serverSlug) : null,
+          readCachedConsensus(lat, lon),
+        ]);
+        // Серверне місто — «зараз» з нашого сервера; не вдалося — напряму (1 «виклик» відвідувача)
+        const own =
+          serverNow ||
+          (await axios.get(buildLightCurrentUrl(lat, lon), { timeout: 10000 })).data?.current;
+        if (!own) return;
+        const { current, tempSpread } = blendCurrentWithConsensus(own, consensus);
+        const now = Date.now();
+        const decorate = (code, isDay) => ({
+          iconPlaceholder: getWeatherIcon(code, isDay),
+          iconSymbol: getWeatherIconSymbol(code, isDay),
+        });
+        setWeatherCards((prev) =>
+          prev.map((c) =>
+            c.id === card.id
+              ? applyLightCurrent(c, current, {
+                  now,
+                  tempSpread: consensus ? tempSpread : undefined,
+                  decorate,
+                })
+              : c,
+          ),
+        );
+        notifyWeatherSummary(card.locationName || "Ваша локація", current);
+      } catch (error) {
+        console.warn("Легке оновлення погоди не вдалося:", error?.message);
+      }
+    },
+    [handleRefreshCard],
+  );
+
+  // Картка, яку зараз видно в каруселі, і картка короткої погоди під пошуком
+  const activeCardIdRef = useRef(null);
+  const quickWeatherCardIdRef = useRef(null);
+  // Коли востаннє смикали картку (id → мс): не частіше REFRESH_RETRY_MS, навіть після помилки
+  const refreshAttemptRef = useRef(new Map());
+
+  // Оновлює картку, лише якщо дані застаріли: повністю (раз на ~3 год, нова доба) або «зараз»
+  const refreshIfStale = useCallback(
+    (card) => {
+      if (!card) return null;
+      const now = Date.now();
+      const kind = pickRefreshKind(card, now);
+      if (!kind) return null;
+      const key = String(card.id);
+      if (now - (refreshAttemptRef.current.get(key) || 0) < REFRESH_RETRY_MS) return null;
+      refreshAttemptRef.current.set(key, now);
+      if (kind === "full") handleRefreshCard(card);
+      else refreshCurrentLight(card);
+      return kind;
+    },
+    [handleRefreshCard, refreshCurrentLight],
+  );
+
+  // Решта карток оновиться, коли до неї догортають (подія з каруселі)
+  const getVisibleCards = useCallback(() => {
+    const cards = weatherCardsRef.current;
+    const ids = new Set(
+      [activeCardIdRef.current, quickWeatherCardIdRef.current].filter((v) => v != null).map(String),
+    );
+    const visible = cards.filter((c) => ids.has(String(c.id)));
+    return visible.length ? visible : cards.slice(0, 1);
+  }, []);
+
+  // Картки, які зараз не оновлювались повністю, все одно стережемо від небезпечної погоди —
+  // одним запитом на всі: 2 змінні на 7 годин = 1 «виклик» на місто (як серверний sendAlerts).
+  // Пристрій із push стереже сервер — тоді нічого не робимо.
+  const checkHazardsCheaply = useCallback(async (cards) => {
+    if (!isWeatherAlertsEnabled() || isPushSubscribed()) return;
+    const list = cards.filter(
+      (c) =>
+        isCardWeatherAlertsOn(c.id) && Number.isFinite(Number(c.lat)) && Number.isFinite(Number(c.lon)),
+    );
+    if (list.length === 0) return;
+    try {
+      const lats = list.map((c) => Number(c.lat).toFixed(2)).join(",");
+      const lons = list.map((c) => Number(c.lon).toFixed(2)).join(",");
+      const res = await axios.get(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}` +
+          "&hourly=weather_code,wind_gusts_10m&wind_speed_unit=ms&timezone=GMT&forecast_hours=7",
+        { timeout: 10000 },
+      );
+      const data = Array.isArray(res.data) ? res.data : [res.data];
+      list.forEach((c, i) => {
+        if (!data[i]?.hourly) return;
+        notifyWeatherHazardsLocal({
+          cardId: c.id,
+          placeName: c.locationName || "Ваша локація",
+          hourly: data[i].hourly,
+          utcOffsetSeconds: 0,
+        }).catch(() => {});
+      });
+    } catch (error) {
+      console.warn("Перевірка небезпечної погоди не вдалася:", error?.message);
+    }
+  }, []);
+
+  // Щогодини й після повернення на вкладку: видимі картки — за потреби; решта — лише небезпека
+  const runScheduledRefresh = useCallback(() => {
+    const fullIds = new Set();
+    getVisibleCards().forEach((card) => {
+      if (refreshIfStale(card) === "full") fullIds.add(String(card.id));
+    });
+    checkHazardsCheaply(weatherCardsRef.current.filter((c) => !fullIds.has(String(c.id))));
+  }, [getVisibleCards, refreshIfStale, checkHazardsCheaply]);
+
   // 1. Початкове завантаження локації
   useEffect(() => {
+    // GPS-картку і так зараз запитуємо — перевірка «чи застаріло» не має дублювати запит
+    refreshAttemptRef.current.set("main-card", Date.now());
     getInitialLocation();
   }, [getInitialLocation]);
 
@@ -3902,28 +4084,23 @@ const App = () => {
     }
   }, [isHydrated, fetchWeather]);
 
-  // 2. Перевірка актуальності даних при завантаженні (якщо сьогодні 30-те, а дані за 25-те)
+  // 2. Видима картка: під час запуску і щоразу, коли в каруселі гортнули на іншу.
+  // Застарілі дані (нова доба, понад ~3 год, старий формат) — повне оновлення, понад годину —
+  // лише «зараз». Невидимі картки не чіпаємо, доки до них не догортають.
   useEffect(() => {
-    if (!isHydrated) return;
-
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
-
-    weatherCards.forEach((card) => {
-      const firstDayDate = card.daily16?.[0]?.fullDate;
-      // Перший день картки — «вчора» в часовому поясі МІСТА. Якщо порівнювати з нашим
-      // «вчора», для Нью-Йорка чи Токіо дати не збігаються ніколи, і картка
-      // оновлювалась би по колу (зайві запити до Open-Meteo).
-      const cityYesterday = Number.isFinite(card.utcOffsetSeconds)
-        ? new Date(Date.now() + card.utcOffsetSeconds * 1000 - 86400000).toISOString().slice(0, 10)
-        : yesterdayStr; // старі картки без зсуву — до першого оновлення
-      // Картки, збережені до виправлення одиниць вітру (км/год), оновлюємо одразу
-      if (firstDayDate !== cityYesterday || card.windUnit !== "ms") {
-        handleRefreshCard(card);
-      }
-    });
-  }, [isHydrated, weatherCards, handleRefreshCard]);
+    if (!isHydrated) return undefined;
+    activeCardIdRef.current = getLastActiveWeatherCardId();
+    getVisibleCards().forEach((card) => refreshIfStale(card));
+    const handleActive = (e) => {
+      activeCardIdRef.current = e.detail?.id ?? null;
+      const card = weatherCardsRef.current.find(
+        (c) => String(c.id) === String(activeCardIdRef.current),
+      );
+      if (card) refreshIfStale(card);
+    };
+    window.addEventListener(WEATHER_ACTIVE_CARD_EVENT, handleActive);
+    return () => window.removeEventListener(WEATHER_ACTIVE_CARD_EVENT, handleActive);
+  }, [isHydrated, getVisibleCards, refreshIfStale]);
 
   // 3. Автоматичне оновлення кожну годину (тільки якщо вкладка активна)
   useEffect(() => {
@@ -3934,16 +4111,13 @@ const App = () => {
       if (document.visibilityState === "visible") {
         const remaining = calculateSecondsUntilNextHour();
         // Якщо ми перетнули межу години (було мало секунд, а стало знову близько 3600)
-        if (prevRemaining <= 5 && remaining > 3590) {
-          console.log("Auto-updating weather cards at start of hour...");
-          weatherCardsRef.current.forEach((card) => handleRefreshCard(card));
-        }
+        if (prevRemaining <= 5 && remaining > 3590) runScheduledRefresh();
         prevRemaining = remaining;
       }
     }, 1000);
 
     return () => clearInterval(timerId);
-  }, [isHydrated, handleRefreshCard, calculateSecondsUntilNextHour]);
+  }, [isHydrated, runScheduledRefresh, calculateSecondsUntilNextHour]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -3961,13 +4135,14 @@ const App = () => {
 
       if (hiddenDuration < 5 * 60 * 1000) return;
 
-      weatherCardsRef.current.forEach((card) => handleRefreshCard(card));
+      // Раніше тут повністю оновлювались УСІ картки (до 10 × 9,94 «виклику» за кожне повернення)
+      runScheduledRefresh();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () =>
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [isHydrated, handleRefreshCard]);
+  }, [isHydrated, runScheduledRefresh]);
 
   const handleDeleteCard = useCallback((id) => {
     setWeatherCards((prev) => prev.filter((card) => card.id !== id));
@@ -4234,6 +4409,12 @@ const App = () => {
     else removePref(QUICK_WEATHER_CITY_KEY);
   }, []);
   const quickWeatherCardId = quickWeatherCard?.id;
+  // Коротку погоду під пошуком видно завжди — її картку теж тримаємо свіжою
+  useEffect(() => {
+    quickWeatherCardIdRef.current = quickWeatherCardId ?? null;
+    if (!isHydrated || quickWeatherCardId == null) return;
+    refreshIfStale(weatherCardsRef.current.find((c) => c.id === quickWeatherCardId));
+  }, [quickWeatherCardId, isHydrated, refreshIfStale]);
   const handleOpenQuickWeather = useCallback(() => {
     document.getElementById("weather")?.scrollIntoView({ behavior: "smooth", block: "start" });
     if (quickWeatherCardId != null) {

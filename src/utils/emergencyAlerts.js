@@ -59,8 +59,28 @@ export const setCardWeatherAlerts = (cardId, on) => {
   setPref(WEATHER_OFF_CARDS_KEY, JSON.stringify(on ? rest : [...rest, id]));
 };
 
+// ───────────── Ранковий прогноз о 7:00 (лише push: сайт о сьомій ранку зазвичай закритий) ─────────────
+
+export const MORNING_BRIEF_HOUR = 7;
+export const MORNING_ENABLED_KEY = "morning_brief_enabled";
+// Картка, для якої рахувати зведення; не обрано або її видалили — перша картка в списку
+export const MORNING_CARD_KEY = "morning_brief_card";
+
+export const isMorningBriefEnabled = () => getPref(MORNING_ENABLED_KEY) === "true";
+export const setMorningBriefEnabled = (enabled) =>
+  setPref(MORNING_ENABLED_KEY, enabled ? "true" : "false");
+export const getMorningCardId = () => getPref(MORNING_CARD_KEY) || "";
+export const setMorningCardId = (cardId) => setPref(MORNING_CARD_KEY, String(cardId));
+
 // Зміна цих налаштувань має оновити профіль push на сервері
-export const ALERT_PREF_KEYS = new Set([PAUSE_KEY, DAILY_KEY, WEATHER_ENABLED_KEY, WEATHER_OFF_CARDS_KEY]);
+export const ALERT_PREF_KEYS = new Set([
+  PAUSE_KEY,
+  DAILY_KEY,
+  WEATHER_ENABLED_KEY,
+  WEATHER_OFF_CARDS_KEY,
+  MORNING_ENABLED_KEY,
+  MORNING_CARD_KEY,
+]);
 
 // ───────────── Небезпечні явища ─────────────
 

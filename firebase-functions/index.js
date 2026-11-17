@@ -6,8 +6,11 @@
 //   • надсилає кожному пристрою те, що він хоче, з його паузою та лімітом на добу.
 // Працює навіть тоді, коли сайт закрито.
 //
+// sendMorningBrief — щодня о 7:00: ранковий прогноз для обраної картки (див. нижче).
+//
 // Вартість: ~1 440 запусків на місяць при безкоштовних 2 000 000; Cloud Scheduler —
-// одне завдання з трьох безкоштовних; Firestore — одне читання колекції токенів за запуск.
+// три завдання (sendAlerts, refreshNewsBundle, sendMorningBrief) = рівно безкоштовна квота,
+// четверте вже платне ($0,10/міс); Firestore — одне читання колекції токенів за запуск.
 //
 // Власні стрічки користувача зберігаються лише на його пристрої — про них сповіщає
 // сама сторінка, поки вона відкрита.
@@ -22,6 +25,8 @@ import { getFirestore, FieldValue, FieldPath } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import {
   detectHazards,
+  formatMorningBrief,
+  MORNING_HOURLY_VARS,
   placeKey,
   planForToken,
   NEWS_MAX_AGE_MS,
@@ -267,7 +272,7 @@ export const savePushProfile = onCall(
     const today = kyivDayKey(Date.now());
 
     // Нічого не хоче — не зберігаємо (і не рахуємо в ліміти)
-    if (!profile.newsAlerts && !profile.weatherAlerts) {
+    if (!profile.newsAlerts && !profile.weatherAlerts && !profile.morningBrief) {
       await ref.delete();
       return { ok: true, deleted: true };
     }
@@ -469,6 +474,136 @@ export const sendAlerts = onSchedule(
     logger.info(
       `Пристроїв: ${live.length}; свіжих новин: ${news.length}; місць: ${hazardsByPlace.size}; ` +
         `сповіщень: ${outgoing.length} (доставлено ${delivered}); видалено токенів: ${toDelete.size}`,
+    );
+  },
+);
+
+// ───────────── Ранковий прогноз о 7:00 ─────────────
+//
+// Щодня о 7:00 за Києвом: «Конотоп: +3°, без дощу» / «Вдягни теплу куртку · вдень до +7°…»
+// для однієї картки, яку обрав пристрій (morningPlace). Окремо від екстрених сповіщень:
+// не чекає паузи й не рахується в ліміт на добу — це щоденне зведення, а не тривога.
+//
+// Вартість: третє (останнє безкоштовне) завдання Cloud Scheduler; ~30 запусків на місяць;
+// Firestore — читання лише пристроїв із morningBrief == true; Open-Meteo — 1 «виклик»
+// на унікальне місце (координати округлені до ~10 км, сусіди діляться одним запитом).
+
+const MAX_MORNING_READS = 6000; // стеля читань Firestore за ранок
+
+const loadMorningForecasts = async (places) => {
+  const unique = new Map();
+  places.forEach((p) => unique.set(placeKey(p), p));
+  let keys = [...unique.keys()];
+  if (keys.length > MAX_PLACES_PER_RUN) {
+    logger.warn(`Ранок: місць ${keys.length} — лише ${MAX_PLACES_PER_RUN} (запобіжник Open-Meteo)`);
+    keys = keys.slice(0, MAX_PLACES_PER_RUN);
+  }
+  const result = new Map();
+  for (let i = 0; i < keys.length; i += OPEN_METEO_BATCH) {
+    const chunk = keys.slice(i, i + OPEN_METEO_BATCH);
+    const lats = chunk.map((k) => k.split(",")[0]).join(",");
+    const lons = chunk.map((k) => k.split(",")[1]).join(",");
+    try {
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}` +
+          `&hourly=${MORNING_HOURLY_VARS.join(",")}&wind_speed_unit=ms&timezone=auto&forecast_days=2`,
+        { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
+      );
+      if (!res.ok) throw new Error(`Open-Meteo: HTTP ${res.status}`);
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : [data];
+      list.forEach((entry, idx) => result.set(chunk[idx], entry));
+    } catch (err) {
+      logger.warn("Ранковий прогноз для частини місць недоступний", { error: String(err) });
+    }
+  }
+  return result;
+};
+
+export const sendMorningBrief = onSchedule(
+  {
+    schedule: "0 7 * * *",
+    timeZone: "Europe/Kyiv",
+    region: REGION,
+    memory: "256MiB",
+    timeoutSeconds: 300,
+    maxInstances: 1,
+    retryCount: 0,
+  },
+  async () => {
+    const now = Date.now();
+    const today = kyivDayKey(now);
+    const snap = await db
+      .collection(TOKENS)
+      .where("morningBrief", "==", true)
+      .limit(MAX_MORNING_READS)
+      .get();
+    if (snap.size === MAX_MORNING_READS) {
+      logger.warn(`Ранок: пристроїв понад ${MAX_MORNING_READS} — решта сьогодні без зведення`);
+    }
+
+    const targets = snap.docs
+      .map((d) => ({ ref: d.ref, data: d.data() }))
+      .filter(({ data }) => {
+        const age = data.updatedAt?.toMillis ? now - data.updatedAt.toMillis() : Infinity;
+        return (
+          data.token &&
+          age <= TOKEN_TTL_MS &&
+          data.morningSentDay !== today && // повторний запуск того ж ранку нічого не дублює
+          Number.isFinite(Number(data.morningPlace?.lat)) &&
+          Number.isFinite(Number(data.morningPlace?.lon))
+        );
+      });
+    if (targets.length === 0) {
+      logger.info("Ранок: підписаних пристроїв немає");
+      return;
+    }
+
+    const forecasts = await loadMorningForecasts(targets.map((t) => t.data.morningPlace));
+    const outgoing = [];
+    targets.forEach((t) => {
+      const entry = forecasts.get(placeKey(t.data.morningPlace));
+      const brief = entry && formatMorningBrief(t.data.morningPlace.name, entry, now);
+      if (!brief) return;
+      outgoing.push({
+        owner: t,
+        message: {
+          token: t.data.token,
+          // kind "morning": Service Worker не пише його в журнал ліміту екстрених сповіщень
+          data: { title: brief.title, body: brief.body, url: "/", tag: "morning-brief", kind: "morning" },
+          // Зведення застаріває за кілька годин — після обіду його вже не показуємо
+          webpush: { headers: { Urgency: "normal", TTL: String(4 * 60 * 60) } },
+        },
+      });
+    });
+
+    const toDelete = new Set();
+    const sent = [];
+    for (let i = 0; i < outgoing.length; i += FCM_BATCH) {
+      const chunk = outgoing.slice(i, i + FCM_BATCH);
+      const response = await getMessaging().sendEach(chunk.map((o) => o.message));
+      response.responses.forEach((r, idx) => {
+        if (r.success) sent.push(chunk[idx].owner.ref);
+        else if (DEAD_TOKEN_CODES.has(r.error?.code)) toDelete.add(chunk[idx].owner.ref);
+      });
+    }
+
+    const writes = [
+      ...sent.filter((ref) => !toDelete.has(ref)).map((ref) => ({ ref })),
+      ...[...toDelete].map((ref) => ({ ref, del: true })),
+    ];
+    for (let i = 0; i < writes.length; i += 400) {
+      const batch = db.batch();
+      writes.slice(i, i + 400).forEach((w) => {
+        if (w.del) batch.delete(w.ref);
+        else batch.set(w.ref, { morningSentDay: today }, { merge: true });
+      });
+      await batch.commit();
+    }
+
+    logger.info(
+      `Ранок: пристроїв ${targets.length}; місць ${forecasts.size}; ` +
+        `надіслано ${sent.length}; видалено токенів ${toDelete.size}`,
     );
   },
 );

@@ -61,17 +61,18 @@ self.addEventListener("push", (event) => {
   const data = payload.data || payload;
   const title = data.title || payload.notification?.title;
   if (!title) return;
-  event.waitUntil(
-    Promise.all([
-      self.registration.showNotification(title, {
-        body: data.body || payload.notification?.body || "",
-        icon: "/favicon.ico",
-        tag: data.tag || undefined,
-        data: { url: data.url },
-      }),
-      logPush(data.kind === "weather" ? "weather" : "news"),
-    ]),
-  );
+  const shown = self.registration.showNotification(title, {
+    body: data.body || payload.notification?.body || "",
+    icon: "/favicon.ico",
+    tag: data.tag || undefined,
+    data: { url: data.url },
+  });
+  // Ранковий прогноз о 7:00 — щоденне зведення, а не тривога: у ліміт на добу не рахуємо
+  if (data.kind === "morning") {
+    event.waitUntil(shown);
+    return;
+  }
+  event.waitUntil(Promise.all([shown, logPush(data.kind === "weather" ? "weather" : "news")]));
 });
 
 // Натискання на сповіщення відкриває саму новину

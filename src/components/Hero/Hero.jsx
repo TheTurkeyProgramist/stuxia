@@ -6,7 +6,7 @@ import React, {
   useCallback,
 } from "react";
 import { FaSun } from "react-icons/fa";
-import { BsMoonStarsFill } from "react-icons/bs";
+import { BsMoonStarsFill, BsLightningChargeFill } from "react-icons/bs";
 import { createPortal } from "react-dom";
 import { FaMountainCity, FaTemperatureArrowUp } from "react-icons/fa6";
 import { FaSnowflake, FaWind } from "react-icons/fa";
@@ -65,6 +65,7 @@ import { ModalSuspense } from "../Loader/ModalLoading.jsx";
 import { OPEN_BG_MODAL_EVENT, OPEN_TIMEZONE_EVENT } from "./heroEvents.js";
 import { getEagerChunk, loadNews } from "../../utils/eagerChunks.js";
 import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
+import { findServerCity } from "../../utils/serverCities";
 // Новини (~120 КБ) — окремим файлом. Телефон: після першого показу сторінки, щоб не затримувати
 // фон Hero (LCP). ПК: уже завантажені до першого малювання (eagerChunks.js)
 const LazyNews = React.lazy(loadNews);
@@ -1126,6 +1127,28 @@ const CoordsLine = styled.span`
   font-size: 0.85em;
   opacity: 0.8;
 `;
+
+// Блискавка біля серверного міста: погоду готує сервер Стихії, ліміт Open-Meteo не витрачається
+const ServerCityMark = styled.span`
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px;
+  vertical-align: -1px;
+  color: #facc15;
+  filter: drop-shadow(0 0 2px rgba(250, 204, 21, 0.45));
+  svg {
+    width: 0.95em;
+    height: 0.95em;
+  }
+`;
+
+const SERVER_CITY_HINT = "Погоду готує сервер Стихії — не витрачає ваш ліміт запитів";
+const renderServerMark = (city) =>
+  findServerCity(city?.lat, city?.lon) ? (
+    <ServerCityMark title={SERVER_CITY_HINT} aria-label={SERVER_CITY_HINT} role="img">
+      <BsLightningChargeFill aria-hidden="true" />
+    </ServerCityMark>
+  ) : null;
 
 const coordSpin = keyframes`
   to { transform: rotate(360deg); }
@@ -2413,6 +2436,7 @@ const Hero = ({
                             {(isAdded || existingCard) && <MdCheck aria-hidden="true" />}
                             {city.name}
                             {city.state ? `, ${city.state}` : ""} ({city.country})
+                            {renderServerMark(city)}
                             <br />
                             <CoordsLine>
                               Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°
@@ -2554,6 +2578,7 @@ const Hero = ({
                             {city.isManual
                               ? city.name
                               : `${city.name}${city.state ? `, ${city.state}` : ""} (${city.country})`}
+                            {renderServerMark(city)}
                             <br />
                             <CoordsLine>
                               Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°

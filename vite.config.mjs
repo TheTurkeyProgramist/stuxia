@@ -2,6 +2,12 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
 import { UKRAINE_CITIES_40, getCitySlug, getCitySeo } from './src/utils/citiesDatabase.js';
+import {
+  REGIONS,
+  buildCitySection,
+  buildCityJsonLd,
+  buildRegionPage,
+} from './scripts/cityPageContent.mjs';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import viteCompression from 'vite-plugin-compression';
 import { imagetools } from 'vite-imagetools';
@@ -114,7 +120,10 @@ const SITE_URL = 'https://stuxia.com';
 
 // Після збірки: статична сторінка на кожне місто з бази (dist/pohoda/<slug>/index.html)
 // з назвою міста в title/description/og — щоб Google показував «погода Конотоп».
-// Застосунок сам читає /pohoda/<slug>/ і відкриває погоду цього міста. Плюс свіжий sitemap.xml.
+// Міста з кліматом (src/data/cityClimate.json) отримують унікальний вміст: клімат по місяцях,
+// рекорди, світловий день, найближчі міста (scripts/cityPageContent.mjs). Плюс сторінки областей
+// (/pohoda/sumska-oblast/) і свіжий sitemap.xml.
+// Застосунок сам читає /pohoda/<slug>/ і відкриває погоду цього міста.
 function cityPagesPlugin() {
   let outDir = 'dist';
   const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -123,6 +132,29 @@ function cityPagesPlugin() {
       new RegExp(`(<meta\\s+${attr}="${key}"\\s+content=")[^"]*(")`),
       `$1${escapeHtml(value)}$2`,
     );
+  // Заголовок, опис, og/twitter, canonical і JSON-LD — однаково для міст і областей
+  const renderPage = (base, { url, title, shortTitle, description, section, jsonLd }) => {
+    let html = base.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`);
+    html = setMeta(html, 'name', 'description', description);
+    html = setMeta(html, 'property', 'og:url', url);
+    html = setMeta(html, 'property', 'og:title', shortTitle);
+    html = setMeta(html, 'property', 'og:description', description);
+    html = setMeta(html, 'name', 'twitter:title', shortTitle);
+    html = setMeta(html, 'name', 'twitter:description', description);
+    // Видимий текст поза #root: React його не перемальовує, тож Google бачить H1 і клімат
+    // і в сирому HTML, і після виконання JS (внизу сторінки)
+    html = html.replace('</main>', `</main>\n    ${section}`);
+    html = html.replace(/(<link\s+rel="canonical"\s+href=")[^"]*(")/, `$1${url}$2`);
+    const ld = jsonLd
+      .map((item) => `<script type="application/ld+json">${JSON.stringify(item).replace(/</g, '\\u003c')}</script>`)
+      .join('\n  ');
+    return html.replace('</head>', `${ld}\n  </head>`);
+  };
+  const writePage = (slug, html) => {
+    const dir = path.join(outDir, 'pohoda', slug);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), html);
+  };
 
   return {
     name: 'city-pages',
@@ -138,6 +170,8 @@ function cityPagesPlugin() {
         const base = fs.readFileSync(indexPath, 'utf8');
         const today = new Date().toISOString().slice(0, 10);
         const urls = [{ loc: `${SITE_URL}/`, priority: '1.0' }];
+        const climatePath = path.resolve('src/data/cityClimate.json');
+        const climate = fs.existsSync(climatePath) ? JSON.parse(fs.readFileSync(climatePath, 'utf8')) : {};
 
         for (const city of UKRAINE_CITIES_40) {
           const slug = getCitySlug(city);
@@ -145,43 +179,48 @@ function cityPagesPlugin() {
           const url = `${SITE_URL}/pohoda/${slug}/`;
           // Ті самі тексти ставить і застосунок (App.jsx), тож після JS заголовок не зміниться
           const seo = getCitySeo(city);
-          const { title, description } = seo;
-
-          let html = base.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`);
-          html = setMeta(html, 'name', 'description', description);
-          html = setMeta(html, 'property', 'og:url', url);
-          html = setMeta(html, 'property', 'og:title', seo.shortTitle);
-          html = setMeta(html, 'property', 'og:description', description);
-          html = setMeta(html, 'name', 'twitter:title', seo.shortTitle);
-          html = setMeta(html, 'name', 'twitter:description', description);
-          // Видимий заголовок і текст поза #root: React його не перемальовує, тож Google
-          // бачить H1 «Погода в Конотопі» і в сирому HTML, і після виконання JS (внизу сторінки)
-          html = html.replace(
-            '</main>',
-            `</main>
-    <section id="city-seo" style="max-width:900px;margin:24px auto;padding:16px 18px;box-sizing:border-box;border-radius:12px;background:rgba(0,0,0,.62);color:#fff;font-size:14px;line-height:1.55">
-      <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3">${escapeHtml(seo.heading)}</h1>
-      <p style="margin:0 0 6px">${escapeHtml(description)}</p>
-      <p style="margin:0;opacity:.85">${escapeHtml(seo.text)}</p>
-    </section>`,
+          writePage(
+            slug,
+            renderPage(base, {
+              url,
+              title: seo.title,
+              shortTitle: seo.shortTitle,
+              description: seo.description,
+              section: buildCitySection(city, UKRAINE_CITIES_40, climate),
+              jsonLd: buildCityJsonLd(city, url),
+            }),
           );
-          html = html.replace(/(<link\s+rel="canonical"\s+href=")[^"]*(")/, `$1${url}$2`);
-          html = html.replace(
-            '</head>',
-            `<script type="application/ld+json">${JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'Place',
-              name: city.name,
-              description: seo.heading,
-              geo: { '@type': 'GeoCoordinates', latitude: city.lat, longitude: city.lon },
-              address: { '@type': 'PostalAddress', addressCountry: 'UA', addressLocality: city.name },
-            })}</script>\n  </head>`,
-          );
+          // Сторінки з кліматом повніші — трохи вищий пріоритет
+          urls.push({ loc: url, priority: climate[slug] ? '0.9' : '0.8' });
+        }
 
-          const dir = path.join(outDir, 'pohoda', slug);
-          fs.mkdirSync(dir, { recursive: true });
-          fs.writeFileSync(path.join(dir, 'index.html'), html);
-          urls.push({ loc: url, priority: '0.8' });
+        for (const region of REGIONS) {
+          const page = buildRegionPage(region, UKRAINE_CITIES_40, climate);
+          const url = `${SITE_URL}/pohoda/${region.slug}/`;
+          writePage(
+            region.slug,
+            renderPage(base, {
+              url,
+              title: page.title,
+              shortTitle: page.shortTitle,
+              description: page.description,
+              section: page.section,
+              jsonLd: [
+                {
+                  '@context': 'https://schema.org',
+                  '@type': 'ItemList',
+                  name: `Погода ${region.inRegion}`,
+                  itemListElement: page.cities.map((c, i) => ({
+                    '@type': 'ListItem',
+                    position: i + 1,
+                    name: c.name,
+                    url: `${SITE_URL}/pohoda/${getCitySlug(c)}/`,
+                  })),
+                },
+              ],
+            }),
+          );
+          urls.push({ loc: url, priority: '0.9' });
         }
 
         const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -199,7 +238,11 @@ ${urls
 </urlset>
 `;
         fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemap);
-        console.log(`\n🏙️  Сторінки міст: ${urls.length - 1}, sitemap.xml оновлено`);
+        const withClimate = UKRAINE_CITIES_40.filter((c) => climate[getCitySlug(c)]).length;
+        console.log(
+          `\n🏙️  Сторінки міст: ${urls.length - 1 - REGIONS.length} (з кліматом: ${withClimate}), ` +
+            `областей: ${REGIONS.length}; sitemap.xml оновлено`,
+        );
       },
     },
   };

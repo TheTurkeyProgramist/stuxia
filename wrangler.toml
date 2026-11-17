@@ -5,3 +5,11 @@
 name = "stuxia"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"
+
+# Сховище погоди «серверних» міст (functions/api/city-weather.js, блискавка в пошуку).
+# Один раз: `bun x wrangler kv namespace create CITY_WEATHER` → вставити виданий id нижче
+# і розкоментувати. Поки прив'язки немає, функція відповідає 503, а сайт бере погоду
+# напряму з Open-Meteo, як раніше, — нічого не ламається.
+# [[kv_namespaces]]
+# binding = "CITY_WEATHER"
+# id = "ВСТАВ_СЮДИ_ID"

@@ -1,6 +1,8 @@
 import {
   CONSENSUS_MODELS,
   blendWithConsensus,
+  blendCurrentWithConsensus,
+  shiftApparent,
   median,
   reconcileWeatherCode,
 } from "./weatherConsensus";
@@ -129,5 +131,37 @@ describe("reconcileWeatherCode", () => {
   });
   it("adds snow when most models agree on precipitation below zero", () => {
     expect(reconcileWeatherCode(3, { wetShare: 0.86, precip: 0.6, cloud: 100, temp: -2 })).toBe(71);
+  });
+});
+
+describe("shiftApparent", () => {
+  it("moves feels-like together with temperature, humidity and wind", () => {
+    const before = { t: 10, rh: 80, wind: 3 };
+    // Тепліше на 2° (вологість та сама) — відчувається тепліше більш ніж на 2° (вологе повітря)
+    expect(shiftApparent(8, before, { t: 12, rh: 80, wind: 3 })).toBeGreaterThan(10);
+    // Вітер сильніший на 2 м/с — на 1,4° холодніше
+    expect(shiftApparent(8, before, { t: 10, rh: 80, wind: 5 })).toBe(6.6);
+    // Нічого не змінилось — те саме значення
+    expect(shiftApparent(8, before, before)).toBe(8);
+  });
+  it("keeps the original value when something is missing", () => {
+    expect(shiftApparent(8, { t: 10, rh: null, wind: 3 }, { t: 12, rh: 80, wind: 3 })).toBe(8);
+    expect(shiftApparent(null, { t: 10, rh: 80, wind: 3 }, { t: 12, rh: 80, wind: 3 })).toBeNull();
+  });
+});
+
+describe("blendCurrentWithConsensus", () => {
+  it("blends current values and recomputes feels-like without models' apparent temperature", () => {
+    const c = makeConsensus({ temperature_2m: () => [2, 4], relative_humidity_2m: () => [80, 80], wind_speed_10m: () => [3, 3] });
+    const own = { time: "2026-11-11T12:30", temperature_2m: 10, relative_humidity_2m: 80, wind_speed_10m: 3, apparent_temperature: 8 };
+    const { current, tempSpread } = blendCurrentWithConsensus(own, c);
+    expect(current.temperature_2m).toBe(3);
+    expect(current.apparent_temperature).toBeLessThan(8 - 7 + 0.01); // −7° температури → ≥ 7° холодніше
+    expect(tempSpread).toBe(0);
+    expect(own.temperature_2m).toBe(10); // не мутує
+  });
+  it("returns best_match as is without consensus", () => {
+    const own = { time: "2026-11-11T12:30", temperature_2m: 10 };
+    expect(blendCurrentWithConsensus(own, null).current).toBe(own);
   });
 });

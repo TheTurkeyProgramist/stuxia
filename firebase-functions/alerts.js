@@ -84,6 +84,110 @@ export const formatWeatherAlert = (placeName, hazards) => {
 
 export const placeKey = (p) => `${Number(p.lat).toFixed(1)},${Number(p.lon).toFixed(1)}`;
 
+// ───────────── Ранковий прогноз о 7:00 (sendMorningBrief) ─────────────
+//
+// «Конотоп: +3°, без дощу» + «Вдягни теплу куртку · вдень до +7°, вітер до 6 м/с».
+// Заголовок і перший рядок тексту видно навіть у згорнутому сповіщенні.
+
+// Запит до Open-Meteo: 7 змінних × 2 доби = вага 1 «виклик» на місце (Open-Meteo, calculateQueryWeight:
+// max(1, змінні/10, змінні/10 × дні/14) на кожне місце). Беремо години «від зараз до 21:00».
+export const MORNING_HOURLY_VARS = [
+  "temperature_2m",
+  "apparent_temperature",
+  "precipitation_probability",
+  "precipitation",
+  "weather_code",
+  "wind_speed_10m",
+  "wind_gusts_10m",
+];
+const MORNING_DAY_HOURS = 14; // 7:00 → 21:00
+const MORNING_OUT_HOURS = 2; // «вийти з дому» — найхолодніше з найближчих 2 годин
+const WET_CHANCE = 40; // %, нижче — «без дощу»
+
+const STORM = new Set([95, 96, 99]);
+const SNOW = new Set([71, 73, 75, 77, 85, 86]);
+const RAIN = new Set([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]);
+
+/** +3°, −2°, 0° (справжній мінус, а не дефіс). */
+export const formatTemp = (t) => {
+  const n = Math.round(Number(t));
+  if (!Number.isFinite(n) || n === 0) return "0°";
+  return n > 0 ? `+${n}°` : `−${Math.abs(n)}°`;
+};
+
+/** Що вдягнути — за найхолоднішою «відчувається» на виході з дому (як getOutfitAdvice у QuickWeather.jsx). */
+export const morningOutfit = (feels, wind) => {
+  if (feels <= -10) return "вдягни пуховик, шапку й рукавиці";
+  if (feels <= 0) return "вдягни теплу куртку й шапку";
+  if (feels <= 7) return "вдягни теплу куртку";
+  if (feels <= 14) return wind >= 8 ? "вдягни вітровку" : "вдягни легку куртку";
+  if (feels <= 20) return wind >= 8 ? "вдягни вітровку" : "вистачить кофти";
+  return "можна у футболці";
+};
+
+/**
+ * Текст ранкового сповіщення для одного місця.
+ * entry — відповідь Open-Meteo для місця з timezone=auto (місцевий час + utc_offset_seconds);
+ * now — час розсилки. Повертає { title, body } або null.
+ */
+export const formatMorningBrief = (placeName, entry, now = Date.now()) => {
+  const hourly = entry?.hourly;
+  const times = hourly?.time || [];
+  const offsetMs = (Number(entry?.utc_offset_seconds) || 0) * 1000;
+  const hourStart = now - (now % (60 * 60 * 1000));
+  // Місцевий час «2026-11-18T07:00» → момент у UTC
+  const start = times.findIndex((t) => Date.parse(`${t}Z`) - offsetMs >= hourStart);
+  if (start < 0) return null;
+  const at = (name, i) => Number(hourly?.[name]?.[i]);
+  const day = [];
+  for (let i = start; i < Math.min(times.length, start + MORNING_DAY_HOURS + 1); i++) day.push(i);
+  if (!Number.isFinite(at("temperature_2m", start))) return null;
+
+  // Перша година з опадами, у які варто вірити
+  const wetIdx = day.find((i) => {
+    const code = at("weather_code", i);
+    const chance = at("precipitation_probability", i);
+    const mm = at("precipitation", i);
+    const wetCode = STORM.has(code) || SNOW.has(code) || RAIN.has(code);
+    return (Number.isFinite(chance) ? chance >= WET_CHANCE : true) && (wetCode || mm >= 0.2);
+  });
+  const tempNow = at("temperature_2m", start);
+  let sky;
+  let wet = null;
+  if (wetIdx === undefined) {
+    sky = tempNow <= 1 ? "без опадів" : "без дощу";
+  } else {
+    const code = at("weather_code", wetIdx);
+    wet = STORM.has(code)
+      ? "гроза"
+      : SNOW.has(code) || (!RAIN.has(code) && at("temperature_2m", wetIdx) <= 0)
+        ? "сніг"
+        : "дощ";
+    sky = wetIdx === start ? wet : `${wet} з ${String(times[wetIdx]).slice(11, 16)}`;
+  }
+
+  const outHours = day.slice(0, MORNING_OUT_HOURS + 1);
+  const feels = Math.min(...outHours.map((i) => at("apparent_temperature", i)).filter(Number.isFinite));
+  const wind = Math.max(0, ...day.map((i) => at("wind_speed_10m", i)).filter(Number.isFinite));
+  const gusts = Math.max(0, ...day.map((i) => at("wind_gusts_10m", i)).filter(Number.isFinite));
+  const maxTemp = Math.max(...day.map((i) => at("temperature_2m", i)).filter(Number.isFinite));
+
+  let advice = morningOutfit(Number.isFinite(feels) ? feels : tempNow, wind);
+  // «Вдягни куртку і візьми парасолю», але «Можна у футболці, але візьми парасолю»
+  const joiner = advice.startsWith("вдягни") ? " і" : ", але";
+  if (wet === "сніг") advice += `${joiner} взуй непромокне взуття`;
+  else if (wet) advice += `${joiner} візьми парасолю`;
+
+  const name = String(placeName || "").trim();
+  const place = !name || name === "Ваша локація" ? "Біля вас" : name.slice(0, 40);
+  const details = [`вдень до ${formatTemp(maxTemp)}`, `вітер до ${Math.round(wind)} м/с`];
+  if (gusts >= 15) details.push(`пориви до ${Math.round(gusts)} м/с`);
+  return {
+    title: `${place}: ${formatTemp(tempNow)}, ${sky}`.slice(0, 120),
+    body: `${advice.charAt(0).toUpperCase()}${advice.slice(1)} · ${details.join(", ")}`,
+  };
+};
+
 // ───────────── Реєстрація пристрою (savePushProfile) ─────────────
 
 export const PAUSE_OPTIONS = [30, 60, 120, 240, 480]; // синхронно з ALERT_PAUSE_OPTIONS
@@ -94,6 +198,20 @@ export const MAX_WORD_LENGTH = 40;
 // Токен FCM: латиниця, цифри, «_», «-», «:» (зазвичай ~150–170 символів)
 export const isValidFcmToken = (token) =>
   typeof token === "string" && /^[A-Za-z0-9_:-]{100,4096}$/.test(token);
+
+/** Місце з профілю: координати округлюємо до ~10 км, назву обрізаємо; погане — null. */
+const sanitizePlace = (pl) => {
+  if (!pl || typeof pl !== "object") return null;
+  const lat = Number(pl.lat);
+  const lon = Number(pl.lon);
+  if (!Number.isFinite(lat) || Math.abs(lat) > 90) return null;
+  if (!Number.isFinite(lon) || Math.abs(lon) > 180) return null;
+  return {
+    lat: Math.round(lat * 10) / 10,
+    lon: Math.round(lon * 10) / 10,
+    name: (typeof pl.name === "string" ? pl.name : "").trim().slice(0, 60) || "Ваша локація",
+  };
+};
 
 /** Профіль від браузера — лише очищені й обмежені значення, решту відкидаємо. */
 export const sanitizeProfile = (raw) => {
@@ -107,21 +225,15 @@ export const sanitizeProfile = (raw) => {
       )].slice(0, MAX_WORDS)
     : [];
   const places = Array.isArray(p.places)
-    ? p.places
-        .filter((pl) => pl && typeof pl === "object")
-        .map((pl) => ({ lat: Number(pl.lat), lon: Number(pl.lon), name: pl.name }))
-        .filter((pl) => Number.isFinite(pl.lat) && Math.abs(pl.lat) <= 90)
-        .filter((pl) => Number.isFinite(pl.lon) && Math.abs(pl.lon) <= 180)
-        .slice(0, MAX_PLACES)
-        .map((pl) => ({
-          lat: Math.round(pl.lat * 10) / 10,
-          lon: Math.round(pl.lon * 10) / 10,
-          name: (typeof pl.name === "string" ? pl.name : "").trim().slice(0, 60) || "Ваша локація",
-        }))
+    ? p.places.map(sanitizePlace).filter(Boolean).slice(0, MAX_PLACES)
     : [];
+  const morningPlace = p.morningBrief === true ? sanitizePlace(p.morningPlace) : null;
   return {
     newsAlerts: p.newsAlerts === true,
     weatherAlerts: p.weatherAlerts === true,
+    // Ранковий прогноз — лише разом із місцем, для якого його рахувати
+    morningBrief: Boolean(morningPlace),
+    morningPlace,
     pauseMinutes: PAUSE_OPTIONS.includes(p.pauseMinutes) ? p.pauseMinutes : 120,
     dailyLimit: clampInt(p.dailyLimit, 1, 20, 5),
     urgentWords: words,

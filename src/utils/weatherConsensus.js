@@ -31,9 +31,12 @@ export const CONSENSUS_MODEL_LABELS = {
 
 // Тиск і точку роси не звіряємо: моделі тут майже не розходяться, а кожна змінна × 7 моделей
 // коштує квоти Open-Meteo. Вони лишаються з best_match (точка роси лише обрізається до температури).
+// «Відчувається» теж не запитуємо (−0,7 «виклику»): перераховуємо з медіан температури, вологості
+// й вітру — див. shiftApparent. Звірено 17.11.2026 на 5 містах × 11 діб: від медіани моделей
+// відрізняється в середньому на 0,33° погодинно і 0,41° для денного максимуму.
+// Хмарність лишаємо: best_match відходить від медіани в середньому на 17 п.п.
 const HOURLY_VARS = [
   "temperature_2m",
-  "apparent_temperature",
   "relative_humidity_2m",
   "wind_speed_10m",
   "wind_gusts_10m",
@@ -58,9 +61,8 @@ const DAILY_VARS = [
 // 0.1–0.3 (вітер, «відчувається»), опади — 0.4 мм: ECMWF/JMA мають крок 3–6 год, і API
 // ділить їхні суми на доби інакше; погодинна сума узгоджена з графіком картки.
 const DAILY_API_VARS = ["temperature_2m_max", "temperature_2m_min"];
+// apparent_temperature_max/min — з уже змішаного погодинного ряду (див. blendWithConsensus)
 const DAILY_FROM_HOURLY = {
-  apparent_temperature_max: ["apparent_temperature", "max"],
-  apparent_temperature_min: ["apparent_temperature", "min"],
   wind_speed_10m_max: ["wind_speed_10m", "max"],
   wind_gusts_10m_max: ["wind_gusts_10m", "max"],
   precipitation_sum: ["precipitation", "sum"],
@@ -69,7 +71,6 @@ const DAILY_FROM_HOURLY = {
 // Скільки змінних «поточної» погоди звіряємо (решту лишаємо з best_match)
 const CURRENT_VARS = [
   "temperature_2m",
-  "apparent_temperature",
   "relative_humidity_2m",
   "wind_speed_10m",
   "wind_gusts_10m",
@@ -103,6 +104,25 @@ export const median = (values) => {
 };
 
 const round1 = (v) => Math.round(v * 10) / 10;
+
+// Тиск водяної пари, гПа (як у формулі «відчувається» Стедмена / BoM)
+const vapourPressure = (t, rh) => (rh / 100) * 6.105 * Math.exp((17.27 * t) / (237.7 + t));
+
+/**
+ * «Відчувається» після заміни температури, вологості й вітру на медіани моделей.
+ * Беремо значення best_match (воно вже враховує сонце) і зсуваємо його на зміну складових
+ * за формулою Стедмена: AT = T + 0.33·e − 0.70·v − 4. Чого бракує — повертаємо як було.
+ */
+export const shiftApparent = (apparent, before, after) => {
+  const vals = [apparent, before.t, before.rh, before.wind, after.t, after.rh, after.wind];
+  if (!vals.every(isNum)) return apparent;
+  return round1(
+    apparent +
+      (after.t - before.t) +
+      0.33 * (vapourPressure(after.t, after.rh) - vapourPressure(before.t, before.rh)) -
+      0.7 * (after.wind - before.wind),
+  );
+};
 
 const roundFor = (variable, v) =>
   INTEGER_VARS.has(variable) ? Math.round(v) : round1(v);
@@ -234,6 +254,50 @@ export const withDerivedDaily = (consensus) => {
   return { ...consensus, daily };
 };
 
+/**
+ * «Зараз»: 15-хвилинний nowcast best_match + моделі, інтерпольовані на той самий момент
+ * (медіана). Спільне для повного оновлення картки і легкого (лише `current`, див. App.jsx).
+ * Нічого не мутує. Повертає { current, tempSpread }.
+ */
+export const blendCurrentWithConsensus = (primaryCurrent, consensus) => {
+  const cH = consensus?.hourly;
+  if (!primaryCurrent?.time || !cH?.time?.length) return { current: primaryCurrent, tempSpread: null };
+  const c = { ...primaryCurrent };
+  let tempSpread = null;
+  for (const variable of CURRENT_VARS) {
+    const own = primaryCurrent[variable];
+    const vals = CONSENSUS_MODELS
+      .map((m) => interpolateAt(cH, `${variable}_${m}`, cH.time, c.time))
+      .filter(isNum);
+    if (vals.length < MIN_CONSENSUS_SOURCES) continue;
+    if (variable === "temperature_2m") tempSpread = robustHalfRange(vals);
+    c[variable] = roundFor(variable, median(isNum(own) ? [...vals, own] : vals));
+  }
+  c.apparent_temperature = shiftApparent(
+    primaryCurrent.apparent_temperature,
+    { t: primaryCurrent.temperature_2m, rh: primaryCurrent.relative_humidity_2m, wind: primaryCurrent.wind_speed_10m },
+    { t: c.temperature_2m, rh: c.relative_humidity_2m, wind: c.wind_speed_10m },
+  );
+  if (isNum(c.wind_gusts_10m) && isNum(c.wind_speed_10m) && c.wind_gusts_10m < c.wind_speed_10m) {
+    c.wind_gusts_10m = c.wind_speed_10m;
+  }
+  if (isNum(c.dew_point_2m) && isNum(c.temperature_2m) && c.dew_point_2m > c.temperature_2m) {
+    c.dew_point_2m = c.temperature_2m;
+  }
+  // Код «зараз» узгоджуємо з опадами моделей у цю годину
+  const hi = cH.time.indexOf(`${String(c.time).slice(0, 13)}:00`);
+  const precipVals = modelValues(cH, "precipitation", hi);
+  if (isNum(c.weather_code) && precipVals.length >= MIN_CONSENSUS_SOURCES) {
+    c.weather_code = reconcileWeatherCode(c.weather_code, {
+      wetShare: precipVals.filter((v) => v >= WET_MM).length / precipVals.length,
+      precip: roundFor("precipitation", median(precipVals)),
+      cloud: c.cloud_cover,
+      temp: c.temperature_2m,
+    });
+  }
+  return { current: c, tempSpread };
+};
+
 export const blendWithConsensus = (primary, rawConsensus) => {
   if (!primary || !rawConsensus?.hourly?.time?.length) {
     return { data: primary, accuracy: null };
@@ -284,6 +348,19 @@ export const blendWithConsensus = (primary, rawConsensus) => {
 
     for (const model of CONSENSUS_MODELS) {
       if ((cH[`temperature_2m_${model}`] || []).some(isNum)) usedModels.add(model);
+    }
+
+    // «Відчувається» — за зміною температури, вологості й вітру
+    if (Array.isArray(primary.hourly?.apparent_temperature)) {
+      const p = primary.hourly;
+      const h = d.hourly;
+      h.apparent_temperature = p.apparent_temperature.map((at, i) =>
+        shiftApparent(
+          at,
+          { t: p.temperature_2m?.[i], rh: p.relative_humidity_2m?.[i], wind: p.wind_speed_10m?.[i] },
+          { t: h.temperature_2m?.[i], rh: h.relative_humidity_2m?.[i], wind: h.wind_speed_10m?.[i] },
+        ),
+      );
     }
 
     // Фізична узгодженість після медіан
@@ -345,6 +422,21 @@ export const blendWithConsensus = (primary, rawConsensus) => {
         }
       });
       d.daily[variable] = next;
+    }
+
+    // «Відчувається» за добу — з уже змішаного погодинного ряду (лише повні доби)
+    const apparentByDay = {};
+    hourTimes.forEach((t, i) => {
+      const v = d.hourly?.apparent_temperature?.[i];
+      if (!isNum(v)) return;
+      (apparentByDay[String(t).slice(0, 10)] ??= []).push(v);
+    });
+    for (const [variable, op] of [["apparent_temperature_max", Math.max], ["apparent_temperature_min", Math.min]]) {
+      if (!Array.isArray(primary.daily?.[variable])) continue;
+      d.daily[variable] = primary.daily[variable].map((v, i) => {
+        const vals = apparentByDay[dayTimes[i]];
+        return vals && vals.length >= 24 ? round1(op(...vals)) : v;
+      });
     }
 
     // Денні макс/мін не мають суперечити погодинному графіку того ж дня
@@ -414,36 +506,11 @@ export const blendWithConsensus = (primary, rawConsensus) => {
   }
 
   // ---------- Зараз ----------
-  // Поточні дані best_match — 15-хвилинний nowcast; додаємо його голосом до медіани моделей
   let tempSpread = null;
   if (d.current?.time) {
-    for (const variable of CURRENT_VARS) {
-      const own = primary.current?.[variable];
-      const vals = CONSENSUS_MODELS
-        .map((m) => interpolateAt(cH, `${variable}_${m}`, cH.time, d.current.time))
-        .filter(isNum);
-      if (vals.length < MIN_CONSENSUS_SOURCES) continue;
-      if (variable === "temperature_2m") tempSpread = robustHalfRange(vals);
-      d.current[variable] = roundFor(variable, median(isNum(own) ? [...vals, own] : vals));
-    }
-    const c = d.current;
-    if (isNum(c.wind_gusts_10m) && isNum(c.wind_speed_10m) && c.wind_gusts_10m < c.wind_speed_10m) {
-      c.wind_gusts_10m = c.wind_speed_10m;
-    }
-    if (isNum(c.dew_point_2m) && isNum(c.temperature_2m) && c.dew_point_2m > c.temperature_2m) {
-      c.dew_point_2m = c.temperature_2m;
-    }
-    // Код «зараз» узгоджуємо з тією ж годиною погодинного ряду
-    const hourKey = `${String(c.time).slice(0, 13)}:00`;
-    const hi = hourTimes.indexOf(hourKey);
-    if (hi !== -1 && isNum(c.weather_code)) {
-      c.weather_code = reconcileWeatherCode(c.weather_code, {
-        wetShare: wetShareByHour[hi],
-        precip: precipByHour[hi],
-        cloud: c.cloud_cover,
-        temp: c.temperature_2m,
-      });
-    }
+    const blended = blendCurrentWithConsensus(primary.current, consensus);
+    d.current = blended.current;
+    tempSpread = blended.tempSpread;
   }
 
   if (usedModels.size < MIN_CONSENSUS_SOURCES) {
