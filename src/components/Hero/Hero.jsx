@@ -839,7 +839,7 @@ const CoordinateSearchButton = styled.button`
     cursor: not-allowed;
   }
 `;
-// Слоган під пошуком: завжди один рядок; довга версія — з 700px, коротка — на вужчих екранах
+// Слоган під пошуком: завжди один рядок; довга версія — з 760px, коротка — на вужчих екранах
 const HeroSlogan = styled.p`
   width: 100%;
   margin: 0;
@@ -854,7 +854,7 @@ const HeroSlogan = styled.p`
   .full {
     display: none;
   }
-  @media (min-width: 700px) {
+  @media (min-width: 760px) {
     .full {
       display: inline;
     }
@@ -1416,9 +1416,9 @@ const Hero = ({
   const slogan = (
     <HeroSlogan $isDarkMode={isDarkMode}>
       <span className="full">
-        Ви заслуговуєте на багатофункціональний прогноз, де немає політики та реклами! Гарної погоди!
+        Ви заслуговуєте на бундючий багатофункціональний прогноз, де немає політики та реклами! Гарної погоди!
       </span>
-      <span className="short">Прогноз без політики й реклами. Гарної погоди!</span>
+      <span className="short">Бундючий прогноз без політики й реклами. Гарної погоди!</span>
     </HeroSlogan>
   );
   const { registerRef, isActive } = useTutorial?.() || { registerRef: () => {} };
