@@ -32,7 +32,21 @@ import {
 } from "react-icons/fi";
 import styled, { keyframes, css } from "styled-components";
 import { useSelector, useDispatch } from "react-redux";
-import { MdAccessTime, MdMore, MdSearch, MdWallpaper, MdAutoAwesome, MdTranslate } from "react-icons/md";
+import {
+  MdAccessTime,
+  MdMore,
+  MdSearch,
+  MdWallpaper,
+  MdAutoAwesome,
+  MdTranslate,
+  MdExplore,
+  MdCheck,
+  MdCheckCircle,
+  MdErrorOutline,
+  MdWarningAmber,
+  MdSync,
+  MdClose,
+} from "react-icons/md";
 import { useTranslation } from "react-i18next";
 import {
   addCustomDay,
@@ -79,6 +93,10 @@ const useOpenedOnce = (flag) => {
   return opened || flag;
 };
 import { usePageActive } from "../../utils/pageActivity.js";
+import { usePrefValue } from "../../utils/betaFeatures";
+import { setPref } from "../../utils/prefsStore.js";
+
+const SCROLL_TO_NEW_CARD_KEY = "hero_scroll_to_new_card";
 const bgCardThumbnails = {
   [village]: {
     src: village,
@@ -631,6 +649,10 @@ const SearchWrapper = styled.div`
 `;
 
 const BrowserSearchPanel = styled.div`
+  /* Вище за новини (NewsDiv: z-index 100) — інакше випадні списки пошуку
+     (особливо за координатами) провалюються під блок новин */
+  position: relative;
+  z-index: 101;
   width: min(860px, calc(100vw - 8px));
   box-sizing: border-box;
   border: 1px solid
@@ -744,6 +766,13 @@ const CoordinatesContainer = styled.div`
   gap: 8px;
   flex-wrap: wrap;
   justify-content: center;
+`;
+
+// Поля координат + випадний список під ними (список позиціонується відносно цього блоку)
+const CoordSearchArea = styled.div`
+  position: relative;
+  z-index: 3;
+  width: 100%;
 `;
 
 const CoordinateInput = styled.div`
@@ -885,12 +914,15 @@ const HeroInput = styled.input`
     color: ${(p) => (p.$isDarkMode ? "#f3efef" : "#000000")};
   }
 `;
+// Кольори випадних списків пошуку за темою сайту: (темна, світла)
+const listTheme = (dark, light) => (props) => (props.$isDarkMode === false ? light : dark);
+
 const SuggestionsList = styled.div`
   position: absolute;
   top: 100%;
   align-items: center;
-  background: ${(props) => (props.isDarkMode ? "#fefefeec" : "#000000da")};
-  backdrop-filter: blur(10px);
+  background: ${listTheme("rgba(16, 21, 28, 0.98)", "rgba(255, 255, 255, 0.98)")};
+  color: ${listTheme("#f4f2f2", "#0b1220")};
   border-radius: 0 0 15px 15px;
   z-index: 9999;
   display: flex;
@@ -898,7 +930,8 @@ const SuggestionsList = styled.div`
   flex-direction: column;
   max-height: 350px;
   overflow-y: auto;
-  border: 1px solid rgb(0, 0, 0);
+  border: 1px solid ${listTheme("rgba(255, 255, 255, 0.14)", "rgba(0, 0, 0, 0.14)")};
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 179, 108, 0.85) rgba(0, 0, 0, 0.12);
 
@@ -920,19 +953,125 @@ const SuggestionsList = styled.div`
 const SuggestionItem = styled.button`
   width: 100%;
   text-align: left;
-  padding: 2px;
-  border-top: 1px solid #eee;
+  padding: 4px 6px;
+  border: none;
+  border-top: 1px solid rgba(127, 127, 127, 0.28);
   font-size: 14px;
+  font-family: inherit;
   cursor: ${(props) => (props.$added ? "default" : "pointer")};
   transition: all 0.2s;
-  color: ${(props) => (props.isDarkMode ? "#050505fb" : "#f4f2f2")};
+  background: transparent;
+  color: inherit;
   ${(props) => props.$added && css`
     background: rgba(74, 222, 128, 0.25);
   `}
+  ${(props) => props.$exists && !props.$added && css`
+    background: rgba(56, 189, 248, 0.18);
+    box-shadow: inset 3px 0 0 #38bdf8;
+  `}
   &:hover {
-    background: ${(props) => (props.$added ? "rgba(74, 222, 128, 0.25)" : "skyblue")};
+    background: ${(props) =>
+      props.$added
+        ? "rgba(74, 222, 128, 0.25)"
+        : props.$exists
+          ? "rgba(56, 189, 248, 0.32)"
+          : "skyblue"};
     color: white;
   }
+`;
+
+// Мітка «Є картка» / «Додано» в підказці
+const CardStatusBadge = styled.span`
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  color: #04121c;
+  background: ${(p) => (p.$added ? "#4ade80" : "#7dd3fc")};
+`;
+
+const ScrollToCardLabel = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  user-select: none;
+
+  input {
+    margin: 0;
+    width: 15px;
+    height: 15px;
+    accent-color: #ff9d48;
+    cursor: pointer;
+  }
+`;
+
+// «Вибрали кілька — перегорне до останнього» під панеллю лімітів
+const AddedBarHint = styled.span`
+  flex-basis: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  color: ${listTheme("#ffca91", "#b45309")};
+`;
+
+// Поруч немає населених пунктів — людина сама називає свою точку
+const CustomPointBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: calc(100% - 16px);
+  box-sizing: border-box;
+  margin: 0 8px 8px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 157, 72, 0.12);
+  border: 1px solid rgba(255, 179, 108, 0.6);
+  color: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+
+  > span svg {
+    vertical-align: -3px;
+    margin-right: 4px;
+    font-size: 16px;
+    color: #ff9d48;
+  }
+`;
+
+const CustomPointRow = styled.div`
+  display: flex;
+  gap: 6px;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid rgba(255, 179, 108, 0.6);
+    border-radius: 6px;
+    background: ${listTheme("#0b0f14", "#ffffff")};
+    color: ${listTheme("#f4f2f2", "#0b1220")};
+    font-size: 13px;
+    font-family: inherit;
+  }
+
+  input::placeholder {
+    color: ${listTheme("rgba(244, 242, 242, 0.5)", "rgba(11, 18, 32, 0.45)")};
+  }
+`;
+
+const AddedBarActions = styled.span`
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
 `;
 
 const SuggestionRow = styled.span`
@@ -947,6 +1086,76 @@ const SuggestionRow = styled.span`
 const SuggestionText = styled.span`
   min-width: 0;
   flex: 1;
+
+  /* галочка «вже є картка / додано» перед назвою */
+  > svg {
+    vertical-align: -2px;
+    margin-right: 4px;
+    color: #4ade80;
+  }
+`;
+
+const CoordsLine = styled.span`
+  font-size: 0.85em;
+  opacity: 0.8;
+`;
+
+const coordSpin = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
+// Статус пошуку за координатами — у заголовку списку, фіксованої висоти (нічого не стрибає)
+const CoordStatus = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: calc(2 * 1.4em + 12px);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  color: ${(p) =>
+    ({
+      searching: p.$isDarkMode === false ? "#0369a1" : "#38bdf8",
+      found: p.$isDarkMode === false ? "#15803d" : "#4ade80",
+      none: p.$isDarkMode === false ? "#b45309" : "#ffb36c",
+      error: p.$isDarkMode === false ? "#b91c1c" : "#ff6b6b",
+    })[p.$type] || "inherit"};
+
+  svg {
+    flex-shrink: 0;
+    font-size: 16px;
+  }
+
+  .spin {
+    animation: ${coordSpin} 1s linear infinite;
+  }
+`;
+
+const CloseListButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: calc(100% - 16px);
+  margin: 8px;
+  padding: 8px;
+  border: 1px solid ${listTheme("rgba(255, 255, 255, 0.16)", "rgba(0, 0, 0, 0.14)")};
+  border-radius: 8px;
+  background: ${listTheme("rgba(255, 255, 255, 0.08)", "rgba(0, 0, 0, 0.05)")};
+  color: inherit;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: ${listTheme("rgba(255, 255, 255, 0.16)", "rgba(0, 0, 0, 0.1)")};
+  }
 `;
 
 // Мітка небезпечної погоди в підказці: червона — сьогодні, помаранчева — найближчі 2 дні
@@ -1005,14 +1214,15 @@ const AddedBar = styled.div`
   width: 100%;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 8px;
   padding: 6px 8px;
   box-sizing: border-box;
   font-size: 13px;
   font-weight: 600;
-  color: #f4f2f2;
-  background: rgba(0, 0, 0, 0.85);
+  color: inherit;
+  background: ${listTheme("#0c1016", "#f1f5f9")};
   border-bottom: 1px solid rgba(255, 179, 108, 0.6);
 `;
 
@@ -1106,6 +1316,10 @@ const Hero = ({
   bgReady = true,
   heroDateString,
   onAddCity,
+  // (lat, lon) → картка, що вже є для цього міста, або null
+  findCardForCity,
+  // id картки → прогорнути до неї
+  onOpenCard,
   cardLimits,
   startAnimation,
   user,
@@ -1193,7 +1407,14 @@ const Hero = ({
   const resetAddedCities = () => {
     addedCityKeysRef.current = new Set();
     setAddedCityKeys([]);
+    lastAddRef.current = null;
   };
+  // Чекбокс «Прогорнути до картки» в списку підказок (запам'ятовується, типово увімкнено).
+  // Гортаємо не після кожного міста, а на «Готово» — до останнього доданого
+  const scrollToNewCard = usePrefValue(SCROLL_TO_NEW_CARD_KEY, "true") === "true";
+  const lastAddRef = useRef(null); // { city, promise } — останнє додане з підказок місто
+  const findCardForCityRef = useRef(findCardForCity);
+  findCardForCityRef.current = findCardForCity;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const bgModalMounted = useOpenedOnce(isModalOpen);
@@ -1425,7 +1646,10 @@ const Hero = ({
   const [showCoordinateSuggestions, setShowCoordinateSuggestions] =
     useState(false);
   const [isSearchingNearby, setIsSearchingNearby] = useState(false);
-  const [nearbySearchStatus, setNearbySearchStatus] = useState("");
+  // { type: "searching" | "found" | "none" | "error", text } або null
+  const [nearbySearchStatus, setNearbySearchStatus] = useState(null);
+  // Назва власної точки, коли поруч немає населених пунктів
+  const [customPointName, setCustomPointName] = useState("");
   const searchRef = useRef(null);
 
   useEffect(() => {
@@ -1547,28 +1771,27 @@ const Hero = ({
 
     const currentPoint = {
       name: "Обрана точка",
-      state: `Широта: ${lat}`,
-      country: `Довгота: ${lon}`,
       lat: lat,
       lon: lon,
       isManual: true,
     };
 
     coordSearchLockRef.current = true;
+    setCustomPointName("");
+    // Список відкриваємо одразу: статус пошуку живе в його заголовку, тож нічого не стрибає
+    setCoordinateSuggestions([currentPoint]);
+    setShowCoordinateSuggestions(true);
+    setIsSearchingNearby(true);
     try {
-      setNearbySearchStatus("🔍 Шукаємо за вказаними координатами...");
+      setNearbySearchStatus({ type: "searching", text: "Шукаємо за вказаними координатами…" });
       const data = await reverseGeocode(lat, lon);
 
       if (data.length > 0) {
         setCoordinateSuggestions([currentPoint, ...data]);
-        setShowCoordinateSuggestions(true);
-        setNearbySearchStatus("");
+        setNearbySearchStatus({ type: "found", text: "Знайдено за координатами" });
         return;
       }
-      setIsSearchingNearby(true);
-      setShowCoordinateSuggestions(true);
-      setCoordinateSuggestions([currentPoint]);
-      setNearbySearchStatus("Нічого не знайшли точно — шукаємо найближче...");
+      setNearbySearchStatus({ type: "searching", text: "Точно нічого немає — шукаємо найближче…" });
 
       const TIMEOUT_MS = 10000;
       const startTime = Date.now();
@@ -1587,9 +1810,10 @@ const Hero = ({
         for (const [tryLat, tryLon] of candidates) {
           if (Date.now() - startTime >= TIMEOUT_MS) break outer;
 
-          setNearbySearchStatus(
-            `🔎 Перевіряємо: ±${delta}° (шир: ${tryLat.toFixed(1)}°, довг: ${tryLon.toFixed(1)}°)...`
-          );
+          setNearbySearchStatus({
+            type: "searching",
+            text: `Шукаємо поруч: ±${delta}° (шир. ${tryLat.toFixed(1)}°, довг. ${tryLon.toFixed(1)}°)`,
+          });
 
           try {
             // Nominatim дозволяє не більше 1 запиту на секунду
@@ -1598,7 +1822,7 @@ const Hero = ({
 
             if (tryData.length > 0) {
               setCoordinateSuggestions([currentPoint, ...tryData]);
-              setNearbySearchStatus(`✅ Знайдено поруч (відхилення ~${delta}°)`);
+              setNearbySearchStatus({ type: "found", text: `Знайдено поруч (відхилення ~${delta}°)` });
               found = true;
               break outer;
             }
@@ -1610,35 +1834,67 @@ const Hero = ({
 
       if (!found) {
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-        setNearbySearchStatus(
-          `⚠️ Пошук завершено (${elapsed}с) — навколо немає населених пунктів. Можна додати точку вручну.`
-        );
+        setNearbySearchStatus({
+          type: "none",
+          text: `Пошук завершено (${elapsed} с) — навколо немає населених пунктів`,
+        });
       }
     } catch (error) {
       console.error("Помилка при пошуку за координатами:", error);
-      setCoordinateSuggestions([currentPoint]);
-      setShowCoordinateSuggestions(true);
-      setNearbySearchStatus("❌ Помилка запиту. Спробуйте ще раз.");
+      setNearbySearchStatus({ type: "error", text: "Помилка запиту. Спробуйте ще раз." });
     } finally {
       coordSearchLockRef.current = false;
       setIsSearchingNearby(false);
     }
   };
 
-  const handleSelectCoordinateResult = (city) => {
-    const cityObj = {
-      name: city.name,
-      fullName: `${city.name}${city.state ? `, ${city.state}` : ""} (${city.country})`,
-      lat: city.lat,
-      lon: city.lon,
-    };
-    onAddCity(cityObj);
-    window.dispatchEvent(new CustomEvent('domino-next-step-auto'));
-    
-    setLatitude("");
-    setLongitude("");
+  const closeCoordinateSuggestions = () => {
     setShowCoordinateSuggestions(false);
     setCoordinateSuggestions([]);
+    setCustomPointName("");
+    setNearbySearchStatus(null);
+  };
+
+  // Додає точку з пошуку за координатами. Список після цього закривається,
+  // тож (якщо ввімкнено «Прогорнути до картки») гортаємо одразу, без «Готово»
+  const addCoordinatePoint = (cityObj) => {
+    const existingCard = findCardForCity?.(cityObj.lat, cityObj.lon);
+    if (existingCard) {
+      onOpenCard?.(existingCard.id);
+      closeCoordinateSuggestions();
+      return;
+    }
+    const addPromise = Promise.resolve(onAddCity(cityObj));
+    if (scrollToNewCard) scrollToCardAfterAdd(cityObj, addPromise);
+    window.dispatchEvent(new CustomEvent("domino-next-step-auto"));
+    setLatitude("");
+    setLongitude("");
+    closeCoordinateSuggestions();
+  };
+
+  const handleSelectCoordinateResult = (city) => {
+    const coords = `${city.lat.toFixed(2)}°, ${city.lon.toFixed(2)}°`;
+    addCoordinatePoint({
+      name: city.name,
+      fullName: city.isManual
+        ? `${city.name} (${coords})`
+        : `${city.name}${city.state ? `, ${city.state}` : ""} (${city.country})`,
+      lat: city.lat,
+      lon: city.lon,
+    });
+  };
+
+  // «Першовідкривач»: своя назва для точки, біля якої немає жодного населеного пункту
+  const handleAddCustomPoint = () => {
+    const point = coordinateSuggestions[0];
+    if (!point) return;
+    const name = customPointName.trim().replace(/\s+/g, " ") || "Обрана точка";
+    addCoordinatePoint({
+      name,
+      fullName: `${name} (${point.lat.toFixed(2)}°, ${point.lon.toFixed(2)}°)`,
+      lat: point.lat,
+      lon: point.lon,
+    });
   };
 
   const getCityKey = (city) => `${city.lat.toFixed(3)},${city.lon.toFixed(3)}`;
@@ -1693,6 +1949,12 @@ const Hero = ({
   // Список не закривається: можна додати кілька міст поспіль, потім натиснути «Готово»
   const handleSelect = async (city) => {
     const key = getCityKey(city);
+    // Картка для цього міста вже є — не дублюємо, а показуємо її
+    const existingCard = findCardForCity?.(city.lat, city.lon);
+    if (existingCard) {
+      if (onOpenCard) onOpenCard(existingCard.id);
+      return;
+    }
     if (addedCityKeysRef.current.has(key)) return;
     addedCityKeysRef.current.add(key);
     setAddedCityKeys((prev) => [...prev, key]);
@@ -1706,18 +1968,94 @@ const Hero = ({
     window.dispatchEvent(new CustomEvent('domino-next-step-auto'));
 
     let added = false;
+    const addPromise = Promise.resolve(onAddCity(cityObj));
+    const addEntry = { city: cityObj, promise: addPromise };
+    lastAddRef.current = addEntry;
     try {
-      added = await onAddCity(cityObj);
+      added = await addPromise;
     } catch (err) {
       console.error("Не вдалося додати місто:", err);
     }
     if (added === false) {
+      // Не вдалося — на «Готово» до цього міста не гортаємо
+      if (lastAddRef.current === addEntry) lastAddRef.current = null;
       addedCityKeysRef.current.delete(key);
       setAddedCityKeys((prev) => prev.filter((k) => k !== key));
     }
   };
 
+  // Чекаємо, поки картка додасться (запит погоди), даємо їй відрендеритись і гортаємо до неї
+  const scrollToCardAfterAdd = (city, addPromise) => {
+    if (!onOpenCard) return;
+    addPromise
+      .then((added) => {
+        if (added === false) return;
+        setTimeout(() => {
+          const card = findCardForCityRef.current?.(city.lat, city.lon);
+          if (card) onOpenCard(card.id);
+        }, 400);
+      })
+      .catch(() => {});
+  };
+
+  // Панель над підказками (обидва режими пошуку): ліміти карток і «Прогорнути до картки».
+  // У пошуку за координатами точка одна і список закривається одразу — без «Готово»
+  const renderCardLimitsBar = ({ forCoordinates = false } = {}) => {
+    if (!cardLimits) return null;
+    const addedCount = forCoordinates ? 0 : addedCityKeys.length;
+    return (
+      <AddedBar $isDarkMode={isDarkMode}>
+        <span>
+          {addedCount > 0 && `Додано: ${addedCount} · `}
+          Карток: {cardLimits.custom}/{cardLimits.maxCustom}
+          {cardLimits.daily !== null && ` · Сьогодні: ${cardLimits.daily}/${cardLimits.maxDaily}`}
+        </span>
+        <AddedBarActions>
+          <ScrollToCardLabel
+            onMouseDown={(e) => e.preventDefault()}
+            title={
+              forCoordinates
+                ? "Після додавання точки прогорнути сторінку до її картки"
+                : "Після «Готово» прогорнути сторінку до картки останнього доданого міста"
+            }
+          >
+            <input
+              type="checkbox"
+              checked={scrollToNewCard}
+              onChange={(e) => setPref(SCROLL_TO_NEW_CARD_KEY, e.target.checked ? "true" : "false")}
+            />
+            Прогорнути до картки
+          </ScrollToCardLabel>
+          {addedCount > 0 && (
+            <DoneButton
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={handleFinishAdding}
+            >
+              Готово
+            </DoneButton>
+          )}
+        </AddedBarActions>
+        {scrollToNewCard && addedCount > 1 && (
+          <AddedBarHint $isDarkMode={isDarkMode}>
+            Ви вибрали кілька варіантів — після «Готово» вас перегорне до картки останнього
+            вибраного
+          </AddedBarHint>
+        )}
+      </AddedBar>
+    );
+  };
+
+  const COORD_STATUS_ICONS = {
+    found: MdCheckCircle,
+    none: MdWarningAmber,
+    error: MdErrorOutline,
+  };
+
   const handleFinishAdding = () => {
+    const lastAdd = lastAddRef.current;
+    lastAddRef.current = null;
+    if (scrollToNewCard && lastAdd) scrollToCardAfterAdd(lastAdd.city, lastAdd.promise);
     setInputValue("");
     setSuggestions([]);
     setShowList(false);
@@ -1997,29 +2335,21 @@ const Hero = ({
                   />
                 </SearchBorder>
                 {showList && suggestions.length > 0 && (
-                  <SuggestionsList>
-                    {cardLimits && (
-                      <AddedBar>
-                        <span>
-                          {addedCityKeys.length > 0 && `Додано: ${addedCityKeys.length} · `}
-                          Карток: {cardLimits.custom}/{cardLimits.maxCustom}
-                          {cardLimits.daily !== null && ` · Сьогодні: ${cardLimits.daily}/${cardLimits.maxDaily}`}
-                        </span>
-                        {addedCityKeys.length > 0 && (
-                          <DoneButton
-                            type="button"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={handleFinishAdding}
-                          >
-                            Готово
-                          </DoneButton>
-                        )}
-                      </AddedBar>
-                    )}
-                    {suggestions.map((city, index) => (
+                  <SuggestionsList $isDarkMode={isDarkMode}>
+                    {renderCardLimitsBar()}
+                    {suggestions.map((city, index) => {
+                      const isAdded = addedCityKeys.includes(getCityKey(city));
+                      const existingCard = findCardForCity?.(city.lat, city.lon);
+                      return (
                       <SuggestionItem
                         key={`${city.lat}-${city.lon}-${index}`}
-                        $added={addedCityKeys.includes(getCityKey(city))}
+                        $added={isAdded}
+                        $exists={Boolean(existingCard)}
+                        title={
+                          existingCard
+                            ? `Картка «${existingCard.locationName || city.name}» вже є — натисніть, щоб перейти до неї`
+                            : undefined
+                        }
                         onMouseDown={(e) => {
                           e.preventDefault();
                           handleSelect(city);
@@ -2032,18 +2362,24 @@ const Hero = ({
                       >
                         <SuggestionRow>
                           <SuggestionText>
-                            {addedCityKeys.includes(getCityKey(city)) && "✓ "}
+                            {(isAdded || existingCard) && <MdCheck aria-hidden="true" />}
                             {city.name}
                             {city.state ? `, ${city.state}` : ""} ({city.country})
                             <br />
-                            <span style={{ fontSize: "0.85em", color: "#fffcfc" }}>
+                            <CoordsLine>
                               Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°
-                            </span>
+                            </CoordsLine>
                           </SuggestionText>
                           {renderDangerBadge(city)}
+                          {(isAdded || existingCard) && (
+                            <CardStatusBadge $added={isAdded}>
+                              {isAdded ? "Додано" : "Є картка"}
+                            </CardStatusBadge>
+                          )}
                         </SuggestionRow>
                       </SuggestionItem>
-                    ))}
+                      );
+                    })}
 
                     {hasMore ? (
                       <LoadMoreButton isDarkMode={isDarkMode} onClick={handleLoadMore}>
@@ -2062,6 +2398,8 @@ const Hero = ({
             </HeroFormater>
           ) : (
             <HeroFormater>
+              {/* Список результатів — одразу під полями, поверх короткої погоди (як у пошуку за назвою) */}
+              <CoordSearchArea>
               <CoordinatesContainer style={{ alignItems: "flex-start" }}>
                 <CoordinateInput $isDarkMode={isDarkMode}>
                   <input
@@ -2102,96 +2440,94 @@ const Hero = ({
                   Знайти
                 </CoordinateSearchButton>
               </CoordinatesContainer>
-              {quickWeather}
-              {nearbySearchStatus && (
-                <div style={{
-                  color: nearbySearchStatus.startsWith("✅") ? "#00e676"
-                       : nearbySearchStatus.startsWith("❌") ? "#ff5252"
-                       : nearbySearchStatus.startsWith("⚠️") ? "#ffb36c"
-                       : "#00eaff",
-                  fontSize: "11px",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  padding: "4px 10px",
-                  background: "rgba(0,0,0,0.65)",
-                  borderRadius: "6px",
-                  maxWidth: "340px",
-                  margin: "4px auto 0",
-                  backdropFilter: "blur(4px)",
-                  lineHeight: 1.4,
-                }}>
-                  {isSearchingNearby && (
-                    <span style={{ marginRight: "6px" }}>⟳</span>
-                  )}
-                  {nearbySearchStatus}
-                </div>
-              )}
-              {searchModePicker}
-
               {showCoordinateSuggestions && (
-                <SuggestionsList
-                  style={{
-                    width: "auto",
-                    minWidth: "300px",
-                    marginTop: "6px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    position: "absolute",
-                  }}
-                >
-                  <div
-                    style={{
-                      color: "#333",
-                      fontWeight: "bold",
-                      marginBottom: "6px",
-                      textAlign: "center",
-                      fontSize: "12px",
-                    }}
-                  >
-                    {isSearchingNearby
-                      ? "Шукаємо поруч…"
-                      : coordinateSuggestions.length > 1
-                        ? "Знайдено поруч з координатами:"
-                        : "Лише точка за координатами (міст не знайдено)"}
-                  </div>
-                  {coordinateSuggestions.map((city, index) => (
-                    <SuggestionItem
-                      key={`${city.lat}-${city.lon}-${index}`}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        handleSelectCoordinateResult(city);
-                      }}
-                      onClick={() => handleSelectCoordinateResult(city)}
-                    >
-                       {city.name}
-                      {city.state ? `, ${city.state}` : ""} ({city.country})
-                      <br />
-                      <span style={{ fontSize: "0.85em", color: "#666" }}>
-                        {city.lat.toFixed(2)}°, {city.lon.toFixed(2)}°
+                <SuggestionsList $isDarkMode={isDarkMode}>
+                  {renderCardLimitsBar({ forCoordinates: true })}
+                  {nearbySearchStatus && (() => {
+                    const StatusIcon = isSearchingNearby
+                      ? MdSync
+                      : COORD_STATUS_ICONS[nearbySearchStatus.type] || MdSearch;
+                    return (
+                      <CoordStatus
+                        $isDarkMode={isDarkMode}
+                        $type={nearbySearchStatus.type}
+                        role="status"
+                        aria-live="polite"
+                      >
+                        <StatusIcon className={isSearchingNearby ? "spin" : undefined} aria-hidden="true" />
+                        <span>{nearbySearchStatus.text}</span>
+                      </CoordStatus>
+                    );
+                  })()}
+                  {!isSearchingNearby &&
+                    coordinateSuggestions.length === 1 &&
+                    nearbySearchStatus?.type === "none" && (
+                    <CustomPointBox $isDarkMode={isDarkMode}>
+                      <span>
+                        <MdExplore aria-hidden="true" />
+                        Ви першовідкривач! Поруч немає населених пунктів — назвіть свою точку:
                       </span>
-                    </SuggestionItem>
-                  ))}
-                  <button
-                    onClick={() => {
-                      setShowCoordinateSuggestions(false);
-                      setCoordinateSuggestions([]);
-                      setNearbySearchStatus("");
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: "8px",
-                      background: "#f0f0f0",
-                      border: "1px solid #ccc",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      marginTop: "10px",
-                      fontSize: "12px",
-                    }}
+                      <CustomPointRow $isDarkMode={isDarkMode}>
+                        <input
+                          type="text"
+                          value={customPointName}
+                          onChange={(e) => setCustomPointName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleAddCustomPoint();
+                          }}
+                          placeholder="Наприклад: Моя метеостанція"
+                          maxLength={40}
+                          aria-label="Назва власної точки"
+                        />
+                        <DoneButton type="button" onClick={handleAddCustomPoint}>
+                          Додати
+                        </DoneButton>
+                      </CustomPointRow>
+                    </CustomPointBox>
+                  )}
+                  {coordinateSuggestions.map((city, index) => {
+                    const existingCard = findCardForCity?.(city.lat, city.lon);
+                    return (
+                      <SuggestionItem
+                        key={`${city.lat}-${city.lon}-${index}`}
+                        type="button"
+                        $exists={Boolean(existingCard)}
+                        title={
+                          existingCard
+                            ? `Картка «${existingCard.locationName || city.name}» вже є — натисніть, щоб перейти до неї`
+                            : undefined
+                        }
+                        onClick={() => handleSelectCoordinateResult(city)}
+                      >
+                        <SuggestionRow>
+                          <SuggestionText>
+                            {existingCard && <MdCheck aria-hidden="true" />}
+                            {city.isManual
+                              ? city.name
+                              : `${city.name}${city.state ? `, ${city.state}` : ""} (${city.country})`}
+                            <br />
+                            <CoordsLine>
+                              Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°
+                            </CoordsLine>
+                          </SuggestionText>
+                          {existingCard && <CardStatusBadge>Є картка</CardStatusBadge>}
+                        </SuggestionRow>
+                      </SuggestionItem>
+                    );
+                  })}
+                  <CloseListButton
+                    type="button"
+                    $isDarkMode={isDarkMode}
+                    onClick={closeCoordinateSuggestions}
                   >
-                    ✕ Закрити
-                  </button>
+                    <MdClose aria-hidden="true" />
+                    Закрити
+                  </CloseListButton>
                 </SuggestionsList>
               )}
+              </CoordSearchArea>
+              {quickWeather}
+              {searchModePicker}
             </HeroFormater>
           )}
           </SearchWrapper>

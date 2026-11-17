@@ -4059,6 +4059,16 @@ const App = () => {
   // Міста з Hero додаються строго по черзі: перевірка ліміту й лічильник у Firestore
   // мають бачити результат попереднього додавання (швидкі кліки по кількох підказках)
   const addCityQueueRef = useRef(Promise.resolve());
+  // Прогорнути сторінку до погоди й гортнути карусель на потрібну картку
+  const scrollToWeatherCard = useCallback((id) => {
+    document.getElementById("weather")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.dispatchEvent(new CustomEvent(WEATHER_CAROUSEL_JUMP_EVENT, { detail: { id } }));
+  }, []);
+  // Картка, яка вже є для цього міста (для позначки в підказках пошуку)
+  const findCardForCity = useCallback(
+    (lat, lon) => findDuplicateCityCard(weatherCards, lat, lon),
+    [weatherCards],
+  );
   const handleAddCityFromHero = useCallback(
     (cityObj) => {
       const task = addCityQueueRef.current.then(async () => {
@@ -4265,6 +4275,8 @@ const App = () => {
           onOpenQuickWeather={handleOpenQuickWeather}
           heroDateString={heroDateString}
           onAddCity={handleAddCityFromHero}
+          findCardForCity={findCardForCity}
+          onOpenCard={scrollToWeatherCard}
           cardLimits={{
             custom: weatherCards.filter((c) => !c.isMain).length,
             maxCustom: maxCustomCards,
