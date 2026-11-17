@@ -879,11 +879,44 @@ const DecoratorPresetThumb = ({ accent, rounded = 2, variant = 0 }) => {
   );
 };
 
+// Режими Декоратора в «Параметрах»: вимкнено / перегляд змін / редагування кліком
+const DECORATOR_VIEW_OPTIONS = [
+  { id: "off", label: "Вимкнено", hint: "Сайт без змін Декоратора" },
+  { id: "view", label: "Перегляд", hint: "Зміни видно, сайт працює як звичайно" },
+  { id: "edit", label: "Редагування", hint: "Клік по елементу сайту відкриває редактор" },
+];
+
 const DECORATOR_PRESETS = [
   { id: "original", label: "Оригінал", hint: "Без змін" },
   { id: 0, label: "Декоративний шаблон 1", accent: "#d946ef", rounded: 4, variant: 0 },
   { id: 1, label: "Декоративний шаблон 2", accent: "#f59e0b", rounded: 7, variant: 1 },
 ];
+
+// Журнал змін Декоратора: зрозумілі назви службових властивостей і без довжелезних data:-рядків
+const DECORATOR_LOG_LABELS = {
+  "--dec-cursor-image": "курсор-зображення",
+  "--dec-cursor-size": "розмір курсора",
+  "--dec-click-sound": "звук натискання (більше не діє)",
+  "--dec-click-fx": "ефект натискання",
+  "--dec-text": "текст у блоці",
+  "--dec-click-fx-color": "колір ефекту натискання",
+  "--dec-font-src": "джерело шрифту",
+  "--font-family": "шрифт вкладених елементів",
+  fontFamily: "шрифт",
+  "--dec-react": "звукова реакція",
+  "--dec-react-color": "колір реакції",
+  "--dec-3d": "3D-кнопка",
+  "--dec-3d-depth": "глибина 3D",
+  "--dec-3d-color": "колір 3D-ребер",
+  "--dec-3d-dir": "положення 3D-грані",
+  "--dec-3d-fill": "заливка 3D-граней",
+};
+const formatDecoratorLogValue = (value) => {
+  if (!value) return "скинуто";
+  if (/^url\(/.test(value)) return "власний файл";
+  if (value === "1") return "увімкнено";
+  return value;
+};
 
 // Порожній, коли секція новин не змонтована (вимкнена) — тоді показуємо підказку
 const NewsFeedsSlot = styled.div`
@@ -1857,9 +1890,10 @@ const UserSettingsModal = ({
 
   // Decorator hook
   const {
-    isDecoratorMode,
-    setIsDecoratorMode,
+    viewMode = "view",
+    setViewMode = () => {},
     changeLog = [],
+    decorItems = [],
     undoChange = () => {},
     resetAll = () => {},
     isPersistent = false,
@@ -4531,20 +4565,85 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#d946ef"><FiPenTool /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Режим Декоратора (CSS Редактор)</CardTitle>
-                        <CardDescription>Закрийте Параметри й клацніть елемент сайту, щоб змінити його стиль. Alt + клік — звичайне натискання</CardDescription>
+                        <CardTitle>
+                          Режим Декоратора (CSS Редактор){" "}
+                          <span
+                            title="Експериментальна функція"
+                            style={{
+                              display: "inline-block",
+                              marginLeft: "6px",
+                              padding: "1px 8px",
+                              borderRadius: "999px",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                              verticalAlign: "middle",
+                              color: "#d946ef",
+                              background: "rgba(217,70,239,0.14)",
+                            }}
+                          >
+                            Експериментально
+                          </span>
+                        </CardTitle>
+                        <CardDescription>
+                          {viewMode === "edit"
+                            ? "Закрийте Параметри й клацніть елемент сайту, щоб змінити його стиль. Alt + клік — звичайне натискання"
+                            : viewMode === "view"
+                              ? "Перегляд: зміни Декоратора видно, а сайт працює як звичайно"
+                              : "Вимкнено: сайт без змін Декоратора — шаблони збережені"}
+                        </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: "13px", color: "var(--s-text)" }}>Увімкнути режим Декоратора</span>
-                        <ToggleWrapper onClick={() => setIsDecoratorMode(!isDecoratorMode)}>
-                          <ToggleStatusLabel $checked={isDecoratorMode}>{isDecoratorMode ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
-                          <SwitchPill $checked={isDecoratorMode} />
-                        </ToggleWrapper>
+                      {/* М'яке попередження: Декоратор прив'язується до будови сторінки, а вона з оновленнями змінюється */}
+                      <div
+                        role="note"
+                        style={{
+                          display: "flex",
+                          gap: "10px",
+                          alignItems: "flex-start",
+                          padding: "10px 12px",
+                          borderRadius: "8px",
+                          fontSize: "12.5px",
+                          lineHeight: 1.5,
+                          color: "var(--s-text-2)",
+                          background: "rgba(217,70,239,0.07)",
+                          border: "1px solid rgba(217,70,239,0.22)",
+                        }}
+                      >
+                        <span aria-hidden="true" style={{ fontSize: "15px", lineHeight: 1.3 }}>🧪</span>
+                        <span>
+                          Декоратор поки що експериментальний — ми лише вчимося разом із ним. Стихія
+                          постійно оновлюється, тож після деяких оновлень окремі ваші зміни можуть трохи
+                          зсунутися або перестати діяти. Нічого страшного: їх легко поправити в
+                          Декораторі або скасувати в «Журналі змін», а сайт без них завжди працює як
+                          звичайно.
+                        </span>
                       </div>
 
-                      {isDecoratorMode && (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "13px", color: "var(--s-text)" }}>Режим Декоратора</span>
+                        <Segmented role="radiogroup" aria-label="Режим Декоратора">
+                          {DECORATOR_VIEW_OPTIONS.map((option) => {
+                            const active = viewMode === option.id;
+                            return (
+                              <SegmentBtn
+                                key={option.id}
+                                type="button"
+                                role="radio"
+                                aria-checked={active}
+                                title={option.hint}
+                                $active={active}
+                                $tone={option.id === "off" ? "hide" : "show"}
+                                onClick={() => setViewMode(option.id)}
+                              >
+                                {option.label}
+                              </SegmentBtn>
+                            );
+                          })}
+                        </Segmented>
+                      </div>
+
+                      {viewMode !== "off" && (
                         <>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                             <span style={{ fontSize: "13px", color: "var(--s-text)" }}>Зберігати зміни після оновлення</span>
@@ -4594,7 +4693,7 @@ const UserSettingsModal = ({
                             <div style={{ maxHeight: "140px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px" }}>
                               {changeLog.map((log) => (
                                 <div key={log.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(var(--s-ink),0.04)", padding: "4px 8px", borderRadius: "4px", fontSize: "11px" }}>
-                                  <span><b style={{ color: "var(--s-accent)" }}>{log.tagName}</b> {log.property}: {log.newValue}</span>
+                                  <span><b style={{ color: "var(--s-accent)" }}>{log.tagName}</b> {DECORATOR_LOG_LABELS[log.property] || log.property}: {formatDecoratorLogValue(log.newValue)}</span>
                                   <WinButton style={{ padding: "2px 6px", fontSize: "10px" }} onClick={() => undoChange(log.id)}>Відмінити</WinButton>
                                 </div>
                               ))}
@@ -4603,7 +4702,13 @@ const UserSettingsModal = ({
                             <span style={{ fontSize: "11px", color: "var(--s-muted)", fontStyle: "italic" }}>Змін ще немає</span>
                           )}
 
-                          {changeLog.length > 0 && (
+                          {decorItems.length > 0 && (
+                            <span style={{ fontSize: "12px", color: "var(--s-muted)" }}>
+                              Декор-об'єктів (фото/відео) на сторінці: {decorItems.length}. Змінювати їх — у режимі «Редагування».
+                            </span>
+                          )}
+
+                          {(changeLog.length > 0 || decorItems.length > 0) && (
                             <WinButton $danger onClick={resetAll} style={{ alignSelf: "flex-start" }}>
                               Скинути всі зміни Декоратора
                             </WinButton>

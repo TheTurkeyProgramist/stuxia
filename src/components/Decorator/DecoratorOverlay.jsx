@@ -28,6 +28,13 @@ const isIgnored = (el) => {
   return false;
 };
 
+// Батьківський елемент, який можна редагувати (не body і не службові шари)
+const getEditableParent = (el) => {
+  const parent = el?.parentElement;
+  if (!parent || parent === document.body || parent === document.documentElement) return null;
+  return isIgnored(parent) ? null : parent;
+};
+
 const DecoratorOverlay = ({ isStickyBgMode }) => {
   const { isDecoratorMode } = useDecorator();
   const [hoveredEl, setHoveredEl] = useState(null);
@@ -137,6 +144,8 @@ const DecoratorOverlay = ({ isStickyBgMode }) => {
           <DecoratorModal
             targetElement={selectedEl}
             onClose={() => setSelectedEl(null)}
+            parentTag={getEditableParent(selectedEl)?.tagName.toLowerCase()}
+            onSelectParent={() => setSelectedEl((el) => getEditableParent(el) || el)}
           />
         </ModalSuspense>
       )}
