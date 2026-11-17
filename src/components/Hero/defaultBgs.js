@@ -218,7 +218,7 @@ export const DEFAULT_BGS = [
   // Світ Динофроз та Дракони
   {
     src: dinofrozVideo,
-    name: "Імператор Ніцерон (Відео)",
+    name: "Імператор Несерон (Відео)",
     category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
@@ -243,7 +243,7 @@ export const DEFAULT_BGS = [
   },
   {
     src: dinofrozone,
-    name: "Імператор Ніцерон",
+    name: "Імператор Несерон",
     category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
@@ -306,7 +306,7 @@ export const DEFAULT_BGS = [
   },
   {
     src: fingerdash,
-    name: "Замок Ніцерона",
+    name: "Замок Несерона",
     category: "Фентезі та Легенди",
     author: "Mondo TV",
     source: "м/с Динофроз",
