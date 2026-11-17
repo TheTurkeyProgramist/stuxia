@@ -101,7 +101,7 @@ import {
   writeWithDailyCounter,
 } from "./utils/cloudCounter";
 import { MotionConfig, Reorder, useDragControls } from "framer-motion";
-import { useAnimationsDisabled, setAnimationsDisabled } from "./utils/animationsPref";
+import { useAnimationsDisabled } from "./utils/animationsPref";
 import {
   useBeta,
   setBetaOn,
@@ -235,7 +235,7 @@ const StyledSectionContainer = styled.div`
     background-color 0.5s ease,
     backdrop-filter 0.5s ease;
   border-radius: 20px;
-  margin: 10px 0;
+  margin: ${(props) => (props.$isFirst ? "0 0 10px" : "10px 0")};
   display: ${(props) => (props.$isHidden ? "none" : "block")};
 `;
 const getWeatherIcon = (code, isDay = 1) => {
@@ -728,7 +728,7 @@ const ReorderRow = ({ item, index, isDarkMode, onDragEnd }) => {
   );
 };
 
-/* Ряд «перемикач анімацій + заголовок Погода» над картками.
+/* Ряд із заголовком «Погода» над картками.
    З 768px пошук міст — бокова панель зліва від карток, на телефоні — випадаючий список над ними */
 const WIDE_WEATHER_ROW_QUERY = "(min-width: 768px)";
 // Коротка погода під пошуком → прокрутити карусель до цієї картки (detail: { id })
@@ -747,7 +747,7 @@ const pickQuickWeatherCard = (cards) => {
 };
 
 /* z-index: над каруселлю (1800), але під фіксованою шапкою сайту (1900),
-   інакше при прокрутці «Анімації» й «Погода» налазять на шапку */
+   інакше при прокрутці «Погода» налазить на шапку */
 const WeatherTitleRow = styled.div`
   position: relative;
   z-index: 1850;
@@ -777,100 +777,6 @@ const useMediaQuery = (query) => {
     return () => mql.removeEventListener?.("change", onChange);
   }, [query]);
   return matches;
-};
-
-/* Перемикач «Анімації та розмиття» поруч із «Погода»: та сама висота, заокруглення й z-index, щоб не провалювалась у липкому режимі */
-const AnimationsToggleButton = styled.button`
-  position: relative;
-  z-index: 400;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 5px 12px;
-  border-radius: 10px;
-  border: 2px solid ${(props) => (props.$off ? "#888" : "rgba(0, 255, 229, 0.6)")};
-  background: ${(props) => (props.$isDarkMode ? "rgba(0, 0, 0, 0.93)" : "rgb(255, 255, 255)")};
-  color: ${(props) =>
-    props.$off ? (props.$isDarkMode ? "#bbb" : "#555") : props.$isDarkMode ? "#00ffe5" : "#006b61"};
-  font-size: 13px;
-  font-weight: bold;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    box-shadow: 0 0 12px rgba(0, 255, 229, 0.4);
-  }
-`;
-
-const AnimationsSwitchTrack = styled.span`
-  position: relative;
-  flex-shrink: 0;
-  width: 40px;
-  height: 22px;
-  border-radius: 11px;
-  border: 1.5px solid ${(props) => (props.$on ? "#00ffe5" : "#888")};
-  background: ${(props) => (props.$on ? "rgba(0, 255, 229, 0.35)" : "#2a2a2a")};
-  transition: background 0.2s ease, border-color 0.2s ease;
-
-  &::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: ${(props) => (props.$on ? "20px" : "2px")};
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #fff;
-    transform: translateY(-50%);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-    transition: left 0.2s ease;
-  }
-`;
-
-const AnimationsStateLabel = styled.span`
-  font-weight: normal;
-  font-size: 12px;
-  opacity: 0.85;
-  min-width: 62px;
-  text-align: left;
-
-  /* На вузьких екранах стан і так видно по перемикачу — звільняємо місце під довшу назву */
-  @media (max-width: 520px) {
-    display: none;
-  }
-`;
-
-/* «Анімації та розмиття»: на телефонах дозволяємо перенос у два рядки, щоб не вилазило за екран */
-const AnimationsToggleText = styled.span`
-  @media (max-width: 520px) {
-    white-space: normal;
-    line-height: 1.1;
-    text-align: left;
-    max-width: 92px;
-  }
-`;
-
-const WeatherAnimationsToggle = ({ isDarkMode }) => {
-  const animationsDisabled = useAnimationsDisabled();
-  const isOn = !animationsDisabled;
-  return (
-    <AnimationsToggleButton
-      type="button"
-      role="switch"
-      $off={animationsDisabled}
-      $isDarkMode={isDarkMode}
-      aria-checked={isOn}
-      aria-label={`Анімації та розмиття: ${isOn ? "увімкнено" : "вимкнено"}`}
-      onClick={() => setAnimationsDisabled(!animationsDisabled)}
-    >
-      <AnimationsToggleText>Анімації та розмиття</AnimationsToggleText>
-      <AnimationsSwitchTrack $on={isOn} aria-hidden="true" />
-      <AnimationsStateLabel aria-hidden="true">
-        {isOn ? "увімкнено" : "вимкнено"}
-      </AnimationsStateLabel>
-    </AnimationsToggleButton>
-  );
 };
 
 const CityJumpToggle = styled.button`
@@ -2006,7 +1912,6 @@ const SectionContent = memo(
       return (
         <div id="weather">
           <WeatherTitleRow>
-            <WeatherAnimationsToggle isDarkMode={isDarkMode} />
             <AihelpTitle
               $isStickyBgMode={isStickyBgMode}
               $isDarkMode={isDarkMode}
@@ -4263,6 +4168,17 @@ const App = () => {
       );
     }
   }, [quickWeatherCardId]);
+  // «Спробувати ще» на короткій погоді: заново запитуємо GPS-картку (якщо її ще немає) і всі наявні
+  const handleRetryQuickWeather = useCallback(() => {
+    const cards = weatherCardsRef.current || [];
+    if (!cards.some((card) => card.isMain)) getInitialLocation();
+    cards.forEach((card) => handleRefreshCard(card));
+  }, [getInitialLocation, handleRefreshCard]);
+
+  // Перша видима секція під Hero (зазвичай погода) — без верхнього відступу, впритул до кнопок новин
+  const firstVisibleSectionKey = siteSections.find(
+    (section) => section.key !== "hero" && !hiddenSections.includes(section.key),
+  )?.key;
 
   const LandingPage = (
     <>
@@ -4273,6 +4189,7 @@ const App = () => {
           onSelectQuickWeatherCity={handleSelectQuickWeatherCity}
           hideQuickWeather={hideGpsCard && weatherCards.length === 0}
           onOpenQuickWeather={handleOpenQuickWeather}
+          onRetryQuickWeather={handleRetryQuickWeather}
           heroDateString={heroDateString}
           onAddCity={handleAddCityFromHero}
           findCardForCity={findCardForCity}
@@ -4350,6 +4267,7 @@ const App = () => {
                 $isDarkMode={sectionThemes[section.key] ?? isDarkMode}
                 $isStickyBgMode={isStickyBgMode}
                 $isHidden={hiddenSections.includes(section.key)}
+                $isFirst={section.key === firstVisibleSectionKey}
                 key={section.key}
               >
                 <SectionContent

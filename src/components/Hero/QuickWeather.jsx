@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import styled, { css, keyframes } from "styled-components";
 import {
   WiDaySunny,
@@ -15,7 +15,7 @@ import {
 } from "react-icons/wi";
 import { GiMonclerJacket, GiTShirt, GiShorts } from "react-icons/gi";
 import { MdPlace } from "react-icons/md";
-import { TbUmbrella, TbUmbrellaOff } from "react-icons/tb";
+import { TbUmbrella, TbUmbrellaOff, TbCloudOff } from "react-icons/tb";
 
 // Коротка погода одразу під пошуком: «+6° · Хмарно · Дощу не буде · Вдягніть куртку і шарф».
 // Дані — з картки погоди, яку App уже завантажив (без окремого запиту до API).
@@ -29,6 +29,10 @@ const isWetCode = (code) => RAIN_CODES.has(code) || SNOW_CODES.has(code) || STOR
 const LOOKAHEAD_HOURS = 12;
 // З якої ймовірності вважаємо, що опади «можливі»
 const WET_PROBABILITY = 40;
+
+// Скільки чекаємо прогноз, перш ніж показати «Не вдалося завантажити погоду»
+const LOAD_TIMEOUT_MS = 10000;
+const isOffline = () => typeof navigator !== "undefined" && navigator.onLine === false;
 
 // Пункт у списку міст, що відкриває пошук для додавання нового
 export const ADD_CITY_OPTION = "__add_city";
@@ -174,8 +178,74 @@ export const getOutfitAdvice = (card, precipitation) => {
   return { Icon, text };
 };
 
-const QuickWeather = ({ card, cities = [], isDarkMode, onOpen, onSelectCity }) => {
-  if (!card?.current) {
+const QuickWeather = ({ card, cities = [], isDarkMode, onOpen, onSelectCity, onRetry }) => {
+  const hasData = Boolean(card?.current);
+  // Прогноз не прийшов за LOAD_TIMEOUT_MS (або немає інтернету) — показуємо помилку замість вічного «Завантажуємо…»
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [offline, setOffline] = useState(isOffline);
+
+  useEffect(() => {
+    if (hasData) {
+      setFailed(false);
+      return undefined;
+    }
+    if (isOffline()) {
+      setFailed(true);
+      return undefined;
+    }
+    const timer = setTimeout(() => setFailed(true), LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [hasData, attempt]);
+
+  const handleRetry = useCallback(() => {
+    setOffline(isOffline());
+    setFailed(false);
+    setAttempt((n) => n + 1);
+    onRetry?.();
+  }, [onRetry]);
+
+  // Інтернет зник / з'явився: одразу показуємо помилку або самі пробуємо ще раз
+  useEffect(() => {
+    const goOffline = () => setOffline(true);
+    const goOnline = () => {
+      setOffline(false);
+      if (!hasData) handleRetry();
+    };
+    window.addEventListener("offline", goOffline);
+    window.addEventListener("online", goOnline);
+    return () => {
+      window.removeEventListener("offline", goOffline);
+      window.removeEventListener("online", goOnline);
+    };
+  }, [hasData, handleRetry]);
+
+  if (!hasData && (failed || offline)) {
+    return (
+      <Box $isDarkMode={isDarkMode} role="alert">
+        <Body as="div">
+          <WeatherIcon aria-hidden="true" style={{ color: "#94a3b8", fontSize: 26, margin: 0 }}>
+            <TbCloudOff />
+          </WeatherIcon>
+          <Main>
+            <Line>
+              <strong>Не вдалося завантажити погоду</strong>
+            </Line>
+            <Line>
+              <Muted $isDarkMode={isDarkMode}>
+                {offline ? "Немає з'єднання з інтернетом" : "Сервіс прогнозу не відповідає"}
+              </Muted>
+            </Line>
+          </Main>
+          <RetryButton type="button" $isDarkMode={isDarkMode} onClick={handleRetry}>
+            Спробувати ще
+          </RetryButton>
+        </Body>
+      </Box>
+    );
+  }
+
+  if (!hasData) {
     return (
       <Box $isDarkMode={isDarkMode} $loading aria-busy="true" aria-label="Завантажуємо погоду">
         <Body as="div">
@@ -392,6 +462,29 @@ const MoreButton = styled.button`
 
   &:hover {
     background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)")};
+  }
+
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 1px;
+  }
+`;
+
+const RetryButton = styled.button`
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(125,211,252,0.5)" : "rgba(3,105,161,0.4)")};
+  border-radius: 8px;
+  background: ${(p) => (p.$isDarkMode ? "rgba(125,211,252,0.12)" : "rgba(3,105,161,0.08)")};
+  color: ${(p) => (p.$isDarkMode ? "#7dd3fc" : "#0369a1")};
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    background: ${(p) => (p.$isDarkMode ? "rgba(125,211,252,0.22)" : "rgba(3,105,161,0.15)")};
   }
 
   &:focus-visible {

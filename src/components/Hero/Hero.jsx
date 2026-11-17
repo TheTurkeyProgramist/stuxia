@@ -166,7 +166,8 @@ const HeroDiv = styled.div`
   /* одразу під фіксованою шапкою (48px), логотип тепер у шапці */
   justify-content: flex-start;
   padding-top: 58px;
-  padding-bottom: 12px;
+  /* мінімальний відступ від кнопок новин до першої секції (погоди) під Hero */
+  padding-bottom: 4px;
   box-sizing: border-box;
   align-items: center;
   overflow: hidden;
@@ -837,6 +838,31 @@ const CoordinateSearchButton = styled.button`
     cursor: not-allowed;
   }
 `;
+// Слоган під пошуком: завжди один рядок; довга версія — з 700px, коротка — на вужчих екранах
+const HeroSlogan = styled.p`
+  width: 100%;
+  margin: 0;
+  color: ${(props) => (props.$isDarkMode ? "#f4f7fb" : "#30343b")};
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .full {
+    display: none;
+  }
+  @media (min-width: 700px) {
+    .full {
+      display: inline;
+    }
+    .short {
+      display: none;
+    }
+  }
+`;
+
 const HeroFormater = styled.div`
   display: flex;
   flex-direction: column;
@@ -1362,6 +1388,7 @@ const Hero = ({
   onOpenQuickWeather,
   quickWeatherCities,
   onSelectQuickWeatherCity,
+  onRetryQuickWeather,
 }) => {
   const dispatch = useDispatch();
   // «Додати інше місто…» — до пошуку; нове місто саме стане на головний екран (автовибір — останнє додане)
@@ -1381,7 +1408,17 @@ const Hero = ({
       isDarkMode={isDarkMode}
       onOpen={onOpenQuickWeather}
       onSelectCity={handleQuickWeatherCity}
+      onRetry={onRetryQuickWeather}
     />
+  );
+  // Слоган одним рядком під пошуком (на телефоні — коротша версія, щоб влізла в рядок)
+  const slogan = (
+    <HeroSlogan $isDarkMode={isDarkMode}>
+      <span className="full">
+        Ви заслуговуєте на багатофункціональний прогноз, де немає політики та реклами! Гарної погоди!
+      </span>
+      <span className="short">Прогноз без політики й реклами. Гарної погоди!</span>
+    </HeroSlogan>
   );
   const { registerRef, isActive } = useTutorial?.() || { registerRef: () => {} };
   const customDays = useSelector((state) => state.calendar?.customDays || []);
@@ -2393,6 +2430,7 @@ const Hero = ({
                   </SuggestionsList>
                 )}
               </SearchContainer>
+              {slogan}
               {quickWeather}
               {searchModePicker}
             </HeroFormater>
@@ -2526,6 +2564,7 @@ const Hero = ({
                 </SuggestionsList>
               )}
               </CoordSearchArea>
+              {slogan}
               {quickWeather}
               {searchModePicker}
             </HeroFormater>
