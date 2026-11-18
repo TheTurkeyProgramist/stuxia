@@ -149,6 +149,26 @@ const EmojiWrapper = styled.span`
   line-height: 1;
 `;
 
+// Увімкнений перемикач у шапці (напр. «Фон на увесь сайт»): іконка того ж кольору, що й решта,
+// а стан — маленька крапка акцентного кольору в куті
+const ActiveDot = styled.span`
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    right: -4px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ff9d3b;
+    box-shadow: 0 0 0 2px ${(p) => (p.$isDarkMode ? "#0b1220" : "#ffffff")};
+  }
+`;
+
 // Підпис під іконкою в шапці — щоб новий відвідувач знав, що за кнопкою (повна назва — у підказці)
 const IconLabel = styled.span`
   display: block;
@@ -1310,9 +1330,10 @@ const Header = ({
       key: "stickyBg",
       label: "Фон",
       menuLabel: "Фон на увесь сайт",
-      tooltip: "Фон на увесь сайт",
-      icon: <MdWallpaper style={{ color: isStickyBgMode ? "#ff005d" : "inherit" }} />,
+      tooltip: `Фон на увесь сайт: ${isStickyBgMode ? "увімкнено" : "вимкнено"}`,
+      icon: <MdWallpaper />,
       state: isStickyBgMode ? "увімкнено" : "вимкнено",
+      pressed: isStickyBgMode,
       onClick: handleStickyBgToggle,
       showFrom: 1024,
     },
@@ -1432,8 +1453,15 @@ const Header = ({
               {...(action.prefetch ? prefetchProps(action.prefetch) : action.prefetchFn ? { onPointerEnter: action.prefetchFn, onFocus: action.prefetchFn, onTouchStart: action.prefetchFn } : null)}
               $isDarkMode={isDarkMode}
               aria-label={action.tooltip}
+              aria-pressed={action.pressed}
             >
-              <EmojiWrapper style={action.iconStyle}>{action.icon}</EmojiWrapper>
+              <EmojiWrapper style={action.iconStyle}>
+                {action.pressed ? (
+                  <ActiveDot $isDarkMode={isDarkMode}>{action.icon}</ActiveDot>
+                ) : (
+                  action.icon
+                )}
+              </EmojiWrapper>
               <IconLabel aria-hidden="true">{action.label}</IconLabel>
             </IconButton>
           </Tooltip>

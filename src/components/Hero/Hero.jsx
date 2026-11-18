@@ -71,6 +71,7 @@ import { OPEN_BG_MODAL_EVENT, OPEN_TIMEZONE_EVENT } from "./heroEvents.js";
 import { getEagerChunk, loadNews } from "../../utils/eagerChunks.js";
 import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
 import { findServerCity } from "../../utils/serverCities";
+import { searchLocalCities, sortSuggestionsByQuery } from "../../utils/citySearch";
 // Новини (~120 КБ) — окремим файлом. Телефон: після першого показу сторінки, щоб не затримувати
 // фон Hero (LCP). ПК: уже завантажені до першого малювання (eagerChunks.js)
 const LazyNews = React.lazy(loadNews);
@@ -950,66 +951,111 @@ const HeroInput = styled.input`
 // Кольори випадних списків пошуку за темою сайту: (темна, світла)
 const listTheme = (dark, light) => (props) => (props.$isDarkMode === false ? light : dark);
 
+// Палітра списків пошуку — системні кольори Apple (macOS / iOS), темна і світла
+const UI = {
+  text: listTheme("#f5f5f7", "#1d1d1f"),
+  secondary: listTheme("rgba(235, 235, 245, 0.6)", "rgba(60, 60, 67, 0.6)"),
+  separator: listTheme("rgba(84, 84, 88, 0.55)", "rgba(60, 60, 67, 0.16)"),
+  hover: listTheme("rgba(255, 255, 255, 0.075)", "rgba(0, 0, 0, 0.045)"),
+  pressed: listTheme("rgba(255, 255, 255, 0.12)", "rgba(0, 0, 0, 0.08)"),
+  accent: listTheme("#0a84ff", "#007aff"),
+  accentText: listTheme("#4da3ff", "#0066cc"),
+  accentTint: listTheme("rgba(10, 132, 255, 0.16)", "rgba(0, 122, 255, 0.1)"),
+  green: listTheme("#30d158", "#248a3d"),
+  greenTint: listTheme("rgba(48, 209, 88, 0.16)", "rgba(52, 199, 89, 0.14)"),
+  glass: listTheme("rgba(28, 28, 30, 0.8)", "rgba(255, 255, 255, 0.82)"),
+  bar: listTheme("rgba(28, 28, 30, 0.92)", "rgba(250, 250, 252, 0.92)"),
+};
+
 const SuggestionsList = styled.div`
   position: absolute;
-  top: 100%;
-  align-items: center;
-  background: ${listTheme("rgba(16, 21, 28, 0.98)", "rgba(255, 255, 255, 0.98)")};
-  color: ${listTheme("#f4f2f2", "#0b1220")};
-  border-radius: 0 0 15px 15px;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
   z-index: 9999;
   display: flex;
-  width: 99.7%;
   flex-direction: column;
-  max-height: 350px;
+  align-items: center;
+  max-height: 360px;
   overflow-y: auto;
-  border: 1px solid ${listTheme("rgba(255, 255, 255, 0.14)", "rgba(0, 0, 0, 0.14)")};
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  padding-bottom: 4px;
+  border-radius: 14px;
+  background: ${UI.glass};
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  backdrop-filter: saturate(180%) blur(24px);
+  color: ${UI.text};
+  border: 0.5px solid ${listTheme("rgba(255, 255, 255, 0.14)", "rgba(0, 0, 0, 0.1)")};
+  box-shadow:
+    0 18px 50px ${listTheme("rgba(0, 0, 0, 0.5)", "rgba(0, 0, 0, 0.16)")},
+    0 2px 8px ${listTheme("rgba(0, 0, 0, 0.3)", "rgba(0, 0, 0, 0.06)")};
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 179, 108, 0.85) rgba(0, 0, 0, 0.12);
+  scrollbar-color: ${listTheme("rgba(255, 255, 255, 0.28)", "rgba(0, 0, 0, 0.25)")} transparent;
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
-
   &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.08);
-    border-radius: 999px;
+    background: transparent;
   }
-
   &::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #ffb36c 0%, #ff8c2b 100%);
+    background: ${listTheme("rgba(255, 255, 255, 0.28)", "rgba(0, 0, 0, 0.22)")};
+    border: 2px solid transparent;
+    background-clip: padding-box;
     border-radius: 999px;
   }
 `;
 
+// Рядок як у меню macOS: заокруглений, ледь помітна підсвітка; тонкі розділювачі з відступом
+// ховаються біля рядка під курсором
 const SuggestionItem = styled.button`
-  width: 100%;
-  text-align: left;
-  padding: 4px 6px;
+  position: relative;
+  flex-shrink: 0;
+  width: calc(100% - 12px);
+  margin: 0 6px;
+  padding: 9px 12px;
   border: none;
-  border-top: 1px solid rgba(127, 127, 127, 0.28);
-  font-size: 14px;
+  border-radius: 10px;
+  text-align: left;
   font-family: inherit;
-  cursor: ${(props) => (props.$added ? "default" : "pointer")};
-  transition: all 0.2s;
-  background: transparent;
-  color: inherit;
-  ${(props) => props.$added && css`
-    background: rgba(74, 222, 128, 0.25);
-  `}
-  ${(props) => props.$exists && !props.$added && css`
-    background: rgba(56, 189, 248, 0.18);
-    box-shadow: inset 3px 0 0 #38bdf8;
-  `}
-  &:hover {
-    background: ${(props) =>
-      props.$added
-        ? "rgba(74, 222, 128, 0.25)"
-        : props.$exists
-          ? "rgba(56, 189, 248, 0.32)"
-          : "skyblue"};
-    color: white;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: ${UI.text};
+  background: ${(p) => (p.$added ? UI.greenTint(p) : p.$exists ? UI.accentTint(p) : "transparent")};
+  cursor: ${(p) => (p.$added ? "default" : "pointer")};
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  & + &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 12px;
+    right: 12px;
+    height: 0.5px;
+    background: ${UI.separator};
+    transition: opacity 0.15s ease;
+  }
+  &:hover::before,
+  &:hover + &::before,
+  &:focus-visible::before,
+  &:focus-visible + &::before {
+    opacity: 0;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      background: ${(p) =>
+        p.$added ? UI.greenTint(p) : p.$exists ? UI.accentTint(p) : UI.hover(p)};
+      ${(p) => (p.$added || p.$exists) && css`filter: brightness(1.08);`}
+    }
+  }
+  &:active {
+    background: ${(p) => (p.$added ? UI.greenTint(p) : UI.pressed(p))};
+  }
+  &:focus-visible {
+    outline: 2px solid ${UI.accent};
+    outline-offset: -2px;
   }
 `;
 
@@ -1022,8 +1068,9 @@ const CardStatusBadge = styled.span`
   font-weight: 700;
   line-height: 1.25;
   white-space: nowrap;
-  color: #04121c;
-  background: ${(p) => (p.$added ? "#4ade80" : "#7dd3fc")};
+  letter-spacing: 0;
+  color: ${(p) => (p.$added ? UI.green(p) : UI.accentText(p))};
+  background: ${(p) => (p.$added ? UI.greenTint(p) : UI.accentTint(p))};
 `;
 
 const ScrollToCardLabel = styled.label`
@@ -1040,7 +1087,7 @@ const ScrollToCardLabel = styled.label`
     margin: 0;
     width: 15px;
     height: 15px;
-    accent-color: #ff9d48;
+    accent-color: #0a84ff;
     cursor: pointer;
   }
 `;
@@ -1119,18 +1166,24 @@ const SuggestionRow = styled.span`
 const SuggestionText = styled.span`
   min-width: 0;
   flex: 1;
+  font-weight: 500;
 
   /* галочка «вже є картка / додано» перед назвою */
   > svg {
     vertical-align: -2px;
     margin-right: 4px;
-    color: #4ade80;
+    color: #30d158;
   }
 `;
 
 const CoordsLine = styled.span`
-  font-size: 0.85em;
-  opacity: 0.8;
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  color: ${UI.secondary};
 `;
 
 // Блискавка біля серверного міста: погоду готує сервер Стихії, ліміт Open-Meteo не витрачається
@@ -1326,6 +1379,9 @@ const SearchEmptyNote = styled.div`
 
 const SERVER_CITY_HINT = "Погоду готує сервер Стихії — не витрачає ваш ліміт запитів";
 
+// Скільки нових карток за добу має лишитись, щоб показати лічильник у смужці лімітів
+const DAILY_LEFT_WARN = 5;
+
 // «Погода в Конотопі» → «конотопі»: що саме шукати
 const cleanCityQuery = (value) =>
   String(value || "").trim().toLowerCase().replace(/^(погода\s+(в|у)?\s*)/i, "").trim();
@@ -1378,24 +1434,35 @@ const CoordStatus = styled.div`
 `;
 
 const CloseListButton = styled.button`
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  width: calc(100% - 16px);
-  margin: 8px;
-  padding: 8px;
-  border: 1px solid ${listTheme("rgba(255, 255, 255, 0.16)", "rgba(0, 0, 0, 0.14)")};
-  border-radius: 8px;
-  background: ${listTheme("rgba(255, 255, 255, 0.08)", "rgba(0, 0, 0, 0.05)")};
-  color: inherit;
+  width: calc(100% - 12px);
+  margin: 4px 6px 2px;
+  padding: 9px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: ${UI.accentText};
   font-family: inherit;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.15s ease;
 
-  &:hover {
-    background: ${listTheme("rgba(255, 255, 255, 0.16)", "rgba(0, 0, 0, 0.1)")};
+  @media (hover: hover) {
+    &:hover {
+      background: ${UI.hover};
+    }
+  }
+  &:active {
+    background: ${UI.pressed};
+  }
+  &:focus-visible {
+    outline: 2px solid ${UI.accent};
+    outline-offset: -2px;
   }
 `;
 
@@ -1462,20 +1529,39 @@ const AddedBar = styled.div`
   box-sizing: border-box;
   font-size: 13px;
   font-weight: 600;
-  color: inherit;
-  background: ${listTheme("#0c1016", "#f1f5f9")};
-  border-bottom: 1px solid rgba(255, 179, 108, 0.6);
+  letter-spacing: -0.005em;
+  color: ${UI.text};
+  background: ${UI.bar};
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid ${UI.separator};
+  margin-bottom: 4px;
+  padding: 8px 14px;
 `;
 
+// Кнопка-«пігулка» системного синього, як «Готово» в iOS
 const DoneButton = styled.button`
-  padding: 4px 12px;
+  padding: 5px 14px;
   border: none;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #ffca91, #ff9d48);
-  color: #1a0800;
-  font-weight: 700;
+  border-radius: 999px;
+  background: ${UI.accent};
+  color: #fff;
+  font-family: inherit;
+  font-weight: 600;
   font-size: 13px;
   cursor: pointer;
+  transition: filter 0.15s ease, transform 0.1s ease;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+  &:focus-visible {
+    outline: 2px solid ${UI.accent};
+    outline-offset: 2px;
+  }
 `;
 
 
@@ -1519,16 +1605,31 @@ const AiButton = styled(DateButton)`
   }
 `;
 const LoadMoreButton = styled.button`
-  width: 100%;
-  padding: 8px;
-  background: ${(props) => (props.isDarkMode ? "black" : "white")};
-  transition: background-color 0.3s ease; 
-  color: ${(props) => (props.isDarkMode ? "white" : "black")};
-  font-weight: bold;
-  cursor: ${(props) => (props.disabled ? "default" : "pointer")};
-  font-size: 13px;
-  &:hover {
-    background: ${(props) => (props.isDarkMode ? "#220150" : "#ffcc00")};
+  flex-shrink: 0;
+  width: calc(100% - 12px);
+  margin: 4px 6px 2px;
+  padding: 9px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: ${(p) => (p.disabled ? UI.secondary(p) : UI.accentText(p))};
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: ${(p) => (p.disabled ? 500 : 600)};
+  cursor: ${(p) => (p.disabled ? "default" : "pointer")};
+  transition: background-color 0.15s ease;
+
+  @media (hover: hover) {
+    &:hover:not(:disabled) {
+      background: ${UI.hover};
+    }
+  }
+  &:active:not(:disabled) {
+    background: ${UI.pressed};
+  }
+  &:focus-visible {
+    outline: 2px solid ${UI.accent};
+    outline-offset: -2px;
   }
 `;
 
@@ -1948,11 +2049,8 @@ const Hero = ({
       return;
     }
 
-    // Підкапотне миттєве співставлення з 40 містами України
-    const localMatches = UKRAINE_CITIES_40.filter((c) =>
-      c.name.toLowerCase().includes(cleanValue) ||
-      c.aliases.some((a) => a.toLowerCase().includes(cleanValue))
-    ).map((c) => ({
+    // Миттєвий пошук у базі міст: спершу ті, що починаються з введеного (utils/citySearch.js)
+    const localMatches = searchLocalCities(UKRAINE_CITIES_40, cleanValue).map((c) => ({
       name: c.name,
       state: "Україна",
       country: "UA",
@@ -1982,8 +2080,12 @@ const Hero = ({
         }),
       );
       setHasMore(apiResults.length >= currentLimit);
+      // «Ще варіанти» дописуємо в кінець (видимі не перескакують); новий пошук — спершу
+      // все, що починається з введеного: і з бази, і з геокодера
       setSuggestions((prev) =>
-        mergeCitySuggestions(append ? prev : localMatches, apiResults)
+        append
+          ? mergeCitySuggestions(prev, apiResults)
+          : sortSuggestionsByQuery(mergeCitySuggestions(localMatches, apiResults), cleanValue),
       );
       // Ні в базі, ні в геокодері — кажемо про це, а не мовчимо
       if (!append && localMatches.length === 0 && apiResults.length === 0) {
@@ -2288,12 +2390,26 @@ const Hero = ({
   const renderCardLimitsBar = ({ forCoordinates = false } = {}) => {
     if (!cardLimits) return null;
     const addedCount = forCoordinates ? 0 : addedCityKeys.length;
+    // Денний ліміт нових карток (лише для акаунта) показуємо, коли до нього лишилось мало —
+    // інакше «Сьогодні: 0/20» новачкові нічого не каже
+    const dailyLeft =
+      cardLimits.daily !== null ? Math.max(0, cardLimits.maxDaily - cardLimits.daily) : null;
+    const showDaily = dailyLeft !== null && dailyLeft <= DAILY_LEFT_WARN;
+    const limitsHint =
+      `Картки: ${cardLimits.custom} з ${cardLimits.maxCustom} — стільки міст можна тримати одночасно` +
+      " (картка «Ваша локація» не рахується)." +
+      (dailyLeft !== null
+        ? ` Нових карток за добу: ${cardLimits.daily} з ${cardLimits.maxDaily} — лічильник скидається опівночі.`
+        : "");
     return (
       <AddedBar $isDarkMode={isDarkMode}>
-        <span>
+        <span title={limitsHint}>
           {addedCount > 0 && `Додано: ${addedCount} · `}
-          Карток: {cardLimits.custom}/{cardLimits.maxCustom}
-          {cardLimits.daily !== null && ` · Сьогодні: ${cardLimits.daily}/${cardLimits.maxDaily}`}
+          Картки: {cardLimits.custom} з {cardLimits.maxCustom}
+          {showDaily &&
+            (dailyLeft === 0
+              ? " · сьогодні нових уже не додати"
+              : ` · сьогодні можна додати ще ${dailyLeft}`)}
         </span>
         <AddedBarActions>
           <ScrollToCardLabel
@@ -2630,6 +2746,7 @@ const Hero = ({
                       return (
                       <SuggestionItem
                         key={`${city.lat}-${city.lon}-${index}`}
+                        $isDarkMode={isDarkMode}
                         $added={isAdded}
                         $exists={Boolean(existingCard)}
                         title={
@@ -2660,7 +2777,7 @@ const Hero = ({
                           </SuggestionText>
                           {renderDangerBadge(city)}
                           {(isAdded || existingCard) && (
-                            <CardStatusBadge $added={isAdded}>
+                            <CardStatusBadge $isDarkMode={isDarkMode} $added={isAdded}>
                               {isAdded ? "Додано" : "Є картка"}
                             </CardStatusBadge>
                           )}
@@ -2670,11 +2787,11 @@ const Hero = ({
                     })}
 
                     {hasMore ? (
-                      <LoadMoreButton isDarkMode={isDarkMode} onClick={handleLoadMore}>
+                      <LoadMoreButton $isDarkMode={isDarkMode} onClick={handleLoadMore}>
                         Завантажити ще варіанти
                       </LoadMoreButton>
                     ) : (
-                      <LoadMoreButton isDarkMode={isDarkMode} disabled>
+                      <LoadMoreButton $isDarkMode={isDarkMode} disabled>
                         Кінець списку
                       </LoadMoreButton>
                     )}
@@ -2814,6 +2931,7 @@ const Hero = ({
                       <SuggestionItem
                         key={`${city.lat}-${city.lon}-${index}`}
                         type="button"
+                        $isDarkMode={isDarkMode}
                         $exists={Boolean(existingCard)}
                         title={
                           existingCard
@@ -2834,7 +2952,7 @@ const Hero = ({
                               Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°
                             </CoordsLine>
                           </SuggestionText>
-                          {existingCard && <CardStatusBadge>Є картка</CardStatusBadge>}
+                          {existingCard && <CardStatusBadge $isDarkMode={isDarkMode}>Є картка</CardStatusBadge>}
                         </SuggestionRow>
                       </SuggestionItem>
                     );
