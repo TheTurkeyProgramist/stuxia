@@ -143,11 +143,11 @@ export async function onRequest({ request, env, waitUntil }) {
       "Cache-Control": `public, max-age=${EDGE_CACHE_SECONDS[part]}`,
       "X-Fetched-At": String(result.fetchedAt),
     };
-    if (result.refreshed) headers["X-Open-Meteo-Cost"] = String(result.cost ?? "");
     if (result.stale) headers["X-Stale"] = "1";
-    const response = respond(body, 200, headers);
-    if (cache && !result.stale) waitUntil(cache.put(cacheKey, response.clone()));
-    return response;
+    // У кеш — без X-Open-Meteo-Cost: копія з кешу нічого не коштувала
+    if (cache && !result.stale) waitUntil(cache.put(cacheKey, respond(body, 200, headers)));
+    // Скільки «викликів» Open-Meteo коштувала САМЕ ця відповідь (0 — з KV або кешу)
+    return respond(body, 200, { ...headers, "X-Open-Meteo-Cost": String(result.refreshed ? result.cost ?? "" : 0) });
   } catch (err) {
     // Сайт тоді сам піде до Open-Meteo (з лімітом відвідувача), як для звичайних міст
     return respond({ error: "City weather is temporarily unavailable", details: String(err).slice(0, 200) }, 502, {

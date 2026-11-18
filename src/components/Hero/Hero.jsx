@@ -4,6 +4,7 @@ import React, {
   useRef,
   useMemo,
   useCallback,
+  useId,
 } from "react";
 import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill, BsLightningChargeFill } from "react-icons/bs";
@@ -46,6 +47,7 @@ import {
   MdWarningAmber,
   MdSync,
   MdClose,
+  MdExpandMore,
 } from "react-icons/md";
 import { useTranslation } from "react-i18next";
 import {
@@ -1142,7 +1144,150 @@ const ServerCityMark = styled.span`
   }
 `;
 
+// Пояснення нагорі списку підказок (під лімітами карток) — лише коли серед них є місто з блискавкою.
+// Не <details>: його згортання браузер не анімує. Висота — через grid-template-rows 0fr ↔ 1fr,
+// плавно в обидва боки без вимірювання висоти тексту.
+const ServerCityNote = styled.div`
+  flex-shrink: 0;
+  width: calc(100% - 16px);
+  box-sizing: border-box;
+  margin: 6px 8px 4px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  background: ${listTheme("rgba(250, 204, 21, 0.1)", "rgba(250, 204, 21, 0.16)")};
+  border: 1px solid ${listTheme("rgba(250, 204, 21, 0.35)", "rgba(161, 98, 7, 0.35)")};
+  color: ${listTheme("#f4f2f2", "#0b1220")};
+
+  b {
+    color: ${listTheme("#fde68a", "#854d0e")};
+  }
+`;
+
+const ServerCityNoteToggle = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+
+  > svg:first-child {
+    flex-shrink: 0;
+    color: ${listTheme("#facc15", "#a16207")};
+  }
+  &:focus-visible {
+    outline: 2px solid ${listTheme("#facc15", "#a16207")};
+    outline-offset: -2px;
+  }
+`;
+
+const ServerCityNoteMore = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.75;
+  white-space: nowrap;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.28s ease;
+    transform: rotate(${(p) => (p.$open ? "180deg" : "0deg")});
+  }
+  @media (prefers-reduced-motion: reduce) {
+    svg {
+      transition: none;
+    }
+  }
+`;
+
+const ServerCityNoteBody = styled.div`
+  display: grid;
+  grid-template-rows: ${(p) => (p.$open ? "1fr" : "0fr")};
+  opacity: ${(p) => (p.$open ? 1 : 0)};
+  transition: grid-template-rows 0.28s ease, opacity 0.22s ease;
+
+  > div {
+    min-height: 0;
+    overflow: hidden;
+    padding: 0 10px;
+  }
+  p {
+    margin: 0;
+  }
+  ul {
+    margin: 4px 0 0;
+    padding-left: 18px;
+  }
+  > div > :last-child {
+    margin-bottom: 7px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
+const ServerCityNoteBox = ({ isDarkMode }) => {
+  const [open, setOpen] = useState(false);
+  const bodyId = useId();
+  return (
+    <ServerCityNote $isDarkMode={isDarkMode}>
+      <ServerCityNoteToggle
+        type="button"
+        $isDarkMode={isDarkMode}
+        aria-expanded={open}
+        aria-controls={bodyId}
+        // Як і підказки: не забираємо фокус із поля пошуку
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <BsLightningChargeFill aria-hidden="true" />
+        Блискавка — погода з сервера Стихії
+        <ServerCityNoteMore $open={open}>
+          {open ? "Сховати" : "Детальніше"}
+          <MdExpandMore aria-hidden="true" />
+        </ServerCityNoteMore>
+      </ServerCityNoteToggle>
+      <ServerCityNoteBody id={bodyId} $open={open} aria-hidden={!open}>
+        <div>
+          <p>
+            Прогноз для цих міст сервер Стихії отримує сам і ділиться ним з усіма, тож картка
+            <b> не витрачає ваш ліміт</b> запитів до Open-Meteo.
+          </p>
+          <ul>
+            <li>
+              У кожної адреси (IP) — свої <b>10 000 запитів на добу</b>. Вони лишаються для міст
+              без блискавки.
+            </li>
+            <li>
+              Сервер на всі такі міста бере до <b>6 200 на добу</b> зі свого окремого ліміту.
+            </li>
+            <li>Картка відкривається швидше: прогноз уже готовий.</li>
+            <li>Ваша GPS-картка теж бере погоду із сервера, якщо ви ближче 5 км до такого міста.</li>
+          </ul>
+        </div>
+      </ServerCityNoteBody>
+    </ServerCityNote>
+  );
+};
+
 const SERVER_CITY_HINT = "Погоду готує сервер Стихії — не витрачає ваш ліміт запитів";
+const renderServerCityNote = (cities, isDarkMode) =>
+  cities.some((c) => findServerCity(c?.lat, c?.lon)) ? (
+    <ServerCityNoteBox isDarkMode={isDarkMode} />
+  ) : null;
+
 const renderServerMark = (city) =>
   findServerCity(city?.lat, city?.lon) ? (
     <ServerCityMark title={SERVER_CITY_HINT} aria-label={SERVER_CITY_HINT} role="img">
@@ -2408,6 +2553,7 @@ const Hero = ({
                 {showList && suggestions.length > 0 && (
                   <SuggestionsList $isDarkMode={isDarkMode}>
                     {renderCardLimitsBar()}
+                    {renderServerCityNote(suggestions, isDarkMode)}
                     {suggestions.map((city, index) => {
                       const isAdded = addedCityKeys.includes(getCityKey(city));
                       const existingCard = findCardForCity?.(city.lat, city.lon);
@@ -2516,6 +2662,7 @@ const Hero = ({
               {showCoordinateSuggestions && (
                 <SuggestionsList $isDarkMode={isDarkMode}>
                   {renderCardLimitsBar({ forCoordinates: true })}
+                  {renderServerCityNote(coordinateSuggestions, isDarkMode)}
                   {nearbySearchStatus && (() => {
                     const StatusIcon = isSearchingNearby
                       ? MdSync
