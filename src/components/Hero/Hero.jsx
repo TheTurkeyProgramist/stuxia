@@ -32,6 +32,7 @@ import {
   FiZoomIn,
 } from "react-icons/fi";
 import styled, { keyframes, css } from "styled-components";
+import { AnimatePresence, motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import {
   MdAccessTime,
@@ -48,6 +49,8 @@ import {
   MdSync,
   MdClose,
   MdExpandMore,
+  MdSearchOff,
+  MdWifiOff,
 } from "react-icons/md";
 import { useTranslation } from "react-i18next";
 import {
@@ -1282,7 +1285,50 @@ const ServerCityNoteBox = ({ isDarkMode }) => {
   );
 };
 
+// Той самий випадаючий список, але з анімацією появи/зникнення (framer-motion;
+// вимкнені анімації сайту — MotionConfig в App.jsx — вимикають і її)
+const MotionSuggestionsList = motion.create(SuggestionsList);
+const LIST_MOTION = {
+  initial: { opacity: 0, y: -6 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -6, pointerEvents: "none" },
+  transition: { duration: 0.22, ease: "easeOut" },
+};
+
+// Пошук завершився, а міст немає: «Здається, місто «коо» не існує…»
+const SearchEmptyNote = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: ${listTheme("#f4f2f2", "#0b1220")};
+
+  > svg {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    margin-top: 1px;
+    color: ${(p) => (p.$error ? "#f87171" : listTheme("#ffb36c", "#c2410c")(p))};
+  }
+  b {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 14px;
+  }
+  span {
+    opacity: 0.85;
+  }
+`;
+
 const SERVER_CITY_HINT = "Погоду готує сервер Стихії — не витрачає ваш ліміт запитів";
+
+// «Погода в Конотопі» → «конотопі»: що саме шукати
+const cleanCityQuery = (value) =>
+  String(value || "").trim().toLowerCase().replace(/^(погода\s+(в|у)?\s*)/i, "").trim();
 const renderServerCityNote = (cities, isDarkMode) =>
   cities.some((c) => findServerCity(c?.lat, c?.lon)) ? (
     <ServerCityNoteBox isDarkMode={isDarkMode} />
@@ -1605,6 +1651,8 @@ const Hero = ({
     return () => window.removeEventListener("domino-auto-input-konotop", handleAutoKonotop);
   }, [onAddCity]);
   const [suggestions, setSuggestions] = useState([]);
+  // Пошук завершився без жодного міста: { query, reason: "none" | "error" } або null
+  const [searchEmpty, setSearchEmpty] = useState(null);
   const [limit, setLimit] = useState(3);
   const [showList, setShowList] = useState(false);
   // Міста, додані з поточного списку підказок (ключ — координати); ref захищає від подвійного кліку
@@ -1887,8 +1935,13 @@ const Hero = ({
     };
   }, []);
 
+  // Номер останнього пошуку: відповідь геокодера, що прийшла після нового введення
+  // (або після очищення поля), вже не потрібна — інакше старий список вилазить знову
+  const suggestionsSeqRef = useRef(0);
+
   const fetchSuggestions = async (currentLimit, value, append = false) => {
-    const cleanValue = value.trim().toLowerCase().replace(/^(погода\s+(в|у)?\s*)/i, "").trim();
+    const seq = ++suggestionsSeqRef.current;
+    const cleanValue = cleanCityQuery(value);
     if (cleanValue.length < 2) {
       setSuggestions([]);
       setShowList(false);
@@ -1918,6 +1971,7 @@ const Hero = ({
         `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleanValue)}&count=${currentLimit}&language=uk&format=json`,
       );
       const data = await response.json();
+      if (seq !== suggestionsSeqRef.current) return;
       const apiResults = (Array.isArray(data?.results) ? data.results : []).map(
         (r) => ({
           name: r.name,
@@ -1931,11 +1985,19 @@ const Hero = ({
       setSuggestions((prev) =>
         mergeCitySuggestions(append ? prev : localMatches, apiResults)
       );
+      // Ні в базі, ні в геокодері — кажемо про це, а не мовчимо
+      if (!append && localMatches.length === 0 && apiResults.length === 0) {
+        setSearchEmpty({ query: value.trim(), reason: "none" });
+      }
       setShowList(true);
     } catch (error) {
+      if (seq !== suggestionsSeqRef.current) return;
       console.error("Помилка API:", error);
       if (localMatches.length > 0) {
         setSuggestions(localMatches);
+        setShowList(true);
+      } else if (!append) {
+        setSearchEmpty({ query: value.trim(), reason: "error" });
         setShowList(true);
       }
     }
@@ -1945,9 +2007,16 @@ const Hero = ({
   useEffect(() => {
     setLimit(3);
     setHasMore(true);
-    const timeoutId = setTimeout(() => {
-      if (inputValue) fetchSuggestions(3, inputValue, false);
-    }, 500);
+    setSearchEmpty(null);
+    // Поле очистили (чи лишилась одна літера) — старі підказки ховаємо одразу, а не через 500 мс,
+    // і відповідь пошуку, що ще йде, відкидаємо
+    if (cleanCityQuery(inputValue).length < 2) {
+      suggestionsSeqRef.current += 1;
+      setSuggestions([]);
+      setShowList(false);
+      return undefined;
+    }
+    const timeoutId = setTimeout(() => fetchSuggestions(3, inputValue, false), 500);
     return () => clearTimeout(timeoutId);
   }, [inputValue]);
 
@@ -2479,7 +2548,7 @@ const Hero = ({
                     setInputValue(e.target.value);
                     window.dispatchEvent(new CustomEvent('domino-hero-input-change', { detail: { value: e.target.value } }));
                   }}
-                  onFocus={() => suggestions.length > 0 && setShowList(true)}
+                  onFocus={() => (suggestions.length > 0 || searchEmpty) && setShowList(true)}
                   placeholder="Уведіть місто, село. Наприклад: Київ..."
                   type="text"
                   autoComplete="off"
@@ -2550,8 +2619,9 @@ const Hero = ({
                     pathLength="1000"
                   />
                 </SearchBorder>
+                <AnimatePresence>
                 {showList && suggestions.length > 0 && (
-                  <SuggestionsList $isDarkMode={isDarkMode}>
+                  <MotionSuggestionsList key="suggestions" $isDarkMode={isDarkMode} {...LIST_MOTION}>
                     {renderCardLimitsBar()}
                     {renderServerCityNote(suggestions, isDarkMode)}
                     {suggestions.map((city, index) => {
@@ -2608,8 +2678,40 @@ const Hero = ({
                         Кінець списку
                       </LoadMoreButton>
                     )}
-                  </SuggestionsList>
+                  </MotionSuggestionsList>
                 )}
+                {showList && suggestions.length === 0 && searchEmpty && (
+                  <MotionSuggestionsList
+                    key="search-empty"
+                    $isDarkMode={isDarkMode}
+                    role="status"
+                    {...LIST_MOTION}
+                  >
+                    {searchEmpty.reason === "error" ? (
+                      <SearchEmptyNote $isDarkMode={isDarkMode} $error>
+                        <MdWifiOff aria-hidden="true" />
+                        <div>
+                          <b>Не вдалося перевірити «{searchEmpty.query}»</b>
+                          <span>
+                            Немає зв'язку з пошуком міст. Перевірте інтернет і спробуйте ще раз.
+                          </span>
+                        </div>
+                      </SearchEmptyNote>
+                    ) : (
+                      <SearchEmptyNote $isDarkMode={isDarkMode}>
+                        <MdSearchOff aria-hidden="true" />
+                        <div>
+                          <b>Здається, місто «{searchEmpty.query}» не існує</b>
+                          <span>
+                            Перевірте, чи немає помилки в назві. Можна написати інакше — повністю,
+                            латиницею (Konotop) — або знайти точку в режимі координат.
+                          </span>
+                        </div>
+                      </SearchEmptyNote>
+                    )}
+                  </MotionSuggestionsList>
+                )}
+                </AnimatePresence>
               </SearchContainer>
               {slogan}
               {quickWeather}
@@ -2659,8 +2761,9 @@ const Hero = ({
                   Знайти
                 </CoordinateSearchButton>
               </CoordinatesContainer>
+              <AnimatePresence>
               {showCoordinateSuggestions && (
-                <SuggestionsList $isDarkMode={isDarkMode}>
+                <MotionSuggestionsList key="coordinate-suggestions" $isDarkMode={isDarkMode} {...LIST_MOTION}>
                   {renderCardLimitsBar({ forCoordinates: true })}
                   {renderServerCityNote(coordinateSuggestions, isDarkMode)}
                   {nearbySearchStatus && (() => {
@@ -2744,8 +2847,9 @@ const Hero = ({
                     <MdClose aria-hidden="true" />
                     Закрити
                   </CloseListButton>
-                </SuggestionsList>
+                </MotionSuggestionsList>
               )}
+              </AnimatePresence>
               </CoordSearchArea>
               {slogan}
               {quickWeather}
