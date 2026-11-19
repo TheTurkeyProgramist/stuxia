@@ -11,7 +11,8 @@ import { BsMoonStarsFill } from "react-icons/bs";
 import { GiShop, GiExitDoor } from "react-icons/gi";
 import relax from "../../mp3/modals/relax.mp3";
 import { FaSun } from "react-icons/fa";
-import herotext from "../../media/brand/wordmark-stykhiia.webp";
+// У шапці логотип 40 px заввишки — копія 120 px (×3 для різких екранів) замість оригіналу 1667×640
+import herotext from "../../media/brand/wordmark-stykhiia.webp?h=120&format=webp&quality=80";
 import { prefetchProps } from "../../utils/modalChunks.js";
 import { MdSettingsSuggest, MdMenu, MdAccountCircle, MdWallpaper, MdManageAccounts, MdCalendarMonth, MdClose } from "react-icons/md";
 import { loadFirebase } from "../../firebaseLazy.js";

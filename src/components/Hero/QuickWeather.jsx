@@ -419,6 +419,9 @@ const CityPicker = styled.label`
   select {
     min-width: 0;
     max-width: 100%;
+    /* 24px — мінімальна область дотику (Lighthouse «Області дотику») */
+    min-height: 24px;
+    box-sizing: border-box;
     padding: 1px 2px;
     border: 1px solid transparent;
     border-radius: 6px;
@@ -452,6 +455,9 @@ const CityPicker = styled.label`
 
 const MoreButton = styled.button`
   flex: 0 0 auto;
+  min-height: 24px;
+  min-width: 24px;
+  box-sizing: border-box;
   padding: 1px 6px;
   border: none;
   border-radius: 6px;

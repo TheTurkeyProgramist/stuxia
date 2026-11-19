@@ -16,14 +16,15 @@ import { CgMiniPlayer } from "react-icons/cg";
 import { GiLockedChest } from "react-icons/gi";
 import turkey from "../../media/characters/kate-and-domino.webm";
 import toast, { Toaster } from "react-hot-toast";
-import coverVentusky from "../../media/third-party/services/ventusky.webp";
-import coverWindy from "../../media/third-party/services/windy.webp";
-import coverAlerts from "../../media/third-party/services/air-alerts.webp";
-import coverAirTargets from "../../media/third-party/services/air-targets.webp";
-import coverExcalidraw from "../../media/third-party/services/excalidraw.webp";
-import coverSaveEcoBot from "../../media/third-party/services/saveecobot.webp";
-import coverAirTraffic from "../../media/third-party/services/air-traffic.webp";
-import coverDeepState from "../../media/third-party/services/deepstate.webp";
+// Обкладинки карток показуються ~170–240 px — збираємо копії шириною 360 px (оригінали ~1400 px)
+import coverVentusky from "../../media/third-party/services/ventusky.webp?w=360&format=webp&quality=62";
+import coverWindy from "../../media/third-party/services/windy.webp?w=360&format=webp&quality=62";
+import coverAlerts from "../../media/third-party/services/air-alerts.webp?w=360&format=webp&quality=62";
+import coverAirTargets from "../../media/third-party/services/air-targets.webp?w=360&format=webp&quality=62";
+import coverExcalidraw from "../../media/third-party/services/excalidraw.webp?w=360&format=webp&quality=62";
+import coverSaveEcoBot from "../../media/third-party/services/saveecobot.webp?w=360&format=webp&quality=62";
+import coverAirTraffic from "../../media/third-party/services/air-traffic.webp?w=360&format=webp&quality=62";
+import coverDeepState from "../../media/third-party/services/deepstate.webp?w=360&format=webp&quality=62";
 import { usePageActive } from "../../utils/pageActivity.js";
 import FunTicker from "./FunTicker";
 // Ctrl + Alt + M: Активувати/деактивувати мапу

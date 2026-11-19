@@ -11,6 +11,7 @@ import {
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import viteCompression from 'vite-plugin-compression';
 import { imagetools } from 'vite-imagetools';
+import reactIconsSplit from './vite-plugins/reactIconsSplit.mjs';
 import { visualizer } from 'rollup-plugin-visualizer';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -276,6 +277,8 @@ export default defineConfig(({ mode }) => {
   return {
   plugins: [
     newsFeedPlugin(),
+    // Кожна іконка react-icons — окремий модуль, щоб іконки модалок не вантажились на старті
+    reactIconsSplit(),
     react(),
     imagetools(),
 
@@ -409,9 +412,9 @@ export default defineConfig(({ mode }) => {
     if (/\/node_modules\/(react|react-dom|scheduler)\//.test(id)) {
       return 'vendor-react';
     }
-    // react-icons лишаємо тут. Пробували прибрати (2026-11-16) — виграшу 0: кожен набір іконок
-    // (fa, gi, fa6…) — один модуль, який не ріжеться між частинами, тож іконки просто
-    // переїжджали в окремі файли й однаково вантажились на старті (+9 запитів)
+    // Самі іконки сюди вже не потрапляють: плагін reactIconsSplit робить кожну окремим модулем
+    // (з префіксом «react-icon:», не з node_modules), і вони їдуть разом з кодом, якому потрібні.
+    // Тут лишається лише спільне ядро react-icons/lib (GenIcon) та UI-бібліотеки.
     if (/\/node_modules\/(react-icons|@floating-ui|@radix-ui)\//.test(id)) {
       return 'vendor-ui';
     }
