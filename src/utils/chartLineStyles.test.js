@@ -23,7 +23,7 @@ describe("mergeLineStyles", () => {
     const merged = mergeLineStyles({ daily: { day: { dimOpacity: 5 }, night: { dimOpacity: -1 }, right: { width: 2 } } });
     expect(merged.daily.day.dimOpacity).toBe(0.9);
     expect(merged.daily.night.dimOpacity).toBe(0);
-    expect(merged.daily.right.dimOpacity).toBe(0.1);
+    expect(merged.daily.right.dimOpacity).toBe(0);
     expect(merged.daily.trendDay.dimOpacity).toBeUndefined();
   });
 

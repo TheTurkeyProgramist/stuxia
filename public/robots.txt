@@ -7,3 +7,6 @@ Disallow: /
 
 User-agent: *
 Disallow:
+
+# Карта сайту (на збірці vite.config.mjs записує туди всі сторінки міст)
+Sitemap: https://stuxia.com/sitemap.xml

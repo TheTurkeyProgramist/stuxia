@@ -11,8 +11,9 @@ import {
   FaCloudSunRain,
   FaCloudMoonRain,
   FaSmog,
+  FaMoon,
 } from "react-icons/fa";
-import { BsMoonStarsFill } from "react-icons/bs";
+import { BsMoonStarsFill, BsCloudSnowFill, BsSnow } from "react-icons/bs";
 import { GiSnowing } from "react-icons/gi";
 import { IoThunderstorm, IoRainy } from "react-icons/io5";
 import { TbNavigationFilled } from "react-icons/tb";
@@ -27,9 +28,19 @@ const pickIcon = (code, isDay) => {
   if (code === 65 || code === 82) return FaCloudShowersHeavy;
   if (code === 80 || code === 81) return isDay ? FaCloudSunRain : FaCloudMoonRain;
   if (code >= 61 && code <= 67) return FaCloudRain;
-  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return GiSnowing;
+  // Сніг: слабкий/помірний — хмара зі сніжинками, сильний — щільний снігопад,
+  // снігова крупа — сніжинка. Зливовий сніг (85/86) — та сама форма + сонце/місяць (див. pickBadge)
+  if (code === 71 || code === 73 || code === 85) return BsCloudSnowFill;
+  if (code === 75 || code === 86) return GiSnowing;
+  if (code === 77) return BsSnow;
   if (code >= 95 && code <= 99) return IoThunderstorm;
   return FaCloud;
+};
+
+// Сонце/місяць позаду хмари — позначка «зливовий» (сніг уривками з проясненнями)
+const pickBadge = (code, isDay) => {
+  if (code === 85 || code === 86) return isDay ? FaSun : FaMoon;
+  return null;
 };
 
 // Емодзі зі старих збережених даних → приблизний код WMO
@@ -69,9 +80,10 @@ const paletteFor = (code, isDay) => {
   if ((code >= 61 && code <= 65) || (code >= 80 && code <= 82)) {
     return { color: "#3D9DFF", ring: "#3D9DFF" };
   }
-  if ((code >= 71 && code <= 77) || code === 85 || code === 86) {
-    return { color: "#F0FBFF", ring: "#22D3EE" };
+  if (code === 85 || code === 86) {
+    return { color: "#F0FBFF", ring: "#A5B4FC", badge: isDay ? "#FFC21A" : "#FDE68A" };
   }
+  if (code >= 71 && code <= 77) return { color: "#F0FBFF", ring: "#22D3EE" };
   if (code >= 95 && code <= 99) return { color: "#C4A5FF", accent: "#FFD43B", ring: "#A78BFA" };
   return { color: "#D5DCE6", ring: "#94A3B8" };
 };
@@ -141,15 +153,51 @@ export const createChartWeatherIcon = (item, size = 28, dangerColor = null, opac
   ctx.stroke();
   ctx.globalAlpha = opacity;
 
+  // Зливовий сніг: велике сонце/місяць визирає з-за хмари (як у зливового дощу)
+  const Badge = pickBadge(code, isDay);
+  const badgeData = Badge ? getComponentIconData(`badge|${isDay ? 1 : 0}`, Badge) : null;
+  if (badgeData) {
+    const [vx, vy, vw, vh] = badgeData.viewBox;
+    const k = (size * 0.42) / Math.max(vw, vh);
+    ctx.save();
+    ctx.translate(c - size * 0.15, c - size * 0.15);
+    ctx.scale(k, k);
+    ctx.translate(-(vx + vw / 2), -(vy + vh / 2));
+    ctx.fillStyle = palette.badge || "#FFC21A";
+    badgeData.paths.forEach((d) => {
+      try {
+        ctx.fill(new Path2D(d));
+      } catch {
+        /* Path2D недоступний — пропускаємо шлях */
+      }
+    });
+    ctx.restore();
+  }
+
   if (data) {
     const [vx, vy, vw, vh] = data.viewBox;
-    const box = size * 0.66;
+    // Коли позаду сонце — хмару трохи менше й зсуваємо вниз-праворуч
+    const box = size * (badgeData ? 0.56 : 0.66);
+    const shift = badgeData ? size * 0.08 : 0;
     const k = box / Math.max(vw, vh);
-    const ox = c - (vw * k) / 2 - vx * k;
-    const oy = c - (vh * k) / 2 - vy * k;
+    const ox = c + shift - (vw * k) / 2 - vx * k;
+    const oy = c + shift - (vh * k) / 2 - vy * k;
     ctx.save();
     ctx.translate(ox, oy);
     ctx.scale(k, k);
+    if (badgeData) {
+      // Темний контур відділяє хмару від сонця позаду
+      ctx.lineJoin = "round";
+      ctx.lineWidth = 2.4 / k;
+      ctx.strokeStyle = "rgba(8, 12, 20, 0.95)";
+      data.paths.forEach((d) => {
+        try {
+          ctx.stroke(new Path2D(d));
+        } catch {
+          /* Path2D недоступний */
+        }
+      });
+    }
     // Легка тінь — відділяє іконку від фону
     ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
     ctx.shadowBlur = 2 / k;

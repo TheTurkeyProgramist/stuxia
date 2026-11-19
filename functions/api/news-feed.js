@@ -24,6 +24,33 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+// ───────────── Лише для самої Стихії ─────────────
+// Довільні ?url= і ?resolve= обробляємо тільки для запитів зі сторінок Стихії,
+// щоб чужі сайти не тягнули через наш сервер свої стрічки й не витрачали ліміт запитів.
+// Вбудовані стрічки (?source=<id>) відкриті всім: вони однакові й лежать у кеші.
+const OWN_HOSTS = new Set(["stuxia.com", "www.stuxia.com", "stuxia.pages.dev", "localhost", "127.0.0.1"]);
+
+const hostOf = (value) => {
+  try {
+    return new URL(value).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+};
+
+const isOwnHost = (host, requestHost) =>
+  Boolean(host) && (host === requestHost || OWN_HOSTS.has(host) || host.endsWith(".stuxia.pages.dev"));
+
+const isOwnSiteRequest = (request) => {
+  const headers = request.headers;
+  // Sec-Fetch-Site ставить сам браузер — скрипт чужого сайту його не підробить
+  if (headers.get("Sec-Fetch-Site") === "same-origin") return true;
+  const requestHost = hostOf(request.url);
+  const origin = headers.get("Origin");
+  if (origin) return isOwnHost(hostOf(origin), requestHost);
+  return isOwnHost(hostOf(headers.get("Referer") || ""), requestHost);
+};
+
 const json = (data, status = 200, extraHeaders = {}) =>
   new Response(JSON.stringify(data), {
     status,
@@ -412,6 +439,13 @@ export async function onRequest({ request, waitUntil }) {
   const params = new URL(request.url).searchParams;
   const source = params.get("source");
   const rawUrl = params.get("url");
+
+  // Перевіряємо ДО кешу, інакше закешована відповідь віддавалась би будь-кому.
+  // Вбудована стрічка — це саме id зі списку (source=https://… сюди не входить).
+  const isBuiltInSource = Boolean(source && FEEDS[source]) && params.get("resolve") === null;
+  if (!isBuiltInSource && !isOwnSiteRequest(request)) {
+    return json({ error: "Forbidden" }, 403, { "Cache-Control": "no-store" });
+  }
 
   // Кеш Cloudflare: ключ — повний URL запиту (з source/url/resolve)
   const cache = typeof caches !== "undefined" ? caches.default : null;

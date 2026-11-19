@@ -20,7 +20,7 @@ export const WIDTH_MIN = 1;
 export const WIDTH_MAX = 8;
 // Прозорість лінії, вимкненої в легенді (0 — повністю сховати)
 export const DIM_MAX = 0.9;
-export const DEFAULT_DIM = 0.1;
+export const DEFAULT_DIM = 0; // за замовчуванням вимкнена лінія повністю схована
 
 // Що писати під стрілками вітру
 export const WIND_LABELS = {
