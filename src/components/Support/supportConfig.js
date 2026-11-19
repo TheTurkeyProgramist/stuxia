@@ -6,6 +6,7 @@
 import { getPref, setPref } from "../../utils/prefsStore.js";
 
 import i18n from "../../i18n/i18n.js";
+import { dateLocale } from "../../utils/weatherText.js";
 export const DONATE_URL = "https://donatello.to/TheTurkeyStudio";
 
 // Комісія платформи донатів (Donatello) — частка, яка не доходить до проєкту
@@ -74,4 +75,4 @@ export const isSupporter = (user) =>
     SUPPORTER_UIDS.includes(user.uid) ||
     isRememberedSupporter(user.uid));
 
-export const formatUah = (n) => i18n.t("ui.supportConfig.hrn", { v0: Math.round(n).toLocaleString("uk-UA") });
+export const formatUah = (n) => i18n.t("ui.supportConfig.hrn", { v0: Math.round(n).toLocaleString(dateLocale()) });

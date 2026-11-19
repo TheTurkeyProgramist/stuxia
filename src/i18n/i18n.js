@@ -1,7 +1,6 @@
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
-import uk from './locales/uk.json';
 import { getPref, setPref } from '../utils/prefsStore.js';
 
 export const RTL_LANGUAGES = new Set(['ar', 'fa']);
@@ -28,7 +27,8 @@ const supportedLanguages = [
   'so', 'qu',
 ];
 
-// Українська вшита в бандл (fallback), решта мов вантажиться окремим чанком лише при виборі
+// Кожна мова (і українська теж) — окремий чанк, вантажиться лише вибрана.
+// Запасної мови немає: усі мови мають повний набір ключів (перевіряє localesComplete.test.js)
 const lazyLocalesBackend = {
   type: 'backend',
   read(lng, _ns, callback) {
@@ -69,6 +69,8 @@ languageDetector.addDetector({
       const lower = String(tag || '').toLowerCase();
       // Російська з Білорусі (ru-BY) — білоруська
       if (lower === 'ru-by') return 'be';
+      // Російська (ru) і російська з України (ru-UA) — українська
+      if (lower === 'ru' || lower === 'ru-ua') return 'uk';
       const code = lower.split('-')[0];
       if (supportedLanguages.includes(code)) return code;
     }
@@ -76,14 +78,13 @@ languageDetector.addDetector({
   },
 });
 
-i18n
+/** Виконується, коли файл вибраної мови завантажено — до цього застосунок не малюємо (main.jsx). */
+export const i18nReady = i18n
   .use(lazyLocalesBackend)
   .use(languageDetector)
   .use(initReactI18next)
   .init({
-    resources: { uk: { translation: uk } },
-    partialBundledLanguages: true,
-    fallbackLng: 'uk',
+    fallbackLng: false,
     supportedLngs: supportedLanguages,
     load: 'languageOnly',
     react: { useSuspense: false },

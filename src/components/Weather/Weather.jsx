@@ -1574,6 +1574,8 @@ const WeatherCardComponent = ({
     const { engine } = getVoiceSettings();
     let progressToastShown = false;
     try {
+      // Голоси українські — опис погоди беремо українською, тож її переклад має бути завантажений
+      await i18n.loadLanguages("uk");
       await speak(buildForecastSpeech(card), {
         // Перший запуск Piper качає модель — показуємо хід завантаження
         onProgress: ({ loaded, total }) => {

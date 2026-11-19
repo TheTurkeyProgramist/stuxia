@@ -13,6 +13,7 @@ import { getNow, syncClock } from "../../utils/serverClock.js";
 import { TIMEZONES } from "./timezones.js";
 
 import i18n from "../../i18n/i18n.js";
+import { dateLocale } from "../../utils/weatherText.js";
 const TimezoneMenu = styled.div`
   position: fixed;
   /* Від 5% згори до самого низу екрана — смуга прокрутки вміщується повністю */
@@ -303,7 +304,7 @@ const getTimezoneInfo = (timezone, now) => {
     const localMinute = Number(timeParts.find((part) => part.type === "minute")?.value);
     const timeStr = `${String(localHour).padStart(2, "0")}:${String(localMinute).padStart(2, "0")}`;
     // Дата в поясі картки: десь ще 31 жовтня, а десь уже 2 листопада
-    const dateStr = new Intl.DateTimeFormat("uk", {
+    const dateStr = new Intl.DateTimeFormat(dateLocale(), {
       weekday: "short",
       day: "numeric",
       month: "long",

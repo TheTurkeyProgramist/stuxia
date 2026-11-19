@@ -20,6 +20,7 @@ import {
 } from "../../utils/referral.js";
 
 import i18n from "../../i18n/i18n.js";
+import { dateLocale } from "../../utils/weatherText.js";
 const CLOSE_DURATION_MS = 500;
 
 const slideIn = keyframes`
@@ -581,7 +582,7 @@ const RulesInner = styled.div`
 
 const { supporter: B_SUP, inviter: B_INV, invitee: B_NEW } = BADGES;
 const fmtDate = (ms) =>
-  Number.isFinite(ms) ? new Date(ms).toLocaleDateString("uk-UA", { day: "numeric", month: "long" }) : "";
+  Number.isFinite(ms) ? new Date(ms).toLocaleDateString(dateLocale(), { day: "numeric", month: "long" }) : "";
 
 // Умови й опис значків — видно завжди, навіть без акаунта
 const InviteRulesBlock = () => {

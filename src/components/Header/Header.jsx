@@ -35,6 +35,7 @@ import { isInviter, isInvitee } from "../../utils/referral.js";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
 import i18n from "../../i18n/i18n.js";
+import { dateLocale } from "../../utils/weatherText.js";
 // Консоль команд (/open, /soundtrack, /create…) — вантажиться лише при відкритті
 const CommandsModal = lazyWithRetry(() => import("../Commands/CommandsModal.jsx"));
 const prefetchCommands = () => import("../Commands/CommandsModal.jsx").catch(() => {});
@@ -1572,7 +1573,7 @@ const Header = ({
                      <ProfileModalJoined>
                        <MdCalendarMonth aria-hidden="true" />
                        {i18n.t("ui.Header.zNamyZ")}{" "}
-                       {new Date(joinedAt).toLocaleDateString("uk-UA", {
+                       {new Date(joinedAt).toLocaleDateString(dateLocale(), {
                          day: "numeric",
                          month: "long",
                          year: "numeric",

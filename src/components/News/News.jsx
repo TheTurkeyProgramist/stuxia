@@ -86,6 +86,7 @@ import {
 } from "../../utils/muteSync";
 import { Tooltip } from "../Tooltip/Tooltip";
 import i18n from "../../i18n/i18n.js";
+import { dateLocale } from "../../utils/weatherText.js";
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -4365,7 +4366,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                     <p>
                       {moreNewsCount} {i18n.t("newsWeather.News.novyn2")} {moreGroups.length} {i18n.t("newsWeather.News.dzherel")}
                       {lastUpdated &&
-                        " " + i18n.t("newsWeather.News.onovlenoO", { lastUpdated: lastUpdated.toLocaleTimeString("uk-UA", {
+                        " " + i18n.t("newsWeather.News.onovlenoO", { lastUpdated: lastUpdated.toLocaleTimeString(dateLocale(), {
                           hour: "2-digit",
                           minute: "2-digit",
                         }) })}

@@ -324,6 +324,9 @@ export default defineConfig(({ mode }) => {
           '**/vendor-firebase-*.js', '**/vendor-ai-*.js',
           // Офлайн-ШІ (WebLLM ~7 МБ) качаємо лише тим, хто його ввімкне
           '**/vendor-webllm-*.js', '**/offlineLlm.worker-*.js',
+          // Мови (26 × переклади + фрази ≈ 4,8 МБ) наперед не качаємо: людині потрібна одна —
+          // вона закешується правилом «i18n» у runtimeCaching, щойно її відкриють
+          '**/assets/i18n/**',
         ],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',
@@ -332,6 +335,16 @@ export default defineConfig(({ mode }) => {
         skipWaiting: true,
         clientsClaim: true,
         runtimeCaching: [
+          {
+            // Файли мов: імена з хешем, тож CacheFirst безпечний — нова збірка дасть нові імена
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/assets/i18n/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'i18n',
+              expiration: { maxEntries: 12, maxAgeSeconds: 60 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
           {
             urlPattern: ({ url }) => url.hostname === 'api.open-meteo.com',
             handler: 'NetworkFirst',
@@ -385,7 +398,13 @@ export default defineConfig(({ mode }) => {
       polyfill: true,
     },
     rollupOptions: {
-  output: {manualChunks(id) {
+  output: {
+  // Мови — окремою текою assets/i18n/ (див. globIgnores і runtimeCaching у VitePWA)
+  chunkFileNames: (chunk) =>
+    /[\\/]src[\\/]i18n[\\/](locales|phrases)[\\/]/.test(chunk.facadeModuleId || '')
+      ? 'assets/i18n/[name]-[hash].js'
+      : 'assets/[name]-[hash].js',
+  manualChunks(id) {
   if (id.includes('node_modules')) {
     if (/\/node_modules\/(react|react-dom|scheduler)\//.test(id)) {
       return 'vendor-react';

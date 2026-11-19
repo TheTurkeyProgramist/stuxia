@@ -11,6 +11,7 @@ import DecoratorDraftPrompt from "./DecoratorDraftPrompt.jsx";
 import DecorLayer from "./DecorLayer.jsx";
 
 import i18n from "../../i18n/i18n.js";
+import { dateLocale } from "../../utils/weatherText.js";
 export const DecoratorContext = createContext();
 
 export const useDecorator = () => useContext(DecoratorContext);
@@ -442,7 +443,7 @@ export const DecoratorProvider = ({ children, isDarkMode }) => {
           originalValue,
           newValue,
           mode,
-          timestamp: new Date().toLocaleTimeString("uk-UA"),
+          timestamp: new Date().toLocaleTimeString(dateLocale()),
         },
       ]);
     },

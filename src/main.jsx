@@ -1,5 +1,5 @@
 // Initialize i18n BEFORE rendering (must be first import; prefs are hydrated in index.jsx)
-import i18n from "./i18n/i18n.js";
+import i18n, { i18nReady } from "./i18n/i18n.js";
 import "./i18n/i18n.css";
 import "./media/fonts/stykhiia/stykhiia-fonts.css";
 
@@ -46,8 +46,9 @@ const isFramed = window.self !== window.top && !import.meta.env.DEV;
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 // На ПК чекаємо новини й картку погоди (eagerChunks.js), щоб вони вже були в першому
-// малюванні; на телефоні проміс виконаний одразу
-eagerChunksReady().then(() => root.render(
+// малюванні; на телефоні проміс виконаний одразу.
+// Мова теж вантажиться окремим файлом — без неї замість тексту були б ключі
+Promise.all([eagerChunksReady(), i18nReady.catch(() => {})]).then(() => root.render(
   isFramed ? (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: 16, textAlign: "center", fontFamily: "system-ui, sans-serif", background: "#0b1426", color: "#fff" }}>
       <p style={{ margin: 0 }}>{i18n.t("frameGuard.text")}</p>

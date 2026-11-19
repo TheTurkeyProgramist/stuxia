@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { getNow } from "../../utils/serverClock";
+import { dateLocale } from "../../utils/weatherText.js";
+import i18n from "../../i18n/i18n.js";
 
 // Годинник у Hero (без секунд). Окремий компонент, бо раніше стан `now` жив в App
 // і щосекунди перерендерював увесь сайт (новини, картки погоди, графіки, мапу).
@@ -8,38 +10,24 @@ const formatHeroDate = (now, user, timeZone) => {
   const hour12 = user?.hour12 === true;
 
   try {
-    const options = { timeZone, hour12 };
-    if (mode === "time" || mode === "both") {
-      options.hour = "2-digit";
-      options.minute = "2-digit";
-    }
-
-    if (mode === "date" || mode === "both") {
-      options.weekday = "long";
-      options.day = "numeric";
-      options.month = "2-digit";
-      options.year = "numeric";
-    }
-
-    const fmt = new Intl.DateTimeFormat("uk", options);
-    const parts = fmt.formatToParts(now);
-    const p = (type) => parts.find((x) => x.type === type)?.value || "";
-
+    // Мовою сайту: порядок дня/місяця, назву дня тижня й роздільники дає сам браузер
+    const lng = dateLocale();
     const timePart =
       mode === "time" || mode === "both"
-        ? `${p("hour")}:${p("minute")}${hour12 && p("dayPeriod") ? " " + p("dayPeriod") : ""}`
+        ? now.toLocaleTimeString(lng, { timeZone, hour12, hour: "2-digit", minute: "2-digit" })
         : "";
-    const datePart =
+    const rawDate =
       mode === "date" || mode === "both"
-        ? `${p("weekday") ? p("weekday").charAt(0).toUpperCase() + p("weekday").slice(1) : ""}${p("day") ? `, ${p("day")}.${p("month")}.${p("year")}` : ""}`
+        ? now.toLocaleDateString(lng, { timeZone, weekday: "long", day: "numeric", month: "2-digit", year: "numeric" })
         : "";
+    const datePart = rawDate ? rawDate.charAt(0).toLocaleUpperCase(lng) + rawDate.slice(1) : "";
 
     if (mode === "both") return `${timePart} ${datePart}`.trim();
     return timePart || datePart;
   } catch {
     const h = String(now.getHours()).padStart(2, "0");
     const m = String(now.getMinutes()).padStart(2, "0");
-    const d = now.toLocaleDateString("uk");
+    const d = now.toLocaleDateString(dateLocale());
     return `${h}:${m} ${d}`;
   }
 };
@@ -59,6 +47,14 @@ const HeroClock = ({ user, timeZone }) => {
     };
     tick();
     return () => clearTimeout(timer);
+  }, []);
+
+  // Змінили мову — одразу перемальовуємо дату, не чекаючи наступної хвилини
+  const [, setLng] = useState(i18n.language);
+  useEffect(() => {
+    const onChange = (lng) => setLng(lng);
+    i18n.on("languageChanged", onChange);
+    return () => i18n.off("languageChanged", onChange);
   }, []);
 
   return formatHeroDate(now, user, timeZone);

@@ -11,6 +11,7 @@ import {
 } from "./customBgLimits.js";
 
 import i18n from "../../i18n/i18n.js";
+import { dateLocale } from "../../utils/weatherText.js";
 // Пошук нових фонів у Wikimedia Commons: фото, картини або відео.
 // API відкрите й не потребує ключа; файли віддаються з CORS, тож вибране
 // завантажуємо в браузер (Blob) — фон працює й офлайн.
@@ -543,7 +544,7 @@ const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
       {results.length > 0 && (
         <>
           <span style={{ fontSize: 11, color: "var(--bm-muted, #8a8d9b)" }}>
-            {i18n.t("ui.CommonsSearch.pokazano")} {results.length.toLocaleString("uk-UA")} {i18n.t("ui.CommonsSearch.natysnitNaKartkuShchob")}
+            {i18n.t("ui.CommonsSearch.pokazano")} {results.length.toLocaleString(dateLocale())} {i18n.t("ui.CommonsSearch.natysnitNaKartkuShchob")}
           </span>
           <Grid>
             {results.map((item) => {

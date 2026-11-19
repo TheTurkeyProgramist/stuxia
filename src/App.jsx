@@ -1826,7 +1826,8 @@ const LoadingPhraseWrapper = styled.div`
       text-shadow: 0 0 12px rgba(148, 255, 250, 0.9);
       font-weight: bold;
       &::before {
-        content: "Нове: ";
+        /* Підпис мовою сайту — з атрибута data-new-label */
+        content: attr(data-new-label) ": ";
         font-size: 0.8em;
         color: orange;
       }
@@ -4450,7 +4451,10 @@ const App = () => {
         <HeroCredits
           randomPhrase={
             loadingPhraseText && (
-              <LoadingPhraseWrapper $isNew={phraseData.isNew}>
+              <LoadingPhraseWrapper
+                $isNew={phraseData.isNew}
+                data-new-label={i18n.t("newsWeather.News.nove")}
+              >
                 {loadingPhraseText}
                 {phraseParticles.map((p) => (
                   <ParticleSymbol
