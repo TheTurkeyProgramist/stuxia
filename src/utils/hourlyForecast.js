@@ -1,3 +1,5 @@
+import i18n from "../i18n/i18n.js";
+import { dateLocale } from "./weatherText.js";
 export const HOURLY_DAY_OPTIONS = [1, 2, 3, 5, 7];
 
 export const getHourlyForecastItems = (hourly = [], { days = 1 } = {}) => {
@@ -10,7 +12,7 @@ export const getHourlyForecastItems = (hourly = [], { days = 1 } = {}) => {
 };
 
 const formatDayLabel = (dateLabel, index = 0) => {
-  if (!dateLabel) return index === 0 ? "Сьогодні" : `День ${index + 1}`;
+  if (!dateLabel) return index === 0 ? i18n.t("newsWeather.hourlyForecast.sohodni") : i18n.t("newsWeather.hourlyForecast.den", { v0: index + 1 });
 
   const normalized = String(dateLabel).trim();
   const today = new Date();
@@ -22,11 +24,11 @@ const formatDayLabel = (dateLabel, index = 0) => {
     const candidate = new Date(today.getFullYear(), month - 1, day);
     const diffDays = Math.round((candidate - baseDate) / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return `${normalized} (Сьогодні)`;
-    if (diffDays === 1) return `${normalized} (Завтра)`;
-    if (diffDays === 2) return `${normalized} (Післязавтра)`;
+    if (diffDays === 0) return i18n.t("newsWeather.hourlyForecast.sohodni2", { normalized: normalized });
+    if (diffDays === 1) return i18n.t("newsWeather.hourlyForecast.zavtra", { normalized: normalized });
+    if (diffDays === 2) return i18n.t("newsWeather.hourlyForecast.pisliazavtra", { normalized: normalized });
 
-    const weekday = candidate.toLocaleDateString("uk", { weekday: "short" });
+    const weekday = candidate.toLocaleDateString(dateLocale(), { weekday: "short" });
     return `${normalized} (${weekday})`;
   }
 
@@ -42,7 +44,7 @@ const getItemHour = (item) => {
   return Number.isNaN(hour) ? null : hour;
 };
 
-const PART_OF_DAY_NAMES = { 0: "Ніч", 6: "Ранок", 12: "День", 18: "Вечір" };
+const PART_OF_DAY_NAMES = () => ({ 0: i18n.t("newsWeather.hourlyForecast.nich"), 6: i18n.t("newsWeather.hourlyForecast.ranok"), 12: i18n.t("newsWeather.hourlyForecast.den2"), 18: i18n.t("newsWeather.hourlyForecast.vechir") });
 const SUM_FIELDS = ["precipitation", "snowfall", "evapotranspiration"];
 const MAX_FIELDS = ["windNum", "wind_gusts_10m", "wind_gusts"];
 
@@ -56,7 +58,7 @@ const aggregatePartsOfDay = (items) =>
     });
     if (windowItems.length === 0) return null;
 
-    const result = { ...windowItems[0], time: `${PART_OF_DAY_NAMES[start]} ${String(start).padStart(2, "0")}:00` };
+    const result = { ...windowItems[0], time: `${PART_OF_DAY_NAMES()[start]} ${String(start).padStart(2, "0")}:00` };
 
     SUM_FIELDS.forEach((field) => {
       const values = windowItems.map((i) => Number(i[field])).filter(Number.isFinite);

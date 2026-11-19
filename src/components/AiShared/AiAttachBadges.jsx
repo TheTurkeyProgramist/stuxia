@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { IoPartlySunny, IoNewspaper } from "react-icons/io5";
 import { useAiAttachments } from "./aiAttachments";
 
+import i18n from "../../i18n/i18n.js";
 // Рожеві значки: скільки карток погоди й новин прикріплено до ШІ.
 // Впізнавана іконка (сонце з хмаркою / газета) + кружечок із цифрою в кутку, як у сповіщень.
 // Світла тема — насичений рожевий і біла цифра, темна — світло-рожевий і темна цифра.
@@ -65,14 +66,14 @@ export default function AiAttachBadges({ isDarkMode }) {
   if (!cards.length) return null;
 
   const label = [
-    weather && `${weather} ${plural(weather, "картка погоди", "картки погоди", "карток погоди")}`,
-    news && `${news} ${plural(news, "новина", "новини", "новин")}`,
+    weather && `${weather} ${plural(weather, i18n.t("ui.AiAttachBadges.kartkaPohody"), i18n.t("ui.AiAttachBadges.kartkyPohody"), i18n.t("ui.AiAttachBadges.kartokPohody"))}`,
+    news && `${news} ${plural(news, i18n.t("ui.AiAttachBadges.novyna"), i18n.t("ui.AiAttachBadges.novyny"), i18n.t("ui.AiAttachBadges.novyn"))}`,
   ]
     .filter(Boolean)
     .join(", ");
 
   return (
-    <Row role="img" aria-label={`Прикріплено до ШІ: ${label}`} title={`Прикріплено до ШІ: ${label}`}>
+    <Row role="img" aria-label={i18n.t("ui.AiAttachBadges.prykriplenoDoShi", { label: label })} title={i18n.t("ui.AiAttachBadges.prykriplenoDoShi", { label: label })}>
       {weather > 0 && (
         <Badge $isDarkMode={isDarkMode}>
           <IoPartlySunny aria-hidden="true" />

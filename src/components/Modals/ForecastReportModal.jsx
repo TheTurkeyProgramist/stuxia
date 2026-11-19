@@ -7,6 +7,7 @@ import { PiThermometerFill } from "react-icons/pi";
 import { BsThermometerSun, BsClockHistory } from "react-icons/bs";
 import { REPORT_ICONS, REPORT_COLORS, ReportSection, ReportLine } from "../Weather/ForecastReport.jsx";
 
+import i18n from "../../i18n/i18n.js";
 // Повний звіт смарт-прогнозу (експертні правила)
 const ForecastReportModal = ({ ruleForecast, forecastTimeString, isDarkMode, onClose }) => {
   const [copied, setCopied] = useState(false);
@@ -35,7 +36,7 @@ const ForecastReportModal = ({ ruleForecast, forecastTimeString, isDarkMode, onC
     >
       <div
         role="dialog"
-        aria-label="Повний звіт прогнозу"
+        aria-label={i18n.t("modals.ForecastReportModal.povnyiZvitProhnozu")}
         style={{
           background: isDarkMode ? "#0b0b0b" : "#fff",
           border: "1px solid rgba(0,238,255,0.6)",
@@ -66,12 +67,12 @@ const ForecastReportModal = ({ ruleForecast, forecastTimeString, isDarkMode, onC
             }}
           >
             <BiLineChart size={22} />
-            Смарт-прогноз (Офлайн / Правила) — повний звіт
+            {i18n.t("modals.ForecastReportModal.smartProhnozOflainPravyla")}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <button
                 onClick={copyText}
-                title="Скопіювати текст прогнозу"
+                title={i18n.t("modals.ForecastReportModal.skopiiuvatyTekstProhnozu")}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -87,11 +88,11 @@ const ForecastReportModal = ({ ruleForecast, forecastTimeString, isDarkMode, onC
                 }}
               >
                 <BiCheck size={16} />
-                {copied ? "Скопійовано!" : "Скопіювати"}
+                {copied ? i18n.t("modals.ForecastReportModal.skopiiovano") : i18n.t("modals.ForecastReportModal.skopiiuvaty")}
               </button>
             <button
               onClick={onClose}
-              aria-label="Закрити"
+              aria-label={i18n.t("modals.ForecastReportModal.zakryty")}
               style={{
                 background: "none",
                 border: "none",
@@ -108,27 +109,27 @@ const ForecastReportModal = ({ ruleForecast, forecastTimeString, isDarkMode, onC
         {ruleForecast ? (
             <div style={{ whiteSpace: "normal", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 20px", opacity: 0.85 }}>
-                <ReportLine icon={<BiCurrentLocation />} color="#00eeff">Прогноз для {ruleForecast.locationNameGenitive || ruleForecast.locationName}</ReportLine>
-                <ReportLine icon={<FaClock />} color="#aaa">Час: {forecastTimeString || "зараз"}</ReportLine>
+                <ReportLine icon={<BiCurrentLocation />} color="#00eeff">{i18n.t("modals.ForecastReportModal.prohnozDlia")} {ruleForecast.locationNameGenitive || ruleForecast.locationName}</ReportLine>
+                <ReportLine icon={<FaClock />} color="#aaa">{i18n.t("modals.ForecastReportModal.chas")} {forecastTimeString || i18n.t("modals.ForecastReportModal.zaraz")}</ReportLine>
               </div>
 
-              <ReportSection title="Добовий баланс" icon={<FaSun />} color="#ffb36c">
+              <ReportSection title={i18n.t("modals.ForecastReportModal.dobovyiBalans")} icon={<FaSun />} color="#ffb36c">
                 <ReportLine icon={<PiThermometerFill />} color="#ffb36c">{ruleForecast.dayNight?.message}</ReportLine>
               </ReportSection>
 
-              <ReportSection title="Погодинні зміни" icon={<BsClockHistory />} color="#00b7ff">
+              <ReportSection title={i18n.t("modals.ForecastReportModal.pohodynniZminy")} icon={<BsClockHistory />} color="#00b7ff">
                 <ReportLine icon={<FaCloudRain />} color="#14b8a6">{ruleForecast.hourlyData?.rainWindowText}</ReportLine>
                 <ReportLine icon={<BsThermometerSun />} color="#ff9d3b">{ruleForecast.hourlyData?.peakTempText}</ReportLine>
                 <ReportLine icon={<BiWind />} color="#00b7ff">{ruleForecast.hourlyData?.windTrendText}</ReportLine>
               </ReportSection>
 
-              <ReportSection title="Тижневий тренд" icon={<FaCalendarDays />} color="#b362ff">
+              <ReportSection title={i18n.t("modals.ForecastReportModal.tyzhnevyiTrend")} icon={<FaCalendarDays />} color="#b362ff">
                 <ReportLine icon={<BiLineChart />} color="#b362ff">{ruleForecast.weeklyData?.trendText}</ReportLine>
                 <ReportLine icon={<FaCloud />} color="#aaa">{ruleForecast.weeklyData?.weekSummaryText}</ReportLine>
               </ReportSection>
 
               {ruleForecast.atmosphereNotes?.length > 0 && (
-                <ReportSection title="Атмосферні фактори" icon={<FaGauge />} color="#4da6ff">
+                <ReportSection title={i18n.t("modals.ForecastReportModal.atmosferniFaktory")} icon={<FaGauge />} color="#4da6ff">
                   {ruleForecast.atmosphereNotes.map((n, i) => (
                     <ReportLine key={i} icon={REPORT_ICONS[n.type] || <FaExclamationTriangle />} color={REPORT_COLORS[n.type] || "#4da6ff"}>
                       <b>{n.title}:</b> {n.text}
@@ -138,7 +139,7 @@ const ForecastReportModal = ({ ruleForecast, forecastTimeString, isDarkMode, onC
               )}
 
               {ruleForecast.lifestyleAdvice?.length > 0 && (
-                <ReportSection title="Рекомендації та гардероб" icon={<FaLightbulb />} color="#4ade80">
+                <ReportSection title={i18n.t("modals.ForecastReportModal.rekomendatsiiTaHarderob")} icon={<FaLightbulb />} color="#4ade80">
                   {ruleForecast.lifestyleAdvice.map((a, i) => (
                     <ReportLine key={i} icon={REPORT_ICONS[a.type] || <FaLightbulb />} color={REPORT_COLORS[a.type] || "#4ade80"}>
                       <b>{a.title}</b> {a.text}
@@ -147,7 +148,7 @@ const ForecastReportModal = ({ ruleForecast, forecastTimeString, isDarkMode, onC
                 </ReportSection>
               )}
             </div>
-          ) : "Дані формуються..."}
+          ) : i18n.t("modals.ForecastReportModal.daniFormuiutsia")}
       </div>
     </div>,
     document.body

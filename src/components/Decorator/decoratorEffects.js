@@ -1,15 +1,16 @@
+import i18n from "../../i18n/i18n.js";
 // Ефекти натискання Декоратора: з точки кліку вилітають зірки, конфеті, сердечка тощо.
 // Частинки — звичайні DOM-елементи з Web Animations API: без канви й без бібліотек,
 // після анімації одразу видаляються.
 
 export const CLICK_EFFECTS = [
-  { id: "stars", label: "Зірочки", hint: "Чотирикутні зірки розлітаються навсібіч" },
-  { id: "confetti", label: "Конфеті", hint: "Різнобарвні клаптики злітають і падають" },
-  { id: "sparks", label: "Іскри", hint: "Короткі промені, як від бенгальського вогню" },
-  { id: "hearts", label: "Сердечка", hint: "Сердечка спливають угору" },
-  { id: "ripple", label: "Хвиля", hint: "Кільце розходиться від місця натиску" },
-  { id: "bubbles", label: "Бульбашки", hint: "Бульбашки здіймаються й лопаються" },
-  { id: "snow", label: "Сніжинки", hint: "Сніжинки розлітаються й повільно падають" },
+  { id: "stars", get label() { return i18n.t("ui.decoratorEffects.zirochky"); }, get hint() { return i18n.t("ui.decoratorEffects.chotyrykutniZirkyRozlitaiutsiaNavsibich"); } },
+  { id: "confetti", get label() { return i18n.t("ui.decoratorEffects.konfeti"); }, get hint() { return i18n.t("ui.decoratorEffects.riznobarvniKlaptykyZlitaiutI"); } },
+  { id: "sparks", get label() { return i18n.t("ui.decoratorEffects.iskry"); }, get hint() { return i18n.t("ui.decoratorEffects.korotkiPromeniIakVid"); } },
+  { id: "hearts", get label() { return i18n.t("ui.decoratorEffects.serdechka"); }, get hint() { return i18n.t("ui.decoratorEffects.serdechkaSplyvaiutUhoru"); } },
+  { id: "ripple", get label() { return i18n.t("ui.decoratorEffects.khvylia"); }, get hint() { return i18n.t("ui.decoratorEffects.kiltseRozkhodytsiaVidMistsia"); } },
+  { id: "bubbles", get label() { return i18n.t("ui.decoratorEffects.bulbashky"); }, get hint() { return i18n.t("ui.decoratorEffects.bulbashkyZdiimaiutsiaILopaiutsia"); } },
+  { id: "snow", get label() { return i18n.t("ui.decoratorEffects.snizhynky"); }, get hint() { return i18n.t("ui.decoratorEffects.snizhynkyRozlitaiutsiaIPovilno"); } },
 ];
 
 const PALETTES = {

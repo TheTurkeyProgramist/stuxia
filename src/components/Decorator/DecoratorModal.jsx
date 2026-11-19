@@ -72,6 +72,7 @@ import {
   suggestionsFor,
 } from "./decoratorSuggestions";
 
+import i18n from "../../i18n/i18n.js";
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -1153,168 +1154,168 @@ const PassthroughBtn = styled(ActionBtn)`
 
 const EDITABLE_PROPS_CONFIG = {
   color: {
-    label: "Колір тексту",
+    get label() { return i18n.t("ui.DecoratorModal.kolirTekstu"); },
     cssProp: "color",
     icon: FiType,
     type: "color",
-    desc: "Змінює колір шрифту елемента",
+    get desc() { return i18n.t("ui.DecoratorModal.zminiuieKolirShryftuElementa"); },
   },
   backgroundColor: {
-    label: "Колір фону",
+    get label() { return i18n.t("ui.DecoratorModal.kolirFonu"); },
     cssProp: "backgroundColor",
     icon: FiDroplet,
     type: "color",
-    desc: "Змінює фоновий колір елемента",
+    get desc() { return i18n.t("ui.DecoratorModal.zminiuieFonovyiKolirElementa"); },
   },
   backgroundImage: {
-    label: "Градієнт фону",
+    get label() { return i18n.t("ui.DecoratorModal.hradiientFonu"); },
     cssProp: "backgroundImage",
     icon: FiSunset,
     type: "gradient",
-    desc: "Плавний перехід кольорів замість суцільного фону",
+    get desc() { return i18n.t("ui.DecoratorModal.plavnyiPerekhidKolorivZamist"); },
   },
   border: {
-    label: "Рамка (бордюр)",
+    get label() { return i18n.t("ui.DecoratorModal.ramkaBordiur"); },
     cssProp: "border",
     icon: FiSquare,
     type: "border",
-    desc: "Налаштування межі елемента",
+    get desc() { return i18n.t("ui.DecoratorModal.nalashtuvanniaMezhiElementa"); },
   },
   borderRadius: {
-    label: "Заокруглення кутів",
+    get label() { return i18n.t("ui.DecoratorModal.zaokruhlenniaKutiv"); },
     cssProp: "borderRadius",
     icon: FiCircle,
     type: "text",
-    placeholder: "напр., 8px або 50%",
-    desc: "Радіус заокруглення рамки",
+    get placeholder() { return i18n.t("ui.DecoratorModal.napr8pxAbo50"); },
+    get desc() { return i18n.t("ui.DecoratorModal.radiusZaokruhlenniaRamky"); },
   },
   boxShadow: {
-    label: "Тінь елемента",
+    get label() { return i18n.t("ui.DecoratorModal.tinElementa"); },
     cssProp: "boxShadow",
     icon: FiLayers,
     type: "text",
-    placeholder: "напр., 0 4px 10px rgba(0,0,0,0.3)",
-    desc: "Додає ефект тіні навколо елемента",
+    get placeholder() { return i18n.t("ui.DecoratorModal.napr04px10px"); },
+    get desc() { return i18n.t("ui.DecoratorModal.dodaieEfektTiniNavkolo"); },
   },
   textShadow: {
-    label: "Тінь тексту",
+    get label() { return i18n.t("ui.DecoratorModal.tinTekstu"); },
     cssProp: "textShadow",
     icon: FiBold,
     type: "text",
-    placeholder: "напр., 1px 1px 2px #000",
-    desc: "Ефект тіні для тексту",
+    get placeholder() { return i18n.t("ui.DecoratorModal.napr1px1px2px"); },
+    get desc() { return i18n.t("ui.DecoratorModal.efektTiniDliaTekstu"); },
   },
   backdropFilter: {
-    label: "Розмиття фону",
+    get label() { return i18n.t("ui.DecoratorModal.rozmyttiaFonu"); },
     cssProp: "backdropFilter",
     icon: FiCloud,
     type: "text",
-    placeholder: "напр., blur(10px)",
-    desc: "Ефекти для фону (скляний ефект)",
+    get placeholder() { return i18n.t("ui.DecoratorModal.naprBlur10px"); },
+    get desc() { return i18n.t("ui.DecoratorModal.efektyDliaFonuSklianyi"); },
   },
   filter: {
-    label: "Фільтри",
+    get label() { return i18n.t("ui.DecoratorModal.filtry"); },
     cssProp: "filter",
     icon: FiSliders,
     type: "text",
-    placeholder: "напр., grayscale(50%)",
-    desc: "Ефекти зображення/кольору",
+    get placeholder() { return i18n.t("ui.DecoratorModal.naprGrayscale50"); },
+    get desc() { return i18n.t("ui.DecoratorModal.efektyZobrazhenniaKoloru"); },
   },
   transform: {
-    label: "Трансформація",
+    get label() { return i18n.t("ui.DecoratorModal.transformatsiia"); },
     cssProp: "transform",
     icon: FiMove,
     type: "transform",
-    placeholder: "напр., rotate(5deg) scale(1.1) або skewY(3deg)",
-    desc: "Зсув, поворот, масштаб, нахил — або свій CSS",
+    get placeholder() { return i18n.t("ui.DecoratorModal.naprRotate5degScale"); },
+    get desc() { return i18n.t("ui.DecoratorModal.zsuvPovorotMasshtabNakhyl"); },
   },
   transformOrigin: {
-    label: "Точка трансформації",
+    get label() { return i18n.t("ui.DecoratorModal.tochkaTransformatsii"); },
     cssProp: "transformOrigin",
     icon: FiCrosshair,
     type: "text",
-    placeholder: "напр., center, top left, 50% 100%",
-    desc: "Відносно чого виконується трансформація",
+    get placeholder() { return i18n.t("ui.DecoratorModal.naprCenterTopLeft"); },
+    get desc() { return i18n.t("ui.DecoratorModal.vidnosnoChohoVykonuietsiaTransformatsiia"); },
   },
   transition: {
-    label: "Анімація переходу",
+    get label() { return i18n.t("ui.DecoratorModal.animatsiiaPerekhodu"); },
     cssProp: "transition",
     icon: FiZap,
     type: "text",
-    placeholder: "напр., all 0.3s ease",
-    desc: "Плавність зміни стилів (корисно для :hover)",
+    get placeholder() { return i18n.t("ui.DecoratorModal.naprAll03s"); },
+    get desc() { return i18n.t("ui.DecoratorModal.plavnistZminyStylivKorysno"); },
   },
   outline: {
-    label: "Контур",
+    get label() { return i18n.t("ui.DecoratorModal.kontur"); },
     cssProp: "outline",
     icon: FiMaximize,
     type: "text",
-    placeholder: "напр., 2px solid red",
-    desc: "Зовнішня рамка елемента",
+    get placeholder() { return i18n.t("ui.DecoratorModal.napr2pxSolidRed"); },
+    get desc() { return i18n.t("ui.DecoratorModal.zovnishniaRamkaElementa"); },
   },
   textDecoration: {
-    label: "Декорування тексту",
+    get label() { return i18n.t("ui.DecoratorModal.dekoruvanniaTekstu"); },
     cssProp: "textDecoration",
     icon: FiUnderline,
     type: "text",
-    placeholder: "напр., underline або none",
-    desc: "Підкреслення, закреслення тощо",
+    get placeholder() { return i18n.t("ui.DecoratorModal.naprUnderlineAboNone"); },
+    get desc() { return i18n.t("ui.DecoratorModal.pidkreslenniaZakreslenniaToshcho"); },
   },
   cursor: {
-    label: "Курсор миші",
+    get label() { return i18n.t("ui.DecoratorModal.kursorMyshi"); },
     cssProp: "cursor",
     icon: FiMousePointer,
     type: "cursor",
-    desc: "Вигляд курсора при наведенні",
+    get desc() { return i18n.t("ui.DecoratorModal.vyhliadKursoraPryNavedenni"); },
   },
   cursorImage: {
-    label: "Курсор-зображення",
+    get label() { return i18n.t("ui.DecoratorModal.kursorZobrazhennia"); },
     cssProp: "--dec-cursor-image",
     extraKeys: ["--dec-cursor-size"],
     icon: FiImage,
     type: "cursorImage",
-    desc: "Своє фото або маленька GIF замість стрілочки (до 512 КБ)",
+    get desc() { return i18n.t("ui.DecoratorModal.svoieFotoAboMalenka"); },
   },
   clickFx: {
-    label: "Ефект натискання",
+    get label() { return i18n.t("ui.DecoratorModal.efektNatyskannia"); },
     cssProp: "--dec-click-fx",
     extraKeys: ["--dec-click-fx-color"],
     icon: FiStar,
     type: "clickFx",
-    desc: "З місця кліку вилітають зірочки, конфеті, сердечка…",
+    get desc() { return i18n.t("ui.DecoratorModal.zMistsiaKlikuVylitaiut"); },
   },
   blockText: {
-    label: "Текст у блоці",
+    get label() { return i18n.t("ui.DecoratorModal.tekstUBlotsi"); },
     cssProp: "--dec-text",
     icon: FiFileText,
     type: "blockText",
     // Текст не залежить від наведення — зберігаємо у «Звичайному» обраної теми
     fixedState: "default",
-    desc: "Замінює головний напис елемента своїм. Окремо для денної й темної теми",
+    get desc() { return i18n.t("ui.DecoratorModal.zaminiuieHolovnyiNapysElementa"); },
   },
   fontFamily: {
-    label: "Шрифт",
+    get label() { return i18n.t("ui.DecoratorModal.shryft"); },
     cssProp: "fontFamily",
     extraKeys: ["--font-family", "--dec-font-src"],
     icon: FiEdit3,
     type: "font",
-    desc: "Google Fonts, шрифти Стихії, системний або свій файл",
+    get desc() { return i18n.t("ui.DecoratorModal.googleFontsShryftyStykhii"); },
   },
   react: {
-    label: "Звукова реакція",
+    get label() { return i18n.t("ui.DecoratorModal.zvukovaReaktsiia"); },
     cssProp: "--dec-react",
     extraKeys: ["--dec-react-color"],
     icon: FiActivity,
     type: "react",
-    desc: "Напівпрозора тінь при натисканні й під фонову музику — що гучніше, то більша",
+    get desc() { return i18n.t("ui.DecoratorModal.napivprozoraTinPryNatyskanni"); },
   },
   threeD: {
-    label: "3D-кнопка",
+    get label() { return i18n.t("ui.DecoratorModal.3dKnopka"); },
     cssProp: "--dec-3d",
     extraKeys: ["--dec-3d-depth", "--dec-3d-dir", "--dec-3d-color", "--dec-3d-fill"],
     icon: FiBox,
     type: "threeD",
-    desc: "Каркас задньої грані, як у куба; при наведенні кнопка «заходить» у неї",
+    get desc() { return i18n.t("ui.DecoratorModal.karkasZadnoiHraniIak"); },
   },
 };
 
@@ -1412,10 +1413,10 @@ const combineBorder = (width, style, color) =>
 const TRANSFORM_FIELDS = [
   { key: "translateX", label: "X (px)", unit: "px", def: 0, step: 1 },
   { key: "translateY", label: "Y (px)", unit: "px", def: 0, step: 1 },
-  { key: "rotate", label: "Поворот (°)", unit: "deg", def: 0, step: 1 },
-  { key: "scale", label: "Масштаб", unit: "", def: 1, step: 0.05 },
-  { key: "skewX", label: "Нахил X (°)", unit: "deg", def: 0, step: 1 },
-  { key: "skewY", label: "Нахил Y (°)", unit: "deg", def: 0, step: 1 },
+  { key: "rotate", get label() { return i18n.t("ui.DecoratorModal.povorot"); }, unit: "deg", def: 0, step: 1 },
+  { key: "scale", get label() { return i18n.t("ui.DecoratorModal.masshtab"); }, unit: "", def: 1, step: 0.05 },
+  { key: "skewX", get label() { return i18n.t("ui.DecoratorModal.nakhylX"); }, unit: "deg", def: 0, step: 1 },
+  { key: "skewY", get label() { return i18n.t("ui.DecoratorModal.nakhylY"); }, unit: "deg", def: 0, step: 1 },
 ];
 
 const parseTransform = (str) => {
@@ -1443,16 +1444,16 @@ const buildTransform = (fields, original = "") => {
 
 // ── Градієнт: розбір і збирання простого градієнта з двох кольорів ──
 const DEFAULT_GRADIENT = { type: "linear", angle: 135, from: "#ffb36c", to: "#a855f7" };
-const GRADIENT_ANGLES = [
-  [0, "↑", "Знизу вгору"],
-  [45, "↗", "Знизу-зліва вгору-вправо"],
-  [90, "→", "Зліва направо"],
-  [135, "↘", "Згори-зліва вниз-вправо"],
-  [180, "↓", "Згори вниз"],
-  [225, "↙", "Згори-справа вниз-вліво"],
-  [270, "←", "Справа наліво"],
-  [315, "↖", "Знизу-справа вгору-вліво"],
-];
+const GRADIENT_ANGLES = () => ([
+  [0, "↑", i18n.t("ui.DecoratorModal.znyzuVhoru")],
+  [45, "↗", i18n.t("ui.DecoratorModal.znyzuZlivaVhoruVpravo")],
+  [90, "→", i18n.t("ui.DecoratorModal.zlivaNapravo")],
+  [135, "↘", i18n.t("ui.DecoratorModal.zhoryZlivaVnyzVpravo")],
+  [180, "↓", i18n.t("ui.DecoratorModal.zhoryVnyz")],
+  [225, "↙", i18n.t("ui.DecoratorModal.zhorySpravaVnyzVlivo")],
+  [270, "←", i18n.t("ui.DecoratorModal.spravaNalivo")],
+  [315, "↖", i18n.t("ui.DecoratorModal.znyzuSpravaVhoruVlivo")],
+]);
 
 // Розбиває за комами верхнього рівня (коми всередині rgba(...) не рахуються)
 const splitTopLevel = (str) => {
@@ -1496,14 +1497,14 @@ const toCamel = (name) =>
 
 // Розділи бічної навігації Декоратора
 const NAV_GROUPS = [
-  { id: "colors", title: "Кольори", desc: "Колір тексту та фону елемента", icon: FiDroplet, props: ["color", "backgroundColor", "backgroundImage"] },
-  { id: "shape", title: "Рамка й форма", desc: "Межі, контур і заокруглення кутів", icon: FiSquare, props: ["border", "borderRadius", "outline"] },
-  { id: "effects", title: "Ефекти", desc: "Тіні, розмиття та фільтри", icon: FiAperture, props: ["boxShadow", "textShadow", "backdropFilter", "filter"] },
-  { id: "motion", title: "Рух і анімація", desc: "Зсув, поворот, масштаб і плавність переходів", icon: FiMove, props: ["transform", "transformOrigin", "transition"] },
-  { id: "text", title: "Текст, шрифт і курсор", desc: "Свій текст, шрифт, декорування тексту, вигляд курсора та курсор-зображення", icon: FiMousePointer, props: ["blockText", "fontFamily", "textDecoration", "cursor", "cursorImage"] },
+  { id: "colors", get title() { return i18n.t("ui.DecoratorModal.kolory"); }, get desc() { return i18n.t("ui.DecoratorModal.kolirTekstuTaFonu"); }, icon: FiDroplet, props: ["color", "backgroundColor", "backgroundImage"] },
+  { id: "shape", get title() { return i18n.t("ui.DecoratorModal.ramkaIForma"); }, get desc() { return i18n.t("ui.DecoratorModal.mezhiKonturIZaokruhlennia"); }, icon: FiSquare, props: ["border", "borderRadius", "outline"] },
+  { id: "effects", get title() { return i18n.t("ui.DecoratorModal.efekty"); }, get desc() { return i18n.t("ui.DecoratorModal.tiniRozmyttiaTaFiltry"); }, icon: FiAperture, props: ["boxShadow", "textShadow", "backdropFilter", "filter"] },
+  { id: "motion", get title() { return i18n.t("ui.DecoratorModal.rukhIAnimatsiia"); }, get desc() { return i18n.t("ui.DecoratorModal.zsuvPovorotMasshtabI"); }, icon: FiMove, props: ["transform", "transformOrigin", "transition"] },
+  { id: "text", get title() { return i18n.t("ui.DecoratorModal.tekstShryftIKursor"); }, get desc() { return i18n.t("ui.DecoratorModal.sviiTekstShryftDekoruvannia"); }, icon: FiMousePointer, props: ["blockText", "fontFamily", "textDecoration", "cursor", "cursorImage"] },
   // fixedState: налаштування діють в обох станах, тож зберігаються у «Звичайному»
-  { id: "interactive", title: "Ефекти й 3D", desc: "Ефект натискання, реакція на музику та об'ємні кнопки", icon: FiStar, props: ["clickFx", "react", "threeD"], fixedState: "default" },
-  { id: "custom", title: "Власний CSS", desc: "Будь-які інші CSS-властивості", icon: FiCode, props: [] },
+  { id: "interactive", get title() { return i18n.t("ui.DecoratorModal.efektyI3d"); }, get desc() { return i18n.t("ui.DecoratorModal.efektNatyskanniaReaktsiiaNa"); }, icon: FiStar, props: ["clickFx", "react", "threeD"], fixedState: "default" },
+  { id: "custom", get title() { return i18n.t("ui.DecoratorModal.vlasnyiCss"); }, get desc() { return i18n.t("ui.DecoratorModal.budIakiInshiCss"); }, icon: FiCode, props: [] },
 ];
 
 // ── Поле з підказками: список готових значень з поясненням українською ──
@@ -1684,8 +1685,8 @@ const SuggestField = ({ value, onChange, suggestions = [], placeholder, ariaLabe
         <button
           type="button"
           tabIndex={-1}
-          aria-label="Показати підказки"
-          title="Підказки"
+          aria-label={i18n.t("ui.DecoratorModal.pokazatyPidkazky")}
+          title={i18n.t("ui.DecoratorModal.pidkazky")}
           // mousedown, а не click: інакше поле втратить фокус і список закриється
           onMouseDown={(e) => {
             e.preventDefault();
@@ -1724,13 +1725,13 @@ const SuggestField = ({ value, onChange, suggestions = [], placeholder, ariaLabe
               {item.swatch && <SuggestSwatch $color={item.value} />}
               {item.slow && (
                 <FiAlertCircle
-                  title="Повільно на слабких пристроях"
+                  title={i18n.t("ui.DecoratorModal.povilnoNaSlabkykhPrystroiakh")}
                   style={{ flexShrink: 0, color: "#60a5fa" }}
                 />
               )}
               {item.risky && (
                 <FiAlertTriangle
-                  title="Може зламати вигляд сайту — змінюйте в міру"
+                  title={i18n.t("ui.DecoratorModal.mozheZlamatyVyhliadSaitu")}
                   style={{ flexShrink: 0, color: "var(--d-accent)" }}
                 />
               )}
@@ -1837,11 +1838,11 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
     e.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setFileError((prev) => ({ ...prev, cursor: "Оберіть зображення (PNG, JPG, GIF, WebP або SVG)" }));
+      setFileError((prev) => ({ ...prev, cursor: i18n.t("ui.DecoratorModal.oberitZobrazhenniaPngJpg") }));
       return;
     }
     if (file.size > MAX_CURSOR_KB * 1024) {
-      setFileError((prev) => ({ ...prev, cursor: `Файл завеликий — максимум ${MAX_CURSOR_KB} КБ` }));
+      setFileError((prev) => ({ ...prev, cursor: i18n.t("ui.DecoratorModal.failZavelykyiMaksymumKb", { MAX_CURSOR_KB: MAX_CURSOR_KB }) }));
       return;
     }
     try {
@@ -1851,18 +1852,18 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
       setFileError((prev) => ({ ...prev, cursor: "" }));
       handleChange("--dec-cursor-image", `url("${url}")`, mode);
     } catch {
-      setFileError((prev) => ({ ...prev, cursor: "Не вдалося прочитати файл" }));
+      setFileError((prev) => ({ ...prev, cursor: i18n.t("ui.DecoratorModal.neVdalosiaProchytatyFail") }));
     }
   };
 
   const handleAddCustom = () => {
     const name = toCamel(newPropName);
     if (!/^(--)?[a-zA-Z][a-zA-Z0-9-]*$/.test(name)) {
-      setCustomError("Некоректна назва властивості");
+      setCustomError(i18n.t("ui.DecoratorModal.nekorektnaNazvaVlastyvosti"));
       return;
     }
     if (!newPropValue.trim()) {
-      setCustomError("Вкажіть значення");
+      setCustomError(i18n.t("ui.DecoratorModal.vkazhitZnachennia"));
       return;
     }
     handleChange(name, newPropValue.trim());
@@ -1979,7 +1980,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
           onChange={(v) => handleChange(cssProp, v)}
           suggestions={VALUE_SUGGESTIONS.transform}
           placeholder={placeholder}
-          ariaLabel="Трансформація: CSS"
+          ariaLabel={i18n.t("ui.DecoratorModal.transformatsiiaCss")}
         />
       </>
     );
@@ -1987,12 +1988,12 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
 
   const renderColor = (value, onChange, label, placeholder) => (
     <Controls>
-      <Swatch $color={value} $empty={!value} title={value || "Не задано"}>
+      <Swatch $color={value} $empty={!value} title={value || i18n.t("ui.DecoratorModal.neZadano")}>
         <input
           type="color"
           value={rgbToHex(value)}
           onChange={(e) => onChange(e.target.value)}
-          aria-label={`${label}: палітра`}
+          aria-label={i18n.t("ui.DecoratorModal.palitra", { label: label })}
           data-decorator-ignore="true"
         />
       </Swatch>
@@ -2017,7 +2018,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
         onClick={onToggle}
         data-decorator-ignore="true"
       />
-      <SwitchLabel $on={on}>{on ? "Увімкнено" : "Вимкнено"}</SwitchLabel>
+      <SwitchLabel $on={on}>{on ? i18n.t("ui.DecoratorModal.uvimkneno") : i18n.t("ui.DecoratorModal.vymkneno")}</SwitchLabel>
     </>
   );
 
@@ -2035,14 +2036,14 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
           <GradientPreview
             $draft={!hasValue}
             style={{ background: hasValue ? val : buildGradient(g) }}
-            title={hasValue ? val : "Зразок — ще не застосовано"}
+            title={hasValue ? val : i18n.t("ui.DecoratorModal.zrazokShcheNeZastosovano")}
           />
           {simple ? (
             <>
-              <Segmented role="radiogroup" aria-label="Тип градієнта">
+              <Segmented role="radiogroup" aria-label={i18n.t("ui.DecoratorModal.typHradiienta")}>
                 {[
-                  ["linear", "Лінійний"],
-                  ["radial", "Радіальний (коло)"],
+                  ["linear", i18n.t("ui.DecoratorModal.liniinyi")],
+                  ["radial", i18n.t("ui.DecoratorModal.radialnyiKolo")],
                 ].map(([id, text]) => (
                   <SegmentBtn
                     key={id}
@@ -2058,8 +2059,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                 ))}
               </Segmented>
               {g.type === "linear" && (
-                <Segmented role="radiogroup" aria-label="Напрямок градієнта">
-                  {GRADIENT_ANGLES.map(([angle, arrow, hint]) => (
+                <Segmented role="radiogroup" aria-label={i18n.t("ui.DecoratorModal.napriamokHradiienta")}>
+                  {GRADIENT_ANGLES().map(([angle, arrow, hint]) => (
                     <SegmentBtn
                       key={angle}
                       type="button"
@@ -2076,15 +2077,15 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                   ))}
                 </Segmented>
               )}
-              <PropDesc>Перший колір</PropDesc>
-              {renderColor(g.from, (v) => setG({ from: v || DEFAULT_GRADIENT.from }), "Перший колір", "#ffb36c")}
-              <PropDesc>Другий колір</PropDesc>
-              {renderColor(g.to, (v) => setG({ to: v || DEFAULT_GRADIENT.to }), "Другий колір", "#a855f7")}
+              <PropDesc>{i18n.t("ui.DecoratorModal.pershyiKolir")}</PropDesc>
+              {renderColor(g.from, (v) => setG({ from: v || DEFAULT_GRADIENT.from }), i18n.t("ui.DecoratorModal.pershyiKolir"), "#ffb36c")}
+              <PropDesc>{i18n.t("ui.DecoratorModal.druhyiKolir")}</PropDesc>
+              {renderColor(g.to, (v) => setG({ to: v || DEFAULT_GRADIENT.to }), i18n.t("ui.DecoratorModal.druhyiKolir"), "#a855f7")}
             </>
           ) : (
-            <PropDesc>Градієнт складніший за два кольори — змінюйте його текстом нижче.</PropDesc>
+            <PropDesc>{i18n.t("ui.DecoratorModal.hradiientSkladnishyiZaDva")}</PropDesc>
           )}
-          <PropDesc>Готовий градієнт або свій CSS</PropDesc>
+          <PropDesc>{i18n.t("ui.DecoratorModal.hotovyiHradiientAboSvii")}</PropDesc>
           <SuggestField
             value={val}
             onChange={(v) => handleChange(cssProp, v, mode)}
@@ -2093,42 +2094,38 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
             ariaLabel={label}
           />
           <GradientHelp>
-            <summary>Як написати свій градієнт</summary>
+            <summary>{i18n.t("ui.DecoratorModal.iakNapysatySviiHradiient")}</summary>
             <div>
               <p>
-                <b>Лінійний:</b> <code>linear-gradient(напрямок, колір1, колір2, …)</code> — кольори
-                плавно переходять уздовж прямої.
+                <b>{i18n.t("ui.DecoratorModal.liniinyi2")}</b> <code>{i18n.t("ui.DecoratorModal.linearGradientNapriamokKolir1")}</code> {i18n.t("ui.DecoratorModal.koloryPlavnoPerekhodiatUzdovzh")}
               </p>
               <ul>
                 <li>
-                  Напрямок — кут: <code>90deg</code> зліва направо, <code>180deg</code> згори вниз,{" "}
-                  <code>135deg</code> по діагоналі. Або словами: <code>to right</code>,{" "}
+                  {i18n.t("ui.DecoratorModal.napriamokKut")} <code>90deg</code> {i18n.t("ui.DecoratorModal.zlivaNapravo2")} <code>180deg</code> {i18n.t("ui.DecoratorModal.zhoryVnyz2")}{" "}
+                  <code>135deg</code> {i18n.t("ui.DecoratorModal.poDiahonaliAboSlovamy")} <code>to right</code>,{" "}
                   <code>to bottom right</code>.
                 </li>
                 <li>
-                  Кольорів може бути скільки завгодно:{" "}
+                  {i18n.t("ui.DecoratorModal.kolorivMozheButySkilky")}{" "}
                   <code>linear-gradient(90deg, red, yellow, green)</code>.
                 </li>
                 <li>
-                  Позиції кажуть, де починається колір:{" "}
+                  {i18n.t("ui.DecoratorModal.pozytsiiKazhutDePochynaietsia")}{" "}
                   <code>#ffb36c 0%, #ef4444 50%, #a855f7 100%</code>.
                 </li>
                 <li>
-                  Однакові позиції дають різку межу — смуги: <code>red 50%, blue 50%</code>.
+                  {i18n.t("ui.DecoratorModal.odnakoviPozytsiiDaiutRizku")} <code>red 50%, blue 50%</code>.
                 </li>
               </ul>
               <p>
-                <b>Радіальний:</b> <code>radial-gradient(circle, колір1, колір2)</code> — коло, що
-                розходиться з центру.
+                <b>{i18n.t("ui.DecoratorModal.radialnyi")}</b> <code>{i18n.t("ui.DecoratorModal.radialGradientCircleKolir1")}</code> {i18n.t("ui.DecoratorModal.koloShchoRozkhodytsiaZ")}
               </p>
               <p>
-                <b>Прозорість:</b> <code>transparent</code> або <code>rgba(0,0,0,0.6)</code>.
-                Наприклад, <code>linear-gradient(transparent, rgba(0,0,0,0.6))</code> — затемнення
-                знизу, щоб текст читався на картинці.
+                <b>{i18n.t("ui.DecoratorModal.prozorist")}</b> <code>transparent</code> {i18n.t("ui.DecoratorModal.abo")} <code>rgba(0,0,0,0.6)</code>{i18n.t("ui.DecoratorModal.napryklad")} <code>linear-gradient(transparent, rgba(0,0,0,0.6))</code> {i18n.t("ui.DecoratorModal.zatemnenniaZnyzuShchobTekst")}
               </p>
               <p>
-                Градієнт лягає поверх «Кольору фону». Щоб повернути звичайний фон — <code>none</code>{" "}
-                або кнопка «Скинути».
+                {i18n.t("ui.DecoratorModal.hradiientLiahaiePoverkhKoloru")} <code>none</code>{" "}
+                {i18n.t("ui.DecoratorModal.aboKnopkaSkynuty")}
               </p>
             </div>
           </GradientHelp>
@@ -2144,7 +2141,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
           <Controls>
             <ImagePreview>{src ? <img src={src} alt="" /> : <FiImage />}</ImagePreview>
             <UploadBtn data-decorator-ignore="true">
-              <FiUpload /> {src ? "Замінити" : "Фото або GIF"}
+              <FiUpload /> {src ? i18n.t("ui.DecoratorModal.zaminyty") : i18n.t("ui.DecoratorModal.fotoAboGif")}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
@@ -2159,7 +2156,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                 onChange={(e) =>
                   handleChange("--dec-cursor-size", e.target.value === "32px" ? "" : e.target.value, mode)
                 }
-                aria-label="Розмір курсора"
+                aria-label={i18n.t("ui.DecoratorModal.rozmirKursora")}
                 data-decorator-ignore="true"
               >
                 {CURSOR_SIZES.map((s) => (
@@ -2189,7 +2186,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
         return (
           <Warning role="note" $tone="hint">
             <FiInfo />
-            <span>У цьому елементі немає тексту. Виберіть сам напис або кнопку з написом.</span>
+            <span>{i18n.t("ui.DecoratorModal.uTsomuElementiNemaie")}</span>
           </Warning>
         );
       }
@@ -2199,14 +2196,13 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
             value={val}
             maxLength={200}
             onChange={(e) => handleChange(cssProp, e.target.value.trim() ? e.target.value : "", mode)}
-            placeholder={current ? `Зараз: ${current}` : "Свій текст"}
+            placeholder={current ? i18n.t("ui.DecoratorModal.zaraz", { current: current }) : i18n.t("ui.DecoratorModal.sviiTekst")}
             aria-label={label}
             style={{ fontFamily: "inherit", fontSize: 14 }}
             data-decorator-ignore="true"
           />
           <PropDesc>
-            Змінюється лише головний напис — іконки й решта вмісту лишаються. Новий текст з'явиться
-            після «Застосувати»; в «Оригіналі» сайт покаже справжній.
+            {i18n.t("ui.DecoratorModal.zminiuietsiaLysheHolovnyiNapys")}
           </PropDesc>
         </>
       );
@@ -2228,7 +2224,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                 aria-label={label}
                 data-decorator-ignore="true"
               >
-                <option value="">Без ефекту</option>
+                <option value="">{i18n.t("ui.DecoratorModal.bezEfektu")}</option>
                 {CLICK_EFFECTS.map((fx) => (
                   <option key={fx.id} value={fx.id}>
                     {fx.label} — {fx.hint}
@@ -2241,8 +2237,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
               type="button"
               disabled={!val}
               onClick={(e) => preview(e, val)}
-              aria-label="Показати ефект"
-              title="Показати ефект"
+              aria-label={i18n.t("ui.DecoratorModal.pokazatyEfekt")}
+              title={i18n.t("ui.DecoratorModal.pokazatyEfekt")}
               data-decorator-ignore="true"
             >
               <FiPlay />
@@ -2250,8 +2246,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
           </Controls>
           {val && (
             <>
-              <PropDesc>Колір частинок</PropDesc>
-              {renderColor(color, (v) => handleChange("--dec-click-fx-color", v, mode), "Колір частинок", "різнобарвні — як задумано ефектом")}
+              <PropDesc>{i18n.t("ui.DecoratorModal.kolirChastynok")}</PropDesc>
+              {renderColor(color, (v) => handleChange("--dec-click-fx-color", v, mode), i18n.t("ui.DecoratorModal.kolirChastynok"), i18n.t("ui.DecoratorModal.riznobarvniIakZadumanoEfektom"))}
             </>
           )}
         </>
@@ -2311,7 +2307,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
           setFont({ kind: "pack", id: meta.id });
           setFileError((prev) => ({ ...prev, font: "" }));
         } catch (err) {
-          setFileError((prev) => ({ ...prev, font: err?.message || "Не вдалося додати шрифт" }));
+          setFileError((prev) => ({ ...prev, font: err?.message || i18n.t("ui.DecoratorModal.neVdalosiaDodatyShryft") }));
         } finally {
           setFontBusy(false);
         }
@@ -2326,12 +2322,12 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
               disabled={fontBusy}
               data-decorator-ignore="true"
             >
-              <option value="">Як на сайті</option>
-              <option value="system">Без шрифта — системний шрифт пристрою</option>
-              <optgroup label="Шрифти Стихії">
+              <option value="">{i18n.t("ui.DecoratorModal.iakNaSaiti")}</option>
+              <option value="system">{i18n.t("ui.DecoratorModal.bezShryftaSystemnyiShryft")}</option>
+              <optgroup label={i18n.t("ui.DecoratorModal.shryftyStykhii")}>
                 {STYKHIIA_FONTS.map((f) => (
                   <option key={f.id} value={`stykhiia:${f.id}`}>
-                    Стихія {f.label}
+                    {i18n.t("ui.DecoratorModal.stykhiia")} {f.label}
                   </option>
                 ))}
               </optgroup>
@@ -2342,16 +2338,16 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                   </option>
                 ))}
                 <option value="google-custom">
-                  {choice?.kind === "google" && !isListedGoogle ? `Інший: ${choice.name}` : "Інший шрифт з Google Fonts…"}
+                  {choice?.kind === "google" && !isListedGoogle ? i18n.t("ui.DecoratorModal.inshyi", { name: choice.name }) : i18n.t("ui.DecoratorModal.inshyiShryftZGoogle")}
                 </option>
               </optgroup>
-              <optgroup label="Мої шрифти">
+              <optgroup label={i18n.t("ui.DecoratorModal.moiShryfty")}>
                 {fontPacks.map((pack) => (
                   <option key={pack.id} value={`pack:${pack.id}`}>
                     {pack.name}
                   </option>
                 ))}
-                <option value="file">{fontBusy ? "Додаю шрифт…" : "Завантажити файл шрифту (.ttf, .otf, .woff, .zip)…"}</option>
+                <option value="file">{fontBusy ? i18n.t("ui.DecoratorModal.dodaiuShryft") : i18n.t("ui.DecoratorModal.zavantazhytyFailShryftuTtf")}</option>
               </optgroup>
             </Select>
             <FiChevronDown />
@@ -2372,8 +2368,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                 onChange={setGoogleDraft}
                 suggestions={GOOGLE_FONTS.map((f) => ({ value: f.name, label: f.hint }))}
                 onEnter={() => googleDraft.trim() && (setFont({ kind: "google", name: googleDraft }), setGoogleDraft(null))}
-                placeholder="Назва з fonts.google.com, напр. Lobster"
-                ariaLabel="Назва шрифту з Google Fonts"
+                placeholder={i18n.t("ui.DecoratorModal.nazvaZFontsGoogle")}
+                ariaLabel={i18n.t("ui.DecoratorModal.nazvaShryftuZGoogle")}
               />
               <AddBtn
                 type="button"
@@ -2382,8 +2378,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                   setFont({ kind: "google", name: googleDraft });
                   setGoogleDraft(null);
                 }}
-                aria-label="Застосувати шрифт"
-                title="Застосувати"
+                aria-label={i18n.t("ui.DecoratorModal.zastosuvatyShryft")}
+                title={i18n.t("ui.DecoratorModal.zastosuvaty")}
                 data-decorator-ignore="true"
               >
                 <FiCheck />
@@ -2391,7 +2387,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
             </Controls>
           )}
           <FontPreview style={{ fontFamily: val || "inherit" }}>
-            Погода в Конотопі −3°C, сніг · Ґґ Єє Її 0123
+            {i18n.t("ui.DecoratorModal.pohodaVKonotopi3")}
           </FontPreview>
           {fileError.font && <ErrorText role="alert">{fileError.font}</ErrorText>}
         </>
@@ -2407,8 +2403,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
             renderColor(
               styles["--dec-react-color"] || "",
               (v) => handleChange("--dec-react-color", v, mode),
-              "Колір тіні",
-              "як у тексту",
+              i18n.t("ui.DecoratorModal.kolirTini"),
+              i18n.t("ui.DecoratorModal.iakUTekstu"),
             )}
         </>
       );
@@ -2432,12 +2428,12 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                     mode,
                   )
                 }
-                aria-label="Глибина задньої грані"
+                aria-label={i18n.t("ui.DecoratorModal.hlybynaZadnoiHrani")}
                 data-decorator-ignore="true"
               >
                 {EDGE_DEPTHS.map((d) => (
                   <option key={d} value={d}>
-                    Грань {d}
+                    {i18n.t("ui.DecoratorModal.hran")} {d}
                   </option>
                 ))}
               </Select>
@@ -2447,8 +2443,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
         </Controls>
           {on && (
             <>
-              <PropDesc>Положення задньої грані</PropDesc>
-              <Segmented role="radiogroup" aria-label="Положення задньої грані">
+              <PropDesc>{i18n.t("ui.DecoratorModal.polozhenniaZadnoiHrani")}</PropDesc>
+              <Segmented role="radiogroup" aria-label={i18n.t("ui.DecoratorModal.polozhenniaZadnoiHrani")}>
                 {Object.entries(CUBE_DIR_ICONS).map(([id, DirIcon]) => {
                   const active = (styles["--dec-3d-dir"] || CUBE_DEFAULT_DIR) === id;
                   return (
@@ -2470,25 +2466,25 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                   );
                 })}
               </Segmented>
-              <PropDesc>Колір ребер</PropDesc>
+              <PropDesc>{i18n.t("ui.DecoratorModal.kolirReber")}</PropDesc>
               {renderColor(
                 styles["--dec-3d-color"] || "",
                 (v) => handleChange("--dec-3d-color", v, mode),
-                "Колір ребер",
-                "як у тексту",
+                i18n.t("ui.DecoratorModal.kolirReber"),
+                i18n.t("ui.DecoratorModal.iakUTekstu"),
               )}
-              <PropDesc>Заливка всередині граней</PropDesc>
+              <PropDesc>{i18n.t("ui.DecoratorModal.zalyvkaVseredyniHranei")}</PropDesc>
               {(() => {
                 const fill = styles["--dec-3d-fill"] || "";
                 const fillMode = !fill ? "button" : fill === "transparent" ? "none" : "custom";
                 const setFill = (v) => handleChange("--dec-3d-fill", v, mode);
                 return (
                   <>
-                    <Segmented role="radiogroup" aria-label="Заливка всередині граней">
+                    <Segmented role="radiogroup" aria-label={i18n.t("ui.DecoratorModal.zalyvkaVseredyniHranei")}>
                       {[
-                        ["button", "Як кнопка", ""],
-                        ["custom", "Свій колір", "#000000"],
-                        ["none", "Без заливки", "transparent"],
+                        ["button", i18n.t("ui.DecoratorModal.iakKnopka"), ""],
+                        ["custom", i18n.t("ui.DecoratorModal.sviiKolir"), "#000000"],
+                        ["none", i18n.t("ui.DecoratorModal.bezZalyvky"), "transparent"],
                       ].map(([id, text, value]) => (
                         <SegmentBtn
                           key={id}
@@ -2503,7 +2499,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                         </SegmentBtn>
                       ))}
                     </Segmented>
-                    {fillMode === "custom" && renderColor(fill, setFill, "Колір заливки", "#000000")}
+                    {fillMode === "custom" && renderColor(fill, setFill, i18n.t("ui.DecoratorModal.kolirZalyvky"), "#000000")}
                   </>
                 );
               })()}
@@ -2513,8 +2509,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
             <Warning role="note" $tone="hint">
               <FiInfo />
               <span>
-                Пропозиція: у кнопки немає рамки — прибрати заокруглення й додати рамку{" "}
-                <code>{cubeBorderHint}</code>, щоб куб мав чіткі ребра.
+                {i18n.t("ui.DecoratorModal.propozytsiiaUKnopkyNemaie")}{" "}
+                <code>{cubeBorderHint}</code>{i18n.t("ui.DecoratorModal.shchobKubMavChitki")}
               </span>
               <GhostBtn
                 onClick={() => {
@@ -2523,7 +2519,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                 }}
                 data-decorator-ignore="true"
               >
-                <FiCheck /> Застосувати
+                <FiCheck /> {i18n.t("ui.DecoratorModal.zastosuvaty")}
               </GhostBtn>
             </Warning>
           )}
@@ -2532,9 +2528,9 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
               <FiAlertTriangle />
               <span>
                 {cubeBlocker === "replaced"
-                  ? `На <${tagName}> грань не намалювати.`
-                  : "Цей елемент обрізає все поза своїми межами (overflow), тож грані не буде видно."}{" "}
-                {parentTag ? "Виберіть батьківський елемент — наприклад, саму кнопку замість напису в ній." : ""}
+                  ? i18n.t("ui.DecoratorModal.naHranNeNamaliuvaty", { tagName: tagName })
+                  : i18n.t("ui.DecoratorModal.tseiElementObrizaieVse")}{" "}
+                {parentTag ? i18n.t("ui.DecoratorModal.vyberitBatkivskyiElementNapryklad") : ""}
               </span>
               {parentTag && (
                 <GhostBtn onClick={onSelectParent} data-decorator-ignore="true">
@@ -2548,7 +2544,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
     }
 
     if (type === "color") {
-      return renderColor(val, (v) => handleChange(cssProp, v), label, "#ffb36c або transparent");
+      return renderColor(val, (v) => handleChange(cssProp, v), label, i18n.t("ui.DecoratorModal.ffb36cAboTransparent"));
     }
 
     if (type === "cursor") {
@@ -2558,20 +2554,20 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
             value={val}
             onChange={(e) => handleChange(cssProp, e.target.value)}
             data-decorator-ignore="true"
-            aria-label={`${label}: вигляд курсора`}
+            aria-label={i18n.t("ui.DecoratorModal.vyhliadKursora", { label: label })}
           >
-            <option value="">Успадковується</option>
-            <option value="default">Стрілка (default)</option>
-            <option value="pointer">Вказівник (pointer)</option>
-            <option value="grab">Рука відкрита (grab)</option>
-            <option value="grabbing">Рука стиснута (grabbing)</option>
-            <option value="zoom-in">Збільшення (zoom-in)</option>
-            <option value="zoom-out">Зменшення (zoom-out)</option>
-            <option value="text">Текст (text)</option>
-            <option value="not-allowed">Заборонено (not-allowed)</option>
-            <option value="help">Довідка (help)</option>
-            <option value="wait">Очікування (wait)</option>
-            <option value="move">Переміщення (move)</option>
+            <option value="">{i18n.t("ui.DecoratorModal.uspadkovuietsia")}</option>
+            <option value="default">{i18n.t("ui.DecoratorModal.strilkaDefault")}</option>
+            <option value="pointer">{i18n.t("ui.DecoratorModal.vkazivnykPointer")}</option>
+            <option value="grab">{i18n.t("ui.DecoratorModal.rukaVidkrytaGrab")}</option>
+            <option value="grabbing">{i18n.t("ui.DecoratorModal.rukaStysnutaGrabbing")}</option>
+            <option value="zoom-in">{i18n.t("ui.DecoratorModal.zbilshenniaZoomIn")}</option>
+            <option value="zoom-out">{i18n.t("ui.DecoratorModal.zmenshenniaZoomOut")}</option>
+            <option value="text">{i18n.t("ui.DecoratorModal.tekstText")}</option>
+            <option value="not-allowed">{i18n.t("ui.DecoratorModal.zaboronenoNotAllowed")}</option>
+            <option value="help">{i18n.t("ui.DecoratorModal.dovidkaHelp")}</option>
+            <option value="wait">{i18n.t("ui.DecoratorModal.ochikuvanniaWait")}</option>
+            <option value="move">{i18n.t("ui.DecoratorModal.peremishchenniaMove")}</option>
           </Select>
           <FiChevronDown />
         </SelectWrap>
@@ -2592,7 +2588,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                 value={parsed.width}
                 onChange={(e) => set(e.target.value, parsed.style, parsed.color)}
                 data-decorator-ignore="true"
-                aria-label={`${label}: товщина`}
+                aria-label={i18n.t("ui.DecoratorModal.tovshchyna", { label: label })}
               >
                 {widths.map((w) => (
                   <option key={w} value={w}>
@@ -2607,17 +2603,17 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                 value={parsed.style}
                 onChange={(e) => set(parsed.width, e.target.value, parsed.color)}
                 data-decorator-ignore="true"
-                aria-label={`${label}: стиль`}
+                aria-label={i18n.t("ui.DecoratorModal.styl", { label: label })}
               >
-                <option value="none">Немає</option>
-                <option value="solid">Суцільна</option>
-                <option value="double">Подвійна</option>
-                <option value="dashed">Штрихова</option>
-                <option value="dotted">Пунктирна</option>
-                <option value="groove">3D жолоб</option>
-                <option value="ridge">3D гребінь</option>
-                <option value="inset">3D втиснута</option>
-                <option value="outset">3D витиснута</option>
+                <option value="none">{i18n.t("ui.DecoratorModal.nemaie")}</option>
+                <option value="solid">{i18n.t("ui.DecoratorModal.sutsilna")}</option>
+                <option value="double">{i18n.t("ui.DecoratorModal.podviina")}</option>
+                <option value="dashed">{i18n.t("ui.DecoratorModal.shtrykhova")}</option>
+                <option value="dotted">{i18n.t("ui.DecoratorModal.punktyrna")}</option>
+                <option value="groove">{i18n.t("ui.DecoratorModal.3dZholob")}</option>
+                <option value="ridge">{i18n.t("ui.DecoratorModal.3dHrebin")}</option>
+                <option value="inset">{i18n.t("ui.DecoratorModal.3dVtysnuta")}</option>
+                <option value="outset">{i18n.t("ui.DecoratorModal.3dVytysnuta")}</option>
               </Select>
               <FiChevronDown />
             </SelectWrap>
@@ -2626,7 +2622,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
             renderColor(
               parsed.color,
               (c) => set(parsed.width, parsed.style, c),
-              `${label}: колір`,
+              i18n.t("ui.DecoratorModal.kolir", { label: label }),
               "#ffb36c",
             )}
         </>
@@ -2641,14 +2637,13 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
           value={val}
           onChange={(v) => handleChange(cssProp, v)}
           suggestions={suggestionsFor(cssProp)}
-          placeholder={placeholder || "успадковується"}
+          placeholder={placeholder || i18n.t("ui.DecoratorModal.uspadkovuietsia2")}
           ariaLabel={label}
         />
         {isSlowValue(val) && (
           <SlowNote role="note">
             <FiAlertCircle />
-            Розмиття повільне на слабких пристроях: телефони й старі ноутбуки можуть гальмувати під час
-            прокрутки. Краще невеликі значення, наприклад blur(4px).
+            {i18n.t("ui.DecoratorModal.rozmyttiaPovilneNaSlabkykh")}
           </SlowNote>
         )}
       </>
@@ -2696,11 +2691,11 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
             <PropLabel>
               {prop.label}
               {mixed ? (
-                <ChangedTag title="У позначених темах/станах значення різні — нове значення запишеться в усі">
-                  різні значення
+                <ChangedTag title={i18n.t("ui.DecoratorModal.uPoznachenykhTemakhStanakh")}>
+                  {i18n.t("ui.DecoratorModal.rizniZnachennia")}
                 </ChangedTag>
               ) : (
-                val && <ChangedTag>змінено</ChangedTag>
+                val && <ChangedTag>{i18n.t("ui.DecoratorModal.zmineno")}</ChangedTag>
               )}
             </PropLabel>
             <PropDesc>{prop.desc}</PropDesc>
@@ -2708,8 +2703,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
           {changed && (
             <ResetBtn
               onClick={() => resetProp(prop, mode)}
-              aria-label={`Скинути: ${prop.label}`}
-              title="Скинути"
+              aria-label={i18n.t("ui.DecoratorModal.skynuty", { label: prop.label })}
+              title={i18n.t("ui.DecoratorModal.skynuty2")}
               data-decorator-ignore="true"
             >
               <FiRotateCcw />
@@ -2728,12 +2723,12 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
           <FiCode />
         </PropIcon>
         <PropText>
-          <PropLabel>Власні властивості</PropLabel>
-          <PropDesc>Будь-яка CSS-властивість. Почніть вводити назву — з'являться підказки. Enter — додати</PropDesc>
+          <PropLabel>{i18n.t("ui.DecoratorModal.vlasniVlastyvosti")}</PropLabel>
+          <PropDesc>{i18n.t("ui.DecoratorModal.budIakaCssVlastyvist")}</PropDesc>
         </PropText>
       </PropHead>
 
-      {customProps.length === 0 && <EmptyNote>Власних властивостей ще немає</EmptyNote>}
+      {customProps.length === 0 && <EmptyNote>{i18n.t("ui.DecoratorModal.vlasnykhVlastyvosteiShcheNemaie")}</EmptyNote>}
 
       {customProps.map(([name, value]) => (
         <Controls key={name}>
@@ -2755,8 +2750,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
           />
           <ResetBtn
             onClick={() => handleChange(name, "")}
-            aria-label={`Прибрати ${name}`}
-            title="Прибрати"
+            aria-label={i18n.t("ui.DecoratorModal.prybraty", { name: name })}
+            title={i18n.t("ui.DecoratorModal.prybraty2")}
             data-decorator-ignore="true"
           >
             <FiX />
@@ -2769,21 +2764,21 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
           value={newPropName}
           onChange={setNewPropName}
           suggestions={PROPERTY_SUGGESTIONS}
-          placeholder="властивість, напр. letter-spacing"
-          ariaLabel="Назва властивості"
+          placeholder={i18n.t("ui.DecoratorModal.vlastyvistNaprLetterSpacing")}
+          ariaLabel={i18n.t("ui.DecoratorModal.nazvaVlastyvosti")}
         />
         <SuggestField
           value={newPropValue}
           onChange={setNewPropValue}
           suggestions={suggestionsFor(newPropName.trim())}
           onEnter={handleAddCustom}
-          placeholder="значення"
-          ariaLabel="Значення властивості"
+          placeholder={i18n.t("ui.DecoratorModal.znachennia")}
+          ariaLabel={i18n.t("ui.DecoratorModal.znachenniaVlastyvosti")}
         />
         <AddBtn
           onClick={handleAddCustom}
-          aria-label="Додати властивість"
-          title="Додати"
+          aria-label={i18n.t("ui.DecoratorModal.dodatyVlastyvist")}
+          title={i18n.t("ui.DecoratorModal.dodaty")}
           data-decorator-ignore="true"
         >
           <FiPlus />
@@ -2794,10 +2789,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
         <Warning role="note">
           <FiAlertTriangle />
           <span>
-            <b>Будьте в міру.</b> Ширина, висота, прозорість, відступи, розмір шрифту та інші
-            властивості розміщення можуть зламати вигляд сайту або зробити його незручним: блоки
-            наїжджають один на одного, текст обрізається, кнопки зникають. Змінюйте потроху й
-            перевіряйте результат — скасувати можна в «Журналі змін» або режимом «Оригінал».
+            <b>{i18n.t("ui.DecoratorModal.budteVMiru")}</b> {i18n.t("ui.DecoratorModal.shyrynaVysotaProzoristVidstupy")}
           </span>
         </Warning>
       )}
@@ -2831,25 +2823,25 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
           </HeaderIcon>
           <HeaderText>
             <Title id="decorator-title">
-              Декоратор <TagBadge>&lt;{tagName}&gt;</TagBadge>
+              {i18n.t("ui.DecoratorModal.dekorator")} <TagBadge>&lt;{tagName}&gt;</TagBadge>
             </Title>
             <Subtitle>
-              Декоративний шаблон {activePreset + 1} · інший шаблон не зміниться
+              {i18n.t("ui.DecoratorModal.dekoratyvnyiShablon")} {activePreset + 1} {i18n.t("ui.DecoratorModal.inshyiShablonNeZminytsia")}
             </Subtitle>
           </HeaderText>
           {parentTag && (
             <GhostBtn
               onClick={onSelectParent}
-              title="Вибрати елемент, у якому лежить цей (наприклад, кнопку замість напису в ній)"
+              title={i18n.t("ui.DecoratorModal.vybratyElementUIakomu")}
               data-decorator-ignore="true"
             >
-              <FiCornerLeftUp /> Батьківський <TagBadge>&lt;{parentTag}&gt;</TagBadge>
+              <FiCornerLeftUp /> {i18n.t("ui.DecoratorModal.batkivskyi")} <TagBadge>&lt;{parentTag}&gt;</TagBadge>
             </GhostBtn>
           )}
           <IconBtn
             onClick={onClose}
-            aria-label="Закрити"
-            title="Закрити (Esc)"
+            aria-label={i18n.t("ui.DecoratorModal.zakryty")}
+            title={i18n.t("ui.DecoratorModal.zakrytyEsc")}
             data-decorator-ignore="true"
           >
             <FiX />
@@ -2857,26 +2849,26 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
         </ModalHeader>
 
         <Main>
-          <Sidebar aria-label="Розділи Декоратора">
-            <SideLabel>Що редагуємо</SideLabel>
+          <Sidebar aria-label={i18n.t("ui.DecoratorModal.rozdilyDekoratora")}>
+            <SideLabel>{i18n.t("ui.DecoratorModal.shchoRedahuiemo")}</SideLabel>
             <ModeBlock>
               {[
                 {
-                  label: "Тема сайту",
+                  label: i18n.t("ui.DecoratorModal.temaSaitu"),
                   list: themes,
                   setList: setThemes,
                   items: [
-                    ["light", "Денна", FiSun],
-                    ["dark", "Темна", FiMoon],
+                    ["light", i18n.t("ui.DecoratorModal.denna"), FiSun],
+                    ["dark", i18n.t("ui.DecoratorModal.temna"), FiMoon],
                   ],
                 },
                 {
-                  label: "Стан елемента",
+                  label: i18n.t("ui.DecoratorModal.stanElementa"),
                   list: states,
                   setList: setStates,
                   items: [
-                    ["default", "Звичайний", FiSquare],
-                    ["hover", "Наведення", FiMousePointer],
+                    ["default", i18n.t("ui.DecoratorModal.zvychainyi"), FiSquare],
+                    ["hover", i18n.t("ui.DecoratorModal.navedennia"), FiMousePointer],
                   ],
                 },
               ].map((group) => (
@@ -2890,7 +2882,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                         role="checkbox"
                         aria-checked={on}
                         $active={on}
-                        title={on && group.list.length === 1 ? "Хоча б один пункт має бути позначений" : undefined}
+                        title={on && group.list.length === 1 ? i18n.t("ui.DecoratorModal.khochaBOdynPunkt") : undefined}
                         onClick={() => toggleIn(group.setList, id)}
                         data-decorator-ignore="true"
                       >
@@ -2904,8 +2896,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
             </ModeBlock>
             <SideHint>
               {targetModes.length > 1
-                ? `Зміни запишуться одразу в ${targetModes.length} варіанти. `
-                : "Позначте кілька — зміна запишеться в усі одразу. "}
+                ? i18n.t("ui.DecoratorModal.zminyZapyshutsiaOdrazuV", { length: targetModes.length }) + " "
+                : i18n.t("ui.DecoratorModal.poznachteKilkaZminaZapyshetsia") + " "}
               {targetModes.length < 4 ? (
                 <button
                   type="button"
@@ -2915,7 +2907,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                   }}
                   data-decorator-ignore="true"
                 >
-                  Позначити всі 4
+                  {i18n.t("ui.DecoratorModal.poznachytyVsi4")}
                 </button>
               ) : (
                 <button
@@ -2926,12 +2918,12 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                   }}
                   data-decorator-ignore="true"
                 >
-                  Лише поточний вигляд
+                  {i18n.t("ui.DecoratorModal.lyshePotochnyiVyhliad")}
                 </button>
               )}
             </SideHint>
 
-            <SideLabel>Розділи</SideLabel>
+            <SideLabel>{i18n.t("ui.DecoratorModal.rozdily")}</SideLabel>
             <NavList role="tablist" aria-orientation="vertical">
               {NAV_GROUPS.map((group) => {
                 const active = group.id === currentGroup.id;
@@ -2950,7 +2942,7 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
                       <GroupIcon />
                     </NavIcon>
                     <NavText>{group.title}</NavText>
-                    {count > 0 && <CountBadge aria-label={`змін: ${count}`}>{count}</CountBadge>}
+                    {count > 0 && <CountBadge aria-label={i18n.t("ui.DecoratorModal.zmin", { count: count })}>{count}</CountBadge>}
                   </NavItem>
                 );
               })}
@@ -2959,11 +2951,11 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
             <SideFooter>
               <span>
                 {changedCount
-                  ? `Змінено властивостей: ${changedCount}`
-                  : "Для цього стану змін ще немає"}
+                  ? i18n.t("ui.DecoratorModal.zminenoVlastyvostei", { changedCount: changedCount })
+                  : i18n.t("ui.DecoratorModal.dliaTsohoStanuZmin")}
               </span>
               <GhostBtn onClick={clearCurrentTheme} data-decorator-ignore="true">
-                <FiRotateCcw /> Очистити тему
+                <FiRotateCcw /> {i18n.t("ui.DecoratorModal.ochystytyTemu")}
               </GhostBtn>
             </SideFooter>
           </Sidebar>
@@ -2981,9 +2973,8 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
 
             {currentGroup.fixedState && (
               <StateNote>
-                {themes.length > 1 ? <FiSun /> : activeTheme === "dark" ? <FiMoon /> : <FiSun />} Діє для{" "}
-                {themes.length > 1 ? "обох тем" : `теми «${activeTheme === "dark" ? "Темна" : "Денна"}»`} в обох
-                станах — і без наведення, і з ним
+                {themes.length > 1 ? <FiSun /> : activeTheme === "dark" ? <FiMoon /> : <FiSun />} {i18n.t("ui.DecoratorModal.diieDlia")}{" "}
+                {themes.length > 1 ? i18n.t("ui.DecoratorModal.obokhTem") : i18n.t("ui.DecoratorModal.temy", { v0: activeTheme === "dark" ? "Темна" : "Денна" })} {i18n.t("ui.DecoratorModal.vObokhStanakhI")}
               </StateNote>
             )}
 
@@ -3000,13 +2991,13 @@ const DecoratorModal = ({ targetElement, onClose, onSelectParent, parentTag }) =
         <Footer>
           <PassthroughBtn
             onClick={handlePassthrough}
-            title="Натиснути на елемент як зазвичай"
+            title={i18n.t("ui.DecoratorModal.natysnutyNaElementIak")}
             data-decorator-ignore="true"
           >
-            <FiPlay /> Виконати дію
+            <FiPlay /> {i18n.t("ui.DecoratorModal.vykonatyDiiu")}
           </PassthroughBtn>
           <ApplyBtn onClick={handleApply} data-decorator-ignore="true">
-            <FiCheck /> Застосувати
+            <FiCheck /> {i18n.t("ui.DecoratorModal.zastosuvaty")}
           </ApplyBtn>
         </Footer>
       </Modal>

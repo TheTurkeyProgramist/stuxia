@@ -4,6 +4,7 @@ import { useTutorial } from './TutorialContext.jsx';
 import dominoVideo from '../../media/characters/kate-and-domino.webm';
 import { getPageScroller } from '../../utils/siteMirror';
 
+import i18n from "../../i18n/i18n.js";
 const ACCENT = '#ffb36c';
 const TOTAL_STEPS = 8;
 
@@ -296,7 +297,7 @@ const HighlightOutline = styled.div`
 const QUIP_SEEN_KEY = 'domino_quip_speechless_seen';
 const QUIP_IDLE_MS = 8000;
 const QUIP_VISIBLE_MS = 6500;
-const QUIP_TEXT = 'Бачу, Стихія тебе вразила — аж слів забракло?';
+const QUIP_TEXT = () => (i18n.t("ui.DominoTutorial.bachuStykhiiaTebeVrazyla"));
 
 const QuipBubble = styled.div`
   ${panelSurface}
@@ -387,8 +388,8 @@ const DominoQuip = () => {
     <QuipBubble style={pos} role="status" aria-live="polite" onClick={() => setPos(null)}>
       <DominoMascot size={40} />
       <div>
-        <b>Доміно</b>
-        <span>{QUIP_TEXT}</span>
+        <b>{i18n.t("ui.DominoTutorial.domino")}</b>
+        <span>{QUIP_TEXT()}</span>
       </div>
     </QuipBubble>
   );
@@ -548,12 +549,12 @@ const DominoTutorial = ({ user }) => {
     {
       step: 1,
       targetName: 'heroInput',
-      text: 'Привіт, я Доміно! Давай дізнаємось погоду: введи назву свого міста та обери потрібну точку у списку. Можна натиснути кілька міст поспіль.',
+      text: i18n.t("ui.DominoTutorial.pryvitIaDominoDavai"),
     },
     {
       step: 2,
       targetName: null,
-      text: 'Чудово! А тепер давай спустимось нижче, щоб подивитися прогноз.',
+      text: i18n.t("ui.DominoTutorial.chudovoATeperDavai"),
       autoAction: () => {
         setTimeout(() => {
           document.body.style.overflow = '';
@@ -569,18 +570,18 @@ const DominoTutorial = ({ user }) => {
     {
       step: 3,
       targetName: 'weatherGear',
-      text: 'У цій картці показано детальний прогноз. Натисни на іконку шестерні для налаштувань.',
+      text: i18n.t("ui.DominoTutorial.uTsiiKarttsiPokazano"),
     },
     {
       step: 4,
       targetName: 'weatherModal',
-      text: 'Тут налаштовуються деталі прогнозу, важливі дати, фони та порядок карток.\n\n• До 9 карток плюс GPS-картка (понад 5 — навантаження на пристрій).\n• До 20 нових карток на добу.'
+      text: i18n.t("ui.DominoTutorial.tutNalashtovuiutsiaDetaliProhnozu")
     },
     {
       step: 5,
       // Секція карт у App має id="map" — спускаємось до неї й підсвічуємо
       targetId: 'map',
-      text: 'Тут усі карти в одному місці: Windy і Ventusky для погоди, мапа тривог, DeepState та інші.\n\n• Обирай джерело в списку карт.\n• Додавай власні фрейми — сайти, які дозволяють вбудовування (ми перевіримо це за тебе).\n• На комп’ютері та планшеті (горизонтально) можна відкрити дві карти поруч.',
+      text: i18n.t("ui.DominoTutorial.tutUsiKartyV"),
       onEnter: () => {
         window.dispatchEvent(new CustomEvent('domino-close-weather-settings'));
       }
@@ -588,17 +589,17 @@ const DominoTutorial = ({ user }) => {
     {
       step: 6,
       targetName: 'newsHeader',
-      text: 'Додавай свої джерела новин! Ми автоматично блокуємо казино, 18+, політику та кримінал. Згодом тут можна підключати YouTube, Telegram та інші канали.'
+      text: i18n.t("ui.DominoTutorial.dodavaiSvoiDzherelaNovyn")
     },
     {
       step: 7,
       targetName: 'headerBgTheme',
-      text: 'Персоналізуй сайт: обирай тематичні фони (Динофроз, природа, кіно) та налаштовуй загальну тему сайту.'
+      text: i18n.t("ui.DominoTutorial.personalizuiSaitObyraiTematychni")
     },
     {
       step: 8,
       targetName: null,
-      text: user ? 'Дякуємо, що ти з нами! Насолоджуйся сайтом.' : 'Увійди, щоб отримати повний доступ. І пам’ятай: не жартуй з Несероном! :)',
+      text: user ? i18n.t("ui.DominoTutorial.diakuiemoShchoTyZ") : i18n.t("ui.DominoTutorial.uviidyShchobOtrymatyPovnyi"),
       isLast: true,
     }
   ];
@@ -639,17 +640,17 @@ const DominoTutorial = ({ user }) => {
 
   if (promptMounted || showInitialModal) {
     return (
-      <CornerPrompt $closing={!showInitialModal} role="dialog" aria-label="Навчання від Доміно">
-        <CornerClose onClick={skipTutorial} aria-label="Закрити">×</CornerClose>
+      <CornerPrompt $closing={!showInitialModal} role="dialog" aria-label={i18n.t("ui.DominoTutorial.navchanniaVidDomino")}>
+        <CornerClose onClick={skipTutorial} aria-label={i18n.t("ui.DominoTutorial.zakryty")}>×</CornerClose>
         <CornerHead>
           <DominoMascot size={52} />
           <CornerTitle>
-            Я Доміно!
-            <span>Покажу сайт за хвилину</span>
+            {i18n.t("ui.DominoTutorial.iaDomino")}
+            <span>{i18n.t("ui.DominoTutorial.pokazhuSaitZaKhvylynu")}</span>
           </CornerTitle>
         </CornerHead>
-        <CornerButton onClick={startTutorial}>Почати навчання</CornerButton>
-        <CornerHint>Запустити знову можна в Параметрах → Режими сайту</CornerHint>
+        <CornerButton onClick={startTutorial}>{i18n.t("ui.DominoTutorial.pochatyNavchannia")}</CornerButton>
+        <CornerHint>{i18n.t("ui.DominoTutorial.zapustytyZnovuMozhnaV")}</CornerHint>
       </CornerPrompt>
     );
   }
@@ -671,8 +672,8 @@ const DominoTutorial = ({ user }) => {
         <PopoverHead>
           <DominoMascot size={48} />
           <PopoverMeta>
-            <PopoverName>Доміно</PopoverName>
-            <StepLabel>Крок {currentStep} з {TOTAL_STEPS}</StepLabel>
+            <PopoverName>{i18n.t("ui.DominoTutorial.domino")}</PopoverName>
+            <StepLabel>{i18n.t("ui.DominoTutorial.krok")} {currentStep} {i18n.t("ui.DominoTutorial.z")} {TOTAL_STEPS}</StepLabel>
             <Progress aria-hidden="true">
               {Array.from({ length: TOTAL_STEPS }, (_, i) => (
                 <ProgressDot key={i} $done={i < currentStep} />
@@ -684,12 +685,12 @@ const DominoTutorial = ({ user }) => {
         {!currentStepData.noSkip && (
           <PopoverActions>
             {showSkipToEnd ? (
-              <SkipAllButton onClick={handleSkipAll} title={`Пропустити до кроку ${TOTAL_STEPS}`}>
-                До кінця →
+              <SkipAllButton onClick={handleSkipAll} title={i18n.t("ui.DominoTutorial.propustytyDoKroku", { TOTAL_STEPS: TOTAL_STEPS })}>
+                {i18n.t("ui.DominoTutorial.doKintsia")}
               </SkipAllButton>
             ) : <span />}
             <NextButton onClick={handleSkip} disabled={skipDisabled}>
-              {currentStepData.isLast ? 'Завершити' : 'Пропустити'}
+              {currentStepData.isLast ? i18n.t("ui.DominoTutorial.zavershyty") : i18n.t("ui.DominoTutorial.propustyty")}
             </NextButton>
           </PopoverActions>
         )}

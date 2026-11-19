@@ -9,13 +9,14 @@ import {
   markDonateClicked,
 } from "./supportNudge";
 
+import i18n from "../../i18n/i18n.js";
 // Через скільки після завантаження перевіряти «місячну» плашку
 const MONTHLY_DELAY_MS = 90 * 1000;
 
 const MESSAGES = {
-  monthly: "Стихія завжди буде безкоштовною. Якщо хочете допомогти їй жити — ось банка.",
-  cards: "Бачимо, ви вже стежите за кількома містами — радіємо, що Стихія стала в пригоді. Вона завжди буде безкоштовною, а якщо хочете допомогти — ось банка.",
-  bg: "Гарний вибір фону! Стихія завжди буде безкоштовною, а якщо хочете допомогти їй жити — ось банка.",
+  get monthly() { return i18n.t("ui.SupportBanner.stykhiiaZavzhdyBudeBezkoshtovnoiu"); },
+  get cards() { return i18n.t("ui.SupportBanner.bachymoVyVzheStezhyte"); },
+  get bg() { return i18n.t("ui.SupportBanner.harnyiVybirFonuStykhiia"); },
 };
 
 const slideUp = keyframes`
@@ -134,9 +135,9 @@ const SupportBanner = ({ isDarkMode, user, onOpenDetails }) => {
   if (!reason || supporter) return null;
 
   return (
-    <Bar $isDarkMode={isDarkMode} role="complementary" aria-label="Підтримка Стихії">
+    <Bar $isDarkMode={isDarkMode} role="complementary" aria-label={i18n.t("ui.SupportBanner.pidtrymkaStykhii")}>
       <Text>
-        <strong>Стихія живе завдяки вам</strong>
+        <strong>{i18n.t("ui.SupportBanner.stykhiiaZhyveZavdiakyVam")}</strong>
         {MESSAGES[reason]}
       </Text>
       <Actions>
@@ -149,7 +150,7 @@ const SupportBanner = ({ isDarkMode, user, onOpenDetails }) => {
             setReason(null);
           }}
         >
-          Банка
+          {i18n.t("ui.SupportBanner.banka")}
         </DonateLink>
         {onOpenDetails && (
           <GhostBtn
@@ -159,10 +160,10 @@ const SupportBanner = ({ isDarkMode, user, onOpenDetails }) => {
               onOpenDetails();
             }}
           >
-            Скільки це коштує?
+            {i18n.t("ui.SupportBanner.skilkyTseKoshtuie")}
           </GhostBtn>
         )}
-        <CloseBtn type="button" onClick={() => setReason(null)} aria-label="Закрити">
+        <CloseBtn type="button" onClick={() => setReason(null)} aria-label={i18n.t("ui.SupportBanner.zakryty")}>
           ×
         </CloseBtn>
       </Actions>

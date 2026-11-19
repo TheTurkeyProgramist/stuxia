@@ -5,6 +5,7 @@ import { FiSearch, FiCheck } from 'react-icons/fi';
 import LanguageScene from './LanguageScene.jsx';
 import { useSceneDecor } from '../../utils/sceneDecor.js';
 import { ALL_LANGUAGES, isRTL } from '../../i18n/useI18nHelpers';
+import { saveChosenLanguage } from '../../i18n/i18n.js';
 import '../../../src/i18n/i18n.css';
 
 // ── Styled Components ──────────────────────────────────────────────────────────
@@ -220,6 +221,7 @@ const LanguagePicker = () => {
   }, [search]);
 
   const handleSelectLanguage = (code) => {
+    saveChosenLanguage(code);
     i18n.changeLanguage(code);
   };
 

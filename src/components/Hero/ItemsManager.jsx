@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { addItem, removeItem, updateItem, selectItems } from "./itemsSlice";
 
+import i18n from "../../i18n/i18n.js";
 const ItemsManager = () => {
   const [text, setText] = useState("");
   const items = useSelector(selectItems);
@@ -15,7 +16,7 @@ const ItemsManager = () => {
   };
 
   const handleUpdate = (id) => {
-    const newText = prompt("Введіть новий текст:");
+    const newText = prompt(i18n.t("ui.ItemsManager.vveditNovyiTekst"));
     if (newText) {
       dispatch(updateItem({ id, text: newText }));
     }
@@ -26,17 +27,17 @@ const ItemsManager = () => {
       <input
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Новий елемент"
+        placeholder={i18n.t("ui.ItemsManager.novyiElement")}
       />
-      <button onClick={handleAdd}>Додати</button>
+      <button onClick={handleAdd}>{i18n.t("ui.ItemsManager.dodaty")}</button>
 
       <ul>
         {items.map((item) => (
           <li key={item.id}>
             {item.text}
-            <button onClick={() => handleUpdate(item.id)}>Редагувати</button>
+            <button onClick={() => handleUpdate(item.id)}>{i18n.t("ui.ItemsManager.redahuvaty")}</button>
             <button onClick={() => dispatch(removeItem(item.id))}>
-              Видалити
+              {i18n.t("ui.ItemsManager.vydalyty")}
             </button>
           </li>
         ))}

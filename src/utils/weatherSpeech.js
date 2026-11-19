@@ -5,6 +5,7 @@
 //  • "piper" — нейромережа Piper прямо в браузері (@mintplex-labs/piper-tts-web): однаково звучить
 //    на будь-якому пристрої, але модель (20–77 МБ) завантажується один раз і зберігається в браузері.
 import { getPref, setPref } from "./prefsStore.js";
+import { getWeatherSummaryTextIn } from "./weatherText.js";
 
 export const VOICE_PREF_KEYS = {
   engine: "beta_voice_engine",
@@ -235,7 +236,11 @@ export const buildForecastSpeech = (card) => {
   const hourPrefix = `${toLocalIsoDate(now)}T${String(now.getHours()).padStart(2, "0")}`;
   const nowHour =
     card.hourly?.find((h) => h.fullTime?.startsWith(hourPrefix)) || card.hourly?.[0];
-  const description = nowHour?.description?.replace(/\p{Extended_Pictographic}/gu, "").trim();
+  // Голоси озвучення українські — тож і опис погоди беремо українською за кодом
+  const description =
+    nowHour?.weather_code !== undefined && nowHour?.weather_code !== null
+      ? getWeatherSummaryTextIn("uk", nowHour.weather_code, nowHour.is_day ?? 1)
+      : nowHour?.description?.replace(/\p{Extended_Pictographic}/gu, "").trim();
 
   const temp = parseNum(card.current.tempNum ?? card.current.temp);
   if (temp !== null) {

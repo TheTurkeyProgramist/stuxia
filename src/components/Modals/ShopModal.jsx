@@ -19,6 +19,7 @@ import {
   INVITE_WINDOW_DAYS,
 } from "../../utils/referral.js";
 
+import i18n from "../../i18n/i18n.js";
 const CLOSE_DURATION_MS = 500;
 
 const slideIn = keyframes`
@@ -593,65 +594,60 @@ const InviteRulesBlock = () => {
         aria-controls="invite-rules"
         onClick={() => setOpen((v) => !v)}
       >
-        Умови та як це працює
+        {i18n.t("modals.ShopModal.umovyTaIakTse")}
       </RulesToggle>
       <RulesCollapse $open={open}>
         <RulesInner $open={open} id="invite-rules">
 
-          <h4>Як отримати значки</h4>
+          <h4>{i18n.t("modals.ShopModal.iakOtrymatyZnachky")}</h4>
           <ol>
-            <li>Увійдіть в акаунт, і тут з'явиться ваше особисте посилання.</li>
-            <li>Скопіюйте його або натисніть «Поділитися» і надішліть другові.</li>
-            <li>Друг відкриває посилання і створює акаунт у Стихії (через Google або пошту).</li>
+            <li>{i18n.t("modals.ShopModal.uviiditVAkauntI")}</li>
+            <li>{i18n.t("modals.ShopModal.skopiiuiteIohoAboNatysnit")}</li>
+            <li>{i18n.t("modals.ShopModal.druhVidkryvaiePosylanniaI")}</li>
             <li>
-              Друг заходить у Стихію {INVITE_ACTIVE_DAYS} різні дні протягом {INVITE_WINDOW_DAYS} днів
-              від реєстрації. День реєстрації вже рахується як перший.
+              {i18n.t("modals.ShopModal.druhZakhodytUStykhiiu")} {INVITE_ACTIVE_DAYS} {i18n.t("modals.ShopModal.rizniDniProtiahom")} {INVITE_WINDOW_DAYS} {i18n.t("modals.ShopModal.dnivVidReiestratsiiDen")}
             </li>
             <li>
-              Значки отримуєте обидва: ви {B_INV.emoji} «{B_INV.name}», друг {B_NEW.emoji} «{B_NEW.name}».
-              Щоб побачити свій, відкрийте замок або натисніть ↻.
+              {i18n.t("modals.ShopModal.znachkyOtrymuieteObydvaVy")} {B_INV.emoji} «{B_INV.name}{i18n.t("modals.ShopModal.druh")} {B_NEW.emoji} «{B_NEW.name}{i18n.t("modals.ShopModal.shchobPobachytySviiVidkryite")}
             </li>
           </ol>
 
-          <h4>Коли друга зараховано</h4>
+          <h4>{i18n.t("modals.ShopModal.kolyDruhaZarakhovano")}</h4>
           <ul>
-            <li>Акаунт новий: створений після переходу за вашим посиланням. Старі акаунти не рахуються.</li>
+            <li>{i18n.t("modals.ShopModal.akauntNovyiStvorenyiPislia")}</li>
             <li>
-              Друг створює акаунт протягом 30 днів після переходу і в тому самому браузері, де
-              відкрив посилання.
+              {i18n.t("modals.ShopModal.druhStvoriuieAkauntProtiahom")}
             </li>
             <li>
-              День зараховується, коли друг відкриває Стихію, увійшовши в акаунт. Один день
-              рахується один раз, хоч скільки разів зайти. Підряд заходити не обов'язково.
+              {i18n.t("modals.ShopModal.denZarakhovuietsiaKolyDruh")}
             </li>
             <li>
-              Доба рахується за світовим часом (UTC): у Києві нова доба для значка починається
-              о 02:00 взимку й о 03:00 влітку.
+              {i18n.t("modals.ShopModal.dobaRakhuietsiaZaSvitovym")}
             </li>
-            <li>Анонімний вхід (без акаунта) не рахується.</li>
-            <li>Кожну людину можна запросити лише один раз. Якщо друг відкрив кілька посилань, рахується перше.</li>
-            <li>Запросити самого себе не можна.</li>
+            <li>{i18n.t("modals.ShopModal.anonimnyiVkhidBezAkaunta")}</li>
+            <li>{i18n.t("modals.ShopModal.kozhnuLiudynuMozhnaZaprosyty")}</li>
+            <li>{i18n.t("modals.ShopModal.zaprosytySamohoSebeNe")}</li>
             <li>
               {INVITES_FOR_BADGE === 1
-                ? "Для значка вистачить одного друга, який виконав умову."
-                : `Для значка потрібно ${INVITES_FOR_BADGE} друзів, які виконали умову.`}
+                ? i18n.t("modals.ShopModal.dliaZnachkaVystachytOdnoho")
+                : i18n.t("modals.ShopModal.dliaZnachkaPotribnoDruziv", { INVITES_FOR_BADGE: INVITES_FOR_BADGE })}
             </li>
           </ul>
 
-          <h4>Усі значки Стихії</h4>
+          <h4>{i18n.t("modals.ShopModal.usiZnachkyStykhii")}</h4>
           <ul>
-            <li>{B_SUP.emoji} «{B_SUP.name}»: за підтримку Стихії донатом.</li>
-            <li>{B_INV.emoji} «{B_INV.name}»: за друга, якого ви привели.</li>
-            <li>{B_NEW.emoji} «{B_NEW.name}»: для друга, який прийшов за запрошенням.</li>
+            <li>{B_SUP.emoji} «{B_SUP.name}{i18n.t("modals.ShopModal.zaPidtrymkuStykhiiDonatom")}</li>
+            <li>{B_INV.emoji} «{B_INV.name}{i18n.t("modals.ShopModal.zaDruhaIakohoVy")}</li>
+            <li>{B_NEW.emoji} «{B_NEW.name}{i18n.t("modals.ShopModal.dliaDruhaIakyiPryishov")}</li>
           </ul>
 
-          <h4>Про значки</h4>
+          <h4>{i18n.t("modals.ShopModal.proZnachky")}</h4>
           <ul>
-            <li>Значки видно у вашому профілі (кнопка з аватаром угорі).</li>
-            <li>Це просто подяка: значки не дають платних функцій і нічого не відкривають.</li>
-            <li>Значок залишається з вами назавжди. На новому пристрої відкрийте замок, і він повернеться.</li>
-            <li>Ми показуємо лише кількість друзів, а не їхні імена чи пошту.</li>
-            <li>Якщо щось пішло не так, напишіть нам, і ми розберемося.</li>
+            <li>{i18n.t("modals.ShopModal.znachkyVydnoUVashomu")}</li>
+            <li>{i18n.t("modals.ShopModal.tseProstoPodiakaZnachky")}</li>
+            <li>{i18n.t("modals.ShopModal.znachokZalyshaietsiaZVamy")}</li>
+            <li>{i18n.t("modals.ShopModal.myPokazuiemoLysheKilkist")}</li>
+            <li>{i18n.t("modals.ShopModal.iakshchoShchosPishloNe")}</li>
           </ul>
         </RulesInner>
       </RulesCollapse>
@@ -661,12 +657,12 @@ const InviteRulesBlock = () => {
 
 // Короткий підсумок про друзів, які прийшли за посиланням
 const invitesSummary = (stats) => {
-  if (!stats.total) return "Поки що ніхто не прийшов за вашим посиланням";
-  const parts = [`Друзів: ${stats.total}`, `виконали умову: ${stats.qualified}`];
+  if (!stats.total) return i18n.t("modals.ShopModal.pokyShchoNikhtoNe");
+  const parts = [i18n.t("modals.ShopModal.druziv", { total: stats.total }), i18n.t("modals.ShopModal.vykonalyUmovu", { qualified: stats.qualified })];
   if (stats.inProgress.length) {
-    parts.push(`набирають дні: ${stats.inProgress.map((d) => `${d}/${INVITE_ACTIVE_DAYS}`).join(", ")}`);
+    parts.push(i18n.t("modals.ShopModal.nabyraiutDni", { v0: stats.inProgress.map((d) => `${d}/${INVITE_ACTIVE_DAYS}`).join(", ") }));
   }
-  if (stats.expired) parts.push(`не встигли: ${stats.expired}`);
+  if (stats.expired) parts.push(i18n.t("modals.ShopModal.neVstyhly", { expired: stats.expired }));
   return parts.join(" · ");
 };
 
@@ -730,22 +726,22 @@ const InviteLinkBlock = ({ user, onUserUpdate }) => {
     status = (
       <>
         <ProgressDots value={invitee.activeDays} total={INVITE_ACTIVE_DAYS} />
-        Вас запросив друг: день {invitee.activeDays} з {INVITE_ACTIVE_DAYS}. Заходьте до{" "}
+        {i18n.t("modals.ShopModal.vasZaprosyvDruhDen")} {invitee.activeDays} {i18n.t("modals.ShopModal.z")} {INVITE_ACTIVE_DAYS}{i18n.t("modals.ShopModal.zakhodteDo")}{" "}
         {fmtDate(invitee.deadline)}
       </>
     );
   } else if (failed) {
-    status = "Не вдалося перевірити запрошення";
+    status = i18n.t("modals.ShopModal.neVdalosiaPerevirytyZaproshennia");
   } else if (stats) {
     status = (
       <>
-        {inviterBadge && `${B_INV.emoji} Ви — ${B_INV.name} · `}
-        {invitee?.done && `${B_NEW.emoji} Ви — ${B_NEW.name} · `}
+        {inviterBadge && i18n.t("modals.ShopModal.vy", { emoji: B_INV.emoji, name: B_INV.name }) + " "}
+        {invitee?.done && i18n.t("modals.ShopModal.vy", { emoji: B_NEW.emoji, name: B_NEW.name }) + " "}
         {invitesSummary(stats)}
       </>
     );
   } else {
-    status = "Перевіряємо…";
+    status = i18n.t("modals.ShopModal.pereviriaiemo");
   }
 
   return (
@@ -755,14 +751,14 @@ const InviteLinkBlock = ({ user, onUserUpdate }) => {
           readOnly
           value={link}
           onFocus={(e) => e.target.select()}
-          aria-label="Ваше посилання-запрошення"
+          aria-label={i18n.t("modals.ShopModal.vashePosylanniaZaproshennia")}
         />
         <LinkAction type="button" onClick={onCopy} aria-live="polite">
-          {copied ? "Скопійовано ✓" : "Копіювати"}
+          {copied ? i18n.t("modals.ShopModal.skopiiovano") : i18n.t("modals.ShopModal.kopiiuvaty")}
         </LinkAction>
         {canShare && (
           <LinkAction type="button" $primary onClick={onShare}>
-            Поділитися
+            {i18n.t("modals.ShopModal.podilytysia")}
           </LinkAction>
         )}
       </LinkGroup>
@@ -774,8 +770,8 @@ const InviteLinkBlock = ({ user, onUserUpdate }) => {
           type="button"
           onClick={check}
           disabled={checking}
-          aria-label="Оновити стан запрошень"
-          title="Оновити"
+          aria-label={i18n.t("modals.ShopModal.onovytyStanZaproshen")}
+          title={i18n.t("modals.ShopModal.onovyty")}
         >
           ↻
         </RefreshButton>
@@ -807,16 +803,16 @@ const InvitePanel = forwardRef(({ user, onUserUpdate, open, onToggle }, ref) => 
                 onToggle();
               }}
             >
-              🎁 Запроси друга
+              {i18n.t("modals.ShopModal.zaprosyDruha")}
             </button>
           </InviteTitle>
           <InviteText>
-            Друг заходить у Стихію {INVITE_ACTIVE_DAYS} дні, і значки отримуєте обидва
+            {i18n.t("modals.ShopModal.druhZakhodytUStykhiiu")} {INVITE_ACTIVE_DAYS} {i18n.t("modals.ShopModal.dniIZnachkyOtrymuiete")}
           </InviteText>
         </div>
         <BadgePills>
-          <BadgePill title={`Вам: «${B_INV.name}»`}>{B_INV.emoji} {B_INV.name}</BadgePill>
-          <BadgePill title={`Другу: «${B_NEW.name}»`}>{B_NEW.emoji} {B_NEW.name}</BadgePill>
+          <BadgePill title={i18n.t("modals.ShopModal.vam", { name: B_INV.name })}>{B_INV.emoji} {B_INV.name}</BadgePill>
+          <BadgePill title={i18n.t("modals.ShopModal.druhu", { name: B_NEW.name })}>{B_NEW.emoji} {B_NEW.name}</BadgePill>
           <InviteChevron $open={open} aria-hidden="true">›</InviteChevron>
         </BadgePills>
       </InviteHead>
@@ -827,7 +823,7 @@ const InvitePanel = forwardRef(({ user, onUserUpdate, open, onToggle }, ref) => 
               {user?.uid ? (
                 <InviteLinkBlock user={user} onUserUpdate={onUserUpdate} />
               ) : (
-                <InviteStatus>Увійдіть в акаунт (кнопка «Акаунт» угорі), щоб отримати своє посилання.</InviteStatus>
+                <InviteStatus>{i18n.t("modals.ShopModal.uviiditVAkauntKnopka")}</InviteStatus>
               )}
               <InviteRulesBlock />
             </InviteContent>
@@ -1016,44 +1012,44 @@ const AnimatedContent = styled.div`
 const funds = [
   {
     id: "uanimals",
-    title: "Допомога тваринам",
-    desc: "Рятують тварин, які постраждали від війни",
-    buttonText: "Підтримати UAnimals",
+    get title() { return i18n.t("modals.ShopModal.dopomohaTvarynam"); },
+    get desc() { return i18n.t("modals.ShopModal.riatuiutTvarynIakiPostrazhdaly"); },
+    get buttonText() { return i18n.t("modals.ShopModal.pidtrymatyUanimals"); },
     linkUrl: "https://uanimals.org/",
   },
   {
     id: "ecoaction",
-    title: "Захист природи",
-    desc: "Захищають довкілля і клімат України",
-    buttonText: "Підтримати Екодію",
+    get title() { return i18n.t("modals.ShopModal.zakhystPryrody"); },
+    get desc() { return i18n.t("modals.ShopModal.zakhyshchaiutDovkilliaIKlimat"); },
+    get buttonText() { return i18n.t("modals.ShopModal.pidtrymatyEkodiiu"); },
     linkUrl: "https://ecoaction.org.ua/",
   },
   {
     id: "happypaw",
-    title: "Притулки для тварин",
-    desc: "Допомагають безпритульним тваринам знайти дім",
-    buttonText: "Підтримати Happy Paw",
+    get title() { return i18n.t("modals.ShopModal.prytulkyDliaTvaryn"); },
+    get desc() { return i18n.t("modals.ShopModal.dopomahaiutBezprytulnymTvarynamZnaity"); },
+    get buttonText() { return i18n.t("modals.ShopModal.pidtrymatyHappyPaw"); },
     linkUrl: "https://happypaw.ua/",
   },
   {
     id: "tnc",
-    title: "Охорона земель і вод",
-    desc: "Бережуть землі й води по всьому світу",
-    buttonText: "Підтримати Nature Conservancy",
+    get title() { return i18n.t("modals.ShopModal.okhoronaZemelIVod"); },
+    get desc() { return i18n.t("modals.ShopModal.berezhutZemliIVody"); },
+    get buttonText() { return i18n.t("modals.ShopModal.pidtrymatyNatureConservancy"); },
     linkUrl: "https://www.nature.org/",
   },
   {
     id: "oceana",
-    title: "Захист океанів",
-    desc: "Захищають океани та морське життя",
-    buttonText: "Підтримати Oceana",
+    get title() { return i18n.t("modals.ShopModal.zakhystOkeaniv"); },
+    get desc() { return i18n.t("modals.ShopModal.zakhyshchaiutOkeanyTaMorske"); },
+    get buttonText() { return i18n.t("modals.ShopModal.pidtrymatyOceana"); },
     linkUrl: "https://oceana.org/",
   },
   {
     id: "rainforest",
-    title: "Захист тропічних лісів",
-    desc: "Бережуть тропічні ліси від вирубки",
-    buttonText: "Підтримати Rainforest Trust",
+    get title() { return i18n.t("modals.ShopModal.zakhystTropichnykhLisiv"); },
+    get desc() { return i18n.t("modals.ShopModal.berezhutTropichniLisyVid"); },
+    get buttonText() { return i18n.t("modals.ShopModal.pidtrymatyRainforestTrust"); },
     linkUrl: "https://rainforesttrust.org/",
   },
 ];
@@ -1128,32 +1124,31 @@ const ShopModal = ({ onClose, user, onUserUpdate }) => {
       <ShopContainer
         role="dialog"
         aria-modal="true"
-        aria-label="Замок Доміно"
+        aria-label={i18n.t("modals.ShopModal.zamokDomino")}
         $isClosing={isClosing}
         onClick={(e) => e.stopPropagation()}
       >
           <CloseButton onClick={handleClose}>
-            Закрити
+            {i18n.t("modals.ShopModal.zakryty")}
           </CloseButton>
         <AnimatedContent>
           <SupportCard>
             <SupportBody>
               <TopRow>
                 <CharacterText>
-  Мене звати Доміно, у цьому замку я показую погоду. Вхід в Стихію - завжди відкритий!
-  А якщо хочете, щоб світло в залі не згасало, ось банка.
+  {i18n.t("modals.ShopModal.meneZvatyDominoU")}
 </CharacterText>
               </TopRow>
               <InlineRow>
                 <LinkButton href={DONATE_URL} target="_blank" rel="noopener noreferrer" $featured>
-                  Підтримати Стихію
+                  {i18n.t("modals.ShopModal.pidtrymatyStykhiiu")}
                 </LinkButton>
                 <QrBox
                   href={DONATE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="QR-код для підтримки Стихії"
-                  title="Відскануйте телефоном, щоб підтримати Стихію"
+                  aria-label={i18n.t("modals.ShopModal.qrKodDliaPidtrymky")}
+                  title={i18n.t("modals.ShopModal.vidskanuiteTelefonomShchobPidtrymaty")}
                 >
                   <QRCodeSVG value={DONATE_URL} size={42} />
                 </QrBox>
@@ -1161,7 +1156,7 @@ const ShopModal = ({ onClose, user, onUserUpdate }) => {
                   type="button"
                   onClick={() => fundsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
                 >
-                  Або допомогти екофондам ↓
+                  {i18n.t("modals.ShopModal.aboDopomohtyEkofondam")}
                 </EcoJumpButton>
                 <ShareButton
                   type="button"
@@ -1170,7 +1165,7 @@ const ShopModal = ({ onClose, user, onUserUpdate }) => {
                     inviteRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
                 >
-                  🎁 Поділитися — значок у подарунок ↓
+                  {i18n.t("modals.ShopModal.podilytysiaZnachokUPodarunok")}
                 </ShareButton>
               </InlineRow>
             </SupportBody>
@@ -1196,9 +1191,9 @@ const ShopModal = ({ onClose, user, onUserUpdate }) => {
             })}
           </Battlements>
           <FundsHeader ref={fundsRef} id="eco-funds">
-            <FundsTitle>Екологічні фонди</FundsTitle>
+            <FundsTitle>{i18n.t("modals.ShopModal.ekolohichniFondy")}</FundsTitle>
             <FundsSubtitle>
-              Донат іде напряму фонду, не нам. Обирайте те, що вам близьке.
+              {i18n.t("modals.ShopModal.donatIdeNapriamuFondu")}
             </FundsSubtitle>
           </FundsHeader>
           <FundList>

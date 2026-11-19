@@ -5,6 +5,7 @@ import { FaMapLocationDot } from "react-icons/fa6";
 import { MdClose, MdAutoAwesome } from "react-icons/md";
 import styled, { keyframes } from "styled-components";
 
+import i18n from "../../i18n/i18n.js";
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -166,20 +167,20 @@ const OptionText = styled.span`
 const searchModes = [
   {
     id: "ai",
-    label: "Запитати ШІ ✦",
-    description: "Відкрити чат з Google Gemini для допомоги",
+    get label() { return i18n.t("ui.SearchModeModal.zapytatyShi"); },
+    get description() { return i18n.t("ui.SearchModeModal.vidkrytyChatZGoogle"); },
     Icon: MdAutoAwesome,
   },
   {
     id: "city",
-    label: "За назвою міста",
-    description: "Знайдіть прогноз за назвою населеного пункту",
+    get label() { return i18n.t("ui.SearchModeModal.zaNazvoiuMista"); },
+    get description() { return i18n.t("ui.SearchModeModal.znaiditProhnozZaNazvoiu"); },
     Icon: FaMountainCity,
   },
   {
     id: "coordinates",
-    label: "Координати",
-    description: "Введіть широту й довготу точки",
+    get label() { return i18n.t("ui.SearchModeModal.koordynaty"); },
+    get description() { return i18n.t("ui.SearchModeModal.vveditShyrotuIDovhotu"); },
     Icon: FaMapLocationDot,
   },
 ];
@@ -228,14 +229,14 @@ export default function SearchModeModal({
       >
         <Header>
           <Heading>
-            <h2 id="search-mode-heading">Режим пошуку</h2>
+            <h2 id="search-mode-heading">{i18n.t("ui.SearchModeModal.rezhymPoshuku")}</h2>
             <p>
-              Зараз: {currentMode?.label ?? "не вибрано"}. Оберіть інший режим.
+              {i18n.t("ui.SearchModeModal.zaraz")} {currentMode?.label ?? i18n.t("ui.SearchModeModal.neVybrano")}{i18n.t("ui.SearchModeModal.oberitInshyiRezhym")}
             </p>
           </Heading>
           <CloseButton
             type="button"
-            aria-label="Закрити вибір режиму пошуку"
+            aria-label={i18n.t("ui.SearchModeModal.zakrytyVybirRezhymuPoshuku")}
             onClick={onClose}
           >
             <MdClose />

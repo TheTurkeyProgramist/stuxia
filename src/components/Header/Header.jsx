@@ -34,6 +34,7 @@ import { isInviter, isInvitee } from "../../utils/referral.js";
 // import AntiHeaderAd from "./AntiHeaderAd";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
+import i18n from "../../i18n/i18n.js";
 // Консоль команд (/open, /soundtrack, /create…) — вантажиться лише при відкритті
 const CommandsModal = lazyWithRetry(() => import("../Commands/CommandsModal.jsx"));
 const prefetchCommands = () => import("../Commands/CommandsModal.jsx").catch(() => {});
@@ -898,12 +899,12 @@ const ThemePickerContent = ({ isDarkMode, accentColor, onPickTheme, onPickAccent
   return (
     <>
       <ThemePickerHead>
-        <ThemePickerSection>Базова тема</ThemePickerSection>
+        <ThemePickerSection>{i18n.t("ui.Header.bazovaTema")}</ThemePickerSection>
         <ThemePickerClose
           type="button"
           $isDarkMode={isDarkMode}
-          aria-label="Закрити вибір теми"
-          title="Закрити (Esc)"
+          aria-label={i18n.t("ui.Header.zakrytyVybirTemy")}
+          title={i18n.t("ui.Header.zakrytyEsc")}
           onClick={onClose}
         >
           <MdClose aria-hidden="true" />
@@ -918,7 +919,7 @@ const ThemePickerContent = ({ isDarkMode, accentColor, onPickTheme, onPickAccent
           aria-pressed={!isDarkMode}
           onClick={() => onPickTheme(false)}
         >
-          <FaSun /> Світла
+          <FaSun /> {i18n.t("ui.Header.svitla")}
         </ThemeBaseBtn>
         <ThemeBaseBtn
           $isDarkMode={isDarkMode}
@@ -928,15 +929,15 @@ const ThemePickerContent = ({ isDarkMode, accentColor, onPickTheme, onPickAccent
           aria-pressed={isDarkMode}
           onClick={() => onPickTheme(true)}
         >
-          <BsMoonStarsFill /> Темна
+          <BsMoonStarsFill /> {i18n.t("ui.Header.temna")}
         </ThemeBaseBtn>
       </ThemeBaseRow>
 
       <ThemePickerSection>
-        Акцентний колір
+        {i18n.t("ui.Header.aktsentnyiKolir")}
         <AccentState>
           (<AccentChip $color={accentColor} />
-          {accentColor ? getAccentLabel(accentColor).toLowerCase() : "без кольору"})
+          {accentColor ? getAccentLabel(accentColor).toLowerCase() : i18n.t("ui.Header.bezKoloru")})
         </AccentState>
       </ThemePickerSection>
       <AccentSwatches
@@ -1008,7 +1009,7 @@ const Header = ({
     (user?.firstName && user.firstName !== profileEmail && user.firstName) ||
     user?.displayName ||
     profileEmail.split("@")[0] ||
-    "Користувач";
+    i18n.t("ui.Header.korystuvach");
 
   // «З нами з …» — дата створення акаунта з Firebase (однакова на всіх пристроях).
   // Firebase SDK вантажиться ліниво, тож питаємо лише коли профіль відкрили.
@@ -1317,9 +1318,9 @@ const Header = ({
   const headerActions = [
     {
       key: "help",
-      label: "Довідка",
-      menuLabel: user ? "Довідка" : "Довідка й навчання",
-      tooltip: user ? "Допомога з сайтом" : "Навчання",
+      label: i18n.t("ui.Header.dovidka"),
+      menuLabel: user ? i18n.t("ui.Header.dovidka") : i18n.t("ui.Header.dovidkaINavchannia"),
+      tooltip: user ? i18n.t("ui.Header.dopomohaZSaitom") : i18n.t("ui.Header.navchannia"),
       icon: "?",
       iconStyle: { fontWeight: 900 },
       onClick: handleHelpClick,
@@ -1328,20 +1329,20 @@ const Header = ({
     },
     {
       key: "stickyBg",
-      label: "Фон",
-      menuLabel: "Фон на увесь сайт",
-      tooltip: `Фон на увесь сайт: ${isStickyBgMode ? "увімкнено" : "вимкнено"}`,
+      label: i18n.t("ui.Header.fon"),
+      menuLabel: i18n.t("ui.Header.fonNaUvesSait"),
+      tooltip: i18n.t("ui.Header.fonNaUvesSait2", { v0: isStickyBgMode ? "увімкнено" : "вимкнено" }),
       icon: <MdWallpaper />,
-      state: isStickyBgMode ? "увімкнено" : "вимкнено",
+      state: isStickyBgMode ? i18n.t("ui.Header.uvimkneno") : i18n.t("ui.Header.vymkneno"),
       pressed: isStickyBgMode,
       onClick: handleStickyBgToggle,
       showFrom: 1024,
     },
     {
       key: "shop",
-      label: "Магазин",
-      menuLabel: "Магазин і підтримка",
-      tooltip: "Станьте нашим спосором, та підтримайте інші екологічні компанії!",
+      label: i18n.t("ui.Header.mahazyn"),
+      menuLabel: i18n.t("ui.Header.mahazynIPidtrymka"),
+      tooltip: i18n.t("ui.Header.stanteNashymSposoromTa"),
       icon: <GiShop />,
       iconStyle: { fontSize: "19px" },
       onClick: handleShopClick,
@@ -1350,9 +1351,9 @@ const Header = ({
     },
     {
       key: "commands",
-      label: "Команди",
-      menuLabel: "Команди",
-      tooltip: "Консоль команд (клавіша /)",
+      label: i18n.t("ui.Header.komandy"),
+      menuLabel: i18n.t("ui.Header.komandy"),
+      tooltip: i18n.t("ui.Header.konsolKomandKlavisha"),
       icon: "/",
       iconStyle: { fontWeight: 900, fontFamily: "ui-monospace, Consolas, monospace" },
       onClick: () => { playSfx(relax); setIsCommandsOpen(true); },
@@ -1361,9 +1362,9 @@ const Header = ({
     },
     {
       key: "authors",
-      label: "Подяка",
-      menuLabel: "Подяка",
-      tooltip: "Подяка авторам і джерелам",
+      label: i18n.t("ui.Header.podiaka"),
+      menuLabel: i18n.t("ui.Header.podiaka"),
+      tooltip: i18n.t("ui.Header.podiakaAvtoramIDzherelam"),
       icon: <FaBookOpen />,
       iconStyle: { fontSize: "18px" },
       onClick: () => onOpenAuthorsDirectory?.(),
@@ -1385,15 +1386,15 @@ const Header = ({
     <LogoButton
       type="button"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      aria-label="Стихія — на початок сторінки"
+      aria-label={i18n.t("ui.Header.stykhiiaNaPochatokStorinky")}
     >
-      <LogoImg src={herotext} alt="Стихія" width="212" height="78" decoding="async" />
+      <LogoImg src={herotext} alt={i18n.t("ui.Header.stykhiia")} width="212" height="78" decoding="async" />
     </LogoButton>
 
     <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)} onKeyDown={handleHeaderKeyDown}>
       {/* Тема — завжди в шапці (її міні-модалка прив'язана до кнопки) */}
       <ThemePickerWrap>
-        <Tooltip content="Вибір теми" isDarkMode={isDarkMode}>
+        <Tooltip content={i18n.t("ui.Header.vybirTemy")} isDarkMode={isDarkMode}>
           <IconButton
             ref={themePickerBtnRef}
             onClick={() => { playSfx(bell); setShowThemePicker(p => !p); }}
@@ -1404,7 +1405,7 @@ const Header = ({
               }
             }}
             $isDarkMode={isDarkMode}
-            aria-label="Вибір теми (Alt + T)"
+            aria-label={i18n.t("ui.Header.vybirTemyAltT")}
             aria-expanded={showThemePicker}
             style={{ position: "relative" }}
           >
@@ -1422,7 +1423,7 @@ const Header = ({
                 border: "1px solid rgba(0,0,0,0.3)"
               }} />
             )}
-            <IconLabel aria-hidden="true">Тема</IconLabel>
+            <IconLabel aria-hidden="true">{i18n.t("ui.Header.tema")}</IconLabel>
           </IconButton>
         </Tooltip>
 
@@ -1469,17 +1470,17 @@ const Header = ({
       ))}
 
       {/* Параметри — завжди в шапці; доступні й гостям (вкладка «Безпека» для них заблокована) */}
-      <Tooltip content="Налаштування" isDarkMode={isDarkMode}>
+      <Tooltip content={i18n.t("ui.Header.nalashtuvannia")} isDarkMode={isDarkMode}>
         <IconButton
           onClick={handleSettingsClick}
           {...prefetchProps("settings")}
           $isDarkMode={isDarkMode}
-          aria-label="Налаштування"
+          aria-label={i18n.t("ui.Header.nalashtuvannia")}
         >
           <EmojiWrapper>
             <MdSettingsSuggest />
           </EmojiWrapper>
-          <IconLabel aria-hidden="true">Параметри</IconLabel>
+          <IconLabel aria-hidden="true">{i18n.t("ui.Header.parametry")}</IconLabel>
         </IconButton>
       </Tooltip>
 
@@ -1489,12 +1490,12 @@ const Header = ({
           ref={burgerBtnRef}
           onClick={() => { playSfx(relax); setIsBurgerOpen((p) => !p); }}
           $isDarkMode={isDarkMode}
-          aria-label="Меню"
+          aria-label={i18n.t("ui.Header.meniu")}
           aria-expanded={isBurgerOpen}
           aria-controls="header-burger-menu"
         >
           <EmojiWrapper>{isBurgerOpen ? <MdClose /> : <MdMenu />}</EmojiWrapper>
-          <IconLabel aria-hidden="true">Меню</IconLabel>
+          <IconLabel aria-hidden="true">{i18n.t("ui.Header.meniu")}</IconLabel>
         </IconButton>
         {isBurgerOpen && (
           <BurgerMenu id="header-burger-menu" role="menu" $isDarkMode={isDarkMode} onKeyDown={handleBurgerKeyDown}>
@@ -1520,14 +1521,24 @@ const Header = ({
       {user ? (
         <ProfileButtonWrap>
           <Tooltip
-            content={`Ваш профіль${supporter ? " · Друг індиків" : ""}${inviter ? " · Посол Стихії" : ""}${invitee ? " · Паросток Стихії" : ""} ·${NETWORK_LABELS[networkStatus]}`}
+            content={[
+              i18n.t("ui.Header.vashProfil"),
+              supporter && i18n.t("ui.Header.druhIndykiv"),
+              inviter && i18n.t("ui.Header.posolStykhii"),
+              invitee && i18n.t("ui.Header.parostokStykhii"),
+              NETWORK_LABELS[networkStatus],
+            ].filter(Boolean).join(" · ")}
             isDarkMode={isDarkMode}
           >
           <ProfileButton
             id="header-profile-button"
             $isDarkMode={isDarkMode}
             onClick={() => setIsProfileModalOpen((prev) => !prev)}
-            aria-label={`Профіль користувача.${supporter ? " Друг індиків." : ""} ${NETWORK_LABELS[networkStatus]}`}
+            aria-label={[
+              i18n.t("ui.Header.profilKorystuvacha"),
+              supporter && i18n.t("ui.Header.druhIndykiv2"),
+              NETWORK_LABELS[networkStatus],
+            ].filter(Boolean).join(" ")}
           >
             <RecoveringAvatar
               src={avatarSource}
@@ -1560,7 +1571,7 @@ const Header = ({
                    {joinedAt && (
                      <ProfileModalJoined>
                        <MdCalendarMonth aria-hidden="true" />
-                       З нами з{" "}
+                       {i18n.t("ui.Header.zNamyZ")}{" "}
                        {new Date(joinedAt).toLocaleDateString("uk-UA", {
                          day: "numeric",
                          month: "long",
@@ -1569,13 +1580,13 @@ const Header = ({
                      </ProfileModalJoined>
                    )}
                    {supporter && (
-                     <SupporterChip title="Дякуємо, що підтримуєте Стихію!">🦃 Друг індиків</SupporterChip>
+                     <SupporterChip title={i18n.t("ui.Header.diakuiemoShchoPidtrymuieteStykhiiu")}>{i18n.t("ui.Header.druhIndykiv3")}</SupporterChip>
                    )}
                    {inviter && (
-                     <SupporterChip title="Ви привели друга у Стихію!">📣 Посол Стихії</SupporterChip>
+                     <SupporterChip title={i18n.t("ui.Header.vyPryvelyDruhaU")}>{i18n.t("ui.Header.posolStykhii2")}</SupporterChip>
                    )}
                    {invitee && (
-                     <SupporterChip title="Ви прийшли у Стихію за запрошенням друга!">🌱 Паросток Стихії</SupporterChip>
+                     <SupporterChip title={i18n.t("ui.Header.vyPryishlyUStykhiiu")}>{i18n.t("ui.Header.parostokStykhii2")}</SupporterChip>
                    )}
                 </ProfileModalInfo>
               </ProfileModalBody>
@@ -1595,7 +1606,7 @@ const Header = ({
                 onClick={handleAccountSettingsClick}
               >
                 <MdManageAccounts aria-hidden="true" />
-                Налаштування акаунта
+                {i18n.t("ui.Header.nalashtuvanniaAkaunta")}
               </ProfileSettingsButton>
 
               <LogoutButton
@@ -1607,14 +1618,14 @@ const Header = ({
                 }}
               >
                 <GiExitDoor aria-hidden="true" />
-                Вийти з акаунта
+                {i18n.t("ui.Header.vyityZAkaunta")}
               </LogoutButton>
             </ProfileModal>
         </ProfileButtonWrap>
       ) : (
-        <AccountButton type="button" onClick={handleRegisterClick} {...prefetchProps("register")} $isDarkMode={isDarkMode} aria-label="Увійти в акаунт">
+        <AccountButton type="button" onClick={handleRegisterClick} {...prefetchProps("register")} $isDarkMode={isDarkMode} aria-label={i18n.t("ui.Header.uviityVAkaunt")}>
           <MdAccountCircle aria-hidden="true" />
-          <span>Увійти</span>
+          <span>{i18n.t("ui.Header.uviity")}</span>
         </AccountButton>
       )}
     </ButtonsGroup>
@@ -1623,7 +1634,7 @@ const Header = ({
     <VisualSettingsPanel $isDarkMode={isDarkMode}>
       <div>
         <VisualLabel $isDarkMode={isDarkMode}>
-          Яскравість <span>{visualConfig.darkIntensity}%</span>
+          {i18n.t("ui.Header.iaskravist")} <span>{visualConfig.darkIntensity}%</span>
         </VisualLabel>
         <VisualRange
           type="range"
@@ -1656,7 +1667,7 @@ const Header = ({
       {visualConfig.filterType !== "none" && (
         <div>
           <VisualLabel $isDarkMode={isDarkMode}>
-            Сила ефекту <span>{visualConfig.filterIntensity}%</span>
+            {i18n.t("ui.Header.sylaEfektu")} <span>{visualConfig.filterIntensity}%</span>
           </VisualLabel>
           <VisualRange
             type="range"
@@ -1679,7 +1690,7 @@ const Header = ({
           $isDarkMode={isDarkMode}
           style={{ marginBottom: "8px" }}
         >
-          Стилі
+          {i18n.t("ui.Header.styli")}
         </VisualLabel>
         <div
           style={{

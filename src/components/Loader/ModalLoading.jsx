@@ -5,6 +5,7 @@ import styled, { css, keyframes } from "styled-components";
 import kateAndDomino from "../../media/characters/kate-and-domino.webp?w=360&format=webp&quality=70";
 import { TurkeyDot } from "./TurkeyDot.jsx";
 
+import i18n from "../../i18n/i18n.js";
 // Плашка «Доміно й Кейт», поки довантажується файл модалки (React.lazy).
 
 const SHOW_DELAY_MS = 250; // швидке відкриття (файл уже в кеші) — без миготіння плашки
@@ -12,20 +13,20 @@ const PHRASE_MS = 1800;
 const SLOW_AFTER_MS = 6000; // далі — «довгі» фрази
 const DOUBLE_TAP_MS = 400; // два дотики/кліки за цей час — закрити
 
-const PHRASES = [
-  "Завантажую",
-  "Секундочку",
-  "Пребундючно шкода",
-  "Не поспішай",
-  "Доміно гортає газету",
-  "Кейт поливає квітку",
-];
-const SLOW_PHRASES = [
-  "Інтернет сьогодні неспішний",
-  "Ще трохи — вже майже",
-  "Доміно побіг по швидший інтернет",
-  "Кейт каже, що варто зачекати",
-];
+const PHRASES = () => ([
+  i18n.t("ui.ModalLoading.zavantazhuiu"),
+  i18n.t("ui.ModalLoading.sekundochku"),
+  i18n.t("ui.ModalLoading.prebundiuchnoShkoda"),
+  i18n.t("ui.ModalLoading.nePospishai"),
+  i18n.t("ui.ModalLoading.dominoHortaieHazetu"),
+  i18n.t("ui.ModalLoading.keitPolyvaieKvitku"),
+]);
+const SLOW_PHRASES = () => ([
+  i18n.t("ui.ModalLoading.internetSohodniNespishnyi"),
+  i18n.t("ui.ModalLoading.shcheTrokhyVzheMaizhe"),
+  i18n.t("ui.ModalLoading.dominoPobihPoShvydshyi"),
+  i18n.t("ui.ModalLoading.keitKazheShchoVarto"),
+]);
 
 // Картинку краще мати заздалегідь: коли модалка вантажиться довго, мережа й так зайнята
 let preloaded = false;
@@ -93,23 +94,23 @@ export const ModalLoading = ({ onCancel, error = false, onRetry }) => {
   if (!error && elapsed < SHOW_DELAY_MS) return null;
 
   const isSlow = elapsed >= SLOW_AFTER_MS;
-  const list = isSlow ? SLOW_PHRASES : PHRASES;
+  const list = isSlow ? SLOW_PHRASES() : PHRASES();
   const phraseIndex = Math.floor((isSlow ? elapsed - SLOW_AFTER_MS : elapsed) / PHRASE_MS) % list.length;
 
   let phrase = list[phraseIndex];
   let dots = true;
   if (error) {
-    phrase = "Ой, не вдалося завантажити";
+    phrase = i18n.t("ui.ModalLoading.oiNeVdalosiaZavantazhyty");
     dots = false;
   } else if (!online) {
-    phrase = "Немає інтернету. Відкрию, щойно з'явиться зв'язок";
+    phrase = i18n.t("ui.ModalLoading.nemaieInternetuVidkryiuShchoino");
   }
 
   return createPortal(
     <Backdrop role={error ? "alert" : "status"} aria-live="polite" onClick={handleTap}>
       <Content>
         <Characters>
-          <img src={kateAndDomino} alt="Доміно й Кейт" width="360" height="196" />
+          <img src={kateAndDomino} alt={i18n.t("ui.ModalLoading.dominoIKeit")} width="360" height="196" />
           <Shadow aria-hidden="true" />
           {/* Індик з лоадера бігає над Кейт */}
           {!error && (
@@ -129,7 +130,7 @@ export const ModalLoading = ({ onCancel, error = false, onRetry }) => {
         </Phrase>
 
         {!error && isSlow && online && (
-          <Hint>Вікно відкриється саме, щойно завантажиться</Hint>
+          <Hint>{i18n.t("ui.ModalLoading.viknoVidkryietsiaSameShchoino")}</Hint>
         )}
 
         {error && (
@@ -140,11 +141,11 @@ export const ModalLoading = ({ onCancel, error = false, onRetry }) => {
               (onRetry || (() => window.location.reload()))();
             }}
           >
-            Перезавантажити сторінку
+            {i18n.t("ui.ModalLoading.perezavantazhytyStorinku")}
           </ActionButton>
         )}
 
-        {onCancel && <CloseHint>Двічі натисніть будь-де, щоб закрити</CloseHint>}
+        {onCancel && <CloseHint>{i18n.t("ui.ModalLoading.dvichiNatysnitBudDe")}</CloseHint>}
       </Content>
     </Backdrop>,
     document.body,

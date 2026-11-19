@@ -5,6 +5,7 @@ import { DEFAULT_BGS } from "../Hero/defaultBgs.js";
 import { suspendBgMusic } from "../../utils/bgMusicSuspend";
 import { isAnimationsDisabled } from "../../utils/animationsPref";
 
+import i18n from "../../i18n/i18n.js";
 // Тривалість плавного закриття титрів (фонова музика за цей час починає повертатися)
 const CLOSE_FADE_MS = 800;
 // Скільки показується кожне зображення галереї
@@ -14,21 +15,21 @@ const FINALE_MS = 4000;
 
 // 1. Текстові титри
 const CAPTIONS = [
-  { duration: 5500, text: "Я хочу людей, які з радістю використовуватимуть мій сайт для різних цілей." },
-  { duration: 3500, text: "Надати вам чудову погоду — будючий обов'язок." },
-  { duration: 4500, text: "Політика — це фактор, який ми не підтримуємо і який ви побачите, але за бажанням..." },
-  { duration: 4000, text: "Різноманітна та захоплива музика, яку можна додавати." },
-  { duration: 3500, text: "Пишіть, підказуйте, що зробити для вас :)" },  { duration: 4000, text: "Налаштуйте сайт під себе. Можливостей для персоналізації дуже багато!" },
-  { duration: 5500, text: "Колись я не думав, що це може дійти до такого масштабу, проте фантазія робить дива :)" },
-  { duration: 8500, text: "Велика подяка: API-сайтам, інструментам Firebase, npm-плагінам, які допомогли при створенні Стихії. Малятко ТВ, Mondo TV, Пікселю за гарні роки дитинства. І найголовніше — сім'ї та близьким." },
-  { duration: 4500, text: "Окрема подяка: всім, хто дивиться ці титри та загалом користується сайтом :)" },
+  { duration: 5500, get text() { return i18n.t("modals.KatSceneModal.iaKhochuLiudeiIaki"); } },
+  { duration: 3500, get text() { return i18n.t("modals.KatSceneModal.nadatyVamChudovuPohodu"); } },
+  { duration: 4500, get text() { return i18n.t("modals.KatSceneModal.politykaTseFaktorIakyi"); } },
+  { duration: 4000, get text() { return i18n.t("modals.KatSceneModal.riznomanitnaTaZakhoplyvaMuzyka"); } },
+  { duration: 3500, get text() { return i18n.t("modals.KatSceneModal.pyshitPidkazuiteShchoZrobyty"); } },  { duration: 4000, get text() { return i18n.t("modals.KatSceneModal.nalashtuiteSaitPidSebe"); } },
+  { duration: 5500, get text() { return i18n.t("modals.KatSceneModal.kolysIaNeDumav"); } },
+  { duration: 8500, get text() { return i18n.t("modals.KatSceneModal.velykaPodiakaApiSaitam"); } },
+  { duration: 4500, get text() { return i18n.t("modals.KatSceneModal.okremaPodiakaVsimKhto"); } },
 ];
 // 2. Музичні титри (список саундтреків з авторами)
 const MUSIC_CREDITS = [
-  { title: "Динофроз", author: "Mondo TV" },
+  { get title() { return i18n.t("modals.KatSceneModal.dynofroz"); }, author: "Mondo TV" },
   { title: "Monody, Unity, Hunger", author: "TheFatRat" },
   { title: "Theory of Everything, Theory of Everything II", author: "DJ-Nate" },
-  { title: "Звуки інтерфейсу", author: "Авторська робота" },
+  { get title() { return i18n.t("modals.KatSceneModal.zvukyInterfeisu"); }, get author() { return i18n.t("modals.KatSceneModal.avtorskaRobota"); } },
 ];
 // 3. Галерея зображень
 const GALLERY_IMAGES = DEFAULT_BGS.filter(bg => /\.(webp|jpe?g|png|gif)(\?.*)?$/i.test(bg.src || ""));
@@ -296,7 +297,7 @@ const KatSceneModal = ({ onClose }) => {
         />
 
         <CloseButton type="button" onClick={requestClose}>
-          Пропустити
+          {i18n.t("modals.KatSceneModal.propustyty")}
         </CloseButton>
 
         {/* 1. Показ текстових титрів */}
@@ -309,22 +310,22 @@ const KatSceneModal = ({ onClose }) => {
         {/* 2. Показ музичних титрів */}
         {phase === "music" && currentTrack && (
           <Badge key={`music-${musicIndex}`}>
-            Музичний саундтрек: <span>{currentTrack.title}</span> — {currentTrack.author}
+            {i18n.t("modals.KatSceneModal.muzychnyiSaundtrek")} <span>{currentTrack.title}</span> — {currentTrack.author}
           </Badge>
         )}
 
         {/* 3. Показ галереї картин */}
         {phase === "gallery" && currentBg && (
           <Badge key={`gallery-${galleryIndex}`}>
-            Зображення на сайті: <span>{currentBg.name}</span> {currentBg.author ? `— ${currentBg.author}` : ""}
+            {i18n.t("modals.KatSceneModal.zobrazhenniaNaSaiti")} <span>{currentBg.name}</span> {currentBg.author ? `— ${currentBg.author}` : ""}
           </Badge>
         )}
 
         {/* 4. Фінальний кадр */}
         {phase === "finale" && (
           <FinaleText>
-            <h2>Дякуємо!</h2>
-            <p>Гарної погоди та гарного настрою — ваша Стихія</p>
+            <h2>{i18n.t("modals.KatSceneModal.diakuiemo")}</h2>
+            <p>{i18n.t("modals.KatSceneModal.harnoiPohodyTaHarnoho")}</p>
           </FinaleText>
         )}
 

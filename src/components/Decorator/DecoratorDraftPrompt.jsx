@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import styled, { css, keyframes } from "styled-components";
 import { FiPenTool, FiSave, FiTrash2 } from "react-icons/fi";
 
+import i18n from "../../i18n/i18n.js";
 const slideIn = keyframes`
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
@@ -119,9 +120,9 @@ const Btn = styled.button`
 const plural = (n) => {
   const mod10 = n % 10;
   const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "зміна";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "зміни";
-  return "змін";
+  if (mod10 === 1 && mod100 !== 11) return i18n.t("ui.DecoratorDraftPrompt.zmina");
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return i18n.t("ui.DecoratorDraftPrompt.zminy");
+  return i18n.t("ui.DecoratorDraftPrompt.zmin");
 };
 
 // Після перезавантаження: у минулій сесії лишились незбережені зміни Декоратора
@@ -139,19 +140,18 @@ const DecoratorDraftPrompt = ({ isDarkMode, changes, onSave, onDiscard }) =>
           <FiPenTool />
         </Icon>
         <div>
-          <Title id="decorator-draft-title">Зберегти зміни Декоратора?</Title>
+          <Title id="decorator-draft-title">{i18n.t("ui.DecoratorDraftPrompt.zberehtyZminyDekoratora")}</Title>
           <Text id="decorator-draft-text">
-            Перед перезавантаженням у Декораторі було {changes} {plural(changes)}, але
-            «Зберігати зміни після оновлення» вимкнено. Зберегти їх — і далі зберігати автоматично?
+            {i18n.t("ui.DecoratorDraftPrompt.peredPerezavantazhenniamUDekoratori")} {changes} {plural(changes)}{i18n.t("ui.DecoratorDraftPrompt.aleZberihatyZminyPislia")}
           </Text>
         </div>
       </Head>
       <Actions>
         <Btn type="button" onClick={onDiscard}>
-          <FiTrash2 /> Відкинути
+          <FiTrash2 /> {i18n.t("ui.DecoratorDraftPrompt.vidkynuty")}
         </Btn>
         <Btn type="button" $primary onClick={onSave}>
-          <FiSave /> Зберегти
+          <FiSave /> {i18n.t("ui.DecoratorDraftPrompt.zberehty")}
         </Btn>
       </Actions>
     </Card>,

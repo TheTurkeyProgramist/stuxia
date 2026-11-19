@@ -18,6 +18,7 @@ import registration from "../../media/ui/user-placeholder.webp";
 import { Tooltip } from "../Tooltip/Tooltip";
 import WhyUsModal from "./WhyUsModal";
 
+import i18n from "../../i18n/i18n.js";
 const WhyUsLink = styled.button`
   display: block;
   margin: -6px auto 10px;
@@ -726,8 +727,8 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
         .map((e) => `• ${e.date}: ${e.reason}`)
         .join("\n");
       baseFaqData.unshift({
-        q: "📚 Архів минулих подій (ліміт 5)",
-        a: `Це події, які ви додавали, але їх час уже минув:\n\n${pastText}`,
+        q: i18n.t("modals.UserSearchModal.arkhivMynulykhPodiiLimit"),
+        a: i18n.t("modals.UserSearchModal.tsePodiiIakiVy", { pastText: pastText }),
         image: null,
       });
     }
@@ -825,7 +826,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
     <Overlay $isClosing={isClosing} {...backdropProps("main", handleClose)}>
       <Content $isDarkMode={isDarkMode} $isClosing={isClosing} onClick={(e) => e.stopPropagation()}>
         <Conten $isDarkMode={isDarkMode}>
-          <CloseBtn onClick={handleClose}>Зрозуміло!</CloseBtn>
+          <CloseBtn onClick={handleClose}>{i18n.t("modals.UserSearchModal.zrozumilo")}</CloseBtn>
          <h1
   style={{
     textAlign: "center",
@@ -834,7 +835,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
     marginTop: "-5px",
   }}
 >
-  Навчання
+  {i18n.t("modals.UserSearchModal.navchannia")}
 </h1>
 <p
   style={{
@@ -844,14 +845,14 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
     marginTop: "-8px",
   }}
 >
-  Останнє оновлення: 30 серпня 2026 року
+  {i18n.t("modals.UserSearchModal.ostannieOnovlennia30Serpnia")}
 </p>
           <WhyUsLink
             type="button"
             $isDarkMode={isDarkMode}
             onClick={() => setIsWhyUsOpen(true)}
           >
-            Чому треба обрати нас?
+            {i18n.t("modals.UserSearchModal.chomuTrebaObratyNas")}
           </WhyUsLink>
         </Conten>
         <ScrollArea>
@@ -860,8 +861,8 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
               <SearchIcon $isDarkMode={isDarkMode} aria-hidden="true" />
               <SearchInput
                 type="search"
-                placeholder="Знайти питання або відповідь..."
-                aria-label="Пошук питань"
+                placeholder={i18n.t("modals.UserSearchModal.znaityPytanniaAboVidpovid")}
+                aria-label={i18n.t("modals.UserSearchModal.poshukPytan")}
                 value={searchQuery}
                 $isDarkMode={isDarkMode}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -871,7 +872,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                   type="button"
                   $isDarkMode={isDarkMode}
                   onClick={() => setSearchQuery("")}
-                  aria-label="Очистити пошук"
+                  aria-label={i18n.t("modals.UserSearchModal.ochystytyPoshuk")}
                 >
                   <FiX aria-hidden="true" />
                 </ClearSearchButton>
@@ -880,7 +881,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
               <AccordionWrapper style={{ marginTop: 0 }}>
                 {sortedFaqData.length === 0 && (
                   <p style={{ textAlign: "center", color: "#555" }}>
-                    Питань за цим запитом не знайдено.
+                    {i18n.t("modals.UserSearchModal.pytanZaTsymZapytom")}
                   </p>
                 )}
                 {sortedFaqData.map((item, displayIndex) => {
@@ -909,13 +910,13 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                   >
                     <Question
                       type="button"
-                      aria-label={`Переглянути відповідь: ${item.q}`}
+                      aria-label={i18n.t("modals.UserSearchModal.perehlianutyVidpovid", { q: item.q })}
                     >
                       <QuestionText data-truncated-content>
                         {item.q}
                       </QuestionText>
                       <AnswerPreview data-truncated-content>
-                        {answerPreview || "Натисніть, щоб переглянути відповідь."}
+                        {answerPreview || i18n.t("modals.UserSearchModal.natysnitShchobPerehlianutyVidpovid")}
                       </AnswerPreview>
                     </Question>
                   </AccordionItem>
@@ -924,8 +925,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
               </AccordionWrapper>
               {!searchQuery && (
                 <EasterEggNote $isDarkMode={isDarkMode}>
-                  🦃 Доміно вже дивувався, що ви замовкли на одній букві? Щоб він пожартував ще раз,
-                  виконайте в консолі браузера (F12 → Console) і оновіть сторінку:
+                  {i18n.t("modals.UserSearchModal.dominoVzheDyvuvavsiaShcho")}
                   <code>localStorage.removeItem('domino_quip_speechless_seen')</code>
                 </EasterEggNote>
               )}
@@ -952,8 +952,8 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                 <AnswerActionButton
                   type="button"
                   $variant="download"
-                  aria-label="Скачати зображення"
-                  title="Скачати зображення"
+                  aria-label={i18n.t("modals.UserSearchModal.skachatyZobrazhennia")}
+                  title={i18n.t("modals.UserSearchModal.skachatyZobrazhennia")}
                   onClick={() => handleDownloadImage(selectedFaq.image)}
                 >
                   <FiDownload aria-hidden="true" />
@@ -962,8 +962,8 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
               <AnswerActionButton
                 type="button"
                 $variant="close"
-                aria-label="Закрити"
-                title="Закрити (Esc)"
+                aria-label={i18n.t("modals.UserSearchModal.zakryty")}
+                title={i18n.t("modals.UserSearchModal.zakrytyEsc")}
                 onClick={() => setSelectedFaq(null)}
               >
                 <FiX aria-hidden="true" />
@@ -979,8 +979,8 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
               $visible={showScrollTop}
               tabIndex={showScrollTop ? 0 : -1}
               aria-hidden={!showScrollTop}
-              aria-label="Прокрутити вгору"
-              title="Прокрутити вгору"
+              aria-label={i18n.t("modals.UserSearchModal.prokrutytyVhoru")}
+              title={i18n.t("modals.UserSearchModal.prokrutytyVhoru")}
               onClick={scrollAnswerToTop}
             >
               <FiArrowUp aria-hidden="true" />
@@ -1000,12 +1000,12 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
                 handleDownloadImage(previewImage);
               }}
             >
-              Скачати
+              {i18n.t("modals.UserSearchModal.skachaty")}
             </ActionButton>
           </ImagePreviewActions>
           <PreviewImage
             src={previewImage}
-            alt="Прев'ю зображення"
+            alt={i18n.t("modals.UserSearchModal.previuZobrazhennia")}
             onClick={(e) => e.stopPropagation()}
           />
         </ImagePreviewOverlay>

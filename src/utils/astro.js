@@ -1,4 +1,7 @@
 import * as SunCalc from "suncalc";
+import i18n from "../i18n/i18n.js";
+
+const at = (key, params) => i18n.t(`astro.${key}`, params);
 
 // Астрономічні дані дня (Сонце, сутінки, Місяць) — спільні для детального прогнозу та блоків
 
@@ -19,17 +22,17 @@ export const getMoonData = (dateStr, lat = DEFAULT_LAT, lon = DEFAULT_LON) => {
     const moonTimes = SunCalc.getMoonTimes(date, lat || DEFAULT_LAT, lon || DEFAULT_LON);
     const phase = illum.phase;
     let phaseText = "";
-    if (phase === 0) phaseText = "🌑 Молодик";
-    else if (phase < 0.25) phaseText = "🌒 Зростаючий серп";
-    else if (phase === 0.25) phaseText = "🌓 Перша чверть";
-    else if (phase < 0.5) phaseText = "🌔 Зростаючий місяць";
-    else if (phase === 0.5) phaseText = "🌕 Повня";
-    else if (phase < 0.75) phaseText = "🌖 Спадаючий місяць";
-    else if (phase === 0.75) phaseText = "🌗 Остання чверть";
-    else phaseText = "🌘 Спадаючий серп";
+    if (phase === 0) phaseText = `🌑 ${at("newMoon")}`;
+    else if (phase < 0.25) phaseText = `🌒 ${at("waxingCrescent")}`;
+    else if (phase === 0.25) phaseText = `🌓 ${at("firstQuarter")}`;
+    else if (phase < 0.5) phaseText = `🌔 ${at("waxingGibbous")}`;
+    else if (phase === 0.5) phaseText = `🌕 ${at("fullMoon")}`;
+    else if (phase < 0.75) phaseText = `🌖 ${at("waningGibbous")}`;
+    else if (phase === 0.75) phaseText = `🌗 ${at("lastQuarter")}`;
+    else phaseText = `🌘 ${at("waningCrescent")}`;
 
-    const rise = moonTimes.rise ? formatClock(moonTimes.rise) : "Не сходить";
-    const set = moonTimes.set ? formatClock(moonTimes.set) : "Не заходить";
+    const rise = moonTimes.rise ? formatClock(moonTimes.rise) : at("noRise");
+    const set = moonTimes.set ? formatClock(moonTimes.set) : at("noSet");
 
     return { phaseText, rise, set };
   } catch (e) {
@@ -55,21 +58,21 @@ export const getTwilightData = (dateStr, lat = DEFAULT_LAT, lon = DEFAULT_LON) =
 };
 
 const MAJOR_PHASES = [
-  { at: 0, name: "Молодик" },
-  { at: 0.25, name: "Перша чверть" },
-  { at: 0.5, name: "Повня" },
-  { at: 0.75, name: "Остання чверть" },
+  { at: 0, key: "newMoon" },
+  { at: 0.25, key: "firstQuarter" },
+  { at: 0.5, key: "fullMoon" },
+  { at: 0.75, key: "lastQuarter" },
 ];
 
 const phaseName = (phase) => {
-  if (phase < 0.02 || phase > 0.98) return "Молодик";
-  if (phase < 0.23) return "Зростаючий серп";
-  if (phase < 0.27) return "Перша чверть";
-  if (phase < 0.48) return "Зростаючий місяць";
-  if (phase < 0.52) return "Повня";
-  if (phase < 0.73) return "Спадаючий місяць";
-  if (phase < 0.77) return "Остання чверть";
-  return "Спадаючий серп";
+  if (phase < 0.02 || phase > 0.98) return at("newMoon");
+  if (phase < 0.23) return at("waxingCrescent");
+  if (phase < 0.27) return at("firstQuarter");
+  if (phase < 0.48) return at("waxingGibbous");
+  if (phase < 0.52) return at("fullMoon");
+  if (phase < 0.73) return at("waningGibbous");
+  if (phase < 0.77) return at("lastQuarter");
+  return at("waningCrescent");
 };
 
 // Найближча головна фаза (молодик, чверті, повня) після дати — пошук кроком 3 год
@@ -81,7 +84,7 @@ const findNextMajorPhase = (from) => {
     for (const target of MAJOR_PHASES) {
       const crossed =
         target.at === 0 ? cur < prev : prev < target.at && cur >= target.at;
-      if (crossed) return { name: target.name, date: new Date(t) };
+      if (crossed) return { name: at(target.key), date: new Date(t) };
     }
     prev = cur;
   }
@@ -125,8 +128,8 @@ export const getMoonDetails = (dateStr, lat = DEFAULT_LAT, lon = DEFAULT_LON) =>
       name: phaseName(phase),
       riseDate: times.rise || null,
       setDate: times.set || null,
-      rise: times.rise ? formatClock(times.rise) : "Не сходить",
-      set: times.set ? formatClock(times.set) : "Не заходить",
+      rise: times.rise ? formatClock(times.rise) : at("noRise"),
+      set: times.set ? formatClock(times.set) : at("noSet"),
       nextPhase: findNextMajorPhase(date),
     };
   } catch (e) {
@@ -143,5 +146,5 @@ export const getDayLength = (riseStr, setStr) => {
   if (diffMs < 0) return "—";
   const hrs = Math.floor(diffMs / 3600000);
   const mins = Math.floor((diffMs % 3600000) / 60000);
-  return `${hrs}г ${mins}хв`;
+  return at("dayLength", { h: hrs, m: mins });
 };

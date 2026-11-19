@@ -59,8 +59,7 @@ import {
   CARD_BG_CHANGE_EVENT,
   DEFAULT_CARD_BG,
 } from "./components/Weather/weatherShared.js";
-import Maintenance from "./components/Maintenance.jsx";
-import { getMaintenanceStatus, loadFirebase } from "./firebaseLazy.js";
+import { loadFirebase } from "./firebaseLazy.js";
 import fogBackground from "./media/backgrounds/scenes/foggy-forest-loader.webp";
 import userDefault from "./media/ui/user-placeholder.webp";
 import turkeys from "./media/turkeys/kate.webp";
@@ -98,6 +97,15 @@ import { LiaCloudSunRainSolid, LiaCloudMoonRainSolid, LiaCloudSunSolid } from "r
 import { stripSecrets } from "./utils/passwordHash";
 import { syncClock } from "./utils/serverClock";
 import { useLanguageEffect } from "./i18n/useI18nHelpers.js";
+import i18n from "./i18n/i18n.js";
+import {
+  getWeatherIcon,
+  getWeatherSummaryText,
+  formatShortDate,
+  formatWeekdayShort,
+  formatDayMonth,
+  relocalizeCard,
+} from "./utils/weatherText.js";
 import toast from "react-hot-toast";
 import {
   SETTINGS_SYNC_DAILY_LIMIT,
@@ -138,6 +146,7 @@ import { getStykhiiaFont } from "./utils/stykhiiaFont";
 import { getFontPackId, ensureFontPack } from "./utils/customFonts";
 import { FaMagnifyingGlass, FaGripVertical, FaArrowsUpDown } from "react-icons/fa6";
 import { LOADING_PHRASES } from "./utils/funPhrases";
+import { useFunPhrases } from "./i18n/useFunPhrases.js";
 // Вартість однієї картки в квоті Open-Meteo (виміряно заголовком X-RateLimit-Cost, 17.11.2026):
 //   основний прогноз 3,64 + консенсус 7 моделей 5,6 + сезонний 1,51 = 10,75 «виклику» при першому
 //   відкритті; далі — повне оновлення (9,24) раз на ~3 год і легке «зараз» (1,0) щогодини,
@@ -214,8 +223,8 @@ const maxCustomCardsFor = (hideGpsCard) =>
   hideGpsCard ? MAX_CUSTOM_WEATHER_CARDS + 1 : MAX_CUSTOM_WEATHER_CARDS;
 const cardLimitMessage = (hideGpsCard) =>
   hideGpsCard
-    ? `Можна мати не більше ${maxCustomCardsFor(true)} карток погоди (GPS-картку вимкнено в бета-функціях).`
-    : `Можна мати не більше ${MAX_CUSTOM_WEATHER_CARDS} власних карток погоди плюс поточну GPS-картку.`;
+    ? i18n.t("ui.App.mozhnaMatyNeBilshe", { v0: maxCustomCardsFor(true) })
+    : i18n.t("ui.App.mozhnaMatyNeBilshe2", { MAX_CUSTOM_WEATHER_CARDS: MAX_CUSTOM_WEATHER_CARDS });
 // Понад цю кількість — попередження про навантаження на пристрій
 const SOFT_CUSTOM_WEATHER_CARDS = 5;
 const MAX_DAILY_CARD_ADDITIONS = 20;
@@ -277,38 +286,6 @@ const StyledSectionContainer = styled.div`
   margin: ${(props) => (props.$isFirst ? "0 0 10px" : "10px 0")};
   display: ${(props) => (props.$isHidden ? "none" : "block")};
 `;
-const getWeatherIcon = (code, isDay = 1) => {
-  if (code === 0) return isDay ? "☀️ Сонячно" : "🌙 Місячно";
-  if (code >= 1 && code <= 3) return isDay ? "🌤️ Мінлива хмарність" : "☁️ Мінлива хмарність";
-  if (code >= 45 && code <= 48) return "☁️ Туман";
-  if (code >= 51 && code <= 55) return "🌧️ Мряка";
-  if (code >= 56 && code <= 57) return "🌧️ Мряка з снігом";
-  if (code >= 61 && code <= 65) return "🌧️ Дощ";
-  if (code >= 66 && code <= 67) return "🌧️ Дощ з снігом";
-  if (code >= 71 && code <= 75) return "❄️ Снігопад";
-  if (code === 77) return "❄️ Сніжна крупа";
-  if (code >= 80 && code <= 82) return "🌦️ Зливовий дощ";
-  if (code >= 85 && code <= 86) return "❄️ Зливовий сніг";
-  if (code >= 95 && code <= 99) return "⛈️ Гроза";
-  return "☁️ Хмарно";
-};
-
-const getWeatherSummaryText = (code, isDay = 1) => {
-  if (code === 0) return isDay ? "Сонячно" : "Місячно";
-  if (code >= 1 && code <= 3) return isDay ? "Мінлива хмарність" : "Нічна мінлива хмарність";
-  if (code >= 45 && code <= 48) return "Туманно";
-  if (code >= 51 && code <= 55) return "Мряка";
-  if (code >= 56 && code <= 57) return "Мряка з снігом";
-  if (code >= 61 && code <= 65) return "Дощ";
-  if (code >= 66 && code <= 67) return "Дощ з снігом";
-  if (code >= 71 && code <= 75) return "Сніг";
-  if (code === 77) return "Сніжна крупа";
-  if (code >= 80 && code <= 82) return "Зливовий дощ";
-  if (code >= 85 && code <= 86) return "Зливовий сніг";
-  if (code >= 95 && code <= 99) return "Гроза";
-  return "Хмарно";
-};
-
 // Системне сповіщення «Погода: Конотоп — температура, вітер…» — не частіше разу на годину
 const notifyWeatherSummary = (displayName, current) => {
   if (!current || !("Notification" in window) || Notification.permission !== "granted") return;
@@ -320,10 +297,14 @@ const notifyWeatherSummary = (displayName, current) => {
   const wind = current.wind_speed_10m ?? 0;
   const humidity = current.relative_humidity_2m ?? 0;
   const weatherText = getWeatherSummaryText(current.weather_code, current.is_day);
-  const body = `Температура ${temp}°C${
-    feelsLike !== temp ? `, відчувається ${feelsLike}°C` : ""
-  }, ${weatherText}, вітер ${wind} м/с, вологість ${humidity}%.`;
-  new Notification(`Погода: ${displayName}`, { body, icon: "/favicon.ico" });
+  const body = i18n.t("weatherText.notifyBody", {
+    temp,
+    feels: feelsLike !== temp ? i18n.t("weatherText.notifyFeels", { feels: feelsLike }) : "",
+    weather: weatherText,
+    wind,
+    humidity,
+  });
+  new Notification(i18n.t("weatherText.notifyTitle", { city: displayName }), { body, icon: "/favicon.ico" });
   setPref("weatherNotificationLastSentAt", String(now));
 };
 
@@ -443,7 +424,7 @@ const WeatherCardSkeleton = ({ isDarkMode }) => {
     <WeatherCardSkeletonBox
       $isDarkMode={isDarkMode}
       role="status"
-      aria-label="Завантажуємо прогноз погоди"
+      aria-label={i18n.t("ui.App.zavantazhuiemoProhnozPohody")}
     />
   );
 };
@@ -769,7 +750,7 @@ const ReorderRow = ({ item, index, isDarkMode, onDragEnd }) => {
     >
       <DragHandle
         type="button"
-        aria-label={`Перетягнути картку «${item.label}»`}
+        aria-label={i18n.t("ui.App.peretiahnutyKartku", { label: item.label })}
         onPointerDown={(e) => {
           e.preventDefault();
           controls.start(e);
@@ -1391,7 +1372,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
 
   const normalizedQuery = cityQuery.trim().toLowerCase();
   const matchingCities = labels
-    .map((label, index) => ({ label: label || `Картка ${index + 1}`, index }))
+    .map((label, index) => ({ label: label || i18n.t("ui.App.kartka", { v0: index + 1 }), index }))
     .filter(({ label }) => !normalizedQuery || label.toLowerCase().includes(normalizedQuery));
 
   const cityJumpBlock = childCount > 1 && (
@@ -1400,7 +1381,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
             type="button"
             $isDarkMode={isDarkMode}
             aria-expanded={isCityJumpOpen}
-            title="Знайти серед створених карток міст"
+            title={i18n.t("ui.App.znaitySeredStvorenykhKartok")}
             onClick={() => {
               setIsReorderOpen(false);
               setIsCityJumpOpen((open) => !open);
@@ -1408,7 +1389,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
           >
             <FaMagnifyingGlass aria-hidden="true" />
             {/* Коротко, щоб влазило на вузькому телефоні; повне пояснення — у підказці */}
-            <span>Знайти місто ({childCount})</span>
+            <span>{i18n.t("ui.App.znaityMisto")}{childCount})</span>
             <span aria-hidden="true">{isCityJumpOpen ? "▲" : "▼"}</span>
           </CityJumpToggle>
           {onReorder && (
@@ -1417,20 +1398,20 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
               $isDarkMode={isDarkMode}
               $active={isReorderOpen}
               aria-expanded={isReorderOpen}
-              title="Змінити порядок карток (бета)"
+              title={i18n.t("ui.App.zminytyPoriadokKartokBeta")}
               onClick={() => {
                 setIsCityJumpOpen(false);
                 setIsReorderOpen((open) => !open);
               }}
             >
               <FaArrowsUpDown aria-hidden="true" />
-              <span>Порядок</span>
+              <span>{i18n.t("ui.App.poriadok")}</span>
             </ReorderToggle>
           )}
           {isReorderOpen && onReorder && (
             <CityJumpDropdown $isDarkMode={isDarkMode}>
               <ReorderHint $isDarkMode={isDarkMode}>
-                Потягніть за ⠿, щоб змінити порядок карток (бета)
+                {i18n.t("ui.App.potiahnitZaShchobZminyty")}
               </ReorderHint>
               <Reorder.Group
                 as="ul"
@@ -1461,8 +1442,8 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
                 autoFocus
                 $isDarkMode={isDarkMode}
                 value={cityQuery}
-                placeholder="Назва міста..."
-                aria-label="Пошук серед створених карток"
+                placeholder={i18n.t("ui.App.nazvaMista")}
+                aria-label={i18n.t("ui.App.poshukSeredStvorenykhKartok")}
                 onChange={(e) => setCityQuery(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && matchingCities.length > 0) {
@@ -1484,7 +1465,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
                 ))}
               </CityJumpList>
               {matchingCities.length === 0 && (
-                <CityJumpEmpty $isDarkMode={isDarkMode}>Такого міста немає серед карток</CityJumpEmpty>
+                <CityJumpEmpty $isDarkMode={isDarkMode}>{i18n.t("ui.App.takohoMistaNemaieSered")}</CityJumpEmpty>
               )}
             </CityJumpDropdown>
           )}
@@ -1616,18 +1597,18 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
       $isDarkMode={isDarkMode}
       $collapsed={isCitySidebarHidden}
       $noAnim={animationsDisabled}
-      aria-label="Мої міста"
+      aria-label={i18n.t("ui.App.moiMista")}
       style={sidebarBox ? { height: "100%", maxHeight: "none" } : undefined}
     >
       <CitySidebarHeader>
-        <span title={`Мої міста: ${childCount}`}>Міста ({childCount})</span>
+        <span title={i18n.t("ui.App.moiMista2", { childCount: childCount })}>{i18n.t("ui.App.mista")}{childCount})</span>
         {onReorder && (
           <CitySidebarIconButton
             type="button"
             $active={isSidebarReorder}
             aria-pressed={isSidebarReorder}
-            title="Змінити порядок карток (бета)"
-            aria-label="Змінити порядок карток (бета)"
+            title={i18n.t("ui.App.zminytyPoriadokKartokBeta")}
+            aria-label={i18n.t("ui.App.zminytyPoriadokKartokBeta")}
             onClick={() => setIsSidebarReorder((on) => !on)}
           >
             <FaArrowsUpDown aria-hidden="true" />
@@ -1636,7 +1617,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
       </CitySidebarHeader>
       {isSidebarReorder && onReorder ? (
         <>
-          <ReorderHint $isDarkMode={isDarkMode}>Тягніть за ⠿ (бета)</ReorderHint>
+          <ReorderHint $isDarkMode={isDarkMode}>{i18n.t("ui.App.tiahnitZaBeta")}</ReorderHint>
           <Reorder.Group
             as="ul"
             axis="y"
@@ -1664,8 +1645,8 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
             type="search"
             $isDarkMode={isDarkMode}
             value={cityQuery}
-            placeholder="Пошук..."
-            aria-label="Пошук серед створених карток"
+            placeholder={i18n.t("ui.App.poshuk")}
+            aria-label={i18n.t("ui.App.poshukSeredStvorenykhKartok")}
             onChange={(e) => setCityQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && matchingCities.length > 0) {
@@ -1699,7 +1680,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
             })}
           </CitySidebarList>
           {matchingCities.length === 0 && (
-            <CityJumpEmpty $isDarkMode={isDarkMode}>Немає такого міста</CityJumpEmpty>
+            <CityJumpEmpty $isDarkMode={isDarkMode}>{i18n.t("ui.App.nemaieTakohoMista")}</CityJumpEmpty>
           )}
         </>
       )}
@@ -1710,8 +1691,8 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
           role="switch"
           $active={showArrows}
           aria-checked={showArrows}
-          title={showArrows ? "Сховати стрілки ◀ ▶" : "Показати стрілки ◀ ▶"}
-          aria-label="Стрілки гортання карток"
+          title={showArrows ? i18n.t("ui.App.skhovatyStrilky") : i18n.t("ui.App.pokazatyStrilky")}
+          aria-label={i18n.t("ui.App.strilkyHortanniaKartok")}
           onClick={() => togglePrefFlag(CAROUSEL_ARROWS_HIDDEN_KEY)}
         >
           ◀▶
@@ -1721,8 +1702,8 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
           role="switch"
           $active={showNumbers}
           aria-checked={showNumbers}
-          title={showNumbers ? "Сховати номери карток" : "Показати номери карток"}
-          aria-label="Номери карток"
+          title={showNumbers ? i18n.t("ui.App.skhovatyNomeryKartok") : i18n.t("ui.App.pokazatyNomeryKartok")}
+          aria-label={i18n.t("ui.App.nomeryKartok")}
           onClick={() => togglePrefFlag(CAROUSEL_NUMBERS_HIDDEN_KEY)}
         >
           123
@@ -1788,7 +1769,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
             $noAnim={animationsDisabled}
             inert={!showArrows}
             aria-hidden={!showArrows || undefined}
-            aria-label="Попередня картка"
+            aria-label={i18n.t("ui.App.poperedniaKartka")}
             onClick={() => changeSlide(-1)}
           >
             ◀
@@ -1800,7 +1781,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
             $noAnim={animationsDisabled}
             inert={!showArrows}
             aria-hidden={!showArrows || undefined}
-            aria-label="Наступна картка"
+            aria-label={i18n.t("ui.App.nastupnaKartka")}
             onClick={() => changeSlide(1)}
           >
             ▶
@@ -1905,7 +1886,7 @@ const mergeFanArtBackgrounds = (backgrounds, fanArtImages) => {
 
     merged.push({
       ...image,
-      category: image.category || "Ваші зображення",
+      category: image.category || i18n.t("ui.App.vashiZobrazhennia"),
     });
     keys.forEach((key) => existingKeys.add(key));
   });
@@ -1984,19 +1965,19 @@ const SectionContent = memo(
               $isStickyBgMode={isStickyBgMode}
               $isDarkMode={isDarkMode}
             >
-              Погода
+              {i18n.t("ui.App.pohoda")}
             </AihelpTitle>
           </WeatherTitleRow>
           {hideGpsCard && weatherCards.length === 0 && (
             <EmptyWeatherNote $isDarkMode={isDarkMode}>
-              GPS-картку вимкнено в бета-функціях, а власних карток ще немає.
+              {i18n.t("ui.App.gpsKartkuVymknenoV")}
               <button
                 type="button"
                 onClick={() =>
                   document.getElementById("hero")?.scrollIntoView({ behavior: "smooth" })
                 }
               >
-                Додати місто через пошук
+                {i18n.t("ui.App.dodatyMistoCherezPoshuk")}
               </button>
             </EmptyWeatherNote>
           )}
@@ -2005,7 +1986,7 @@ const SectionContent = memo(
             labels={weatherCards.map((card) => card.locationName)}
             items={weatherCards.map((card) => ({
               id: card.id,
-              label: card.locationName || "Картка",
+              label: card.locationName || i18n.t("ui.App.kartka2"),
               isMain: !!card.isMain,
             }))}
             onReorder={onReorderCards}
@@ -2066,7 +2047,10 @@ const SectionContent = memo(
 const App = () => {
   useLanguageEffect();
   // Фраза дня, що раніше була на заставці завантаження, — тепер у блоці «Працює на базі» на головній
-  const [phraseData, setPhraseData] = useState({ text: "", isNew: false });
+  // index — номер фрази; текст береться мовою сайту, «вже бачили» — за українським текстом
+  const [phraseData, setPhraseData] = useState({ index: -1, isNew: false });
+  const funPhrases = useFunPhrases();
+  const loadingPhraseText = (phraseData.index >= 0 && funPhrases?.LOADING[phraseData.index]) || "";
   const [isDarkMode, setIsDarkMode] = useState(true);
   // Тема скролбара на <html> (App.css: світлий повзунок у темній темі, темний у світлій).
   // Окремий атрибут, а не data-theme — той вмикає color-scheme: dark для всіх полів форм.
@@ -2175,33 +2159,6 @@ const App = () => {
   const [isFirstTimeHelpOpen, setIsFirstTimeHelpOpen] = useState(false);
   const [selectedTimezone, setSelectedTimezone] = useState("UTC");
   const [isHydrated, setIsHydrated] = useState(false);
-  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
-  const [maintenanceEndTime, setMaintenanceEndTime] = useState(null);
-  const [maintenanceMessage, setMaintenanceMessage] = useState(null);
-
-  // Перевіряємо стан техробіт без постійного Firestore listener (легкий REST-запит, без SDK).
-  // Перша перевірка — після показу погоди, щоб не конкурувати з нею за мережу.
-  useEffect(() => {
-    let isActive = true;
-
-    const refreshMaintenanceStatus = async () => {
-      if (document.visibilityState !== "visible") return;
-      const { isMaintenanceMode, endTime, message } = await getMaintenanceStatus();
-      if (isActive) {
-        setIsMaintenanceMode(isMaintenanceMode);
-        setMaintenanceEndTime(endTime);
-        setMaintenanceMessage(message);
-      }
-    };
-
-    const firstCheck = setTimeout(refreshMaintenanceStatus, 3000);
-    document.addEventListener("visibilitychange", refreshMaintenanceStatus);
-    return () => {
-      isActive = false;
-      clearTimeout(firstCheck);
-      document.removeEventListener("visibilitychange", refreshMaintenanceStatus);
-    };
-  }, []);
 
   // Гідратація даних з localforage
   useEffect(() => {
@@ -2299,7 +2256,7 @@ const App = () => {
         if (savedLocationEnabled !== null) setIsLocationEnabled(savedLocationEnabled);
 
         const savedCards = await localforage.getItem("weather_cards");
-        if (savedCards) setWeatherCards((prev) => mergeSavedWeatherCards(prev, savedCards));
+        if (savedCards) setWeatherCards((prev) => mergeSavedWeatherCards(prev, savedCards).map(relocalizeCard));
 
         const savedHideUntil = await localforage.getItem(
           "hideDeleteModalUntil",
@@ -2416,7 +2373,7 @@ const App = () => {
         );
       }
 
-      setPhraseData({ text: selectedText, isNew });
+      setPhraseData({ index: randomIndex, isNew });
     };
     initPhrase();
   }, []);
@@ -2536,6 +2493,12 @@ const App = () => {
 
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [weatherCards, setWeatherCards] = useState([]);
+  // Зміна мови — перебудовуємо підписи погоди (опис, дні тижня, дати) у вже завантажених картках
+  useEffect(() => {
+    const onLang = () => setWeatherCards((prev) => prev.map(relocalizeCard));
+    i18n.on("languageChanged", onLang);
+    return () => i18n.off("languageChanged", onLang);
+  }, []);
   // Бета-функції «Вимкнути GPS-картку» та «Перетягування карток»
   const hideGpsCard = useBeta("hideGpsCard");
   const isDragCardsBeta = useBeta("dragCards");
@@ -2650,7 +2613,7 @@ const App = () => {
       if (settingsLimitToastDateRef.current !== today) {
         settingsLimitToastDateRef.current = today;
         toast(
-          `Ліміт синхронізації налаштувань (${SETTINGS_SYNC_DAILY_LIMIT} на добу) вичерпано. Зміни збережено на цьому пристрої, в акаунт вони потраплять завтра.`,
+          i18n.t("ui.App.limitSynkhronizatsiiNalashtuvanNa", { SETTINGS_SYNC_DAILY_LIMIT: SETTINGS_SYNC_DAILY_LIMIT }),
           { id: "settings-sync-limit", duration: 5000 },
         );
       }
@@ -3213,7 +3176,7 @@ const App = () => {
       const claimed = await claimPendingReferral(user);
       if (claimed) {
         toast.success(
-          `Вітаємо у Стихії! Вас запросив друг. Заходьте ${INVITE_ACTIVE_DAYS} різні дні за ${INVITE_WINDOW_DAYS} днів, і ви обидва отримаєте значки. День 1 з ${INVITE_ACTIVE_DAYS} ✅`,
+          i18n.t("ui.App.vitaiemoUStykhiiVas", { INVITE_ACTIVE_DAYS: INVITE_ACTIVE_DAYS, INVITE_WINDOW_DAYS: INVITE_WINDOW_DAYS, INVITE_ACTIVE_DAYS2: INVITE_ACTIVE_DAYS }),
           { duration: 7000 },
         );
         return;
@@ -3222,9 +3185,9 @@ const App = () => {
       if (!res?.justCounted) return;
       if (res.justDone) {
         setUser((prev) => (prev?.uid === uid ? { ...prev, isInvitee: true } : prev));
-        toast.success(`${BADGES.invitee.emoji} Значок «${BADGES.invitee.name}» ваш! Ваш друг теж отримав значок.`, { duration: 7000 });
+        toast.success(i18n.t("ui.App.znachokVashVashDruh", { emoji: BADGES.invitee.emoji, name: BADGES.invitee.name }), { duration: 7000 });
       } else {
-        toast.success(`День ${res.activeDays} з ${INVITE_ACTIVE_DAYS} у Стихії ✅ Ще трохи, і значки отримаєте ви з другом.`);
+        toast.success(i18n.t("ui.App.denZUStykhii", { activeDays: res.activeDays, INVITE_ACTIVE_DAYS: INVITE_ACTIVE_DAYS }));
       }
     })();
   }, [user?.uid]); // лише при зміні акаунта
@@ -3251,7 +3214,7 @@ const App = () => {
         let displayName =
           typeof cityData === "string"
             ? cityData
-            : cityData?.fullName || "Ваша локація";
+            : cityData?.fullName || i18n.t("ui.App.vashaLokatsiia");
 
         if (cityData && typeof cityData === "object" && cityData.lat) {
           targetLat = cityData.lat;
@@ -3275,7 +3238,7 @@ const App = () => {
               displayName = geo.data.results[0].name;
               cityData = { id: Date.now() }; // Створюємо об'єкт для нової картки
             } else {
-              report("Місто не знайдено в базі Open-Meteo");
+              report(i18n.t("ui.App.mistoNeZnaidenoV"));
               return false;
             }
           }
@@ -3294,10 +3257,10 @@ const App = () => {
           );
           if (duplicateCard) {
             if (notify) {
-              notify(`«${duplicateCard.locationName}» вже є серед ваших карток`);
+              notify(i18n.t("ui.App.vzheIeSeredVashykh", { locationName: duplicateCard.locationName }));
               return false;
             }
-            toast(`«${duplicateCard.locationName}» вже є серед ваших карток`, {
+            toast(i18n.t("ui.App.vzheIeSeredVashykh", { locationName: duplicateCard.locationName }), {
               id: "duplicate-city-card",
               icon: "📍",
             });
@@ -3312,7 +3275,7 @@ const App = () => {
             return false;
           }
           if (customCardsCount >= SOFT_CUSTOM_WEATHER_CARDS) {
-            toast(`Більше ${SOFT_CUSTOM_WEATHER_CARDS} карток спричиняє навантаження на пристрій.`, { icon: "⚠️", duration: 4000 });
+            toast(i18n.t("ui.App.bilsheKartokSprychyniaieNavantazhennia", { SOFT_CUSTOM_WEATHER_CARDS: SOFT_CUSTOM_WEATHER_CARDS }), { icon: "⚠️", duration: 4000 });
           }
 
           // Незареєстровані користувачі не мають ліміту на 3 картки/тиждень
@@ -3341,7 +3304,7 @@ const App = () => {
               });
               setDailyCardAdditions(counterRef.current.count);
               if (!result.ok) {
-                report(`Ви досягли ліміту в ${MAX_DAILY_CARD_ADDITIONS} карток на добу.`);
+                report(i18n.t("ui.App.vyDosiahlyLimituV", { MAX_DAILY_CARD_ADDITIONS: MAX_DAILY_CARD_ADDITIONS }));
                 return false;
               }
             } catch (e) {
@@ -3521,7 +3484,7 @@ const App = () => {
             isFallbackLocation: isMain && !!cityData?.isFallback,
             locationName:
               isMain && !cityData?.fullName
-                ? "Ваша локація"
+                ? i18n.t("ui.App.vashaLokatsiia")
                 : isMain && cityData?.isFallback
                   ? displayName
                   : existingCard
@@ -3552,7 +3515,7 @@ const App = () => {
               evapotranspiration: d.current.et0_fao_evapotranspiration ?? 0,
               freezing_level_height: d.current.freezing_level_height ?? 0,
               soil_temperature_0cm: d.current.soil_temperature_0cm ?? 0,
-              description: "За кодом: " + d.current.weather_code,
+              description: i18n.t("newsWeather.weatherRefresh.zaKodom", { v0: d.current.weather_code }),
               weather_code: d.current.weather_code,
               is_day: d.current.is_day,
               iconPlaceholder: getWeatherIcon(d.current.weather_code, d.current.is_day),
@@ -3574,10 +3537,7 @@ const App = () => {
                 }
                 return {
                   time: `${String(timestamp.getHours()).padStart(2, "0")}:00`,
-                  dateLabel: timestamp.toLocaleDateString("uk", {
-                    day: "2-digit",
-                    month: "2-digit",
-                  }),
+                  dateLabel: formatDayMonth(timestamp),
                   fullTime: t,
                   temp: `${Math.round(d.hourly?.temperature_2m?.[dataIdx] ?? 0)}°C`,
                   tempNum: Math.round(d.hourly?.temperature_2m?.[dataIdx] ?? 0),
@@ -3618,12 +3578,9 @@ const App = () => {
                 };
               }),
             daily16: (d.daily?.time || []).map((t, i) => ({
-              date: new Date(t).toLocaleDateString("uk", {
-                day: "numeric",
-                month: "2-digit",
-              }),
+              date: formatShortDate(t),
               fullDate: t,
-              day: new Date(t).toLocaleDateString("uk", { weekday: "short" }),
+              day: formatWeekdayShort(t),
               temp_day: `${Math.round(d.daily.temperature_2m_max[i] ?? 0)}°C`,
               temp_night: `${Math.round(d.daily.temperature_2m_min[i] ?? 0)}°C`,
               uv_index: d.daily.uv_index_max?.[i] ?? 0,
@@ -3693,11 +3650,8 @@ const App = () => {
           if (sd?.daily?.time?.length) {
             const seasonalData = sd.daily.time.map((t, i) => ({
               fullDate: t,
-              date: new Date(t).toLocaleDateString("uk", {
-                day: "numeric",
-                month: "2-digit",
-              }),
-              day: new Date(t).toLocaleDateString("uk", { weekday: "short" }),
+              date: formatShortDate(t),
+              day: formatWeekdayShort(t),
               // Seasonal API returns ensemble means (arrays of arrays) — take index 0 (mean)
               temp_day: `${Math.round(
                 Array.isArray(sd.daily.temperature_2m_max?.[0])
@@ -3732,7 +3686,7 @@ const App = () => {
       } catch (error) {
         console.error("Помилка завантаження погоди", error);
         if (notify) {
-          notify("Не вдалося завантажити погоду. Перевірте інтернет і спробуйте ще раз");
+          notify(i18n.t("ui.App.neVdalosiaZavantazhytyPohodu"));
           return false;
         }
       }
@@ -3917,7 +3871,7 @@ const App = () => {
               : c,
           ),
         );
-        notifyWeatherSummary(card.locationName || "Ваша локація", current);
+        notifyWeatherSummary(card.locationName || i18n.t("ui.App.vashaLokatsiia"), current);
       } catch (error) {
         console.warn("Легке оновлення погоди не вдалося:", error?.message);
       }
@@ -3981,7 +3935,7 @@ const App = () => {
         if (!data[i]?.hourly) return;
         notifyWeatherHazardsLocal({
           cardId: c.id,
-          placeName: c.locationName || "Ваша локація",
+          placeName: c.locationName || i18n.t("ui.App.vashaLokatsiia"),
           hourly: data[i].hourly,
           utcOffsetSeconds: 0,
         }).catch(() => {});
@@ -4023,13 +3977,13 @@ const App = () => {
       const dbCity = findCityInDatabase(analysis.cityName);
       const seo = dbCity ? getCitySeo(dbCity) : null;
       document.title =
-        seo?.title || `Погода в місті ${analysis.cityName} — точний прогноз | Стихія`;
+        seo?.title || i18n.t("ui.App.pohodaVMistiTochnyi", { cityName: analysis.cityName });
       const metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
         metaDesc.setAttribute(
           "content",
           seo?.description ||
-            `Точний прогноз погоди в місті ${analysis.cityName}: температура, вітер, вологість, тиск та графік на 16 днів.`
+            i18n.t("ui.App.tochnyiProhnozPohodyV", { cityName: analysis.cityName })
         );
       }
 
@@ -4037,11 +3991,11 @@ const App = () => {
       let canonical = document.querySelector('link[rel="canonical"]');
       if (canonical) {
         // Для міст із бази — статична сторінка /pohoda/<slug>/ (її і індексує Google)
+        // Адреса пошуку однакова для всіх мов — не перекладається
+        const seoSearchUrl = `https://stuxia.com/?q=погода+${encodeURIComponent(analysis.cityName.toLowerCase())}`;
         canonical.setAttribute(
           "href",
-          dbCity
-            ? `https://stuxia.com/pohoda/${getCitySlug(dbCity)}/`
-            : `https://stuxia.com/?q=погода+${encodeURIComponent(analysis.cityName.toLowerCase())}`
+          dbCity ? `https://stuxia.com/pohoda/${getCitySlug(dbCity)}/` : seoSearchUrl
         );
       }
 
@@ -4056,7 +4010,7 @@ const App = () => {
         "@context": "https://schema.org",
         "@type": "Place",
         "name": analysis.cityName,
-        "description": seo?.heading || `Точний прогноз погоди в місті ${analysis.cityName}`,
+        "description": seo?.heading || i18n.t("ui.App.tochnyiProhnozPohodyV2", { cityName: analysis.cityName }),
         "address": {
           "@type": "PostalAddress",
           "addressCountry": "UA",
@@ -4231,7 +4185,7 @@ const App = () => {
     setWeatherCards((prev) => prev.filter((card) => !idsToRemove.includes(card.id)));
     setBetaOn("hideGpsCard", false);
     setGpsReturnRequest(null);
-    toast.success("GPS-картку повернуто", { id: "gps-card-return" });
+    toast.success(i18n.t("ui.App.gpsKartkuPovernuto"), { id: "gps-card-return" });
   }, []);
 
   const cancelGpsCardReturn = useCallback(() => setGpsReturnRequest(null), []);
@@ -4396,10 +4350,10 @@ const App = () => {
           id: String(card.id),
           label:
             card.isMain && !card.isFallbackLocation
-              ? `${card.locationName || "Ваша локація"} (GPS)`
+              ? `${card.locationName || i18n.t("ui.App.vashaLokatsiia")} (GPS)`
               : card.isMain
-                ? `${card.locationName || "Київ"} (без GPS)`
-                : card.locationName || "Місто",
+                ? i18n.t("ui.App.bezGps", { v0: card.locationName || "Київ" })
+                : card.locationName || i18n.t("ui.App.misto"),
         })),
     [weatherCards],
   );
@@ -4495,9 +4449,9 @@ const App = () => {
         />
         <HeroCredits
           randomPhrase={
-            phraseData.text && (
+            loadingPhraseText && (
               <LoadingPhraseWrapper $isNew={phraseData.isNew}>
-                {phraseData.text}
+                {loadingPhraseText}
                 {phraseParticles.map((p) => (
                   <ParticleSymbol
                     key={p.id}
@@ -4715,13 +4669,6 @@ const App = () => {
           />
         </div>
       </ThemeWrapper>
-      {isMaintenanceMode && (
-        <Maintenance
-          isDarkMode={isDarkMode}
-          endTime={maintenanceEndTime}
-          message={maintenanceMessage}
-        />
-      )}
       </SiteContextMenu>
     </DecoratorProvider>
   );

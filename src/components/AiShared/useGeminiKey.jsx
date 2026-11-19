@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import localforage from "localforage";
 import { useAgeGate } from "../Modals/AgeGateModal";
 import { GeminiKeyModal } from "../Modals/GeminiKeyModal";
-import { GEMINI_AGE_TEXT, GEMINI_MIN_AGE } from "../../utils/ageGate";
+import { geminiAgeText, GEMINI_MIN_AGE } from "../../utils/ageGate";
 
 const STORAGE_KEY = "gemini_api_key";
 const CHANGE_EVENT = "geminiKeyChanged";
@@ -35,7 +35,7 @@ export const useGeminiKey = ({ modelName } = {}) => {
   }, [reload]);
 
   /** Ключ Gemini видає Google, а умови Gemini API вимагають 18+. */
-  const ensureAge = useCallback(() => requestAge(GEMINI_MIN_AGE, GEMINI_AGE_TEXT), [requestAge]);
+  const ensureAge = useCallback(() => requestAge(GEMINI_MIN_AGE, geminiAgeText()), [requestAge]);
 
   const handleInput = useCallback(async (value) => {
     const cleaned = cleanKey(value || "");

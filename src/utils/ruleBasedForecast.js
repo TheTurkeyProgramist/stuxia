@@ -6,6 +6,17 @@
  */
 
 import { toGenitive } from "./genitive";
+import { isSnowCode, isRainCode } from "./weatherText.js";
+
+import i18n from "../i18n/i18n.js";
+// Теги бейджів (rain, wind, rise, drop, night): логіка й іконки дивляться на них, а не на текст,
+// тож бейджі можна перекладати будь-якою мовою
+const BADGE_TAGS = new Map();
+const badge = (tags, text) => {
+  BADGE_TAGS.set(text, tags.split(" ").filter(Boolean));
+  return text;
+};
+export const badgeHas = (text, tag) => Boolean(text) && (BADGE_TAGS.get(text) || []).includes(tag);
 
 // Допоміжна функція парсингу числових значень
 const parseNum = (val, fallback = 0) => {
@@ -59,32 +70,32 @@ export const analyzeDayNightContrast = (current, todayDaily, unit = "C") => {
   const feelsDiff = Math.round((feelsLike - currentTemp) * 10) / 10;
 
   let message;
-  let badge = null;
+  let dnBadge = null;
 
   if (delta >= 11) {
-    badge = `Контраст день/ніч: ${delta}°C`;
-    message = `Сьогодні вдень очікується близько ${formatTempWithSign(dayTemp, unit)}, проте вночі стовпчики термометрів різко опустяться до ${formatTempWithSign(nightTemp, unit)} (добова амплітуда ${delta}°C). Вечір буде значно прохолоднішим, тому теплий верхній одяг буде обов'язковим.`;
+    dnBadge = badge("night", i18n.t("newsWeather.ruleBasedForecast.kontrastDenNichC", { delta: delta }));
+    message = i18n.t("newsWeather.ruleBasedForecast.sohodniVdenOchikuietsiaBlyzko", { v0: formatTempWithSign(dayTemp, unit), v1: formatTempWithSign(nightTemp, unit), delta: delta });
   } else if (delta >= 7) {
-    badge = `Помірний спад до ночі`;
-    message = `Денна температура становитиме близько ${formatTempWithSign(dayTemp, unit)}, а нічна знизиться до ${formatTempWithSign(nightTemp, unit)}. Різниця у ${delta}°C є типовою, але вимагатиме теплішого шару одягу після заходу сонця.`;
+    dnBadge = badge("drop", i18n.t("newsWeather.ruleBasedForecast.pomirnyiSpadDoNochi"));
+    message = i18n.t("newsWeather.ruleBasedForecast.dennaTemperaturaStanovytymeBlyzko", { v0: formatTempWithSign(dayTemp, unit), v1: formatTempWithSign(nightTemp, unit), delta: delta });
   } else if (delta <= 3 && delta >= -1) {
-    badge = `Рівна доба`;
-    message = `Добові коливання мінімальні: вдень близько ${formatTempWithSign(dayTemp, unit)}, а вночі ${formatTempWithSign(nightTemp, unit)}. Щільна хмарність або волога повітряна маса утримують стабільний температурний фон без різких перепадів.`;
+    dnBadge = badge("", i18n.t("newsWeather.ruleBasedForecast.rivnaDoba"));
+    message = i18n.t("newsWeather.ruleBasedForecast.doboviKolyvanniaMinimalniVden", { v0: formatTempWithSign(dayTemp, unit), v1: formatTempWithSign(nightTemp, unit) });
   } else {
-    message = `Сьогодні температурний графік: вдень ${formatTempWithSign(dayTemp, unit)}, вночі близько ${formatTempWithSign(nightTemp, unit)}.`;
+    message = i18n.t("newsWeather.ruleBasedForecast.sohodniTemperaturnyiHrafikVden", { v0: formatTempWithSign(dayTemp, unit), v1: formatTempWithSign(nightTemp, unit) });
   }
 
   // Додаємо аналіз відчуття (вітер / вологість)
   if (feelsDiff <= -3) {
-    message += ` Через пориви вітру та сирість температура відчувається на ${Math.abs(feelsDiff)}°C нижче за реальну (${formatTempWithSign(feelsLike, unit)}).`;
+    message += " " + i18n.t("newsWeather.ruleBasedForecast.cherezPoryvyVitruTa", { Math: Math.abs(feelsDiff), v1: formatTempWithSign(feelsLike, unit) });
   } else if (feelsDiff >= 3) {
-    message += ` Через високу вологість відчувається тепліше та душніше (${formatTempWithSign(feelsLike, unit)}).`;
+    message += " " + i18n.t("newsWeather.ruleBasedForecast.cherezVysokuVolohistVidchuvaietsia", { v0: formatTempWithSign(feelsLike, unit) });
   }
 
   let warning = null;
   // Попередження про заморозки/ожеледь
   if (nightTemp <= 0 && dayTemp > 0) {
-    warning = `Увага: вночі можливі приморозки або ожеледиця на мокрих ділянках доріг!`;
+    warning = i18n.t("newsWeather.ruleBasedForecast.uvahaVnochiMozhlyviPrymorozky");
     message += ` ${warning}`;
   }
 
@@ -93,7 +104,7 @@ export const analyzeDayNightContrast = (current, todayDaily, unit = "C") => {
     nightTemp,
     delta,
     feelsLike,
-    badge,
+    badge: dnBadge,
     message,
     warning,
   };
@@ -105,7 +116,7 @@ export const analyzeDayNightContrast = (current, todayDaily, unit = "C") => {
 export const analyzeHourlyTimeline = (hourly = [], unit = "C") => {
   if (!Array.isArray(hourly) || hourly.length === 0) {
     return {
-      rainWindowText: "Дані про годинний графік відсутні.",
+      rainWindowText: i18n.t("newsWeather.ruleBasedForecast.daniProHodynnyiHrafik"),
       peakTempText: "",
       windTrendText: "",
       badges: [],
@@ -131,10 +142,13 @@ export const analyzeHourlyTimeline = (hourly = [], unit = "C") => {
     const gust = parseNum(item.wind_gusts_10m ?? item.wind_gusts, 0);
     const visibility = item.visibility == null ? null : parseNum(item.visibility, null);
     const desc = (item.description || item.iconPlaceholder || "").toLowerCase();
-    const isSnow = desc.includes("сніг") || desc.includes("snow");
+    const code = item.weather_code;
+    const hasCode = code !== undefined && code !== null;
+    const isSnow = hasCode ? isSnowCode(code) : desc.includes("сніг") || desc.includes("snow");
     const isRain =
       pop >= 40 ||
       precip >= 0.3 ||
+      (hasCode && isRainCode(code)) ||
       desc.includes("дощ") ||
       desc.includes("злива") ||
       desc.includes("мряка") ||
@@ -158,20 +172,20 @@ export const analyzeHourlyTimeline = (hourly = [], unit = "C") => {
 
   if (afternoonRain.length > 0 && morningRain.length === 0) {
     const firstRainHour = afternoonRain[0].time || `${afternoonRain[0].hourNum}:00`;
-    badges.push("З другої половини дня дощ");
-    rainWindowText = `З другої половини дня очікуються опади: орієнтовно після ${firstRainHour} небо затягне дощовою хмарністю (ймовірність до ${afternoonRain[0].pop || 65}%). Перша половина дня мине без істотних опадів, тож вуличні справи варто запланувати до обіду.`;
+    badges.push(badge("rain", i18n.t("newsWeather.ruleBasedForecast.zDruhoiPolovynyDnia")));
+    rainWindowText = i18n.t("newsWeather.ruleBasedForecast.zDruhoiPolovynyDnia2", { firstRainHour: firstRainHour, v1: afternoonRain[0].pop || 65 });
   } else if (morningRain.length > 0 && afternoonRain.length === 0) {
-    badges.push("Дощ у першій половині дня");
-    rainWindowText = `Основні опади зосереджені в першій половині дня. Ближче до обіду та у другій половині дня дощовий фронт відступить, погода почне поступово прояснюватися.`;
+    badges.push(badge("rain", i18n.t("newsWeather.ruleBasedForecast.doshchUPershiiPolovyni")));
+    rainWindowText = i18n.t("newsWeather.ruleBasedForecast.osnovniOpadyZoseredzheniV");
   } else if (morningRain.length > 0 && afternoonRain.length > 0) {
-    badges.push("Затяжні опади");
-    rainWindowText = `Опади очікуються як у першій, так і в другій половині дня. Парасоля та вологозахисне взуття знадобляться протягом усього дня.`;
+    badges.push(badge("rain", i18n.t("newsWeather.ruleBasedForecast.zatiazhniOpady")));
+    rainWindowText = i18n.t("newsWeather.ruleBasedForecast.opadyOchikuiutsiaIakU");
   } else if (nightRain.length > 0) {
-    badges.push("Нічний дощ");
-    rainWindowText = `Вдень суттєвих опадів не прогнозується, проте пізно ввечері або вночі можливий локальний дощ.`;
+    badges.push(badge("rain night", i18n.t("newsWeather.ruleBasedForecast.nichnyiDoshch")));
+    rainWindowText = i18n.t("newsWeather.ruleBasedForecast.vdenSuttievykhOpadivNe");
   } else {
-    badges.push("Без опадів протягом дня");
-    rainWindowText = `У найближчі 24 години опадів не очікується. Зберігатиметься комфортна суха погода.`;
+    badges.push(badge("", i18n.t("newsWeather.ruleBasedForecast.bezOpadivProtiahomDnia")));
+    rainWindowText = i18n.t("newsWeather.ruleBasedForecast.uNaiblyzhchi24Hodyny");
   }
 
   // Пік тепла та похолодання
@@ -182,7 +196,7 @@ export const analyzeHourlyTimeline = (hourly = [], unit = "C") => {
     if (it.temp < minItem.temp) minItem = it;
   });
 
-  const peakTempText = `Добовий максимум очікується о ${maxItem.time || `${maxItem.hourNum}:00`} (${formatTempWithSign(maxItem.temp, unit)}), тоді як мінімальна позначка (${formatTempWithSign(minItem.temp, unit)}) зафіксується о ${minItem.time || `${minItem.hourNum}:00`}.`;
+  const peakTempText = i18n.t("newsWeather.ruleBasedForecast.dobovyiMaksymumOchikuietsiaO", { v0: maxItem.time || `${maxItem.hourNum}:00`, v1: formatTempWithSign(maxItem.temp, unit), v2: formatTempWithSign(minItem.temp, unit), v3: minItem.time || `${minItem.hourNum}:00` });
 
   // Аналіз вітру: середня швидкість і пориви окремо
   const maxWindItem = itemsWithHour.reduce((prev, curr) =>
@@ -200,26 +214,26 @@ export const analyzeHourlyTimeline = (hourly = [], unit = "C") => {
 
   if (isWindStrong) {
     const peak = roundedGust >= 15 ? maxGustItem : maxWindItem;
-    if (roundedGust >= 15) badges.push(`Пориви вітру до ${roundedGust} м/с`);
-    else badges.push(`Сильний вітер до ${roundedWind} м/с`);
-    const gustPart = roundedGust > roundedWind ? `, пориви до ${roundedGust} м/с` : "";
-    windWarning = `Увага, сильний вітер: до ${roundedWind} м/с${gustPart}, найсильніше близько ${peak.time || `${peak.hourNum}:00`} — будьте обережні поблизу старих дерев і легких конструкцій.`;
+    if (roundedGust >= 15) badges.push(badge("wind", i18n.t("newsWeather.ruleBasedForecast.poryvyVitruDoM", { roundedGust: roundedGust })));
+    else badges.push(badge("wind", i18n.t("newsWeather.ruleBasedForecast.sylnyiViterDoM", { roundedWind: roundedWind })));
+    const gustPart = roundedGust > roundedWind ? i18n.t("newsWeather.ruleBasedForecast.poryvyDoMS", { roundedGust: roundedGust }) : "";
+    windWarning = i18n.t("newsWeather.ruleBasedForecast.uvahaSylnyiViterDo", { roundedWind: roundedWind, gustPart: gustPart, v2: peak.time || `${peak.hourNum}:00` });
     windTrendText = windWarning;
   } else if (roundedWind >= 6 || roundedGust >= 10) {
-    windTrendText = `Вітровий режим помірний: до ${roundedWind} м/с${roundedGust > roundedWind ? `, пориви до ${roundedGust} м/с` : ""}.`;
+    windTrendText = i18n.t("newsWeather.ruleBasedForecast.vitrovyiRezhymPomirnyiDo", { roundedWind: roundedWind, v1: roundedGust > roundedWind ? i18n.t("newsWeather.ruleBasedForecast.poryvyDoMS", { roundedGust: roundedGust }) : "" });
   } else {
-    windTrendText = `Вітер спокійний та слабкий (до ${roundedWind || 2} м/с), сприятливий для прогулянок.`;
+    windTrendText = i18n.t("newsWeather.ruleBasedForecast.viterSpokiinyiTaSlabkyi", { v0: roundedWind || 2 });
   }
 
   // Ожеледиця: опади при температурі близько нуля
   const iceRisk = itemsWithHour.some(
     (h) => (h.isRain || h.isSnow) && h.temp >= -3 && h.temp <= 2
   );
-  if (iceRisk) badges.push("Ризик ожеледиці");
+  if (iceRisk) badges.push(badge("", i18n.t("newsWeather.ruleBasedForecast.ryzykOzheledytsi")));
 
   // Туман: перша година з видимістю менше 1 км
   const fogItem = itemsWithHour.find((h) => h.visibility !== null && h.visibility < 1000) || null;
-  if (fogItem) badges.push("Туман");
+  if (fogItem) badges.push(badge("", i18n.t("newsWeather.ruleBasedForecast.tuman")));
 
   const snowLikely = itemsWithHour.some((h) => h.isSnow);
 
@@ -246,7 +260,7 @@ export const analyzeHourlyTimeline = (hourly = [], unit = "C") => {
 export const analyzeWeeklyTrends = (daily16 = [], unit = "C") => {
   if (!Array.isArray(daily16) || daily16.length < 3) {
     return {
-      trendText: "Недостатньо даних для довгострокового аналізу тенденції.",
+      trendText: i18n.t("newsWeather.ruleBasedForecast.nedostatnoDanykhDliaDovhostrokovoho"),
       jumpBadge: null,
       weekSummaryText: "",
     };
@@ -254,12 +268,13 @@ export const analyzeWeeklyTrends = (daily16 = [], unit = "C") => {
 
   const days = daily16.slice(0, 10).map((d, idx) => ({
     index: idx,
-    date: d.date || d.day || `День ${idx + 1}`,
+    date: d.date || d.day || i18n.t("newsWeather.ruleBasedForecast.den", { v0: idx + 1 }),
     dayName: d.day || d.dayName || "",
     tempDay: parseNum(d.temp_day, 0),
     tempNight: parseNum(d.temp_night, 0),
     pop: parseNum(d.precipitation_probability_max ?? d.pop, 0),
     desc: (d.description || "").toLowerCase(),
+    code: d.weather_code,
   }));
 
   const startTemp = days[0].tempDay;
@@ -284,28 +299,28 @@ export const analyzeWeeklyTrends = (daily16 = [], unit = "C") => {
   let jumpBadge;
 
   if (maxJump >= 5 && jumpDay) {
-    jumpBadge = `Різкий підйом: +${Math.round(maxJump)}°C`;
-    trendText = `На тижні очікується різкий підйом температури: починаючи з ${jumpDay.dayName || jumpDay.date}, повітря прогріється до ${formatTempWithSign(jumpDay.tempDay, unit)} (підйом одразу на +${Math.round(maxJump)}°C у порівнянні з початком періоду). Зайде тепла повітряна маса!`;
+    jumpBadge = badge("rise", i18n.t("newsWeather.ruleBasedForecast.rizkyiPidiomC", { Math: Math.round(maxJump) }));
+    trendText = i18n.t("newsWeather.ruleBasedForecast.naTyzhniOchikuietsiaRizkyi", { v0: jumpDay.dayName || jumpDay.date, v1: formatTempWithSign(jumpDay.tempDay, unit), Math: Math.round(maxJump) });
   } else if (maxDrop <= -5 && dropDay) {
-    jumpBadge = `Різкий спад: ${Math.round(maxDrop)}°C`;
-    trendText = `На зміну теплій погоді насувається різке похолодання: до ${dropDay.dayName || dropDay.date} стовпчики термометрів впадуть до ${formatTempWithSign(dropDay.tempDay, unit)} (падіння на ${Math.abs(Math.round(maxDrop))}°C). Підготуйте тепліші речі наперед.`;
+    jumpBadge = badge("drop", i18n.t("newsWeather.ruleBasedForecast.rizkyiSpadC", { Math: Math.round(maxDrop) }));
+    trendText = i18n.t("newsWeather.ruleBasedForecast.naZminuTepliiPohodi", { v0: dropDay.dayName || dropDay.date, v1: formatTempWithSign(dropDay.tempDay, unit), Math: Math.abs(Math.round(maxDrop)) });
   } else {
-    jumpBadge = `Стабільний тиждень`;
-    trendText = `На найближчий тиждень різких температурних стрибків не передбачається: температура коливатиметься у межах від ${formatTempWithSign(Math.min(...days.map((d) => d.tempDay)), unit)} до ${formatTempWithSign(Math.max(...days.map((d) => d.tempDay)), unit)}. Синоптична ситуація залишатиметься прогнозованою.`;
+    jumpBadge = badge("", i18n.t("newsWeather.ruleBasedForecast.stabilnyiTyzhden"));
+    trendText = i18n.t("newsWeather.ruleBasedForecast.naNaiblyzhchyiTyzhdenRizkykh", { v0: formatTempWithSign(Math.min(...days.map((d) => d.tempDay)), unit), v1: formatTempWithSign(Math.max(...days.map((d) => d.tempDay)), unit) });
   }
 
   // Кількість дощових днів
   const rainyDaysCount = days.filter(
-    (d) => d.pop >= 45 || d.desc.includes("дощ") || d.desc.includes("злив")
+    (d) => d.pop >= 45 || (d.code !== undefined && d.code !== null ? isRainCode(d.code) : d.desc.includes("дощ") || d.desc.includes("злив"))
   ).length;
 
   let weekSummaryText;
   if (rainyDaysCount >= 4) {
-    weekSummaryText = `Загалом тиждень буде вологим та дощовим (${rainyDaysCount} з ${days.length} днів очікуються з опадами).`;
+    weekSummaryText = i18n.t("newsWeather.ruleBasedForecast.zahalomTyzhdenBudeVolohym", { rainyDaysCount: rainyDaysCount, length: days.length });
   } else if (rainyDaysCount === 0) {
-    weekSummaryText = `Попереду сухий та сприятливий період без суттєвих опадів.`;
+    weekSummaryText = i18n.t("newsWeather.ruleBasedForecast.popereduSukhyiTaSpryiatlyvyi");
   } else {
-    weekSummaryText = `Опади матимуть періодичний або локальний характер (дощових днів: близько ${rainyDaysCount}).`;
+    weekSummaryText = i18n.t("newsWeather.ruleBasedForecast.opadyMatymutPeriodychnyiAbo", { rainyDaysCount: rainyDaysCount });
   }
 
   return {
@@ -329,14 +344,14 @@ export const analyzeAtmosphereAndHealth = (current) => {
   if (pressure < 1005) {
     items.push({
       type: "pressure_low",
-      title: "Знижений атмосферний тиск",
-      text: `Тиск становить ${pressure} гПа, що свідчить про наближення циклонічної зони негоди. Метеозалежні люди можуть відчувати втому, головний біль та зниження працездатності.`,
+      title: i18n.t("newsWeather.ruleBasedForecast.znyzhenyiAtmosfernyiTysk"),
+      text: i18n.t("newsWeather.ruleBasedForecast.tyskStanovytHpaShcho", { pressure: pressure }),
     });
   } else if (pressure > 1022) {
     items.push({
       type: "pressure_high",
-      title: "Високий атмосферний тиск",
-      text: `Барометричний тиск підвищений (${pressure} гПа), обумовлений впливом антициклону — очікується суха та спокійна погода.`,
+      title: i18n.t("newsWeather.ruleBasedForecast.vysokyiAtmosfernyiTysk"),
+      text: i18n.t("newsWeather.ruleBasedForecast.barometrychnyiTyskPidvyshchenyiHpa", { pressure: pressure }),
     });
   }
 
@@ -344,14 +359,14 @@ export const analyzeAtmosphereAndHealth = (current) => {
   if (humidity >= 85) {
     items.push({
       type: "humidity",
-      title: "Висока вологість повітря",
-      text: `Вологість ${humidity}%: посилюється відчуття вогкості або паркоти, можливе утворення вранішнього туману чи конденсату.`,
+      title: i18n.t("newsWeather.ruleBasedForecast.vysokaVolohistPovitria"),
+      text: i18n.t("newsWeather.ruleBasedForecast.volohistPosyliuietsiaVidchuttiaVohkosti", { humidity: humidity }),
     });
   } else if (humidity < 35) {
     items.push({
       type: "humidity",
-      title: "Сухе повітря",
-      text: `Вологість знижена (${humidity}%): пийте більше води та зволожуйте шкіру.`,
+      title: i18n.t("newsWeather.ruleBasedForecast.sukhePovitria"),
+      text: i18n.t("newsWeather.ruleBasedForecast.volohistZnyzhenaPyiteBilshe", { humidity: humidity }),
     });
   }
 
@@ -359,8 +374,8 @@ export const analyzeAtmosphereAndHealth = (current) => {
   if (uvi >= 6) {
     items.push({
       type: "uvi",
-      title: "Підвищений УФ-індекс",
-      text: `УФ-індекс сягає ${uvi}: з 11:00 до 16:00 рекомендовано користуватися сонцезахисними окулярами та кремом.`,
+      title: i18n.t("newsWeather.ruleBasedForecast.pidvyshchenyiUfIndeks"),
+      text: i18n.t("newsWeather.ruleBasedForecast.ufIndeksSiahaieZ", { uvi: uvi }),
     });
   }
 
@@ -377,7 +392,7 @@ export const generateActionableAdvice = (current, todayDaily, hourlyAnalysis) =>
   const dayMax = parseNum(todayDaily?.temp_day, currentTemp);
   const dayMin = parseNum(todayDaily?.temp_night, currentTemp);
   const snowToday = parseNum(todayDaily?.snowfall_sum, 0) > 0 || Boolean(hourlyAnalysis.snowLikely);
-  const isRainLikely = hourlyAnalysis.badges.some((b) => b.toLowerCase().includes("дощ"));
+  const isRainLikely = hourlyAnalysis.badges.some((b) => badgeHas(b, "rain"));
   const isWindStrong = hourlyAnalysis.isWindStrong ?? hourlyAnalysis.maxWind >= 10;
   const items = [];
 
@@ -386,80 +401,80 @@ export const generateActionableAdvice = (current, todayDaily, hourlyAnalysis) =>
     items.push({
       type: "wind_warning",
       title: gust > hourlyAnalysis.maxWind
-        ? `Увага, сильний вітер (пориви до ${gust} м/с):`
-        : `Увага, сильний вітер до ${hourlyAnalysis.maxWind} м/с:`,
-      text: "вдягайте вітрозахисну куртку з капюшоном і тримайтеся подалі від дерев та рекламних конструкцій.",
+        ? i18n.t("newsWeather.ruleBasedForecast.uvahaSylnyiViterPoryvy", { gust: gust })
+        : i18n.t("newsWeather.ruleBasedForecast.uvahaSylnyiViterDo2", { maxWind: hourlyAnalysis.maxWind }),
+      text: i18n.t("newsWeather.ruleBasedForecast.vdiahaiteVitrozakhysnuKurtkuZ"),
     });
   }
 
   if (hourlyAnalysis.iceRisk) {
     items.push({
       type: "ice",
-      title: "Ожеледиця",
-      text: "Опади при температурі близько 0° — тротуари й дороги можуть обмерзнути. Взуття з рифленою підошвою, за кермом плавно гальмуйте.",
+      title: i18n.t("newsWeather.ruleBasedForecast.ozheledytsia"),
+      text: i18n.t("newsWeather.ruleBasedForecast.opadyPryTemperaturiBlyzko"),
     });
   }
 
   // Одяг
   let clothText;
   if (feels < -10) {
-    clothText = "Сильний мороз: теплий пуховик, термобілизна, шапка, шарф, рукавиці та утеплене взуття.";
+    clothText = i18n.t("newsWeather.ruleBasedForecast.sylnyiMorozTeplyiPukhovyk");
   } else if (feels < 0) {
-    clothText = "Зимовий теплий пуховик, шапка, шарф, рукавички та утеплене зимове взуття.";
+    clothText = i18n.t("newsWeather.ruleBasedForecast.zymovyiTeplyiPukhovykShapka");
   } else if (feels < 8) {
-    clothText = "Щільна демісезонна куртка або пальто, теплий светр та закрите взуття.";
+    clothText = i18n.t("newsWeather.ruleBasedForecast.shchilnaDemisezonnaKurtkaAbo");
   } else if (feels < 16) {
-    clothText = "Легка куртка, толстовка чи худі, які можна зняти в разі потепління.";
+    clothText = i18n.t("newsWeather.ruleBasedForecast.lehkaKurtkaTolstovkaChy");
   } else if (feels < 23) {
-    clothText = "Легкий кардиган, сорочка з довгим рукавом або лонгслів.";
+    clothText = i18n.t("newsWeather.ruleBasedForecast.lehkyiKardyhanSorochkaZ");
   } else {
-    clothText = "Максимально легкий літній одяг з натуральних тканин (льон, бавовна).";
+    clothText = i18n.t("newsWeather.ruleBasedForecast.maksymalnoLehkyiLitniiOdiah");
   }
   if (Math.round(feels) !== Math.round(currentTemp)) {
-    clothText += ` Відчувається як ${formatTempWithSign(Math.round(feels))}.`;
+    clothText += " " + i18n.t("newsWeather.ruleBasedForecast.vidchuvaietsiaIak", { v0: formatTempWithSign(Math.round(feels)) });
   }
   if (dayMax - dayMin >= 8) {
-    clothText += ` За добу від ${formatTempWithSign(dayMin)} до ${formatTempWithSign(dayMax)} — одягайтесь шарами.`;
+    clothText += " " + i18n.t("newsWeather.ruleBasedForecast.zaDobuVidDo", { v0: formatTempWithSign(dayMin), v1: formatTempWithSign(dayMax) });
   }
-  items.push({ type: "cloth", title: "Гардероб", text: clothText });
+  items.push({ type: "cloth", title: i18n.t("newsWeather.ruleBasedForecast.harderob"), text: clothText });
 
   if (snowToday) {
     items.push({
       type: "snow",
-      title: "Сніг",
-      text: "Очікується сніг: зимове взуття з протектором і більше часу на дорогу.",
+      title: i18n.t("newsWeather.ruleBasedForecast.snih"),
+      text: i18n.t("newsWeather.ruleBasedForecast.ochikuietsiaSnihZymoveVzuttia"),
     });
   }
 
   if (dayMin <= 0 && dayMax > 0) {
     items.push({
       type: "frost",
-      title: "Заморозки вночі",
-      text: `Вночі до ${formatTempWithSign(dayMin)}: накрийте чутливі рослини, а вранці закладіть час на розморожування скла авто.`,
+      title: i18n.t("newsWeather.ruleBasedForecast.zamorozkyVnochi"),
+      text: i18n.t("newsWeather.ruleBasedForecast.vnochiDoNakryiteChutlyvi", { v0: formatTempWithSign(dayMin) }),
     });
   }
 
   if (isRainLikely) {
     items.push({
       type: "umbrella",
-      title: "Парасоля",
-      text: "Обов'язково візьміть із собою компактну парасольку або легкий дощовик.",
+      title: i18n.t("newsWeather.ruleBasedForecast.parasolia"),
+      text: i18n.t("newsWeather.ruleBasedForecast.oboviazkovoVizmitIzSoboiu"),
     });
   }
 
   if (hourlyAnalysis.fog) {
     items.push({
       type: "fog",
-      title: "Туман",
-      text: `Близько ${hourlyAnalysis.fog.time} видимість знизиться до ${hourlyAnalysis.fog.visibilityKm} км: водіям — ближнє світло та більша дистанція.`,
+      title: i18n.t("newsWeather.ruleBasedForecast.tuman"),
+      text: i18n.t("newsWeather.ruleBasedForecast.blyzkoVydymistZnyzytsiaDo", { time: hourlyAnalysis.fog.time, visibilityKm: hourlyAnalysis.fog.visibilityKm }),
     });
   }
 
   if (isRainLikely && !hourlyAnalysis.iceRisk) {
     items.push({
       type: "car",
-      title: "Автомобілістам",
-      text: "Зважайте на мокре дорожнє покриття та збільшуйте дистанцію гальмування.",
+      title: i18n.t("newsWeather.ruleBasedForecast.avtomobilistam"),
+      text: i18n.t("newsWeather.ruleBasedForecast.zvazhaiteNaMokreDorozhnie"),
     });
   }
 
@@ -467,20 +482,20 @@ export const generateActionableAdvice = (current, todayDaily, hourlyAnalysis) =>
   if (isWindStrong || isRainLikely || hourlyAnalysis.iceRisk || feels < -10) {
     items.push({
       type: "home",
-      title: "Відпочинок",
-      text: "Погода не для довгих прогулянок — краще спланувати справи в приміщенні або вийти ненадовго.",
+      title: i18n.t("newsWeather.ruleBasedForecast.vidpochynok"),
+      text: i18n.t("newsWeather.ruleBasedForecast.pohodaNeDliaDovhykh"),
     });
   } else if (feels > 30) {
     items.push({
       type: "sport",
-      title: "Відпочинок",
-      text: "Спека: гуляйте зранку або ввечері, пийте більше води та уникайте сонця опівдні.",
+      title: i18n.t("newsWeather.ruleBasedForecast.vidpochynok"),
+      text: i18n.t("newsWeather.ruleBasedForecast.spekaHuliaiteZrankuAbo"),
     });
   } else {
     items.push({
       type: "sport",
-      title: "Відпочинок",
-      text: "Чудовий час для прогулянок на відкритому повітрі, пробіжки чи катання на велосипеді.",
+      title: i18n.t("newsWeather.ruleBasedForecast.vidpochynok"),
+      text: i18n.t("newsWeather.ruleBasedForecast.chudovyiChasDliaProhulianok"),
     });
   }
 
@@ -502,7 +517,7 @@ export const generateRuleBasedForecast = (
   const daily16 = upcomingDays(card.daily16 || [], now);
   const todayDaily = daily16[0] || {};
   const hourly = card.hourly || [];
-  const locationName = card.locationName || "Ваше місто";
+  const locationName = card.locationName || i18n.t("newsWeather.ruleBasedForecast.vasheMisto");
   // «Прогноз для Києва», «Прогноз для вашої локації»
   const locationNameGenitive = toGenitive(locationName);
 
@@ -520,38 +535,38 @@ export const generateRuleBasedForecast = (
   if (weeklyData.jumpBadge) allBadges.push(weeklyData.jumpBadge);
 
   // Формування короткого заголовка
-  let headline = `Прогноз для ${locationNameGenitive}: `;
-  if (allBadges.some((b) => b.includes("дощ"))) {
-    headline += "Очікуються опади, день вимагатиме парасолі";
-  } else if (weeklyData.jumpBadge?.includes("підйом")) {
-    headline += "Попереду різке потепління та приємна динаміка";
-  } else if (weeklyData.jumpBadge?.includes("спад")) {
-    headline += "Насувається хвиля похолодання";
+  let headline = i18n.t("newsWeather.ruleBasedForecast.prohnozDlia", { locationNameGenitive: locationNameGenitive }) + " ";
+  if (allBadges.some((b) => badgeHas(b, "rain"))) {
+    headline += i18n.t("newsWeather.ruleBasedForecast.ochikuiutsiaOpadyDenVymahatyme");
+  } else if (badgeHas(weeklyData.jumpBadge, "rise")) {
+    headline += i18n.t("newsWeather.ruleBasedForecast.popereduRizkePoteplinniaTa");
+  } else if (badgeHas(weeklyData.jumpBadge, "drop")) {
+    headline += i18n.t("newsWeather.ruleBasedForecast.nasuvaietsiaKhvyliaPokholodannia");
   } else {
-    headline += "Стійка та комфортна погода на найближчий час";
+    headline += i18n.t("newsWeather.ruleBasedForecast.stiikaTaKomfortnaPohoda");
   }
 
   // Текст без емодзі для чистого експорту
   const fullText = [
-    `[Прогноз для ${locationNameGenitive}]`,
-    `Час: ${currentTimeString || "зараз"}`,
+    i18n.t("newsWeather.ruleBasedForecast.prohnozDlia2", { locationNameGenitive: locationNameGenitive }),
+    i18n.t("newsWeather.ruleBasedForecast.chas", { v0: currentTimeString || i18n.t("newsWeather.ruleBasedForecast.nowLower") }),
     "",
-    "Добовий баланс:",
+    i18n.t("newsWeather.ruleBasedForecast.dobovyiBalans"),
     dayNight.message,
     "",
-    "Погодинні зміни:",
+    i18n.t("newsWeather.ruleBasedForecast.pohodynniZminy"),
     hourlyData.rainWindowText,
     hourlyData.peakTempText,
     hourlyData.windTrendText,
     "",
-    "Тижневий тренд:",
+    i18n.t("newsWeather.ruleBasedForecast.tyzhnevyiTrend"),
     weeklyData.trendText,
     weeklyData.weekSummaryText,
     "",
     ...(atmosphereNotes.length > 0
-      ? ["Атмосферні фактори:", ...atmosphereNotes.map((n) => `• ${n.title}: ${n.text}`), ""]
+      ? [i18n.t("newsWeather.ruleBasedForecast.atmosferniFaktory"), ...atmosphereNotes.map((n) => `• ${n.title}: ${n.text}`), ""]
       : []),
-    "Рекомендації та гардероб:",
+    i18n.t("newsWeather.ruleBasedForecast.rekomendatsiiTaHarderob"),
     ...lifestyleAdvice.map((a) => `• ${a.title} ${a.text}`),
   ].join("\n");
 
@@ -601,7 +616,7 @@ export const cleanAiText = (raw) => {
   text = text.replace(/`/g, "");
 
   // 7. Перетворюємо суцільний капслок (СЛОВА ВЕЛИКИМИ ЛІТЕРАМИ) на звичайний регістр речень
-  const allowedAcronyms = new Set(["ШІ", "УФ", "API", "AI", "GPS", "США", "ЄС"]);
+  const allowedAcronyms = new Set(["ШІ", "УФ", "API", "AI", "GPS", "США", "ЄС", "UV", "USA", "EU"]);
   text = text.replace(
     /((?:[A-ZА-ЯІЇЄҐ](?:['’]?[A-ZА-ЯІЇЄҐ])+)(?:\s+[A-ZА-ЯІЇЄҐ]['’]?[A-ZА-ЯІЇЄҐ]*)*)/gu,
     (match, p1, offset, full) => {

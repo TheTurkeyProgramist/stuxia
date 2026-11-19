@@ -1,25 +1,30 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import styled, { css, keyframes } from "styled-components";
-import { JOKES, FACTS, TIPS, MAP_TIPS } from "../../utils/funPhrases";
+import { useFunPhrases } from "../../i18n/useFunPhrases.js";
 
 // Одночасно: жарт, цікавий факт і порада по сайту.
-// ПК — три колонки; планшет (≤900px) — порада окремим рядком зверху, під нею жарт і факт
+// ПК — три колонки; планшет (≤900px) — порада окремим рядком зверху, під нею жарт і факт.
+// Колоди — номери фраз: у всіх мовах той самий порядок, тож зміна мови не збиває колоду
 const KINDS = [
-  { area: "joke", list: JOKES },
-  { area: "fact", list: FACTS },
-  { area: "tip", list: [...MAP_TIPS, ...TIPS] },
+  { area: "joke", list: (p) => p.JOKES },
+  { area: "fact", list: (p) => p.FACTS },
+  { area: "tip", list: (p) => [...p.MAP_TIPS, ...p.TIPS] },
 ];
 const INTERVAL_MS = 10000;
 const TABLET_QUERY = "(max-width: 900px)";
 
-// Тип видно з розташування — префікси «Факт:» і «Порада:» прибираємо
-const clean = (text) => {
-  const body = text.replace(/^(Факт|Порада):\s*/, "");
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Тип видно з розташування — префікси «Факт:» і «Порада:» (мовою сайту) прибираємо
+const clean = (text, prefixes) => {
+  const re = new RegExp(`^(${prefixes.map(escapeRe).join("|")})\\s*[:：]\\s*`);
+  const body = text.replace(re, "");
   return body.charAt(0).toUpperCase() + body.slice(1);
 };
 
-const shuffle = (arr) => {
-  const out = [...arr];
+const shuffledIndexes = (length) => {
+  const out = Array.from({ length }, (_, i) => i);
   for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [out[i], out[j]] = [out[j], out[i]];
@@ -27,13 +32,15 @@ const shuffle = (arr) => {
   return out;
 };
 
-// Для кожного типу — перемішана колода: фрази не повторюються, доки не покажуться всі
-const createDecks = () => KINDS.map((kind) => ({ cards: shuffle(kind.list), pos: 0 }));
+// Довжини списків однакові в усіх мовах — беремо з будь-якої (тут — з поточної)
+const createDecks = (phrases) =>
+  KINDS.map((kind) => ({ cards: shuffledIndexes(kind.list(phrases).length), pos: 0 }));
 
+// Для кожного типу — перемішана колода: фрази не повторюються, доки не покажуться всі
 const draw = (decks, kindIndex) => {
   const deck = decks[kindIndex];
   if (deck.pos >= deck.cards.length) {
-    deck.cards = shuffle(KINDS[kindIndex].list);
+    deck.cards = shuffledIndexes(deck.cards.length);
     deck.pos = 0;
   }
   return deck.cards[deck.pos++];
@@ -42,13 +49,24 @@ const draw = (decks, kindIndex) => {
 const drawAll = (decks) => KINDS.map((_, i) => draw(decks, i));
 
 const FunTicker = ({ isDarkMode }) => {
-  // Колоди змінюються на місці (позиція в колоді), сам об'єкт не замінюється
-  const [decks] = useState(createDecks);
-  const [round, setRound] = useState(() => ({ texts: drawAll(decks), id: 0 }));
+  const { t } = useTranslation();
+  const phrases = useFunPhrases();
+  // Колоди змінюються на місці (позиція в колоді), сам об'єкт не замінюється.
+  // Поки фрази мови вантажаться, колод ще немає
+  const [decks, setDecks] = useState(() => (phrases ? createDecks(phrases) : null));
+  const [round, setRound] = useState(() => ({ picks: decks ? drawAll(decks) : null, id: 0 }));
   const [isPaused, setIsPaused] = useState(false);
 
+  useEffect(() => {
+    if (decks || !phrases) return;
+    const fresh = createDecks(phrases);
+    setDecks(fresh);
+    setRound((prev) => ({ picks: drawAll(fresh), id: prev.id + 1 }));
+  }, [decks, phrases]);
+
   const showNext = useCallback(() => {
-    setRound((prev) => ({ texts: drawAll(decks), id: prev.id + 1 }));
+    if (!decks) return;
+    setRound((prev) => ({ picks: drawAll(decks), id: prev.id + 1 }));
   }, [decks]);
 
   // Наведення миші чи фокус зупиняють зміну — щоб встигнути дочитати.
@@ -69,12 +87,13 @@ const FunTicker = ({ isDarkMode }) => {
       onFocus={() => setIsPaused(true)}
       onBlur={() => setIsPaused(false)}
     >
-      {KINDS.map(({ area }, i) => (
-        <Slot key={`${round.id}-${area}`} $area={area} $isDarkMode={isDarkMode}>
-          <Text>{clean(round.texts[i])}</Text>
-        </Slot>
-      ))}
-      <Hint>Натисніть, щоб змінити текст підказок та фактів</Hint>
+      {phrases && round.picks &&
+        KINDS.map(({ area, list }, i) => (
+          <Slot key={`${round.id}-${area}`} $area={area} $isDarkMode={isDarkMode}>
+            <Text>{clean(list(phrases)[round.picks[i]] || "", phrases.PREFIXES)}</Text>
+          </Slot>
+        ))}
+      <Hint>{t("climateMap.tickerHint")}</Hint>
     </Ticker>
   );
 };

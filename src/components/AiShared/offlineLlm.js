@@ -1,3 +1,4 @@
+import i18n from "../../i18n/i18n.js";
 /**
  * Офлайн-ШІ: модель запускається прямо в браузері через WebGPU (WebLLM).
  * Ні ключа, ні сервера. Модель завантажується один раз, далі береться з кешу браузера.
@@ -16,7 +17,7 @@ export const OFFLINE_MODELS = [
   {
     key: "gemma-2-2b",
     label: "Gemma 2 · 2B",
-    note: "офлайн",
+    get note() { return i18n.t("ui.offlineLlm.oflain"); },
     f16: "gemma-2-2b-it-q4f16_1-MLC",
     f32: "gemma-2-2b-it-q4f32_1-MLC",
     sizeMB: 1300,
@@ -37,16 +38,16 @@ export const checkOfflineSupport = () => {
   if (!supportPromise) {
     supportPromise = (async () => {
       if (typeof navigator === "undefined" || !navigator.gpu) {
-        return { ok: false, f16: false, reason: "Браузер не підтримує WebGPU. Потрібен Chrome або Edge 113+." };
+        return { ok: false, f16: false, reason: i18n.t("ui.offlineLlm.brauzerNePidtrymuieWebgpu") };
       }
       try {
         const adapter = await navigator.gpu.requestAdapter();
         if (!adapter) {
-          return { ok: false, f16: false, reason: "WebGPU вимкнено або відеокарта не підходить." };
+          return { ok: false, f16: false, reason: i18n.t("ui.offlineLlm.webgpuVymknenoAboVideokarta") };
         }
         return { ok: true, f16: adapter.features.has("shader-f16"), reason: "" };
       } catch (err) {
-        return { ok: false, f16: false, reason: err?.message || "Помилка WebGPU." };
+        return { ok: false, f16: false, reason: err?.message || i18n.t("ui.offlineLlm.pomylkaWebgpu") };
       }
     })();
   }

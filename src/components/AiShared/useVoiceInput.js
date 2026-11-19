@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
+import i18n from "../../i18n/i18n.js";
+import { SPEECH_LANGS } from "../Commands/voiceLexicon.js";
 /**
- * Голосовий ввід (Web Speech API), українською.
+ * Голосовий ввід (Web Speech API) мовою сайту.
  * onText(transcript) — отримує розпізнаний текст.
  * onStart / onStop — необов'язкові (наприклад, статус «Слухаю вас...»).
  */
@@ -24,7 +26,7 @@ export const useVoiceInput = ({ onText, onStart, onStop } = {}) => {
   const toggle = useCallback(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      toast.error("Ваш браузер не підтримує розпізнавання голосу.");
+      toast.error(i18n.t("ui.useVoiceInput.vashBrauzerNePidtrymuie"));
       return;
     }
     if (recognitionRef.current) {
@@ -34,7 +36,7 @@ export const useVoiceInput = ({ onText, onStart, onStop } = {}) => {
 
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
-    recognition.lang = "uk-UA";
+    recognition.lang = SPEECH_LANGS[String(i18n.language || "uk").split("-")[0]] || "uk-UA";
     recognition.interimResults = false;
     recognition.onstart = () => {
       setIsListening(true);
@@ -47,9 +49,9 @@ export const useVoiceInput = ({ onText, onStart, onStop } = {}) => {
     recognition.onerror = (event) => {
       // Без onerror кнопка могла назавжди лишитися в стані «слухаю»
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        toast.error("Немає доступу до мікрофона. Дозвольте його в налаштуваннях браузера.");
+        toast.error(i18n.t("ui.useVoiceInput.nemaieDostupuDoMikrofona"));
       } else if (event.error !== "no-speech" && event.error !== "aborted") {
-        toast.error("Не вдалося розпізнати голос. Спробуйте ще раз.");
+        toast.error(i18n.t("ui.useVoiceInput.neVdalosiaRozpiznatyHolos"));
       }
       finish();
     };

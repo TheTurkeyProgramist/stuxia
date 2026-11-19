@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import styled, { keyframes } from "styled-components";
 import { GAMBLING_MIN_AGE, confirmAge, isAgeConfirmed } from "../../utils/ageGate";
 
+import i18n from "../../i18n/i18n.js";
 const fadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
 const popIn = keyframes`
   from { opacity: 0; transform: translateY(8px) scale(0.97); }
@@ -103,14 +104,14 @@ export const AgeGateModal = ({ age, text, onConfirm, onCancel }) => {
       <Box role="alertdialog" aria-modal="true" aria-labelledby="age-gate-title" aria-describedby="age-gate-text">
         <Header>
           <AgeBadge $age={age} aria-hidden="true">{age}+</AgeBadge>
-          <Title id="age-gate-title">Підтвердження віку</Title>
+          <Title id="age-gate-title">{i18n.t("modals.AgeGateModal.pidtverdzhenniaViku")}</Title>
         </Header>
         <Text id="age-gate-text">{text}</Text>
-        <Note>Підтвердження зберігається на цьому пристрої. Його можна скинути кнопкою «Скинути сайт» у налаштуваннях.</Note>
+        <Note>{i18n.t("modals.AgeGateModal.pidtverdzhenniaZberihaietsiaNaTsomu")}</Note>
         <Actions>
-          <Button ref={cancelRef} type="button" onClick={onCancel}>Скасувати</Button>
+          <Button ref={cancelRef} type="button" onClick={onCancel}>{i18n.t("modals.AgeGateModal.skasuvaty")}</Button>
           <Button type="button" $primary onClick={onConfirm}>
-            Мені виповнилося {age}
+            {i18n.t("modals.AgeGateModal.meniVypovnylosia")} {age}
           </Button>
         </Actions>
       </Box>

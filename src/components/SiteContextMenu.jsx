@@ -18,6 +18,7 @@ import "./SiteContextMenu.css";
 import { getFloatingRoot } from "../utils/siteMirror";
 import { getPref, subscribePrefs } from "../utils/prefsStore.js";
 
+import i18n from "../i18n/i18n.js";
 const SITE_CONTEXT_MENU_KEY = "site_context_menu_enabled";
 
 const readEnabled = () => {
@@ -123,7 +124,7 @@ export default function SiteContextMenu({ children, isDarkMode }) {
 
   const openReader = () => {
     const content = document.querySelector("article, [role='article']") ?? document.querySelector("main") ?? document.body;
-    const title = document.title || "Режим читання";
+    const title = document.title || i18n.t("ui.SiteContextMenu.rezhymChytannia");
     const text = content.innerText.trim();
     setReader({ title, text });
   };
@@ -140,7 +141,7 @@ export default function SiteContextMenu({ children, isDarkMode }) {
   /** Браузери блокують відкриття нативного меню через JS (isTrusted=false).
    *  Єдиний спосіб — Shift + права кнопка миші. Показуємо підказку. */
   const openNativeMenu = () => {
-    toast("Утримайте Shift і натисніть правою кнопкою миші — відкриється меню браузера", {
+    toast(i18n.t("ui.SiteContextMenu.utrymaiteShiftINatysnit"), {
       icon: "🖥️",
       duration: 5000,
     });
@@ -166,21 +167,21 @@ export default function SiteContextMenu({ children, isDarkMode }) {
           {/* ── Меню браузера (вгорі) ── */}
           <ContextMenu.Item
             className="site-context-menu-item"
-            title="Браузер не дозволяє сайту відкрити своє меню. Натисніть Shift + ПКМ."
+            title={i18n.t("ui.SiteContextMenu.brauzerNeDozvoliaieSaitu")}
             onSelect={openNativeMenu}
           >
             <FiMonitor aria-hidden="true" />
-            <span>Меню браузера (Shift + права кнопка миші)</span>
+            <span>{i18n.t("ui.SiteContextMenu.meniuBrauzeraShiftPrava")}</span>
           </ContextMenu.Item>
           <ContextMenu.Separator className="site-context-menu-separator" />
 
           <ContextMenu.Item
             className="site-context-menu-item"
-            title="Відкрийте DevTools клавішами F12 або Ctrl+Shift+I"
-            onSelect={() => toast("Браузер не дозволяє сайту відкрити DevTools. Натисніть F12 або Ctrl+Shift+I.")}
+            title={i18n.t("ui.SiteContextMenu.vidkryiteDevtoolsKlavishamyF12")}
+            onSelect={() => toast(i18n.t("ui.SiteContextMenu.brauzerNeDozvoliaieSaitu2"))}
           >
             <FiEye aria-hidden="true" />
-            <span>Перевірити (DevTools · F12)</span>
+            <span>{i18n.t("ui.SiteContextMenu.perevirytyDevtoolsF12")}</span>
           </ContextMenu.Item>
           <ContextMenu.Item
             className="site-context-menu-item"
@@ -188,35 +189,35 @@ export default function SiteContextMenu({ children, isDarkMode }) {
             onSelect={() => void copySelection()}
           >
             <FiCopy aria-hidden="true" />
-            <span>Копіювати виділене</span>
+            <span>{i18n.t("ui.SiteContextMenu.kopiiuvatyVydilene")}</span>
           </ContextMenu.Item>
           {media && (
             <>
               <ContextMenu.Separator className="site-context-menu-separator" />
               <ContextMenu.Item className="site-context-menu-item" onSelect={() => void copyMedia()}>
                 {media.kind === "image" ? <FiImage aria-hidden="true" /> : <FiVideo aria-hidden="true" />}
-                <span>{media.kind === "image" ? "Копіювати фото" : "Копіювати відео"}</span>
+                <span>{media.kind === "image" ? i18n.t("ui.SiteContextMenu.kopiiuvatyFoto") : i18n.t("ui.SiteContextMenu.kopiiuvatyVideo")}</span>
               </ContextMenu.Item>
               <ContextMenu.Item className="site-context-menu-item" onSelect={() => void downloadMedia()}>
                 <FiDownload aria-hidden="true" />
-                <span>{media.kind === "image" ? "Скачати фото" : "Скачати відео"}</span>
+                <span>{media.kind === "image" ? i18n.t("ui.SiteContextMenu.skachatyFoto") : i18n.t("ui.SiteContextMenu.skachatyVideo")}</span>
               </ContextMenu.Item>
               {media.kind === "image" && (
                 <ContextMenu.Item className="site-context-menu-item" onSelect={openLens}>
                   <FiSearch aria-hidden="true" />
-                  <span>Шукати фото у Google Об'єктив</span>
+                  <span>{i18n.t("ui.SiteContextMenu.shukatyFotoUGoogle")}</span>
                 </ContextMenu.Item>
               )}
               <ContextMenu.Item className="site-context-menu-item" onSelect={openMedia}>
                 <FiExternalLink aria-hidden="true" />
-                <span>Відкрити в новій вкладці</span>
+                <span>{i18n.t("ui.SiteContextMenu.vidkrytyVNoviiVkladtsi")}</span>
               </ContextMenu.Item>
             </>
           )}
           <ContextMenu.Separator className="site-context-menu-separator" />
           <ContextMenu.Item className="site-context-menu-item" onSelect={openReader}>
             <FiBookOpen aria-hidden="true" />
-            <span>Відкрити в режимі читання</span>
+            <span>{i18n.t("ui.SiteContextMenu.vidkrytyVRezhymiChytannia")}</span>
           </ContextMenu.Item>
         </ContextMenu.Content>
       </ContextMenu.Portal>
@@ -226,7 +227,7 @@ export default function SiteContextMenu({ children, isDarkMode }) {
             <section className="site-reader" role="dialog" aria-modal="true" aria-labelledby="site-reader-title" data-theme={isDarkMode ? "dark" : "light"}>
               <header className="site-reader-header">
                 <h1 id="site-reader-title">{reader.title}</h1>
-                <button type="button" aria-label="Закрити режим читання" onClick={() => setReader(null)}>
+                <button type="button" aria-label={i18n.t("ui.SiteContextMenu.zakrytyRezhymChytannia")} onClick={() => setReader(null)}>
                   <FiX aria-hidden="true" />
                 </button>
               </header>

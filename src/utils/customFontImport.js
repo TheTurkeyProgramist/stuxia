@@ -1,3 +1,4 @@
+import i18n from "../i18n/i18n.js";
 // Розбір файлів для власного пакета шрифтів: .ttf/.otf/.woff/.woff2 або ZIP-архів
 // (наприклад, «Download family» з Google Fonts). ZIP розпаковується без бібліотек —
 // через вбудований DecompressionStream("deflate-raw").
@@ -41,7 +42,7 @@ function guessName(fileName) {
     .replace(/_/g, " ")
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .trim()
-    .slice(0, 40) || "Мій шрифт";
+    .slice(0, 40) || i18n.t("ui.customFontImport.miiShryft");
 }
 
 async function inflateRaw(buffer) {
@@ -51,7 +52,7 @@ async function inflateRaw(buffer) {
 
 async function unzipFonts(buffer) {
   if (typeof DecompressionStream === "undefined") {
-    throw new Error("Цей браузер не вміє розпаковувати ZIP. Розпакуйте архів і виберіть самі файли шрифтів.");
+    throw new Error(i18n.t("ui.customFontImport.tseiBrauzerNeVmiie"));
   }
   const view = new DataView(buffer);
   const len = buffer.byteLength;
@@ -62,7 +63,7 @@ async function unzipFonts(buffer) {
       break;
     }
   }
-  if (eocd < 0) throw new Error("Архів пошкоджений або це не ZIP.");
+  if (eocd < 0) throw new Error(i18n.t("ui.customFontImport.arkhivPoshkodzhenyiAboTse"));
 
   const count = view.getUint16(eocd + 10, true);
   let p = view.getUint32(eocd + 16, true);
@@ -106,19 +107,19 @@ async function isValidFont(data) {
 // FileList → { name, files: [{ fileName, weight, style, data }] }; кидає Error з поясненням
 export async function readFontPack(fileList) {
   const picked = Array.from(fileList || []);
-  if (!picked.length) throw new Error("Файли не вибрано.");
-  if (typeof FontFace === "undefined") throw new Error("Цей браузер не підтримує власні шрифти.");
+  if (!picked.length) throw new Error(i18n.t("ui.customFontImport.failyNeVybrano"));
+  if (typeof FontFace === "undefined") throw new Error(i18n.t("ui.customFontImport.tseiBrauzerNePidtrymuie"));
 
   let raw = [];
   for (const file of picked) {
     if (ZIP_EXT.test(file.name)) {
-      if (file.size > MAX_PACK) throw new Error("Архів завеликий (більше 40 МБ).");
+      if (file.size > MAX_PACK) throw new Error(i18n.t("ui.customFontImport.arkhivZavelykyiBilshe40"));
       raw.push(...(await unzipFonts(await file.arrayBuffer())));
     } else if (FONT_EXT.test(file.name) && file.size <= MAX_FILE) {
       raw.push({ fileName: file.name, data: await file.arrayBuffer() });
     }
   }
-  if (!raw.length) throw new Error("Не знайдено файлів шрифтів (.ttf, .otf, .woff, .woff2).");
+  if (!raw.length) throw new Error(i18n.t("ui.customFontImport.neZnaidenoFailivShryftiv"));
 
   // Google Fonts кладе в архів і змінний шрифт, і папку static/ — змінного досить
   if (raw.some((f) => isVariable(f.fileName))) raw = raw.filter((f) => isVariable(f.fileName));
@@ -143,7 +144,7 @@ export async function readFontPack(fileList) {
     files.push({ fileName: f.fileName, ...describeFile(f.fileName), data: f.data });
     total += f.data.byteLength;
   }
-  if (!files.length) throw new Error("Файли не схожі на шрифти або пошкоджені.");
+  if (!files.length) throw new Error(i18n.t("ui.customFontImport.failyNeSkhozhiNa"));
 
   const zip = picked.find((f) => ZIP_EXT.test(f.name));
   return { name: guessName(zip ? zip.name : files[0].fileName), files };

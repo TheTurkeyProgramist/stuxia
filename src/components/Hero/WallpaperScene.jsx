@@ -15,6 +15,7 @@ import {
   useWallpaperSettingsMap,
 } from "../../utils/wallpaperPrefs.js";
 
+import i18n from "../../i18n/i18n.js";
 // Каталог живих шпалер. id іде в src ("scene:<id>") і в ключ налаштувань:
 // міста часових поясів — за назвою поясу ("Europe/Kyiv"),
 // власні сцени мов — "lang:<код>" (решта мов показують ті самі міста, тож їх не дублюємо)
@@ -52,8 +53,8 @@ const countryWallpapers = Object.entries(LANGUAGE_PLACES)
 export const WALLPAPERS = [...cityWallpapers, ...countryWallpapers];
 
 export const WALLPAPER_GROUPS = [
-  { value: "cities", label: "Міста часових поясів" },
-  { value: "countries", label: "Країни (з вибору мови)" },
+  { value: "cities", get label() { return i18n.t("ui.WallpaperScene.mistaChasovykhPoiasiv"); } },
+  { value: "countries", get label() { return i18n.t("ui.WallpaperScene.krainyZVyboruMovy"); } },
 ];
 
 export const findWallpaper = (src) => {

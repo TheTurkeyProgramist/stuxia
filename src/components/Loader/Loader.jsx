@@ -12,6 +12,7 @@ import { RiGeminiFill } from "react-icons/ri";
 import hostingerLogo from "../../media/_unused/logos/logo-iq.webp";
 import { LOADER_POWERED_BY_KEY, usePrefValue } from "../../utils/betaFeatures";
 import { TurkeyDot } from "./TurkeyDot.jsx";
+import i18n from "../../i18n/i18n.js";
 const TECH_STACK = [
   { Icon: TbBrandVite, color: "#646CFF", title: "Vite" },
   { Icon: TbBrandWindy, color: "#00c6ff", title: "Windy API" },
@@ -201,7 +202,7 @@ export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
   return (
     <LoaderWrapper $isFadingOut={isFadingOut} role="status" aria-live="polite">
       <TopRightContainer>
-        <span>v.1.0.0 | Я в Конотопі :)</span>
+        <span>{i18n.t("ui.Loader.v100")}</span>
         <TurkeyDot />
       </TopRightContainer>
 
@@ -213,7 +214,7 @@ export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
       <UIOverlay>
         {(showIcons || randomPhrase) && (
           <PoweredByWrapper>
-            {showTitle && <span>Працює на базі:</span>}
+            {showTitle && <span>{i18n.t("ui.Loader.pratsiuieNaBazi")}</span>}
             {showIcons && (
               <IconsGrid>
                 {TECH_STACK.map(({ Icon, src, color, title }) =>
@@ -230,7 +231,7 @@ export default function Loader({ isLoading, isFadingOut, randomPhrase }) {
         )}
 
         <CopyrightText>
-          2026 Stuxia™. Всі права захищені. Автор: TheTurkeyProgramist
+          {i18n.t("ui.Loader.2026StuxiaVsiPrava")}
         </CopyrightText>
       </UIOverlay>
     </LoaderWrapper>

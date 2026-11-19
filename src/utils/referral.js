@@ -17,6 +17,7 @@
 import { loadFirebase } from "../firebaseLazy.js";
 import { getPref, setPref, removePref } from "./prefsStore.js";
 
+import i18n from "../i18n/i18n.js";
 const SITE_URL = "https://stuxia.com";
 const PENDING_KEY = "stykhia_pending_ref";
 const PENDING_TTL_MS = 30 * 24 * 60 * 60 * 1000; // посилання «живе» 30 днів
@@ -29,9 +30,9 @@ export const INVITE_ACTIVE_DAYS = 3; // скільки різних днів д�
 export const INVITE_WINDOW_DAYS = 14; // за скільки днів від реєстрації
 
 export const BADGES = {
-  supporter: { emoji: "🦃", name: "Друг індиків" },
-  inviter: { emoji: "📣", name: "Посол Стихії" },
-  invitee: { emoji: "🌱", name: "Паросток Стихії" },
+  supporter: { emoji: "🦃", get name() { return i18n.t("ui.referral.druhIndykiv"); } },
+  inviter: { emoji: "📣", get name() { return i18n.t("ui.referral.posolStykhii"); } },
+  invitee: { emoji: "🌱", get name() { return i18n.t("ui.referral.parostokStykhii"); } },
 };
 
 const UID_RE = /^[A-Za-z0-9_-]{6,128}$/;
@@ -76,10 +77,10 @@ export const inviteLink = (uid) => `${siteOrigin()}/?ref=${encodeURIComponent(ui
 // Повертає "shared" | "copied" | "cancelled" | "failed"
 export const shareInvite = async (uid) => {
   const url = inviteLink(uid);
-  const text = "Стихія — погода, музика й новини в одному місці. Заходь, і ми обидва отримаємо значки!";
+  const text = i18n.t("ui.referral.stykhiiaPohodaMuzykaI");
   if (navigator.share) {
     try {
-      await navigator.share({ title: "Стихія", text, url });
+      await navigator.share({ title: i18n.t("ui.referral.stykhiia"), text, url });
       return "shared";
     } catch (err) {
       if (err?.name === "AbortError") return "cancelled";

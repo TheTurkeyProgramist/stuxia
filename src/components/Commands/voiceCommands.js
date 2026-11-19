@@ -5,6 +5,8 @@
 import { findCommand } from "./commands.js";
 import { findCityByLocative } from "../../utils/citiesDatabase.js";
 import { toGenitive } from "../../utils/genitive.js";
+import i18n from "../../i18n/i18n.js";
+import { VOICE_LEXICON } from "./voiceLexicon.js";
 
 // Слова-паразити й ввічливість, що не впливають на зміст команди
 const FILLERS = new Set([
@@ -22,7 +24,7 @@ export const normalizeSpeech = (text) =>
   String(text || "")
     .toLowerCase()
     .replace(/[’ʼ`]/g, "'")
-    .replace(/[.,!?;:«»"()]/g, " ")
+    .replace(/[.,!?;:«»"()。，！？、،؟]/g, " ")
     .split(/\s+/)
     .filter((w) => w && !FILLERS.has(w))
     .join(" ");
@@ -91,10 +93,8 @@ const GOTO_WORDS = [
 
 const MUSIC = /музик|саундтрек|пісн|мелоді|трек/;
 
-/**
- * Фраза → рядок команди ("/open shop") або null, якщо не зрозуміли.
- */
-export const voiceToCommand = (speech) => {
+/** Український розбір фрази. */
+const ukrainianVoiceToCommand = (speech) => {
   const t = normalizeSpeech(speech);
   if (!t) return null;
   const [first, ...restWords] = t.split(" ");
@@ -102,7 +102,7 @@ export const voiceToCommand = (speech) => {
 
   // «слеш open shop» або просто англійська команда: «open shop», «soundtrack off»
   if (first === "слеш" || first === "slash") return rest ? `/${rest}` : null;
-  if (/^[a-z]+$/.test(first) && findCommand(first)) return `/${t}`;
+  // Англійська консольна команда («soundtrack off») — див. voiceToCommand, після словників
 
   // Довідка по командах
   if (/^(допомога|допоможи|команди|що ти вмієш|що вмієш|які є команди|які команди)$/.test(t)) return "/help";
@@ -165,3 +165,99 @@ export const voiceToCommand = (speech) => {
 
 /** Приклади для підказки, коли фразу не зрозуміли. */
 export const VOICE_EXAMPLES = ["увімкни музику", "додай погоду у Львові", "відкрий магазин", "темна тема"];
+
+// ── Інші мови: словник voiceLexicon.js ─────────────────────────────────────
+
+const siteLang = () => String(i18n.language || "uk").split("-")[0];
+const NO_SPACES = new Set(["zh", "ja"]);
+const INFIX = new Set(["ar", "fa"]);
+
+/** Фраза мовою lng → команда за словником або null. */
+export const lexiconToCommand = (t, lng) => {
+  const lex = VOICE_LEXICON[lng];
+  if (!lex || !t) return null;
+  const tokens = t.split(" ");
+  const wordHit = (w) => {
+    if (NO_SPACES.has(lng) || w.includes(" ")) return t.includes(w);
+    return tokens.some((tok) =>
+      w.length <= 3 ? tok === w : INFIX.has(lng) ? tok.includes(w) : tok.startsWith(w),
+    );
+  };
+  const has = (key) => (lex[key] || []).some(wordHit);
+  // Назва міста — фраза без службових слів
+  const SERVICE = ["add", "del", "card", "weather", "all", "open", "go"].flatMap((k) => lex[k] || []);
+  const stripService = () => {
+    if (NO_SPACES.has(lng)) {
+      let s = t;
+      SERVICE.slice().sort((a, b) => b.length - a.length).forEach((w) => { s = s.split(w).join(" "); });
+      return s.replace(/\s+/g, " ").trim();
+    }
+    return tokens
+      .filter((tok) => !SERVICE.some((w) => (w.length <= 3 ? tok === w : tok.startsWith(w) || w.split(" ").includes(tok))))
+      .join(" ");
+  };
+  const number = t.match(/\d{1,3}/)?.[0];
+
+  if (has("help") && !has("open")) return "/help";
+  if (has("clear") && !has("history") && !has("card") && !has("weather") && !has("music")) return "/clear";
+  if (has("theme") || (tokens.length <= 2 && (has("dark") || has("light")) && !has("music"))) {
+    if (has("dark")) return "/theme dark";
+    if (has("light")) return "/theme light";
+    if (has("toggle")) return "/theme toggle";
+  }
+  if (number && has("volume")) return `/soundtrack volume ${number}`;
+  if (has("louder")) return "/soundtrack volume +10";
+  if (has("quieter")) return "/soundtrack volume -10";
+  if (has("music")) {
+    if (has("off")) return "/soundtrack off";
+    if (has("toggle")) return "/soundtrack toggle";
+    return "/soundtrack on";
+  }
+  if (tokens.length === 1 && has("off")) return "/soundtrack off";
+  if (has("close")) return "/close";
+  if (has("list")) return "/list weather";
+  const [first, ...restTokens] = tokens;
+  if ((lex.say || []).some((w) => first === w || (w.length > 3 && first.startsWith(w))) && restTokens.length) {
+    return `/say ${restTokens.join(" ")}`;
+  }
+  if (has("add")) {
+    const city = stripService();
+    return city ? `/create weather ${capitalize(city)}` : null;
+  }
+  if (has("del")) {
+    if (has("history")) return "/delete history";
+    if (has("all")) return "/delete weather all";
+    if (number) return `/delete weather ${number}`;
+    const city = stripService();
+    return city ? `/delete weather ${capitalize(city)}` : null;
+  }
+  const OPEN_TARGETS = [["shop", "shop"], ["settings", "settings"], ["helpT", "help"], ["authors", "authors"], ["account", "account"], ["ai", "ai"], ["language", "language"]];
+  const PLACES = [["weather", "weather"], ["map", "map"], ["top", "top"], ["hero", "hero"]];
+  if (has("open") || has("go") || tokens.length <= 2) {
+    const open = OPEN_TARGETS.find(([k]) => has(k));
+    const place = PLACES.find(([k]) => has(k));
+    if (has("go") && place) return `/goto ${place[1]}`;
+    if (open) return `/open ${open[1]}`;
+    if (place) return `/goto ${place[1]}`;
+  }
+  return null;
+};
+
+/**
+ * Фраза → рядок команди ("/open shop") або null, якщо не зрозуміли.
+ * Спершу український розбір, далі — словник мови сайту, потім англійський.
+ */
+export const voiceToCommand = (speech, lng = siteLang()) => {
+  const uk = ukrainianVoiceToCommand(speech);
+  if (uk) return uk;
+  const t = normalizeSpeech(speech);
+  const fromLexicon = (lng !== "uk" && lexiconToCommand(t, lng)) || lexiconToCommand(t, "en");
+  if (fromLexicon) return fromLexicon;
+  // Просто англійська команда консолі: «soundtrack off», «theme dark»
+  const first = t.split(" ")[0];
+  if (/^[a-z]+$/.test(first) && findCommand(first)) return `/${t}`;
+  return null;
+};
+
+/** Приклади фраз мовою сайту. */
+export const getVoiceExamples = (lng = siteLang()) => VOICE_LEXICON[lng]?.ex || VOICE_EXAMPLES;

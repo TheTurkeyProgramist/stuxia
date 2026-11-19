@@ -28,7 +28,7 @@ import {
   MAX_CUSTOM_BGS,
   MAX_VIDEO_BYTES,
   MAX_VIDEO_SECONDS,
-  CUSTOM_BG_LIMITS_TEXT,
+  customBgLimitsText,
   compressImageToLimit,
   customBgLimitMessage,
   getVideoDuration,
@@ -49,6 +49,7 @@ import faded from "../../media/backgrounds/scenes/resort.webp";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { notifySupportMoment } from "../Support/supportNudge.js";
 
+import i18n from "../../i18n/i18n.js";
 const isVideoSource = (src) => {
   if (!src) return false;
   if (src instanceof Blob) return src.type.startsWith("video/");
@@ -93,7 +94,7 @@ const handleDownloadBg = async (bg) => {
     ? safeName
     : `${safeName}${ext}`;
 
-  const toastId = toast.loading("Завантаження файлу...", { id: "bg-download" });
+  const toastId = toast.loading(i18n.t("ui.BgModal.zavantazhenniaFailu"), { id: "bg-download" });
 
   try {
     let blob;
@@ -112,7 +113,7 @@ const handleDownloadBg = async (bg) => {
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
-    toast.success(`Збережено: ${fileName}`, { id: toastId });
+    toast.success(i18n.t("ui.BgModal.zberezheno", { fileName: fileName }), { id: toastId });
   } catch (err) {
     console.warn("Blob fetch download failed, using direct download:", err);
     try {
@@ -124,9 +125,9 @@ const handleDownloadBg = async (bg) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast.success(`Відкрито для скачування: ${fileName}`, { id: toastId });
+      toast.success(i18n.t("ui.BgModal.vidkrytoDliaSkachuvannia", { fileName: fileName }), { id: toastId });
     } catch (fallbackErr) {
-      toast.error("Не вдалося скачати файл", { id: toastId });
+      toast.error(i18n.t("ui.BgModal.neVdalosiaSkachatyFail"), { id: toastId });
     }
   }
 };
@@ -593,7 +594,7 @@ const FullscreenViewer = ({ bg, onClose, onDownload }) => {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={bg.name ? `Перегляд фону: ${bg.name}` : "Перегляд фону"}
+      aria-label={bg.name ? i18n.t("ui.BgModal.perehliadFonu", { name: bg.name }) : i18n.t("ui.BgModal.perehliadFonu2")}
       onClick={onClose}
       style={{ position: "fixed", inset: 0, background: "#000", zIndex: 300000, display: "flex", alignItems: "center", justifyContent: "center" }}
     >
@@ -603,8 +604,8 @@ const FullscreenViewer = ({ bg, onClose, onDownload }) => {
         <img src={srcUrl} alt={bg.name} onClick={(e) => e.stopPropagation()} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
       ))}
       <div style={{ position: "absolute", top: "12px", right: "12px", display: "flex", gap: "8px" }}>
-        <button onClick={(e) => { e.stopPropagation(); onDownload(bg); }} style={btnStyle} aria-label="Скачати"><FiDownload /></button>
-        <button onClick={onClose} style={btnStyle} aria-label="Закрити"><FiX /></button>
+        <button onClick={(e) => { e.stopPropagation(); onDownload(bg); }} style={btnStyle} aria-label={i18n.t("ui.BgModal.skachaty")}><FiDownload /></button>
+        <button onClick={onClose} style={btnStyle} aria-label={i18n.t("ui.BgModal.zakryty")}><FiX /></button>
       </div>
     </div>,
     document.body,
@@ -751,7 +752,7 @@ const settingsBadge = ({ time, season, animations }) =>
   [
     time !== "auto" && optionLabel(WALLPAPER_TIMES, time),
     season !== "auto" && optionLabel(WALLPAPER_SEASONS, season),
-    animations === "off" && "Без анімацій",
+    animations === "off" && i18n.t("ui.BgModal.bezAnimatsii"),
   ]
     .filter(Boolean)
     .join(" · ");
@@ -811,7 +812,7 @@ const WallpaperFullscreen = ({ wallpaper, settings, onClose, onSelect }) => {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`Перегляд шпалер: ${wallpaper.label}`}
+      aria-label={i18n.t("ui.BgModal.perehliadShpaler", { label: wallpaper.label })}
       onClick={onClose}
       style={{ position: "fixed", inset: 0, background: "#000", zIndex: 300000 }}
     >
@@ -821,8 +822,8 @@ const WallpaperFullscreen = ({ wallpaper, settings, onClose, onSelect }) => {
         {settingsBadge(settings) && <span style={{ marginLeft: "10px", fontSize: "13px", fontWeight: 500, color: "#ffd9b0" }}>{settingsBadge(settings)}</span>}
       </div>
       <div style={{ position: "absolute", top: "12px", right: "12px", zIndex: 5, display: "flex", gap: "8px" }}>
-        <button type="button" onClick={(e) => { e.stopPropagation(); onSelect(); onClose(); }} style={btnStyle}>Встановити фоном</button>
-        <button type="button" onClick={onClose} style={btnStyle} aria-label="Закрити"><FiX /></button>
+        <button type="button" onClick={(e) => { e.stopPropagation(); onSelect(); onClose(); }} style={btnStyle}>{i18n.t("ui.BgModal.vstanovytyFonom")}</button>
+        <button type="button" onClick={onClose} style={btnStyle} aria-label={i18n.t("ui.BgModal.zakryty")}><FiX /></button>
       </div>
     </div>,
     document.body,
@@ -869,12 +870,12 @@ const WallpaperSection = ({ heroBg, heroBg2, heroBg3, heroBgMode, onSelect }) =>
 
   const selectionLabel =
     selectedIds.length === 0
-      ? "Нічого не вибрано — поставте галочки на картках"
+      ? i18n.t("ui.BgModal.nichohoNeVybranoPostavte")
       : selectedIds.length === WALLPAPERS.length
-        ? `Усі шпалери (${WALLPAPERS.length})`
+        ? i18n.t("ui.BgModal.usiShpalery", { length: WALLPAPERS.length })
         : selectedIds.length === 1
           ? WALLPAPERS.find((wallpaper) => wallpaper.id === selectedIds[0])?.label
-          : `Вибрано: ${selectedIds.length}`;
+          : i18n.t("ui.BgModal.vybrano", { length: selectedIds.length });
 
   const settingSelect = (field, options, label, Icon) => {
     const value = commonValue(selectedSettings, field);
@@ -882,13 +883,13 @@ const WallpaperSection = ({ heroBg, heroBg2, heroBg3, heroBgMode, onSelect }) =>
       <ConfigRow>
         <label><Icon /> {label}:</label>
         <select
-          aria-label={`${label} для вибраних шпалер`}
+          aria-label={i18n.t("ui.BgModal.dliaVybranykhShpaler", { label: label })}
           value={value}
           disabled={!selectedIds.length}
           onChange={(e) => applyToSelected({ [field]: e.target.value })}
           style={{ ...wallpaperSelectStyle, opacity: selectedIds.length ? 1 : 0.5 }}
         >
-          {value === MIXED && <option value={MIXED} disabled>— різні —</option>}
+          {value === MIXED && <option value={MIXED} disabled>{i18n.t("ui.BgModal.rizni")}</option>}
           {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
       </ConfigRow>
@@ -897,24 +898,22 @@ const WallpaperSection = ({ heroBg, heroBg2, heroBg3, heroBgMode, onSelect }) =>
 
   return (
     <>
-      <ModalSectionTitle><FiSun /> Живі шпалери</ModalSectionTitle>
+      <ModalSectionTitle><FiSun /> {i18n.t("ui.BgModal.zhyviShpalery")}</ModalSectionTitle>
       <span style={{ fontSize: "11px", color: "var(--bm-muted, #8a8d9b)", marginTop: "-6px" }}>
-        Сцени міст і країн: сонце й місяць рухаються за реальним часом місця, трава й дерева змінюються з порами року.
-        Галочками на картках виберіть одну, кілька або всі шпалери — налаштування нижче застосуються до вибраних.
-        Острови, тропіки й снігові місця зелені (або засніжені) цілий рік.
+        {i18n.t("ui.BgModal.stsenyMistIKrain")}
       </span>
       <ModalConfigGrid>
         <ConfigRow>
-          <label><FiSliders /> Налаштування для:</label>
+          <label><FiSliders /> {i18n.t("ui.BgModal.nalashtuvanniaDlia")}</label>
           <div style={{ fontSize: "12px", fontWeight: 600, color: selectedIds.length ? "var(--bm-text, #fff)" : "var(--bm-muted, #8a8d9b)", minHeight: "18px" }}>{selectionLabel}</div>
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            <SmallButton type="button" disabled={selectedIds.length === WALLPAPERS.length} onClick={() => setSelectedIds(WALLPAPERS.map((wallpaper) => wallpaper.id))}>Усі</SmallButton>
-            <SmallButton type="button" disabled={!selectedIds.length} onClick={() => setSelectedIds([])}>Зняти</SmallButton>
+            <SmallButton type="button" disabled={selectedIds.length === WALLPAPERS.length} onClick={() => setSelectedIds(WALLPAPERS.map((wallpaper) => wallpaper.id))}>{i18n.t("ui.BgModal.usi")}</SmallButton>
+            <SmallButton type="button" disabled={!selectedIds.length} onClick={() => setSelectedIds([])}>{i18n.t("ui.BgModal.zniaty")}</SmallButton>
           </div>
         </ConfigRow>
-        {settingSelect("time", WALLPAPER_TIMES, "Час доби", FiClock)}
-        {settingSelect("season", WALLPAPER_SEASONS, "Пора року", FiCalendar)}
-        {settingSelect("animations", WALLPAPER_ANIMATIONS, "Анімації", FiFilm)}
+        {settingSelect("time", WALLPAPER_TIMES, i18n.t("ui.BgModal.chasDoby"), FiClock)}
+        {settingSelect("season", WALLPAPER_SEASONS, i18n.t("ui.BgModal.poraRoku"), FiCalendar)}
+        {settingSelect("animations", WALLPAPER_ANIMATIONS, i18n.t("ui.BgModal.animatsii"), FiFilm)}
       </ModalConfigGrid>
       {WALLPAPER_GROUPS.map((group) => {
         const items = WALLPAPERS.filter((wallpaper) => wallpaper.group === group.value);
@@ -925,7 +924,7 @@ const WallpaperSection = ({ heroBg, heroBg2, heroBg3, heroBgMode, onSelect }) =>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
               <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--bm-label, #ffc996)" }}>{group.label} · {items.length}</span>
               <SmallButton type="button" onClick={() => selectGroup(groupIds)}>
-                {groupSelected ? "Зняти групу" : "Вибрати групу"}
+                {groupSelected ? i18n.t("ui.BgModal.zniatyHrupu") : i18n.t("ui.BgModal.vybratyHrupu")}
               </SmallButton>
             </div>
             <WallpaperGrid>
@@ -937,27 +936,27 @@ const WallpaperSection = ({ heroBg, heroBg2, heroBg3, heroBgMode, onSelect }) =>
                 return (
                   <WallpaperCard key={wallpaper.id} $active={layers.includes(src)} style={selected ? { outline: "2px dashed rgba(255, 179, 108, 0.7)", outlineOffset: "2px" } : undefined}>
                     <CityScene timezone={wallpaper.scene} now={now} timeOfDay={settings.time} season={settings.season} still={settings.animations === "off"} />
-                    <WallpaperPick type="button" $hasSlots={slots > 0} onClick={() => pick(wallpaper)} aria-label={`Встановити шпалери: ${wallpaper.label}`}>
+                    <WallpaperPick type="button" $hasSlots={slots > 0} onClick={() => pick(wallpaper)} aria-label={i18n.t("ui.BgModal.vstanovytyShpalery", { label: wallpaper.label })}>
                       <span>
                         {wallpaper.label}
                         {badge && <span style={{ display: "block", padding: 0, background: "none", fontSize: "10px", fontWeight: 500, color: "#ffd9b0" }}>{badge}</span>}
                       </span>
                     </WallpaperPick>
-                    <SelectBox title={selected ? "Прибрати з вибраних" : "Додати до вибраних"}>
-                      <input type="checkbox" checked={selected} onChange={() => toggleSelected(wallpaper.id)} aria-label={`Вибрати для налаштування: ${wallpaper.label}`} />
+                    <SelectBox title={selected ? i18n.t("ui.BgModal.prybratyZVybranykh") : i18n.t("ui.BgModal.dodatyDoVybranykh")}>
+                      <input type="checkbox" checked={selected} onChange={() => toggleSelected(wallpaper.id)} aria-label={i18n.t("ui.BgModal.vybratyDliaNalashtuvannia", { label: wallpaper.label })} />
                     </SelectBox>
                     <WallpaperTools>
-                      <Tooltip content="Налаштувати лише цю">
-                        <HeartIcon type="button" $color="#ffda79" aria-label={`Налаштувати лише: ${wallpaper.label}`} onClick={() => setSelectedIds([wallpaper.id])}><FiSliders /></HeartIcon>
+                      <Tooltip content={i18n.t("ui.BgModal.nalashtuvatyLysheTsiu")}>
+                        <HeartIcon type="button" $color="#ffda79" aria-label={i18n.t("ui.BgModal.nalashtuvatyLyshe", { label: wallpaper.label })} onClick={() => setSelectedIds([wallpaper.id])}><FiSliders /></HeartIcon>
                       </Tooltip>
-                      <Tooltip content="На весь екран">
-                        <HeartIcon type="button" $color="#aef" aria-label={`На весь екран: ${wallpaper.label}`} onClick={() => setFullscreenId(wallpaper.id)}><FiMaximize2 /></HeartIcon>
+                      <Tooltip content={i18n.t("ui.BgModal.naVesEkran")}>
+                        <HeartIcon type="button" $color="#aef" aria-label={i18n.t("ui.BgModal.naVesEkran2", { label: wallpaper.label })} onClick={() => setFullscreenId(wallpaper.id)}><FiMaximize2 /></HeartIcon>
                       </Tooltip>
                     </WallpaperTools>
                     {slots > 0 && (
                       <SlotButtons style={{ zIndex: 3 }}>
                         {Array.from({ length: slots }, (_, i) => (
-                          <SlotBtn key={i} $active={layers[i] === src} onClick={() => pick(wallpaper, i + 1)}>Слот {i + 1}</SlotBtn>
+                          <SlotBtn key={i} $active={layers[i] === src} onClick={() => pick(wallpaper, i + 1)}>{i18n.t("ui.BgModal.slot")} {i + 1}</SlotBtn>
                         ))}
                       </SlotButtons>
                     )}
@@ -1131,7 +1130,7 @@ const BgModal = ({
     try {
       const current = Number((await localforage.getItem(dailyCountKey())) || 0);
       if (current >= MAX_DAILY_HERO_CARDS) {
-        toast.error(`Ліміт досягнуто — не більше ${MAX_DAILY_HERO_CARDS} карток на добу.`);
+        toast.error(i18n.t("ui.BgModal.limitDosiahnutoNeBilshe", { MAX_DAILY_HERO_CARDS: MAX_DAILY_HERO_CARDS }));
         return;
       }
     } catch (err) {
@@ -1141,17 +1140,17 @@ const BgModal = ({
     let src = file;
     if (isVideo) {
       if (file.size > MAX_VIDEO_BYTES) {
-        toast.error("Відео завелике: максимум 20 МБ.");
+        toast.error(i18n.t("ui.BgModal.videoZavelykeMaksymum20"));
         return;
       }
       const duration = await getVideoDuration(file);
       if (Number.isNaN(duration)) {
-        toast.error("Не вдалося прочитати відео. Спробуйте MP4 або WebM.");
+        toast.error(i18n.t("ui.BgModal.neVdalosiaProchytatyVideo"));
         return;
       }
       // Infinity буває у WebM із запису екрана — тривалість невідома, тож пропускаємо
       if (Number.isFinite(duration) && duration > MAX_VIDEO_SECONDS) {
-        toast.error("Відео задовге: максимум 2 хвилини.");
+        toast.error(i18n.t("ui.BgModal.videoZadovheMaksymum2"));
         return;
       }
     } else {
@@ -1159,7 +1158,7 @@ const BgModal = ({
         src = await compressImageToLimit(file);
       } catch (err) {
         console.error("Failed to compress background image:", err);
-        toast.error("Не вдалося стиснути картинку до 200 КБ. Спробуйте іншу.");
+        toast.error(i18n.t("ui.BgModal.neVdalosiaStysnutyKartynku"));
         return;
       }
     }
@@ -1172,7 +1171,7 @@ const BgModal = ({
       console.error("Failed to update hero uploaded count:", err);
     }
     setCustomHeroBgs((prev) => [
-      { src, name: file.name, category: isVideo ? "Ваші відео" : "Ваші картинки" },
+      { src, name: file.name, category: isVideo ? i18n.t("ui.BgModal.vashiVideo") : i18n.t("ui.BgModal.vashiKartynky") },
       ...prev,
     ]);
     setHeroBg(src);
@@ -1203,10 +1202,10 @@ const BgModal = ({
   if (!isOpen) return null;
 
   const navItems = [
-    { id: "look", label: "Вигляд", Icon: FiDroplet },
-    { id: "wallpapers", label: "Живі шпалери", count: WALLPAPERS.length, Icon: FiSun },
+    { id: "look", label: i18n.t("ui.BgModal.vyhliad"), Icon: FiDroplet },
+    { id: "wallpapers", label: i18n.t("ui.BgModal.zhyviShpalery"), count: WALLPAPERS.length, Icon: FiSun },
     { id: "commons", label: "Wikimedia", Icon: FiSearch },
-    { id: "library", label: "Бібліотека", count: sortedBgs.length, Icon: FiImage },
+    { id: "library", label: i18n.t("ui.BgModal.biblioteka"), count: sortedBgs.length, Icon: FiImage },
   ];
 
   return (
@@ -1216,33 +1215,33 @@ const BgModal = ({
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div>
               <h2 style={{ margin: 0, fontSize: "16px", fontWeight: "700", background: "var(--bm-title, linear-gradient(90deg, #ffb36c 0%, #ffe3b8 100%))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: "0.4px" }}>
-                Налаштування фону та вигляду
+                {i18n.t("ui.BgModal.nalashtuvanniaFonuTaVyhliadu")}
               </h2>
-              <span style={{ fontSize: "11px", color: "var(--bm-muted, #8a8d9b)" }}>Персоналізуйте теми, слайд-шоу та візуальні ефекти</span>
+              <span style={{ fontSize: "11px", color: "var(--bm-muted, #8a8d9b)" }}>{i18n.t("ui.BgModal.personalizuiteTemySlaidShou")}</span>
             </div>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
-            <CloseBtn onClick={onReset}><FiRefreshCw /> Скинути</CloseBtn>
-            <CloseBtn $danger onClick={onClose}><FiX /> Закрити</CloseBtn>
+            <CloseBtn onClick={onReset}><FiRefreshCw /> {i18n.t("ui.BgModal.skynuty")}</CloseBtn>
+            <CloseBtn $danger onClick={onClose}><FiX /> {i18n.t("ui.BgModal.zakryty")}</CloseBtn>
           </div>
         </div>
-        <SectionNav aria-label="Розділи налаштувань фону">
+        <SectionNav aria-label={i18n.t("ui.BgModal.rozdilyNalashtuvanFonu")}>
           {navItems.map(({ id, label, count, Icon }) => (
             <NavButton key={id} type="button" $active={activeSection === id} aria-current={activeSection === id ? "true" : undefined} onClick={() => goToSection(id)}>
               <Icon aria-hidden="true" /> {label}{count != null && <small>{count}</small>}
             </NavButton>
           ))}
           <NavButton type="button" onClick={() => fileInputRef.current?.click()}>
-            <FiUploadCloud aria-hidden="true" /> Завантажити свій
+            <FiUploadCloud aria-hidden="true" /> {i18n.t("ui.BgModal.zavantazhytySvii")}
           </NavButton>
         </SectionNav>
         <ModalSection data-bg-section="look">
         <ModalConfigGrid>
           <ConfigRow>
-            <label><FiImage /> Режим фону:</label>
+            <label><FiImage /> {i18n.t("ui.BgModal.rezhymFonu")}</label>
             <div style={{ display: "flex", gap: "5px", width: "100%" }}>
               <select
-                aria-label="Режим фону"
+                aria-label={i18n.t("ui.BgModal.rezhymFonu2")}
                 value={heroBgMode}
                 onChange={(e) => {
                   setHeroBgMode(e.target.value);
@@ -1256,13 +1255,13 @@ const BgModal = ({
                 }}
                 style={{ background: "var(--bm-input-bg, rgba(10, 14, 26, 0.95))", color: "var(--bm-input-text, #fff)", fontSize: "12px", fontWeight: "500", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 6px", flex: 1, outline: "none" }}
               >
-                <option value="static">Статичний (1 фото)</option>
-                <option value="slideshow-2">Слайд-шоу (2 фото)</option>
-                <option value="slideshow-3">Слайд-шоу (3 фото)</option>
-                <option value="random">Випадковий (усі фото)</option>
+                <option value="static">{i18n.t("ui.BgModal.statychnyi1Foto")}</option>
+                <option value="slideshow-2">{i18n.t("ui.BgModal.slaidShou2Foto")}</option>
+                <option value="slideshow-3">{i18n.t("ui.BgModal.slaidShou3Foto")}</option>
+                <option value="random">{i18n.t("ui.BgModal.vypadkovyiUsiFoto")}</option>
               </select>
               {heroBgMode === "random" && (
-                <Tooltip content="Перемішати та скинути чергу" isDarkMode={isDarkMode}>
+                <Tooltip content={i18n.t("ui.BgModal.peremishatyTaSkynutyCherhu")} isDarkMode={isDarkMode}>
                   <button
                     onClick={() => {
                       const shuffled = shuffleArray(allBgs);
@@ -1270,7 +1269,7 @@ const BgModal = ({
                       setRandomCurrentIndex(0);
                       if (shuffled[0]) { handleSelectBg(shuffled[0].src); setActiveLayer(1); }
                     }}
-                    aria-label="Перемішати та скинути чергу"
+                    aria-label={i18n.t("ui.BgModal.peremishatyTaSkynutyCherhu")}
                     style={{ background: "linear-gradient(135deg, #ffb36c 0%, #ff8c2b 100%)", border: "none", borderRadius: "6px", color: "#000", padding: "2px 8px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", whiteSpace: "nowrap" }}
                   >
                     <FiShuffle />
@@ -1281,16 +1280,16 @@ const BgModal = ({
           </ConfigRow>
           {(heroBgMode === "slideshow-2" || heroBgMode === "slideshow-3" || heroBgMode === "random") && (
             <ConfigRow>
-              <label><FiClock /> Інтервал: {Math.floor(slideshowInterval / 60)}хв{slideshowInterval % 60 > 0 ? ` ${slideshowInterval % 60}с` : ""}</label>
+              <label><FiClock /> {i18n.t("ui.BgModal.interval")} {Math.floor(slideshowInterval / 60)}{i18n.t("ui.BgModal.khv")}{slideshowInterval % 60 > 0 ? " " + i18n.t("ui.BgModal.s", { v0: slideshowInterval % 60 }) : ""}</label>
               <input type="range" min="60" max="300" step="5" value={slideshowInterval} onChange={(e) => setSlideshowInterval(parseInt(e.target.value))} />
             </ConfigRow>
           )}
           <ConfigRow>
-            <label><FiDroplet /> Розмиття: {heroBgBlur.toFixed(1)}px</label>
+            <label><FiDroplet /> {i18n.t("ui.BgModal.rozmyttia")} {heroBgBlur.toFixed(1)}px</label>
             <input type="range" min="0" max="20" step="0.5" value={heroBgBlur} onChange={(e) => setHeroBgBlur(parseFloat(e.target.value))} />
           </ConfigRow>
           <ConfigRow>
-            <label><FiGrid /> Пікселізація: {heroBgPixelation.toFixed(1)}</label>
+            <label><FiGrid /> {i18n.t("ui.BgModal.pikselizatsiia")} {heroBgPixelation.toFixed(1)}</label>
             <input type="range" min="0" max="20" step="0.2" value={heroBgPixelation} onChange={(e) => setHeroBgPixelation(parseFloat(e.target.value))} />
           </ConfigRow>
         </ModalConfigGrid>
@@ -1309,7 +1308,7 @@ const BgModal = ({
 
         <ModalDivider />
         <ModalSection data-bg-section="commons">
-          <ModalSectionTitle><FiSearch /> Нові фони з Wikimedia Commons</ModalSectionTitle>
+          <ModalSectionTitle><FiSearch /> {i18n.t("ui.BgModal.noviFonyZWikimedia")}</ModalSectionTitle>
           <CommonsSearch
             customHeroBgs={customHeroBgs}
             setCustomHeroBgs={setCustomHeroBgs}
@@ -1320,25 +1319,25 @@ const BgModal = ({
 
         <ModalDivider />
         <ModalSection data-bg-section="library">
-        <ModalSectionTitle><FiImage /> Бібліотека зображень</ModalSectionTitle>
+        <ModalSectionTitle><FiImage /> {i18n.t("ui.BgModal.bibliotekaZobrazhen")}</ModalSectionTitle>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-          <ModalSearchInput aria-label="Фільтр наявних фонів за назвою" placeholder="Фільтр наявних фонів за назвою..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setVisibleBgCount(300); }} />
+          <ModalSearchInput aria-label={i18n.t("ui.BgModal.filtrNaiavnykhFonivZa")} placeholder={i18n.t("ui.BgModal.filtrNaiavnykhFonivZa2")} value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setVisibleBgCount(300); }} />
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <label style={{ fontSize: "12px", color: "var(--bm-label, #ffc996)", fontWeight: "600" }}>Категорія:</label>
-              <select aria-label="Категорія фонів" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ background: "var(--bm-input-bg, rgba(10, 14, 26, 0.95))", fontSize: "12px", color: "var(--bm-input-text, #fff)", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
-                <option value="all">Усі зображення</option>
-                <option value="Природа та Стихії">Природа та Стихії</option>
-                <option value="Фентезі та Легенди">Фентезі та Легенди</option>
-                <option value="Темрява та Містика">Темрява та Містика</option>
-                <option value="custom">Ваші зображення та відео</option>
+              <label style={{ fontSize: "12px", color: "var(--bm-label, #ffc996)", fontWeight: "600" }}>{i18n.t("ui.BgModal.katehoriia")}</label>
+              <select aria-label={i18n.t("ui.BgModal.katehoriiaFoniv")} value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ background: "var(--bm-input-bg, rgba(10, 14, 26, 0.95))", fontSize: "12px", color: "var(--bm-input-text, #fff)", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
+                <option value="all">{i18n.t("ui.BgModal.usiZobrazhennia")}</option>
+                <option value={i18n.t("ui.BgModal.pryrodaTaStykhii")}>{i18n.t("ui.BgModal.pryrodaTaStykhii")}</option>
+                <option value={i18n.t("ui.BgModal.fenteziTaLehendy")}>{i18n.t("ui.BgModal.fenteziTaLehendy")}</option>
+                <option value={i18n.t("ui.BgModal.temriavaTaMistyka")}>{i18n.t("ui.BgModal.temriavaTaMistyka")}</option>
+                <option value="custom">{i18n.t("ui.BgModal.vashiZobrazhenniaTaVideo")}</option>
               </select>
             </div>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <label style={{ fontSize: "12px", color: "var(--bm-label, #ffc996)", fontWeight: "600" }}>Сортувати:</label>
-              <select aria-label="Сортування фонів" value={sortType} onChange={(e) => setSortType(e.target.value)} style={{ background: "var(--bm-input-bg, rgba(10, 14, 26, 0.95))", color: "var(--bm-input-text, #fff)", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", fontSize: "12px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
-                <option value="az">Назва А-Я</option>
-                <option value="za">Назва Я-А</option>
+              <label style={{ fontSize: "12px", color: "var(--bm-label, #ffc996)", fontWeight: "600" }}>{i18n.t("ui.BgModal.sortuvaty")}</label>
+              <select aria-label={i18n.t("ui.BgModal.sortuvanniaFoniv")} value={sortType} onChange={(e) => setSortType(e.target.value)} style={{ background: "var(--bm-input-bg, rgba(10, 14, 26, 0.95))", color: "var(--bm-input-text, #fff)", border: "1px solid rgba(255, 179, 108, 0.3)", borderRadius: "6px", fontSize: "12px", padding: "4px 8px", outline: "none", cursor: "pointer" }}>
+                <option value="az">{i18n.t("ui.BgModal.nazvaAIa")}</option>
+                <option value="za">{i18n.t("ui.BgModal.nazvaIaA")}</option>
               </select>
             </div>
           </div>
@@ -1356,24 +1355,24 @@ const BgModal = ({
                     {rating === 2 ? "💛" : rating === 1 ? "❤️" : "🤍"}
                   </HeartIcon>
                   <div style={{ display: "flex", gap: "4px" }}>
-                    <Tooltip content="На весь екран" isDarkMode={isDarkMode}>
-                      <HeartIcon $color="#aef" aria-label="Відкрити на весь екран" onClick={(e) => { e.stopPropagation(); setFullscreenBg(bg); }}><FiMaximize2 /></HeartIcon>
+                    <Tooltip content={i18n.t("ui.BgModal.naVesEkran")} isDarkMode={isDarkMode}>
+                      <HeartIcon $color="#aef" aria-label={i18n.t("ui.BgModal.vidkrytyNaVesEkran")} onClick={(e) => { e.stopPropagation(); setFullscreenBg(bg); }}><FiMaximize2 /></HeartIcon>
                     </Tooltip>
-                    <Tooltip content="Скачати файл фону" isDarkMode={isDarkMode}>
-                      <HeartIcon $color="#ffda79" aria-label="Скачати фон" title="Завантажити фон" onClick={(e) => { e.stopPropagation(); handleDownloadBg(bg); }}><FiDownload /></HeartIcon>
+                    <Tooltip content={i18n.t("ui.BgModal.skachatyFailFonu")} isDarkMode={isDarkMode}>
+                      <HeartIcon $color="#ffda79" aria-label={i18n.t("ui.BgModal.skachatyFon")} title={i18n.t("ui.BgModal.zavantazhytyFon")} onClick={(e) => { e.stopPropagation(); handleDownloadBg(bg); }}><FiDownload /></HeartIcon>
                     </Tooltip>
                   </div>
                 </RatingOverlay>
                 {isCustom(bg.src) && (
                   <>
-                    <EditBtn onClick={(e) => { e.stopPropagation(); const newName = window.prompt("Введіть нову назву для цих шпалер:", bg.name); if (newName) setCustomHeroBgs((prev) => prev.map((b) => b.src === bg.src ? { ...b, name: newName } : b)); }} aria-label="Редагувати назву">✎</EditBtn>
-                    <DeleteBtn onClick={(e) => { e.stopPropagation(); if (window.confirm(`Видалити шпалери "${bg.name}"?`)) { setCustomHeroBgs((prev) => prev.filter((b) => b.src !== bg.src)); setBgRatings((prev) => { const n = { ...prev }; delete n[bg.src]; return n; }); if (heroBg === bg.src) setHeroBg(hills); if (heroBg2 === bg.src) setHeroBg2(hills); } }} aria-label="Видалити">×</DeleteBtn>
+                    <EditBtn onClick={(e) => { e.stopPropagation(); const newName = window.prompt(i18n.t("ui.BgModal.vveditNovuNazvuDlia"), bg.name); if (newName) setCustomHeroBgs((prev) => prev.map((b) => b.src === bg.src ? { ...b, name: newName } : b)); }} aria-label={i18n.t("ui.BgModal.redahuvatyNazvu")}>✎</EditBtn>
+                    <DeleteBtn onClick={(e) => { e.stopPropagation(); if (window.confirm(i18n.t("ui.BgModal.vydalytyShpalery", { name: bg.name }))) { setCustomHeroBgs((prev) => prev.filter((b) => b.src !== bg.src)); setBgRatings((prev) => { const n = { ...prev }; delete n[bg.src]; return n; }); if (heroBg === bg.src) setHeroBg(hills); if (heroBg2 === bg.src) setHeroBg2(hills); } }} aria-label={i18n.t("ui.BgModal.vydalyty")}>×</DeleteBtn>
                   </>
                 )}
                 {bg.author && (<TopOverlay><div style={{ fontWeight: "bold" }}>{bg.author}</div>{bg.source && <div>{bg.source}</div>}</TopOverlay>)}
                 <NameOverlay $hasSlots={heroBgMode === "slideshow-2" || heroBgMode === "slideshow-3"}>
                   {heroBgMode === "random" && qIndex !== -1 && (
-                    <span style={{ color: qIndex === randomCurrentIndex ? "#6cffe4" : "#ffb36c", marginRight: "6px", fontWeight: "bold", textShadow: qIndex === randomCurrentIndex ? "0 0 8px #6cffe4" : "none" }}>#{qIndex + 1} {qIndex === randomCurrentIndex && "(Зараз)"}</span>
+                    <span style={{ color: qIndex === randomCurrentIndex ? "#6cffe4" : "#ffb36c", marginRight: "6px", fontWeight: "bold", textShadow: qIndex === randomCurrentIndex ? "0 0 8px #6cffe4" : "none" }}>#{qIndex + 1} {qIndex === randomCurrentIndex && i18n.t("ui.BgModal.zaraz")}</span>
                   )}
                   {bg.name}
                 </NameOverlay>
@@ -1382,25 +1381,25 @@ const BgModal = ({
                 ) : (
                   <BlobAwareSquare src={cardThumbnail?.src || bg.src} onClick={() => handleSelectBg(bg.src)} title={bg.name} />
                 )}
-                {heroBgMode === "slideshow-2" && (<SlotButtons><SlotBtn $active={heroBg === bg.src} onClick={() => handleSelectBg(bg.src, 1)}>Слот 1</SlotBtn><SlotBtn $active={heroBg2 === bg.src} onClick={() => handleSelectBg(bg.src, 2)}>Слот 2</SlotBtn></SlotButtons>)}
-                {heroBgMode === "slideshow-3" && (<SlotButtons><SlotBtn $active={heroBg === bg.src} onClick={() => handleSelectBg(bg.src, 1)}>Слот 1</SlotBtn><SlotBtn $active={heroBg2 === bg.src} onClick={() => handleSelectBg(bg.src, 2)}>Слот 2</SlotBtn><SlotBtn $active={heroBg3 === bg.src} onClick={() => handleSelectBg(bg.src, 3)}>Слот 3</SlotBtn></SlotButtons>)}
+                {heroBgMode === "slideshow-2" && (<SlotButtons><SlotBtn $active={heroBg === bg.src} onClick={() => handleSelectBg(bg.src, 1)}>{i18n.t("ui.BgModal.slot1")}</SlotBtn><SlotBtn $active={heroBg2 === bg.src} onClick={() => handleSelectBg(bg.src, 2)}>{i18n.t("ui.BgModal.slot2")}</SlotBtn></SlotButtons>)}
+                {heroBgMode === "slideshow-3" && (<SlotButtons><SlotBtn $active={heroBg === bg.src} onClick={() => handleSelectBg(bg.src, 1)}>{i18n.t("ui.BgModal.slot1")}</SlotBtn><SlotBtn $active={heroBg2 === bg.src} onClick={() => handleSelectBg(bg.src, 2)}>{i18n.t("ui.BgModal.slot2")}</SlotBtn><SlotBtn $active={heroBg3 === bg.src} onClick={() => handleSelectBg(bg.src, 3)}>{i18n.t("ui.BgModal.slot3")}</SlotBtn></SlotButtons>)}
               </BgItem>
             );
           })}
         </BgGrid>
 
         {sortedBgs.length > visibleBgCount && (
-          <LoadMoreButton isDarkMode={isDarkMode} onClick={() => setVisibleBgCount((prev) => prev + 300)}>Завантажити ще</LoadMoreButton>
+          <LoadMoreButton isDarkMode={isDarkMode} onClick={() => setVisibleBgCount((prev) => prev + 300)}>{i18n.t("ui.BgModal.zavantazhytyShche")}</LoadMoreButton>
         )}
         </ModalSection>
 
         <ModalDivider />
         <DropZone onDragOver={handleDragOver} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()}>
           <FiUploadCloud size={24} aria-hidden="true" />
-          <div><span style={{ color: "var(--bm-accent-text, #ffb36c)", fontWeight: "bold" }}>Перетягніть сюди</span> картинку або відео</div>
-          <span style={{ fontSize: "11px", color: "var(--bm-muted, #8a8d9b)" }}>або натисніть для вибору файлу з вашого пристрою</span>
+          <div><span style={{ color: "var(--bm-accent-text, #ffb36c)", fontWeight: "bold" }}>{i18n.t("ui.BgModal.peretiahnitSiudy")}</span> {i18n.t("ui.BgModal.kartynkuAboVideo")}</div>
+          <span style={{ fontSize: "11px", color: "var(--bm-muted, #8a8d9b)" }}>{i18n.t("ui.BgModal.aboNatysnitDliaVyboru")}</span>
           <span style={{ fontSize: "11px", color: "var(--bm-muted, #8a8d9b)" }}>
-            Ваші фони: {customHeroBgs?.length || 0}/{MAX_CUSTOM_BGS} · {CUSTOM_BG_LIMITS_TEXT}
+            {i18n.t("ui.BgModal.vashiFony")} {customHeroBgs?.length || 0}/{MAX_CUSTOM_BGS} · {customBgLimitsText()}
           </span>
           <input type="file" ref={fileInputRef} hidden accept="image/*,video/*" onChange={(e) => { handleFileUpload(e.target.files[0]); e.target.value = ""; }} />
         </DropZone>

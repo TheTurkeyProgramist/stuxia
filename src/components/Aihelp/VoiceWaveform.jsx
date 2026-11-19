@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
 
+import i18n from "../../i18n/i18n.js";
 const WINDOW_MS = 3000;
 const BAR_STEP_PX = 3;
 
@@ -121,7 +122,7 @@ const VoiceWaveform = ({ active, isDarkMode }) => {
   if (!active) return null;
 
   return (
-    <WaveWrap $isDarkMode={isDarkMode} role="img" aria-label="Хвиля голосу за останні 3 секунди">
+    <WaveWrap $isDarkMode={isDarkMode} role="img" aria-label={i18n.t("ui.VoiceWaveform.khvyliaHolosuZaOstanni")}>
       <canvas ref={canvasRef} />
     </WaveWrap>
   );

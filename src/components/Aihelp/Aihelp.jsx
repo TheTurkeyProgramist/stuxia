@@ -64,6 +64,7 @@ import { FaClapperboard } from "react-icons/fa6";
 import VoiceWaveform from "./VoiceWaveform";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { getPref, setPref } from "../../utils/prefsStore.js";
+import i18n from "../../i18n/i18n.js";
 //<Tooltip content="Змінити тему" isDarkMode={isDarkMode}>
 /* ── Animations ── */
 const fadeIn = keyframes`
@@ -1262,19 +1263,19 @@ const StarterCarouselTrack = styled.div`
 
 const StarterQuestionsCarousel = ({ isDarkMode, onAsk }) => {
   const questions = [
-    { text: "Які новини про погоду у світі?", icon: <TbWorldStar /> },
-    { text: "Як зміни клімату впливають на природу?", icon: <PiNewspaperClippingFill /> },
-    { text: "Яка погода буде завтра в Києві?", icon: <IoIosCloudyNight /> },
-    { text: "Порадь екологічні компанії", icon: < FaHandsHelping/> },
-    { text: "Порадити гру, кіно і т.д.?", icon: <FaClapperboard /> },
+    { text: i18n.t("ui.Aihelp.iakiNovynyProPohodu"), icon: <TbWorldStar /> },
+    { text: i18n.t("ui.Aihelp.iakZminyKlimatuVplyvaiut"), icon: <PiNewspaperClippingFill /> },
+    { text: i18n.t("ui.Aihelp.iakaPohodaBudeZavtra"), icon: <IoIosCloudyNight /> },
+    { text: i18n.t("ui.Aihelp.poradEkolohichniKompanii"), icon: < FaHandsHelping/> },
+    { text: i18n.t("ui.Aihelp.poradytyHruKinoI"), icon: <FaClapperboard /> },
   ];
   const { position, isResetting, pauseProps } = useStarterCarousel(questions.length);
 
   return (
     <StarterQuestionsGrid
       role="group"
-      aria-label="Популярні запитання"
-      aria-roledescription="карусель"
+      aria-label={i18n.t("ui.Aihelp.populiarniZapytannia")}
+      aria-roledescription={i18n.t("ui.Aihelp.karusel")}
       {...pauseProps}
     >
       <StarterCarouselViewport>
@@ -1405,10 +1406,10 @@ const SuggestedPillBtn = styled.button`
 /* ── Exported helpers ── */
 export const getResponseLengthInstruction = (responseLength) => {
   if (responseLength === "detailed")
-    return { label: "Більше", instruction: "Докладно." };
+    return { label: i18n.t("ui.Aihelp.bilshe"), instruction: "Докладно." };
   if (responseLength === "normal")
-    return { label: "Нормально", instruction: "Нормально." };
-  return { label: "Менше", instruction: "Коротко." };
+    return { label: i18n.t("ui.Aihelp.normalno"), instruction: "Нормально." };
+  return { label: i18n.t("ui.Aihelp.menshe"), instruction: "Коротко." };
 };
 
 const getSystemPrompt = (suggestedQuestionsCount) => {
@@ -1440,7 +1441,7 @@ const getSystemPrompt = (suggestedQuestionsCount) => {
 ${suggestionsInstruction}`;
 };
 
-const formatModelSize = (mb) => (mb >= 1000 ? `${(mb / 1000).toFixed(1)} ГБ` : `${mb} МБ`);
+const formatModelSize = (mb) => (mb >= 1000 ? i18n.t("ui.Aihelp.hb", { v0: (mb / 1000).toFixed(1) }) : i18n.t("ui.Aihelp.mb", { mb: mb }));
 
 // Малі офлайн-моделі мають вікно ~4K токенів, тому промпт стислий
 const getOfflineSystemPrompt = (suggestedQuestionsCount) =>
@@ -1456,7 +1457,7 @@ const getOfflineSystemPrompt = (suggestedQuestionsCount) =>
 
 const createDefaultChatObject = (index = 1, initialMessages = []) => ({
   id: `chat_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-  title: `Чат ${index}`,
+  title: i18n.t("ui.Aihelp.chat", { index: index }),
   messages: initialMessages,
   createdAt: Date.now(),
 });
@@ -1561,7 +1562,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
 
   const handleCreateNewChat = () => {
     if (chats.length >= 10) {
-      toast.error("Досягнуто ліміт 10 паралельних чатів. Видаліть непотрібний чат.");
+      toast.error(i18n.t("ui.Aihelp.dosiahnutoLimit10Paralelnykh"));
       return;
     }
     const nextNum = chats.length + 1;
@@ -1573,7 +1574,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     localforage.setItem("ai_help_active_chat_id", newChat.id);
     clearFiles();
     setPrompt("");
-    toast.success(`Створено новий чат! (${updated.length}/10)`);
+    toast.success(i18n.t("ui.Aihelp.stvorenoNovyiChat10", { length: updated.length }));
   };
 
   const handleDeleteChat = (chatId, e) => {
@@ -1585,7 +1586,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       setActiveChatId(resetChat.id);
       localforage.setItem("ai_help_chats_v2", [resetChat]);
       localforage.setItem("ai_help_active_chat_id", resetChat.id);
-      toast.success("Чат очищено");
+      toast.success(i18n.t("ui.Aihelp.chatOchyshcheno"));
       return;
     }
 
@@ -1599,7 +1600,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       localforage.setItem("ai_help_active_chat_id", nextActiveId);
     }
 
-    toast.success("Чат видалено");
+    toast.success(i18n.t("ui.Aihelp.chatVydaleno"));
   };
 
   // Свайпи на мобільних: від лівого краю — показати бічну панель, вліво — згорнути
@@ -1705,7 +1706,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
   const { isListening, toggle: handleVoiceInput } = useVoiceInput({
     onText: (transcript) =>
       setPrompt((prev) => `${prev ? `${prev} ` : ""}${transcript}`.slice(0, MAX_MESSAGE_LENGTH)),
-    onStart: () => setStatus("Слухаю вас..."),
+    onStart: () => setStatus(i18n.t("ui.Aihelp.slukhaiuVas")),
     onStop: () => setStatus(""),
   });
 
@@ -1810,13 +1811,13 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     const MAX_FILES = 15;
     const MAX_TOTAL_SIZE = 100 * 1024 * 1024;
     if (selectedFiles.length + incomingFiles.length > MAX_FILES) {
-      toast.error(`Максимум ${MAX_FILES} файлів.`);
+      toast.error(i18n.t("ui.Aihelp.maksymumFailiv", { MAX_FILES: MAX_FILES }));
       return;
     }
     const currentTotalSize = selectedFiles.reduce((acc, f) => acc + f.file.size, 0);
     const incomingTotalSize = incomingFiles.reduce((acc, f) => acc + f.size, 0);
     if (currentTotalSize + incomingTotalSize > MAX_TOTAL_SIZE) {
-      toast.error("Загальний розмір перевищує 100 МБ.");
+      toast.error(i18n.t("ui.Aihelp.zahalnyiRozmirPerevyshchuie100"));
       return;
     }
     const newFilesData = incomingFiles.map((file) => {
@@ -1852,16 +1853,16 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       try {
         window.dispatchEvent(new CustomEvent("heroBackgroundChanged", { detail: { src: url } }));
       } catch { }
-      toast.success("Картину встановлено як фон!");
+      toast.success(i18n.t("ui.Aihelp.kartynuVstanovlenoIakFon"));
     } catch (err) {
       console.error(err);
-      toast.error("Не вдалося встановити фон.");
+      toast.error(i18n.t("ui.Aihelp.neVdalosiaVstanovytyFon"));
     }
   };
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-      toast.success("Скопійовано!", { duration: 1500 });
+      toast.success(i18n.t("ui.Aihelp.skopiiovano"), { duration: 1500 });
     });
   };
 
@@ -1869,13 +1870,13 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     toast(
       (t) => (
         <span style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
-          Очистити поточний чат?
+          {i18n.t("ui.Aihelp.ochystytyPotochnyiChat")}
           <button
             onClick={async () => {
               toast.dismiss(t.id);
               clearFiles();
               updateChatMessages(activeChatId, []);
-              toast.success("Історію поточного чату очищено");
+              toast.success(i18n.t("ui.Aihelp.istoriiuPotochnohoChatuOchyshcheno"));
             }}
             style={{
               background: "#e53e3e", color: "#fff", border: "none",
@@ -1883,7 +1884,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
               fontSize: 12, fontWeight: 600,
             }}
           >
-            Очистити
+            {i18n.t("ui.Aihelp.ochystyty")}
           </button>
           <button
             onClick={() => toast.dismiss(t.id)}
@@ -1893,7 +1894,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
               cursor: "pointer", fontSize: 12,
             }}
           >
-            Скасувати
+            {i18n.t("ui.Aihelp.skasuvaty")}
           </button>
         </span>
       ),
@@ -1938,19 +1939,19 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       if (!support.ok) {
         updateChatMessages(targetChatId, (prev) => [
           ...prev,
-          { text: `Офлайн-ШІ недоступний на цьому пристрої: ${support.reason} Перемкніться на Gemini.`, isBot: true },
+          { text: i18n.t("ui.Aihelp.oflainShiNedostupnyiNa", { reason: support.reason }), isBot: true },
         ]);
         return;
       }
       if (selectedFiles.length > 0) {
-        toast.error("Офлайн-ШІ розуміє лише текст. Для фото, відео й аудіо перемкніться на Gemini.");
+        toast.error(i18n.t("ui.Aihelp.oflainShiRozumiieLyshe"));
         return;
       }
     } else {
       if (!personalApiKey) {
         updateChatMessages(targetChatId, (prev) => [
           ...prev,
-          { text: "Будь ласка, вставте ключ Gemini — натисніть кнопку з ключем угорі.", isBot: true },
+          { text: i18n.t("ui.Aihelp.budLaskaVstavteKliuch"), isBot: true },
         ]);
         openKeyModal();
         return;
@@ -1961,7 +1962,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     if (originalPrompt && hasBannedContent(originalPrompt)) {
       updateChatMessages(targetChatId, (prev) => [
         ...prev,
-        { text: "Запит містить заборонені слова або теми.", isBot: true },
+        { text: i18n.t("ui.Aihelp.zapytMistytZaboroneniSlova"), isBot: true },
       ]);
       return;
     }
@@ -1969,7 +1970,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
     // Перезарядку могли запустити в «ШІ Викладі новини» (офлайн-моделі квота не потрібна)
     const remainingSec = isOffline ? 0 : await cooldown.sync();
     if (remainingSec > 0) {
-      toast.error(`Зачекайте ще ${remainingSec} с перед наступним запитом.`);
+      toast.error(i18n.t("ui.Aihelp.zachekaiteShcheSPered", { remainingSec: remainingSec }));
       return;
     }
 
@@ -1987,7 +1988,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       let webContext = "";
       const isWeatherOrSearchQuery = googleSearchEnabled || /погод|температур|градус|дощ|опад|сонц|соняч|хмарно|вітер|київ|львів|одес|харків|дніпр|завтра|сьогодні|прогноз|weather|forecast/i.test(originalPrompt);
       if (isWeatherOrSearchQuery && originalPrompt) {
-        setStatus("Отримую актуальну інформацію / прогноз погоди...");
+        setStatus(i18n.t("ui.Aihelp.otrymuiuAktualnuInformatsiiuProhnoz"));
         try {
           webContext = await fetchFreeWebSearch(originalPrompt);
         } catch (searchErr) {
@@ -2019,7 +2020,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
 
       if (isOffline) {
         const offlineModel = getOfflineModel(offlineModelKey);
-        setStatus(offlineCached ? "Запускаю офлайн-ШІ..." : `Завантажую офлайн-модель (~${formatModelSize(offlineModel.sizeMB)}, один раз)...`);
+        setStatus(offlineCached ? i18n.t("ui.Aihelp.zapuskaiuOflainShi") : i18n.t("ui.Aihelp.zavantazhuiuOflainModelOdyn", { v0: formatModelSize(offlineModel.sizeMB) }));
         // Вікно контексту мале: беремо коротку історію й обрізаємо інтернет-контекст
         const history = messages.slice(-4).map((m) => ({
           role: m.isBot ? "assistant" : "user",
@@ -2044,7 +2045,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
             { role: "user", content: userContent },
           ],
           onProgress: ({ progress }) => {
-            if (!generating) setStatus(`Підготовка офлайн-моделі: ${Math.round(progress * 100)}%`);
+            if (!generating) setStatus(i18n.t("ui.Aihelp.pidhotovkaOflainModeli", { Math: Math.round(progress * 100) }));
           },
           onDelta: (acc) => {
             if (!generating) {
@@ -2064,7 +2065,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
         return;
       }
 
-      setStatus("З'єднання з Google Gemini...");
+      setStatus(i18n.t("ui.Aihelp.ziednanniaZGoogleGemini"));
       const cleanedKey = (personalApiKey || "").trim().replace(/^["']|["']$/g, "");
       const genAI = new GoogleGenerativeAI(cleanedKey);
       const fullPrompt = `${lengthInstr}\n${webInstruction}${cardContext}${webContext}\n${conversationContext ? `Попередній діалог:\n${conversationContext}\n` : ""}${originalPrompt || "Проаналізуй прикріплений контент."}`;
@@ -2091,7 +2092,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
         }
       }
 
-      if (!result) throw lastErr || new Error("Не вдалося підключитися до Gemini API.");
+      if (!result) throw lastErr || new Error(i18n.t("ui.Aihelp.neVdalosiaPidkliuchytysiaDo"));
 
       let accumulatedText = "";
       for await (const chunk of result.stream) {
@@ -2125,17 +2126,17 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
         const isMemoryError = /memory|OOM|device.?lost|allocat/i.test(msg);
         setError(
           isMemoryError
-            ? "Відеокарті не вистачило пам'яті. Оберіть легшу офлайн-модель або перемкніться на Gemini."
-            : `Помилка офлайн-ШІ: ${msg || "невідома помилка"}`,
+            ? i18n.t("ui.Aihelp.videokartiNeVystachyloPamiati")
+            : i18n.t("ui.Aihelp.pomylkaOflainShi", { v0: msg || "невідома помилка" }),
         );
         clearFiles();
         return;
       }
-      const errorMessage = err?.message || "Невідома помилка Gemini.";
+      const errorMessage = err?.message || i18n.t("ui.Aihelp.nevidomaPomylkaGemini");
       const isQuotaError = /429|quota|rate.?limit|RESOURCE_EXHAUSTED/i.test(errorMessage);
       setError(
         isQuotaError
-          ? "Google відхилив запит через ліміт квоти (HTTP 429). Зачекайте 1 хвилину."
+          ? i18n.t("ui.Aihelp.googleVidkhylyvZapytCherez")
           : errorMessage,
       );
       clearFiles();
@@ -2171,35 +2172,35 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       />
       <HeaderBar>
         <ChatControlsGroup>
-          <Tooltip content={isSidebarCollapsed ? "Показати список чатів" : "Згорнути список чатів"} isDarkMode={isDarkMode}>
+          <Tooltip content={isSidebarCollapsed ? i18n.t("ui.Aihelp.pokazatySpysokChativ") : i18n.t("ui.Aihelp.zhornutySpysokChativ")} isDarkMode={isDarkMode}>
             <SidebarToggleBtn
               type="button"
               $isDarkMode={isDarkMode}
               onClick={toggleSidebar}
-              aria-label={isSidebarCollapsed ? "Показати бічну панель" : "Згорнути бічну панель"}
+              aria-label={isSidebarCollapsed ? i18n.t("ui.Aihelp.pokazatyBichnuPanel") : i18n.t("ui.Aihelp.zhornutyBichnuPanel")}
               aria-expanded={!isSidebarCollapsed}
             >
               {isSidebarCollapsed ? <TbLayoutSidebarLeftExpand /> : <TbLayoutSidebarLeftCollapse />}
             </SidebarToggleBtn>
           </Tooltip>
-          <Tooltip content="Створити новий паралельний чат" isDarkMode={isDarkMode}>
+          <Tooltip content={i18n.t("ui.Aihelp.stvorytyNovyiParalelnyiChat")} isDarkMode={isDarkMode}>
             <NewChatHeaderBtn
               type="button"
               $isDarkMode={isDarkMode}
               onClick={handleCreateNewChat}
               disabled={chats.length >= 10}
-              aria-label="Створити новий паралельний чат"
+              aria-label={i18n.t("ui.Aihelp.stvorytyNovyiParalelnyiChat")}
             >
               <TbMessagePlus />
             </NewChatHeaderBtn>
           </Tooltip>
           {onClose && (
-            <Tooltip content="Закрити ШІ-асистент" isDarkMode={isDarkMode}>
+            <Tooltip content={i18n.t("ui.Aihelp.zakrytyShiAsystent")} isDarkMode={isDarkMode}>
               <CloseAiModalHeaderBtn
                 type="button"
                 $isDarkMode={isDarkMode}
                 onClick={onClose}
-                aria-label="Закрити ШІ-асистент"
+                aria-label={i18n.t("ui.Aihelp.zakrytyShiAsystent")}
               >
                 <TbX />
               </CloseAiModalHeaderBtn>
@@ -2210,7 +2211,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
 
       <SettingsPanel $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
         <ProviderRow $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-          <ProviderSwitch role="radiogroup" aria-label="Який ШІ відповідає" $isDarkMode={isDarkMode}>
+          <ProviderSwitch role="radiogroup" aria-label={i18n.t("ui.Aihelp.iakyiShiVidpovidaie")} $isDarkMode={isDarkMode}>
             <ProviderOption
               type="button"
               role="radio"
@@ -2227,7 +2228,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
               $active={aiProvider === "offline"}
               onClick={() => changeAiProvider("offline")}
             >
-              Офлайн-ШІ
+              {i18n.t("ui.Aihelp.oflainShi")}
             </ProviderOption>
           </ProviderSwitch>
           {aiProvider === "gemini" ? (
@@ -2243,7 +2244,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                   value={offlineModelKey}
                   onChange={(e) => changeOfflineModel(e.target.value)}
                   disabled={loading}
-                  aria-label="Офлайн-модель"
+                  aria-label={i18n.t("ui.Aihelp.oflainModel")}
                 >
                   {OFFLINE_MODELS.map((m) => (
                     <option key={m.key} value={m.key}>
@@ -2258,14 +2259,14 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
               )}
               <OfflineHint>
                 {offlineSupport && !offlineSupport.ok
-                  ? `Недоступно: ${offlineSupport.reason}`
+                  ? i18n.t("ui.Aihelp.nedostupno", { reason: offlineSupport.reason })
                   : offlineCached
-                    ? "Готово · працює без інтернету"
-                    : "Завантажиться один раз при першому питанні"}
+                    ? i18n.t("ui.Aihelp.hotovoPratsiuieBezInternetu")
+                    : i18n.t("ui.Aihelp.zavantazhytsiaOdynRazPry")}
               </OfflineHint>
             </OfflineModelBox>
           )}
-          <Tooltip content="Безкоштовний онлайн-пошук фактів та інформації без використання квоти Gemini" isDarkMode={isDarkMode}>
+          <Tooltip content={i18n.t("ui.Aihelp.bezkoshtovnyiOnlainPoshukFaktiv")} isDarkMode={isDarkMode}>
             <label
               style={{
                 display: "inline-flex",
@@ -2276,7 +2277,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                 whiteSpace: "nowrap",
                 cursor: "pointer",
               }}
-              aria-label="Безкоштовний онлайн-пошук фактів та інформації без використання квоти Gemini"
+              aria-label={i18n.t("ui.Aihelp.bezkoshtovnyiOnlainPoshukFaktiv")}
             >
               <input
                 type="checkbox"
@@ -2287,7 +2288,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                   await localforage.setItem("gemini_google_search_enabled", enabled);
                 }}
               />
-              Інтернет-пошук
+              {i18n.t("ui.Aihelp.internetPoshuk")}
             </label>
           </Tooltip>
         </ProviderRow>
@@ -2297,7 +2298,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
       <DesktopLayout>
         {/* Left sidebar — always visible on ≥768px */}
         <DesktopSidebar $isDarkMode={isDarkMode} $collapsed={isSidebarCollapsed}>
-          <SidebarTitle $isDarkMode={isDarkMode}>Чати ({chats.length}/10)</SidebarTitle>
+          <SidebarTitle $isDarkMode={isDarkMode}>{i18n.t("ui.Aihelp.chaty")}{chats.length}/10)</SidebarTitle>
           <SidebarChatsList>
             {chats.map((chat, idx) => {
               const isActive = chat.id === activeChatId;
@@ -2310,13 +2311,13 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                     setActiveChatId(chat.id);
                     localforage.setItem("ai_help_active_chat_id", chat.id);
                   }}
-                  title={chat.title || `Чат ${idx + 1}`}
+                  title={chat.title || i18n.t("ui.Aihelp.chat2", { v0: idx + 1 })}
                 >
-                  <SidebarChatLabel>{chat.title || `Чат ${idx + 1}`}</SidebarChatLabel>
+                  <SidebarChatLabel>{chat.title || i18n.t("ui.Aihelp.chat2", { v0: idx + 1 })}</SidebarChatLabel>
                   <SidebarDeleteBtn
                     type="button"
                     onClick={(e) => handleDeleteChat(chat.id, e)}
-                    aria-label="Видалити чат"
+                    aria-label={i18n.t("ui.Aihelp.vydalytyChat")}
                   >
                     <RiDeleteBack2Fill />
                   </SidebarDeleteBtn>
@@ -2329,8 +2330,8 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
             $isDarkMode={isDarkMode}
             onClick={handleCreateNewChat}
             disabled={chats.length >= 10}
-            title="Новий чат"
-            aria-label="Новий чат"
+            title={i18n.t("ui.Aihelp.novyiChat")}
+            aria-label={i18n.t("ui.Aihelp.novyiChat")}
           >
             <TbPlus />
           </SidebarNewChatBtn>
@@ -2341,7 +2342,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
           <ChatHistory ref={chatContainerRef}>
             {messages.length === 0 && (
               <EmptyChatWelcome $isDarkMode={isDarkMode}>
-                <WelcomeTitle $isDarkMode={isDarkMode}>Запитайте або оберіть питання:</WelcomeTitle>
+                <WelcomeTitle $isDarkMode={isDarkMode}>{i18n.t("ui.Aihelp.zapytaiteAboOberitPytannia")}</WelcomeTitle>
                 <StarterQuestionsCarousel
                   isDarkMode={isDarkMode}
                   onAsk={handleAsk}
@@ -2353,24 +2354,24 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
               if (m.isBot) {
                 const { cleanText, questions } = parseSuggestedQuestions(m.text);
                 const hint = i % 2 === 0
-                  ? "Підказка: Ви можете зменшити кількість пропонованих питань після запиту для економії кредитів і зменшення перезарядки. Натисніть «Пропозиції»."
-                  : "Підказка: Для швидших відповідей зменште обсяг відповіді з «Нормально» на «Менше».";
+                  ? i18n.t("ui.Aihelp.pidkazkaVyMozheteZmenshyty")
+                  : i18n.t("ui.Aihelp.pidkazkaDliaShvydshykhVidpovidei");
                 return (
                   <React.Fragment key={i}>
                     <Message $isBot={true} $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-                      <CopyButton onClick={() => copyToClipboard(cleanText)} aria-label="Копіювати відповідь"><TbCopy /></CopyButton>
+                      <CopyButton onClick={() => copyToClipboard(cleanText)} aria-label={i18n.t("ui.Aihelp.kopiiuvatyVidpovid")}><TbCopy /></CopyButton>
                       <ReactMarkdown>{cleanText}</ReactMarkdown>
                       {m.usage?.totalTokens > 0 && (
                         <MessageMeta $isDarkMode={isDarkMode}>
-                          Витрачено токенів: {m.usage.totalTokens}
+                          {i18n.t("ui.Aihelp.vytrachenoTokeniv")} {m.usage.totalTokens}
                           {m.usage.promptTokens > 0 &&
-                            ` (запит: ${m.usage.promptTokens}, відповідь: ${m.usage.responseTokens})`}
+                            " " + i18n.t("ui.Aihelp.zapytVidpovid", { promptTokens: m.usage.promptTokens, responseTokens: m.usage.responseTokens })}
                         </MessageMeta>
                       )}
                     </Message>
                     {questions.length > 0 && (
                       <SuggestedQuestionsContainer>
-                        <SuggestedTitle> Спробуйте запитати далі:</SuggestedTitle>
+                        <SuggestedTitle> {i18n.t("ui.Aihelp.sprobuiteZapytatyDali")}</SuggestedTitle>
                         <SuggestedPillsRow>
                           {questions.map((q, idx) => (
                             <SuggestedPillBtn
@@ -2398,9 +2399,9 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                     type="button"
                     $isDarkMode={isDarkMode}
                     onClick={() => restoreQuestion(i)}
-                    aria-label="Редагувати це питання"
+                    aria-label={i18n.t("ui.Aihelp.redahuvatyTsePytannia")}
                   >
-                    <TbPencil aria-hidden="true" /> Редагувати
+                    <TbPencil aria-hidden="true" /> {i18n.t("ui.Aihelp.redahuvaty")}
                   </EditQuestionButton>
                 </Message>
               );
@@ -2423,7 +2424,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
             {error && (
               <ErrorBox>
                 {error}
-                <RetryButton type="button" title="Повторити" aria-label="Повторити" onClick={() => handleAsk(lastPromptRef.current)}><TbRefresh /></RetryButton>
+                <RetryButton type="button" title={i18n.t("ui.Aihelp.povtoryty")} aria-label={i18n.t("ui.Aihelp.povtoryty")} onClick={() => handleAsk(lastPromptRef.current)}><TbRefresh /></RetryButton>
               </ErrorBox>
             )}
             <div ref={chatEndRef} />
@@ -2435,7 +2436,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
           {selectedFiles.length > 0 && (
             <FilePreviewContainer>
               <FileSizeText>
-                Розмір: {(totalFilesSize / (1024 * 1024)).toFixed(2)} MB / 100 MB
+                {i18n.t("ui.Aihelp.rozmir")} {(totalFilesSize / (1024 * 1024)).toFixed(2)} MB / 100 MB
               </FileSizeText>
               {selectedFiles.map((f, i) => (
                 <FileThumb key={i} $isDarkMode={isDarkMode}>
@@ -2451,7 +2452,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                       <img src={f.objectURL} alt="preview" />
                     )}
                   </div>
-                  <RemoveFileBtn onClick={() => removeFile(i)} aria-label="Прибрати файл"><TbX /></RemoveFileBtn>
+                  <RemoveFileBtn onClick={() => removeFile(i)} aria-label={i18n.t("ui.Aihelp.prybratyFail")}><TbX /></RemoveFileBtn>
                 </FileThumb>
               ))}
             </FilePreviewContainer>
@@ -2460,8 +2461,8 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
           {attachedCards.length > 0 && (
             <AttachedCardsContainer>
               {attachedCards.map((card, i) => {
-                const cardLabel = card.type === "weather" ? "картку погоди" : "новину";
-                const actionText = `Видалити прикріплену ${cardLabel}`;
+                const cardLabel = card.type === "weather" ? i18n.t("ui.Aihelp.kartkuPohody") : i18n.t("ui.Aihelp.novynu");
+                const actionText = i18n.t("ui.Aihelp.vydalytyPrykriplenu", { cardLabel: cardLabel });
                 return (
                   <AttachedChip key={i} $isDarkMode={isDarkMode}>
                     {card.type === "weather" ? <IoIosCloudyNight /> : <PiNewspaperClippingFill />}
@@ -2490,16 +2491,16 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
           >
             <InputQuickSettings $isDarkMode={isDarkMode}>
               <QuickGroup>
-                <Tooltip content="Обсяг відповіді" isDarkMode={isDarkMode}>
+                <Tooltip content={i18n.t("ui.Aihelp.obsiahVidpovidi")} isDarkMode={isDarkMode}>
                   <QuickLabel as="span" $isDarkMode={isDarkMode}>
                     <TbAlignLeft />
                   </QuickLabel>
                 </Tooltip>
-                <Segmented $isDarkMode={isDarkMode} role="group" aria-label="Обсяг відповіді">
+                <Segmented $isDarkMode={isDarkMode} role="group" aria-label={i18n.t("ui.Aihelp.obsiahVidpovidi")}>
                   {[
-                    ["concise", "Менше"],
-                    ["normal", "Нормально"],
-                    ["detailed", "Більше"],
+                    ["concise", i18n.t("ui.Aihelp.menshe")],
+                    ["normal", i18n.t("ui.Aihelp.normalno")],
+                    ["detailed", i18n.t("ui.Aihelp.bilshe")],
                   ].map(([value, label]) => (
                     <SegmentButton
                       key={value}
@@ -2517,12 +2518,12 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
 
               {messages.length > 0 && (
                 <SuggestedQuestionsSetting>
-                  <Tooltip content="Кількість рекомендованих питань (перезарядка)" isDarkMode={isDarkMode}>
+                  <Tooltip content={i18n.t("ui.Aihelp.kilkistRekomendovanykhPytanPerezariadka")} isDarkMode={isDarkMode}>
                     <QuickLabel as="span" $isDarkMode={isDarkMode}>
                       <TbBulb />
                     </QuickLabel>
                   </Tooltip>
-                  <Segmented $isDarkMode={isDarkMode} role="group" aria-label="Кількість рекомендованих питань">
+                  <Segmented $isDarkMode={isDarkMode} role="group" aria-label={i18n.t("ui.Aihelp.kilkistRekomendovanykhPytan")}>
                     {SUGGESTED_COUNT_OPTIONS.map(({ value, cooldown: delay }) => (
                       <SegmentButton
                         key={value}
@@ -2536,7 +2537,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                         }}
                       >
                         {value}
-                        <small>{delay} с</small>
+                        <small>{delay} {i18n.t("ui.Aihelp.s")}</small>
                       </SegmentButton>
                     ))}
                   </Segmented>
@@ -2549,7 +2550,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
             ) : (
               <TextArea
                 ref={textareaRef}
-                placeholder="Запитайте щось... (Enter — надіслати, Shift+Enter — новий рядок)"
+                placeholder={i18n.t("ui.Aihelp.zapytaiteShchosEnterNadislaty")}
                 value={prompt}
                 maxLength={MAX_MESSAGE_LENGTH}
                 onChange={handleTextChange}
@@ -2567,8 +2568,8 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                 {prompt.length}/{MAX_MESSAGE_LENGTH}
               </MessageCounter>
               <label style={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
-                <Tooltip content="Додати фото, відео, аудіо" isDarkMode={isDarkMode}>
-                <IconBtn $isDarkMode={isDarkMode} $size="20px" aria-label="Додати фото, відео, аудіо">
+                <Tooltip content={i18n.t("ui.Aihelp.dodatyFotoVideoAudio")} isDarkMode={isDarkMode}>
+                <IconBtn $isDarkMode={isDarkMode} $size="20px" aria-label={i18n.t("ui.Aihelp.dodatyFotoVideoAudio")}>
                   <MdAddPhotoAlternate />
                 </IconBtn>
                 </Tooltip>
@@ -2580,19 +2581,19 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                   onChange={(e) => handleFileSelect(e.target.files)}
                 />
               </label>
-              <Tooltip content={isListening ? "Зупинити запис" : "Голосовий ввід"} isDarkMode={isDarkMode}>
-              <IconBtn $isDarkMode={isDarkMode} onClick={handleVoiceInput} aria-label={isListening ? "Зупинити запис" : "Голосовий ввід"} $listening={isListening}>
+              <Tooltip content={isListening ? i18n.t("ui.Aihelp.zupynytyZapys") : i18n.t("ui.Aihelp.holosovyiVvid")} isDarkMode={isDarkMode}>
+              <IconBtn $isDarkMode={isDarkMode} onClick={handleVoiceInput} aria-label={isListening ? i18n.t("ui.Aihelp.zupynytyZapys") : i18n.t("ui.Aihelp.holosovyiVvid")} $listening={isListening}>
                 {isListening ? <TbPlayerStopFilled /> : <FaMicrophoneAlt />}
               </IconBtn>
               </Tooltip>
-              <Tooltip content="Очистити поточний чат" isDarkMode={isDarkMode}>
-              <IconBtn $isDarkMode={isDarkMode} $danger onClick={clearCurrentHistory} aria-label="Очистити поточний чат" $size="20px">
+              <Tooltip content={i18n.t("ui.Aihelp.ochystytyPotochnyiChat2")} isDarkMode={isDarkMode}>
+              <IconBtn $isDarkMode={isDarkMode} $danger onClick={clearCurrentHistory} aria-label={i18n.t("ui.Aihelp.ochystytyPotochnyiChat2")} $size="20px">
                 <RiDeleteBack2Fill />
               </IconBtn>
               </Tooltip>
-              <Tooltip content="Надіслати" isDarkMode={isDarkMode}>
-                <SendButton disabled={!canSend} $isDarkMode={isDarkMode} onClick={() => handleAsk()} aria-label="Надіслати">
-                  {loading ? <GiTimeTrap /> : cooldownSeconds > 0 ? `${cooldownSeconds}с` : <TbSend />}
+              <Tooltip content={i18n.t("ui.Aihelp.nadislaty")} isDarkMode={isDarkMode}>
+                <SendButton disabled={!canSend} $isDarkMode={isDarkMode} onClick={() => handleAsk()} aria-label={i18n.t("ui.Aihelp.nadislaty")}>
+                  {loading ? <GiTimeTrap /> : cooldownSeconds > 0 ? i18n.t("ui.Aihelp.s2", { cooldownSeconds: cooldownSeconds }) : <TbSend />}
                 </SendButton>
               </Tooltip>
             </ActionButtons>
@@ -2602,14 +2603,14 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
 
       {viewingFile && (
         <ViewerOverlay onClick={closeViewer}>
-          <ViewerClose onClick={closeViewer} aria-label="Закрити перегляд"><TbX /></ViewerClose>
+          <ViewerClose onClick={closeViewer} aria-label={i18n.t("ui.Aihelp.zakrytyPerehliad")}><TbX /></ViewerClose>
           <ViewerFileName>{viewingFile.file.name}</ViewerFileName>
 
           <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
             {viewingFile.file.type.startsWith("image/") ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
                 <ViewerImage src={viewingFile.objectURL} alt={viewingFile.file.name} />
-                <SetBgButton onClick={() => setAsBackground(viewingFile)}><TbPhoto /> Зробити фоном</SetBgButton>
+                <SetBgButton onClick={() => setAsBackground(viewingFile)}><TbPhoto /> {i18n.t("ui.Aihelp.zrobytyFonom")}</SetBgButton>
               </div>
             ) : viewingFile.file.type.startsWith("video/") ? (
               <>
@@ -2627,7 +2628,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                     <TimelineFill style={{ width: `${mediaProgress * 100}%` }} />
                   </TimelineBar>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <PlayPauseBtn onClick={togglePlay} aria-label={mediaPlaying ? "Пауза" : "Відтворити"}>{mediaPlaying ? <TbPlayerPauseFilled /> : <TbPlayerPlayFilled />}</PlayPauseBtn>
+                    <PlayPauseBtn onClick={togglePlay} aria-label={mediaPlaying ? i18n.t("ui.Aihelp.pauza") : i18n.t("ui.Aihelp.vidtvoryty")}>{mediaPlaying ? <TbPlayerPauseFilled /> : <TbPlayerPlayFilled />}</PlayPauseBtn>
                     <TimeLabel>{formatTime(mediaCurrentTime)} / {formatTime(mediaDuration)}</TimeLabel>
                   </div>
                   <SpeedRow>
@@ -2659,7 +2660,7 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
                     <TimelineFill style={{ width: `${mediaProgress * 100}%` }} />
                   </TimelineBar>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <PlayPauseBtn onClick={togglePlay} aria-label={mediaPlaying ? "Пауза" : "Відтворити"}>{mediaPlaying ? <TbPlayerPauseFilled /> : <TbPlayerPlayFilled />}</PlayPauseBtn>
+                    <PlayPauseBtn onClick={togglePlay} aria-label={mediaPlaying ? i18n.t("ui.Aihelp.pauza") : i18n.t("ui.Aihelp.vidtvoryty")}>{mediaPlaying ? <TbPlayerPauseFilled /> : <TbPlayerPlayFilled />}</PlayPauseBtn>
                     <TimeLabel>{formatTime(mediaCurrentTime)} / {formatTime(mediaDuration)}</TimeLabel>
                   </div>
                   <SpeedRow>

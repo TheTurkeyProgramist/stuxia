@@ -1,3 +1,4 @@
+import i18n from "../i18n/i18n.js";
 // Як часто й наскільки повно оновлювати картки погоди — щоб не їсти квоту Open-Meteo.
 //
 // Open-Meteo рахує «виклики» за кількістю змінних (×моделі), а не за кількістю годин:
@@ -89,14 +90,14 @@ export const applyLightCurrent = (card, current, { now = Date.now(), tempSpread,
     tempNum: Math.round(current.temperature_2m),
     feels_like: isNum(current.apparent_temperature) ? `${Math.round(current.apparent_temperature)}°C` : prev.feels_like,
     humidity: isNum(current.relative_humidity_2m) ? `${current.relative_humidity_2m}%` : prev.humidity,
-    wind_speed: `${current.wind_speed_10m ?? 0} м/с`,
+    wind_speed: i18n.t("newsWeather.weatherRefresh.mS", { v0: current.wind_speed_10m ?? 0 }),
     windNum: current.wind_speed_10m ?? 0,
     wind_direction_10m: current.wind_direction_10m ?? prev.wind_direction_10m,
     wind_gusts_10m: current.wind_gusts_10m ?? prev.wind_gusts_10m,
     cloud_cover: current.cloud_cover ?? prev.cloud_cover,
     weather_code: current.weather_code ?? prev.weather_code,
     is_day: current.is_day ?? prev.is_day,
-    description: `За кодом: ${current.weather_code ?? prev.weather_code}`,
+    description: i18n.t("newsWeather.weatherRefresh.zaKodom", { v0: current.weather_code ?? prev.weather_code }),
   };
   if (hour) {
     SLOW_FROM_HOURLY.forEach((key) => {

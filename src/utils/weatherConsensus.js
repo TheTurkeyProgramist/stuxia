@@ -1,3 +1,4 @@
+import i18n from "../i18n/i18n.js";
 // Консенсус кількох незалежних погодних моделей.
 //
 // Головний запит Open-Meteo (best_match) — одна модель. Тут ми окремо беремо прогнози
@@ -25,7 +26,7 @@ export const CONSENSUS_MODEL_LABELS = {
   gfs_seamless: "NOAA GFS",
   ukmo_seamless: "UK Met Office",
   meteofrance_seamless: "Météo-France",
-  gem_seamless: "Канада GEM",
+  get gem_seamless() { return i18n.t("newsWeather.weatherConsensus.kanadaGem"); },
   jma_seamless: "JMA",
 };
 

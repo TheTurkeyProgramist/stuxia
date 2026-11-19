@@ -5,6 +5,7 @@
 
 import { getPref, setPref } from "../../utils/prefsStore.js";
 
+import i18n from "../../i18n/i18n.js";
 export const DONATE_URL = "https://donatello.to/TheTurkeyStudio";
 
 // Комісія платформи донатів (Donatello) — частка, яка не доходить до проєкту
@@ -14,12 +15,12 @@ export const DONATION_FEE = 0.1;
 // (ліміти ще не перевищені або послугу ще не оформлено).
 // Коли стаття стане реальною — просто приберіть `hidden`.
 export const COSTS = [
-  { id: "ai", label: "Підписка на ШІ-помічника для розробки", price: "1 100 грн/міс", monthly: 1100 },
-  { id: "domain", label: "Домен .com", price: "1 000 грн/рік", monthly: 83 },
-  { id: "firebase", label: "Firebase", price: "400 грн/міс", monthly: 400, hidden: true },
-  { id: "cloudflare", label: "Cloudflare", price: "$15/міс", monthly: 675, hidden: true },
-  { id: "apple", label: "Apple Developer", price: "4 500 грн/рік", monthly: 375, hidden: true },
-  { id: "trademark", label: "Торгова марка", price: "9 000 грн / 10 років", monthly: 75, hidden: true },
+  { id: "ai", get label() { return i18n.t("ui.supportConfig.pidpyskaNaShiPomichnyka"); }, get price() { return i18n.t("ui.supportConfig.1100HrnMis"); }, monthly: 1100 },
+  { id: "domain", get label() { return i18n.t("ui.supportConfig.domenCom"); }, get price() { return i18n.t("ui.supportConfig.1000HrnRik"); }, monthly: 83 },
+  { id: "firebase", label: "Firebase", get price() { return i18n.t("ui.supportConfig.400HrnMis"); }, monthly: 400, hidden: true },
+  { id: "cloudflare", label: "Cloudflare", get price() { return i18n.t("ui.supportConfig.15Mis"); }, monthly: 675, hidden: true },
+  { id: "apple", label: "Apple Developer", get price() { return i18n.t("ui.supportConfig.4500HrnRik"); }, monthly: 375, hidden: true },
+  { id: "trademark", get label() { return i18n.t("ui.supportConfig.torhovaMarka"); }, get price() { return i18n.t("ui.supportConfig.9000Hrn10"); }, monthly: 75, hidden: true },
 ];
 
 export const VISIBLE_COSTS = COSTS.filter((c) => !c.hidden);
@@ -73,4 +74,4 @@ export const isSupporter = (user) =>
     SUPPORTER_UIDS.includes(user.uid) ||
     isRememberedSupporter(user.uid));
 
-export const formatUah = (n) => `${Math.round(n).toLocaleString("uk-UA")} грн`;
+export const formatUah = (n) => i18n.t("ui.supportConfig.hrn", { v0: Math.round(n).toLocaleString("uk-UA") });

@@ -1,18 +1,19 @@
+import i18n from "../i18n/i18n.js";
 // Стилі ліній графіків погоди (окремо для кожної лінії), як "Формат лінії" в Excel
 
 export const CURVES = {
-  smooth: { label: "Плавна" },
-  monotone: { label: "Без викидів", hint: "Плавна, але не виходить за межі реальних значень" },
-  straight: { label: "Ламана" },
-  stepped: { label: "Сходинки" },
+  smooth: { get label() { return i18n.t("ui.chartLineStyles.plavna"); } },
+  monotone: { get label() { return i18n.t("ui.chartLineStyles.bezVykydiv"); }, get hint() { return i18n.t("ui.chartLineStyles.plavnaAleNeVykhodyt"); } },
+  straight: { get label() { return i18n.t("ui.chartLineStyles.lamana"); } },
+  stepped: { get label() { return i18n.t("ui.chartLineStyles.skhodynky"); } },
 };
 
 export const DASHES = {
-  solid: { label: "Суцільна", pattern: [] },
-  dashed: { label: "Штрихова", pattern: [8, 5] },
-  dotted: { label: "Крапкова", pattern: [1, 6] },
-  dashDot: { label: "Штрих-пунктир", pattern: [10, 4, 2, 4] },
-  longDash: { label: "Довгий штрих", pattern: [16, 6] },
+  solid: { get label() { return i18n.t("ui.chartLineStyles.sutsilna"); }, pattern: [] },
+  dashed: { get label() { return i18n.t("ui.chartLineStyles.shtrykhova"); }, pattern: [8, 5] },
+  dotted: { get label() { return i18n.t("ui.chartLineStyles.krapkova"); }, pattern: [1, 6] },
+  dashDot: { get label() { return i18n.t("ui.chartLineStyles.shtrykhPunktyr"); }, pattern: [10, 4, 2, 4] },
+  longDash: { get label() { return i18n.t("ui.chartLineStyles.dovhyiShtrykh"); }, pattern: [16, 6] },
 };
 
 export const WIDTH_MIN = 1;
@@ -23,8 +24,8 @@ export const DEFAULT_DIM = 0.1;
 
 // Що писати під стрілками вітру
 export const WIND_LABELS = {
-  speed: { label: "Швидкість" },
-  gusts: { label: "Пориви" },
+  speed: { get label() { return i18n.t("ui.chartLineStyles.shvydkist"); } },
+  gusts: { get label() { return i18n.t("ui.chartLineStyles.poryvy"); } },
 };
 
 const line = (overrides = {}) => ({

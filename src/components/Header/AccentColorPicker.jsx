@@ -4,16 +4,17 @@ import { FaCheck } from "react-icons/fa";
 import { MdFormatColorReset } from "react-icons/md";
 import { getPref, removePref, setPref, subscribePrefs } from "../../utils/prefsStore.js";
 
+import i18n from "../../i18n/i18n.js";
 // Кольори веселки + "без накладення"
 export const ACCENT_COLORS = [
-  { id: "none",   label: "Без накладення", color: null },
-  { id: "red",    label: "Червоний",       color: "#FF3B30" },
-  { id: "orange", label: "Оранжевий",      color: "#FF9500" },
-  { id: "yellow", label: "Жовтий",         color: "#FFD60A" },
-  { id: "green",  label: "Зелений",        color: "#30D158" },
-  { id: "cyan",   label: "Блакитний",      color: "#00C7BE" },
-  { id: "blue",   label: "Синій",          color: "#0A84FF" },
-  { id: "violet", label: "Фіолетовий",     color: "#BF5AF2" },
+  { id: "none",   get label() { return i18n.t("ui.AccentColorPicker.bezNakladennia"); }, color: null },
+  { id: "red",    get label() { return i18n.t("ui.AccentColorPicker.chervonyi"); },       color: "#FF3B30" },
+  { id: "orange", get label() { return i18n.t("ui.AccentColorPicker.oranzhevyi"); },      color: "#FF9500" },
+  { id: "yellow", get label() { return i18n.t("ui.AccentColorPicker.zhovtyi"); },         color: "#FFD60A" },
+  { id: "green",  get label() { return i18n.t("ui.AccentColorPicker.zelenyi"); },        color: "#30D158" },
+  { id: "cyan",   get label() { return i18n.t("ui.AccentColorPicker.blakytnyi"); },      color: "#00C7BE" },
+  { id: "blue",   get label() { return i18n.t("ui.AccentColorPicker.synii"); },          color: "#0A84FF" },
+  { id: "violet", get label() { return i18n.t("ui.AccentColorPicker.fioletovyi"); },     color: "#BF5AF2" },
 ];
 
 const STORAGE_KEY = "headerAccentColor";
@@ -57,7 +58,7 @@ export const useAccentColor = () => {
 };
 
 export const getAccentLabel = (color) =>
-  ACCENT_COLORS.find((a) => a.color === color)?.label || "Без накладення";
+  ACCENT_COLORS.find((a) => a.color === color)?.label || i18n.t("ui.AccentColorPicker.bezNakladennia");
 
 const AccentRow = styled.div`
   display: grid;

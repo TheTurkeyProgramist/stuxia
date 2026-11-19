@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import styled from "styled-components";
 import { BiCurrentLocation, BiTrash } from "react-icons/bi";
 
+import i18n from "../../i18n/i18n.js";
 // Бета «Вимкнути GPS-картку»: без неї можна мати на одну власну картку більше.
 // Коли GPS-картку повертають, а власних карток забагато, людина вибирає, яку прибрати
 // (за замовчуванням — додану останньою).
@@ -74,12 +75,12 @@ const GpsCardReturnDialog = ({ cards, removeCount, maxWithGps, onConfirm, onCanc
   return createPortal(
     <Overlay onClick={onCancel}>
       <Dialog role="dialog" aria-modal="true" aria-labelledby="gps-return-title" onClick={(e) => e.stopPropagation()}>
-        <Title id="gps-return-title"><BiCurrentLocation /> Повернути GPS-картку</Title>
+        <Title id="gps-return-title"><BiCurrentLocation /> {i18n.t("newsWeather.GpsCardReturnDialog.povernutyGpsKartku")}</Title>
         <Text>
-          З GPS-карткою можна мати не більше {maxWithGps} власних карток, а зараз їх {cards.length}.
+          {i18n.t("newsWeather.GpsCardReturnDialog.zGpsKartkoiuMozhna")} {maxWithGps} {i18n.t("newsWeather.GpsCardReturnDialog.vlasnykhKartokAZaraz")} {cards.length}.
           {removeCount === 1
-            ? " Виберіть, яку картку прибрати (запропоновано додану останньою):"
-            : ` Виберіть ${removeCount}, які прибрати:`}
+            ? " " + i18n.t("newsWeather.GpsCardReturnDialog.vyberitIakuKartkuPrybraty")
+            : " " + i18n.t("newsWeather.GpsCardReturnDialog.vyberitIakiPrybraty", { removeCount: removeCount })}
         </Text>
         <List>
           {cards.map((card, i) => {
@@ -100,14 +101,14 @@ const GpsCardReturnDialog = ({ cards, removeCount, maxWithGps, onConfirm, onCanc
           })}
         </List>
         <Actions>
-          <Button type="button" onClick={onCancel}>Скасувати</Button>
+          <Button type="button" onClick={onCancel}>{i18n.t("newsWeather.GpsCardReturnDialog.skasuvaty")}</Button>
           <Button
             type="button"
             $danger
             disabled={selected.length !== removeCount}
             onClick={() => onConfirm(selected)}
           >
-            <BiTrash /> Видалити {names || "картку"} і повернути GPS
+            <BiTrash /> {i18n.t("newsWeather.GpsCardReturnDialog.vydalyty")} {names || i18n.t("newsWeather.GpsCardReturnDialog.kartku")} {i18n.t("newsWeather.GpsCardReturnDialog.iPovernutyGps")}
           </Button>
         </Actions>
       </Dialog>

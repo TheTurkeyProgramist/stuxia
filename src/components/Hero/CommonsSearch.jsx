@@ -10,6 +10,7 @@ import {
   customBgLimitMessage,
 } from "./customBgLimits.js";
 
+import i18n from "../../i18n/i18n.js";
 // Пошук нових фонів у Wikimedia Commons: фото, картини або відео.
 // API відкрите й не потребує ключа; файли віддаються з CORS, тож вибране
 // завантажуємо в браузер (Blob) — фон працює й офлайн.
@@ -20,17 +21,17 @@ const FULL_WIDTH = 1920; // стандартний розмір мініатюр
 const NO_RESULTS = "no-results";
 
 const TYPES = [
-  { value: "photo", label: "Фото", Icon: FiImage },
-  { value: "painting", label: "Картини", Icon: FiImage },
-  { value: "video", label: "Відео", Icon: FiFilm },
+  { value: "photo", get label() { return i18n.t("ui.CommonsSearch.foto"); }, Icon: FiImage },
+  { value: "painting", get label() { return i18n.t("ui.CommonsSearch.kartyny"); }, Icon: FiImage },
+  { value: "video", get label() { return i18n.t("ui.CommonsSearch.video"); }, Icon: FiFilm },
 ];
 
 const ORDERS = [
-  { value: "relevance", label: "Найкращі" },
-  { value: "create_timestamp_desc", label: "Нові" },
+  { value: "relevance", get label() { return i18n.t("ui.CommonsSearch.naikrashchi"); } },
+  { value: "create_timestamp_desc", get label() { return i18n.t("ui.CommonsSearch.novi"); } },
 ];
 
-const SUGGESTIONS = ["ліс", "гори", "море", "космос", "нічне місто", "осінь", "зима", "водоспад", "північне сяйво", "пустеля", "дощ", "туман"];
+const SUGGESTIONS = () => ([i18n.t("ui.CommonsSearch.lis"), i18n.t("ui.CommonsSearch.hory"), i18n.t("ui.CommonsSearch.more"), i18n.t("ui.CommonsSearch.kosmos"), i18n.t("ui.CommonsSearch.nichneMisto"), i18n.t("ui.CommonsSearch.osin"), i18n.t("ui.CommonsSearch.zyma"), i18n.t("ui.CommonsSearch.vodospad"), i18n.t("ui.CommonsSearch.pivnichneSiaivo"), i18n.t("ui.CommonsSearch.pustelia"), i18n.t("ui.CommonsSearch.doshch"), i18n.t("ui.CommonsSearch.tuman")]);
 
 // Commons не має «безпечного пошуку», тож відсіюємо очевидне за назвою файлу
 const UNSAFE_WORDS = ["nude", "naked", "nudity", "erotic", "nsfw", "porn", "sex", "topless", "genitals"];
@@ -40,10 +41,11 @@ const SAFE_FILTER = UNSAFE_WORDS.map((word) => `-intitle:${word}`).join(" ");
 const hasCyrillic = (text) => /[а-яіїєґё]/i.test(text);
 
 const translateQuery = async (query) => {
-  if (!hasCyrillic(query)) return query;
+  const siteLng = String(i18n.language || "uk").split("-")[0];
+  if (!hasCyrillic(query) && siteLng === "en") return query;
   try {
     const response = await fetch(
-      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=uk&tl=en&dt=t&q=${encodeURIComponent(query)}`,
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(query)}`,
     );
     if (!response.ok) throw new Error(`Translation failed: ${response.status}`);
     const data = await response.json();
@@ -440,7 +442,7 @@ const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
     const saved = findSaved(item);
     if (saved) {
       onSelect(saved.src);
-      toast.success("Фон встановлено.");
+      toast.success(i18n.t("ui.CommonsSearch.fonVstanovleno"));
       return;
     }
     if (customHeroBgs.length >= MAX_CUSTOM_BGS) {
@@ -467,7 +469,7 @@ const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
         id: `commons-${item.key}`,
         src,
         name: item.name,
-        category: item.kind === "video" ? "Ваші відео" : "Ваші картинки",
+        category: item.kind === "video" ? i18n.t("ui.CommonsSearch.vashiVideo") : i18n.t("ui.CommonsSearch.vashiKartynky"),
         source: item.license ? `Wikimedia Commons · ${item.license}` : "Wikimedia Commons",
         author: item.author,
         sourceUrl: item.page,
@@ -476,17 +478,17 @@ const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
     ]);
     onSelect(src);
     setAddingKey(null);
-    toast.success(item.kind === "video" ? "Відео-фон встановлено." : "Фон встановлено.");
+    toast.success(item.kind === "video" ? i18n.t("ui.CommonsSearch.videoFonVstanovleno") : i18n.t("ui.CommonsSearch.fonVstanovleno"));
   };
 
   const loading = status === "loading";
   const hasMore = results.length > 0 && nextOffset !== null;
 
   return (
-    <Panel aria-label="Пошук нових фонів у Wikimedia Commons">
+    <Panel aria-label={i18n.t("ui.CommonsSearch.poshukNovykhFonivU")}>
       <PanelTitle>
-        <span>Фото, картини та відео для фону</span>
-        <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener noreferrer">Вільні файли з Wikimedia Commons</a>
+        <span>{i18n.t("ui.CommonsSearch.fotoKartynyTaVideo")}</span>
+        <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener noreferrer">{i18n.t("ui.CommonsSearch.vilniFailyZWikimedia")}</a>
       </PanelTitle>
 
       <SearchRow onSubmit={(event) => { event.preventDefault(); search(); }}>
@@ -494,27 +496,27 @@ const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
           <FiSearch aria-hidden="true" />
           <input
             type="search"
-            aria-label="Пошук фонів у Wikimedia Commons"
-            placeholder="Що шукаємо? Наприклад: гори в тумані"
+            aria-label={i18n.t("ui.CommonsSearch.poshukFonivUWikimedia")}
+            placeholder={i18n.t("ui.CommonsSearch.shchoShukaiemoNaprykladHory")}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
         </SearchField>
         <SearchButton type="submit" disabled={loading}>
           {loading ? <Spinner /> : <FiSearch />}
-          {loading ? "Шукаємо..." : "Шукати"}
+          {loading ? i18n.t("ui.CommonsSearch.shukaiemo") : i18n.t("ui.CommonsSearch.shukaty")}
         </SearchButton>
       </SearchRow>
 
       <Toolbar>
-        <Segmented role="group" aria-label="Тип">
+        <Segmented role="group" aria-label={i18n.t("ui.CommonsSearch.typ")}>
           {TYPES.map(({ value, label, Icon }) => (
             <SegmentButton key={value} type="button" $active={type === value} aria-pressed={type === value} onClick={() => changeFilter({ type: value })}>
               <Icon aria-hidden="true" /> {label}
             </SegmentButton>
           ))}
         </Segmented>
-        <Segmented role="group" aria-label="Порядок">
+        <Segmented role="group" aria-label={i18n.t("ui.CommonsSearch.poriadok")}>
           {ORDERS.map(({ value, label }) => (
             <SegmentButton key={value} type="button" $active={order === value} aria-pressed={order === value} onClick={() => changeFilter({ order: value })}>
               {label}
@@ -523,25 +525,25 @@ const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
         </Segmented>
         <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
           <input type="checkbox" checked={horizontal} onChange={(event) => changeFilter({ horizontal: event.target.checked })} style={{ accentColor: "#ffb36c" }} />
-          {type === "video" ? "Лише горизонтальні й чіткі (від 1280 px)" : "Лише широкі й чіткі (від 1600 px)"}
+          {type === "video" ? i18n.t("ui.CommonsSearch.lysheHoryzontalniIChitki") : i18n.t("ui.CommonsSearch.lysheShyrokiIChitki")}
         </label>
       </Toolbar>
 
       <Chips>
-        {SUGGESTIONS.map((word) => (
+        {SUGGESTIONS().map((word) => (
           <Chip key={word} type="button" onClick={() => { setQuery(word); search({ query: word }); }}>
             {word}
           </Chip>
         ))}
       </Chips>
 
-      {status === NO_RESULTS && <span style={{ color: "var(--bm-nav-text, #c5c8d0)", fontSize: 12 }}>Нічого не знайдено. Спробуйте інший запит або зніміть фільтр «Лише широкі».</span>}
-      {status === "error" && <span role="alert" style={{ color: "var(--bm-danger, #ff8a80)", fontSize: 12 }}>Пошук не вдався. Перевірте з'єднання і спробуйте ще раз.</span>}
+      {status === NO_RESULTS && <span style={{ color: "var(--bm-nav-text, #c5c8d0)", fontSize: 12 }}>{i18n.t("ui.CommonsSearch.nichohoNeZnaidenoSprobuite")}</span>}
+      {status === "error" && <span role="alert" style={{ color: "var(--bm-danger, #ff8a80)", fontSize: 12 }}>{i18n.t("ui.CommonsSearch.poshukNeVdavsiaPerevirte")}</span>}
 
       {results.length > 0 && (
         <>
           <span style={{ fontSize: 11, color: "var(--bm-muted, #8a8d9b)" }}>
-            Показано {results.length.toLocaleString("uk-UA")} · натисніть на картку, щоб зробити фоном · автор і ліцензія — на картці
+            {i18n.t("ui.CommonsSearch.pokazano")} {results.length.toLocaleString("uk-UA")} {i18n.t("ui.CommonsSearch.natysnitNaKartkuShchob")}
           </span>
           <Grid>
             {results.map((item) => {
@@ -550,15 +552,15 @@ const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
               return (
                 <Card key={item.key} $added={added}>
                   {item.kind === "video" ? <VideoThumb item={item} /> : <img src={item.thumb} alt={item.name} loading="lazy" />}
-                  <CardPick type="button" disabled={Boolean(addingKey)} onClick={() => addBackground(item)} aria-label={`Зробити фоном: ${item.name}`} />
+                  <CardPick type="button" disabled={Boolean(addingKey)} onClick={() => addBackground(item)} aria-label={i18n.t("ui.CommonsSearch.zrobytyFonom", { name: item.name })} />
                   {adding ? (
-                    <Badge $bg="rgba(255, 179, 108, 0.95)" $color="#17120d"><Spinner /> Завантажуємо</Badge>
+                    <Badge $bg="rgba(255, 179, 108, 0.95)" $color="#17120d"><Spinner /> {i18n.t("ui.CommonsSearch.zavantazhuiemo")}</Badge>
                   ) : added ? (
-                    <Badge $bg="rgba(110, 231, 168, 0.95)" $color="#0b2a1a"><FiCheck /> Додано</Badge>
+                    <Badge $bg="rgba(110, 231, 168, 0.95)" $color="#0b2a1a"><FiCheck /> {i18n.t("ui.CommonsSearch.dodano")}</Badge>
                   ) : item.kind === "video" ? (
-                    <Badge><FiFilm /> Відео</Badge>
+                    <Badge><FiFilm /> {i18n.t("ui.CommonsSearch.video")}</Badge>
                   ) : null}
-                  <ZoomButton type="button" aria-label={`Переглянути: ${item.name}`} onClick={() => onPreview({ src: item.full, name: item.name })}>
+                  <ZoomButton type="button" aria-label={i18n.t("ui.CommonsSearch.perehlianuty", { name: item.name })} onClick={() => onPreview({ src: item.full, name: item.name })}>
                     <FiMaximize2 />
                   </ZoomButton>
                   <CardInfo className="info">
@@ -574,7 +576,7 @@ const CommonsSearch = ({ customHeroBgs = [], setCustomHeroBgs, onSelect, onPrevi
           </Grid>
           {hasMore && (
             <SearchButton type="button" disabled={status === "loading-more"} onClick={() => search({ offset: nextOffset })} style={{ alignSelf: "center" }}>
-              {status === "loading-more" ? <><Spinner /> Завантажуємо...</> : "Показати ще"}
+              {status === "loading-more" ? <><Spinner /> {i18n.t("ui.CommonsSearch.zavantazhuiemo2")}</> : i18n.t("ui.CommonsSearch.pokazatyShche")}
             </SearchButton>
           )}
         </>

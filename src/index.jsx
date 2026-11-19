@@ -3,12 +3,18 @@
 import { hydratePrefs } from "./utils/prefsStore.js";
 import { captureReferralFromUrl } from "./utils/referral.js";
 import { startEagerChunks } from "./utils/eagerChunks.js";
+import { isBlockedEnvironment, renderBlockedScreen } from "./utils/blockedBrowser.js";
 
-hydratePrefs()
-  .then(() => captureReferralFromUrl()) // ?ref= з посилання «Запроси друга»
-  .then(() => {
-    // ПК: новини й картка погоди вантажаться паралельно з main.jsx (див. eagerChunks.js).
-    // Після hydratePrefs — бо їхній код може читати налаштування вже при завантаженні
-    startEagerChunks();
-    return import("./main.jsx");
-  });
+// Яндекс Браузер і проксі Яндекса: сайт навмисно недоступний — показуємо повідомлення й нічого не запускаємо
+if (isBlockedEnvironment()) {
+  renderBlockedScreen();
+} else {
+  hydratePrefs()
+    .then(() => captureReferralFromUrl()) // ?ref= з посилання «Запроси друга»
+    .then(() => {
+      // ПК: новини й картка погоди вантажаться паралельно з main.jsx (див. eagerChunks.js).
+      // Після hydratePrefs — бо їхній код може читати налаштування вже при завантаженні
+      startEagerChunks();
+      return import("./main.jsx");
+    });
+}

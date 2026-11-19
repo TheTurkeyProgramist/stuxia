@@ -1,3 +1,4 @@
+import i18n from "../i18n/i18n.js";
 // Одиниці виміру. Усі дані в картках зберігаються в SI-подібних базових одиницях:
 // °C, м/с, гПа, км (видимість), мм (опади), см (сніг), м (висота).
 
@@ -27,47 +28,47 @@ export const detectSystem = (units) =>
 export const UNIT_GROUPS = [
   {
     key: "temp",
-    title: "Температура",
+    get title() { return i18n.t("ui.units.temperatura"); },
     options: [
-      { key: "C", label: "°C", hint: "Цельсій (рекомендовано)" },
-      { key: "K", label: "K", hint: "Кельвіни" },
-      { key: "F", label: "°F", hint: "Фаренгейти" },
+      { key: "C", label: "°C", get hint() { return i18n.t("ui.units.tselsiiRekomendovano"); } },
+      { key: "K", label: "K", get hint() { return i18n.t("ui.units.kelviny"); } },
+      { key: "F", label: "°F", get hint() { return i18n.t("ui.units.farenheity"); } },
     ],
   },
   {
     key: "wind",
-    title: "Швидкість вітру",
+    get title() { return i18n.t("ui.units.shvydkistVitru"); },
     options: [
-      { key: "ms", label: "м/с", hint: "Метри за секунду" },
-      { key: "kmh", label: "км/год", hint: "Кілометри за годину" },
-      { key: "mph", label: "миль/год", hint: "Милі за годину" },
-      { key: "kn", label: "вуз.", hint: "Вузли" },
+      { key: "ms", get label() { return i18n.t("ui.units.mS"); }, get hint() { return i18n.t("ui.units.metryZaSekundu"); } },
+      { key: "kmh", get label() { return i18n.t("ui.units.kmHod"); }, get hint() { return i18n.t("ui.units.kilometryZaHodynu"); } },
+      { key: "mph", get label() { return i18n.t("ui.units.mylHod"); }, get hint() { return i18n.t("ui.units.myliZaHodynu"); } },
+      { key: "kn", get label() { return i18n.t("ui.units.vuz"); }, get hint() { return i18n.t("ui.units.vuzly"); } },
     ],
   },
   {
     key: "pressure",
-    title: "Атмосферний тиск",
+    get title() { return i18n.t("ui.units.atmosfernyiTysk"); },
     options: [
-      { key: "hpa", label: "гПа", hint: "Гектопаскалі" },
-      { key: "mmhg", label: "мм рт. ст.", hint: "Міліметри ртутного стовпа" },
-      { key: "inhg", label: "inHg", hint: "Дюйми ртутного стовпа" },
-      { key: "kpa", label: "кПа", hint: "Кілопаскалі" },
+      { key: "hpa", get label() { return i18n.t("ui.units.hpa"); }, get hint() { return i18n.t("ui.units.hektopaskali"); } },
+      { key: "mmhg", get label() { return i18n.t("ui.units.mmRtSt"); }, get hint() { return i18n.t("ui.units.milimetryRtutnohoStovpa"); } },
+      { key: "inhg", label: "inHg", get hint() { return i18n.t("ui.units.diuimyRtutnohoStovpa"); } },
+      { key: "kpa", get label() { return i18n.t("ui.units.kpa"); }, get hint() { return i18n.t("ui.units.kilopaskali"); } },
     ],
   },
   {
     key: "distance",
-    title: "Відстань і висота",
+    get title() { return i18n.t("ui.units.vidstanIVysota"); },
     options: [
-      { key: "km", label: "км / м", hint: "Кілометри та метри" },
-      { key: "mi", label: "милі / фути", hint: "Милі та фути" },
+      { key: "km", get label() { return i18n.t("ui.units.kmM"); }, get hint() { return i18n.t("ui.units.kilometryTaMetry"); } },
+      { key: "mi", get label() { return i18n.t("ui.units.myliFuty"); }, get hint() { return i18n.t("ui.units.myliTaFuty"); } },
     ],
   },
   {
     key: "precip",
-    title: "Опади, сніг, випаровування",
+    get title() { return i18n.t("ui.units.opadySnihVyparovuvannia"); },
     options: [
-      { key: "mm", label: "мм / см", hint: "Міліметри та сантиметри" },
-      { key: "in", label: "дюйми", hint: "Дюйми" },
+      { key: "mm", get label() { return i18n.t("ui.units.mmSm"); }, get hint() { return i18n.t("ui.units.milimetryTaSantymetry"); } },
+      { key: "in", get label() { return i18n.t("ui.units.diuimy"); }, get hint() { return i18n.t("ui.units.diuimy2"); } },
     ],
   },
 ];
@@ -94,8 +95,8 @@ export const convertTemp = (c, u) => {
 
 // ---- Вітер (вхід м/с) ----
 const WIND_FACTOR = { ms: 1, kmh: 3.6, mph: 2.236936, kn: 1.943844 };
-const WIND_LABEL = { ms: "м/с", kmh: "км/год", mph: "миль/год", kn: "вуз." };
-export const windLabel = (u) => WIND_LABEL[u] || "м/с";
+const WIND_LABEL = { get ms() { return i18n.t("ui.units.mS"); }, get kmh() { return i18n.t("ui.units.kmHod"); }, get mph() { return i18n.t("ui.units.mylHod"); }, get kn() { return i18n.t("ui.units.vuz"); } };
+export const windLabel = (u) => WIND_LABEL[u] || i18n.t("ui.units.mS");
 export const convertWind = (ms, u) => {
   const n = num(ms);
   return n === null ? null : n * (WIND_FACTOR[u] ?? 1);
@@ -103,16 +104,16 @@ export const convertWind = (ms, u) => {
 
 // ---- Тиск (вхід гПа) ----
 const PRESSURE_FACTOR = { hpa: 1, kpa: 0.1, mmhg: 0.750062, inhg: 0.02953 };
-const PRESSURE_LABEL = { hpa: "гПа", kpa: "кПа", mmhg: "мм рт. ст.", inhg: "inHg" };
-export const pressureLabel = (u) => PRESSURE_LABEL[u] || "гПа";
+const PRESSURE_LABEL = { get hpa() { return i18n.t("ui.units.hpa"); }, get kpa() { return i18n.t("ui.units.kpa"); }, get mmhg() { return i18n.t("ui.units.mmRtSt"); }, inhg: "inHg" };
+export const pressureLabel = (u) => PRESSURE_LABEL[u] || i18n.t("ui.units.hpa");
 export const convertPressure = (hpa, u) => {
   const n = num(hpa);
   return n === null ? null : n * (PRESSURE_FACTOR[u] ?? 1);
 };
 
 // ---- Опади (вхід мм) / сніг (вхід см) ----
-export const precipLabel = (u) => (u === "in" ? "in" : "мм");
-export const snowLabel = (u) => (u === "in" ? "in" : "см");
+export const precipLabel = (u) => (u === "in" ? "in" : i18n.t("ui.units.mm"));
+export const snowLabel = (u) => (u === "in" ? "in" : i18n.t("ui.units.sm"));
 export const convertPrecip = (mm, u) => {
   const n = num(mm);
   return n === null ? null : u === "in" ? n / 25.4 : n;
@@ -123,8 +124,8 @@ export const convertSnow = (cm, u) => {
 };
 
 // ---- Видимість (вхід км) / висота (вхід м) ----
-export const visibilityLabel = (u) => (u === "mi" ? "миль" : "км");
-export const heightLabel = (u) => (u === "mi" ? "ft" : "м");
+export const visibilityLabel = (u) => (u === "mi" ? i18n.t("ui.units.myl") : i18n.t("ui.units.km"));
+export const heightLabel = (u) => (u === "mi" ? "ft" : i18n.t("ui.units.m"));
 export const convertVisibility = (km, u) => {
   const n = num(km);
   return n === null ? null : u === "mi" ? n * 0.621371 : n;
@@ -157,6 +158,6 @@ export const makeFormatters = (units) => {
     height: (m) => out(convertHeight(m, u.distance), heightLabel(u.distance), 0),
     // числові значення для графіків
     windValue: (ms) => round(convertWind(ms, u.wind) ?? 0, 1),
-    windAxis: `Вітер (${windLabel(u.wind)})`,
+    windAxis: i18n.t("ui.units.viter", { v0: windLabel(u.wind) }),
   };
 };

@@ -12,6 +12,7 @@ import {
 import authorsData from "../MusicPhoto/authors.json";
 import { useAnimationsDisabled } from "../../utils/animationsPref.js";
 
+import i18n from "../../i18n/i18n.js";
 /*
   Структура запису в authors.json:
   {
@@ -53,7 +54,7 @@ const RAW = authorsData.map((a, i) => ({
   id: a.id ?? `author-${i}`,
   kind: a.kind === "hero" ? "hero" : "author",
   image: resolveImage(a.image),
-  name: a.name || "Без імені",
+  name: a.name || i18n.t("ui.AuthorsDirectoryModal.bezImeni"),
   role: a.role || "",
   quote: (a.quote || "").trim(),
   bio: a.bio || "",
@@ -140,12 +141,12 @@ const AuthorArticle = ({ author, $dropCap }) => (
     {author.bio ? (
       <Bio $dropCap={$dropCap}>{author.bio}</Bio>
     ) : (
-      <EmptyText>Біографія ще пишеться…</EmptyText>
+      <EmptyText>{i18n.t("ui.AuthorsDirectoryModal.biohrafiiaShchePyshetsia")}</EmptyText>
     )}
 
     {author.usedIn.length > 0 && (
       <Section>
-        <SectionTitle>У Стихії</SectionTitle>
+        <SectionTitle>{i18n.t("ui.AuthorsDirectoryModal.uStykhii")}</SectionTitle>
         <Chips>
           {author.usedIn.map((item) => (
             <Chip key={item}>{item}</Chip>
@@ -156,14 +157,14 @@ const AuthorArticle = ({ author, $dropCap }) => (
 
     {author.note && (
       <Note>
-        <SectionTitle>Від автора Стихії</SectionTitle>
+        <SectionTitle>{i18n.t("ui.AuthorsDirectoryModal.vidAvtoraStykhii")}</SectionTitle>
         <p>{author.note}</p>
       </Note>
     )}
 
     {author.remark && (
       <Section>
-        <SectionTitle>Примітка</SectionTitle>
+        <SectionTitle>{i18n.t("ui.AuthorsDirectoryModal.prymitka")}</SectionTitle>
         <Remark>{author.remark}</Remark>
       </Section>
     )}
@@ -172,7 +173,7 @@ const AuthorArticle = ({ author, $dropCap }) => (
       <Links>
         {author.links.map((link) => (
           <LinkButton key={link.url} href={link.url} target="_blank" rel="noopener noreferrer">
-            <span>{link.label || "Джерело"}</span>
+            <span>{link.label || i18n.t("ui.AuthorsDirectoryModal.dzherelo")}</span>
             {link.platform && <LinkPlatform>{link.platform}</LinkPlatform>}
             <FaExternalLinkAlt aria-hidden="true" />
           </LinkButton>
@@ -189,12 +190,12 @@ const SearchField = ({ value, onChange, autoFocus }) => (
       type="search"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      placeholder="Пошук: автор, трек, мультфільм…"
-      aria-label="Пошук авторів"
+      placeholder={i18n.t("ui.AuthorsDirectoryModal.poshukAvtorTrekMultfilm")}
+      aria-label={i18n.t("ui.AuthorsDirectoryModal.poshukAvtoriv")}
       autoFocus={autoFocus}
     />
     {value && (
-      <ClearButton type="button" onClick={() => onChange("")} aria-label="Очистити пошук">
+      <ClearButton type="button" onClick={() => onChange("")} aria-label={i18n.t("ui.AuthorsDirectoryModal.ochystytyPoshuk")}>
         <FaTimes />
       </ClearButton>
     )}
@@ -219,8 +220,8 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
   const q = normalize(query);
   const filtered = useMemo(() => AUTHORS.filter((a) => matchesQuery(a, q)), [q]);
   const groups = [
-    { key: "hero", title: "Герої Стихії", items: filtered.filter(isHero) },
-    { key: "author", title: "Автори та джерела", items: filtered.filter((a) => !isHero(a)) },
+    { key: "hero", title: i18n.t("ui.AuthorsDirectoryModal.heroiStykhii"), items: filtered.filter(isHero) },
+    { key: "author", title: i18n.t("ui.AuthorsDirectoryModal.avtoryTaDzherela"), items: filtered.filter((a) => !isHero(a)) },
   ].filter((g) => g.items.length > 0);
 
   const goTo = useCallback(
@@ -287,17 +288,17 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
         $dark={isDarkMode}
         role="dialog"
         aria-modal="true"
-        aria-label="Автори та джерела"
+        aria-label={i18n.t("ui.AuthorsDirectoryModal.avtoryTaDzherela")}
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={noMotion ? instant : { duration: 0.25, ease: "easeOut" }}
       >
         <MobileHeader>
           <div>
-            <Eyebrow>Стихія · довідник</Eyebrow>
-            <MobileTitle>Автори та джерела</MobileTitle>
+            <Eyebrow>{i18n.t("ui.AuthorsDirectoryModal.stykhiiaDovidnyk")}</Eyebrow>
+            <MobileTitle>{i18n.t("ui.AuthorsDirectoryModal.avtoryTaDzherela")}</MobileTitle>
           </div>
-          <RoundButton type="button" onClick={handleClose} aria-label="Закрити">
+          <RoundButton type="button" onClick={handleClose} aria-label={i18n.t("ui.AuthorsDirectoryModal.zakryty")}>
             <FaTimes />
           </RoundButton>
         </MobileHeader>
@@ -328,7 +329,7 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
               ))}
             </React.Fragment>
           ))}
-          {filtered.length === 0 && <EmptyText>Нікого не знайдено за «{query}».</EmptyText>}
+          {filtered.length === 0 && <EmptyText>{i18n.t("ui.AuthorsDirectoryModal.nikohoNeZnaidenoZa")}{query}».</EmptyText>}
         </MobileList>
 
         <AnimatePresence>
@@ -342,9 +343,9 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
             >
               <MobileHeader>
                 <BackButton type="button" onClick={() => setMobileIndex(null)}>
-                  <FaArrowLeft aria-hidden="true" /> Усі автори
+                  <FaArrowLeft aria-hidden="true" /> {i18n.t("ui.AuthorsDirectoryModal.usiAvtory")}
                 </BackButton>
-                <RoundButton type="button" onClick={handleClose} aria-label="Закрити">
+                <RoundButton type="button" onClick={handleClose} aria-label={i18n.t("ui.AuthorsDirectoryModal.zakryty")}>
                   <FaTimes />
                 </RoundButton>
               </MobileHeader>
@@ -359,7 +360,7 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
                   disabled={mobileAuthor.index === 0}
                   onClick={() => setMobileIndex(mobileAuthor.index - 1)}
                 >
-                  <FaChevronLeft aria-hidden="true" /> Назад
+                  <FaChevronLeft aria-hidden="true" /> {i18n.t("ui.AuthorsDirectoryModal.nazad")}
                 </PagerButton>
                 <PagerCount>
                   {mobileAuthor.page} / {AUTHORS.length}
@@ -369,7 +370,7 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
                   disabled={mobileAuthor.index === AUTHORS.length - 1}
                   onClick={() => setMobileIndex(mobileAuthor.index + 1)}
                 >
-                  Далі <FaChevronRight aria-hidden="true" />
+                  {i18n.t("ui.AuthorsDirectoryModal.dali")} <FaChevronRight aria-hidden="true" />
                 </PagerButton>
               </MobilePager>
             </MobileDetail>
@@ -391,7 +392,7 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
       animate={{ opacity: 1 }}
       transition={noMotion ? instant : { duration: 0.2 }}
     >
-      <ScreenClose type="button" onClick={handleClose} aria-label="Закрити">
+      <ScreenClose type="button" onClick={handleClose} aria-label={i18n.t("ui.AuthorsDirectoryModal.zakryty")}>
         <FaTimes />
       </ScreenClose>
 
@@ -399,7 +400,7 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
         $dark={isDarkMode}
         role="dialog"
         aria-modal="true"
-        aria-label="Автори та джерела"
+        aria-label={i18n.t("ui.AuthorsDirectoryModal.avtoryTaDzherela")}
         onClick={(e) => e.stopPropagation()}
         initial={{ opacity: 0, scale: 0.96, y: 18 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -409,13 +410,13 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
 
         {/* Ліва сторінка — зміст */}
         <LeftPage>
-          <Eyebrow $paper>Стихія · довідник</Eyebrow>
-          <BookTitle>Автори та джерела</BookTitle>
-          <Lead>Герої Стихії, а також люди й студії, чия музика та мультфільми живуть у ній.</Lead>
+          <Eyebrow $paper>{i18n.t("ui.AuthorsDirectoryModal.stykhiiaDovidnyk")}</Eyebrow>
+          <BookTitle>{i18n.t("ui.AuthorsDirectoryModal.avtoryTaDzherela")}</BookTitle>
+          <Lead>{i18n.t("ui.AuthorsDirectoryModal.heroiStykhiiATakozh")}</Lead>
 
           <SearchField value={query} onChange={setQuery} />
 
-          <TocLabel>Зміст</TocLabel>
+          <TocLabel>{i18n.t("ui.AuthorsDirectoryModal.zmist")}</TocLabel>
           <Toc>
             {groups.map((group) => (
               <React.Fragment key={group.key}>
@@ -449,7 +450,7 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
                 })}
               </React.Fragment>
             ))}
-            {filtered.length === 0 && <EmptyText>Нікого не знайдено за «{query}».</EmptyText>}
+            {filtered.length === 0 && <EmptyText>{i18n.t("ui.AuthorsDirectoryModal.nikohoNeZnaidenoZa")}{query}».</EmptyText>}
           </Toc>
         </LeftPage>
 
@@ -465,19 +466,19 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
                 $paper
                 disabled={current === 0}
                 onClick={() => goTo(current - 1)}
-                aria-label="Попередня сторінка"
+                aria-label={i18n.t("ui.AuthorsDirectoryModal.poperedniaStorinka")}
               >
                 <FaChevronLeft aria-hidden="true" />
               </PagerButton>
               <PageNumber>
-                — {underAuthor.page} з {AUTHORS.length} —
+                — {underAuthor.page} {i18n.t("ui.AuthorsDirectoryModal.z")} {AUTHORS.length} —
               </PageNumber>
               <PagerButton
                 type="button"
                 $paper
                 disabled={current === AUTHORS.length - 1}
                 onClick={() => goTo(current + 1)}
-                aria-label="Наступна сторінка"
+                aria-label={i18n.t("ui.AuthorsDirectoryModal.nastupnaStorinka")}
               >
                 <FaChevronRight aria-hidden="true" />
               </PagerButton>
@@ -499,7 +500,7 @@ const AuthorsDirectoryModal = ({ isOpen, onClose, isDarkMode = true }) => {
                 </FaceScroll>
                 <FaceFooter>
                   <PageNumber>
-                    — {leafAuthor.page} з {AUTHORS.length} —
+                    — {leafAuthor.page} {i18n.t("ui.AuthorsDirectoryModal.z")} {AUTHORS.length} —
                   </PageNumber>
                 </FaceFooter>
                 <LeafShade

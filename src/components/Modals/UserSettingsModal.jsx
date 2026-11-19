@@ -161,7 +161,7 @@ import {
   getUrgentWords,
   setUrgentWords,
   resetUrgentWords,
-  DEFAULT_URGENT_WORDS,
+  getDefaultUrgentWords,
   URGENT_MAX_WORDS,
   URGENT_MAX_WORD_LENGTH,
   isRecsEnabled,
@@ -227,11 +227,11 @@ import {
 } from "../../utils/customFonts";
 import { readFontPack } from "../../utils/customFontImport";
 
+import i18n from "../../i18n/i18n.js";
 // Підказка в картці «Мої пакети шрифтів»: готовий запит до Claude, щоб підібрати вільний шрифт
 const CLAUDE_FONT_PROMPT =
-  "Допоможи підібрати вільний шрифт (ліцензія OFL) з повною підтримкою кирилиці для погодного сайту. " +
-  "Дай 3–5 варіантів: настрій шрифту, для заголовків чи тексту, і посилання, де викачати ZIP-пакет.";
-const CLAUDE_FONT_URL = `https://claude.ai/new?q=${encodeURIComponent(CLAUDE_FONT_PROMPT)}`;
+  () => (i18n.t("modals.UserSettingsModal.dopomozhyPidibratyVilnyiShryft"));
+const CLAUDE_FONT_URL = () => (`https://claude.ai/new?q=${encodeURIComponent(CLAUDE_FONT_PROMPT())}`);
 
 // Keyframe Animations
 const fadeIn = keyframes`
@@ -773,7 +773,7 @@ const LevelHint = ({ level, scope = "item" }) => {
         return <Icon aria-hidden="true" />;
       })()}
       <span>
-        {isTab ? "Цей розділ" : "Це налаштування"} з режиму <strong>{levelFullName(level)}</strong>. Перемкнути?
+        {isTab ? i18n.t("modals.UserSettingsModal.tseiRozdil") : i18n.t("modals.UserSettingsModal.tseNalashtuvannia")} {i18n.t("modals.UserSettingsModal.zRezhymu")} <strong>{levelFullName(level)}</strong>{i18n.t("modals.UserSettingsModal.peremknuty")}
       </span>
       <LevelHintButton
         type="button"
@@ -782,7 +782,7 @@ const LevelHint = ({ level, scope = "item" }) => {
           ctx?.switchLevel(level);
         }}
       >
-        Перемкнути
+        {i18n.t("modals.UserSettingsModal.peremknuty2")}
       </LevelHintButton>
     </LevelHintBar>
   );
@@ -885,47 +885,47 @@ const DecoratorPresetThumb = ({ accent, rounded = 2, variant = 0 }) => {
 
 // Режими Декоратора в «Параметрах»: вимкнено / перегляд змін / редагування кліком
 const DECORATOR_VIEW_OPTIONS = [
-  { id: "off", label: "Вимкнено", hint: "Сайт без змін Декоратора" },
-  { id: "view", label: "Перегляд", hint: "Зміни видно, сайт працює як звичайно" },
-  { id: "edit", label: "Редагування", hint: "Клік по елементу сайту відкриває редактор" },
+  { id: "off", get label() { return i18n.t("modals.UserSettingsModal.vymkneno"); }, get hint() { return i18n.t("modals.UserSettingsModal.saitBezZminDekoratora"); } },
+  { id: "view", get label() { return i18n.t("modals.UserSettingsModal.perehliad"); }, get hint() { return i18n.t("modals.UserSettingsModal.zminyVydnoSaitPratsiuie"); } },
+  { id: "edit", get label() { return i18n.t("modals.UserSettingsModal.redahuvannia"); }, get hint() { return i18n.t("modals.UserSettingsModal.klikPoElementuSaitu"); } },
 ];
 
 const DECORATOR_PRESETS = [
-  { id: "original", label: "Оригінал", hint: "Без змін" },
-  { id: 0, label: "Декоративний шаблон 1", accent: "#d946ef", rounded: 4, variant: 0 },
-  { id: 1, label: "Декоративний шаблон 2", accent: "#f59e0b", rounded: 7, variant: 1 },
+  { id: "original", get label() { return i18n.t("modals.UserSettingsModal.oryhinal"); }, get hint() { return i18n.t("modals.UserSettingsModal.bezZmin"); } },
+  { id: 0, get label() { return i18n.t("modals.UserSettingsModal.dekoratyvnyiShablon1"); }, accent: "#d946ef", rounded: 4, variant: 0 },
+  { id: 1, get label() { return i18n.t("modals.UserSettingsModal.dekoratyvnyiShablon2"); }, accent: "#f59e0b", rounded: 7, variant: 1 },
 ];
 
 // Журнал змін Декоратора: зрозумілі назви службових властивостей і без довжелезних data:-рядків
 const DECORATOR_LOG_LABELS = {
-  "--dec-cursor-image": "курсор-зображення",
-  "--dec-cursor-size": "розмір курсора",
-  "--dec-click-sound": "звук натискання (більше не діє)",
-  "--dec-click-fx": "ефект натискання",
-  "--dec-text": "текст у блоці",
-  "--dec-click-fx-color": "колір ефекту натискання",
-  "--dec-font-src": "джерело шрифту",
-  "--font-family": "шрифт вкладених елементів",
-  fontFamily: "шрифт",
-  "--dec-react": "звукова реакція",
-  "--dec-react-color": "колір реакції",
-  "--dec-3d": "3D-кнопка",
-  "--dec-3d-depth": "глибина 3D",
-  "--dec-3d-color": "колір 3D-ребер",
-  "--dec-3d-dir": "положення 3D-грані",
-  "--dec-3d-fill": "заливка 3D-граней",
+  get "--dec-cursor-image"() { return i18n.t("modals.UserSettingsModal.kursorZobrazhennia"); },
+  get "--dec-cursor-size"() { return i18n.t("modals.UserSettingsModal.rozmirKursora"); },
+  get "--dec-click-sound"() { return i18n.t("modals.UserSettingsModal.zvukNatyskanniaBilsheNe"); },
+  get "--dec-click-fx"() { return i18n.t("modals.UserSettingsModal.efektNatyskannia"); },
+  get "--dec-text"() { return i18n.t("modals.UserSettingsModal.tekstUBlotsi"); },
+  get "--dec-click-fx-color"() { return i18n.t("modals.UserSettingsModal.kolirEfektuNatyskannia"); },
+  get "--dec-font-src"() { return i18n.t("modals.UserSettingsModal.dzhereloShryftu"); },
+  get "--font-family"() { return i18n.t("modals.UserSettingsModal.shryftVkladenykhElementiv"); },
+  get fontFamily() { return i18n.t("modals.UserSettingsModal.shryft"); },
+  get "--dec-react"() { return i18n.t("modals.UserSettingsModal.zvukovaReaktsiia"); },
+  get "--dec-react-color"() { return i18n.t("modals.UserSettingsModal.kolirReaktsii"); },
+  get "--dec-3d"() { return i18n.t("modals.UserSettingsModal.3dKnopka"); },
+  get "--dec-3d-depth"() { return i18n.t("modals.UserSettingsModal.hlybyna3d"); },
+  get "--dec-3d-color"() { return i18n.t("modals.UserSettingsModal.kolir3dReber"); },
+  get "--dec-3d-dir"() { return i18n.t("modals.UserSettingsModal.polozhennia3dHrani"); },
+  get "--dec-3d-fill"() { return i18n.t("modals.UserSettingsModal.zalyvka3dHranei"); },
 };
 const formatDecoratorLogValue = (value) => {
-  if (!value) return "скинуто";
-  if (/^url\(/.test(value)) return "власний файл";
-  if (value === "1") return "увімкнено";
+  if (!value) return i18n.t("modals.UserSettingsModal.skynuto");
+  if (/^url\(/.test(value)) return i18n.t("modals.UserSettingsModal.vlasnyiFail");
+  if (value === "1") return i18n.t("modals.UserSettingsModal.uvimkneno");
   return value;
 };
 
 // Порожній, коли секція новин не змонтована (вимкнена) — тоді показуємо підказку
 const NewsFeedsSlot = styled.div`
   &:empty::before {
-    content: "Увімкніть секцію новин вище, щоб керувати стрічками.";
+    content: attr(data-empty);
     font-size: 12px; color: var(--s-muted);
   }
 `;
@@ -1034,10 +1034,10 @@ const SegmentBtn = styled.button`
   &:hover { color: var(--s-text); }
 `;
 const LOADER_POWERED_BY_OPTIONS = [
-  { id: "full", label: "Повністю" },
-  { id: "icons", label: "Іконки" },
-  { id: "hidden", label: "Лише фраза" },
-  { id: "off", label: "Вимкнути" },
+  { id: "full", get label() { return i18n.t("modals.UserSettingsModal.povnistiu"); } },
+  { id: "icons", get label() { return i18n.t("modals.UserSettingsModal.ikonky"); } },
+  { id: "hidden", get label() { return i18n.t("modals.UserSettingsModal.lysheFraza"); } },
+  { id: "off", get label() { return i18n.t("modals.UserSettingsModal.vymknuty"); } },
 ];
 const FontDownloads = styled.div`display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;`;
 const FontDownloadLink = styled.a`
@@ -1149,26 +1149,26 @@ const FilterNotes = styled.div`
 
 // Приклад правила для фільтра новин і пояснення кожної його частини
 const NEWS_FILTER_REGEX_EXAMPLE = String.raw`/уряд(?:у|ом)?|парламент(?:у|ом)?|(?<!\p{L})влад(?:а|и|ою)(?!\p{L})/iu`;
-const NEWS_FILTER_REGEX_LEGEND = [
-  ["/ … /", "Початок і кінець правила. Без косих рисок запис вважається звичайним словом"],
-  ["уряд", "Звичайні літери шукаються як є"],
-  ["(?:у|ом)", "Група варіантів: «у» або «ом». «?:» означає просто групу (нічого не запам'ятовує)"],
-  ["?", "Після групи чи літери: «може бути, а може й не бути». Тому уряд(?:у|ом)? = уряд, уряду, урядом"],
-  ["|", "«АБО» між частинами правила: достатньо, щоб знайшлася будь-яка з них"],
-  [String.raw`\p{L}`, "Будь-яка літера будь-якої мови"],
-  [String.raw`(?<!\p{L})`, "Перед цим місцем не має бути літери — слово не може бути кінцем іншого слова (тож «безвладдя» не спрацює)"],
-  [String.raw`(?!\p{L})`, "Після цього місця не має бути літери — слово має тут закінчитись (тож «владика» не спрацює)"],
-  ["i", "Прапорець після правила: без різниці великі чи малі літери (додається автоматично)"],
-  ["u", "Прапорець Unicode — потрібен для \\p{L} (додається автоматично)"],
-];
-const NEWS_FILTER_REGEX_EXTRA = [
-  [".", "Будь-який один символ"],
-  ["*", "Попереднє повторюється 0 і більше разів: футбол\\p{L}* = футбол, футболу, футболіст…"],
-  ["+", "Попереднє повторюється 1 і більше разів"],
-  [String.raw`\s`, "Пробіл: збірн\\p{L}*\\s+україни = «збірна України», «збірної  України»"],
-  ["[аоє]", "Один із перелічених символів"],
-  [String.raw`\.`, "Сам символ крапки (без \\ крапка означає «будь-який символ»)"],
-];
+const NEWS_FILTER_REGEX_LEGEND = () => ([
+  ["/ … /", i18n.t("modals.UserSettingsModal.pochatokIKinetsPravyla")],
+  [i18n.t("modals.UserSettingsModal.uriad"), i18n.t("modals.UserSettingsModal.zvychainiLiteryShukaiutsiaIak")],
+  [i18n.t("modals.UserSettingsModal.uOm"), i18n.t("modals.UserSettingsModal.hrupaVariantivUAbo")],
+  ["?", i18n.t("modals.UserSettingsModal.pisliaHrupyChyLitery")],
+  ["|", i18n.t("modals.UserSettingsModal.aboMizhChastynamyPravyla")],
+  [String.raw`\p{L}`, i18n.t("modals.UserSettingsModal.budIakaLiteraBud")],
+  [String.raw`(?<!\p{L})`, i18n.t("modals.UserSettingsModal.peredTsymMistsemNe")],
+  [String.raw`(?!\p{L})`, i18n.t("modals.UserSettingsModal.pisliaTsohoMistsiaNe")],
+  ["i", i18n.t("modals.UserSettingsModal.praporetsPisliaPravylaBez")],
+  ["u", i18n.t("modals.UserSettingsModal.praporetsUnicodePotribenDlia")],
+]);
+const NEWS_FILTER_REGEX_EXTRA = () => ([
+  [".", i18n.t("modals.UserSettingsModal.budIakyiOdynSymvol")],
+  ["*", i18n.t("modals.UserSettingsModal.poperedniePovtoriuietsia0I")],
+  ["+", i18n.t("modals.UserSettingsModal.poperedniePovtoriuietsia1I")],
+  [String.raw`\s`, i18n.t("modals.UserSettingsModal.probilZbirnPL")],
+  [i18n.t("modals.UserSettingsModal.aoie"), i18n.t("modals.UserSettingsModal.odynIzPerelichenykhSymvoliv")],
+  [String.raw`\.`, i18n.t("modals.UserSettingsModal.samSymvolKrapkyBez")],
+]);
 
 // Toggle Switch
 const ToggleWrapper = styled.div`
@@ -1370,23 +1370,23 @@ const ResetConfirmDialog = ({ onConfirm, onCancel, loading }) => {
       >
         <ConfirmHeader>
           <ConfirmIcon><FiRotateCcw aria-hidden="true" /></ConfirmIcon>
-          <ConfirmTitle id="reset-confirm-title">Скинути сайт до заводських?</ConfirmTitle>
+          <ConfirmTitle id="reset-confirm-title">{i18n.t("modals.UserSettingsModal.skynutySaitDoZavodskykh")}</ConfirmTitle>
         </ConfirmHeader>
         <ConfirmList id="reset-confirm-list">
-          <li><FiUser aria-hidden="true" /> Вийти з акаунта на цьому пристрої</li>
-          <li><FiImage aria-hidden="true" /> Стерти тему, фони, музику, ключ Gemini та всі інші локальні налаштування</li>
-          <li><FiTrash2 aria-hidden="true" /> Очистити кеш і перезавантажити сторінку</li>
+          <li><FiUser aria-hidden="true" /> {i18n.t("modals.UserSettingsModal.vyityZAkauntaNa")}</li>
+          <li><FiImage aria-hidden="true" /> {i18n.t("modals.UserSettingsModal.stertyTemuFonyMuzyku")}</li>
+          <li><FiTrash2 aria-hidden="true" /> {i18n.t("modals.UserSettingsModal.ochystytyKeshIPerezavantazhyty")}</li>
         </ConfirmList>
         <ConfirmNote>
           <FiCloud aria-hidden="true" />
-          <span>Акаунт і хмарні дані не видаляються — після входу вони повернуться.</span>
+          <span>{i18n.t("modals.UserSettingsModal.akauntIKhmarniDani")}</span>
         </ConfirmNote>
         <ConfirmActions>
           <WinButton ref={cancelRef} type="button" onClick={onCancel} disabled={loading}>
-            Скасувати
+            {i18n.t("modals.UserSettingsModal.skasuvaty")}
           </WinButton>
           <ConfirmDangerButton type="button" onClick={onConfirm} disabled={loading}>
-            {loading ? "Скидаємо..." : "Скинути"}
+            {loading ? i18n.t("modals.UserSettingsModal.skydaiemo") : i18n.t("modals.UserSettingsModal.skynuty")}
           </ConfirmDangerButton>
         </ConfirmActions>
       </ConfirmBox>
@@ -1478,7 +1478,7 @@ const LevelUpdateNote = styled.div`
   font-size: 12px; color: var(--s-muted); line-height: 1.45;
 `;
 
-const LEVEL_UPDATE_NOTE = "Версії налаштувань змінюються раз на 3–6 тижнів. Чекайте на оновлення!";
+const LEVEL_UPDATE_NOTE = () => (i18n.t("modals.UserSettingsModal.versiiNalashtuvanZminiuiutsiaRaz"));
 
 // Меню на кшталт вибору моделі: обраний режим обведений; 1/2/3 — швидкі клавіші
 const LevelMenu = ({ anchorRef, level, isGuest = false, onSelect, onClose }) => {
@@ -1548,11 +1548,11 @@ const LevelMenu = ({ anchorRef, level, isGuest = false, onSelect, onClose }) => 
     <LevelMenuBox
       ref={boxRef}
       role="menu"
-      aria-label="Режим налаштувань"
+      aria-label={i18n.t("modals.UserSettingsModal.rezhymNalashtuvan")}
       data-active-overlay=""
       style={pos || { visibility: "hidden" }}
     >
-      <LevelMenuHead>Стихія {STYKHIIA_VERSION} · Режим налаштувань</LevelMenuHead>
+      <LevelMenuHead>{i18n.t("modals.UserSettingsModal.stykhiia")} {STYKHIIA_VERSION} {i18n.t("modals.UserSettingsModal.rezhymNalashtuvan2")}</LevelMenuHead>
       {SETTINGS_LEVELS.map(({ key, label, star, story, about, color }) => {
         const isActive = key === level;
         return (
@@ -1574,7 +1574,7 @@ const LevelMenu = ({ anchorRef, level, isGuest = false, onSelect, onClose }) => 
           </LevelMenuItem>
         );
       })}
-      <LevelUpdateNote>{LEVEL_UPDATE_NOTE}</LevelUpdateNote>
+      <LevelUpdateNote>{LEVEL_UPDATE_NOTE()}</LevelUpdateNote>
     </LevelMenuBox>,
     document.body,
   );
@@ -1642,10 +1642,9 @@ const LevelOnboarding = ({ isGuest = false, onChoose }) => {
             <FiLayers aria-hidden="true" />
           </ConfirmIcon>
           <div>
-            <ConfirmTitle id="level-onboarding-title">Який режим налаштувань обрати?</ConfirmTitle>
+            <ConfirmTitle id="level-onboarding-title">{i18n.t("modals.UserSettingsModal.iakyiRezhymNalashtuvanObraty")}</ConfirmTitle>
             <OnboardingSub>
-              Від режиму залежить, скільки налаштувань видно. Змінити його можна будь-коли кнопкою
-              внизу бічної панелі, а пошук завжди шукає в усіх режимах.
+              {i18n.t("modals.UserSettingsModal.vidRezhymuZalezhytSkilky")}
             </OnboardingSub>
           </div>
         </ConfirmHeader>
@@ -1660,14 +1659,14 @@ const LevelOnboarding = ({ isGuest = false, onChoose }) => {
             >
               <LevelIcon level={key} plain />
               <span>
-                <b>Стихія {STYKHIIA_VERSION} · {label} · <em>{star}</em></b>
-                {key === DEFAULT_SETTINGS_LEVEL && <OnboardingBadge>Для початку</OnboardingBadge>}
+                <b>{i18n.t("modals.UserSettingsModal.stykhiia")} {STYKHIIA_VERSION} · {label} · <em>{star}</em></b>
+                {key === DEFAULT_SETTINGS_LEVEL && <OnboardingBadge>{i18n.t("modals.UserSettingsModal.dliaPochatku")}</OnboardingBadge>}
                 <small>{story} <strong>{levelCountLabel(key, isGuest)} · {about}</strong></small>
               </span>
             </OnboardingOption>
           ))}
         </OnboardingList>
-        <LevelUpdateNote style={{ marginTop: 10, padding: "8px 2px 0" }}>{LEVEL_UPDATE_NOTE}</LevelUpdateNote>
+        <LevelUpdateNote style={{ marginTop: 10, padding: "8px 2px 0" }}>{LEVEL_UPDATE_NOTE()}</LevelUpdateNote>
       </ConfirmBox>
     </ConfirmOverlay>
   );
@@ -2082,7 +2081,7 @@ const UserSettingsModal = ({
     if (!nextVal) {
       const ok = await requestAge(
         GAMBLING_MIN_AGE,
-        `Без фільтра у стрічку потраплять усі новини, зокрема про війну, кримінал, казино та ставки. Вимкнути фільтр можна лише з ${GAMBLING_MIN_AGE} років.`,
+        i18n.t("modals.UserSettingsModal.bezFiltraUStrichku", { GAMBLING_MIN_AGE: GAMBLING_MIN_AGE }),
       );
       if (!ok) return;
     }
@@ -2120,8 +2119,8 @@ const UserSettingsModal = ({
     if (mode === "show") {
       const label = NEWS_FILTER_CATEGORIES.find((c) => c.key === key)?.label || key;
       const ok = key === "gambling"
-        ? await requestAge(GAMBLING_MIN_AGE, `Новини про казино та ставки можна показувати лише з ${GAMBLING_MIN_AGE} років.`)
-        : await requestAge(18, `Тема «${label}» може містити неприємний або дорослий контент. Показувати її можна лише з 18 років.`);
+        ? await requestAge(GAMBLING_MIN_AGE, i18n.t("modals.UserSettingsModal.novynyProKazynoTa", { GAMBLING_MIN_AGE: GAMBLING_MIN_AGE }))
+        : await requestAge(18, i18n.t("modals.UserSettingsModal.temaMozheMistytyNepryiemnyi", { label: label }));
       if (!ok) return;
     }
     const next = { ...newsFilterModes, [key]: mode };
@@ -2173,13 +2172,13 @@ const UserSettingsModal = ({
       return;
     }
     if (!("Notification" in window)) {
-      alert("Цей браузер не підтримує сповіщення.");
+      alert(i18n.t("modals.UserSettingsModal.tseiBrauzerNePidtrymuie"));
       return;
     }
     let permission = Notification.permission;
     if (permission === "default") permission = await Notification.requestPermission();
     if (permission !== "granted") {
-      alert("Сповіщення заблоковані в налаштуваннях браузера. Дозвольте їх для цього сайту й спробуйте ще раз.");
+      alert(i18n.t("modals.UserSettingsModal.spovishchenniaZablokovaniVNalashtuvannia"));
       return;
     }
     setLocal(true);
@@ -2195,9 +2194,9 @@ const UserSettingsModal = ({
     setIsUrgentBusy(false);
     setUrgentDelivery(ok ? "push" : "local");
     if (!ok && getLastPushError() === "limit") {
-      alert("Сьогодні забагато нових підписок на сповіщення. Поки сповіщення приходитимуть, коли Стихія відкрита; спробуйте ввімкнути ще раз завтра.");
+      alert(i18n.t("modals.UserSettingsModal.sohodniZabahatoNovykhPidpysok"));
     } else if (!ok && getLastPushError() === "captcha") {
-      alert("Не вдалося пройти перевірку від ботів (Cloudflare). Поки сповіщення приходитимуть, коли Стихія відкрита; спробуйте ввімкнути ще раз пізніше.");
+      alert(i18n.t("modals.UserSettingsModal.neVdalosiaProityPerevirku"));
     }
   };
   const toggleUrgentNotify = () =>
@@ -2218,13 +2217,13 @@ const UserSettingsModal = ({
       return;
     }
     if (!isPushSupported()) {
-      alert("Цей браузер не отримує сповіщень, коли Стихія закрита, тож ранковий прогноз не дійде. На iPhone спершу додайте сайт на екран «Додому».");
+      alert(i18n.t("modals.UserSettingsModal.tseiBrauzerNeOtrymuie"));
       return;
     }
     let permission = Notification.permission;
     if (permission === "default") permission = await Notification.requestPermission();
     if (permission !== "granted") {
-      alert("Сповіщення заблоковані в налаштуваннях браузера. Дозвольте їх для цього сайту й спробуйте ще раз.");
+      alert(i18n.t("modals.UserSettingsModal.spovishchenniaZablokovaniVNalashtuvannia"));
       return;
     }
     // Спершу зберігаємо вибір: subscribePush бере профіль із налаштувань
@@ -2246,10 +2245,10 @@ const UserSettingsModal = ({
     const reason = getLastPushError();
     alert(
       reason === "limit"
-        ? "Сьогодні забагато нових підписок на сповіщення. Спробуйте ввімкнути ранковий прогноз завтра."
+        ? i18n.t("modals.UserSettingsModal.sohodniZabahatoNovykhPidpysok2")
         : reason === "captcha"
-          ? "Не вдалося пройти перевірку від ботів (Cloudflare). Спробуйте ввімкнути ранковий прогноз пізніше."
-          : "Не вдалося підключити сповіщення. Перевірте інтернет і спробуйте ще раз.",
+          ? i18n.t("modals.UserSettingsModal.neVdalosiaProityPerevirku2")
+          : i18n.t("modals.UserSettingsModal.neVdalosiaPidkliuchytySpovishchennia"),
     );
   };
   const [alertPause, setAlertPauseState] = useState(getAlertPause);
@@ -2263,7 +2262,7 @@ const UserSettingsModal = ({
     setAlertDailyLimit(n);
   };
   const isAnyEmergencyOn = isUrgentNotifyOn || isWeatherAlertsOn;
-  const formatPause = (m) => (m < 60 ? `${m} хв` : `${m / 60} год`);
+  const formatPause = (m) => (m < 60 ? i18n.t("modals.UserSettingsModal.khv", { m: m }) : i18n.t("modals.UserSettingsModal.hod", { v0: m / 60 }));
   const addUrgentWord = () => {
     const word = urgentWordDraft.trim().toLowerCase().slice(0, URGENT_MAX_WORD_LENGTH);
     if (!word || urgentWords.length >= URGENT_MAX_WORDS) return;
@@ -2283,7 +2282,7 @@ const UserSettingsModal = ({
   };
   const restoreUrgentWords = () => {
     resetUrgentWords();
-    setUrgentWordsState(DEFAULT_URGENT_WORDS);
+    setUrgentWordsState(getDefaultUrgentWords());
   };
 
   const newsViewMode = usePrefValue(NEWS_VIEW_KEY, "cards");
@@ -2349,7 +2348,7 @@ const UserSettingsModal = ({
     const { auth, GoogleAuthProvider, unlink, linkWithPopup, reauthenticateWithPopup } = await loadAuth();
     const currentFbUser = auth.currentUser;
     if (!currentFbUser) {
-      alert("Хмарний акаунт неактивний. Вийдіть і увійдіть знову, щоб активувати прив'язки.");
+      alert(i18n.t("modals.UserSettingsModal.khmarnyiAkauntNeaktyvnyiVyidit"));
       return;
     }
     try {
@@ -2360,7 +2359,7 @@ const UserSettingsModal = ({
       let result;
       if (isLinkedGoogle && providerIds.length > 1) {
         // Є інший спосіб входу — безпечно замінити прив'язаний Google-акаунт.
-        if (!window.confirm("Замінити прив'язаний Google-акаунт на інший?")) return;
+        if (!window.confirm(i18n.t("modals.UserSettingsModal.zaminytyPryviazanyiGoogleAkaunt"))) return;
         await unlink(currentFbUser, "google.com");
         result = await linkWithPopup(currentFbUser, provider);
       } else if (isLinkedGoogle) {
@@ -2381,16 +2380,16 @@ const UserSettingsModal = ({
         email: newGoogleUser.email || user?.email,
         avatar: newPhoto || user?.avatar,
       });
-      alert(`✅ Google акаунт підтверджено: ${newGoogleUser.email}`);
+      alert(i18n.t("modals.UserSettingsModal.googleAkauntPidtverdzheno", { email: newGoogleUser.email }));
     } catch (err) {
       if (err.code === "auth/cancelled-popup-request" || err.code === "auth/popup-closed-by-user") {
         // user closed popup — silent
       } else if (err.code === "auth/user-mismatch") {
-        alert("⚠️ Цей Google акаунт не збігається з поточним профілем! Якщо Google — єдиний спосіб входу, його не можна замінити.");
+        alert(i18n.t("modals.UserSettingsModal.tseiGoogleAkauntNe"));
       } else if (err.code === "auth/credential-already-in-use" || err.code === "auth/email-already-in-use") {
-        alert("⚠️ Цей Google акаунт уже прив'язаний до іншого профілю.");
+        alert(i18n.t("modals.UserSettingsModal.tseiGoogleAkauntUzhe"));
       } else {
-        alert("Помилка: " + (err.message || err.code));
+        alert(i18n.t("modals.UserSettingsModal.pomylka", { v0: err.message || err.code }));
       }
     }
   };
@@ -2400,20 +2399,20 @@ const UserSettingsModal = ({
     const { auth, unlink } = await loadAuth();
     if (!auth.currentUser) return;
     if (providerIds.length <= 1) {
-      alert("Google — єдиний спосіб входу в цей профіль, відв'язати його не можна, інакше ви втратите доступ.");
+      alert(i18n.t("modals.UserSettingsModal.googleIedynyiSposibVkhodu"));
       return;
     }
-    const confirmUnlink = window.confirm("Ви дійсно бажаєте відв'язати Google від цього профілю?\n\nПісля відв'язки для входу буде потрібен пароль.");
+    const confirmUnlink = window.confirm(i18n.t("modals.UserSettingsModal.vyDiisnoBazhaieteVidviazaty"));
     if (!confirmUnlink) return;
     try {
       await unlink(auth.currentUser, "google.com");
       setFirebaseUserState(auth.currentUser);
-      alert("✅ Google акаунт відв'язано успішно.");
+      alert(i18n.t("modals.UserSettingsModal.googleAkauntVidviazanoUspishno"));
     } catch (err) {
       if (err.code === "auth/no-such-provider") {
-        alert("Google вже не прив'язано до цього профілю.");
+        alert(i18n.t("modals.UserSettingsModal.googleVzheNePryviazano"));
       } else {
-        alert("Помилка відв'язування: " + (err.message || err.code));
+        alert(i18n.t("modals.UserSettingsModal.pomylkaVidviazuvannia", { v0: err.message || err.code }));
       }
     }
   };
@@ -2423,27 +2422,27 @@ const UserSettingsModal = ({
   const handleRebindEmail = async () => {
     const trimmed = relinkEmail.trim();
     if (!trimmed || !trimmed.includes("@") || !trimmed.includes(".")) {
-      setRelinkStatus("❌ Введіть коректну електронну пошту!");
+      setRelinkStatus(i18n.t("modals.UserSettingsModal.vveditKorektnuElektronnuPoshtu"));
       return;
     }
     if (trimmed === (user?.email || user?.account)) {
-      setRelinkStatus("⚠️ Це вже поточна пошта профілю.");
+      setRelinkStatus(i18n.t("modals.UserSettingsModal.tseVzhePotochnaPoshta"));
       return;
     }
 
     const { auth, verifyBeforeUpdateEmail } = await loadAuth();
     const cu = auth.currentUser;
     if (!cu) {
-      setRelinkStatus("⚠️ Хмарний акаунт неактивний — вийдіть та увійдіть знову, потім спробуйте ще раз.");
+      setRelinkStatus(i18n.t("modals.UserSettingsModal.khmarnyiAkauntNeaktyvnyiVyidit2"));
       return;
     }
     if (!hasPasswordProvider) {
-      setRelinkStatus("⚠️ Пошта цього профілю керується Google і не може бути змінена тут.");
+      setRelinkStatus(i18n.t("modals.UserSettingsModal.poshtaTsohoProfiliuKeruietsia"));
       return;
     }
 
     setRelinkLoading(true);
-    setRelinkStatus("⏳ Надсилаємо лист...");
+    setRelinkStatus(i18n.t("modals.UserSettingsModal.nadsylaiemoLyst"));
 
     try {
       await verifyBeforeUpdateEmail(cu, trimmed);
@@ -2454,16 +2453,16 @@ const UserSettingsModal = ({
         const registered = await localforage.getItem("registered_user");
         if (registered) await localforage.setItem("registered_user", { ...registered, pendingEmail: trimmed });
       } catch {}
-      setRelinkStatus(`✅ Лист підтвердження надіслано на ${trimmed}. Перевірте вхідні (та спам). Після кліку на посилання входьте з новою поштою.`);
+      setRelinkStatus(i18n.t("modals.UserSettingsModal.lystPidtverdzhenniaNadislanoNa", { trimmed: trimmed }));
     } catch (err) {
       if (err.code === "auth/requires-recent-login") {
-        setRelinkStatus("⚠️ Потрібна повторна авторизація — вийдіть та увійдіть знову, потім спробуйте ще раз.");
+        setRelinkStatus(i18n.t("modals.UserSettingsModal.potribnaPovtornaAvtoryzatsiiaVyidit"));
       } else if (err.code === "auth/email-already-in-use") {
-        setRelinkStatus("❌ Ця пошта вже використовується іншим акаунтом!");
+        setRelinkStatus(i18n.t("modals.UserSettingsModal.tsiaPoshtaVzheVykorystovuietsia"));
       } else if (err.code === "auth/invalid-email") {
-        setRelinkStatus("❌ Неправильний формат електронної пошти!");
+        setRelinkStatus(i18n.t("modals.UserSettingsModal.nepravylnyiFormatElektronnoiPoshty"));
       } else {
-        setRelinkStatus(`❌ Не вдалося надіслати лист: ${err.code || err.message}`);
+        setRelinkStatus(i18n.t("modals.UserSettingsModal.neVdalosiaNadislatyLyst", { v0: err.code || err.message }));
       }
     } finally {
       setRelinkLoading(false);
@@ -2508,28 +2507,31 @@ const UserSettingsModal = ({
     } = await loadAuth();
     const cu = auth.currentUser;
     if (!cu) {
-      setDeleteStatus("⚠️ Хмарний акаунт неактивний — вийдіть та увійдіть знову, потім спробуйте ще раз.");
+      setDeleteStatus(i18n.t("modals.UserSettingsModal.khmarnyiAkauntNeaktyvnyiVyidit2"));
       return;
     }
+    // Слово-підтвердження мовою сайту; українське «ВИДАЛИТИ» приймаємо завжди
+    const confirmWord = i18n.t("modals.UserSettingsModal.deleteConfirmWord");
     const typed = window.prompt(
-      "Видалення акаунта не можна скасувати: зникнуть вхід, хмарні налаштування, картки погоди та фільтри новин.\n\nЩоб підтвердити, введіть слово ВИДАЛИТИ",
+      i18n.t("modals.UserSettingsModal.vydalenniaAkauntaNeMozhna", { word: confirmWord }),
     );
     if (typed === null) return;
-    if (typed.trim().toUpperCase() !== "ВИДАЛИТИ") {
-      setDeleteStatus("❌ Слово введено неправильно — акаунт не видалено.");
+    const typedWord = typed.trim().toUpperCase();
+    if (typedWord !== confirmWord.toUpperCase() && typedWord !== "ВИДАЛИТИ") {
+      setDeleteStatus(i18n.t("modals.UserSettingsModal.slovoVvedenoNepravylnoAkaunt"));
       return;
     }
 
     setDeleteLoading(true);
     try {
       // 1. Firebase дозволяє видалити акаунт лише після свіжого входу
-      setDeleteStatus("⏳ Підтвердіть, що це ви...");
+      setDeleteStatus(i18n.t("modals.UserSettingsModal.pidtverditShchoTseVy"));
       if (providerIds.includes("google.com")) {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: "select_account" });
         await reauthenticateWithPopup(cu, provider);
       } else if (hasPasswordProvider) {
-        const password = window.prompt("Введіть поточний пароль від акаунта:");
+        const password = window.prompt(i18n.t("modals.UserSettingsModal.vveditPotochnyiParolVid"));
         if (!password) {
           setDeleteStatus("");
           return;
@@ -2538,7 +2540,7 @@ const UserSettingsModal = ({
       }
 
       // 2. Стираємо хмарні дані
-      setDeleteStatus("⏳ Видаляємо дані...");
+      setDeleteStatus(i18n.t("modals.UserSettingsModal.vydaliaiemoDani"));
       const { db, doc, getDoc, updateDoc, deleteDoc, deleteField } = await loadFirebase();
       const configRef = doc(db, "config", cu.uid);
       const snap = await getDoc(configRef);
@@ -2563,26 +2565,26 @@ const UserSettingsModal = ({
       try { removePref("saved_google_avatar"); } catch {}
 
       if (deleteWipeDevice) {
-        alert("✅ Акаунт видалено. Зараз очистимо цей пристрій і перезавантажимо сторінку.");
+        alert(i18n.t("modals.UserSettingsModal.akauntVydalenoZarazOchystymo"));
         await factoryReset();
         return;
       }
-      alert("✅ Акаунт і пов'язані з ним дані видалено.");
+      alert(i18n.t("modals.UserSettingsModal.akauntIPoviazaniZ"));
       onLogout();
     } catch (err) {
       const code = err?.code || "";
       if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
         setDeleteStatus("");
       } else if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
-        setDeleteStatus("❌ Неправильний пароль — акаунт не видалено.");
+        setDeleteStatus(i18n.t("modals.UserSettingsModal.nepravylnyiParolAkauntNe"));
       } else if (code === "auth/user-mismatch") {
-        setDeleteStatus("⚠️ Оберіть той самий Google-акаунт, з яким ви увійшли.");
+        setDeleteStatus(i18n.t("modals.UserSettingsModal.oberitToiSamyiGoogle"));
       } else if (code === "auth/requires-recent-login") {
-        setDeleteStatus("⚠️ Потрібна повторна авторизація — вийдіть та увійдіть знову, потім спробуйте ще раз.");
+        setDeleteStatus(i18n.t("modals.UserSettingsModal.potribnaPovtornaAvtoryzatsiiaVyidit"));
       } else if (code === "permission-denied") {
-        setDeleteStatus("❌ Сервер не дозволив стерти дані — акаунт не видалено. Спробуйте пізніше.");
+        setDeleteStatus(i18n.t("modals.UserSettingsModal.serverNeDozvolyvSterty"));
       } else {
-        setDeleteStatus(`❌ Не вдалося видалити акаунт: ${code || err?.message}`);
+        setDeleteStatus(i18n.t("modals.UserSettingsModal.neVdalosiaVydalytyAkaunt", { v0: code || err?.message }));
       }
     } finally {
       setDeleteLoading(false);
@@ -2714,18 +2716,18 @@ const UserSettingsModal = ({
       setFontPackStacks((prev) => ({ ...prev, [meta.id]: stack }));
       updateLivePreview({ fontFamily: fontPackValue(meta.id) });
     } catch (err) {
-      setFontPackError(err?.message || "Не вдалося додати пакет.");
+      setFontPackError(err?.message || i18n.t("modals.UserSettingsModal.neVdalosiaDodatyPaket"));
     } finally {
       setFontPackBusy(false);
     }
   };
 
   const handleDeleteFontPack = async (pack) => {
-    if (!window.confirm(`Видалити пакет «${pack.name}» з цього пристрою?`)) return;
+    if (!window.confirm(i18n.t("modals.UserSettingsModal.vydalytyPaketZTsoho", { name: pack.name }))) return;
     try {
       await deleteFontPack(pack.id);
     } catch {
-      setFontPackError("Не вдалося видалити пакет.");
+      setFontPackError(i18n.t("modals.UserSettingsModal.neVdalosiaVydalytyPaket"));
       return;
     }
     setFontPacks((prev) => prev.filter((p) => p.id !== pack.id));
@@ -2749,7 +2751,7 @@ const UserSettingsModal = ({
   };
 
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  const months = ["Січень","Лютий","Березень","Квітень","Травень","Червень","Липень","Серпень","Вересень","Жовтень","Листопад","Грудень"];
+  const months = [i18n.t("modals.UserSettingsModal.sichen"),i18n.t("modals.UserSettingsModal.liutyi"),i18n.t("modals.UserSettingsModal.berezen"),i18n.t("modals.UserSettingsModal.kviten"),i18n.t("modals.UserSettingsModal.traven"),i18n.t("modals.UserSettingsModal.cherven"),i18n.t("modals.UserSettingsModal.lypen"),i18n.t("modals.UserSettingsModal.serpen"),i18n.t("modals.UserSettingsModal.veresen"),i18n.t("modals.UserSettingsModal.zhovten"),i18n.t("modals.UserSettingsModal.lystopad"),i18n.t("modals.UserSettingsModal.hruden")];
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 1909 + 1 }, (_, i) => currentYear - i);
 
@@ -2791,19 +2793,19 @@ const UserSettingsModal = ({
     if (/[A-Z]/.test(password) || /[a-z]/.test(password)) score++;
     if (/\d/.test(password)) score++;
     if (/[^A-Za-z0-9]/.test(password)) score++;
-    if (score <= 2) return { width: "33%", color: "#ff4d4d", label: "Слабкий" };
-    if (score <= 4) return { width: "66%", color: "#ffb36c", label: "Середній" };
-    return { width: "100%", color: "#4caf50", label: "Надійний" };
+    if (score <= 2) return { width: "33%", color: "#ff4d4d", label: i18n.t("modals.UserSettingsModal.slabkyi") };
+    if (score <= 4) return { width: "66%", color: "#ffb36c", label: i18n.t("modals.UserSettingsModal.serednii") };
+    return { width: "100%", color: "#4caf50", label: i18n.t("modals.UserSettingsModal.nadiinyi") };
   };
   const pwStrength = getPasswordStrength(formData.newPassword);
 
   const handleSubmit = () => {
     if (isGuest) { finishClosing(); return; }
-    if (isInvalidDate) { alert("Введена некоректна дата!"); return; }
-    if (!formData.day || !formData.month || !formData.year) { alert("Будь ласка, виберіть дату народження!"); return; }
+    if (isInvalidDate) { alert(i18n.t("modals.UserSettingsModal.vvedenaNekorektnaData")); return; }
+    if (!formData.day || !formData.month || !formData.year) { alert(i18n.t("modals.UserSettingsModal.budLaskaVyberitDatu")); return; }
     if (formData.newPassword) {
-      if (formData.newPassword !== formData.confirmPassword) { alert("Нові паролі не збігаються!"); return; }
-      if (formData.newPassword.length < 6) { alert("Пароль занадто короткий!"); return; }
+      if (formData.newPassword !== formData.confirmPassword) { alert(i18n.t("modals.UserSettingsModal.noviParoliNeZbihaiutsia")); return; }
+      if (formData.newPassword.length < 6) { alert(i18n.t("modals.UserSettingsModal.parolZanadtoKorotkyi")); return; }
     }
     const finalAvatar = getActiveAvatarUrl();
 
@@ -2960,10 +2962,10 @@ const UserSettingsModal = ({
     const file = e.target.files[0];
     e.target.value = "";
     if (!file || activeSlotRef.current === null) return;
-    if (file.size > MAX_CUSTOM_MB * 1024 * 1024) { alert(`Файл занадто великий! Максимум ${MAX_CUSTOM_MB} МБ.`); return; }
+    if (file.size > MAX_CUSTOM_MB * 1024 * 1024) { alert(i18n.t("modals.UserSettingsModal.failZanadtoVelykyiMaksymum", { MAX_CUSTOM_MB: MAX_CUSTOM_MB })); return; }
     const audio = new Audio(URL.createObjectURL(file));
     audio.onloadedmetadata = () => {
-      if (audio.duration > MAX_CUSTOM_MIN * 60) { alert(`Мелодія занадто довга! Максимум ${MAX_CUSTOM_MIN} хвилин.`); URL.revokeObjectURL(audio.src); return; }
+      if (audio.duration > MAX_CUSTOM_MIN * 60) { alert(i18n.t("modals.UserSettingsModal.melodiiaZanadtoDovhaMaksymum", { MAX_CUSTOM_MIN: MAX_CUSTOM_MIN })); URL.revokeObjectURL(audio.src); return; }
       const updated = [...customTracks];
       updated[Math.min(activeSlotRef.current, updated.length)] = { name: file.name.split(".")[0].substring(0, 30), file, repeats: 1, enabled: true };
       setCustomBgTracks(updated.slice(0, MAX_CUSTOM_TRACKS)); setBgMusicSource(file); setActiveBgTrackId(null);
@@ -2991,13 +2993,13 @@ const UserSettingsModal = ({
 
   // ── Nav config ───────────────────────────────────────────────────────────
   const navItems = [
-    { key: "personalization", icon: <FiSliders />, label: "Персоналізація" },
-    { key: "security", icon: <FiShield />, label: "Безпека", locked: isGuest },
-    { key: "siteSections", icon: <FiCompass />, label: "Секції та новини" },
-    { key: "modes", icon: <FiZap />, label: "Режими та застосунки" },
-    { key: "filters", icon: <FiEye />, label: "Візуальні фільтри" },
-    { key: "bgMusic", icon: <FiMusic />, label: "Фонова музика" },
-    { key: "beta", icon: <TbFlask />, label: "Бета-функції" },
+    { key: "personalization", icon: <FiSliders />, label: i18n.t("modals.UserSettingsModal.personalizatsiia") },
+    { key: "security", icon: <FiShield />, label: i18n.t("modals.UserSettingsModal.bezpeka"), locked: isGuest },
+    { key: "siteSections", icon: <FiCompass />, label: i18n.t("modals.UserSettingsModal.sektsiiTaNovyny") },
+    { key: "modes", icon: <FiZap />, label: i18n.t("modals.UserSettingsModal.rezhymyTaZastosunky") },
+    { key: "filters", icon: <FiEye />, label: i18n.t("modals.UserSettingsModal.vizualniFiltry") },
+    { key: "bgMusic", icon: <FiMusic />, label: i18n.t("modals.UserSettingsModal.fonovaMuzyka") },
+    { key: "beta", icon: <TbFlask />, label: i18n.t("modals.UserSettingsModal.betaFunktsii") },
   ];
 
   // ── Загальний пошук у параметрах ─────────────────────────────────────────
@@ -3137,7 +3139,7 @@ const UserSettingsModal = ({
     const mod10 = n % 10;
     const mod100 = n % 100;
     // 1, 2–4 налаштування; 5–20 налаштувань
-    return mod10 >= 1 && mod10 <= 4 && (mod100 < 11 || mod100 > 14) ? "налаштування" : "налаштувань";
+    return mod10 >= 1 && mod10 <= 4 && (mod100 < 11 || mod100 > 14) ? i18n.t("modals.UserSettingsModal.nalashtuvannia") : i18n.t("modals.UserSettingsModal.nalashtuvan");
   };
 
   // На телефоні вкладки — горизонтальний ряд: тримаємо активну в полі зору
@@ -3182,16 +3184,16 @@ const UserSettingsModal = ({
                   <FiUser />
                 </div>
                 <div >
-                  <HeaderTitle>Параметри</HeaderTitle>
+                  <HeaderTitle>{i18n.t("modals.UserSettingsModal.parametry")}</HeaderTitle>
                   <HeaderSub>
-                    {isGuest ? "Гість • Увійдіть для повного доступу" : <AccountName value={user?.email || user?.account || "Обліковий запис"} />}
+                    {isGuest ? i18n.t("modals.UserSettingsModal.histUviiditDliaPovnoho") : <AccountName value={user?.email || user?.account || i18n.t("modals.UserSettingsModal.oblikovyiZapys")} />}
                   </HeaderSub>
                 </div>
               </UserBadge>
             </HeaderLeft>
             <HeaderActions>
-              <HeaderButton onClick={() => setShowKatScene(true)} aria-label="Титри">
-                <FiFilm /> <span>Титри</span>
+              <HeaderButton onClick={() => setShowKatScene(true)} aria-label={i18n.t("modals.UserSettingsModal.tytry")}>
+                <FiFilm /> <span>{i18n.t("modals.UserSettingsModal.tytry")}</span>
               </HeaderButton>
               <CloseButton onClick={handleCancel}><FiX /></CloseButton>
             </HeaderActions>
@@ -3206,9 +3208,9 @@ const UserSettingsModal = ({
                   ref={searchInputRef}
                   type="text"
                   role="searchbox"
-                  aria-label="Пошук у параметрах"
-                  placeholder="Пошук у параметрах"
-                  title="Пошук по всіх розділах (Ctrl+F)"
+                  aria-label={i18n.t("modals.UserSettingsModal.poshukUParametrakh")}
+                  placeholder={i18n.t("modals.UserSettingsModal.poshukUParametrakh")}
+                  title={i18n.t("modals.UserSettingsModal.poshukPoVsikhRozdilakh")}
                   autoComplete="off"
                   spellCheck={false}
                   value={searchQuery}
@@ -3224,7 +3226,7 @@ const UserSettingsModal = ({
                 {searchQuery && (
                   <SearchClear
                     type="button"
-                    aria-label="Очистити пошук"
+                    aria-label={i18n.t("modals.UserSettingsModal.ochystytyPoshuk")}
                     onClick={() => {
                       setSearchQuery("");
                       searchInputRef.current?.focus();
@@ -3263,7 +3265,7 @@ const UserSettingsModal = ({
                 return locked ? (
                   <Tooltip
                     key={key}
-                    content="Необхідна реєстрація"
+                    content={i18n.t("modals.UserSettingsModal.neobkhidnaReiestratsiia")}
                     placement="right"
                     wrapperStyle={{ display: "block", flexShrink: 0 }}
                   >
@@ -3279,13 +3281,13 @@ const UserSettingsModal = ({
                 $color={getLevelInfo(settingsLevel).color}
                 aria-haspopup="menu"
                 aria-expanded={levelMenuOpen}
-                title={`Стихія ${STYKHIIA_VERSION} · ${levelFullName(settingsLevel)}: ${getLevelInfo(settingsLevel).about}`}
-                aria-label={`Режим налаштувань: ${levelFullName(settingsLevel)}`}
+                title={i18n.t("modals.UserSettingsModal.stykhiia2", { STYKHIIA_VERSION: STYKHIIA_VERSION, v1: levelFullName(settingsLevel), about: getLevelInfo(settingsLevel).about })}
+                aria-label={i18n.t("modals.UserSettingsModal.rezhymNalashtuvan3", { v0: levelFullName(settingsLevel) })}
                 onClick={() => setLevelMenuOpen((open) => !open)}
               >
                 <LevelIcon level={settingsLevel} />
                 <LevelButtonText>
-                  <small>Стихія {STYKHIIA_VERSION} · <em>{getLevelInfo(settingsLevel).star}</em></small>
+                  <small>{i18n.t("modals.UserSettingsModal.stykhiia")} {STYKHIIA_VERSION} · <em>{getLevelInfo(settingsLevel).star}</em></small>
                   <b>{getLevelInfo(settingsLevel).label}</b>
                 </LevelButtonText>
                 <FiChevronDown aria-hidden="true" />
@@ -3311,57 +3313,56 @@ const UserSettingsModal = ({
             >
               {isSearching && searchStats.total > 0 && (
                 <SearchNote>
-                  Знайдено <strong>{searchStats.total}</strong> {pluralResults(searchStats.total)}. Змінюйте їх просто тут
-                  або натисніть назву, щоб перейти до її розділу.
+                  {i18n.t("modals.UserSettingsModal.znaideno")} <strong>{searchStats.total}</strong> {pluralResults(searchStats.total)}{i18n.t("modals.UserSettingsModal.zminiuiteIkhProstoTut")}
                 </SearchNote>
               )}
               {isSearching && searchStats.total === 0 && (
                 <SearchEmpty>
                   <FiSearch aria-hidden="true" />
-                  <strong>Нічого не знайдено</strong>
-                  <span>За запитом «{searchQuery.trim()}» немає налаштувань. Спробуйте інше слово.</span>
+                  <strong>{i18n.t("modals.UserSettingsModal.nichohoNeZnaideno")}</strong>
+                  <span>{i18n.t("modals.UserSettingsModal.zaZapytom")}{searchQuery.trim()}{i18n.t("modals.UserSettingsModal.nemaieNalashtuvanSprobuiteInshe")}</span>
                 </SearchEmpty>
               )}
 
               {/* ── SECURITY TAB ────────────────────────────────────── */}
               {showTab("security") && !isGuest && (
                 <CardGroup data-settings-tab="security">
-                  <SectionHeaderTitle><FiShield /> Безпека та переприв'язка акаунту</SectionHeaderTitle>
-                  <SectionDescription>Прив'язка Google-акаунту, зміна пошти та пароля для входу в профіль</SectionDescription>
+                  <SectionHeaderTitle><FiShield /> {i18n.t("modals.UserSettingsModal.bezpekaTaPerepryviazkaAkauntu")}</SectionHeaderTitle>
+                  <SectionDescription>{i18n.t("modals.UserSettingsModal.pryviazkaGoogleAkauntuZmina")}</SectionDescription>
 
                   {/* Account Relinking & Binding Controls */}
                   <CardExpanded>
                     <CardLeft>
                       <CardIconBox $color="var(--s-accent)"><FiLink /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Керування прив'язками профілю</CardTitle>
-                        <CardDescription>Зміна прив'язаного Google-акаунту або пошти</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.keruvanniaPryviazkamyProfiliu")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.zminaPryviazanohoGoogleAkauntu")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "4px" }}>
                       {/* Google Binding */}
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
                         <div style={{ display: "flex", flexDirection: "column", minWidth: 0, maxWidth: "100%" }}>
-                          <span style={{ fontSize: "13px", fontWeight: "600", color: "var(--s-text)" }}>Google Акаунт</span>
+                          <span style={{ fontSize: "13px", fontWeight: "600", color: "var(--s-text)" }}>{i18n.t("modals.UserSettingsModal.googleAkaunt")}</span>
                           <span style={{ fontSize: "11px", color: isLinkedGoogle ? "var(--s-accent)" : "var(--s-muted)", display: "flex", minWidth: 0 }}>
                             {!hasFirebaseSession
-                              ? "Хмарний акаунт неактивний — увійдіть знову"
+                              ? i18n.t("modals.UserSettingsModal.khmarnyiAkauntNeaktyvnyiUviidit")
                               : isLinkedGoogle ? (
                                 <>
-                                  <span style={{ whiteSpace: "pre", flexShrink: 0 }}>✓ Прив'язано (</span>
+                                  <span style={{ whiteSpace: "pre", flexShrink: 0 }}>{i18n.t("modals.UserSettingsModal.pryviazano")}</span>
                                   <AccountName value={googleEmail || "Google"} />
                                   <span style={{ flexShrink: 0 }}>)</span>
                                 </>
-                              ) : "Не прив'язано"}
+                              ) : i18n.t("modals.UserSettingsModal.nePryviazano")}
                           </span>
                         </div>
                         <div style={{ display: "flex", gap: "6px" }}>
                           <WinButton type="button" onClick={handleRelinkGoogle} disabled={!hasFirebaseSession}>
-                            {!isLinkedGoogle ? "Прив'язати Google" : providerIds.length > 1 ? "Переприв'язати Google" : "Підтвердити Google"}
+                            {!isLinkedGoogle ? i18n.t("modals.UserSettingsModal.pryviazatyGoogle") : providerIds.length > 1 ? i18n.t("modals.UserSettingsModal.perepryviazatyGoogle") : i18n.t("modals.UserSettingsModal.pidtverdytyGoogle")}
                           </WinButton>
                           {isLinkedGoogle && providerIds.length > 1 && (
                             <WinButton type="button" $danger onClick={handleUnlinkGoogle}>
-                              Відв'язати
+                              {i18n.t("modals.UserSettingsModal.vidviazaty")}
                             </WinButton>
                           )}
                         </div>
@@ -3371,25 +3372,25 @@ const UserSettingsModal = ({
                       {!hasPasswordProvider ? (
                         <div style={{ borderTop: "1px solid rgba(var(--s-ink),0.08)", paddingTop: "10px", fontSize: "11px", color: "var(--s-muted)" }}>
                           {hasFirebaseSession
-                            ? "Пошта цього профілю керується Google і змінюється в налаштуваннях Google-акаунту."
-                            : "Щоб змінити пошту, вийдіть та увійдіть знову."}
+                            ? i18n.t("modals.UserSettingsModal.poshtaTsohoProfiliuKeruietsia2")
+                            : i18n.t("modals.UserSettingsModal.shchobZminytyPoshtuVyidit")}
                         </div>
                       ) : (
                       <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderTop: "1px solid rgba(var(--s-ink),0.08)", paddingTop: "10px" }}>
-                        <span style={{ fontSize: "13px", fontWeight: "600", color: "var(--s-text)" }}>Зміна прив'язаної пошти</span>
+                        <span style={{ fontSize: "13px", fontWeight: "600", color: "var(--s-text)" }}>{i18n.t("modals.UserSettingsModal.zminaPryviazanoiPoshty")}</span>
                         <span style={{ fontSize: "11px", color: "var(--s-muted)" }}>
-                          На нову пошту буде надіслано лист підтвердження. Зміна набере чинності після кліку на посилання у листі.
+                          {i18n.t("modals.UserSettingsModal.naNovuPoshtuBude")}
                         </span>
                         <div style={{ display: "flex", gap: "8px" }}>
                           <WinInput
                             type="email"
-                            placeholder="Введіть нову пошту..."
+                            placeholder={i18n.t("modals.UserSettingsModal.vveditNovuPoshtu")}
                             value={relinkEmail}
                             onChange={(e) => { setRelinkEmail(e.target.value); setRelinkStatus(""); }}
                             disabled={relinkLoading}
                           />
                           <WinButton type="button" $primary onClick={handleRebindEmail} style={{ whiteSpace: "nowrap" }} disabled={relinkLoading}>
-                            {relinkLoading ? "⏳..." : "Надіслати лист"}
+                            {relinkLoading ? "⏳..." : i18n.t("modals.UserSettingsModal.nadislatyLyst")}
                           </WinButton>
                         </div>
                         {relinkStatus && (
@@ -3414,20 +3415,20 @@ const UserSettingsModal = ({
                       <CardLeft>
                         <CardIconBox $color="var(--s-red)"><FiKey /></CardIconBox>
                         <CardInfo>
-                          <CardTitle>Зміна пароля</CardTitle>
-                          <CardDescription>Введіть новий пароль для профілю</CardDescription>
+                          <CardTitle>{i18n.t("modals.UserSettingsModal.zminaParolia")}</CardTitle>
+                          <CardDescription>{i18n.t("modals.UserSettingsModal.vveditNovyiParolDlia")}</CardDescription>
                         </CardInfo>
                       </CardLeft>
                       <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
-                        <WinInput type="password" placeholder="Новий пароль" value={formData.newPassword}
+                        <WinInput type="password" placeholder={i18n.t("modals.UserSettingsModal.novyiParol")} value={formData.newPassword}
                           onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })} />
                         {formData.newPassword && (
                           <div style={{ display: "flex", flexDirection: "column" }}>
                             <PasswordStrengthBar $width={pwStrength.width} $color={pwStrength.color} />
-                            <PasswordStrengthText $color={pwStrength.color}>Надійність: {pwStrength.label}</PasswordStrengthText>
+                            <PasswordStrengthText $color={pwStrength.color}>{i18n.t("modals.UserSettingsModal.nadiinist")} {pwStrength.label}</PasswordStrengthText>
                           </div>
                         )}
-                        <WinInput type="password" placeholder="Підтвердіть новий пароль" value={formData.confirmPassword}
+                        <WinInput type="password" placeholder={i18n.t("modals.UserSettingsModal.pidtverditNovyiParol")} value={formData.confirmPassword}
                           onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} />
                       </div>
                     </CardExpanded>
@@ -3438,9 +3439,9 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="var(--s-red)"><FiTrash2 /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Видалити акаунт</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.vydalytyAkaunt")}</CardTitle>
                         <CardDescription>
-                          Назавжди видаляє вхід, хмарні налаштування, картки погоди та фільтри новин. Скасувати не можна.
+                          {i18n.t("modals.UserSettingsModal.nazavzhdyVydaliaieVkhidKhmarni")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
@@ -3452,7 +3453,7 @@ const UserSettingsModal = ({
                           onChange={(e) => setDeleteWipeDevice(e.target.checked)}
                           disabled={deleteLoading}
                         />
-                        Також очистити цей пристрій (тема, фони, музика, ключ Gemini)
+                        {i18n.t("modals.UserSettingsModal.takozhOchystytyTseiPrystrii")}
                       </label>
                       <div>
                         <WinButton
@@ -3461,12 +3462,12 @@ const UserSettingsModal = ({
                           onClick={handleDeleteAccount}
                           disabled={deleteLoading || !hasFirebaseSession}
                         >
-                          {deleteLoading ? "⏳..." : "Видалити акаунт"}
+                          {deleteLoading ? "⏳..." : i18n.t("modals.UserSettingsModal.vydalytyAkaunt")}
                         </WinButton>
                       </div>
                       {!hasFirebaseSession && (
                         <span style={{ fontSize: "11px", color: "var(--s-muted)" }}>
-                          Хмарний акаунт неактивний — вийдіть та увійдіть знову.
+                          {i18n.t("modals.UserSettingsModal.khmarnyiAkauntNeaktyvnyiVyidit3")}
                         </span>
                       )}
                       {deleteStatus && (
@@ -3486,39 +3487,39 @@ const UserSettingsModal = ({
               {/* ── PERSONALIZATION TAB ─────────────────────────────── */}
               {showTab("personalization") && (
                 <CardGroup data-settings-tab="personalization">
-                  <SectionHeaderTitle><FiSliders /> Персоналізація та інтерфейс</SectionHeaderTitle>
-                  <SectionDescription>Фон сайту, часовий пояс, формат часу й дати, анімації та розмиття, підказки, шрифт, жести та дзеркальність сайту</SectionDescription>
+                  <SectionHeaderTitle><FiSliders /> {i18n.t("modals.UserSettingsModal.personalizatsiiaTaInterfeis")}</SectionHeaderTitle>
+                  <SectionDescription>{i18n.t("modals.UserSettingsModal.fonSaituChasovyiPoias")}</SectionDescription>
 
-                  <SubSectionTitle><FiImage /> Фон сайту</SubSectionTitle>
+                  <SubSectionTitle><FiImage /> {i18n.t("modals.UserSettingsModal.fonSaitu")}</SubSectionTitle>
 
                   <Card>
                     <CardLeft>
                       <CardIconBox $color="#f472b6"><GiPalette /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Фон</CardTitle>
-                        <CardDescription>Картинка на першому екрані: вибрати свою, слайд-шоу, розмиття</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.fon")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.kartynkaNaPershomuEkrani")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <WinButton type="button" onClick={() => openHeroWindow(OPEN_BG_MODAL_EVENT)}>
-                        Змінити фон
+                        {i18n.t("modals.UserSettingsModal.zminytyFon")}
                       </WinButton>
                     </CardControl>
                   </Card>
 
-                  <SubSectionTitle><FiClock /> Час та дата</SubSectionTitle>
+                  <SubSectionTitle><FiClock /> {i18n.t("modals.UserSettingsModal.chasTaData")}</SubSectionTitle>
 
                   <Card>
                     <CardLeft>
                       <CardIconBox $color="#38bdf8"><FiGlobe /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Часовий пояс</CardTitle>
-                        <CardDescription>За яким часом показувати годинник на першому екрані</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.chasovyiPoias")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.zaIakymChasomPokazuvaty")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <WinButton type="button" onClick={() => openHeroWindow(OPEN_TIMEZONE_EVENT)}>
-                        Змінити часовий пояс
+                        {i18n.t("modals.UserSettingsModal.zminytyChasovyiPoias")}
                       </WinButton>
                     </CardControl>
                   </Card>
@@ -3527,14 +3528,14 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#22d3ee"><TbClock24 /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Формат часу</CardTitle>
-                        <CardDescription>24-годинний або 12-годинний (AM/PM)</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.formatChasu")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.24HodynnyiAbo12")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <WinSelect value={formData.hour12 ? "12" : "24"} onChange={(e) => updateLivePreview({ hour12: e.target.value === "12" })}>
-                        <option value="24">24-годинний</option>
-                        <option value="12">12-годинний (AM/PM)</option>
+                        <option value="24">{i18n.t("modals.UserSettingsModal.24Hodynnyi")}</option>
+                        <option value="12">{i18n.t("modals.UserSettingsModal.12HodynnyiAmPm")}</option>
                       </WinSelect>
                     </CardControl>
                   </Card>
@@ -3543,40 +3544,40 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="var(--s-green)"><FiCalendar /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Режим відображення</CardTitle>
-                        <CardDescription>Час, дата або обидва разом</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.rezhymVidobrazhennia")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.chasDataAboObydva")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <WinSelect value={formData.dateDisplayMode} onChange={(e) => updateLivePreview({ dateDisplayMode: e.target.value })}>
-                        <option value="both">Час та Дата разом</option>
-                        <option value="time">Тільки Час</option>
-                        <option value="date">Тільки Дата</option>
+                        <option value="both">{i18n.t("modals.UserSettingsModal.chasTaDataRazom")}</option>
+                        <option value="time">{i18n.t("modals.UserSettingsModal.tilkyChas")}</option>
+                        <option value="date">{i18n.t("modals.UserSettingsModal.tilkyData")}</option>
                       </WinSelect>
                     </CardControl>
                   </Card>
 
-                  <SubSectionTitle><FiSliders /> Інтерфейс</SubSectionTitle>
+                  <SubSectionTitle><FiSliders /> {i18n.t("modals.UserSettingsModal.interfeis")}</SubSectionTitle>
 
                   {/* Вимкнути анімації та розмиття */}
                   <Card>
                     <CardLeft>
                       <CardIconBox $color="#fbbf24"><FiPauseCircle /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Вимкнути анімації та розмиття</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.vymknutyAnimatsiiTaRozmyttia")}</CardTitle>
                         <CardDescription>
                           {animationsAutoDisabled
-                            ? "Вимкнено автоматично: пристрій слабкий, тож анімації й розмиття фону могли б гальмувати. Можна увімкнути вручну"
+                            ? i18n.t("modals.UserSettingsModal.vymknenoAvtomatychnoPrystriiSlabkyi")
                             : animationsDisabled
-                            ? "Анімації, плавні переходи й розмиття фону вимкнено — сайт легший для слабких пристроїв"
-                            : "Іконки, переходи й ефекти анімовані, фон під вікнами розмитий"}
+                            ? i18n.t("modals.UserSettingsModal.animatsiiPlavniPerekhodyI")
+                            : i18n.t("modals.UserSettingsModal.ikonkyPerekhodyIEfekty")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={() => setAnimationsDisabled(!animationsDisabled)}>
                         <ToggleStatusLabel $checked={animationsDisabled}>
-                          {animationsDisabled ? "Вимкнено" : "Увімкнено"}
+                          {animationsDisabled ? i18n.t("modals.UserSettingsModal.vymkneno") : i18n.t("modals.UserSettingsModal.uvimkneno2")}
                         </ToggleStatusLabel>
                         <SwitchPill $checked={animationsDisabled} />
                       </ToggleWrapper>
@@ -3588,11 +3589,11 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#00eeff"><FiRepeat /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Автоперемикання вкладок картки</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.avtoperemykanniaVkladokKartky")}</CardTitle>
                         <CardDescription>
                           {tabAutoplay.on
-                            ? `Картка погоди сама гортає «Зараз → Годинна → 16 днів → Смарт» кожні ${formatTabAutoplay(tabAutoplay.seconds)} (пауза, поки курсор над карткою, і хвилину після дотику чи прокрутки). Довгий інтервал — щоб детально роздивитись кожну вкладку. Для окремої картки можна задати своє в її меню ⚙`
-                            : "Вкладки картки погоди не перемикаються самі. Для окремої картки можна увімкнути в її меню ⚙"}
+                            ? i18n.t("modals.UserSettingsModal.kartkaPohodySamaHortaie", { v0: formatTabAutoplay(tabAutoplay.seconds) })
+                            : i18n.t("modals.UserSettingsModal.vkladkyKartkyPohodyNe")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
@@ -3610,17 +3611,16 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#c084fc"><GiPalette /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Стиль графіків</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.stylHrafikiv")}</CardTitle>
                         <CardDescription>
-                          Форма, тип і товщина ліній, цифри біля точок — для всіх карток погоди одразу.
-                          Окремій картці можна задати своє через ⚙ → «Стиль графіка»
+                          {i18n.t("modals.UserSettingsModal.formaTypITovshchyna")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
                       {[
-                        { key: "hourly", label: "Погодинний графік" },
-                        { key: "daily", label: "Графік на 16 днів" },
+                        { key: "hourly", label: i18n.t("modals.UserSettingsModal.pohodynnyiHrafik") },
+                        { key: "daily", label: i18n.t("modals.UserSettingsModal.hrafikNa16Dniv") },
                       ].map(({ key, label }) => (
                         <WinButton
                           key={key}
@@ -3662,18 +3662,18 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#a3e635"><FiMoreVertical /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Контекстне меню Стихії</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.kontekstneMeniuStykhii")}</CardTitle>
                         <CardDescription>
                           {isSiteContextMenuEnabled
-                            ? "Права кнопка миші відкриває меню Стихії (копіювання, фото, режим читання)"
-                            : "Права кнопка миші відкриває звичайне меню браузера"}
+                            ? i18n.t("modals.UserSettingsModal.pravaKnopkaMyshiVidkryvaie")
+                            : i18n.t("modals.UserSettingsModal.pravaKnopkaMyshiVidkryvaie2")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={toggleSiteContextMenu}>
                         <ToggleStatusLabel $checked={isSiteContextMenuEnabled}>
-                          {isSiteContextMenuEnabled ? "Увімкнуто" : "Вимкнуто"}
+                          {isSiteContextMenuEnabled ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}
                         </ToggleStatusLabel>
                         <SwitchPill $checked={isSiteContextMenuEnabled} />
                       </ToggleWrapper>
@@ -3684,13 +3684,13 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#4ade80"><FiType /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Шрифт Стихії</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.shryftStykhii")}</CardTitle>
                         <CardDescription style={{ fontFamily: (getStykhiiaFont(formData.fontFamily) || STYKHIIA_FONTS[0]).stack }}>
-                          Погода в Конотопі −3°C, сніг
+                          {i18n.t("modals.UserSettingsModal.pohodaVKonotopi3")}
                         </CardDescription>
                         <FontDownloads>
                           {STYKHIIA_FONTS.map((f) => (
-                            <FontDownloadLink key={f.id} href={f.ttfUrl} download={f.fileName} title={`Викачати ${f.fileName}, щоб встановити на комп'ютер`}>
+                            <FontDownloadLink key={f.id} href={f.ttfUrl} download={f.fileName} title={i18n.t("modals.UserSettingsModal.vykachatyShchobVstanovytyNa", { fileName: f.fileName })}>
                               <FiDownload /> {f.label} .ttf
                             </FontDownloadLink>
                           ))}
@@ -3698,8 +3698,8 @@ const UserSettingsModal = ({
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
-                      <Segmented role="radiogroup" aria-label="Шрифт Стихії">
-                        {[{ id: "", label: "Вимк.", stack: "inherit" }, ...STYKHIIA_FONTS].map((f) => {
+                      <Segmented role="radiogroup" aria-label={i18n.t("modals.UserSettingsModal.shryftStykhii")}>
+                        {[{ id: "", label: i18n.t("modals.UserSettingsModal.vymk"), stack: "inherit" }, ...STYKHIIA_FONTS].map((f) => {
                           const active = f.id ? formData.fontFamily === f.id : !getStykhiiaFont(formData.fontFamily);
                           return (
                             <SegmentBtn
@@ -3725,12 +3725,12 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#f472b6"><FiType /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Власний шрифт</CardTitle>
-                        <CardDescription>Назва шрифту Google Fonts (напр. Roboto)</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.vlasnyiShryft")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.nazvaShryftuGoogleFonts")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl style={{ minWidth: "200px" }}>
-                      <WinInput placeholder="Назва шрифту" value={activeFontPackId ? "" : formData.fontFamily} onChange={(e) => updateLivePreview({ fontFamily: e.target.value })} />
+                      <WinInput placeholder={i18n.t("modals.UserSettingsModal.nazvaShryftu")} value={activeFontPackId ? "" : formData.fontFamily} onChange={(e) => updateLivePreview({ fontFamily: e.target.value })} />
                     </CardControl>
                   </Card>
                   )}
@@ -3739,14 +3739,14 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#38bdf8"><FiUpload /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Мої пакети шрифтів</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.moiPaketyShryftiv")}</CardTitle>
                         <CardDescription>
                           {fontPackBusy
-                            ? "Читаю шрифти…"
-                            : fontPackError || "TTF, OTF, WOFF2 або ZIP-архів. Файли лишаються лише на цьому пристрої."}
+                            ? i18n.t("modals.UserSettingsModal.chytaiuShryfty")
+                            : fontPackError || i18n.t("modals.UserSettingsModal.ttfOtfWoff2Abo")}
                         </CardDescription>
                         {fontPacks.length > 0 && (
-                          <FontPackList role="radiogroup" aria-label="Мої пакети шрифтів">
+                          <FontPackList role="radiogroup" aria-label={i18n.t("modals.UserSettingsModal.moiPaketyShryftiv")}>
                             {fontPacks.map((p) => {
                               const active = activeFontPackId === p.id;
                               return (
@@ -3756,12 +3756,12 @@ const UserSettingsModal = ({
                                     role="radio"
                                     aria-checked={active}
                                     style={{ fontFamily: fontPackStacks[p.id] || "inherit" }}
-                                    title={`${p.count} файл(ів), ${(p.size / 1024 / 1024).toFixed(1)} МБ`}
+                                    title={i18n.t("modals.UserSettingsModal.failIvMb", { count: p.count, v1: (p.size / 1024 / 1024).toFixed(1) })}
                                     onClick={() => updateLivePreview({ fontFamily: active ? "" : fontPackValue(p.id) })}
                                   >
                                     {p.name}
                                   </button>
-                                  <button type="button" aria-label={`Видалити пакет ${p.name}`} title="Видалити з пристрою" onClick={() => handleDeleteFontPack(p)}>
+                                  <button type="button" aria-label={i18n.t("modals.UserSettingsModal.vydalytyPaket", { name: p.name })} title={i18n.t("modals.UserSettingsModal.vydalytyZPrystroiu")} onClick={() => handleDeleteFontPack(p)}>
                                     <FiTrash2 />
                                   </button>
                                 </FontPackChip>
@@ -3770,9 +3770,9 @@ const UserSettingsModal = ({
                           </FontPackList>
                         )}
                         <FontPackTip>
-                          💡 Не знаєте, який шрифт узяти?{" "}
-                          <a href={CLAUDE_FONT_URL} target="_blank" rel="noopener noreferrer">Спитайте Claude</a>
-                          {" "}— він підбере вільні шрифти з кирилицею й підкаже, де викачати пакет.
+                          {i18n.t("modals.UserSettingsModal.neZnaieteIakyiShryft")}{" "}
+                          <a href={CLAUDE_FONT_URL()} target="_blank" rel="noopener noreferrer">{i18n.t("modals.UserSettingsModal.spytaiteClaude")}</a>
+                          {" "}{i18n.t("modals.UserSettingsModal.vinPidbereVilniShryfty")}
                         </FontPackTip>
                       </CardInfo>
                     </CardLeft>
@@ -3786,7 +3786,7 @@ const UserSettingsModal = ({
                         onChange={handleFontPackFiles}
                       />
                       <WinButton type="button" disabled={fontPackBusy} onClick={() => fontPackInputRef.current?.click()}>
-                        <FiUpload /> Додати
+                        <FiUpload /> {i18n.t("modals.UserSettingsModal.dodaty")}
                       </WinButton>
                     </CardControl>
                   </Card>
@@ -3795,8 +3795,8 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#fb7185"><TbHandFinger /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Чутливість жестів</CardTitle>
-                        <CardDescription>Свайпи та слайдери: {formData.gestureSensitivity}x</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.chutlyvistZhestiv")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.svaipyTaSlaidery")} {formData.gestureSensitivity}x</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl style={{ minWidth: "160px" }}>
@@ -3809,13 +3809,13 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#facc15"><FiMousePointer /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Швидкий відгук на кліки</CardTitle>
-                        <CardDescription>Миттєвий відгук без затримок</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.shvydkyiVidhukNaKliky")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.myttievyiVidhukBezZatrymok")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={() => updateLivePreview({ fastClicks: !formData.fastClicks })}>
-                        <ToggleStatusLabel $checked={formData.fastClicks}>{formData.fastClicks ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <ToggleStatusLabel $checked={formData.fastClicks}>{formData.fastClicks ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                         <SwitchPill $checked={formData.fastClicks} />
                       </ToggleWrapper>
                     </CardControl>
@@ -3825,28 +3825,28 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#818cf8"><TbFlipVertical /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Дзеркальність сайту</CardTitle>
-                        <CardDescription>Скидається після перезавантаження сторінки</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.dzerkalnistSaitu")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.skydaietsiaPisliaPerezavantazhenniaStori")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: "13px", color: "var(--s-text)" }}>По горизонталі (ліво ↔ право)</span>
+                        <span style={{ fontSize: "13px", color: "var(--s-text)" }}>{i18n.t("modals.UserSettingsModal.poHoryzontaliLivoPravo")}</span>
                         <ToggleWrapper onClick={() => setMirrorX(!mirrorX)}>
-                          <ToggleStatusLabel $checked={mirrorX}>{mirrorX ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                          <ToggleStatusLabel $checked={mirrorX}>{mirrorX ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                           <SwitchPill $checked={mirrorX} />
                         </ToggleWrapper>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: "13px", color: "var(--s-text)" }}>По вертикалі (верх ↕ низ)</span>
+                        <span style={{ fontSize: "13px", color: "var(--s-text)" }}>{i18n.t("modals.UserSettingsModal.poVertykaliVerkhNyz")}</span>
                         <ToggleWrapper onClick={() => setMirrorY(!mirrorY)}>
-                          <ToggleStatusLabel $checked={mirrorY}>{mirrorY ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                          <ToggleStatusLabel $checked={mirrorY}>{mirrorY ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                           <SwitchPill $checked={mirrorY} />
                         </ToggleWrapper>
                       </div>
                       {(mirrorX || mirrorY) && (
                         <WinButton $danger style={{ alignSelf: "flex-start", marginTop: "4px" }} onClick={() => { setMirrorX(false); setMirrorY(false); }}>
-                          Скинути дзеркальність
+                          {i18n.t("modals.UserSettingsModal.skynutyDzerkalnist")}
                         </WinButton>
                       )}
                     </div>
@@ -3857,8 +3857,8 @@ const UserSettingsModal = ({
               {/* ── SITE SECTIONS TAB ─────────────────────────────────── */}
               {showTab("siteSections") && (
                 <CardGroup data-settings-tab="siteSections">
-                  <SectionHeaderTitle><FiCompass /> Секції сайту та новини</SectionHeaderTitle>
-                  <SectionDescription>Порядок, видимість і тема кожної секції, а також фільтр та вигляд новин</SectionDescription>
+                  <SectionHeaderTitle><FiCompass /> {i18n.t("modals.UserSettingsModal.sektsiiSaituTaNovyny")}</SectionHeaderTitle>
+                  <SectionDescription>{i18n.t("modals.UserSettingsModal.poriadokVydymistITema")}</SectionDescription>
 
                   {siteSections && siteSections.map((sec, idx) => {
                     const isHidden = hiddenSections?.includes(sec.key);
@@ -3875,7 +3875,7 @@ const UserSettingsModal = ({
                           </CardLeft>
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                             {/* Theme Toggle */}
-                            <IconBtn onClick={() => onToggleSectionTheme(sec.key)} title="Змінити тему секції">
+                            <IconBtn onClick={() => onToggleSectionTheme(sec.key)} title={i18n.t("modals.UserSettingsModal.zminytyTemuSektsii")}>
                               {isDarkTheme ? <BsMoonStarsFill style={{ fontSize: "13px" }} /> : <FaSunIcon style={{ fontSize: "13px", color: "#ffb36c" }} />}
                             </IconBtn>
 
@@ -3883,7 +3883,7 @@ const UserSettingsModal = ({
                             <IconBtn
                               onClick={() => onToggleSectionVisibility(sec.key)}
                               disabled={!isHidden && siteSections.length - (hiddenSections?.length || 0) <= 2}
-                              title={isHidden ? "Показати секцію" : "Приховати секцію"}
+                              title={isHidden ? i18n.t("modals.UserSettingsModal.pokazatySektsiiu") : i18n.t("modals.UserSettingsModal.prykhovatySektsiiu")}
                             >
                               {isHidden ? <FaEyeSlash style={{ color: "var(--s-red)" }} /> : <FaEye style={{ color: "var(--s-accent)" }} />}
                             </IconBtn>
@@ -3891,10 +3891,10 @@ const UserSettingsModal = ({
                             {/* Move Up/Down */}
                             {sec.key !== "hero" && (
                               <>
-                                <IconBtn disabled={idx <= 1} onClick={() => moveSiteSection(idx, -1)} title="Підняти">
+                                <IconBtn disabled={idx <= 1} onClick={() => moveSiteSection(idx, -1)} title={i18n.t("modals.UserSettingsModal.pidniaty")}>
                                   <FiChevronUp />
                                 </IconBtn>
-                                <IconBtn disabled={idx === siteSections.length - 1} onClick={() => moveSiteSection(idx, 1)} title="Опустити">
+                                <IconBtn disabled={idx === siteSections.length - 1} onClick={() => moveSiteSection(idx, 1)} title={i18n.t("modals.UserSettingsModal.opustyty")}>
                                   <FiChevronDown />
                                 </IconBtn>
                               </>
@@ -3907,23 +3907,23 @@ const UserSettingsModal = ({
 
                   <div data-level="medium" style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
                     <WinButton onClick={onResetSectionThemes} style={{ flex: 1 }}>
-                      Скинути теми секцій
+                      {i18n.t("modals.UserSettingsModal.skynutyTemySektsii")}
                     </WinButton>
                   </div>
 
-                  <SubSectionTitle><FiGlobe /> Новини</SubSectionTitle>
+                  <SubSectionTitle><FiGlobe /> {i18n.t("modals.UserSettingsModal.novyny")}</SubSectionTitle>
 
                   <Card level="medium">
                     <CardLeft>
                       <CardIconBox $color="#f97316"><FiFilter /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Фільтр новин</CardTitle>
-                        <CardDescription>Приховує новини про війну, політику, кримінал та інший небажаний контент. Зміни діють після оновлення новин</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.filtrNovyn")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.prykhovuieNovynyProViinu")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={toggleNewsFilter}>
-                        <ToggleStatusLabel $checked={isNewsFilterOn}>{isNewsFilterOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <ToggleStatusLabel $checked={isNewsFilterOn}>{isNewsFilterOn ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                         <SwitchPill $checked={isNewsFilterOn} />
                       </ToggleWrapper>
                     </CardControl>
@@ -3935,17 +3935,17 @@ const UserSettingsModal = ({
                   <FilterSubGroup $disabled={!isNewsFilterOn} aria-disabled={!isNewsFilterOn}>
                     <Card>
                       <CardInfo>
-                        <CardTitle>Ретельна перевірка новин</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.retelnaPerevirkaNovyn")}</CardTitle>
                         <CardDescription>
                           {isNewsFilterThoroughOn
-                            ? "Фільтр небажаних новин читає весь опис — надійніше, але сторінка може підвисати, поки новини перевіряються."
-                            : `Фільтр небажаних новин читає заголовок і перші ${NEWS_FILTER_FAST_DESCRIPTION_CHARS} символів опису — швидко. Увімкніть, щоб перевіряти весь опис (надійніше).`}
-                          {" "}Лише на цьому пристрої, діє з наступного оновлення новин
+                            ? i18n.t("modals.UserSettingsModal.filtrNebazhanykhNovynChytaie")
+                            : i18n.t("modals.UserSettingsModal.filtrNebazhanykhNovynChytaie2", { NEWS_FILTER_FAST_DESCRIPTION_CHARS: NEWS_FILTER_FAST_DESCRIPTION_CHARS })}
+                          {" "}{i18n.t("modals.UserSettingsModal.lysheNaTsomuPrystroi")}
                         </CardDescription>
                       </CardInfo>
                       <CardControl>
                         <ToggleWrapper onClick={toggleNewsFilterThorough}>
-                          <ToggleStatusLabel $checked={isNewsFilterThoroughOn}>{isNewsFilterThoroughOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                          <ToggleStatusLabel $checked={isNewsFilterThoroughOn}>{isNewsFilterThoroughOn ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                           <SwitchPill $checked={isNewsFilterThoroughOn} />
                         </ToggleWrapper>
                       </CardControl>
@@ -3957,14 +3957,14 @@ const UserSettingsModal = ({
                     {/* 1. М'який режим */}
                     <Card level="pro">
                       <CardInfo>
-                        <CardTitle>Не видаляти, а показувати плашку</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.neVydaliatyAPokazuvaty")}</CardTitle>
                         <CardDescription>
-                          Небажана новина лишається у стрічці під плашкою «Небажаний контент був автозаблокований» з кнопкою «Розглушити»
+                          {i18n.t("modals.UserSettingsModal.nebazhanaNovynaLyshaietsiaU")}
                         </CardDescription>
                       </CardInfo>
                       <CardControl>
                         <ToggleWrapper onClick={toggleNewsFilterSoft}>
-                          <ToggleStatusLabel $checked={isNewsFilterSoft}>{isNewsFilterSoft ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                          <ToggleStatusLabel $checked={isNewsFilterSoft}>{isNewsFilterSoft ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                           <SwitchPill $checked={isNewsFilterSoft} />
                         </ToggleWrapper>
                       </CardControl>
@@ -3974,8 +3974,8 @@ const UserSettingsModal = ({
                     {/* 2. Категорії: не рекомендувати / показувати */}
                     <CardExpanded level="medium">
                       <CardInfo>
-                        <CardTitle>Які теми бачити</CardTitle>
-                        <CardDescription>Для кожної теми оберіть: не рекомендувати (фільтр її ховає) чи показувати</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.iakiTemyBachyty")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.dliaKozhnoiTemyOberit")}</CardDescription>
                       </CardInfo>
                       <div>
                         {NEWS_FILTER_CATEGORIES.map(({ key, label }) => {
@@ -3992,7 +3992,7 @@ const UserSettingsModal = ({
                                   $tone="hide"
                                   onClick={() => setNewsFilterCategoryMode(key, "hide")}
                                 >
-                                  Не рекомендувати
+                                  {i18n.t("modals.UserSettingsModal.neRekomenduvaty")}
                                 </SegmentBtn>
                                 <SegmentBtn
                                   type="button"
@@ -4002,7 +4002,7 @@ const UserSettingsModal = ({
                                   $tone="show"
                                   onClick={() => setNewsFilterCategoryMode(key, "show")}
                                 >
-                                  Показувати
+                                  {i18n.t("modals.UserSettingsModal.pokazuvaty")}
                                 </SegmentBtn>
                               </Segmented>
                             </FilterRow>
@@ -4014,10 +4014,9 @@ const UserSettingsModal = ({
                     {/* 3. Власні слова та правила */}
                     <CardExpanded level="pro">
                       <CardInfo>
-                        <FilterSubTitle>Власні слова та правила ({newsFilterWords.length}/{NEWS_FILTER_MAX_WORDS})</FilterSubTitle>
+                        <FilterSubTitle>{i18n.t("modals.UserSettingsModal.vlasniSlovaTaPravyla")}{newsFilterWords.length}/{NEWS_FILTER_MAX_WORDS})</FilterSubTitle>
                         <CardDescription>
-                          Новини з цими словами в заголовку чи описі теж блокуватимуться. Регістр не важливий.
-                          Можна писати не лише слово, а й правило між косими рисками — див. пояснення нижче
+                          {i18n.t("modals.UserSettingsModal.novynyZTsymySlovamy")}
                         </CardDescription>
                       </CardInfo>
                       <form
@@ -4031,7 +4030,7 @@ const UserSettingsModal = ({
                           type="text"
                           value={newsFilterWordDraft}
                           maxLength={NEWS_FILTER_MAX_WORD_LENGTH}
-                          placeholder="Слово (футбол) або правило (/футбол\p{L}*/iu)"
+                          placeholder={i18n.t("modals.UserSettingsModal.slovoFutbolAboPravylo")}
                           disabled={!isNewsFilterOn}
                           spellCheck={false}
                           onChange={(e) => setNewsFilterWordDraft(e.target.value)}
@@ -4046,14 +4045,14 @@ const UserSettingsModal = ({
                             newsFilterWords.length >= NEWS_FILTER_MAX_WORDS
                           }
                         >
-                          <FiPlus /> Додати
+                          <FiPlus /> {i18n.t("modals.UserSettingsModal.dodaty")}
                         </WinButton>
                       </form>
                       {newsFilterDraftEntry && (
                         <DraftHint $tone={newsFilterDraftEntry.kind}>
-                          {newsFilterDraftEntry.kind === "word" && "Звичайне слово: блокуватиметься текст, що містить його"}
-                          {newsFilterDraftEntry.kind === "regex" && "Правило коректне — його можна додати"}
-                          {newsFilterDraftEntry.kind === "invalid" && `Помилка в правилі: ${newsFilterDraftEntry.error}`}
+                          {newsFilterDraftEntry.kind === "word" && i18n.t("modals.UserSettingsModal.zvychaineSlovoBlokuvatymetsiaTekst")}
+                          {newsFilterDraftEntry.kind === "regex" && i18n.t("modals.UserSettingsModal.pravyloKorektneIohoMozhna")}
+                          {newsFilterDraftEntry.kind === "invalid" && i18n.t("modals.UserSettingsModal.pomylkaVPravyli", { error: newsFilterDraftEntry.error })}
                         </DraftHint>
                       )}
                       {newsFilterWords.length > 0 && (
@@ -4061,7 +4060,7 @@ const UserSettingsModal = ({
                           {newsFilterWords.map((word) => (
                             <WordChip key={word} $regex={parseNewsFilterEntry(word).kind !== "word"}>
                               {word}
-                              <button type="button" aria-label={`Прибрати «${word}»`} onClick={() => removeNewsFilterWord(word)}>
+                              <button type="button" aria-label={i18n.t("modals.UserSettingsModal.prybraty", { word: word })} onClick={() => removeNewsFilterWord(word)}>
                                 <FiX />
                               </button>
                             </WordChip>
@@ -4080,7 +4079,7 @@ const UserSettingsModal = ({
                           <RegexHelpChevron $open={isRegexHelpOpen} aria-hidden="true">
                             <FiChevronDown />
                           </RegexHelpChevron>
-                          Як писати правила (регулярні вирази)
+                          {i18n.t("modals.UserSettingsModal.iakPysatyPravylaRehuliarni")}
                         </RegexHelpToggle>
                         <AnimatePresence initial={false}>
                           {isRegexHelpOpen && (
@@ -4094,30 +4093,28 @@ const UserSettingsModal = ({
                               style={{ overflow: "hidden" }}
                             >
                         <p>
-                          Правило — це шаблон між косими рисками. Воно ловить одразу всі форми слова. Приклад, який
-                          блокує новини про уряд, парламент і владу:
+                          {i18n.t("modals.UserSettingsModal.pravyloTseShablonMizh")}
                         </p>
                         <RegexExample>
                           <code>{NEWS_FILTER_REGEX_EXAMPLE}</code>
                           <WinButton type="button" onClick={() => setNewsFilterWordDraft(NEWS_FILTER_REGEX_EXAMPLE)}>
-                            Вставити приклад
+                            {i18n.t("modals.UserSettingsModal.vstavytyPryklad")}
                           </WinButton>
                         </RegexExample>
                         <p>
-                          Спрацює на: <i>уряд, уряду, урядом, парламент, парламенту, парламентом, влада, влади, владою</i>.
-                          Не спрацює на: <i>владика, безвладдя</i>.
+                          {i18n.t("modals.UserSettingsModal.spratsiuieNa")} <i>{i18n.t("modals.UserSettingsModal.uriadUriaduUriadomParlament")}</i>{i18n.t("modals.UserSettingsModal.neSpratsiuieNa")} <i>{i18n.t("modals.UserSettingsModal.vladykaBezvladdia")}</i>.
                         </p>
                         <RegexLegend>
-                          {NEWS_FILTER_REGEX_LEGEND.map(([token, text]) => (
+                          {NEWS_FILTER_REGEX_LEGEND().map(([token, text]) => (
                             <Fragment key={token}>
                               <code>{token}</code>
                               <span>{text}</span>
                             </Fragment>
                           ))}
                         </RegexLegend>
-                        <p style={{ marginTop: "10px" }}>Інші корисні елементи:</p>
+                        <p style={{ marginTop: "10px" }}>{i18n.t("modals.UserSettingsModal.inshiKorysniElementy")}</p>
                         <RegexLegend>
-                          {NEWS_FILTER_REGEX_EXTRA.map(([token, text]) => (
+                          {NEWS_FILTER_REGEX_EXTRA().map(([token, text]) => (
                             <Fragment key={token}>
                               <code>{token}</code>
                               <span>{text}</span>
@@ -4131,8 +4128,8 @@ const UserSettingsModal = ({
                     </CardExpanded>
 
                     <FilterNotes>
-                      <span><FiInfo aria-hidden="true" /> Нові налаштування, як і сам фільтр, діють після оновлення новин.</span>
-                      <span data-level="pro"><FiInfo aria-hidden="true" /> Розглушена плашка відкрита лише до перезавантаження сторінки.</span>
+                      <span><FiInfo aria-hidden="true" /> {i18n.t("modals.UserSettingsModal.noviNalashtuvanniaIakI")}</span>
+                      <span data-level="pro"><FiInfo aria-hidden="true" /> {i18n.t("modals.UserSettingsModal.rozhlushenaPlashkaVidkrytaLyshe")}</span>
                     </FilterNotes>
                   </FilterSubGroup>
 
@@ -4141,16 +4138,16 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#ffaa00">{newsViewMode === "list" ? <FiList /> : <FiGrid />}</CardIconBox>
                       <CardInfo>
-                        <CardTitle>Вигляд новин</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.vyhliadNovyn")}</CardTitle>
                         <CardDescription>
                           {newsViewMode === "list"
-                            ? "Список: маленьке фото ліворуч, джерело й заголовок праворуч — більше новин на екрані"
-                            : "Блоки: великі картки з фото й описом, гортаються каруселлю"}
+                            ? i18n.t("modals.UserSettingsModal.spysokMalenkeFotoLivoruch")
+                            : i18n.t("modals.UserSettingsModal.blokyVelykiKartkyZ")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
-                      <Segmented role="radiogroup" aria-label="Вигляд новин">
+                      <Segmented role="radiogroup" aria-label={i18n.t("modals.UserSettingsModal.vyhliadNovyn")}>
                         {NEWS_VIEW_MODES.map((mode) => {
                           const active = (newsViewMode === "list" ? "list" : "cards") === mode.id;
                           return (
@@ -4178,13 +4175,13 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#ffaa00"><FiRss /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Мої стрічки</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.moiStrichky")}</CardTitle>
                         <CardDescription>
-                          Додайте сайт, RSS, YouTube, Telegram, Mastodon, Bluesky чи Hive. Тут же — чорний список заблокованих джерел
+                          {i18n.t("modals.UserSettingsModal.dodaiteSaitRssYoutube")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
-                    <NewsFeedsSlot ref={newsFeedsSlotRef} />
+                    <NewsFeedsSlot ref={newsFeedsSlotRef} data-empty={i18n.t("ui.UserSettingsModal.newsFeedsEmpty")} />
                   </CardExpanded>
 
                   {/* Термінові новини: позначка й порядок — завжди, системні сповіщення — за перемикачем */}
@@ -4192,21 +4189,21 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#ef4444"><FiBell /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Сповіщення про термінові новини</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.spovishchenniaProTerminoviNovyny")}</CardTitle>
                         <CardDescription>
                           {isUrgentBusy
-                            ? "Підключаємо сповіщення…"
+                            ? i18n.t("modals.UserSettingsModal.pidkliuchaiemoSpovishchennia")
                             : isUrgentNotifyOn && urgentDelivery === "push"
-                              ? "Приходять навіть тоді, коли Стихія закрита (вбудовані джерела, стандартні слова). Про власні стрічки й слова — поки Стихія відкрита. Перевірка — раз на 30 хвилин"
+                              ? i18n.t("modals.UserSettingsModal.prykhodiatNavitTodiKoly")
                               : isPushSupported()
-                                ? "Системне сповіщення про термінову новину — навіть коли Стихія закрита. На iPhone — лише якщо сайт додано на екран «Додому». Перевірка — раз на 30 хвилин"
-                                : "Системне сповіщення про термінову новину, поки Стихія відкрита — можна у фоновій вкладці. Цей браузер не отримує сповіщень із закритого сайту. Перевірка — раз на 30 хвилин"}
+                                ? i18n.t("modals.UserSettingsModal.systemneSpovishchenniaProTerminovu")
+                                : i18n.t("modals.UserSettingsModal.systemneSpovishchenniaProTerminovu2")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={toggleUrgentNotify}>
-                        <ToggleStatusLabel $checked={isUrgentNotifyOn}>{isUrgentNotifyOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <ToggleStatusLabel $checked={isUrgentNotifyOn}>{isUrgentNotifyOn ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                         <SwitchPill $checked={isUrgentNotifyOn} />
                       </ToggleWrapper>
                     </CardControl>
@@ -4215,10 +4212,9 @@ const UserSettingsModal = ({
                   <FilterSubGroup data-level="pro">
                     <CardExpanded level="pro">
                       <CardInfo>
-                        <FilterSubTitle>Слова термінових новин ({urgentWords.length}/{URGENT_MAX_WORDS})</FilterSubTitle>
+                        <FilterSubTitle>{i18n.t("modals.UserSettingsModal.slovaTerminovykhNovyn")}{urgentWords.length}/{URGENT_MAX_WORDS})</FilterSubTitle>
                         <CardDescription>
-                          Новина з цими словами в заголовку чи описі отримує червону позначку «Терміново» і стає першою в каруселі.
-                          Можна писати початок слова: «евакуац» знайде і «евакуація», і «евакуації». Англійські слова — для іноземних стрічок
+                          {i18n.t("modals.UserSettingsModal.novynaZTsymySlovamy")}
                         </CardDescription>
                       </CardInfo>
                       <form
@@ -4232,7 +4228,7 @@ const UserSettingsModal = ({
                           type="text"
                           value={urgentWordDraft}
                           maxLength={URGENT_MAX_WORD_LENGTH}
-                          placeholder="Слово або його початок (тривога, землетрус)"
+                          placeholder={i18n.t("modals.UserSettingsModal.slovoAboIohoPochatok")}
                           spellCheck={false}
                           onChange={(e) => setUrgentWordDraft(e.target.value)}
                         />
@@ -4240,7 +4236,7 @@ const UserSettingsModal = ({
                           type="submit"
                           disabled={!urgentWordDraft.trim() || urgentWords.length >= URGENT_MAX_WORDS}
                         >
-                          <FiPlus /> Додати
+                          <FiPlus /> {i18n.t("modals.UserSettingsModal.dodaty")}
                         </WinButton>
                       </form>
                       {urgentWords.length > 0 && (
@@ -4248,7 +4244,7 @@ const UserSettingsModal = ({
                           {urgentWords.map((word) => (
                             <WordChip key={word}>
                               {word}
-                              <button type="button" aria-label={`Прибрати «${word}»`} onClick={() => removeUrgentWord(word)}>
+                              <button type="button" aria-label={i18n.t("modals.UserSettingsModal.prybraty", { word: word })} onClick={() => removeUrgentWord(word)}>
                                 <FiX />
                               </button>
                             </WordChip>
@@ -4257,7 +4253,7 @@ const UserSettingsModal = ({
                       )}
                       <div>
                         <WinButton type="button" onClick={restoreUrgentWords}>
-                          <FiRotateCcw /> Повернути стандартні слова
+                          <FiRotateCcw /> {i18n.t("modals.UserSettingsModal.povernutyStandartniSlova")}
                         </WinButton>
                       </div>
                     </CardExpanded>
@@ -4268,17 +4264,16 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#facc15"><FiCloudLightning /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Сповіщення про небезпечну погоду</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.spovishchenniaProNebezpechnuPohodu")}</CardTitle>
                         <CardDescription>
-                          Гроза, град, штормовий (пориви від {GUST_STORM_MS} м/с) чи ураганний вітер, злива, сильний снігопад, ожеледь — у найближчі {WEATHER_ALERT_HOURS} годин для кожної картки погоди.
-                          Вимкнути для окремої картки можна в її меню ⚙.
-                          {isWeatherAlertsOn && urgentDelivery === "push" ? " Приходять навіть тоді, коли Стихія закрита" : ""}
+                          {i18n.t("modals.UserSettingsModal.hrozaHradShtormovyiPoryvy")} {GUST_STORM_MS} {i18n.t("modals.UserSettingsModal.mSChyUrahannyi")} {WEATHER_ALERT_HOURS} {i18n.t("modals.UserSettingsModal.hodynDliaKozhnoiKartky")}
+                          {isWeatherAlertsOn && urgentDelivery === "push" ? " " + i18n.t("modals.UserSettingsModal.prykhodiatNavitTodiKoly2") : ""}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={toggleWeatherAlerts}>
-                        <ToggleStatusLabel $checked={isWeatherAlertsOn}>{isWeatherAlertsOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <ToggleStatusLabel $checked={isWeatherAlertsOn}>{isWeatherAlertsOn ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                         <SwitchPill $checked={isWeatherAlertsOn} />
                       </ToggleWrapper>
                     </CardControl>
@@ -4289,19 +4284,17 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#fb923c"><FiSunrise /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Ранковий прогноз о {MORNING_BRIEF_HOUR}:00</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.rankovyiProhnozO")} {MORNING_BRIEF_HOUR}:00</CardTitle>
                         <CardDescription>
                           {isUrgentBusy
-                            ? "Підключаємо сповіщення…"
-                            : `Щоранку одне сповіщення: «Конотоп: +3°, без дощу · Вдягни теплу куртку». Для першої картки погоди — іншу можна обрати в її меню ⚙. Приходить, навіть коли Стихія закрита, і не рахується в ліміт сповіщень на добу${
-                                isPushSupported() ? "" : ". Цей браузер не отримує сповіщень із закритого сайту"
-                              }`}
+                            ? i18n.t("modals.UserSettingsModal.pidkliuchaiemoSpovishchennia")
+                            : i18n.t("modals.UserSettingsModal.shchorankuOdneSpovishchenniaKonotop", { v0: isPushSupported() ? "" : i18n.t("ui.UserSettingsModal.noPushHint") })}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={toggleMorningBrief}>
-                        <ToggleStatusLabel $checked={isMorningOn}>{isMorningOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <ToggleStatusLabel $checked={isMorningOn}>{isMorningOn ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                         <SwitchPill $checked={isMorningOn} />
                       </ToggleWrapper>
                     </CardControl>
@@ -4311,13 +4304,13 @@ const UserSettingsModal = ({
                   <FilterSubGroup $disabled={!isAnyEmergencyOn} aria-disabled={!isAnyEmergencyOn}>
                     <CardExpanded>
                       <CardInfo>
-                        <FilterSubTitle>Пауза між сповіщеннями</FilterSubTitle>
+                        <FilterSubTitle>{i18n.t("modals.UserSettingsModal.pauzaMizhSpovishchenniamy")}</FilterSubTitle>
                         <CardDescription>
-                          Після сповіщення наступна новина прийде не раніше, ніж через цей час. Попередження про небезпечну погоду не чекають — приходять одразу
+                          {i18n.t("modals.UserSettingsModal.pisliaSpovishchenniaNastupnaNovyna")}
                         </CardDescription>
                       </CardInfo>
                       <div>
-                        <Segmented role="radiogroup" aria-label="Пауза між сповіщеннями">
+                        <Segmented role="radiogroup" aria-label={i18n.t("modals.UserSettingsModal.pauzaMizhSpovishchenniamy")}>
                           {ALERT_PAUSE_OPTIONS.map((m) => (
                             <SegmentBtn
                               key={m}
@@ -4337,9 +4330,9 @@ const UserSettingsModal = ({
                     </CardExpanded>
                     <CardExpanded>
                       <CardInfo>
-                        <FilterSubTitle>Не більше {alertDailyLimit} сповіщень на добу</FilterSubTitle>
+                        <FilterSubTitle>{i18n.t("modals.UserSettingsModal.neBilshe")} {alertDailyLimit} {i18n.t("modals.UserSettingsModal.spovishchenNaDobu")}</FilterSubTitle>
                         <CardDescription>
-                          Разом для термінових новин і погоди. Лічильник скидається опівночі
+                          {i18n.t("modals.UserSettingsModal.razomDliaTerminovykhNovyn")}
                         </CardDescription>
                       </CardInfo>
                       <ProgressBar
@@ -4349,7 +4342,7 @@ const UserSettingsModal = ({
                         step="1"
                         value={alertDailyLimit}
                         disabled={!isAnyEmergencyOn}
-                        aria-label="Скільки екстрених сповіщень на добу"
+                        aria-label={i18n.t("modals.UserSettingsModal.skilkyEkstrenykhSpovishchenNa")}
                         onChange={(e) => changeAlertDailyLimit(Number(e.target.value))}
                       />
                     </CardExpanded>
@@ -4360,15 +4353,15 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#f472b6"><FiHeart /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Персональні рекомендації</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.personalniRekomendatsii")}</CardTitle>
                         <CardDescription>
-                          Цікавіші вам новини стоять першими. Стихія враховує обрані теми та новини, які ви відкриваєте. Ці дані лишаються лише на цьому пристрої
+                          {i18n.t("modals.UserSettingsModal.tsikavishiVamNovynyStoiat")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={toggleRecs}>
-                        <ToggleStatusLabel $checked={isRecsOn}>{isRecsOn ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <ToggleStatusLabel $checked={isRecsOn}>{isRecsOn ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                         <SwitchPill $checked={isRecsOn} />
                       </ToggleWrapper>
                     </CardControl>
@@ -4377,8 +4370,8 @@ const UserSettingsModal = ({
                   <FilterSubGroup data-level="pro" $disabled={!isRecsOn} aria-disabled={!isRecsOn}>
                     <CardExpanded level="pro">
                       <CardInfo>
-                        <FilterSubTitle>Мої теми</FilterSubTitle>
-                        <CardDescription>Новини на ці теми показуються першими</CardDescription>
+                        <FilterSubTitle>{i18n.t("modals.UserSettingsModal.moiTemy")}</FilterSubTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.novynyNaTsiTemy")}</CardDescription>
                       </CardInfo>
                       <WordChips>
                         {NEWS_TOPICS.map((topic) => {
@@ -4402,25 +4395,25 @@ const UserSettingsModal = ({
 
                     <CardExpanded level="pro">
                       <CardInfo>
-                        <FilterSubTitle>Що Стихія вже знає про ваші інтереси</FilterSubTitle>
+                        <FilterSubTitle>{i18n.t("modals.UserSettingsModal.shchoStykhiiaVzheZnaie")}</FilterSubTitle>
                         <CardDescription>
                           {hasRecsHistory
                             ? [
-                                recsInterests.topics.length > 0 && `Теми: ${recsInterests.topics.join(", ")}`,
-                                recsInterests.sources.length > 0 && `Джерела: ${recsInterests.sources.join(", ")}`,
+                                recsInterests.topics.length > 0 && i18n.t("modals.UserSettingsModal.temy", { v0: recsInterests.topics.join(", ") }),
+                                recsInterests.sources.length > 0 && i18n.t("modals.UserSettingsModal.dzherela", { v0: recsInterests.sources.join(", ") }),
                               ].filter(Boolean).join(" · ")
-                            : "Поки нічого. Відкрийте кілька новин — і тут з'являться ваші улюблені теми та джерела"}
+                            : i18n.t("modals.UserSettingsModal.pokyNichohoVidkryiteKilka")}
                         </CardDescription>
                       </CardInfo>
                       <div>
                         <WinButton type="button" onClick={clearRecsHistory} disabled={!isRecsOn || !hasRecsHistory}>
-                          <FiTrash2 /> Забути мої кліки
+                          <FiTrash2 /> {i18n.t("modals.UserSettingsModal.zabutyMoiKliky")}
                         </WinButton>
                       </div>
                     </CardExpanded>
 
                     <FilterNotes>
-                      <span><FiInfo aria-hidden="true" /> Теми й перемикачі змінюють порядок новин одразу, а нові кліки — з наступного оновлення стрічки.</span>
+                      <span><FiInfo aria-hidden="true" /> {i18n.t("modals.UserSettingsModal.temyIPeremykachiZminiuiut")}</span>
                     </FilterNotes>
                   </FilterSubGroup>
 
@@ -4429,18 +4422,15 @@ const UserSettingsModal = ({
                       <CardLeft>
                         <CardIconBox $color="#e879f9"><FiBellOff /></CardIconBox>
                         <CardInfo>
-                          <CardTitle>Синхронізація заглушених новин і фільтра</CardTitle>
+                          <CardTitle>{i18n.t("modals.UserSettingsModal.synkhronizatsiiaZahlushenykhNovynI")}</CardTitle>
                           <CardDescription>
-                            Синхронізувати приховані новини та налаштування фільтра (теми, власні слова й правила) між усіма пристроями.
-                            Не більше {MUTE_SYNC_DAILY_LIMIT} дій на добу — «Заглушити», «Розглушити» і зміна фільтра рахуються однаково
-                            (кілька змін фільтра поспіль — одна дія). Те, що понад ліміт, зберігається лише на цьому пристрої
-                            й підтягнеться в хмару з наступною синхронізацією.
+                            {i18n.t("modals.UserSettingsModal.synkhronizuvatyPrykhovaniNovynyTa")} {MUTE_SYNC_DAILY_LIMIT} {i18n.t("modals.UserSettingsModal.diiNaDobuZahlushyty")}
                           </CardDescription>
                         </CardInfo>
                       </CardLeft>
                       <CardControl>
                         <ToggleWrapper onClick={() => updateLivePreview({ syncMutedNews: !formData.syncMutedNews })}>
-                          <ToggleStatusLabel $checked={formData.syncMutedNews}>{formData.syncMutedNews ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                          <ToggleStatusLabel $checked={formData.syncMutedNews}>{formData.syncMutedNews ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                           <SwitchPill $checked={formData.syncMutedNews} />
                         </ToggleWrapper>
                       </CardControl>
@@ -4450,8 +4440,8 @@ const UserSettingsModal = ({
                       <CardLeft>
                         <CardIconBox $color="#e879f9"><FiBellOff /></CardIconBox>
                         <CardInfo>
-                          <CardTitle>Синхронізація заглушених новин і фільтра</CardTitle>
-                          <CardDescription>🔒 Доступно тільки для зареєстрованих користувачів</CardDescription>
+                          <CardTitle>{i18n.t("modals.UserSettingsModal.synkhronizatsiiaZahlushenykhNovynI")}</CardTitle>
+                          <CardDescription>{i18n.t("modals.UserSettingsModal.dostupnoTilkyDliaZareiestrovanykh")}</CardDescription>
                         </CardInfo>
                       </CardLeft>
                     </Card>
@@ -4461,18 +4451,18 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#c4b5fd"><FiEye /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Видимість елементів новин</CardTitle>
-                        <CardDescription>Увімкніть або вимкніть частини новинних карток</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.vydymistElementivNovyn")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.uvimknitAboVymknitChastyny")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
                       {newsLayout.filter((b) => b.key !== "image").map((block) => (
                         <div key={block.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                           <span style={{ fontSize: "13px", color: "var(--s-text)" }}>
-                            {block.key === "title" ? "Заголовок новини" : "Опис новини"}
+                            {block.key === "title" ? i18n.t("modals.UserSettingsModal.zaholovokNovyny") : i18n.t("modals.UserSettingsModal.opysNovyny")}
                           </span>
                           <ToggleWrapper onClick={() => toggleNewsBlockVisibility(block.key)}>
-                            <ToggleStatusLabel $checked={block.visible}>{block.visible ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                            <ToggleStatusLabel $checked={block.visible}>{block.visible ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                             <SwitchPill $checked={block.visible} />
                           </ToggleWrapper>
                         </div>
@@ -4485,16 +4475,16 @@ const UserSettingsModal = ({
               {/* ── MODES & LOADING TAB ───────────────────────────────── */}
               {showTab("modes") && (
                 <CardGroup data-settings-tab="modes">
-                  <SectionHeaderTitle><FiZap /> Режими сайту та застосунки</SectionHeaderTitle>
-                  <SectionDescription>Тема, акцентний колір, швидкість завантаження, режим Декоратора, навчання та застосунки для пристроїв</SectionDescription>
+                  <SectionHeaderTitle><FiZap /> {i18n.t("modals.UserSettingsModal.rezhymySaituTaZastosunky")}</SectionHeaderTitle>
+                  <SectionDescription>{i18n.t("modals.UserSettingsModal.temaAktsentnyiKolirShvydkist")}</SectionDescription>
 
                   {/* Restart tutorial */}
                   <Card>
                     <CardLeft>
                       <CardIconBox $color="#86efac"><TbSchool /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Навчання від Доміно</CardTitle>
-                        <CardDescription>Пройти інтерактивне навчання по сайту ще раз</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.navchanniaVidDomino")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.proityInteraktyvneNavchanniaPo")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
@@ -4505,7 +4495,7 @@ const UserSettingsModal = ({
                           setTimeout(() => tutorial?.startTutorial(), 300);
                         }}
                       >
-                        <FiPlay /> Запустити
+                        <FiPlay /> {i18n.t("modals.UserSettingsModal.zapustyty")}
                       </WinButton>
                     </CardControl>
                   </Card>
@@ -4515,13 +4505,13 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#ffb36c">{isDarkMode ? <BsMoonStarsFill /> : <FaSunIcon style={{ color: "#ffb36c" }} />}</CardIconBox>
                       <CardInfo>
-                        <CardTitle>Головна тема сайту</CardTitle>
-                        <CardDescription>{isDarkMode ? "Темна тема активна" : "Світла тема активна"}</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.holovnaTemaSaitu")}</CardTitle>
+                        <CardDescription>{isDarkMode ? i18n.t("modals.UserSettingsModal.temnaTemaAktyvna") : i18n.t("modals.UserSettingsModal.svitlaTemaAktyvna")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <WinButton onClick={onToggleTheme}>
-                        {isDarkMode ? <><BsMoonStarsFill /> Темна</> : <><FaSunIcon style={{ color: "#ffb36c" }} /> Світла</>}
+                        {isDarkMode ? <><BsMoonStarsFill /> {i18n.t("modals.UserSettingsModal.temna")}</> : <><FaSunIcon style={{ color: "#ffb36c" }} /> {i18n.t("modals.UserSettingsModal.svitla")}</>}
                       </WinButton>
                     </CardControl>
                   </Card>
@@ -4531,9 +4521,9 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color={accentColor || "var(--s-accent)"}><GiPalette /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Акцентний колір шапки</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.aktsentnyiKolirShapky")}</CardTitle>
                         <CardDescription>
-                          {accentColor ? `Акцент: ${getAccentLabel(accentColor)}` : "Без накладення кольору"}
+                          {accentColor ? i18n.t("modals.UserSettingsModal.aktsent", { v0: getAccentLabel(accentColor) }) : i18n.t("modals.UserSettingsModal.bezNakladenniaKoloru")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
@@ -4550,13 +4540,13 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#5eead4"><FiAnchor /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Липкий фоновий ефект</CardTitle>
-                        <CardDescription>Закріплення заднього плану при скролі</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.lypkyiFonovyiEfekt")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.zakriplenniaZadnohoPlanuPry")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={onToggleStickyBg}>
-                        <ToggleStatusLabel $checked={isStickyBgMode}>{isStickyBgMode ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <ToggleStatusLabel $checked={isStickyBgMode}>{isStickyBgMode ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                         <SwitchPill $checked={isStickyBgMode} />
                       </ToggleWrapper>
                     </CardControl>
@@ -4567,15 +4557,15 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="var(--s-blue)"><FiDownloadCloud /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Стратегія завантаження ресурсів</CardTitle>
-                        <CardDescription>Оптимізація швидкості запуску та економія трафіку</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.stratehiiaZavantazhenniaResursiv")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.optymizatsiiaShvydkostiZapuskuTa")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
                       {[
-                        { key: "eager", label: "Повний", desc: "Завантажує все відразу при старті" },
-                        { key: "delayed", label: "Оптимальний", desc: "Завантажує важкі модулі через 8 сек" },
-                        { key: "lazy", label: "Економний", desc: "Завантажує тільки за потребою" },
+                        { key: "eager", label: i18n.t("modals.UserSettingsModal.povnyi"), desc: i18n.t("modals.UserSettingsModal.zavantazhuieVseVidrazuPry") },
+                        { key: "delayed", label: i18n.t("modals.UserSettingsModal.optymalnyi"), desc: i18n.t("modals.UserSettingsModal.zavantazhuieVazhkiModuliCherez") },
+                        { key: "lazy", label: i18n.t("modals.UserSettingsModal.ekonomnyi"), desc: i18n.t("modals.UserSettingsModal.zavantazhuieTilkyZaPotreboiu") },
                       ].map(({ key, label }) => (
                         <WinButton
                           key={key}
@@ -4598,20 +4588,20 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#a3e635"><FiLayers /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>«Працює на базі» при відкритті</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.pratsiuieNaBaziPry")}</CardTitle>
                         <CardDescription>
                           {loaderPoweredBy === "off"
-                            ? "Картку вимкнено — при відкритті сайту вона не з'являється"
+                            ? i18n.t("modals.UserSettingsModal.kartkuVymknenoPryVidkrytti")
                             : loaderPoweredBy === "hidden"
-                            ? "У картці лише фраза дня, без сервісів та іконок"
+                            ? i18n.t("modals.UserSettingsModal.uKarttsiLysheFraza")
                             : loaderPoweredBy === "icons"
-                              ? "Лише іконки сервісів, без підпису — назву видно при наведенні"
-                              : "Підпис «Працює на базі» та іконки сервісів, на яких зроблена Стихія"}
+                              ? i18n.t("modals.UserSettingsModal.lysheIkonkyServisivBez")
+                              : i18n.t("modals.UserSettingsModal.pidpysPratsiuieNaBazi")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
-                      <Segmented role="radiogroup" aria-label="«Працює на базі» при відкритті">
+                      <Segmented role="radiogroup" aria-label={i18n.t("modals.UserSettingsModal.pratsiuieNaBaziPry")}>
                         {LOADER_POWERED_BY_OPTIONS.map((option) => {
                           const active = loaderPoweredBy === option.id;
                           return (
@@ -4638,9 +4628,9 @@ const UserSettingsModal = ({
                       <CardIconBox $color="#d946ef"><FiPenTool /></CardIconBox>
                       <CardInfo>
                         <CardTitle>
-                          Режим Декоратора (CSS Редактор){" "}
+                          {i18n.t("modals.UserSettingsModal.rezhymDekoratoraCssRedaktor")}{" "}
                           <span
-                            title="Експериментальна функція"
+                            title={i18n.t("modals.UserSettingsModal.eksperymentalnaFunktsiia")}
                             style={{
                               display: "inline-block",
                               marginLeft: "6px",
@@ -4653,15 +4643,15 @@ const UserSettingsModal = ({
                               background: "rgba(217,70,239,0.14)",
                             }}
                           >
-                            Експериментально
+                            {i18n.t("modals.UserSettingsModal.eksperymentalno")}
                           </span>
                         </CardTitle>
                         <CardDescription>
                           {viewMode === "edit"
-                            ? "Закрийте Параметри й клацніть елемент сайту, щоб змінити його стиль. Alt + клік — звичайне натискання"
+                            ? i18n.t("modals.UserSettingsModal.zakryiteParametryIKlatsnit")
                             : viewMode === "view"
-                              ? "Перегляд: зміни Декоратора видно, а сайт працює як звичайно"
-                              : "Вимкнено: сайт без змін Декоратора — шаблони збережені"}
+                              ? i18n.t("modals.UserSettingsModal.perehliadZminyDekoratoraVydno")
+                              : i18n.t("modals.UserSettingsModal.vymknenoSaitBezZmin")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
@@ -4684,17 +4674,13 @@ const UserSettingsModal = ({
                       >
                         <span aria-hidden="true" style={{ fontSize: "15px", lineHeight: 1.3 }}>🧪</span>
                         <span>
-                          Декоратор поки що експериментальний — ми лише вчимося разом із ним. Стихія
-                          постійно оновлюється, тож після деяких оновлень окремі ваші зміни можуть трохи
-                          зсунутися або перестати діяти. Нічого страшного: їх легко поправити в
-                          Декораторі або скасувати в «Журналі змін», а сайт без них завжди працює як
-                          звичайно.
+                          {i18n.t("modals.UserSettingsModal.dekoratorPokyShchoEksperymentalnyi")}
                         </span>
                       </div>
 
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-                        <span style={{ fontSize: "13px", color: "var(--s-text)" }}>Режим Декоратора</span>
-                        <Segmented role="radiogroup" aria-label="Режим Декоратора">
+                        <span style={{ fontSize: "13px", color: "var(--s-text)" }}>{i18n.t("modals.UserSettingsModal.rezhymDekoratora")}</span>
+                        <Segmented role="radiogroup" aria-label={i18n.t("modals.UserSettingsModal.rezhymDekoratora")}>
                           {DECORATOR_VIEW_OPTIONS.map((option) => {
                             const active = viewMode === option.id;
                             return (
@@ -4718,17 +4704,17 @@ const UserSettingsModal = ({
                       {viewMode !== "off" && (
                         <>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <span style={{ fontSize: "13px", color: "var(--s-text)" }}>Зберігати зміни після оновлення</span>
+                            <span style={{ fontSize: "13px", color: "var(--s-text)" }}>{i18n.t("modals.UserSettingsModal.zberihatyZminyPisliaOnovlennia")}</span>
                             <ToggleWrapper onClick={() => setIsPersistent(!isPersistent)}>
-                              <ToggleStatusLabel $checked={isPersistent}>{isPersistent ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                              <ToggleStatusLabel $checked={isPersistent}>{isPersistent ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                               <SwitchPill $checked={isPersistent} />
                             </ToggleWrapper>
                           </div>
 
                           <div style={{ fontSize: "12px", fontWeight: "600", color: "var(--s-accent)", marginTop: "4px" }}>
-                            Вигляд сайту (кожен шаблон зберігає свої окремі зміни)
+                            {i18n.t("modals.UserSettingsModal.vyhliadSaituKozhenShablon")}
                           </div>
-                          <DecoratorPresetRow role="radiogroup" aria-label="Вигляд сайту в Декораторі">
+                          <DecoratorPresetRow role="radiogroup" aria-label={i18n.t("modals.UserSettingsModal.vyhliadSaituVDekoratori")}>
                             {DECORATOR_PRESETS.map((preset) => {
                               const isOriginal = preset.id === "original";
                               const active = isOriginal ? showOriginal : !showOriginal && activePreset === preset.id;
@@ -4745,7 +4731,7 @@ const UserSettingsModal = ({
                                   <DecoratorPresetThumb accent={preset.accent} rounded={preset.rounded} variant={preset.variant} />
                                   <DecoratorPresetName title={preset.label}>{preset.label}</DecoratorPresetName>
                                   <DecoratorPresetMeta>
-                                    {isOriginal ? preset.hint : count ? `Змін: ${count}` : "Порожній"}
+                                    {isOriginal ? preset.hint : count ? i18n.t("modals.UserSettingsModal.zmin", { count: count }) : i18n.t("modals.UserSettingsModal.porozhnii")}
                                   </DecoratorPresetMeta>
                                 </DecoratorPresetBtn>
                               );
@@ -4753,12 +4739,12 @@ const UserSettingsModal = ({
                           </DecoratorPresetRow>
                           {showOriginal && (
                             <span style={{ fontSize: "11px", color: "var(--s-muted)" }}>
-                              Зараз видно сайт без змін Декоратора. Шаблони збережені — оберіть один, щоб повернути його вигляд.
+                              {i18n.t("modals.UserSettingsModal.zarazVydnoSaitBez")}
                             </span>
                           )}
 
                           <div style={{ fontSize: "12px", fontWeight: "600", color: "var(--s-accent)", marginTop: "4px" }}>
-                            Журнал змін ({changeLog.length})
+                            {i18n.t("modals.UserSettingsModal.zhurnalZmin")}{changeLog.length})
                           </div>
 
                           {changeLog.length > 0 ? (
@@ -4766,23 +4752,23 @@ const UserSettingsModal = ({
                               {changeLog.map((log) => (
                                 <div key={log.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(var(--s-ink),0.04)", padding: "4px 8px", borderRadius: "4px", fontSize: "11px" }}>
                                   <span><b style={{ color: "var(--s-accent)" }}>{log.tagName}</b> {DECORATOR_LOG_LABELS[log.property] || log.property}: {formatDecoratorLogValue(log.newValue)}</span>
-                                  <WinButton style={{ padding: "2px 6px", fontSize: "10px" }} onClick={() => undoChange(log.id)}>Відмінити</WinButton>
+                                  <WinButton style={{ padding: "2px 6px", fontSize: "10px" }} onClick={() => undoChange(log.id)}>{i18n.t("modals.UserSettingsModal.vidminyty")}</WinButton>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <span style={{ fontSize: "11px", color: "var(--s-muted)", fontStyle: "italic" }}>Змін ще немає</span>
+                            <span style={{ fontSize: "11px", color: "var(--s-muted)", fontStyle: "italic" }}>{i18n.t("modals.UserSettingsModal.zminShcheNemaie")}</span>
                           )}
 
                           {decorItems.length > 0 && (
                             <span style={{ fontSize: "12px", color: "var(--s-muted)" }}>
-                              Декор-об'єктів (фото/відео) на сторінці: {decorItems.length}. Змінювати їх — у режимі «Редагування».
+                              {i18n.t("modals.UserSettingsModal.dekorObiektivFotoVideo")} {decorItems.length}{i18n.t("modals.UserSettingsModal.zminiuvatyIkhURezhymi")}
                             </span>
                           )}
 
                           {(changeLog.length > 0 || decorItems.length > 0) && (
                             <WinButton $danger onClick={resetAll} style={{ alignSelf: "flex-start" }}>
-                              Скинути всі зміни Декоратора
+                              {i18n.t("modals.UserSettingsModal.skynutyVsiZminyDekoratora")}
                             </WinButton>
                           )}
                         </>
@@ -4790,14 +4776,14 @@ const UserSettingsModal = ({
                     </div>
                   </CardExpanded>
 
-                  <SubSectionTitle><FiDownload /> Застосунки Стихії</SubSectionTitle>
+                  <SubSectionTitle><FiDownload /> {i18n.t("modals.UserSettingsModal.zastosunkyStykhii")}</SubSectionTitle>
 
                   <Card>
                     <CardLeft>
                       <CardIconBox $color="#00a4ef"><FaWindows /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Версія для Windows</CardTitle>
-                        <CardDescription>Завантажити застосунок Stuxia для комп'ютера</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.versiiaDliaWindows")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.zavantazhytyZastosunokStuxiaDlia")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
@@ -4806,7 +4792,7 @@ const UserSettingsModal = ({
                         $primary
                         href="https://github.com/TheTurkeyProgramist/stuxia/releases/download/v1.0.0/stuxia_1.0.0_x64-setup.exe"
                       >
-                        <FiDownload /> Завантажити
+                        <FiDownload /> {i18n.t("modals.UserSettingsModal.zavantazhyty")}
                       </WinButton>
                     </CardControl>
                   </Card>
@@ -4815,8 +4801,8 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#3ddc84"><FaAndroid /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Версія для Android</CardTitle>
-                        <CardDescription>APK для встановлення на Android-пристрої</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.versiiaDliaAndroid")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.apkDliaVstanovlenniaNa")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
@@ -4825,7 +4811,7 @@ const UserSettingsModal = ({
                         $primary
                         href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Android.apk"
                       >
-                        <FiDownload /> Завантажити APK
+                        <FiDownload /> {i18n.t("modals.UserSettingsModal.zavantazhytyApk")}
                       </WinButton>
                     </CardControl>
                   </Card>
@@ -4834,8 +4820,8 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#fcc624"><FaLinux /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Версія для Linux</CardTitle>
-                        <CardDescription>Ubuntu 22.04+, Debian 12+, Mint 21+, Fedora 38+: AppImage або DEB</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.versiiaDliaLinux")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.ubuntu2204Debian")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
@@ -4859,8 +4845,8 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#d1d5db"><FaApple /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>На iPhone та iPad</CardTitle>
-                        <CardDescription>Відкрийте сайт у Safari, натисніть «Поділитися» → «На початковий екран»</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.naIphoneTaIpad")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.vidkryiteSaitUSafari")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
@@ -4871,7 +4857,7 @@ const UserSettingsModal = ({
                         target="_blank"
                         rel="noreferrer"
                       >
-                        <FiGlobe /> Відкрити сайт
+                        <FiGlobe /> {i18n.t("modals.UserSettingsModal.vidkrytySait")}
                       </WinButton>
                     </CardControl>
                   </Card>
@@ -4881,10 +4867,10 @@ const UserSettingsModal = ({
               {/* ── VISUAL FILTERS TAB ─────────────────────────────────── */}
               {showTab("filters") && (
                 <CardGroup data-settings-tab="filters">
-                  <SectionHeaderTitle><FiEye /> Візуальні фільтри та пресети</SectionHeaderTitle>
+                  <SectionHeaderTitle><FiEye /> {i18n.t("modals.UserSettingsModal.vizualniFiltryTaPresety")}</SectionHeaderTitle>
                   <SectionDescription>
-                    Затемнення, кольорові фільтри для зору та збереження власних пресетів.
-                    {isFiltersPreviewOn && <WideScreenOnly as="span"> Результат видно на сторінці ліворуч</WideScreenOnly>}
+                    {i18n.t("modals.UserSettingsModal.zatemnenniaKoloroviFiltryDlia")}
+                    {isFiltersPreviewOn && <WideScreenOnly as="span"> {i18n.t("modals.UserSettingsModal.rezultatVydnoNaStorintsi")}</WideScreenOnly>}
                   </SectionDescription>
                   <TabLevelHint tab="filters" />
 
@@ -4894,18 +4880,18 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#fdba74"><FiColumns /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Перегляд поруч зі сторінкою</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.perehliadPoruchZiStorinkoiu")}</CardTitle>
                         <CardDescription>
                           {isFiltersPreviewOn
-                            ? "На цій вкладці вікно зсувається праворуч і не затемнює сайт (на широкому екрані)"
-                            : "Вікно налаштувань звичайного розміру, сторінка затемнена"}
+                            ? i18n.t("modals.UserSettingsModal.naTsiiVkladtsiVikno")
+                            : i18n.t("modals.UserSettingsModal.viknoNalashtuvanZvychainohoRozmiru")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={toggleFiltersPreview}>
                         <ToggleStatusLabel $checked={isFiltersPreviewOn}>
-                          {isFiltersPreviewOn ? "Увімкнуто" : "Вимкнуто"}
+                          {isFiltersPreviewOn ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}
                         </ToggleStatusLabel>
                         <SwitchPill $checked={isFiltersPreviewOn} />
                       </ToggleWrapper>
@@ -4917,8 +4903,8 @@ const UserSettingsModal = ({
                       <CardLeft>
                         <CardIconBox $color="#fcd34d"><FiMaximize2 /></CardIconBox>
                         <CardInfo>
-                          <CardTitle>Ширина вікна в режимі перегляду</CardTitle>
-                          <CardDescription>{filtersPreviewWidth}% ширини екрана</CardDescription>
+                          <CardTitle>{i18n.t("modals.UserSettingsModal.shyrynaViknaVRezhymi")}</CardTitle>
+                          <CardDescription>{filtersPreviewWidth}{i18n.t("modals.UserSettingsModal.shyrynyEkrana")}</CardDescription>
                         </CardInfo>
                       </CardLeft>
                       <CardControl style={{ minWidth: "180px" }}>
@@ -4940,8 +4926,8 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#fde047"><TbBrightnessDown /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Зменшення яскравості / Затемнення</CardTitle>
-                        <CardDescription>Інтенсивність: {visualConfig.darkIntensity || 0}%</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.zmenshenniaIaskravostiZatemnennia")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.intensyvnist")} {visualConfig.darkIntensity || 0}%</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl style={{ minWidth: "180px" }}>
@@ -4958,8 +4944,8 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#f0abfc"><TbColorFilter /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Кольорові та зорові фільтри</CardTitle>
-                        <CardDescription>Оберіть ефект для оформлення сторінки</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.koloroviTaZoroviFiltry")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.oberitEfektDliaOformlennia")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <FilterGrid style={{ marginTop: "4px" }}>
@@ -4981,8 +4967,8 @@ const UserSettingsModal = ({
                       <CardLeft>
                         <CardIconBox $color="#fca5a5"><FiSlidersIcon /></CardIconBox>
                         <CardInfo>
-                          <CardTitle>Сила ефекту фільтра</CardTitle>
-                          <CardDescription>Інтенсивність: {visualConfig.filterIntensity || 50}%</CardDescription>
+                          <CardTitle>{i18n.t("modals.UserSettingsModal.sylaEfektuFiltra")}</CardTitle>
+                          <CardDescription>{i18n.t("modals.UserSettingsModal.intensyvnist")} {visualConfig.filterIntensity || 50}%</CardDescription>
                         </CardInfo>
                       </CardLeft>
                       <CardControl style={{ minWidth: "180px" }}>
@@ -5000,13 +4986,13 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#67e8f9"><FiImage /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Приклад</CardTitle>
-                        <CardDescription>Так фільтр виглядатиме на сторінці</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.pryklad")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.takFiltrVyhliadatymeNa")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <FilterExampleImage
                       src={filterExampleImg}
-                      alt="Приклад візуального фільтра"
+                      alt={i18n.t("modals.UserSettingsModal.prykladVizualnohoFiltra")}
                       loading="lazy"
                       style={{ filter: getPreviewFilter(visualConfig) }}
                     />
@@ -5017,11 +5003,11 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#a5b4fc"><FiLayers /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Комбінація фільтрів</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.kombinatsiiaFiltriv")}</CardTitle>
                         <CardDescription>
                           {comboIds.length > 1
-                            ? `Разом діють: ${comboIds.map((id) => FILTERS.find((f) => f.id === id)?.label).join(" + ")}`
-                            : "Позначте кілька фільтрів, щоб вони діяли разом, і збережіть як власний пресет"}
+                            ? i18n.t("modals.UserSettingsModal.razomDiiut", { v0: comboIds.map((id) => FILTERS.find((f) => f.id === id)?.label).join(" + ") })
+                            : i18n.t("modals.UserSettingsModal.poznachteKilkaFiltrivShchob")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
@@ -5039,9 +5025,9 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#f9a8d4"><TbWand /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Швидкі стилі та пресети</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.shvydkiStyliTaPresety")}</CardTitle>
                         <CardDescription>
-                          Готові стилі та власні пресети ({customPresets.length}/{MAX_CUSTOM_PRESETS}). Хедер і налаштування фільтри не змінюють — тут їх завжди можна вимкнути
+                          {i18n.t("modals.UserSettingsModal.hotoviStyliTaVlasni")}{customPresets.length}/{MAX_CUSTOM_PRESETS}{i18n.t("modals.UserSettingsModal.khederINalashtuvanniaFiltry")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
@@ -5058,10 +5044,10 @@ const UserSettingsModal = ({
                           </FilterCardBtn>
                           <IconBtn
                             onClick={() => {
-                              const n = window.prompt("Нова назва пресета:", presetName(p));
+                              const n = window.prompt(i18n.t("modals.UserSettingsModal.novaNazvaPreseta"), presetName(p));
                               if (n) onUpdatePresetName(p.id, n);
                             }}
-                            title="Перейменувати"
+                            title={i18n.t("modals.UserSettingsModal.pereimenuvaty")}
                             style={{ width: 22, height: 22, fontSize: 10 }}
                           >
                             <FiEdit2 />
@@ -5069,7 +5055,7 @@ const UserSettingsModal = ({
                           <IconBtn
                             $danger
                             onClick={() => onDeletePreset(p.id)}
-                            title="Видалити"
+                            title={i18n.t("modals.UserSettingsModal.vydalyty")}
                             style={{ width: 22, height: 22, fontSize: 10 }}
                           >
                             <FiX />
@@ -5080,7 +5066,7 @@ const UserSettingsModal = ({
 
                     <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
                       <WinInput
-                        placeholder={customPresets.length >= MAX_CUSTOM_PRESETS ? "Досягнуто ліміт — видаліть пресет" : "Назва нового пресета..."}
+                        placeholder={customPresets.length >= MAX_CUSTOM_PRESETS ? i18n.t("modals.UserSettingsModal.dosiahnutoLimitVydalitPreset") : i18n.t("modals.UserSettingsModal.nazvaNovohoPreseta")}
                         value={newPresetName}
                         onChange={(e) => setNewPresetName(e.target.value)}
                         maxLength={15}
@@ -5095,13 +5081,13 @@ const UserSettingsModal = ({
                           }
                         }}
                       >
-                        Зберегти
+                        {i18n.t("modals.UserSettingsModal.zberehty")}
                       </WinButton>
                     </div>
                   </CardExpanded>
 
                   <WinButton $danger onClick={onResetFilters} style={{ alignSelf: "flex-start", marginTop: "4px" }}>
-                    <FiRotateCcw /> Скинути всі фільтри
+                    <FiRotateCcw /> {i18n.t("modals.UserSettingsModal.skynutyVsiFiltry")}
                   </WinButton>
                 </CardGroup>
               )}
@@ -5109,8 +5095,8 @@ const UserSettingsModal = ({
               {/* ── BG MUSIC TAB ────────────────────────────────────── */}
               {showTab("bgMusic") && (
                 <CardGroup data-settings-tab="bgMusic">
-                  <SectionHeaderTitle><FiMusic /> Фонова музика</SectionHeaderTitle>
-                  <SectionDescription>Гучність, швидкість і режим відтворення, бібліотека треків та власні файли</SectionDescription>
+                  <SectionHeaderTitle><FiMusic /> {i18n.t("modals.UserSettingsModal.fonovaMuzyka")}</SectionHeaderTitle>
+                  <SectionDescription>{i18n.t("modals.UserSettingsModal.huchnistShvydkistIRezhym")}</SectionDescription>
                   <TabLevelHint tab="bgMusic" />
 
                   {/* Main toggle */}
@@ -5118,13 +5104,13 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#a78bfa"><FiMusic /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Фонова музика</CardTitle>
-                        <CardDescription>Вмикайте приємну музику під час використання сайту</CardDescription>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.fonovaMuzyka")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.vmykaitePryiemnuMuzykuPid")}</CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={() => setBgMusicEnabled(!bgMusicEnabled)}>
-                        <ToggleStatusLabel $checked={bgMusicEnabled}>{bgMusicEnabled ? "Увімкнуто" : "Вимкнуто"}</ToggleStatusLabel>
+                        <ToggleStatusLabel $checked={bgMusicEnabled}>{bgMusicEnabled ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}</ToggleStatusLabel>
                         <SwitchPill $checked={bgMusicEnabled} />
                       </ToggleWrapper>
                     </CardControl>
@@ -5136,23 +5122,23 @@ const UserSettingsModal = ({
                       <CardLeft>
                         <CardIconBox $color="#c084fc"><FiVolume2 /></CardIconBox>
                         <CardInfo>
-                          <CardTitle>Гучність та швидкість</CardTitle>
-                          <CardDescription>Налаштування відтворення фону та звукових ефектів</CardDescription>
+                          <CardTitle>{i18n.t("modals.UserSettingsModal.huchnistTaShvydkist")}</CardTitle>
+                          <CardDescription>{i18n.t("modals.UserSettingsModal.nalashtuvanniaVidtvorenniaFonuTa")}</CardDescription>
                         </CardInfo>
                       </CardLeft>
                       <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "4px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <span style={{ fontSize: "12px", color: "var(--s-muted)", minWidth: "90px" }}>Гучність: {Math.round(bgMusicVolume * 100)}%</span>
+                          <span style={{ fontSize: "12px", color: "var(--s-muted)", minWidth: "90px" }}>{i18n.t("modals.UserSettingsModal.huchnist")} {Math.round(bgMusicVolume * 100)}%</span>
                           <ProgressBar type="range" min="0" max="1" step="0.01" value={bgMusicVolume}
                             onChange={(e) => setBgMusicVolume(parseFloat(e.target.value))} style={{ flex: 1 }} />
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <span style={{ fontSize: "12px", color: "var(--s-muted)", minWidth: "90px" }}>Швидкість: {bgMusicSpeed}x</span>
+                          <span style={{ fontSize: "12px", color: "var(--s-muted)", minWidth: "90px" }}>{i18n.t("modals.UserSettingsModal.shvydkist")} {bgMusicSpeed}x</span>
                           <ProgressBar type="range" min="0.5" max="2" step="0.05" value={bgMusicSpeed}
                             onChange={(e) => applySpeedChange(parseFloat(e.target.value))} style={{ flex: 1 }} />
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                          <span style={{ fontSize: "12px", color: "var(--s-muted)", minWidth: "90px" }}>Гучність SFX: {Math.round(sfxVolume * 100)}%</span>
+                          <span style={{ fontSize: "12px", color: "var(--s-muted)", minWidth: "90px" }}>{i18n.t("modals.UserSettingsModal.huchnistSfx")} {Math.round(sfxVolume * 100)}%</span>
                           <ProgressBar type="range" min="0" max="1" step="0.01" value={sfxVolume}
                             onChange={(e) => setSfxVolume(parseFloat(e.target.value))} style={{ flex: 1 }} />
                         </div>
@@ -5164,8 +5150,8 @@ const UserSettingsModal = ({
                       <CardLeft>
                         <CardIconBox $color="#8b5cf6"><TbMenuOrder style={{ fontSize: "18px" }} /></CardIconBox>
                         <CardInfo>
-                          <CardTitle>Режим відтворення</CardTitle>
-                          <CardDescription>Позиція: {formatTime(currentTime)} / {formatTime(duration)}</CardDescription>
+                          <CardTitle>{i18n.t("modals.UserSettingsModal.rezhymVidtvorennia")}</CardTitle>
+                          <CardDescription>{i18n.t("modals.UserSettingsModal.pozytsiia")} {formatTime(currentTime)} / {formatTime(duration)}</CardDescription>
                         </CardInfo>
                       </CardLeft>
                       <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
@@ -5174,14 +5160,14 @@ const UserSettingsModal = ({
                           {["loop", "order"].map((m) => (
                             <WinButton key={m} onClick={() => setBgMusicMode(m)}
                               style={{ background: bgMusicMode === m ? "rgba(var(--s-accent-rgb),0.15)" : undefined, borderColor: bgMusicMode === m ? "var(--s-accent)" : undefined }}>
-                              <FiRepeat /> {m === "loop" ? "Повтор" : "Порядок"}
+                              <FiRepeat /> {m === "loop" ? i18n.t("modals.UserSettingsModal.povtor") : i18n.t("modals.UserSettingsModal.poriadok")}
                             </WinButton>
                           ))}
                           <WinButton onClick={() => setBgMusicShuffle(!bgMusicShuffle)}
                             style={{ background: bgMusicShuffle ? "rgba(167,139,250,0.15)" : undefined, borderColor: bgMusicShuffle ? "#a78bfa" : undefined }}>
-                            <FiShuffle /> Перемішати
+                            <FiShuffle /> {i18n.t("modals.UserSettingsModal.peremishaty")}
                           </WinButton>
-                          <WinButton onClick={onResetBgPosition}>Скинути позицію</WinButton>
+                          <WinButton onClick={onResetBgPosition}>{i18n.t("modals.UserSettingsModal.skynutyPozytsiiu")}</WinButton>
                         </div>
                       </div>
                     </CardExpanded>
@@ -5191,7 +5177,7 @@ const UserSettingsModal = ({
                       {["library", "custom"].map((t) => (
                         <WinButton key={t} onClick={() => setMusicTab(t)}
                           style={{ background: musicTab === t ? "rgba(var(--s-accent-rgb),0.15)" : undefined, borderColor: musicTab === t ? "var(--s-accent)" : undefined }}>
-                          {t === "library" ? <><FiList /> Бібліотека</> : <><FiUpload /> Власні треки</>}
+                          {t === "library" ? <><FiList /> {i18n.t("modals.UserSettingsModal.biblioteka")}</> : <><FiUpload /> {i18n.t("modals.UserSettingsModal.vlasniTreky")}</>}
                         </WinButton>
                       ))}
                     </div>
@@ -5200,7 +5186,7 @@ const UserSettingsModal = ({
                       <CardExpanded>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
                           <FiSearch style={{ color: "var(--s-muted)" }} />
-                          <WinInput placeholder="Пошук треку..." value={libSearch} onChange={(e) => setLibSearch(e.target.value)} style={{ maxWidth: "280px" }} />
+                          <WinInput placeholder={i18n.t("modals.UserSettingsModal.poshukTreku")} value={libSearch} onChange={(e) => setLibSearch(e.target.value)} style={{ maxWidth: "280px" }} />
                         </div>
                         <MusicScrollList>
                           {libraryTracks.map((track) => {
@@ -5225,14 +5211,14 @@ const UserSettingsModal = ({
                                 <TrackInfo>
                                   <TrackName>{track.name}</TrackName>
                                   <TrackStatus>
-                                    {track.isCustom ? "Власний трек" : isLoading ? `Завантаження ${prog}%...` : track.available ? "✓ Доступний" : "↓ Клікніть для завантаження"}
+                                    {track.isCustom ? i18n.t("modals.UserSettingsModal.vlasnyiTrek") : isLoading ? i18n.t("modals.UserSettingsModal.zavantazhennia", { prog: prog }) : track.available ? i18n.t("modals.UserSettingsModal.dostupnyi") : i18n.t("modals.UserSettingsModal.kliknitDliaZavantazhennia")}
                                   </TrackStatus>
                                 </TrackInfo>
                                 {isActive && <Equalizer />}
                                 {bgMusicMode === "order" && (
                                   <IconBtn
                                     onClick={(e) => { e.stopPropagation(); toggleTrackHidden(track, isActive); }}
-                                    title={track.hidden ? "Повернути в чергу" : "Пропускати в режимі «Порядок»"}
+                                    title={track.hidden ? i18n.t("modals.UserSettingsModal.povernutyVCherhu") : i18n.t("modals.UserSettingsModal.propuskatyVRezhymiPoriadok")}
                                   >
                                     {track.hidden ? <FaEyeSlash style={{ color: "var(--s-red)" }} /> : <FaEye style={{ color: "var(--s-accent)" }} />}
                                   </IconBtn>
@@ -5249,8 +5235,8 @@ const UserSettingsModal = ({
                         <CardLeft>
                           <CardIconBox $color="#7c3aed"><FiUpload /></CardIconBox>
                           <CardInfo>
-                            <CardTitle>Власні треки ({customTracks.length}/{MAX_CUSTOM_TRACKS})</CardTitle>
-                            <CardDescription>MP3/WAV/OPUS (рекомендовано) до {MAX_CUSTOM_MB} МБ та {MAX_CUSTOM_MIN} хвилин. Додані треки з'являються в бібліотеці</CardDescription>
+                            <CardTitle>{i18n.t("modals.UserSettingsModal.vlasniTreky2")}{customTracks.length}/{MAX_CUSTOM_TRACKS})</CardTitle>
+                            <CardDescription>{i18n.t("modals.UserSettingsModal.mp3WavOpusRekomendovano")} {MAX_CUSTOM_MB} {i18n.t("modals.UserSettingsModal.mbTa")} {MAX_CUSTOM_MIN} {i18n.t("modals.UserSettingsModal.khvylynDodaniTrekyZiavliaiutsia")}</CardDescription>
                           </CardInfo>
                         </CardLeft>
                         <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
@@ -5260,13 +5246,13 @@ const UserSettingsModal = ({
                                 ? <div style={{ width: 28, height: 28, background: "rgba(var(--s-accent-rgb),0.1)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}><FiMusic style={{ color: "var(--s-accent)", fontSize: "13px" }} /></div>
                                 : <div style={{ width: 28, height: 28, background: "rgba(var(--s-ink),0.04)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "var(--s-faint)", fontSize: "12px" }}>{i + 1}</span></div>
                               }
-                              <SlotName>{track?.name || <span style={{ color: "var(--s-faint)" }}>Додати трек</span>}</SlotName>
+                              <SlotName>{track?.name || <span style={{ color: "var(--s-faint)" }}>{i18n.t("modals.UserSettingsModal.dodatyTrek")}</span>}</SlotName>
                               <SlotActions>
-                                <IconBtn onClick={() => { activeSlotRef.current = i; fileInputRef.current.click(); }} title="Завантажити">
+                                <IconBtn onClick={() => { activeSlotRef.current = i; fileInputRef.current.click(); }} title={i18n.t("modals.UserSettingsModal.zavantazhyty")}>
                                   <FiUpload />
                                 </IconBtn>
                                 {track?.file && (
-                                  <IconBtn $danger onClick={() => handleRemoveCustomTrack(i)} title="Видалити"><FiTrash2 /></IconBtn>
+                                  <IconBtn $danger onClick={() => handleRemoveCustomTrack(i)} title={i18n.t("modals.UserSettingsModal.vydalyty")}><FiTrash2 /></IconBtn>
                                 )}
                               </SlotActions>
                             </CustomSlotCard>
@@ -5282,10 +5268,9 @@ const UserSettingsModal = ({
               {/* ── BETA TAB ─────────────────────────────────────────── */}
               {showTab("beta") && (
                 <CardGroup data-settings-tab="beta">
-                  <SectionHeaderTitle><TbFlask /> Бета-функції</SectionHeaderTitle>
+                  <SectionHeaderTitle><TbFlask /> {i18n.t("modals.UserSettingsModal.betaFunktsii")}</SectionHeaderTitle>
                   <SectionDescription>
-                    Нові можливості, які ще допрацьовуються. Можуть поводитись несподівано — якщо щось не так,
-                    просто вимкніть. Налаштування діють лише в цьому браузері.
+                    {i18n.t("modals.UserSettingsModal.noviMozhlyvostiIakiShche")}
                   </SectionDescription>
                   <TabLevelHint tab="beta" />
 
@@ -5293,18 +5278,18 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#60a5fa"><FiNavigation /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Вимкнути GPS-картку</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.vymknutyGpsKartku")}</CardTitle>
                         <CardDescription>
                           {isHideGpsCardBeta
-                            ? "Картка «Ваша локація» не створюється, геолокація не запитується. Можна мати 9 власних карток"
-                            : "Прибрати картку «Ваша локація» й отримати місце ще для однієї власної картки (8 → 9)"}
+                            ? i18n.t("modals.UserSettingsModal.kartkaVashaLokatsiiaNe")
+                            : i18n.t("modals.UserSettingsModal.prybratyKartkuVashaLokatsiia")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={() => onToggleHideGpsCard(!isHideGpsCardBeta)}>
                         <ToggleStatusLabel $checked={isHideGpsCardBeta}>
-                          {isHideGpsCardBeta ? "Увімкнуто" : "Вимкнуто"}
+                          {isHideGpsCardBeta ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}
                         </ToggleStatusLabel>
                         <SwitchPill $checked={isHideGpsCardBeta} />
                       </ToggleWrapper>
@@ -5315,16 +5300,16 @@ const UserSettingsModal = ({
                     <CardLeft>
                       <CardIconBox $color="#f472b6"><FiMove /></CardIconBox>
                       <CardInfo>
-                        <CardTitle>Перетягування карток</CardTitle>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.peretiahuvanniaKartok")}</CardTitle>
                         <CardDescription>
-                          Кнопка «Порядок» біля пошуку міст: тягніть картки за ⠿, щоб змінити їхній порядок
+                          {i18n.t("modals.UserSettingsModal.knopkaPoriadokBiliaPoshuku")}
                         </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
                       <ToggleWrapper onClick={() => setBetaOn("dragCards", !isDragCardsBeta)}>
                         <ToggleStatusLabel $checked={isDragCardsBeta}>
-                          {isDragCardsBeta ? "Увімкнуто" : "Вимкнуто"}
+                          {isDragCardsBeta ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}
                         </ToggleStatusLabel>
                         <SwitchPill $checked={isDragCardsBeta} />
                       </ToggleWrapper>
@@ -5336,16 +5321,16 @@ const UserSettingsModal = ({
                       <CardLeft>
                         <CardIconBox $color="#facc15"><FiVolume2 /></CardIconBox>
                         <CardInfo>
-                          <CardTitle>Озвучення прогнозу</CardTitle>
+                          <CardTitle>{i18n.t("modals.UserSettingsModal.ozvuchenniaProhnozu")}</CardTitle>
                           <CardDescription>
-                            Кнопка 🔊 на картці погоди читає коротке зведення: зараз, вітер, сьогодні
+                            {i18n.t("modals.UserSettingsModal.knopkaNaKarttsiPohody")}
                           </CardDescription>
                         </CardInfo>
                       </CardLeft>
                       <CardControl>
                         <ToggleWrapper onClick={() => setBetaOn("voiceForecast", !isVoiceBeta)}>
                           <ToggleStatusLabel $checked={isVoiceBeta}>
-                            {isVoiceBeta ? "Увімкнуто" : "Вимкнуто"}
+                            {isVoiceBeta ? i18n.t("modals.UserSettingsModal.uvimknuto") : i18n.t("modals.UserSettingsModal.vymknuto")}
                           </ToggleStatusLabel>
                           <SwitchPill $checked={isVoiceBeta} />
                         </ToggleWrapper>
@@ -5371,7 +5356,7 @@ const UserSettingsModal = ({
                 >
                   <ScrollHintButton type="button" onClick={scrollToHint}>
                     <FiChevronDown aria-hidden="true" />
-                    {scrollHint.label ? `Нижче: ${scrollHint.label}` : "Прокрутіть нижче"}
+                    {scrollHint.label ? i18n.t("modals.UserSettingsModal.nyzhche", { label: scrollHint.label }) : i18n.t("modals.UserSettingsModal.prokrutitNyzhche")}
                   </ScrollHintButton>
                 </ScrollHintFade>
               )}
@@ -5384,11 +5369,11 @@ const UserSettingsModal = ({
             <TermsRow>
               <FiInfo style={{ color: "var(--s-accent)" }} />
               <span>
-                Ви погодились з{" "}
-                <TermsLink onClick={() => setShowTerms(true)}>Угодою</TermsLink>
+                {i18n.t("modals.UserSettingsModal.vyPohodylysZ")}{" "}
+                <TermsLink onClick={() => setShowTerms(true)}>{i18n.t("modals.UserSettingsModal.uhodoiu")}</TermsLink>
               </span>
               <Tooltip
-                content="Вийти з акаунта й стерти всі дані сайту на цьому пристрої"
+                content={i18n.t("modals.UserSettingsModal.vyityZAkauntaI")}
                 placement="top"
                 isDarkMode={isDarkMode}
               >
@@ -5398,15 +5383,15 @@ const UserSettingsModal = ({
                   disabled={resetLoading}
                 >
                   <FiRotateCcw aria-hidden="true" />
-                  {resetLoading ? "Скидаємо..." : "Скинути сайт"}
+                  {resetLoading ? i18n.t("modals.UserSettingsModal.skydaiemo") : i18n.t("modals.UserSettingsModal.skynutySait")}
                 </ResetLink>
               </Tooltip>
             </TermsRow>
             <FooterButtons>
-              <WinButton onClick={handleCancel}>Скасувати</WinButton>
+              <WinButton onClick={handleCancel}>{i18n.t("modals.UserSettingsModal.skasuvaty")}</WinButton>
               {!isGuest && (
                 <WinButton $primary onClick={handleSubmit} disabled={isInvalidDate}>
-                  Зберегти
+                  {i18n.t("modals.UserSettingsModal.zberehty")}
                 </WinButton>
               )}
             </FooterButtons>

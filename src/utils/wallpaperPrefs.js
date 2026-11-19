@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { getPref, setPref, subscribePrefs } from "./prefsStore.js";
 
+import i18n from "../i18n/i18n.js";
 // Живі шпалери — сцени міст часових поясів як фон Hero.
 // Фон зберігається як звичайний src, але з префіксом: "scene:Europe/Kyiv".
 // Час доби й пора року налаштовуються окремо для кожного міста
@@ -13,25 +14,25 @@ export const isWallpaperSrc = (src) => typeof src === "string" && src.startsWith
 export const toWallpaperSrc = (timezoneValue) => `${WALLPAPER_PREFIX}${timezoneValue}`;
 
 export const WALLPAPER_TIMES = [
-  { value: "auto", label: "Авто — сонце рухається" },
-  { value: "morning", label: "Ранок" },
-  { value: "day", label: "День" },
-  { value: "evening", label: "Вечір" },
-  { value: "night", label: "Ніч" },
+  { value: "auto", get label() { return i18n.t("ui.wallpaperPrefs.avtoSontseRukhaietsia"); } },
+  { value: "morning", get label() { return i18n.t("ui.wallpaperPrefs.ranok"); } },
+  { value: "day", get label() { return i18n.t("ui.wallpaperPrefs.den"); } },
+  { value: "evening", get label() { return i18n.t("ui.wallpaperPrefs.vechir"); } },
+  { value: "night", get label() { return i18n.t("ui.wallpaperPrefs.nich"); } },
 ];
 
 // Весна й літо на малюнках однакові (рідна зелень), тож це один пункт
 export const WALLPAPER_SEASONS = [
-  { value: "auto", label: "Авто — за датою" },
-  { value: "summer", label: "Весна · Літо" },
-  { value: "autumn", label: "Осінь" },
-  { value: "winter", label: "Зима" },
+  { value: "auto", get label() { return i18n.t("ui.wallpaperPrefs.avtoZaDatoiu"); } },
+  { value: "summer", get label() { return i18n.t("ui.wallpaperPrefs.vesnaLito"); } },
+  { value: "autumn", get label() { return i18n.t("ui.wallpaperPrefs.osin"); } },
+  { value: "winter", get label() { return i18n.t("ui.wallpaperPrefs.zyma"); } },
 ];
 
 // Анімації сцени: дерева, хвилі, дощ, сніг, пелюстки, рух сонця
 export const WALLPAPER_ANIMATIONS = [
-  { value: "on", label: "Увімкнено" },
-  { value: "off", label: "Вимкнено" },
+  { value: "on", get label() { return i18n.t("ui.wallpaperPrefs.uvimkneno"); } },
+  { value: "off", get label() { return i18n.t("ui.wallpaperPrefs.vymkneno"); } },
 ];
 
 const SETTINGS_KEY = "wallpaper_settings";

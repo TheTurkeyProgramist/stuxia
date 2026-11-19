@@ -61,26 +61,3 @@ export async function listCollection(name) {
   return docs;
 }
 
-/**
- * Стан техробіт через REST API Firestore — без SDK.
- * Документ: config/global → isMaintenanceMode, maintenanceEndTime, maintenanceMessage
- *
- * @returns {Promise<{isMaintenanceMode: boolean, endTime: string|null, message: string|null}>}
- */
-export async function getMaintenanceStatus() {
-  const off = { isMaintenanceMode: false, endTime: null, message: null };
-  try {
-    const res = await fetch(`${REST_BASE}/config/global?key=${firebaseConfig.apiKey}`);
-    if (!res.ok) return off;
-    const fields = (await res.json()).fields || {};
-    const end = fields.maintenanceEndTime;
-    return {
-      isMaintenanceMode: !!fields.isMaintenanceMode?.booleanValue,
-      endTime: end?.timestampValue ?? end?.stringValue ?? null,
-      message: fields.maintenanceMessage?.stringValue ?? null,
-    };
-  } catch {
-    // При помилці доступу або мережі не блокуємо сайт.
-    return off;
-  }
-}

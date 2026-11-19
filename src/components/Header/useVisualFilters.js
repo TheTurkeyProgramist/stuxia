@@ -2,22 +2,23 @@ import { useState, useEffect, useCallback } from "react";
 import localforage from "localforage";
 import { FiFilm, FiMoon, FiRadio, FiDroplet, FiBookOpen, FiCamera, FiStar } from "react-icons/fi";
 
+import i18n from "../../i18n/i18n.js";
 // intensity — сила, з якою фільтр вмикається (на 50% більшість ефектів на темному сайті ледь помітні)
 export const FILTERS = [
-  { id: "none", label: "Вимкнено", intensity: 50 },
-  { id: "grayscale", label: "Дальтонізм", intensity: 100 },
-  { id: "sepia", label: "Сепія", intensity: 90 },
-  { id: "invert", label: "Негатив", intensity: 100 },
-  { id: "matrix", label: "Пікселізація", intensity: 60 },
-  { id: "uv", label: "УФ-Лампа", intensity: 70 },
-  { id: "contrast", label: "Контраст", intensity: 75 },
-  { id: "saturate", label: "Насиченість", intensity: 85 },
-  { id: "blur", label: "Розмиття", intensity: 25 },
-  { id: "hue", label: "Веселка", intensity: 50 },
-  { id: "warm", label: "Теплі тони", intensity: 80 },
-  { id: "noir", label: "Нуар", intensity: 60 },
-  { id: "chaos", label: "Хаос", intensity: 50 },
-  { id: "ultrachaos", label: "Ультрахаос", intensity: 50 },
+  { id: "none", get label() { return i18n.t("ui.useVisualFilters.vymkneno"); }, intensity: 50 },
+  { id: "grayscale", get label() { return i18n.t("ui.useVisualFilters.daltonizm"); }, intensity: 100 },
+  { id: "sepia", get label() { return i18n.t("ui.useVisualFilters.sepiia"); }, intensity: 90 },
+  { id: "invert", get label() { return i18n.t("ui.useVisualFilters.nehatyv"); }, intensity: 100 },
+  { id: "matrix", get label() { return i18n.t("ui.useVisualFilters.pikselizatsiia"); }, intensity: 60 },
+  { id: "uv", get label() { return i18n.t("ui.useVisualFilters.ufLampa"); }, intensity: 70 },
+  { id: "contrast", get label() { return i18n.t("ui.useVisualFilters.kontrast"); }, intensity: 75 },
+  { id: "saturate", get label() { return i18n.t("ui.useVisualFilters.nasychenist"); }, intensity: 85 },
+  { id: "blur", get label() { return i18n.t("ui.useVisualFilters.rozmyttia"); }, intensity: 25 },
+  { id: "hue", get label() { return i18n.t("ui.useVisualFilters.veselka"); }, intensity: 50 },
+  { id: "warm", get label() { return i18n.t("ui.useVisualFilters.tepliTony"); }, intensity: 80 },
+  { id: "noir", get label() { return i18n.t("ui.useVisualFilters.nuar"); }, intensity: 60 },
+  { id: "chaos", get label() { return i18n.t("ui.useVisualFilters.khaos"); }, intensity: 50 },
+  { id: "ultrachaos", get label() { return i18n.t("ui.useVisualFilters.ultrakhaos"); }, intensity: 50 },
 ];
 
 // Вибір фільтра з кнопки: одразу з його силою за замовчуванням
@@ -30,37 +31,37 @@ export const selectFilter = (prev, id) => {
 export const PRESETS = [
   {
     id: "cinema",
-    label: "Кіно",
+    get label() { return i18n.t("ui.useVisualFilters.kino"); },
     icon: FiFilm,
     config: { darkIntensity: 15, filterType: "sepia", filterIntensity: 20 },
   },
   {
     id: "night",
-    label: "Ніч",
+    get label() { return i18n.t("ui.useVisualFilters.nich"); },
     icon: FiMoon,
     config: { darkIntensity: 70, filterType: "none", filterIntensity: 50 },
   },
   {
     id: "retro",
-    label: "Ретро",
+    get label() { return i18n.t("ui.useVisualFilters.retro"); },
     icon: FiRadio,
     config: { darkIntensity: 5, filterType: "grayscale", filterIntensity: 80 },
   },
   {
     id: "acid",
-    label: "Кислота",
+    get label() { return i18n.t("ui.useVisualFilters.kyslota"); },
     icon: FiDroplet,
     config: { darkIntensity: 0, filterType: "hue", filterIntensity: 60 },
   },
   {
     id: "reading",
-    label: "Читання",
+    get label() { return i18n.t("ui.useVisualFilters.chytannia"); },
     icon: FiBookOpen,
     config: { darkIntensity: 20, filterType: "warm", filterIntensity: 60 },
   },
   {
     id: "oldphoto",
-    label: "Старе фото",
+    get label() { return i18n.t("ui.useVisualFilters.stareFoto"); },
     icon: FiCamera,
     config: { darkIntensity: 10, filterType: "combo", combo: ["sepia", "contrast"], filterIntensity: 60 },
   },

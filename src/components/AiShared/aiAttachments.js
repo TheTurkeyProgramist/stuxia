@@ -8,6 +8,7 @@
 import { useSyncExternalStore } from "react";
 import toast from "react-hot-toast";
 
+import i18n from "../../i18n/i18n.js";
 export const MAX_AI_ATTACHMENTS = 4;
 
 let cards = [];
@@ -23,14 +24,14 @@ const setCards = (next) => {
 export const addAiAttachment = (card) => {
   if (!card) return;
   if (cards.some((c) => c.id === card.id)) {
-    toast.error("Цю картку вже прикріплено!");
+    toast.error(i18n.t("ui.aiAttachments.tsiuKartkuVzhePrykripleno"));
     return;
   }
   if (cards.length >= MAX_AI_ATTACHMENTS) {
-    toast.error(`Максимум ${MAX_AI_ATTACHMENTS} прикріплення.`);
+    toast.error(i18n.t("ui.aiAttachments.maksymumPrykriplennia", { MAX_AI_ATTACHMENTS: MAX_AI_ATTACHMENTS }));
     return;
   }
-  toast.success(`Прикріплено: ${card.title}`);
+  toast.success(i18n.t("ui.aiAttachments.prykripleno", { title: card.title }));
   setCards([...cards, card]);
 };
 

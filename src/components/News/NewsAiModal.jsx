@@ -35,6 +35,7 @@ import readertwo from "../../media/characters/domino-reading-2.webp";
 import readerthree from "../../media/characters/domino-reading-3.webp";
 import readerVideo from "../../media/characters/kate-and-domino.webm";
 
+import i18n from "../../i18n/i18n.js";
 const frames = [
   reader,
   readerfour,
@@ -143,7 +144,7 @@ export const AnimatedCursor = ({ interval = 250, className = "" }) => {
   return (
     <img
       src={frames[currentFrameIndex]}
-      alt="Анімований помічник"
+      alt={i18n.t("newsWeather.NewsAiModal.animovanyiPomichnyk")}
       className={className}
       style={{
         width: "442px",
@@ -378,23 +379,23 @@ const SuggestedQuestions = styled.div`
 const starterQuestions = [
   {
     icon: <FaLightbulb aria-hidden="true" />,
-    text: "Поясни головну думку новини.",
+    get text() { return i18n.t("newsWeather.NewsAiModal.poiasnyHolovnuDumkuNovyny"); },
   },
   {
     icon: <GiSpikedDragonHead aria-hidden="true" />,
-    text: "Які факти є найцікавішими?",
+    get text() { return i18n.t("newsWeather.NewsAiModal.iakiFaktyIeNaitsikavishymy"); },
   },
   {
     icon: <GiTimeBomb aria-hidden="true" />,
-    text: "Які можуть бути наслідки?",
+    get text() { return i18n.t("newsWeather.NewsAiModal.iakiMozhutButyNaslidky"); },
   },
   {
     icon: <MdVerified aria-hidden="true" />,
-    text: "Які джерела підтверджують цю новину?",
+    get text() { return i18n.t("newsWeather.NewsAiModal.iakiDzherelaPidtverdzhuiutTsiu"); },
   },
   {
     icon: <FaCircleInfo aria-hidden="true" />,
-    text: "Що важливо знати про цю подію?",
+    get text() { return i18n.t("newsWeather.NewsAiModal.shchoVazhlyvoZnatyPro"); },
   },
 ];
 
@@ -461,8 +462,8 @@ const StarterQuestionsCarousel = ({ isDarkMode, onAsk }) => {
   return (
     <StarterCarouselViewport
       role="group"
-      aria-label="Популярні запитання про новину"
-      aria-roledescription="карусель"
+      aria-label={i18n.t("newsWeather.NewsAiModal.populiarniZapytanniaProNovynu")}
+      aria-roledescription={i18n.t("newsWeather.NewsAiModal.karusel")}
       {...pauseProps}
     >
       <StarterCarouselTrack
@@ -599,9 +600,9 @@ const Input = styled.input`
 `;
 
 const getResponseLengthInstruction = (value) => {
-  if (value === "detailed") return "Відповідай докладно, але структуровано.";
-  if (value === "concise") return "Відповідай стисло, лише головна суть.";
-  return "Відповідай нормально, збалансовано за обсягом.";
+  if (value === "detailed") return i18n.t("newsWeather.NewsAiModal.vidpovidaiDokladnoAleStrukturovano");
+  if (value === "concise") return i18n.t("newsWeather.NewsAiModal.vidpovidaiStysloLysheHolovna");
+  return i18n.t("newsWeather.NewsAiModal.vidpovidaiNormalnoZbalansovanoZa");
 };
 
 const NEWS_AI_MODEL = "gemini-2.5-flash";
@@ -721,25 +722,12 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
         webContext = await fetchFreeWebSearch(`${newsItem?.title || ""} ${textToSend}`);
       }
       const suggestionsInstruction = getSuggestionsInstruction(suggestedQuestionsCount);
-      const systemInstructions = `Ти — ШІ-помічник для аналізу новин і живої дискусії.
-${getResponseLengthInstruction(responseLength)}
-Відповідай українською, якщо користувач не пише іншою мовою. Розрізняй підтверджені факти, твердження джерела та власні висновки; не вигадуй деталей, яких немає в новині чи наданому контексті.
-Не підтакуй автоматично, не використовуй лестощів і не хвали користувача без конкретної підстави. Оцінюй твердження за доказами; якщо не погоджуєшся, спокійно поясни чому. Відокремлюй факти, припущення й оцінки та визнавай невизначеність.
-Тримай стриманий, нейтральний і предметний тон без порожніх вступів і надмірної емоційності. Враховуй попередні репліки, пояснюй ключову логіку й за потреби став одне конкретне запитання, що допоможе перевірити припущення або обдумати тему. Не додавай запитання механічно.
-Якщо користувач розв'язує навчальну задачу, спершу дай одну конкретну підказку — навіть на перше прохання про готову відповідь. Після його спроби допоможи з наступним кроком; якщо він повторно просить повний розв'язок, поясни його без подальших відмов.
-Якщо користувач питає про суб'єктивний особистий вибір, наприклад колір волосся чи стін, прямо скажи, що це його особистий вибір, і не вирішуй за нього. Не видавай смак за об'єктивний факт і не підміняй відповідь шаблонною символікою. Допоможи визначити критерії та порівняти практичні наслідки; якщо критеріїв немає, постав одне конкретне запитання, яке допоможе людині обрати самостійно.
-${suggestionsInstruction}`;
+      const systemInstructions = i18n.t("newsWeather.NewsAiModal.tyShiPomichnykDlia", { v0: getResponseLengthInstruction(responseLength), suggestionsInstruction: suggestionsInstruction });
       const conversationContext = messages
         .slice(-6)
-        .map((message) => `${message.isBot ? "Асистент" : "Користувач"}: ${message.text}`)
+        .map((message) => `${message.isBot ? i18n.t("newsWeather.NewsAiModal.asystent") : i18n.t("newsWeather.NewsAiModal.korystuvach")}: ${message.text}`)
         .join("\n");
-      const promptText = `${systemInstructions}
-${conversationContext ? `Попередній діалог:\n${conversationContext}\n` : ""}Новина:
-Заголовок: ${newsItem?.title || ""}
-Опис: ${newsItem?.description || ""}
-Посилання: ${newsItem?.link || ""}
-${webContext}
-Запит користувача: ${textToSend}`;
+      const promptText = i18n.t("newsWeather.NewsAiModal.novynaZaholovokOpysPosylannia", { systemInstructions: systemInstructions, v1: conversationContext ? `${i18n.t("newsWeather.NewsAiModal.previousDialog")}\n${conversationContext}\n` : "", v2: newsItem?.title || "", v3: newsItem?.description || "", v4: newsItem?.link || "", webContext: webContext, textToSend: textToSend });
 
       const result = await model.generateContent(promptText);
       const response = await result.response;
@@ -762,7 +750,7 @@ ${webContext}
     } catch (error) {
       console.error(error);
       const botMsg = {
-        text: "⚠️ Помилка при генерації відповіді. Перевірте API-ключ або спробуйте пізніше.",
+        text: i18n.t("newsWeather.NewsAiModal.pomylkaPryHeneratsiiVidpovidi"),
         isBot: true,
       };
       saveHistory([...newMsgs, botMsg]);
@@ -784,10 +772,10 @@ ${webContext}
         <Header $isDarkMode={isDarkMode}>
           <TitleGroup>
             <HiSparkles style={{ color: "#ff8a3d", fontSize: 18 }} />
-            <h3>ШІ Виклад новини</h3>
+            <h3>{i18n.t("newsWeather.NewsAiModal.shiVykladNovyny")}</h3>
           </TitleGroup>
-          <Tooltip content="Закрити" isDarkMode={isDarkMode}>
-            <CloseBtn $isDarkMode={isDarkMode} onClick={onClose} aria-label="Закрити">
+          <Tooltip content={i18n.t("newsWeather.NewsAiModal.zakryty")} isDarkMode={isDarkMode}>
+            <CloseBtn $isDarkMode={isDarkMode} onClick={onClose} aria-label={i18n.t("newsWeather.NewsAiModal.zakryty")}>
               <IoClose />
             </CloseBtn>
           </Tooltip>
@@ -795,14 +783,14 @@ ${webContext}
 
         <ControlsBar $isDarkMode={isDarkMode}>
           <QuickGroup>
-            <Tooltip content="Обсяг відповіді" isDarkMode={isDarkMode}>
+            <Tooltip content={i18n.t("newsWeather.NewsAiModal.obsiahVidpovidi")} isDarkMode={isDarkMode}>
               <FiAlignLeft />
             </Tooltip>
-            <Segmented $isDarkMode={isDarkMode} role="group" aria-label="Обсяг відповіді">
+            <Segmented $isDarkMode={isDarkMode} role="group" aria-label={i18n.t("newsWeather.NewsAiModal.obsiahVidpovidi")}>
               {[
-                ["concise", "Менше"],
-                ["normal", "Нормально"],
-                ["detailed", "Більше"],
+                ["concise", i18n.t("newsWeather.NewsAiModal.menshe")],
+                ["normal", i18n.t("newsWeather.NewsAiModal.normalno")],
+                ["detailed", i18n.t("newsWeather.NewsAiModal.bilshe")],
               ].map(([value, label]) => (
                 <SegmentButton key={value} type="button" $active={responseLength === value} onClick={() => setResponseLength(value)}>
                   {label}
@@ -811,13 +799,13 @@ ${webContext}
             </Segmented>
           </QuickGroup>
           <QuickGroup>
-            <Tooltip content="Кількість запропонованих питань (затримка між запитами)" isDarkMode={isDarkMode}>
+            <Tooltip content={i18n.t("newsWeather.NewsAiModal.kilkistZaproponovanykhPytanZatrymka")} isDarkMode={isDarkMode}>
               <FaLightbulb />
             </Tooltip>
             <Segmented
               $isDarkMode={isDarkMode}
               role="group"
-              aria-label="Кількість запропонованих питань (затримка між запитами)"
+              aria-label={i18n.t("newsWeather.NewsAiModal.kilkistZaproponovanykhPytanZatrymka")}
             >
               {SUGGESTED_COUNT_OPTIONS.map(({ value, cooldown: delay }) => (
                 <SegmentButton
@@ -830,7 +818,7 @@ ${webContext}
                   }}
                 >
                   {value}
-                  <small>{delay} с</small>
+                  <small>{delay} {i18n.t("newsWeather.NewsAiModal.s")}</small>
                 </SegmentButton>
               ))}
             </Segmented>
@@ -847,7 +835,7 @@ ${webContext}
             }}
           >
             <FiGlobe />
-            Інтернет-пошук
+            {i18n.t("newsWeather.NewsAiModal.internetPoshuk")}
           </ToggleChip>
         </ControlsBar>
 
@@ -856,7 +844,7 @@ ${webContext}
             <EmptyState $isDarkMode={isDarkMode}>
               <AnimatedCursor interval={250} />
               <div style={{ marginTop: "-140px", color: isDarkMode ? "#ffffff" : "#080808",}}>
-                Задайте питання про новину або оберіть питання:
+                {i18n.t("newsWeather.NewsAiModal.zadaitePytanniaProNovynu")}
               </div>
               <StarterQuestionsCarousel
                 isDarkMode={isDarkMode}
@@ -872,7 +860,7 @@ ${webContext}
                     <ReactMarkdown>{parsed.cleanText}</ReactMarkdown>
                     {m.usage?.totalTokens > 0 && (
                       <MessageMeta $isDarkMode={isDarkMode}>
-                        Витрачено токенів: {m.usage.totalTokens}
+                        {i18n.t("newsWeather.NewsAiModal.vytrachenoTokeniv")} {m.usage.totalTokens}
                       </MessageMeta>
                     )}
                     {parsed.questions.length > 0 && (
@@ -889,7 +877,7 @@ ${webContext}
               })}
               {loading && (
                 <Message $isBot={true} $isDarkMode={isDarkMode}>
-                  Аналізую та генерую відповідь...
+                  {i18n.t("newsWeather.NewsAiModal.analizuiuTaHeneruiuVidpovid")}
                 </Message>
               )}
               <div ref={chatEndRef} />
@@ -913,39 +901,39 @@ ${webContext}
               maxLength={MAX_MESSAGE_LENGTH}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Задавайте питання..."
+              placeholder={i18n.t("newsWeather.NewsAiModal.zadavaitePytannia")}
               disabled={loading || cooldownSeconds > 0}
             />
             <InputMeta $isDarkMode={isDarkMode}>
               {input.length}/{MAX_MESSAGE_LENGTH}
-              {cooldownSeconds > 0 && ` Перезарядка: ${cooldownSeconds} с`}
+              {cooldownSeconds > 0 && " " + i18n.t("newsWeather.NewsAiModal.perezariadkaS", { cooldownSeconds: cooldownSeconds })}
             </InputMeta>
             <InputActions>
-              <Tooltip content={isListening ? "Зупинити голосовий ввід" : "Голосовий ввід"} placement="top" isDarkMode={isDarkMode}>
+              <Tooltip content={isListening ? i18n.t("newsWeather.NewsAiModal.zupynytyHolosovyiVvid") : i18n.t("newsWeather.NewsAiModal.holosovyiVvid")} placement="top" isDarkMode={isDarkMode}>
                 <InputIconButton
                   type="button"
                   onClick={handleVoiceInput}
-                  aria-label={isListening ? "Зупинити голосовий ввід" : "Голосовий ввід"}
+                  aria-label={isListening ? i18n.t("newsWeather.NewsAiModal.zupynytyHolosovyiVvid") : i18n.t("newsWeather.NewsAiModal.holosovyiVvid")}
                 >
                   {isListening ? <span aria-hidden="true">■</span> : <FaMicrophoneAlt />}
                 </InputIconButton>
               </Tooltip>
-              <Tooltip content="Очистити чат" placement="top" isDarkMode={isDarkMode}>
+              <Tooltip content={i18n.t("newsWeather.NewsAiModal.ochystytyChat")} placement="top" isDarkMode={isDarkMode}>
                 <InputIconButton
                   type="button"
                   onClick={handleClearChat}
-                  aria-label="Очистити чат"
+                  aria-label={i18n.t("newsWeather.NewsAiModal.ochystytyChat")}
                 >
                   <RiDeleteBack2Fill />
                 </InputIconButton>
               </Tooltip>
-              <Tooltip content={cooldownSeconds > 0 ? `Перезарядка: ${cooldownSeconds} с` : "Надіслати"} placement="top" isDarkMode={isDarkMode}>
+              <Tooltip content={cooldownSeconds > 0 ? i18n.t("newsWeather.NewsAiModal.perezariadkaS", { cooldownSeconds: cooldownSeconds }) : i18n.t("newsWeather.NewsAiModal.nadislaty")} placement="top" isDarkMode={isDarkMode}>
                 <InputIconButton
                   type="button"
                   $primary
                   onClick={() => handleSend()}
                   disabled={loading || cooldownSeconds > 0 || !input.trim()}
-                  aria-label={cooldownSeconds > 0 ? `Перезарядка: ${cooldownSeconds} с` : "Надіслати"}
+                  aria-label={cooldownSeconds > 0 ? i18n.t("newsWeather.NewsAiModal.perezariadkaS", { cooldownSeconds: cooldownSeconds }) : i18n.t("newsWeather.NewsAiModal.nadislaty")}
                 >
                   <FiSend />
                 </InputIconButton>

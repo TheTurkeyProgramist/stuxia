@@ -2,6 +2,7 @@ import localforage from "localforage";
 import { getPref, setPref, removePref } from "./prefsStore.js";
 import { canSendLocalAlert, recordLocalAlert, showSystemNotification } from "./emergencyAlerts.js";
 
+import i18n from "../i18n/i18n.js";
 // Особисті налаштування новин: ліміт власних стрічок, термінові новини (без сервера)
 // та персональні рекомендації. Усе зберігається лише на цьому пристрої.
 
@@ -21,6 +22,8 @@ const textOf = (item) =>
 const matchesWord = (text, word) => {
   const w = word.toLowerCase().trim();
   if (!w) return false;
+  // Китайська, японська, корейська — без пробілів між словами: шукаємо підрядок
+  if (/[぀-ヿ㐀-鿿가-힯]/.test(w)) return text.includes(w);
   if (w.length <= 3) {
     const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return new RegExp(`(^|[^\\p{L}])${escaped}($|[^\\p{L}])`, "u").test(text);
@@ -41,8 +44,8 @@ export const getCustomFeedsLimit = () => CUSTOM_FEEDS_MAX;
 // "cards" — блоки-картки в каруселі (як завжди), "list" — список: фото ліворуч, заголовок праворуч
 export const NEWS_VIEW_KEY = "news_view_mode";
 export const NEWS_VIEW_MODES = [
-  { id: "cards", label: "Блоки" },
-  { id: "list", label: "Список" },
+  { id: "cards", get label() { return i18n.t("newsWeather.newsPersonal.bloky"); } },
+  { id: "list", get label() { return i18n.t("newsWeather.newsPersonal.spysok"); } },
 ];
 export const setNewsViewMode = (mode) => setPref(NEWS_VIEW_KEY, mode === "list" ? "list" : "cards");
 
@@ -70,6 +73,39 @@ export const DEFAULT_URGENT_WORDS = [
   "emergency",
 ];
 
+// Основи «терміново / евакуація / надзвичайна ситуація» мовою сайту — додаються до базових
+export const URGENT_WORDS_BY_LANG = {
+  be: ["тэрмінова", "маланка", "эвакуац", "надзвычайн"],
+  de: ["eilmeldung", "dringend", "evakuier", "notfall", "notstand"],
+  fr: ["urgent", "alerte", "évacu", "urgence"],
+  es: ["última hora", "urgente", "evacua", "emergencia"],
+  it: ["ultim'ora", "urgente", "evacua", "emergenza"],
+  pl: ["pilne", "pilna", "ewakuac", "nadzwyczajn", "alarm"],
+  ro: ["ultima oră", "urgent", "evacu", "urgență"],
+  nl: ["breaking", "dringend", "evacu", "noodtoestand", "noodgeval"],
+  pt: ["última hora", "urgente", "evacua", "emergência"],
+  el: ["έκτακτο", "επείγον", "εκκένωσ", "κατάσταση έκτακτης"],
+  cs: ["naléhav", "mimořádn", "evakuac", "nouzov"],
+  hu: ["rendkívüli", "sürgős", "kiürít", "evakuál", "vészhelyzet"],
+  sv: ["just nu", "akut", "evakuer", "nödläge"],
+  fi: ["tuoreet", "kiireellinen", "evakuoi", "hätätila", "poikkeustila"],
+  bg: ["извънредн", "спешн", "евакуац"],
+  lt: ["skubiai", "skubu", "evakuac", "nepaprast"],
+  zh: ["突发", "紧急", "疏散", "撤离"],
+  ar: ["عاجل", "إخلاء", "طوارئ"],
+  ja: ["速報", "緊急", "避難"],
+  tr: ["son dakika", "acil", "tahliye", "olağanüstü"],
+  ko: ["속보", "긴급", "대피"],
+  fa: ["فوری", "تخلیه", "اضطراری"],
+  so: ["deg deg", "degdeg", "daruuri", "barakac"],
+  qu: ["usqhay", "phawarqay", "manchakuy"],
+};
+
+/** Слова за замовчуванням: базові (укр + англ) і мова сайту. */
+export const getDefaultUrgentWords = (lng = String(i18n.language || "uk").split("-")[0]) => [
+  ...new Set([...(URGENT_WORDS_BY_LANG[lng] || []), ...DEFAULT_URGENT_WORDS]),
+];
+
 export const isUrgentNotifyEnabled = () => getPref(URGENT_NOTIFY_KEY) === "true";
 export const setUrgentNotifyEnabled = (enabled) =>
   setPref(URGENT_NOTIFY_KEY, enabled ? "true" : "false");
@@ -78,7 +114,7 @@ export const getUrgentWords = () => {
   const saved = readJson(URGENT_WORDS_KEY, null);
   return Array.isArray(saved)
     ? saved.filter((w) => typeof w === "string" && w.trim())
-    : DEFAULT_URGENT_WORDS;
+    : getDefaultUrgentWords();
 };
 
 export const setUrgentWords = (words) =>
@@ -152,8 +188,8 @@ export const notifyUrgentNews = async (items) => {
     try {
       // Переклад новини міг не вдатися — тоді перекладаємо хоча б заголовок сповіщення
       const title = await ensureUkrainianTitle(item.title);
-      await showSystemNotification(`Терміново: ${title}`.slice(0, 120), {
-        body: item.sourceName || "Стихія",
+      await showSystemNotification(i18n.t("newsWeather.newsPersonal.terminovo", { title: title }).slice(0, 120), {
+        body: item.sourceName || i18n.t("newsWeather.newsPersonal.stykhiia"),
         tag: `urgent-${item.link}`,
         url: item.link,
       });
@@ -183,42 +219,42 @@ const RECS_MAX_SOURCES = 40;
 export const NEWS_TOPICS = [
   {
     id: "animals",
-    label: "Тварини",
+    get label() { return i18n.t("newsWeather.newsPersonal.tvaryny"); },
     words: ["animal", "species", "wildlife", "bird", "mammal", "insect", "whale", "shark", "tiger", "elephant", "wolves", "frog", "reptile", "тварин", "птах", "звір", "комах", "кит", "кити", "китів", "акул", "тигр", "слон", "вовк", "жаба", "жаби"],
   },
   {
     id: "climate",
-    label: "Клімат і погода",
+    get label() { return i18n.t("newsWeather.newsPersonal.klimatIPohoda"); },
     words: ["climate", "weather", "warming", "heatwave", "heat wave", "drought", "flood", "storm", "hurricane", "typhoon", "wildfire", "rainfall", "emission", "carbon", "ozone", "клімат", "погод", "спек", "посух", "повін", "шторм", "ураган", "тайфун", "пожеж", "викид", "вуглец", "озон"],
   },
   {
     id: "space",
-    label: "Космос",
+    get label() { return i18n.t("newsWeather.newsPersonal.kosmos"); },
     words: ["space", "nasa", "planet", "mars", "lunar", "asteroid", "comet", "galaxy", "telescope", "orbit", "satellite", "astronaut", "космос", "космічн", "планет", "марс", "астероїд", "комет", "галактик", "телескоп", "орбіт", "супутник", "астронавт"],
   },
   {
     id: "ocean",
-    label: "Океани й моря",
+    get label() { return i18n.t("newsWeather.newsPersonal.okeanyIMoria"); },
     words: ["ocean", "marine", "coral", "reef", "coast", "seabed", "океан", "морськ", "моря", "корал", "риф", "узбереж"],
   },
   {
     id: "plants",
-    label: "Рослини й ліси",
+    get label() { return i18n.t("newsWeather.newsPersonal.roslynyILisy"); },
     words: ["plant", "tree", "forest", "deforestation", "fungi", "fungus", "flower", "seed", "рослин", "дерев", "ліс", "лісі", "лісу", "ліси", "лісів", "лісов", "гриб", "квіт", "насінн"],
   },
   {
     id: "health",
-    label: "Здоров'я",
+    get label() { return i18n.t("newsWeather.newsPersonal.zdorovia"); },
     words: ["health", "disease", "virus", "vaccine", "cancer", "brain", "medicine", "medical", "infection", "здоров", "хвороб", "вірус", "вакцин", "мозок", "мозку", "медиц", "інфекц"],
   },
   {
     id: "tech",
-    label: "Технології",
+    get label() { return i18n.t("newsWeather.newsPersonal.tekhnolohii"); },
     words: ["technology", "robot", "artificial intelligence", "ai", "algorithm", "computer", "software", "drone", "технолог", "робот", "штучн", "алгоритм", "комп'ютер", "дрон"],
   },
   {
     id: "energy",
-    label: "Енергетика",
+    get label() { return i18n.t("newsWeather.newsPersonal.enerhetyka"); },
     words: ["energy", "solar", "wind power", "wind farm", "battery", "batteries", "nuclear", "fossil", "renewable", "енерг", "сонячн", "вітров", "батаре", "атомн", "нафт", "газ", "газу", "газов"],
   },
 ];

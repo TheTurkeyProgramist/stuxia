@@ -11,6 +11,7 @@ import { CREDITS_HIDDEN_UNTIL_KEY, LOADER_POWERED_BY_KEY, usePrefValue } from ".
 import { getPref, setPref } from "../../utils/prefsStore";
 import { useAnimationsDisabled } from "../../utils/animationsPref";
 
+import i18n from "../../i18n/i18n.js";
 // Колись це була заставка завантаження (Loader). Заставку прибрали — вона на кілька секунд
 // закривала сайт, — а версію з індиком і блок «Працює на базі» перенесли на головну (Hero)
 
@@ -343,7 +344,7 @@ const HideHint = styled.span`
   color: rgba(255, 255, 255, 0.6);
 `;
 
-const VERSION_TEXT = "v.1.0.0 | Я в Конотопі :)";
+const VERSION_TEXT = () => (i18n.t("ui.HeroCredits.v100"));
 
 // Показати → через showMs почати з'їжджати → через slideMs прибрати зовсім (не рендериться).
 // hide() — сховати раніше (напр. після прокрутки). З вимкненими анімаціями зникає одразу
@@ -374,7 +375,7 @@ export function HeroVersionBadge() {
   if (phase === "gone") return null;
   return (
     <HeroCornerBadge $hiding={phase === "hiding"}>
-      <span>{VERSION_TEXT}</span>
+      <span>{VERSION_TEXT()}</span>
       <TurkeyDot />
     </HeroCornerBadge>
   );
@@ -387,7 +388,7 @@ function InlineVersionBadge() {
   const gone = phase === "gone";
   return (
     <InlineBadge $hiding={phase === "hiding"} $gone={gone} aria-hidden={gone || undefined}>
-      <span>{VERSION_TEXT}</span>
+      <span>{VERSION_TEXT()}</span>
       <TurkeyDot />
     </InlineBadge>
   );
@@ -438,7 +439,7 @@ export default function HeroCredits({ randomPhrase }) {
       $hiding={phase === "hiding"}
       role="button"
       tabIndex={0}
-      aria-label="Працює на базі. Натисніть, щоб приховати на тиждень"
+      aria-label={i18n.t("ui.HeroCredits.pratsiuieNaBaziNatysnit")}
       onClick={hideForWeek}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -450,7 +451,7 @@ export default function HeroCredits({ randomPhrase }) {
         <InlineVersionBadge />
         {(showIcons || randomPhrase) && (
           <PoweredByWrapper>
-            {showTitle && <span>Працює на базі:</span>}
+            {showTitle && <span>{i18n.t("ui.HeroCredits.pratsiuieNaBazi")}</span>}
             {showIcons && (
               <IconsGrid>
                 {TECH_STACK.map(({ Icon, src, color, title }) =>
@@ -466,9 +467,9 @@ export default function HeroCredits({ randomPhrase }) {
           </PoweredByWrapper>
         )}
         <CopyrightText>
-          2026 Stuxia™. Всі права захищені. Автор: TheTurkeyProgramist
+          {i18n.t("ui.HeroCredits.2026StuxiaVsiPrava")}
         </CopyrightText>
-        <HideHint>Натисніть, щоб приховати на тиждень</HideHint>
+        <HideHint>{i18n.t("ui.HeroCredits.natysnitShchobPrykhovatyNa")}</HideHint>
     </CreditsCard>
   );
 }

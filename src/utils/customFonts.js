@@ -4,6 +4,7 @@
 // Розбір файлів/ZIP — окремо в customFontImport.js (потрібен лише в Налаштуваннях).
 import localforage from "localforage";
 
+import i18n from "../i18n/i18n.js";
 export const FONT_PACK_PREFIX = "pack:";
 const INDEX_KEY = "index";
 
@@ -93,8 +94,8 @@ export async function saveFontPack(pack) {
     const quota = err?.name === "QuotaExceededError" || /quota/i.test(err?.message || "");
     throw new Error(
       quota
-        ? "Браузеру не вистачає місця для цього пакета. Видаліть старий пакет або візьміть менше файлів."
-        : "Не вдалося зберегти пакет у браузері.",
+        ? i18n.t("ui.customFonts.brauzeruNeVystachaieMistsia")
+        : i18n.t("ui.customFonts.neVdalosiaZberehtyPaket"),
       { cause: err },
     );
   }

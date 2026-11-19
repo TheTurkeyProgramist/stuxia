@@ -2,6 +2,7 @@ import React, { useId } from "react";
 import styled, { keyframes } from "styled-components";
 import { FaArrowUp, FaArrowDown, FaCloudDownloadAlt, FaCloudUploadAlt } from "react-icons/fa";
 
+import i18n from "../../i18n/i18n.js";
 const svgProps = { width: "1em", height: "1em", viewBox: "0 0 24 24", "aria-hidden": true };
 
 // 5 станів: 0 — порожньо, 1–4 — чверті склянки.
@@ -208,7 +209,7 @@ export const CloudWithTrend = ({ cloudCover, trend }) => (
   <CloudWrap>
     {parseFloat(cloudCover) < 50 ? <FaCloudDownloadAlt /> : <FaCloudUploadAlt />}
     {trend !== 0 && (
-      <TrendArrow $color={trend > 0 ? "#4da6ff" : "#ffd700"} title={trend > 0 ? "Хмарність зросте" : "Хмарність спадатиме"}>
+      <TrendArrow $color={trend > 0 ? "#4da6ff" : "#ffd700"} title={trend > 0 ? i18n.t("newsWeather.AnimatedWeatherIcons.khmarnistZroste") : i18n.t("newsWeather.AnimatedWeatherIcons.khmarnistSpadatyme")}>
         {trend > 0 ? <FaArrowUp /> : <FaArrowDown />}
       </TrendArrow>
     )}

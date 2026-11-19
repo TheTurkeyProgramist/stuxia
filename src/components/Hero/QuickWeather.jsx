@@ -17,6 +17,7 @@ import { GiMonclerJacket, GiTShirt, GiShorts } from "react-icons/gi";
 import { MdPlace } from "react-icons/md";
 import { TbUmbrella, TbUmbrellaOff, TbCloudOff } from "react-icons/tb";
 
+import i18n from "../../i18n/i18n.js";
 // Коротка погода одразу під пошуком: «+6° · Хмарно · Дощу не буде · Вдягніть куртку і шарф».
 // Дані — з картки погоди, яку App уже завантажив (без окремого запиту до API).
 
@@ -38,18 +39,18 @@ const isOffline = () => typeof navigator !== "undefined" && navigator.onLine ===
 export const ADD_CITY_OPTION = "__add_city";
 
 const conditionText = (code, isDay = 1) => {
-  if (code === 0) return isDay ? "Ясно" : "Ясна ніч";
-  if (code === 1) return "Переважно ясно";
-  if (code === 2) return "Мінлива хмарність";
-  if (code === 3) return "Хмарно";
-  if (code === 45 || code === 48) return "Туман";
-  if (code >= 51 && code <= 57) return "Мряка";
-  if (code >= 61 && code <= 67) return "Дощ";
-  if (code >= 71 && code <= 77) return "Сніг";
-  if (code >= 80 && code <= 82) return "Злива";
-  if (code === 85 || code === 86) return "Снігопад";
-  if (code >= 95) return "Гроза";
-  return "Хмарно";
+  if (code === 0) return isDay ? i18n.t("newsWeather.QuickWeather.iasno") : i18n.t("newsWeather.QuickWeather.iasnaNich");
+  if (code === 1) return i18n.t("newsWeather.QuickWeather.perevazhnoIasno");
+  if (code === 2) return i18n.t("newsWeather.QuickWeather.minlyvaKhmarnist");
+  if (code === 3) return i18n.t("newsWeather.QuickWeather.khmarno");
+  if (code === 45 || code === 48) return i18n.t("newsWeather.QuickWeather.tuman");
+  if (code >= 51 && code <= 57) return i18n.t("newsWeather.QuickWeather.mriaka");
+  if (code >= 61 && code <= 67) return i18n.t("newsWeather.QuickWeather.doshch");
+  if (code >= 71 && code <= 77) return i18n.t("newsWeather.QuickWeather.snih");
+  if (code >= 80 && code <= 82) return i18n.t("newsWeather.QuickWeather.zlyva");
+  if (code === 85 || code === 86) return i18n.t("newsWeather.QuickWeather.snihopad");
+  if (code >= 95) return i18n.t("newsWeather.QuickWeather.hroza");
+  return i18n.t("newsWeather.QuickWeather.khmarno");
 };
 
 // Іконка погоди і її колір
@@ -95,7 +96,7 @@ export const getPrecipitationLine = (card) => {
   );
   if (wetIndex === -1) {
     const cold = (card?.current?.tempNum ?? 10) <= 0;
-    return { wet: false, kind: null, text: `${cold ? "Опадів" : "Дощу"} найближчі ${upcoming.length} год не буде` };
+    return { wet: false, kind: null, text: i18n.t(cold ? "newsWeather.QuickWeather.noPrecipHours" : "newsWeather.QuickWeather.noRainHours", { length: upcoming.length }) };
   }
 
   const hour = upcoming[wetIndex];
@@ -106,13 +107,13 @@ export const getPrecipitationLine = (card) => {
       ? "snow"
       : "rain";
   const words = {
-    storm: { now: "Зараз гроза", later: "Гроза можлива" },
-    snow: { now: "Зараз сніг", later: "Сніг можливий" },
-    rain: { now: "Зараз дощ", later: "Дощ можливий" },
+    storm: { now: i18n.t("newsWeather.QuickWeather.zarazHroza"), later: i18n.t("newsWeather.QuickWeather.hrozaMozhlyva") },
+    snow: { now: i18n.t("newsWeather.QuickWeather.zarazSnih"), later: i18n.t("newsWeather.QuickWeather.snihMozhlyvyi") },
+    rain: { now: i18n.t("newsWeather.QuickWeather.zarazDoshch"), later: i18n.t("newsWeather.QuickWeather.doshchMozhlyvyi") },
   }[kind];
   const chance = hour.precipitation_probability ? ` (${hour.precipitation_probability}%)` : "";
   if (wetIndex === 0 && isWetCode(card?.current?.weather_code)) return { wet: true, kind, text: words.now };
-  return { wet: true, kind, text: `${words.later} о ${hour.time}${chance}` };
+  return { wet: true, kind, text: i18n.t("newsWeather.QuickWeather.o", { later: words.later, time: hour.time, chance: chance }) };
 };
 
 // Найближча доба кроком у 3 години: 6 точок (час, іконка, температура)
@@ -132,7 +133,7 @@ export const getHourStrip = (card) => {
 };
 
 const joinUk = (list) =>
-  list.length <= 1 ? list.join("") : `${list.slice(0, -1).join(", ")} і ${list[list.length - 1]}`;
+  list.length <= 1 ? list.join("") : i18n.t("newsWeather.QuickWeather.i", { v0: list.slice(0, -1).join(", "), v1: list[list.length - 1] });
 
 /**
  * Що вдягнути — за температурою «відчувається» (враховує вітер і вологість), опадами, вітром і УФ.
@@ -152,29 +153,29 @@ export const getOutfitAdvice = (card, precipitation) => {
   let Icon = GiMonclerJacket;
   let wear;
   if (feels <= -10) {
-    wear = ["пуховик", "шапку", "шарф", "рукавиці"];
+    wear = [i18n.t("newsWeather.QuickWeather.pukhovyk"), i18n.t("newsWeather.QuickWeather.shapku"), i18n.t("newsWeather.QuickWeather.sharf"), i18n.t("newsWeather.QuickWeather.rukavytsi")];
   } else if (feels <= 0) {
-    wear = ["теплу куртку", "шапку", "шарф", "рукавиці"];
+    wear = [i18n.t("newsWeather.QuickWeather.tepluKurtku"), i18n.t("newsWeather.QuickWeather.shapku"), i18n.t("newsWeather.QuickWeather.sharf"), i18n.t("newsWeather.QuickWeather.rukavytsi")];
   } else if (feels <= 7) {
-    wear = feels <= 4 ? ["куртку", "шапку", "шарф"] : ["куртку", "шарф"];
+    wear = feels <= 4 ? [i18n.t("newsWeather.QuickWeather.kurtku"), i18n.t("newsWeather.QuickWeather.shapku"), i18n.t("newsWeather.QuickWeather.sharf")] : [i18n.t("newsWeather.QuickWeather.kurtku"), i18n.t("newsWeather.QuickWeather.sharf")];
   } else if (feels <= 14) {
-    wear = [wind >= 8 ? "вітровку" : "легку куртку", "светр чи худі"];
+    wear = [wind >= 8 ? i18n.t("newsWeather.QuickWeather.vitrovku") : i18n.t("newsWeather.QuickWeather.lehkuKurtku"), i18n.t("newsWeather.QuickWeather.svetrChyKhudi")];
   } else if (feels <= 20) {
     Icon = GiTShirt;
-    wear = [wind >= 8 ? "вітровку" : "кофту", "лонгслів"];
+    wear = [wind >= 8 ? i18n.t("newsWeather.QuickWeather.vitrovku") : i18n.t("newsWeather.QuickWeather.koftu"), i18n.t("newsWeather.QuickWeather.lonhsliv")];
   } else {
     Icon = feels >= 25 ? GiShorts : GiTShirt;
-    wear = feels >= 25 ? ["футболку", "шорти"] : ["футболку"];
+    wear = feels >= 25 ? [i18n.t("newsWeather.QuickWeather.futbolku"), i18n.t("newsWeather.QuickWeather.shorty")] : [i18n.t("newsWeather.QuickWeather.futbolku")];
   }
 
   const take = [];
   if (precipitation?.wet) {
-    take.push(precipitation.kind === "snow" ? "непромокне взуття" : "парасолю");
+    take.push(precipitation.kind === "snow" ? i18n.t("newsWeather.QuickWeather.nepromokneVzuttia") : i18n.t("newsWeather.QuickWeather.parasoliu"));
   }
-  if (isDay && uv >= 6 && feels > 15) take.push("сонцезахисні окуляри");
+  if (isDay && uv >= 6 && feels > 15) take.push(i18n.t("newsWeather.QuickWeather.sontsezakhysniOkuliary"));
 
-  let text = `Вдягніть ${joinUk(wear)}`;
-  if (take.length) text += `, візьміть ${joinUk(take)}`;
+  let text = i18n.t("newsWeather.QuickWeather.vdiahnit", { v0: joinUk(wear) });
+  if (take.length) text += i18n.t("newsWeather.QuickWeather.vizmit", { v0: joinUk(take) });
   return { Icon, text };
 };
 
@@ -229,16 +230,16 @@ const QuickWeather = ({ card, cities = [], isDarkMode, onOpen, onSelectCity, onR
           </WeatherIcon>
           <Main>
             <Line>
-              <strong>Не вдалося завантажити погоду</strong>
+              <strong>{i18n.t("newsWeather.QuickWeather.neVdalosiaZavantazhytyPohodu")}</strong>
             </Line>
             <Line>
               <Muted $isDarkMode={isDarkMode}>
-                {offline ? "Немає з'єднання з інтернетом" : "Сервіс прогнозу не відповідає"}
+                {offline ? i18n.t("newsWeather.QuickWeather.nemaieZiednanniaZInternetom") : i18n.t("newsWeather.QuickWeather.servisProhnozuNeVidpovidaie")}
               </Muted>
             </Line>
           </Main>
           <RetryButton type="button" $isDarkMode={isDarkMode} onClick={handleRetry}>
-            Спробувати ще
+            {i18n.t("newsWeather.QuickWeather.sprobuvatyShche")}
           </RetryButton>
         </Body>
       </Box>
@@ -247,14 +248,14 @@ const QuickWeather = ({ card, cities = [], isDarkMode, onOpen, onSelectCity, onR
 
   if (!hasData) {
     return (
-      <Box $isDarkMode={isDarkMode} $loading aria-busy="true" aria-label="Завантажуємо погоду">
+      <Box $isDarkMode={isDarkMode} $loading aria-busy="true" aria-label={i18n.t("newsWeather.QuickWeather.zavantazhuiemoPohodu")}>
         <Body as="div">
           <WeatherIcon aria-hidden="true" style={{ color: "#cbd5e1" }}>
             <WiDayCloudy />
           </WeatherIcon>
           <Main>
             <Line>
-              <Muted $isDarkMode={isDarkMode}>Завантажуємо погоду…</Muted>
+              <Muted $isDarkMode={isDarkMode}>{i18n.t("newsWeather.QuickWeather.zavantazhuiemoPohodu2")}</Muted>
             </Line>
           </Main>
         </Body>
@@ -276,7 +277,7 @@ const QuickWeather = ({ card, cities = [], isDarkMode, onOpen, onSelectCity, onR
   const precipitation = getPrecipitationLine(card);
   const outfit = getOutfitAdvice(card, precipitation);
   const hours = getHourStrip(card);
-  const place = card.locationName || "Ваша локація";
+  const place = card.locationName || i18n.t("newsWeather.QuickWeather.vashaLokatsiia");
   const selectedId = String(card.id);
 
   const handleCityChange = (e) => {
@@ -293,25 +294,25 @@ const QuickWeather = ({ card, cities = [], isDarkMode, onOpen, onSelectCity, onR
       <Head>
         <CityPicker $isDarkMode={isDarkMode}>
           <MdPlace aria-hidden="true" className="pin" />
-          <select value={selectedId} onChange={handleCityChange} aria-label="Місто для короткої погоди на головному екрані">
+          <select value={selectedId} onChange={handleCityChange} aria-label={i18n.t("newsWeather.QuickWeather.mistoDliaKorotkoiPohody")}>
             {cities.map((city) => (
               <option key={city.id} value={city.id}>
                 {city.label}
               </option>
             ))}
             {!cities.some((city) => city.id === selectedId) && <option value={selectedId}>{place}</option>}
-            <option value={ADD_CITY_OPTION}>＋ Додати інше місто…</option>
+            <option value={ADD_CITY_OPTION}>{i18n.t("newsWeather.QuickWeather.dodatyInsheMisto")}</option>
           </select>
         </CityPicker>
         <MoreButton type="button" $isDarkMode={isDarkMode} onClick={onOpen}>
-          Прогноз ↓
+          {i18n.t("newsWeather.QuickWeather.prohnoz")}
         </MoreButton>
       </Head>
 
       <Body
         type="button"
         onClick={onOpen}
-        aria-label={`${place}: ${temp}, ${condition}${precipitation ? `, ${precipitation.text}` : ""}${outfit ? `. ${outfit.text}` : ""}. Показати повний прогноз`}
+        aria-label={i18n.t("newsWeather.QuickWeather.pokazatyPovnyiProhnoz", { place: place, temp: temp, condition: condition, v3: precipitation ? `, ${precipitation.text}` : "", v4: outfit ? `. ${outfit.text}` : "" })}
       >
         <WeatherIcon aria-hidden="true" style={{ color: conditionColor }}>
           <ConditionIcon />
@@ -320,7 +321,7 @@ const QuickWeather = ({ card, cities = [], isDarkMode, onOpen, onSelectCity, onR
         <Main>
           <Line>
             <strong>{condition}</strong>
-            {feels && <Muted $isDarkMode={isDarkMode}> · відчувається {feels}</Muted>}
+            {feels && <Muted $isDarkMode={isDarkMode}> {i18n.t("newsWeather.QuickWeather.vidchuvaietsia")} {feels}</Muted>}
           </Line>
           {precipitation && (
             <Line>

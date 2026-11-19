@@ -6,6 +6,7 @@ import { BiTrendingUp, BiWind } from "react-icons/bi";
 import ChartStyleModal from "./ChartStyleModal";
 import { DEFAULT_LINE_STYLES, mergeLineStyles } from "../../utils/chartLineStyles";
 
+import i18n from "../../i18n/i18n.js";
 /* Стиль ліній графіків із загальних налаштувань — одразу для всіх карток.
    Зберігає ті самі ключі й шле ту саму подію, що й налаштування окремої картки
    (Weather.jsx: saveLineStyles / toggleGlobalLineStyles). */
@@ -14,19 +15,19 @@ const GLOBAL_KEY = "chartLineStyles_global";
 const USE_GLOBAL_KEY = "chartLineStyles_useGlobal";
 const CHANGE_EVENT = "chartLineStylesChanged";
 
-const RIGHT_AXIS = { key: "right", label: "Права вісь (вітер…)", color: "#00bfff", icon: <BiWind />, wind: true };
+const RIGHT_AXIS = { key: "right", get label() { return i18n.t("modals.GlobalChartStyleModal.pravaVisViter"); }, color: "#00bfff", icon: <BiWind />, wind: true };
 
 const LINES = {
   hourly: [
-    { key: "temp", label: "Температура", color: "#ffb36c", icon: <BsThermometerSun /> },
+    { key: "temp", get label() { return i18n.t("modals.GlobalChartStyleModal.temperatura"); }, color: "#ffb36c", icon: <BsThermometerSun /> },
     RIGHT_AXIS,
   ],
   daily: [
-    { key: "day", label: "День", color: "#ffb36c", icon: <FaSun /> },
-    { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
+    { key: "day", get label() { return i18n.t("modals.GlobalChartStyleModal.den"); }, color: "#ffb36c", icon: <FaSun /> },
+    { key: "night", get label() { return i18n.t("modals.GlobalChartStyleModal.nich"); }, color: "#ff1493", icon: <BsMoonStarsFill /> },
     RIGHT_AXIS,
-    { key: "trendDay", label: "Тренд дня", color: "#ffb36c", icon: <BiTrendingUp />, trend: true },
-    { key: "trendNight", label: "Тренд ночі", color: "#ff1493", icon: <BiTrendingUp />, trend: true },
+    { key: "trendDay", get label() { return i18n.t("modals.GlobalChartStyleModal.trendDnia"); }, color: "#ffb36c", icon: <BiTrendingUp />, trend: true },
+    { key: "trendNight", get label() { return i18n.t("modals.GlobalChartStyleModal.trendNochi"); }, color: "#ff1493", icon: <BiTrendingUp />, trend: true },
   ],
 };
 
@@ -65,7 +66,7 @@ const GlobalChartStyleModal = ({ chartKey, isDarkMode, onClose, zIndex = 100010 
 
   return (
     <ChartStyleModal
-      title={chartKey === "hourly" ? "Стиль ліній: погодинні графіки (усі картки)" : "Стиль ліній: графіки на 16 днів (усі картки)"}
+      title={chartKey === "hourly" ? i18n.t("modals.GlobalChartStyleModal.stylLiniiPohodynniHrafiky") : i18n.t("modals.GlobalChartStyleModal.stylLiniiHrafikyNa")}
       lines={LINES[chartKey]}
       styles={lines}
       onChange={(lineKey, patch) =>

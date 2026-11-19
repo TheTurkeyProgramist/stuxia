@@ -1,6 +1,7 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
 
+import i18n from "../../i18n/i18n.js";
 // Анімовані іконки та шкали Сонця/Місяця для блокового режиму прогнозу
 
 const blow = keyframes`
@@ -138,8 +139,8 @@ export const AstroScale = ({ icon, title, riseLabel, setLabel, progress, isActiv
       <span>{title}</span>
     </ScaleHead>
     <ScaleTimes>
-      <span>Схід — {riseLabel}</span>
-      <span>Захід — {setLabel}</span>
+      <span>{i18n.t("newsWeather.BlockAstroIcons.skhid")} {riseLabel}</span>
+      <span>{i18n.t("newsWeather.BlockAstroIcons.zakhid")} {setLabel}</span>
     </ScaleTimes>
     {progress !== null && (
       <Track>

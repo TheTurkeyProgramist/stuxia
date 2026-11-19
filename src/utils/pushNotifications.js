@@ -16,6 +16,7 @@ import {
   ALERT_PREF_KEYS,
 } from "./emergencyAlerts.js";
 
+import i18n from "../i18n/i18n.js";
 // Справжні push-сповіщення через Firebase Cloud Messaging: приходять навіть тоді,
 // коли Стихія закрита. Розсилає їх Cloud Function sendAlerts (firebase-functions/).
 //
@@ -71,7 +72,7 @@ const morningPlace = () => {
   const place = knownPlaces.find((p) => saved && String(p.id) === saved && hasCoords(p)) ||
     knownPlaces.find(hasCoords);
   return place
-    ? { lat: round1(place.lat), lon: round1(place.lon), name: String(place.name || "Ваша локація").slice(0, 60) }
+    ? { lat: round1(place.lat), lon: round1(place.lon), name: String(place.name || i18n.t("ui.pushNotifications.vashaLokatsiia")).slice(0, 60) }
     : null;
 };
 
@@ -94,7 +95,7 @@ const buildProfile = () => {
           .map((p) => ({
             lat: round1(p.lat),
             lon: round1(p.lon),
-            name: String(p.name || "Ваша локація").slice(0, 60),
+            name: String(p.name || i18n.t("ui.pushNotifications.vashaLokatsiia")).slice(0, 60),
           }))
       : [],
   };
@@ -128,7 +129,7 @@ const loadTurnstile = () => {
       script.onload = () => resolve(window.turnstile);
       script.onerror = () => {
         turnstileLoading = null;
-        reject(new Error("Turnstile не завантажився"));
+        reject(new Error(i18n.t("ui.pushNotifications.turnstileNeZavantazhyvsia")));
       };
       document.head.appendChild(script);
     });
@@ -147,7 +148,7 @@ const getCaptchaToken = async () => {
   let widgetId;
   try {
     return await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error("Turnstile: час вийшов")), TURNSTILE_TIMEOUT_MS);
+      const timer = setTimeout(() => reject(new Error(i18n.t("ui.pushNotifications.turnstileChasVyishov"))), TURNSTILE_TIMEOUT_MS);
       widgetId = turnstile.render(box, {
         sitekey: TURNSTILE_KEY,
         action: "push", // сервер приймає лише цю дію
@@ -158,11 +159,11 @@ const getCaptchaToken = async () => {
         },
         "error-callback": () => {
           clearTimeout(timer);
-          reject(new Error("Turnstile: перевірку не пройдено"));
+          reject(new Error(i18n.t("ui.pushNotifications.turnstilePerevirkuNeProideno")));
         },
         "timeout-callback": () => {
           clearTimeout(timer);
-          reject(new Error("Turnstile: час вийшов"));
+          reject(new Error(i18n.t("ui.pushNotifications.turnstileChasVyishov")));
         },
       });
     });

@@ -6,6 +6,7 @@ import { BiPalette, BiLayer, BiSliderAlt, BiTrendingUp, BiInfoCircle, BiCheck } 
 import { MdOutlineFormatColorFill, MdScatterPlot, MdNumbers } from "react-icons/md";
 import { CURVES, DASHES, WIDTH_MIN, WIDTH_MAX, DIM_MAX, DEFAULT_DIM, WIND_LABELS } from "../../utils/chartLineStyles.js";
 
+import i18n from "../../i18n/i18n.js";
 /* ---------- Мінімалістичний вигляд: менше рамок, сегментовані групи, тонкі повзунки ---------- */
 
 const ModalOverlay = styled.div`
@@ -525,7 +526,7 @@ const CurveSwatch = ({ curve, color }) => (
   </svg>
 );
 
-const dimLabel = (v) => (v === 0 ? "сховати" : `${Math.round(v * 100)}%`);
+const dimLabel = (v) => (v === 0 ? i18n.t("modals.ChartStyleModal.skhovaty") : `${Math.round(v * 100)}%`);
 
 // Прозорість лінії, коли її вимкнено в легенді
 const DimSlider = ({ value, color, label, onChange }) => (
@@ -614,7 +615,7 @@ const ChartStyleModal = ({
         {/* У картці лінії — лише іконки (назва в підказці), щоб усе вміщалось в один рядок */}
         {!l.trend && (
           <Row>
-            <span className="name">Форма</span>
+            <span className="name">{i18n.t("modals.ChartStyleModal.forma")}</span>
             <Options $isDarkMode={isDarkMode}>
               {Object.entries(CURVES).map(([k, c]) => (
                 <OptionButton
@@ -633,7 +634,7 @@ const ChartStyleModal = ({
         )}
 
         <Row>
-          <span className="name">Тип лінії</span>
+          <span className="name">{i18n.t("modals.ChartStyleModal.typLinii")}</span>
           <Options $isDarkMode={isDarkMode}>
             {Object.entries(DASHES).map(([k, d]) => (
               <OptionButton
@@ -651,7 +652,7 @@ const ChartStyleModal = ({
         </Row>
 
         <Row>
-          <span className="name">Товщина</span>
+          <span className="name">{i18n.t("modals.ChartStyleModal.tovshchyna")}</span>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Slider
               min={WIDTH_MIN}
@@ -659,7 +660,7 @@ const ChartStyleModal = ({
               step={1}
               value={s.width}
               color={l.color}
-              label={`Товщина лінії ${l.label}`}
+              label={i18n.t("modals.ChartStyleModal.tovshchynaLinii", { label: l.label })}
               onChange={(v) => set({ width: v })}
             />
             <WidthValue $color={l.color}>{s.width} px</WidthValue>
@@ -667,12 +668,12 @@ const ChartStyleModal = ({
         </Row>
 
         {s.dimOpacity !== undefined && (
-          <Row title="Наскільки видно лінію, коли її вимкнено в легенді над графіком">
-            <span className="name">Коли вимкнено</span>
+          <Row title={i18n.t("modals.ChartStyleModal.naskilkyVydnoLiniiuKoly")}>
+            <span className="name">{i18n.t("modals.ChartStyleModal.kolyVymkneno")}</span>
             <DimSlider
               value={s.dimOpacity}
               color={l.color}
-              label={`Прозорість вимкненої лінії ${l.label}`}
+              label={i18n.t("modals.ChartStyleModal.prozoristVymknenoiLinii", { label: l.label })}
               onChange={(v) => set({ dimOpacity: v })}
             />
           </Row>
@@ -683,26 +684,26 @@ const ChartStyleModal = ({
             <ToggleChip $active={effectiveFill} $color={l.color} $isDarkMode={isDarkMode}>
               <input type="checkbox" checked={effectiveFill} onChange={(e) => set({ fill: e.target.checked })} />
               {effectiveFill ? <BiCheck /> : <MdOutlineFormatColorFill />}
-              Заливка під лінією
+              {i18n.t("modals.ChartStyleModal.zalyvkaPidLiniieiu")}
             </ToggleChip>
             <ToggleChip $active={s.points} $color={l.color} $isDarkMode={isDarkMode}>
               <input type="checkbox" checked={s.points} onChange={(e) => set({ points: e.target.checked })} />
               {s.points ? <BiCheck /> : <MdScatterPlot />}
-              Точки / іконки
+              {i18n.t("modals.ChartStyleModal.tochkyIkonky")}
             </ToggleChip>
             {s.labels !== undefined && (
-              <ToggleChip $active={s.labels} $color={l.color} $isDarkMode={isDarkMode} title="Маленькі числа біля точок графіка">
+              <ToggleChip $active={s.labels} $color={l.color} $isDarkMode={isDarkMode} title={i18n.t("modals.ChartStyleModal.malenkiChyslaBiliaTochok")}>
                 <input type="checkbox" checked={s.labels} onChange={(e) => set({ labels: e.target.checked })} />
                 {s.labels ? <BiCheck /> : <MdNumbers />}
-                Підписи значень
+                {i18n.t("modals.ChartStyleModal.pidpysyZnachen")}
               </ToggleChip>
             )}
           </Toggles>
         )}
 
         {l.wind && s.windLabel !== undefined && s.labels && (
-          <Row title="Що писати маленьким текстом під кожною стрілкою вітру">
-            <span className="name">Під стрілкою</span>
+          <Row title={i18n.t("modals.ChartStyleModal.shchoPysatyMalenkymTekstom")}>
+            <span className="name">{i18n.t("modals.ChartStyleModal.pidStrilkoiu")}</span>
             <Options $isDarkMode={isDarkMode}>
               {Object.entries(WIND_LABELS).map(([k, w]) => (
                 <OptionButton key={k} $active={s.windLabel === k} $accent={l.color} onClick={() => set({ windLabel: k })}>
@@ -735,11 +736,11 @@ const ChartStyleModal = ({
             <div>
               <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700 }}>{title}</h3>
               <div style={{ fontSize: "12px", opacity: 0.55, marginTop: "2px" }}>
-                Форма, тип і товщина кожної лінії. Графік оновлюється одразу.
+                {i18n.t("modals.ChartStyleModal.formaTypITovshchyna")}
               </div>
             </div>
           </div>
-          <CloseButton onClick={onClose} aria-label="Закрити">
+          <CloseButton onClick={onClose} aria-label={i18n.t("modals.ChartStyleModal.zakryty")}>
             <FaTimes />
           </CloseButton>
         </Header>
@@ -747,10 +748,10 @@ const ChartStyleModal = ({
         <div>
           <SectionHeader>
             <SectionLabel>
-              <BiLayer /> Для всіх ліній
+              <BiLayer /> {i18n.t("modals.ChartStyleModal.dliaVsikhLinii")}
               <Hint>
                 · <BiInfoCircle />
-                {allCards ? "зміни застосовуються до графіків усіх карток" : "зміни діють лише для цієї картки"}
+                {allCards ? i18n.t("modals.ChartStyleModal.zminyZastosovuiutsiaDoHrafikiv") : i18n.t("modals.ChartStyleModal.zminyDiiutLysheDlia")}
               </Hint>
             </SectionLabel>
             {/* Без onToggleAllCards (загальні налаштування) — перемикача немає: там завжди всі картки */}
@@ -758,13 +759,13 @@ const ChartStyleModal = ({
               <AllCardsToggle $active={allCards} $isDarkMode={isDarkMode}>
                 <input type="checkbox" checked={allCards} onChange={(e) => onToggleAllCards(e.target.checked)} />
                 <span className="switch" aria-hidden="true" />
-                Для всіх карток
+                {i18n.t("modals.ChartStyleModal.dliaVsikhKartok")}
               </AllCardsToggle>
             )}
           </SectionHeader>
           <AllLinesPanel $isDarkMode={isDarkMode}>
             <Row>
-              <span className="name">Форма</span>
+              <span className="name">{i18n.t("modals.ChartStyleModal.forma")}</span>
               <Options $isDarkMode={isDarkMode}>
                 {Object.entries(CURVES).map(([k, c]) => (
                   <OptionButton
@@ -780,7 +781,7 @@ const ChartStyleModal = ({
               </Options>
             </Row>
             <Row>
-              <span className="name">Тип лінії</span>
+              <span className="name">{i18n.t("modals.ChartStyleModal.typLinii")}</span>
               <Options $isDarkMode={isDarkMode}>
                 {Object.entries(DASHES).map(([k, d]) => (
                   <OptionButton key={k} $active={sameDash === k} $isDarkMode={isDarkMode} onClick={() => onApplyAll({ dash: k })}>
@@ -789,23 +790,23 @@ const ChartStyleModal = ({
                 ))}
               </Options>
             </Row>
-            <Row title="Наскільки видно лінію, коли її вимкнено в легенді над графіком">
-              <span className="name">Коли вимкнено</span>
+            <Row title={i18n.t("modals.ChartStyleModal.naskilkyVydnoLiniiuKoly")}>
+              <span className="name">{i18n.t("modals.ChartStyleModal.kolyVymkneno")}</span>
               <DimSlider
                 value={commonDim}
                 color="#00eeff"
-                label="Прозорість вимкнених ліній"
+                label={i18n.t("modals.ChartStyleModal.prozoristVymknenykhLinii")}
                 onChange={(v) => onApplyAll({ dimOpacity: v })}
               />
             </Row>
-            <Row title="Маленькі числа біля точок: температура, вітер тощо">
-              <span className="name">Цифри</span>
+            <Row title={i18n.t("modals.ChartStyleModal.malenkiChyslaBiliaTochok2")}>
+              <span className="name">{i18n.t("modals.ChartStyleModal.tsyfry")}</span>
               <Options $isDarkMode={isDarkMode}>
                 <OptionButton $active={anyLabels} $isDarkMode={isDarkMode} onClick={() => onApplyAll({ labels: true })}>
-                  Показувати
+                  {i18n.t("modals.ChartStyleModal.pokazuvaty")}
                 </OptionButton>
                 <OptionButton $active={!anyLabels} $isDarkMode={isDarkMode} onClick={() => onApplyAll({ labels: false })}>
-                  Сховати
+                  {i18n.t("modals.ChartStyleModal.skhovaty2")}
                 </OptionButton>
               </Options>
             </Row>
@@ -814,7 +815,7 @@ const ChartStyleModal = ({
 
         <div>
           <SectionLabel style={{ marginBottom: "10px" }}>
-            <BiSliderAlt /> Кожна лінія окремо
+            <BiSliderAlt /> {i18n.t("modals.ChartStyleModal.kozhnaLiniiaOkremo")}
           </SectionLabel>
           <CardsGrid>{mainLines.map(renderLineCard)}</CardsGrid>
         </div>
@@ -822,8 +823,8 @@ const ChartStyleModal = ({
         {trendLines.length > 0 && (
           <div>
             <SectionLabel style={{ marginBottom: "10px" }}>
-              <BiTrendingUp /> Лінії тренду
-              <Hint>· видно, коли тренд увімкнено кнопкою на графіку</Hint>
+              <BiTrendingUp /> {i18n.t("modals.ChartStyleModal.liniiTrendu")}
+              <Hint>{i18n.t("modals.ChartStyleModal.vydnoKolyTrendUvimkneno")}</Hint>
             </SectionLabel>
             <CardsGrid>{trendLines.map(renderLineCard)}</CardsGrid>
           </div>
@@ -831,10 +832,10 @@ const ChartStyleModal = ({
 
         <Footer $isDarkMode={isDarkMode}>
           <ResetButton $isDarkMode={isDarkMode} onClick={onReset}>
-            <FaUndo /> Скинути до типових
+            <FaUndo /> {i18n.t("modals.ChartStyleModal.skynutyDoTypovykh")}
           </ResetButton>
           <DoneButton $isDarkMode={isDarkMode} onClick={onClose}>
-            <BiCheck size={16} /> Готово
+            <BiCheck size={16} /> {i18n.t("modals.ChartStyleModal.hotovo")}
           </DoneButton>
         </Footer>
       </ModalContent>

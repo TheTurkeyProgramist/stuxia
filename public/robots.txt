@@ -1,3 +1,9 @@
 # https://www.robotstxt.org/robotstxt.html
+
+# Пошукові роботи Яндекса — сайт для них закритий
+# («Yandex» охоплює всіх роботів Яндекса: YandexBot, YandexImages тощо)
+User-agent: Yandex
+Disallow: /
+
 User-agent: *
 Disallow:

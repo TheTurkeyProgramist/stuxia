@@ -12,6 +12,7 @@ import { useSceneDecor } from "../../utils/sceneDecor.js";
 import { getNow, syncClock } from "../../utils/serverClock.js";
 import { TIMEZONES } from "./timezones.js";
 
+import i18n from "../../i18n/i18n.js";
 const TimezoneMenu = styled.div`
   position: fixed;
   /* Від 5% згори до самого низу екрана — смуга прокрутки вміщується повністю */
@@ -341,10 +342,10 @@ const getTimezoneInfo = (timezone, now) => {
 };
 
 const PHASES = {
-  dawn: { label: "Світанок", color: "#62d6e8", Icon: FiSunrise },
-  day: { label: "День", color: "#ffd54f", Icon: FaSun },
-  dusk: { label: "Сутінки", color: "#f080b5", Icon: FiSunset },
-  night: { label: "Ніч", color: "#90caf9", Icon: BsMoonStarsFill },
+  dawn: { get label() { return i18n.t("ui.TimezoneModal.svitanok"); }, color: "#62d6e8", Icon: FiSunrise },
+  day: { get label() { return i18n.t("ui.TimezoneModal.den"); }, color: "#ffd54f", Icon: FaSun },
+  dusk: { get label() { return i18n.t("ui.TimezoneModal.sutinky"); }, color: "#f080b5", Icon: FiSunset },
+  night: { get label() { return i18n.t("ui.TimezoneModal.nich"); }, color: "#90caf9", Icon: BsMoonStarsFill },
 };
 
 // На білих картках (світла тема без декору) пастельні кольори фаз не читаються
@@ -406,7 +407,7 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone,
               $plain={plain}
               aria-label={`${timezone.label}${info ? `, ${info.timeStr}, ${info.dateStr}` : ""}${
                 info ? `, ${info.utcOffset}` : ""
-              }${cities.length ? `. Інші міста: ${cities.join(", ")}` : ""}`}
+              }${cities.length ? i18n.t("ui.TimezoneModal.inshiMista", { cities: cities.join(", ") }) : ""}`}
               onClick={() => {
                 setSelectedTimezone(timezone.value);
                 localforage.setItem("selected_timezone", timezone.value);
@@ -469,11 +470,11 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone,
                 </PhaseIndicator>
               )}
               <CitiesTooltip aria-hidden="true">
-                Часовий пояс: {timezone.value}
+                {i18n.t("ui.TimezoneModal.chasovyiPoias")} {timezone.value}
                 {cities.length > 0 && (
                   <>
                     <br />
-                    Інші міста:
+                    {i18n.t("ui.TimezoneModal.inshiMista2")}
                     <br />
                     {cities.map((city) => (
                       <CityHighlight key={city}>{city}</CityHighlight>
@@ -498,14 +499,14 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone,
           $light={isLight}
           type="button"
           onClick={onClose}
-          aria-label="Закрити список часових поясів"
+          aria-label={i18n.t("ui.TimezoneModal.zakrytySpysokChasovykhPoiasiv")}
         >
           ×
         </TimezoneMenuCloseBtn>
-        <TimezoneMenuTitle $light={isLight}>Часовий пояс</TimezoneMenuTitle>
+        <TimezoneMenuTitle $light={isLight}>{i18n.t("ui.TimezoneModal.chasovyiPoias2")}</TimezoneMenuTitle>
         <DecorToggle
-          label="Декор"
-          title="Малюнки міст і погодні ефекти (вимкніть для економії продуктивності)"
+          label={i18n.t("ui.TimezoneModal.dekor")}
+          title={i18n.t("ui.TimezoneModal.maliunkyMistIPohodni")}
           accent="#ffb36c"
           isDarkMode={isDarkMode}
         />

@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { DEFAULT_BGS } from "../Hero/defaultBgs";
 
+import i18n from "../../i18n/i18n.js";
 const BgModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -101,7 +102,7 @@ const BgSquare = styled.img`
 const WeatherBgModal = ({ locationName, bgMode, onSelect, onClose }) => (
   <BgModalOverlay onClick={onClose}>
     <BgModalContent onClick={(e) => e.stopPropagation()}>
-      <h2 style={{ margin: 0, color: "#ffb36c" }}>Зміна фону: {locationName}</h2>
+      <h2 style={{ margin: 0, color: "#ffb36c" }}>{i18n.t("modals.WeatherBgModal.zminaFonu")} {locationName}</h2>
       <BgGrid>
         {DEFAULT_BGS.filter((bg) => /\.(webp|jpe?g|png|gif)(\?.*)?$/i.test(bg.src || "")).map((bg, idx) => (
           <BgItem key={idx} $active={bgMode === bg.src} onClick={() => onSelect(bg.src)}>
@@ -129,7 +130,7 @@ const WeatherBgModal = ({ locationName, bgMode, onSelect, onClose }) => (
           marginTop: "10px",
         }}
       >
-        Закрити
+        {i18n.t("modals.WeatherBgModal.zakryty")}
       </button>
     </BgModalContent>
   </BgModalOverlay>

@@ -12,18 +12,19 @@ import {
 } from "./supportConfig";
 import { useSupportProgress, claimSupporterBadge, kyivMonth } from "./useSupportProgress";
 
+import i18n from "../../i18n/i18n.js";
 // «у листопаді» — для підпису шкали
-const MONTHS_IN = [
-  "січні", "лютому", "березні", "квітні", "травні", "червні",
-  "липні", "серпні", "вересні", "жовтні", "листопаді", "грудні",
-];
+const MONTHS_IN = () => ([
+  i18n.t("ui.SupportCosts.sichni"), i18n.t("ui.SupportCosts.liutomu"), i18n.t("ui.SupportCosts.berezni"), i18n.t("ui.SupportCosts.kvitni"), i18n.t("ui.SupportCosts.travni"), i18n.t("ui.SupportCosts.chervni"),
+  i18n.t("ui.SupportCosts.lypni"), i18n.t("ui.SupportCosts.serpni"), i18n.t("ui.SupportCosts.veresni"), i18n.t("ui.SupportCosts.zhovtni"), i18n.t("ui.SupportCosts.lystopadi"), i18n.t("ui.SupportCosts.hrudni"),
+]);
 
 const daysWord = (n) => {
   const mod10 = n % 10;
   const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "день";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "дні";
-  return "днів";
+  if (mod10 === 1 && mod100 !== 11) return i18n.t("ui.SupportCosts.den");
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return i18n.t("ui.SupportCosts.dni");
+  return i18n.t("ui.SupportCosts.dniv");
 };
 
 const MonthHint = styled.div`
@@ -364,7 +365,7 @@ const SupporterClaim = ({ user, onUserUpdate }) => {
   if (!user) {
     return (
       <ClaimMessage as="div" style={{ marginTop: 10 }}>
-        Увійдіть в акаунт (кнопка «Акаунт» угорі), щоб отримати значок «Друг індиків».
+        {i18n.t("ui.SupportCosts.uviiditVAkauntKnopka")}
       </ClaimMessage>
     );
   }
@@ -372,7 +373,7 @@ const SupporterClaim = ({ user, onUserUpdate }) => {
   if (isSupporter(user)) {
     return (
       <ClaimMessage as="div" $ok style={{ marginTop: 10 }}>
-        🦃 Ви — Друг індиків. Дякуємо, що підтримуєте Стихію!
+        {i18n.t("ui.SupportCosts.vyDruhIndykivDiakuiemo")}
       </ClaimMessage>
     );
   }
@@ -384,13 +385,13 @@ const SupporterClaim = ({ user, onUserUpdate }) => {
     if (res.ok) {
       rememberSupporter(user.uid);
       onUserUpdate?.({ ...user, isSupporter: true, supporterSince: Date.now() });
-      setStatus({ state: "ok", text: "Готово! Значок 🦃 уже біля вашого акаунта. Дякуємо!" });
+      setStatus({ state: "ok", text: i18n.t("ui.SupportCosts.hotovoZnachokUzheBilia") });
     } else {
       setStatus({
         state: "error",
         text:
           res.error ||
-          "Не знайшли такого донату. Перевірте ім'я (як на Donatello) і суму. Свіжий донат може з'явитися за 2–3 хвилини.",
+          i18n.t("ui.SupportCosts.neZnaishlyTakohoDonatu"),
       });
     }
   };
@@ -398,7 +399,7 @@ const SupporterClaim = ({ user, onUserUpdate }) => {
   return (
     <ClaimForm onSubmit={onSubmit}>
       <label>
-        Ім'я, яке ви вказали на Donatello
+        {i18n.t("ui.SupportCosts.imiaIakeVyVkazaly")}
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -408,7 +409,7 @@ const SupporterClaim = ({ user, onUserUpdate }) => {
         />
       </label>
       <label>
-        Сума, грн
+        {i18n.t("ui.SupportCosts.sumaHrn")}
         <input
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
@@ -419,7 +420,7 @@ const SupporterClaim = ({ user, onUserUpdate }) => {
         />
       </label>
       <ClaimSubmit type="submit" disabled={status.state === "loading"}>
-        {status.state === "loading" ? "Перевіряємо…" : "Отримати значок"}
+        {status.state === "loading" ? i18n.t("ui.SupportCosts.pereviriaiemo") : i18n.t("ui.SupportCosts.otrymatyZnachok")}
       </ClaimSubmit>
       {status.text && (
         <ClaimMessage $ok={status.state === "ok"} role="status">
@@ -437,7 +438,7 @@ const SupportCosts = ({ user, onUserUpdate }) => {
   const [openClaim, setOpenClaim] = useState(false);
   const { raised, target, live, month } = useSupportProgress();
   const monthIndex = Number(String(month).slice(5, 7)) - 1;
-  const monthName = MONTHS_IN[monthIndex] ?? "цьому місяці";
+  const monthName = MONTHS_IN()[monthIndex] ?? i18n.t("ui.SupportCosts.tsomuMisiatsi");
   const { daysLeft } = kyivMonth();
   const feePct = Math.round(DONATION_FEE * 100);
 
@@ -470,15 +471,12 @@ const SupportCosts = ({ user, onUserUpdate }) => {
     <Section aria-labelledby="support-costs-title">
       <Columns>
         <div>
-          <Title id="support-costs-title">Скільки коштує Стихія</Title>
+          <Title id="support-costs-title">{i18n.t("ui.SupportCosts.skilkyKoshtuieStykhiia")}</Title>
           <Lead>
-            Прогноз, кілька точок і новини завжди будуть безкоштовними для всіх. Але сайт
-            живе не з повітря — ось чесні цифри, без «мільйонів розробнику».
+            {i18n.t("ui.SupportCosts.prohnozKilkaTochokI")}
           </Lead>
           <Note>
-            В Україні є важливіші збори, і ми це розуміємо. Якщо хочете допомогти Стихії
-            жити — ось банка. Донатерам дістається хіба що значок «Друг індиків» біля
-            акаунта, функції від цього не змінюються.
+            {i18n.t("ui.SupportCosts.vUkrainiIeVazhlyvishi")}
           </Note>
         </div>
 
@@ -487,12 +485,12 @@ const SupportCosts = ({ user, onUserUpdate }) => {
             href={DONATE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`У ${monthName} зібрано ${raised} з ${target} гривень. Відкрити банку на Donatello`}
+            aria-label={i18n.t("ui.SupportCosts.uZibranoZHryven", { monthName: monthName, raised: raised, target: target })}
           >
             <GoalLabel>
               <span>
-                Зібрано в {monthName}
-                {live && <LiveDot title="Оновлюється автоматично з Donatello">наживо</LiveDot>}
+                {i18n.t("ui.SupportCosts.zibranoV")} {monthName}
+                {live && <LiveDot title={i18n.t("ui.SupportCosts.onovliuietsiaAvtomatychnoZDonatello")}>{i18n.t("ui.SupportCosts.nazhyvo")}</LiveDot>}
               </span>
               <Amount $bump={bump} key={bump ? "bump" : "still"}>
                 {formatUah(shownRaised)} / {formatUah(target)}
@@ -502,7 +500,7 @@ const SupportCosts = ({ user, onUserUpdate }) => {
               <Fill $pct={pct} $bump={bump} />
             </Track>
             <MonthHint>
-              Шкала обнуляється 1-го числа кожного місяця · до кінця місяця ще {daysLeft}{" "}
+              {i18n.t("ui.SupportCosts.shkalaObnuliaietsia1Ho")} {daysLeft}{" "}
               {daysWord(daysLeft)}
             </MonthHint>
           </GoalLink>
@@ -512,12 +510,12 @@ const SupportCosts = ({ user, onUserUpdate }) => {
               type="button"
               aria-expanded={openTable}
               aria-controls="support-costs-table"
-              title={openTable ? "Згорнути таблицю витрат" : "Розгорнути таблицю витрат"}
+              title={openTable ? i18n.t("ui.SupportCosts.zhornutyTablytsiuVytrat") : i18n.t("ui.SupportCosts.rozhornutyTablytsiuVytrat")}
               onClick={() => setOpenTable((v) => !v)}
             >
               <Arrow $open={openTable} aria-hidden="true">▸</Arrow>
-              {openTable ? "Згорнути таблицю витрат" : "Розгорнути таблицю витрат"}
-              <Hint>· ≈ {formatUah(MONTHLY_GOAL)}/міс</Hint>
+              {openTable ? i18n.t("ui.SupportCosts.zhornutyTablytsiuVytrat") : i18n.t("ui.SupportCosts.rozhornutyTablytsiuVytrat")}
+              <Hint>· ≈ {formatUah(MONTHLY_GOAL)}{i18n.t("ui.SupportCosts.mis")}</Hint>
             </ToggleBtn>
             <ToggleBtn
               type="button"
@@ -526,7 +524,7 @@ const SupportCosts = ({ user, onUserUpdate }) => {
               onClick={() => setOpenClaim((v) => !v)}
             >
               <Arrow $open={openClaim} aria-hidden="true">▸</Arrow>
-              🦃 Я задонатив — отримати значок
+              {i18n.t("ui.SupportCosts.iaZadonatyvOtrymatyZnachok")}
             </ToggleBtn>
           </ButtonsRow>
         </div>
@@ -543,9 +541,9 @@ const SupportCosts = ({ user, onUserUpdate }) => {
           <Table>
             <thead>
               <tr>
-                <th scope="col">Стаття</th>
-                <th scope="col">Ціна</th>
-                <th scope="col">На місяць</th>
+                <th scope="col">{i18n.t("ui.SupportCosts.stattia")}</th>
+                <th scope="col">{i18n.t("ui.SupportCosts.tsina")}</th>
+                <th scope="col">{i18n.t("ui.SupportCosts.naMisiats")}</th>
               </tr>
             </thead>
             <tbody>
@@ -557,15 +555,15 @@ const SupportCosts = ({ user, onUserUpdate }) => {
                 </tr>
               ))}
               <tr>
-                <td>Комісія платформи донатів</td>
-                <td>{feePct}% від донату</td>
+                <td>{i18n.t("ui.SupportCosts.komisiiaPlatformyDonativ")}</td>
+                <td>{feePct}{i18n.t("ui.SupportCosts.vidDonatu")}</td>
                 <td>≈ {formatUah(MONTHLY_GOAL - MONTHLY_TOTAL)}</td>
               </tr>
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={2}>Разом</td>
-                <td>≈ {formatUah(MONTHLY_GOAL)}/міс</td>
+                <td colSpan={2}>{i18n.t("ui.SupportCosts.razom")}</td>
+                <td>≈ {formatUah(MONTHLY_GOAL)}{i18n.t("ui.SupportCosts.mis")}</td>
               </tr>
             </tfoot>
           </Table>

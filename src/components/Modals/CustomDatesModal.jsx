@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addCustomDay, removeCustomDay } from "../../features/counter/Counter.js";
 import { BiTrash, BiX, BiCalendarPlus } from "react-icons/bi";
 
+import i18n from "../../i18n/i18n.js";
 const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -199,13 +200,13 @@ const CustomDatesModal = ({ onClose, isDarkMode, currentCardId }) => {
   }, [onClose]);
 
   const handleAdd = () => {
-    if (!date || !reason) return alert("Заповніть дату та назву");
-    if (reason.length > 30) return alert("Назва занадто довга (макс 30)");
+    if (!date || !reason) return alert(i18n.t("modals.CustomDatesModal.zapovnitDatuTaNazvu"));
+    if (reason.length > 30) return alert(i18n.t("modals.CustomDatesModal.nazvaZanadtoDovhaMaks"));
 
     // Check limit
     const userEvents = customDays; // Simplified: assuming 1 user for now
     if (userEvents.length >= 3) {
-      return alert("Максимум 3 події на користувача");
+      return alert(i18n.t("modals.CustomDatesModal.maksymum3PodiiNa"));
     }
 
     dispatch(
@@ -230,14 +231,14 @@ const CustomDatesModal = ({ onClose, isDarkMode, currentCardId }) => {
       <ModalContent
         $isDarkMode={isDarkMode}
         role="dialog"
-        aria-label="Встановити дати"
+        aria-label={i18n.t("modals.CustomDatesModal.vstanovytyDaty")}
         onClick={(e) => e.stopPropagation()}
       >
         <Header>
           <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-            <BiCalendarPlus style={{ color: "#ffb36c" }} /> Встановити дати
+            <BiCalendarPlus style={{ color: "#ffb36c" }} /> {i18n.t("modals.CustomDatesModal.vstanovytyDaty")}
           </h3>
-          <CloseButton onClick={onClose} aria-label="Закрити">
+          <CloseButton onClick={onClose} aria-label={i18n.t("modals.CustomDatesModal.zakryty")}>
             <BiX />
           </CloseButton>
         </Header>
@@ -245,7 +246,7 @@ const CustomDatesModal = ({ onClose, isDarkMode, currentCardId }) => {
         <Body>
           <Column>
             <InputGroup>
-              <label>Дата та Час початку</label>
+              <label>{i18n.t("modals.CustomDatesModal.dataTaChasPochatku")}</label>
               <div style={{ display: "flex", gap: "5px" }}>
                 <StyledInput
                   type="date"
@@ -264,7 +265,7 @@ const CustomDatesModal = ({ onClose, isDarkMode, currentCardId }) => {
             </InputGroup>
 
             <InputGroup>
-              <label>Тривалість</label>
+              <label>{i18n.t("modals.CustomDatesModal.tryvalist")}</label>
               <div style={{ display: "flex", gap: "5px" }}>
                 <StyledInput
                   type="number"
@@ -280,30 +281,30 @@ const CustomDatesModal = ({ onClose, isDarkMode, currentCardId }) => {
                   value={durationUnit}
                   onChange={(e) => setDurationUnit(e.target.value)}
                 >
-                  <option value="hours">Годин</option>
-                  <option value="days">Днів</option>
+                  <option value="hours">{i18n.t("modals.CustomDatesModal.hodyn")}</option>
+                  <option value="days">{i18n.t("modals.CustomDatesModal.dniv")}</option>
                 </StyledSelect>
               </div>
             </InputGroup>
 
             <InputGroup>
-              <label>Застосувати для:</label>
+              <label>{i18n.t("modals.CustomDatesModal.zastosuvatyDlia")}</label>
               <StyledSelect
                 $isDarkMode={isDarkMode}
                 value={targetCard}
                 onChange={(e) => setTargetCard(e.target.value)}
               >
-                <option value="all">Всіх карток</option>
-                <option value={currentCardId}>Цієї картки</option>
+                <option value="all">{i18n.t("modals.CustomDatesModal.vsikhKartok")}</option>
+                <option value={currentCardId}>{i18n.t("modals.CustomDatesModal.tsiieiKartky")}</option>
               </StyledSelect>
             </InputGroup>
 
             <InputGroup>
-              <label>Назва події (макс 30 симв.)</label>
+              <label>{i18n.t("modals.CustomDatesModal.nazvaPodiiMaks30")}</label>
               <div style={{ display: "flex", gap: "5px" }}>
                 <StyledInput
                   type="text"
-                  placeholder="Наприклад: Новий Рік"
+                  placeholder={i18n.t("modals.CustomDatesModal.naprykladNovyiRik")}
                   $isDarkMode={isDarkMode}
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
@@ -313,7 +314,7 @@ const CustomDatesModal = ({ onClose, isDarkMode, currentCardId }) => {
                   maxLength={30}
                   style={{ flex: 1 }}
                 />
-                <AddButton onClick={handleAdd} aria-label="Додати подію">
+                <AddButton onClick={handleAdd} aria-label={i18n.t("modals.CustomDatesModal.dodatyPodiiu")}>
                   +
                 </AddButton>
               </div>
@@ -321,17 +322,17 @@ const CustomDatesModal = ({ onClose, isDarkMode, currentCardId }) => {
           </Column>
 
           <Column>
-            <h4 style={{ margin: 0 }}>Наступаючі / триваючі події</h4>
+            <h4 style={{ margin: 0 }}>{i18n.t("modals.CustomDatesModal.nastupaiuchiTryvaiuchiPodii")}</h4>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {myEvents.length === 0 && <p style={{ fontSize: "12px", opacity: 0.7, margin: 0 }}>Немає подій</p>}
+              {myEvents.length === 0 && <p style={{ fontSize: "12px", opacity: 0.7, margin: 0 }}>{i18n.t("modals.CustomDatesModal.nemaiePodii")}</p>}
               {myEvents.map((ev) => (
                 <EventItem key={ev.id} $isDarkMode={isDarkMode}>
                   <div>
                     <b>{ev.reason}</b>
                     <br />
-                    {ev.date} {ev.time} ({ev.duration} {ev.durationUnit === "days" ? "дн" : "год"})
+                    {ev.date} {ev.time} ({ev.duration} {ev.durationUnit === "days" ? i18n.t("modals.CustomDatesModal.dn") : i18n.t("modals.CustomDatesModal.hod")})
                   </div>
-                  <DeleteButton onClick={() => dispatch(removeCustomDay(ev.id))} aria-label="Видалити подію">
+                  <DeleteButton onClick={() => dispatch(removeCustomDay(ev.id))} aria-label={i18n.t("modals.CustomDatesModal.vydalytyPodiiu")}>
                     <BiTrash size={18} />
                   </DeleteButton>
                 </EventItem>

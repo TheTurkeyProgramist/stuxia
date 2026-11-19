@@ -4,6 +4,7 @@ import styled, { keyframes } from "styled-components";
 import { FiKey, FiEye, FiEyeOff, FiExternalLink, FiX, FiChevronDown } from "react-icons/fi";
 import { TbGauge } from "react-icons/tb";
 
+import i18n from "../../i18n/i18n.js";
 // Спільні для «Допомоги ШІ» та «ШІ Викладу новини»:
 // кнопка-статус ключа Gemini і модалка з полем для ключа.
 
@@ -65,13 +66,13 @@ export const GeminiKeyButton = ({ hasKey, onClick, isDarkMode = true }) => (
     $hasKey={hasKey}
     $isDarkMode={isDarkMode}
     onClick={onClick}
-    aria-label={hasKey ? "Ключ Gemini додано. Змінити ключ" : "Вставити ключ Gemini"}
+    aria-label={hasKey ? i18n.t("modals.GeminiKeyModal.kliuchGeminiDodanoZminyty") : i18n.t("modals.GeminiKeyModal.vstavytyKliuchGemini")}
   >
     <FiKey aria-hidden="true" />
     <span>
       {hasKey
-        ? "Ключ Gemini додано — натисніть, щоб змінити"
-        : "ШІ пасивно ввімкнений — натисніть, щоб вставити ключ"}
+        ? i18n.t("modals.GeminiKeyModal.kliuchGeminiDodanoNatysnit")
+        : i18n.t("modals.GeminiKeyModal.shiPasyvnoVvimknenyiNatysnit")}
     </span>
   </KeyButton>
 );
@@ -267,22 +268,21 @@ export const GeminiKeyModal = ({ value, onChange, onClose, modelName }) => {
       }}
     >
       <Box role="dialog" aria-modal="true" aria-labelledby="gemini-key-title">
-        <CloseButton type="button" onClick={onClose} aria-label="Закрити">
+        <CloseButton type="button" onClick={onClose} aria-label={i18n.t("modals.GeminiKeyModal.zakryty")}>
           <FiX aria-hidden="true" />
         </CloseButton>
         <Header>
           <IconBadge aria-hidden="true"><FiKey /></IconBadge>
-          <Title id="gemini-key-title">Ключ Gemini</Title>
+          <Title id="gemini-key-title">{i18n.t("modals.GeminiKeyModal.kliuchGemini")}</Title>
         </Header>
         <Text>
-          Ключ потрібен, щоб працював ШІ. Він зберігається лише в цьому браузері й
-          використовується спільно «Допомогою ШІ» та «ШІ Викладом новини».
+          {i18n.t("modals.GeminiKeyModal.kliuchPotribenShchobPratsiuvav")}
         </Text>
         <Field>
           <input
             ref={inputRef}
             type={isVisible ? "text" : "password"}
-            placeholder="Вставте ваш Gemini API Key..."
+            placeholder={i18n.t("modals.GeminiKeyModal.vstavteVashGeminiApi")}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onClose()}
@@ -298,14 +298,14 @@ export const GeminiKeyModal = ({ value, onChange, onClose, modelName }) => {
           <EyeButton
             type="button"
             onClick={() => setIsVisible((v) => !v)}
-            aria-label={isVisible ? "Сховати ключ" : "Показати ключ"}
+            aria-label={isVisible ? i18n.t("modals.GeminiKeyModal.skhovatyKliuch") : i18n.t("modals.GeminiKeyModal.pokazatyKliuch")}
           >
             {isVisible ? <FiEyeOff aria-hidden="true" /> : <FiEye aria-hidden="true" />}
           </EyeButton>
         </Field>
         <Links>
           <GetKeyLink href={GET_KEY_URL} target="_blank" rel="noreferrer">
-            Отримати ключ безкоштовно в Google AI Studio <FiExternalLink aria-hidden="true" />
+            {i18n.t("modals.GeminiKeyModal.otrymatyKliuchBezkoshtovnoV")} <FiExternalLink aria-hidden="true" />
           </GetKeyLink>
           <LimitsToggle
             type="button"
@@ -315,25 +315,22 @@ export const GeminiKeyModal = ({ value, onChange, onClose, modelName }) => {
             aria-controls="gemini-key-limits"
           >
             <TbGauge aria-hidden="true" />
-            Переглянути приблизні ліміти
+            {i18n.t("modals.GeminiKeyModal.perehlianutyPryblyzniLimity")}
             <FiChevronDown aria-hidden="true" />
           </LimitsToggle>
           {showLimits && (
             <LimitsPanel id="gemini-key-limits">
               <LimitRow>
-                <span>Ліміт на хвилину (Google):</span>
-                <span>15 / хв</span>
+                <span>{i18n.t("modals.GeminiKeyModal.limitNaKhvylynuGoogle")}</span>
+                <span>{i18n.t("modals.GeminiKeyModal.15Khv")}</span>
               </LimitRow>
               <LimitRow>
-                <span>Ліміт на добу (Google):</span>
-                <span>1500 / доба</span>
+                <span>{i18n.t("modals.GeminiKeyModal.limitNaDobuGoogle")}</span>
+                <span>{i18n.t("modals.GeminiKeyModal.1500Doba")}</span>
               </LimitRow>
               <LimitsNote>
-                Це безкоштовні ліміти Google AI Studio. Їх визначає ваш ключ, а не «Стихія»
-                {modelName ? <> (модель <strong>{modelName}</strong>)</> : null}. З платним ключем
-                ліміти більші, але тут показано базові: ми не маємо доступу до вашого акаунта.
-                Перезарядка 15 с після кожного запиту та ліміт 300 символів на запит зроблені,
-                щоб економити вашу квоту.
+                {i18n.t("modals.GeminiKeyModal.tseBezkoshtovniLimityGoogle")}
+                {modelName ? <> {i18n.t("modals.GeminiKeyModal.model")} <strong>{modelName}</strong>)</> : null}{i18n.t("modals.GeminiKeyModal.zPlatnymKliuchemLimity")}
               </LimitsNote>
             </LimitsPanel>
           )}
@@ -341,11 +338,11 @@ export const GeminiKeyModal = ({ value, onChange, onClose, modelName }) => {
         <Actions>
           {value && (
             <Button type="button" $variant="danger" onClick={() => onChange("")}>
-              Видалити ключ
+              {i18n.t("modals.GeminiKeyModal.vydalytyKliuch")}
             </Button>
           )}
           <Button type="button" $variant="primary" onClick={onClose}>
-            Готово
+            {i18n.t("modals.GeminiKeyModal.hotovo")}
           </Button>
         </Actions>
       </Box>

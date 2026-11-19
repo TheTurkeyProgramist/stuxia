@@ -13,6 +13,7 @@ import {
   makeFormatters,
 } from "../../utils/units.js";
 
+import i18n from "../../i18n/i18n.js";
 const GROUP_META = {
   temp: { icon: <FaThermometerHalf />, color: "#ffb36c", example: (f) => f.temp(20) },
   wind: { icon: <BiWind />, color: "#00b7ff", example: (f) => f.wind(5) },
@@ -25,40 +26,40 @@ const GROUP_META = {
 const CONVERSIONS = [
   {
     key: "temp",
-    title: "Температура",
+    get title() { return i18n.t("modals.UnitsModal.temperatura"); },
     lines: ["°F = °C × 9/5 + 32", "K = °C + 273,15"],
-    advice: "°C — найзручніша для повсякденного життя, нуль збігається з замерзанням води. °F має сенс лише якщо ви звикли до американської шкали. K потрібні майже виключно в науці.",
+    get advice() { return i18n.t("modals.UnitsModal.cNaizruchnishaDliaPovsiakdennoho"); },
   },
   {
     key: "wind",
-    title: "Швидкість вітру",
-    lines: ["км/год = м/с × 3,6", "миль/год = м/с × 2,237", "вузли = м/с × 1,944"],
-    advice: "м/с — стандарт метеорологів. км/год легше уявити в порівнянні з авто, вузли потрібні морякам і пілотам.",
+    get title() { return i18n.t("modals.UnitsModal.shvydkistVitru"); },
+    get lines() { return [i18n.t("modals.UnitsModal.kmHodMS"), i18n.t("modals.UnitsModal.mylHodMS"), i18n.t("modals.UnitsModal.vuzlyMS1")]; },
+    get advice() { return i18n.t("modals.UnitsModal.mSStandartMeteorolohiv"); },
   },
   {
     key: "pressure",
-    title: "Атмосферний тиск",
-    lines: ["мм рт. ст. = гПа × 0,750", "кПа = гПа ÷ 10", "inHg = гПа × 0,02953"],
-    advice: "Норма — приблизно 1013 гПа, або 760 мм рт. ст. В Україні звична мм рт. ст., у прогнозах і на графіках — гПа. inHg потрібні лише для американських джерел.",
+    get title() { return i18n.t("modals.UnitsModal.atmosfernyiTysk"); },
+    get lines() { return [i18n.t("modals.UnitsModal.mmRtStHpa"), i18n.t("modals.UnitsModal.kpaHpa10"), i18n.t("modals.UnitsModal.inhgHpa002953")]; },
+    get advice() { return i18n.t("modals.UnitsModal.normaPryblyzno1013Hpa"); },
   },
   {
     key: "distance",
-    title: "Відстань і висота",
-    lines: ["милі = км × 0,6214", "фути = м × 3,281"],
-    advice: "Міняйте на милі/фути тільки якщо звикли до них, наприклад під час подорожі до США чи Британії.",
+    get title() { return i18n.t("modals.UnitsModal.vidstanIVysota"); },
+    get lines() { return [i18n.t("modals.UnitsModal.myliKm06214"), i18n.t("modals.UnitsModal.futyM3281")]; },
+    get advice() { return i18n.t("modals.UnitsModal.miniaiteNaMyliFuty"); },
   },
   {
     key: "precip",
-    title: "Опади і сніг",
-    lines: ["дюйми (опади) = мм ÷ 25,4", "дюйми (сніг) = см ÷ 2,54"],
-    advice: "Мм краще для опадів: 1 мм = 1 літр води на кв. метр. Дюйми дають дрібні числа (0,04 in), тому їх складніше читати.",
+    get title() { return i18n.t("modals.UnitsModal.opadyISnih"); },
+    get lines() { return [i18n.t("modals.UnitsModal.diuimyOpadyMm25"), i18n.t("modals.UnitsModal.diuimySnihSm2")]; },
+    get advice() { return i18n.t("modals.UnitsModal.mmKrashcheDliaOpadiv"); },
   },
 ];
 
 const SYSTEMS = [
-  { key: "metric", label: "Метрична", hint: "°C, м/с, гПа, км, мм", icon: <FaGlobeEurope />, units: METRIC_UNITS },
-  { key: "imperial", label: "Імперська", hint: "°F, миль/год, inHg, милі, дюйми", icon: <FaFlagUsa />, units: IMPERIAL_UNITS },
-  { key: "custom", label: "Користувацька", hint: "Обрати кожну одиницю окремо", icon: <FaSlidersH /> },
+  { key: "metric", get label() { return i18n.t("modals.UnitsModal.metrychna"); }, get hint() { return i18n.t("modals.UnitsModal.cMSHpa"); }, icon: <FaGlobeEurope />, units: METRIC_UNITS },
+  { key: "imperial", get label() { return i18n.t("modals.UnitsModal.imperska"); }, get hint() { return i18n.t("modals.UnitsModal.fMylHodInhg"); }, icon: <FaFlagUsa />, units: IMPERIAL_UNITS },
+  { key: "custom", get label() { return i18n.t("modals.UnitsModal.korystuvatska"); }, get hint() { return i18n.t("modals.UnitsModal.obratyKozhnuOdynytsiuOkremo"); }, icon: <FaSlidersH /> },
 ];
 
 const ModalOverlay = styled.div`
@@ -377,29 +378,29 @@ const UnitsModal = ({ units, onChange, onClose, isDarkMode, allCards = true, onT
       <ModalContent
         $isDarkMode={isDarkMode}
         role="dialog"
-        aria-label="Одиниці виміру"
+        aria-label={i18n.t("modals.UnitsModal.odynytsiVymiru")}
         onClick={(e) => e.stopPropagation()}
       >
         <Header>
           <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-            <FaRulerHorizontal style={{ color: "#00eeff" }} /> Одиниці виміру
+            <FaRulerHorizontal style={{ color: "#00eeff" }} /> {i18n.t("modals.UnitsModal.odynytsiVymiru")}
           </h3>
-          <CloseButton onClick={onClose} aria-label="Закрити">
+          <CloseButton onClick={onClose} aria-label={i18n.t("modals.UnitsModal.zakryty")}>
             <FaTimes />
           </CloseButton>
         </Header>
 
         <div>
           <ScopeRow>
-            <SectionLabel>Система мір</SectionLabel>
+            <SectionLabel>{i18n.t("modals.UnitsModal.systemaMir")}</SectionLabel>
             {onToggleAllCards && (
               <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                 <span className="hint">
-                  {allCards ? "Одиниці однакові для всіх карток" : "Одиниці діють лише для цієї картки"}
+                  {allCards ? i18n.t("modals.UnitsModal.odynytsiOdnakoviDliaVsikh") : i18n.t("modals.UnitsModal.odynytsiDiiutLysheDlia")}
                 </span>
                 <AllCardsToggle $active={allCards} $isDarkMode={isDarkMode}>
                   <input type="checkbox" checked={allCards} onChange={(e) => onToggleAllCards(e.target.checked)} />
-                  Для всіх карток
+                  {i18n.t("modals.UnitsModal.dliaVsikhKartok")}
                 </AllCardsToggle>
               </div>
             )}
@@ -424,7 +425,7 @@ const UnitsModal = ({ units, onChange, onClose, isDarkMode, allCards = true, onT
         </div>
 
         <div>
-          <SectionLabel>Окремі одиниці</SectionLabel>
+          <SectionLabel>{i18n.t("modals.UnitsModal.okremiOdynytsi")}</SectionLabel>
           <Grid>
             {UNIT_GROUPS.map((g) => {
               const meta = GROUP_META[g.key];
@@ -455,7 +456,7 @@ const UnitsModal = ({ units, onChange, onClose, isDarkMode, allCards = true, onT
         </div>
 
         <Formulas $isDarkMode={isDarkMode}>
-          <summary>Як переводити одиниці і чи варто</summary>
+          <summary>{i18n.t("modals.UnitsModal.iakPerevodytyOdynytsiI")}</summary>
           <div className="formula-list">
             {CONVERSIONS.map((c) => (
               <div className="formula-card" key={c.key}>
@@ -468,17 +469,16 @@ const UnitsModal = ({ units, onChange, onClose, isDarkMode, allCards = true, onT
             ))}
           </div>
           <p className="general">
-            Дані завжди зберігаються в метричних одиницях, а перемикач лише перераховує числа для показу.
-            Точність не втрачається, тому змінюйте одиницю вільно: це нічого не ламає. Якщо вагаєтесь, залиште метричну систему.
+            {i18n.t("modals.UnitsModal.daniZavzhdyZberihaiutsiaV")}
           </p>
         </Formulas>
 
         <Footer>
           <Preview>
-            Приклад: {fmt.temp(20)} · {fmt.wind(5)} · {fmt.pressure(1013)}
+            {i18n.t("modals.UnitsModal.pryklad")} {fmt.temp(20)} · {fmt.wind(5)} · {fmt.pressure(1013)}
           </Preview>
           <ResetButton $isDarkMode={isDarkMode} onClick={() => { setForcedCustom(false); onChange({ ...DEFAULT_UNITS }); }}>
-            <FaUndo /> Скинути до типових
+            <FaUndo /> {i18n.t("modals.UnitsModal.skynutyDoTypovykh")}
           </ResetButton>
         </Footer>
       </ModalContent>

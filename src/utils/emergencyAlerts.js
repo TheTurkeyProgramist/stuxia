@@ -1,6 +1,7 @@
 import localforage from "localforage";
 import { getPref, setPref } from "./prefsStore.js";
 
+import i18n from "../i18n/i18n.js";
 // Екстрені сповіщення: пауза між ними, ліміт на добу та попередження про небезпечну погоду.
 // Ті самі пороги й правила повторює сервер (firebase-functions/index.js) — тримайте синхронно.
 
@@ -90,11 +91,11 @@ export const GUST_HURRICANE_MS = 32.7; // ураганний вітер (12 ба
 
 // Коди WMO з Open-Meteo → явище. Порядок — від найнебезпечнішого
 const CODE_HAZARDS = [
-  { type: "hail", label: "гроза з градом", codes: [96, 99] },
-  { type: "thunder", label: "гроза", codes: [95] },
-  { type: "ice", label: "крижаний дощ, ожеледь", codes: [66, 67] },
-  { type: "snow", label: "сильний снігопад", codes: [75, 86] },
-  { type: "rain", label: "сильна злива", codes: [65, 82] },
+  { type: "hail", get label() { return i18n.t("ui.emergencyAlerts.hrozaZHradom"); }, codes: [96, 99] },
+  { type: "thunder", get label() { return i18n.t("ui.emergencyAlerts.hroza"); }, codes: [95] },
+  { type: "ice", get label() { return i18n.t("ui.emergencyAlerts.kryzhanyiDoshchOzheled"); }, codes: [66, 67] },
+  { type: "snow", get label() { return i18n.t("ui.emergencyAlerts.sylnyiSnihopad"); }, codes: [75, 86] },
+  { type: "rain", get label() { return i18n.t("ui.emergencyAlerts.sylnaZlyva"); }, codes: [65, 82] },
 ];
 
 /**
@@ -122,9 +123,9 @@ export const detectWeatherHazards = (hourly, utcOffsetSeconds = 0, now = Date.no
   });
 
   if (maxGust >= GUST_HURRICANE_MS) {
-    found.set("hurricane", { type: "hurricane", label: `ураганний вітер, пориви до ${Math.round(maxGust)} м/с` });
+    found.set("hurricane", { type: "hurricane", label: i18n.t("ui.emergencyAlerts.urahannyiViterPoryvyDo", { Math: Math.round(maxGust) }) });
   } else if (maxGust >= GUST_STORM_MS) {
-    found.set("storm", { type: "storm", label: `штормовий вітер, пориви до ${Math.round(maxGust)} м/с` });
+    found.set("storm", { type: "storm", label: i18n.t("ui.emergencyAlerts.shtormovyiViterPoryvyDo", { Math: Math.round(maxGust) }) });
   }
   // Гроза з градом уже містить грозу
   if (found.has("hail")) found.delete("thunder");
@@ -137,7 +138,7 @@ export const formatWeatherAlert = (placeName, hazards) => {
   const first = labels[0].charAt(0).toUpperCase() + labels[0].slice(1);
   return {
     title: `⚠ ${first} — ${placeName}`.slice(0, 120),
-    body: `Найближчі ${WEATHER_ALERT_HOURS} год: ${labels.join("; ")}`,
+    body: i18n.t("ui.emergencyAlerts.naiblyzhchiHod", { WEATHER_ALERT_HOURS: WEATHER_ALERT_HOURS, labels: labels.join("; ") }),
   };
 };
 
@@ -218,7 +219,7 @@ export const notifyWeatherHazardsLocal = async ({ cardId, placeName, hourly, utc
   if (hazards.length === 0) return;
   if (!(await canSendLocalAlert("weather"))) return;
 
-  const { title, body } = formatWeatherAlert(placeName || "ваша локація", hazards);
+  const { title, body } = formatWeatherAlert(placeName || i18n.t("ui.emergencyAlerts.vashaLokatsiia"), hazards);
   try {
     await showSystemNotification(title, { body, tag: `weather-${cardId}`, url: "/" });
   } catch (err) {

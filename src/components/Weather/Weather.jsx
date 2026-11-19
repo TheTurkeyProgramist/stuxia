@@ -57,7 +57,8 @@ import {
   addCustomDay,
 } from "../../features/counter/Counter.js";
 import { getHourlyForecastDetailGroups } from "../../utils/hourlyForecast";
-import { generateRuleBasedForecast } from "../../utils/ruleBasedForecast";
+import { generateRuleBasedForecast, badgeHas } from "../../utils/ruleBasedForecast";
+import { ddmmFromIso, isWeekendIso, dateLocale } from "../../utils/weatherText.js";
 import { DEFAULT_CARD_BG, CARD_BG_CHANGE_EVENT } from "./weatherShared";
 import { getWindDirectionText, getWindDirectionShort } from "../../utils/windUtils";
 import { linearTrend } from "../../utils/chartTrend";
@@ -117,6 +118,7 @@ import { GiSunRadiations, GiSnowing, GiWaterRecycling, GiIceCube } from "react-i
 import { Tooltip } from "../Tooltip/Tooltip";
 import { createChartWeatherIcon, getChartIconKey, createChartWindArrow, valueLabelsPlugin } from "../../utils/chartWeatherIcon";
 
+import i18n from "../../i18n/i18n.js";
 // Кеш canvas-іконок для точок графіків: картка рендериться щосекунди, і без кешу
 // десятки іконок (з емодзі) малювались заново, а графік бачив «нові» дані
 const chartCanvasCache = new Map();
@@ -163,7 +165,7 @@ const CustomTimersDisplay = ({ customDays, cardId }) => {
           const h = Math.floor((ms / (1000 * 60 * 60)) % 24);
           const m = Math.floor((ms / 1000 / 60) % 60);
           const s = Math.floor((ms / 1000) % 60);
-          return `${d}дні:${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+          return i18n.t("newsWeather.Weather.dni", { d: d, v1: String(h).padStart(2,'0'), v2: String(m).padStart(2,'0'), v3: String(s).padStart(2,'0') });
         };
 
         return (
@@ -176,7 +178,7 @@ const CustomTimersDisplay = ({ customDays, cardId }) => {
             fontWeight: "bold",
             textAlign: "center"
           }}>
-            {ev.reason}: {diffToStart > 0 ? `До події: ${formatDiff(diffToStart)}` : `Подія триватиме ще: ${formatDiff(diffToEnd)}`}
+            {ev.reason}: {diffToStart > 0 ? i18n.t("newsWeather.Weather.doPodii", { v0: formatDiff(diffToStart) }) : i18n.t("newsWeather.Weather.podiiaTryvatymeShche", { v0: formatDiff(diffToEnd) })}
           </div>
         );
       })}
@@ -473,9 +475,9 @@ const SettingsTileContent = ({ active, steps }) => {
         </SettingsCycleIcon>
       </div>
       <div style={SIDE_CARD_TEXT_STYLE}>
-        <NameCardItem $active={active}>Налаштування</NameCardItem>
+        <NameCardItem $active={active}>{i18n.t("newsWeather.Weather.nalashtuvannia")}</NameCardItem>
         <SubNameCardItem $active={active}>
-          <SettingsCycleText key={stepIndex}>{step ? step.text : "Усі налаштування картки"}</SettingsCycleText>
+          <SettingsCycleText key={stepIndex}>{step ? step.text : i18n.t("newsWeather.Weather.usiNalashtuvanniaKartky")}</SettingsCycleText>
         </SubNameCardItem>
       </div>
     </div>
@@ -1213,11 +1215,11 @@ const SpinningIcon = styled.span`
    items: [{ title, current, others: [] }] */
 const UNITS_CYCLE_MS = 2600;
 const UNIT_SHORT_TITLES = {
-  temp: "Температура",
-  wind: "Вітер",
-  pressure: "Тиск",
-  distance: "Відстань",
-  precip: "Опади",
+  get temp() { return i18n.t("newsWeather.Weather.temperatura"); },
+  get wind() { return i18n.t("newsWeather.Weather.viter"); },
+  get pressure() { return i18n.t("newsWeather.Weather.tysk"); },
+  get distance() { return i18n.t("newsWeather.Weather.vidstan"); },
+  get precip() { return i18n.t("newsWeather.Weather.opady"); },
 };
 const UnitsCycleHint = ({ items }) => {
   const animationsDisabled = useAnimationsDisabled();
@@ -1236,7 +1238,7 @@ const UnitsCycleHint = ({ items }) => {
     <SettingsItemHint aria-live="off">
       <SettingsCycleText key={index}>
         {item.title}: <b style={{ color: "#ffb36c", fontWeight: 700 }}>{item.current}</b>
-        {item.others.length > 0 && <> · також {item.others.join(", ")}</>}
+        {item.others.length > 0 && <> {i18n.t("newsWeather.Weather.takozh")} {item.others.join(", ")}</>}
       </SettingsCycleText>
     </SettingsItemHint>
   );
@@ -1273,7 +1275,7 @@ const LocationHintText = styled.p`
 `;
 const LocationHint = ({ isDarkMode }) => (
   <LocationHintText $isDarkMode={isDarkMode}>
-    Натисніть <BiCog aria-label="шестерню" /> для своєї локації
+    {i18n.t("newsWeather.Weather.natysnit")} <BiCog aria-label={i18n.t("newsWeather.Weather.shesterniu")} /> {i18n.t("newsWeather.Weather.dliaSvoieiLokatsii")}
   </LocationHintText>
 );
 /* Плитки блокового режиму (годинний / 16 днів) */
@@ -1502,16 +1504,16 @@ const WindCompassHint = ({ isDarkMode, windUnit, tempSuffix, gusts, showLabels =
         color: muted,
       }}
     >
-      <svg width="32" height="32" viewBox="0 0 54 54" role="img" aria-label="Компас: північ угорі, південь унизу, схід праворуч, захід ліворуч" style={{ flexShrink: 0 }}>
+      <svg width="32" height="32" viewBox="0 0 54 54" role="img" aria-label={i18n.t("newsWeather.Weather.kompasPivnichUhoriPivden")} style={{ flexShrink: 0 }}>
         <circle cx="27" cy="27" r="16" fill="none" stroke="rgba(56, 189, 248, 0.5)" strokeWidth="1.2" />
         <path d="M27 13 L30 27 L27 24 L24 27 Z" fill="#ef4444" />
         <path d="M27 41 L30 27 L27 30 L24 27 Z" fill={isDarkMode ? "#cbd5e1" : "#64748b"} />
         <circle cx="27" cy="27" r="1.6" fill={text} />
         <g fontSize="11.5" fontWeight="800" fill={text} textAnchor="middle" fontFamily="system-ui, sans-serif">
-          <text x="27" y="10">Пн</text>
-          <text x="27" y="53.5">Пд</text>
-          <text x="46.5" y="31">Сх</text>
-          <text x="7.5" y="31">Зх</text>
+          <text x="27" y="10">{i18n.t("newsWeather.Weather.pn")}</text>
+          <text x="27" y="53.5">{i18n.t("newsWeather.Weather.pd")}</text>
+          <text x="46.5" y="31">{i18n.t("newsWeather.Weather.skh")}</text>
+          <text x="7.5" y="31">{i18n.t("newsWeather.Weather.zkh")}</text>
         </g>
       </svg>
       {/* Коли тісно — текст переноситься на 2 рядки (вміщаються у 34px), а не обрізається */}
@@ -1527,7 +1529,7 @@ const WindCompassHint = ({ isDarkMode, windUnit, tempSuffix, gusts, showLabels =
             overflow: "hidden",
           }}
         >
-          Стрілка показує, куди дме вітер!
+          {i18n.t("newsWeather.Weather.strilkaPokazuieKudyDme")}
         </span>
       </div>
     </div>
@@ -1577,14 +1579,14 @@ const WeatherCardComponent = ({
         onProgress: ({ loaded, total }) => {
           if (engine !== "piper" || !total || loaded >= total) return;
           progressToastShown = true;
-          toast.loading(`Завантаження голосу… ${Math.round((loaded / total) * 100)}%`, {
+          toast.loading(i18n.t("newsWeather.Weather.zavantazhenniaHolosu", { Math: Math.round((loaded / total) * 100) }), {
             id: "voice-model-download",
           });
         },
       });
     } catch (err) {
       console.error("Forecast speech failed:", err);
-      toast.error("Не вдалося озвучити прогноз. Спробуйте інший голос у Параметри → Бета-функції.", {
+      toast.error(i18n.t("newsWeather.Weather.neVdalosiaOzvuchytyProhnoz"), {
         id: "voice-error",
       });
     } finally {
@@ -1879,13 +1881,13 @@ const WeatherCardComponent = ({
   const [showDailyTrend, setShowDailyTrend] = useState(false);
   const [rightMetric, setRightMetric] = useState("wind"); // "wind" | "uv" | "precip" | "clouds" | "visibility"
   const RIGHT_METRICS = {
-    wind: { label: "Вітер", axis: fmt.windAxis, color: "#0099ff", rgb: "0, 153, 255", icon: <BiWind /> },
-    uv: { label: "УФ-індекс", axis: "УФ-індекс", color: "#a855f7", rgb: "168, 85, 247", icon: <FaSun /> },
-    precip: { label: "Опади", axis: "Опади (%)", color: "#14b8a6", rgb: "20, 184, 166", icon: <FaCloudRain /> },
-    clouds: { label: "Хмарність", axis: "Хмарність (%)", color: "#9ca3af", rgb: "156, 163, 175", icon: <FaCloud /> },
+    wind: { label: i18n.t("newsWeather.Weather.viter"), axis: fmt.windAxis, color: "#0099ff", rgb: "0, 153, 255", icon: <BiWind /> },
+    uv: { label: i18n.t("newsWeather.Weather.ufIndeks"), axis: i18n.t("newsWeather.Weather.ufIndeks"), color: "#a855f7", rgb: "168, 85, 247", icon: <FaSun /> },
+    precip: { label: i18n.t("newsWeather.Weather.opady"), axis: i18n.t("newsWeather.Weather.opady2"), color: "#14b8a6", rgb: "20, 184, 166", icon: <FaCloudRain /> },
+    clouds: { label: i18n.t("newsWeather.Weather.khmarnist"), axis: i18n.t("newsWeather.Weather.khmarnist2"), color: "#9ca3af", rgb: "156, 163, 175", icon: <FaCloud /> },
     visibility: {
-      label: "Видимість",
-      axis: `Видимість (${visibilityLabel(units.distance)})`,
+      label: i18n.t("newsWeather.Weather.vydymist"),
+      axis: i18n.t("newsWeather.Weather.vydymist2", { v0: visibilityLabel(units.distance) }),
       color: "#7dd3fc",
       rgb: "125, 211, 252",
       icon: <BiLowVision />,
@@ -1914,10 +1916,10 @@ const WeatherCardComponent = ({
   };
   // Підказка графіка для правої осі (крім вітру)
   const rightTooltip = (value) => {
-    if (rightMetric === "uv") return `УФ-індекс: ${(value || 0).toFixed(1)}`;
-    if (rightMetric === "precip") return `Ймовірність опадів: ${Math.round(value || 0)}%`;
-    if (rightMetric === "clouds") return `Хмарність: ${Math.round(value || 0)}%`;
-    if (rightMetric === "visibility") return `Видимість: ${value ?? "—"} ${visibilityLabel(units.distance)}`;
+    if (rightMetric === "uv") return i18n.t("newsWeather.Weather.ufIndeks2", { v0: (value || 0).toFixed(1) });
+    if (rightMetric === "precip") return i18n.t("newsWeather.Weather.imovirnistOpadiv", { Math: Math.round(value || 0) });
+    if (rightMetric === "clouds") return i18n.t("newsWeather.Weather.khmarnist3", { Math: Math.round(value || 0) });
+    if (rightMetric === "visibility") return i18n.t("newsWeather.Weather.vydymist3", { v0: value ?? "—", v1: visibilityLabel(units.distance) });
     return "";
   };
   // Маленькі підписи біля точок правої осі (одиниці — як на осі)
@@ -2169,11 +2171,11 @@ const WeatherCardComponent = ({
   // Кнопка лінії тренду (лише 16-денний графік). Стоїть серед кнопок дій,
   // а коли шапка перенеслась на 2 ряди — у рядку легенди
   const renderTrendButton = () => (
-    <Tooltip content={showDailyTrend ? `Сховати лінію тренду. ${dailyTrendText}` : "Показати лінію тренду температури"} isDarkMode={isDarkMode}>
+    <Tooltip content={showDailyTrend ? i18n.t("newsWeather.Weather.skhovatyLiniiuTrendu", { dailyTrendText: dailyTrendText }) : i18n.t("newsWeather.Weather.pokazatyLiniiuTrenduTemperatury")} isDarkMode={isDarkMode}>
     <ChartActionBtn $isDarkMode={isDarkMode}
       type="button"
       onClick={toggleDailyTrend}
-      aria-label={showDailyTrend ? "Сховати лінію тренду" : "Показати лінію тренду"}
+      aria-label={showDailyTrend ? i18n.t("newsWeather.Weather.skhovatyLiniiuTrendu2") : i18n.t("newsWeather.Weather.pokazatyLiniiuTrendu")}
       aria-pressed={showDailyTrend}
       $wide={showDailyTrend}
     >
@@ -2196,20 +2198,20 @@ const WeatherCardComponent = ({
         flexShrink: 0,
       }}
     >
-      <Tooltip content="Стиль ліній графіка" isDarkMode={isDarkMode}>
+      <Tooltip content={i18n.t("newsWeather.Weather.stylLiniiHrafika")} isDarkMode={isDarkMode}>
       <ChartActionBtn $isDarkMode={isDarkMode}
         type="button"
         onClick={() => setStyleModalChart(chartKey)}
-        aria-label="Стиль ліній графіка"
+        aria-label={i18n.t("newsWeather.Weather.stylLiniiHrafika")}
       >
         <BiPalette />
       </ChartActionBtn>
       </Tooltip>
-      <Tooltip content={labelsOn ? "Сховати цифри біля точок" : "Показати цифри біля точок"} isDarkMode={isDarkMode}>
+      <Tooltip content={labelsOn ? i18n.t("newsWeather.Weather.skhovatyTsyfryBiliaTochok") : i18n.t("newsWeather.Weather.pokazatyTsyfryBiliaTochok")} isDarkMode={isDarkMode}>
         <ChartActionBtn $isDarkMode={isDarkMode}
           type="button"
           onClick={() => applyLineStyleToAll(chartKey, { labels: !labelsOn })}
-          aria-label={labelsOn ? "Сховати цифри біля точок" : "Показати цифри біля точок"}
+          aria-label={labelsOn ? i18n.t("newsWeather.Weather.skhovatyTsyfryBiliaTochok") : i18n.t("newsWeather.Weather.pokazatyTsyfryBiliaTochok")}
           aria-pressed={labelsOn}
           $wide
         >
@@ -2217,20 +2219,20 @@ const WeatherCardComponent = ({
         </ChartActionBtn>
       </Tooltip>
       {chartKey === "daily" && !trendInLegend && renderTrendButton()}
-      <Tooltip content={isFullscreen ? "Вийти з повного екрана" : "На весь екран"} isDarkMode={isDarkMode}>
+      <Tooltip content={isFullscreen ? i18n.t("newsWeather.Weather.vyityZPovnohoEkrana") : i18n.t("newsWeather.Weather.naVesEkran")} isDarkMode={isDarkMode}>
       <ChartActionBtn $isDarkMode={isDarkMode}
         type="button"
         onClick={() => toggleChartFullscreen(chartKey, panelRef)}
-        aria-label={isFullscreen ? "Вийти з повного екрана" : "На весь екран"}
+        aria-label={isFullscreen ? i18n.t("newsWeather.Weather.vyityZPovnohoEkrana") : i18n.t("newsWeather.Weather.naVesEkran")}
       >
         {isFullscreen ? <BiExitFullscreen /> : <BiFullscreen />}
       </ChartActionBtn>
       </Tooltip>
-      <Tooltip content="Завантажити скріншот повноекранного графіка" isDarkMode={isDarkMode}>
+      <Tooltip content={i18n.t("newsWeather.Weather.zavantazhytySkrinshotPovnoekrannohoHrafi")} isDarkMode={isDarkMode}>
       <ChartActionBtn $isDarkMode={isDarkMode}
         type="button"
         onClick={() => downloadChartScreenshot(chartKey, panelRef)}
-        aria-label="Завантажити скріншот повноекранного графіка"
+        aria-label={i18n.t("newsWeather.Weather.zavantazhytySkrinshotPovnoekrannohoHrafi")}
       >
         <BiDownload />
       </ChartActionBtn>
@@ -2270,11 +2272,11 @@ const WeatherCardComponent = ({
             fontWeight: "bold",
           }}
         >
-          <Tooltip content={`Натисніть, щоб ${!hiddenSeries.wind ? "сховати" : "показати"} шкалу графіка`} isDarkMode={isDarkMode}>
+          <Tooltip content={i18n.t("newsWeather.Weather.natysnitShchobShkaluHrafika", { v0: !hiddenSeries.wind ? i18n.t("newsWeather.Weather.hideVerb") : i18n.t("newsWeather.Weather.showVerb") })} isDarkMode={isDarkMode}>
             <button
               type="button"
               onClick={() => toggleDatasetVisibility("wind")}
-              aria-label="Сховати або показати праву шкалу"
+              aria-label={i18n.t("newsWeather.Weather.skhovatyAboPokazatyPravu")}
               style={{ display: "inline-flex", alignItems: "center", padding: "3px 4px 3px 6px", border: "none", background: "transparent", color: "inherit", cursor: "pointer", fontSize: "14px" }}
             >
               {rightMeta.icon}
@@ -2283,7 +2285,7 @@ const WeatherCardComponent = ({
           <select
             value={rightMetric}
             onChange={(e) => setRightMetric(e.target.value)}
-            aria-label="Показник правої осі графіка"
+            aria-label={i18n.t("newsWeather.Weather.pokaznykPravoiOsiHrafika")}
             style={{ padding: "3px 2px", border: "none", background: "transparent", color: "inherit", fontSize: "inherit", fontWeight: "bold", cursor: "pointer", outline: "none" }}
           >
             {Object.entries(RIGHT_METRICS).map(([k, m]) => (
@@ -2292,11 +2294,11 @@ const WeatherCardComponent = ({
           </select>
         </span>
       ) : (
-       <Tooltip key={item.key} content={`Натисніть, щоб ${!hiddenSeries[item.key] ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`} isDarkMode={isDarkMode}>
+       <Tooltip key={item.key} content={i18n.t("newsWeather.Weather.natysnitShchobShkaluHrafika2", { v0: !hiddenSeries[item.key] ? i18n.t("newsWeather.Weather.hideVerb") : i18n.t("newsWeather.Weather.showVerb"), v1: item.label.toLowerCase() })} isDarkMode={isDarkMode}>
         <button
           type="button"
           onClick={() => toggleDatasetVisibility(item.key)}
-          aria-label={`Натисніть, щоб ${!hiddenSeries[item.key] ? "сховати" : "показати"} шкалу графіка ${item.label.toLowerCase()}`}
+          aria-label={i18n.t("newsWeather.Weather.natysnitShchobShkaluHrafika2", { v0: !hiddenSeries[item.key] ? i18n.t("newsWeather.Weather.hideVerb") : i18n.t("newsWeather.Weather.showVerb"), v1: item.label.toLowerCase() })}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -2582,7 +2584,7 @@ const formatChartTempLabel = (value, suffix) => {
     hourlyViewMode === "charts" && !canShowHourlyChart ? "blocks" : hourlyViewMode;
   const effectiveDailyViewMode =
     dailyViewMode === "charts" && isNarrowScreen ? "blocks" : dailyViewMode;
-  const chartBlockedTitle = "Графіки недоступні на телефоні";
+  const chartBlockedTitle = i18n.t("newsWeather.Weather.hrafikyNedostupniNaTelefoni");
   const hourlyChartWidth = Math.max(873, (visibleHourly?.length || 24) * 35);
   const tempSuffix = unit === "F" ? "°F" : unit === "K" ? "K" : "°C";
   const toDisplayTemp = (c) => {
@@ -2595,7 +2597,7 @@ const formatChartTempLabel = (value, suffix) => {
     labels: visibleHourly?.map((h) => h.time) || [],
     datasets: [
       {
-        label: `Температура (${tempSuffix})`,
+        label: i18n.t("newsWeather.Weather.temperatura2", { tempSuffix: tempSuffix }),
         data: visibleHourly?.map((h) => toDisplayTemp(h.tempNum ?? 0)) || [],
         backgroundColor: `rgba(255, 179, 108, ${hourlyOpacity.day * 0.2})`,
         borderColor: `rgba(255, 179, 108, ${hourlyOpacity.day})`,
@@ -2663,98 +2665,98 @@ const formatChartTempLabel = (value, suffix) => {
   };
 
   const getWeatherDescription = (code) => {
-    if (code === 0) return "Ясно";
-    if (code >= 1 && code <= 3) return "Частково хмарно";
-    if (code >= 45 && code <= 48) return "Туман";
-    if (code >= 51 && code <= 55) return "Дрібна сяка";
-    if (code >= 61 && code <= 65) return "Дощ";
-    if (code >= 71 && code <= 77) return "Сніг";
-    if (code >= 80 && code <= 82) return "Шквальний дощ";
-    if (code >= 95 && code <= 99) return "Гроза";
-    return "Хмарно";
+    if (code === 0) return i18n.t("newsWeather.Weather.iasno");
+    if (code >= 1 && code <= 3) return i18n.t("newsWeather.Weather.chastkovoKhmarno");
+    if (code >= 45 && code <= 48) return i18n.t("newsWeather.Weather.tuman");
+    if (code >= 51 && code <= 55) return i18n.t("newsWeather.Weather.dribnaSiaka");
+    if (code >= 61 && code <= 65) return i18n.t("newsWeather.Weather.doshch");
+    if (code >= 71 && code <= 77) return i18n.t("newsWeather.Weather.snih");
+    if (code >= 80 && code <= 82) return i18n.t("newsWeather.Weather.shkvalnyiDoshch");
+    if (code >= 95 && code <= 99) return i18n.t("newsWeather.Weather.hroza");
+    return i18n.t("newsWeather.Weather.khmarno");
   };
 // Реєстр свят 2027
 const HOLIDAYS_2027 = {
   // Січень
-  "01.01": "Вітаю з Новим роком! З новим щастям! Василя / Обрізання Господнє (новий стиль)",
-  "06.01": "Богоявлення / Водохреще (новий стиль)",
-  "07.01": "Різдво Христове (старий стиль)",
-  "12.01": "1 серія 'Реальної містики'. Ціла епоха розкриття містифікацій у 12 сезонів!",
-  "14.01": "Василя / Обрізання Господнє (старий стиль)",
-  "19.01": "Богоявлення / Водохреще (старий стиль)",
+  "01.01": i18n.t("newsWeather.Weather.vitaiuZNovymRokom"),
+  "06.01": i18n.t("newsWeather.Weather.bohoiavlenniaVodokhreshcheNovyiStyl"),
+  "07.01": i18n.t("newsWeather.Weather.rizdvoKhrystoveStaryiStyl"),
+  "12.01": i18n.t("newsWeather.Weather.1SeriiaRealnoiMistyky"),
+  "14.01": i18n.t("newsWeather.Weather.vasyliaObrizanniaHospodnieStaryi"),
+  "19.01": i18n.t("newsWeather.Weather.bohoiavlenniaVodokhreshcheStaryiStyl"),
 
   // Лютий
-  "02.02": "Стрітення Господнє (новий стиль)",
-  "14.02": "З Днем святого Валентина! Доміно тоді знайшов Кейт! І, може, ти знайдеш!",
-  "15.02": "Стрітення Господнє (старий стиль)",
+  "02.02": i18n.t("newsWeather.Weather.stritenniaHospodnieNovyiStyl"),
+  "14.02": i18n.t("newsWeather.Weather.zDnemSviatohoValentyna"),
+  "15.02": i18n.t("newsWeather.Weather.stritenniaHospodnieStaryiStyl"),
 
   // Березень
-  "08.03": "Жінки, всіх вас вітаю з вашим днем! Доміно шукає щось смачненьке для Кейт :)",
-  "20.03": "Весняне рівнодення. Сонце встало на сході, а індики вже на заході :)",
-  "25.03": "Благовіщення Пресвятої Богородиці (новий стиль)",
+  "08.03": i18n.t("newsWeather.Weather.zhinkyVsikhVasVitaiu"),
+  "20.03": i18n.t("newsWeather.Weather.vesnianeRivnodenniaSontseVstalo"),
+  "25.03": i18n.t("newsWeather.Weather.blahovishchenniaPresviatoiBohorodytsiNov"),
 
   // Квітень
-  "01.04": "Сьогодні День дурня, не святого лежня. Нікому не вірте! А вам? А ми теж щось уміємо :)",
-  "07.04": "Благовіщення Пресвятої Богородиці (старий стиль)",
-  "23.04": "День святого Юрія / Георгія (новий стиль)",
+  "01.04": i18n.t("newsWeather.Weather.sohodniDenDurniaNe"),
+  "07.04": i18n.t("newsWeather.Weather.blahovishchenniaPresviatoiBohorodytsiSta"),
+  "23.04": i18n.t("newsWeather.Weather.denSviatohoIuriiaHeorhiia"),
 
   // Травень
-  "01.05": "День праці. Жінки — спечіть щось смачненьке, а чоловіки для дам теж хай щось змайструють!",
-  "02.05": "З Великоднем 2027! Бажаю всім всього найкращого. Скиньте рецепт пасочки на пошту :)",
-  "06.05": "День святого Юрія / Георгія (старий стиль)",
-  "08.05": "День пам'яті та перемоги. В цей день наші прадіди перемогли фашизм. Один не багатьох випадків коли я кажу про політику добре...",
-  "09.05": "День матері. Подякуйте їм за те, що вони підтримували вас у тяжкі дні, а радісні робили ще кращими.",
-  "27.05": "Випуск Dragon Village 3. Скачаєш? :)",
-  "29.05": "Особисте свято у цей день... Пробач, я теж маю секрети :)",
+  "01.05": i18n.t("newsWeather.Weather.denPratsiZhinkySpechit"),
+  "02.05": i18n.t("newsWeather.Weather.zVelykodnem2027Bazhaiu"),
+  "06.05": i18n.t("newsWeather.Weather.denSviatohoIuriiaHeorhiia2"),
+  "08.05": i18n.t("newsWeather.Weather.denPamiatiTaPeremohy"),
+  "09.05": i18n.t("newsWeather.Weather.denMateriPodiakuiteIm"),
+  "27.05": i18n.t("newsWeather.Weather.vypuskDragonVillage3"),
+  "29.05": i18n.t("newsWeather.Weather.osobysteSviatoUTsei"),
 
   // Червень
-  "10.06": "Вознесіння Господнє",
-  "20.06": "Трійця / П'ятдесятниця",
-  "21.06": "Просто літнє сонцестояння. Купив собі ескімо? :)",
-  "24.06": "Різдво Івана Хрестителя / Купала (новий стиль)",
-  "28.06": "День Конституції України",
-  "29.06": "Святих апостолів Петра і Павла (новий стиль)",
+  "10.06": i18n.t("newsWeather.Weather.voznesinniaHospodnie"),
+  "20.06": i18n.t("newsWeather.Weather.triitsiaPiatdesiatnytsia"),
+  "21.06": i18n.t("newsWeather.Weather.prostoLitnieSontsestoianniaKupyv"),
+  "24.06": i18n.t("newsWeather.Weather.rizdvoIvanaKhrestyteliaKupala"),
+  "28.06": i18n.t("newsWeather.Weather.denKonstytutsiiUkrainy"),
+  "29.06": i18n.t("newsWeather.Weather.sviatykhApostolivPetraI"),
 
   // Липень
-  "07.07": "Різдво Івана Хрестителя / Івана Купала (старий стиль)",
-  "12.07": "Святих апостолів Петра і Павла (старий стиль)",
+  "07.07": i18n.t("newsWeather.Weather.rizdvoIvanaKhrestyteliaIvana"),
+  "12.07": i18n.t("newsWeather.Weather.sviatykhApostolivPetraI2"),
 
   // Серпень
-  "01.08": "День Малятко TV. Ще раз особиста подяка. Ціла епоха була... Зараз закритий... :(",
-  "06.08": "Преображення Господнє / Спас (новий стиль)",
-  "15.08": "Успіння Пресвятої Богородиці (новий стиль)",
-  "19.08": "Преображення Господнє / Спас (старий стиль)",
-  "24.08": "День Незалежності України",
-  "28.08": "Успіння Пресвятої Богородиці (старий стиль)",
+  "01.08": i18n.t("newsWeather.Weather.denMaliatkoTvShche"),
+  "06.08": i18n.t("newsWeather.Weather.preobrazhenniaHospodnieSpasNovyi"),
+  "15.08": i18n.t("newsWeather.Weather.uspinniaPresviatoiBohorodytsiNovyi"),
+  "19.08": i18n.t("newsWeather.Weather.preobrazhenniaHospodnieSpasStaryi"),
+  "24.08": i18n.t("newsWeather.Weather.denNezalezhnostiUkrainy"),
+  "28.08": i18n.t("newsWeather.Weather.uspinniaPresviatoiBohorodytsiStaryi"),
 
   // Вересень
-  "01.09": "День знань. Цей день усі ненавидять, бо термін відпустки закінчився :(",
-  "08.09": "Різдво Пресвятої Богородиці (новий стиль)",
-  "11.09": "Випуск 1-ї серії м/с 'Динофроз'. Легенда...",
-  "14.09": "Воздвиження Хреста Господнього (новий стиль)",
-  "20.09": "Всесвітній день прибирання!",
-  "21.09": "Різдво Пресвятої Богородиці (старий стиль)",
-  "23.09": "Осіннє рівнодення. Древніус = Даркніс :)",
-  "27.09": "Воздвиження Хреста Господнього (старий стиль)",
+  "01.09": i18n.t("newsWeather.Weather.denZnanTseiDen"),
+  "08.09": i18n.t("newsWeather.Weather.rizdvoPresviatoiBohorodytsiNovyi"),
+  "11.09": i18n.t("newsWeather.Weather.vypusk1ISerii"),
+  "14.09": i18n.t("newsWeather.Weather.vozdvyzhenniaKhrestaHospodnohoNovyi"),
+  "20.09": i18n.t("newsWeather.Weather.vsesvitniiDenPrybyrannia"),
+  "21.09": i18n.t("newsWeather.Weather.rizdvoPresviatoiBohorodytsiStaryi"),
+  "23.09": i18n.t("newsWeather.Weather.osinnieRivnodenniaDrevniusDarknis"),
+  "27.09": i18n.t("newsWeather.Weather.vozdvyzhenniaKhrestaHospodnohoStaryi"),
 
   // Жовтень
-  "01.10": "Покрова Пресвятої Богородиці та День козацтва (новий стиль)",
-  "14.10": "Покрова Пресвятої Богородиці та День козацтва (старий стиль)",
-  "24.10": "Почався ретроградний Меркурій. Якщо синоптики помилилися з дощем — винні зірки, а не ми! :)",
-  "27.10": "День української писемності та мови. Напиши по максимуму каліграфічний лист.",
+  "01.10": i18n.t("newsWeather.Weather.pokrovaPresviatoiBohorodytsiTa"),
+  "14.10": i18n.t("newsWeather.Weather.pokrovaPresviatoiBohorodytsiTa2"),
+  "24.10": i18n.t("newsWeather.Weather.pochavsiaRetrohradnyiMerkuriiIakshcho"),
+  "27.10": i18n.t("newsWeather.Weather.denUkrainskoiPysemnostiTa"),
 
   // Листопад
-  "19.11": "Міжнародний чоловічий день. Наш день :) Доміно теж святкує :)",
-  "21.11": "Введення в храм Пресвятої Богородиці (новий стиль)",
-  "30.11": "День святого Андрія Первозванного (новий стиль)",
+  "19.11": i18n.t("newsWeather.Weather.mizhnarodnyiCholovichyiDenNash"),
+  "21.11": i18n.t("newsWeather.Weather.vvedenniaVKhramPresviatoi"),
+  "30.11": i18n.t("newsWeather.Weather.denSviatohoAndriiaPervozvannoho"),
 
   // Грудень
-  "04.12": "Введення в храм Пресвятої Богородиці (старий стиль)",
-  "06.12": "День святого Миколая (новий стиль). Цукерку отримав? :) А Доміно — вуглинку, бо вони люблять камені, а індики не їдять солодке :)",
-  "13.12": "День святого Андрія Первозванного (старий стиль)",
-  "19.12": "День святого Миколая (старий стиль). Цукерку отримав? :) А Доміно — вуглинку, бо вони люблять камені, а індики не їдять солодке :)",
-  "22.12": "Зимове сонцестояння. Найтемніший день. Як очі Марти...",
-  "25.12": "Різдво Христове (новий стиль)",
+  "04.12": i18n.t("newsWeather.Weather.vvedenniaVKhramPresviatoi2"),
+  "06.12": i18n.t("newsWeather.Weather.denSviatohoMykolaiaNovyi"),
+  "13.12": i18n.t("newsWeather.Weather.denSviatohoAndriiaPervozvannoho2"),
+  "19.12": i18n.t("newsWeather.Weather.denSviatohoMykolaiaStaryi"),
+  "22.12": i18n.t("newsWeather.Weather.zymoveSontsestoianniaNaitemnishyiDen"),
+  "25.12": i18n.t("newsWeather.Weather.rizdvoKhrystoveNovyiStyl"),
 };
   const isWeekend = (dayName) => {
     const name = dayName.toLowerCase();
@@ -2772,9 +2774,11 @@ const HOLIDAYS_2027 = {
   };
 
   const getDateType = (dateStr, dayName, fullDate) => {
-    const holidayName = HOLIDAYS_2027[dateStr];
-    const isWknd = isWeekend(dayName);
-    const isBday = isBirthday(dateStr);
+    // Ключ «DD.MM» і вихідний — з ISO-дати, бо підписи дати/дня залежать від мови
+    const ddmm = ddmmFromIso(fullDate) || dateStr;
+    const holidayName = HOLIDAYS_2027[ddmm];
+    const isWknd = fullDate ? isWeekendIso(fullDate) : isWeekend(dayName || "");
+    const isBday = isBirthday(ddmm);
     const customDay = customDays.find((d) => d.date === fullDate);
 
     // Пріоритет: Свято > День народження > Custom > Вихідний
@@ -2782,14 +2786,14 @@ const HOLIDAYS_2027 = {
       return {
         type: "holiday",
         color: "#ff6666",
-        label: holidayName + (isWknd ? " + Вихідний" : ""),
+        label: holidayName + (isWknd ? " " + i18n.t("newsWeather.Weather.vykhidnyi") : ""),
       };
     }
     if (isBday) {
       return {
         type: "birthday",
         color: "#e066ff", 
-        label: "З Днем Народження! 🎉",
+        label: i18n.t("newsWeather.Weather.zDnemNarodzhennia"),
         isRainbow: true,
       };
     }
@@ -2800,7 +2804,7 @@ const HOLIDAYS_2027 = {
       return {
         type: "weekend",
         color: "#ff9966",
-        label: "Вихідний",
+        label: i18n.t("newsWeather.Weather.vykhidnyi2"),
       };
     }
     return { type: "regular", color: null, label: "" };
@@ -2817,8 +2821,8 @@ const HOLIDAYS_2027 = {
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
-    if (days > 0) return `⏳ Залишилось: ${days}д ${hours}г`;
-    return `⏳ Почнеться за ${hours}г`;
+    if (days > 0) return i18n.t("newsWeather.Weather.zalyshylosDH", { days: days, hours: hours });
+    return i18n.t("newsWeather.Weather.pochnetsiaZaH", { hours: hours });
   };
 
   const getHolidayMessage = (dateStr, dayName, fullDate) => {
@@ -2826,14 +2830,14 @@ const HOLIDAYS_2027 = {
     const countdown = calculateCountdown(fullDate);
 
     if (customDay) {
-      return countdown ? [`💙 Ваша подія: ${customDay.reason}`, `(${countdown})`] : [`💙 Ваша подія: ${customDay.reason}`];
+      return countdown ? [i18n.t("newsWeather.Weather.vashaPodiia", { reason: customDay.reason }), `(${countdown})`] : [i18n.t("newsWeather.Weather.vashaPodiia", { reason: customDay.reason })];
     }
     if (isBirthday(dateStr)) {
-      return countdown ? [`🎂 Вітаємо, ${user?.firstName}! З Днем Народження! 🌈`, `(${countdown})`] : [`🎂 Вітаємо, ${user?.firstName}! З Днем Народження! 🌈`];
+      return countdown ? [i18n.t("newsWeather.Weather.vitaiemoZDnemNarodzhennia", { v0: user?.firstName }), `(${countdown})`] : [i18n.t("newsWeather.Weather.vitaiemoZDnemNarodzhennia", { v0: user?.firstName })];
     }
     const holiday = HOLIDAYS_2027[dateStr];
     if (holiday) {
-      return countdown ? [`✨ Вітаємо зі святом: ${holiday}!`, `(${countdown})`] : [`✨ Вітаємо зі святом: ${holiday}!`];
+      return countdown ? [i18n.t("newsWeather.Weather.vitaiemoZiSviatom", { holiday: holiday }), `(${countdown})`] : [i18n.t("newsWeather.Weather.vitaiemoZiSviatom", { holiday: holiday })];
     }
     return null;
   };
@@ -2848,7 +2852,7 @@ const HOLIDAYS_2027 = {
     const v = Math.round(trend.slope * 10) / 10;
     return `${v > 0 ? "+" : ""}${v}°`;
   };
-  const dailyTrendText = `Тренд: день ${fmtSlope(dailyDayTrend)}/день, ніч ${fmtSlope(dailyNightTrend)}/день`;
+  const dailyTrendText = i18n.t("newsWeather.Weather.trendDenDenNich", { v0: fmtSlope(dailyDayTrend), v1: fmtSlope(dailyNightTrend) });
   const dailyTrendBadge = `${fmtSlope(dailyDayTrend)} / ${fmtSlope(dailyNightTrend)}`;
   const trendDataset = (label, trend, rgb, opacity, style) => ({
     label,
@@ -2865,8 +2869,8 @@ const HOLIDAYS_2027 = {
   });
   const dailyTrendDatasets = showDailyTrend
     ? [
-        dailyDayTrend && trendDataset("Тренд (день)", dailyDayTrend, "255, 179, 108", dailyOpacity.day, lineStyles.daily.trendDay),
-        dailyNightTrend && trendDataset("Тренд (ніч)", dailyNightTrend, "255, 20, 147", dailyOpacity.night, lineStyles.daily.trendNight),
+        dailyDayTrend && trendDataset(i18n.t("newsWeather.Weather.trendDen"), dailyDayTrend, "255, 179, 108", dailyOpacity.day, lineStyles.daily.trendDay),
+        dailyNightTrend && trendDataset(i18n.t("newsWeather.Weather.trendNich"), dailyNightTrend, "255, 20, 147", dailyOpacity.night, lineStyles.daily.trendNight),
       ].filter(Boolean)
     : [];
 
@@ -2874,7 +2878,7 @@ const HOLIDAYS_2027 = {
     labels: dailyList?.map((d) => `${d.date}\n${d.day}`) || [],
     datasets: [
       {
-        label: `День (${tempSuffix})`,
+        label: i18n.t("newsWeather.Weather.den", { tempSuffix: tempSuffix }),
         data: dailyDayTemps,
         borderColor: `rgba(255, 179, 108, ${dailyOpacity.day})`,
         backgroundColor: `rgba(255, 179, 108, ${dailyOpacity.day * 0.5})`,
@@ -2901,7 +2905,7 @@ const HOLIDAYS_2027 = {
         yAxisID: "y",
       },
       {
-        label: `Ніч (${tempSuffix})`,
+        label: i18n.t("newsWeather.Weather.nich", { tempSuffix: tempSuffix }),
         data: dailyNightTemps,
         borderColor: `rgba(255, 20, 147, ${dailyOpacity.night})`,
         backgroundColor: `rgba(255, 20, 147, ${dailyOpacity.night * 0.2})`,
@@ -2985,16 +2989,16 @@ const HOLIDAYS_2027 = {
         external: externalTooltipHandler,
         filter: (item) => !item.dataset.isTrend, // лінії тренду не показуємо в підказці
         callbacks: {
-          title: (items) => `⏰ Час: ${items[0].label}`,
+          title: (items) => i18n.t("newsWeather.Weather.chas", { label: items[0].label }),
           label: (context) => {
             if (context.datasetIndex === 0) {
               // Температура
               const temp = visibleHourly?.[context.dataIndex]?.tempNum ?? 0;
-              let label = `Температура: ${formatTemp(temp)}`;
+              let label = i18n.t("newsWeather.Weather.temperatura3", { v0: formatTemp(temp) });
 
               let dangers = [];
-              if (temp > 30) dangers.push("СПЕКА ☀️");
-              if (temp < -30) dangers.push("МОРОЗ ❄️");
+              if (temp > 30) dangers.push(i18n.t("newsWeather.Weather.speka"));
+              if (temp < -30) dangers.push(i18n.t("newsWeather.Weather.moroz"));
 
               if (dangers.length > 0) {
                 label += ` ⚠️ ${dangers.join(", ")}`;
@@ -3004,8 +3008,8 @@ const HOLIDAYS_2027 = {
               return ` ${rightTooltip(context.parsed.y)}`;
             } else if (context.datasetIndex === 1) {
               const wind = visibleHourly?.[context.dataIndex]?.windNum ?? 0;
-              let label = ` Вітер: ${fmt.wind(wind)}`;
-              if (wind > 10) label += ` ⚠️ СИЛЬНИЙ ВІТЕР`;
+              let label = " " + i18n.t("newsWeather.Weather.viter2", { fmt: fmt.wind(wind) });
+              if (wind > 10) label += " " + i18n.t("newsWeather.Weather.sylnyiViter");
               const hourlyData = visibleHourly?.[context.dataIndex];
               if (hourlyData) {
                 label += ` | ${getWindDirectionLabel(hourlyData.wind_direction_10m)} (${Math.round(hourlyData.wind_direction_10m || 0)}°)`;
@@ -3019,8 +3023,8 @@ const HOLIDAYS_2027 = {
             const firstContext = contextItems[0];
             const hourlyData = visibleHourly?.[firstContext.dataIndex];
             if (!hourlyData) return "";
-            const desc = hourlyData.description || getWeatherDescription(hourlyData.weather_code) || stripEmoji(hourlyData.iconPlaceholder) || "Погода";
-            return `Стан погоди: ${desc}`;
+            const desc = hourlyData.description || getWeatherDescription(hourlyData.weather_code) || stripEmoji(hourlyData.iconPlaceholder) || i18n.t("newsWeather.Weather.pohoda");
+            return i18n.t("newsWeather.Weather.stanPohody", { desc: desc });
           },
         },
       },
@@ -3028,7 +3032,7 @@ const HOLIDAYS_2027 = {
     scales: {
       y: {
         beginAtZero: false,
-        title: { display: true, text: `Температура (${tempSuffix})`, color: "#ffb36c" },
+        title: { display: true, text: i18n.t("newsWeather.Weather.temperatura2", { tempSuffix: tempSuffix }), color: "#ffb36c" },
         ticks: { color: isDarkMode ? "#aaa" : "#888", font: { size: 10 } },
         grid: {
           color: isDarkMode
@@ -3087,15 +3091,15 @@ const HOLIDAYS_2027 = {
             const isNight = context.datasetIndex === 1;
             const isWind = context.datasetIndex === 2;
             if (isDay) {
-              return `☀️ День: ${formatTemp(parseInt(dailyList?.[context.dataIndex]?.temp_day))}`;
+              return i18n.t("newsWeather.Weather.den2", { v0: formatTemp(parseInt(dailyList?.[context.dataIndex]?.temp_day)) });
             } else if (isNight) {
-              return `🌙 Ніч: ${formatTemp(parseInt(dailyList?.[context.dataIndex]?.temp_night))}`;
+              return i18n.t("newsWeather.Weather.nich2", { v0: formatTemp(parseInt(dailyList?.[context.dataIndex]?.temp_night)) });
             } else if (isWind && rightMetric !== "wind") {
               return rightTooltip(context.parsed.y);
             } else if (isWind) {
               const daily = dailyList?.[context.dataIndex];
               const direction = daily?.wind_direction_10m || 0;
-              return `🌬️ Вітер: ${fmt.wind(parseFloat(daily?.wind_speed) || 0)} | ${getWindDirectionLabel(direction)} (${Math.round(direction)}°)`;
+              return i18n.t("newsWeather.Weather.viter3", { fmt: fmt.wind(parseFloat(daily?.wind_speed) || 0), v1: getWindDirectionLabel(direction), Math: Math.round(direction) });
             }
             return "";
           },
@@ -3105,7 +3109,7 @@ const HOLIDAYS_2027 = {
             const daily = dailyList?.[firstContext.dataIndex];
             if (!daily) return "";
             const desc = daily.description || getWeatherDescription(daily.weather_code) || stripEmoji(daily.iconPlaceholder) || "—";
-            return `Стан погоди: ${desc}`;
+            return i18n.t("newsWeather.Weather.stanPohody", { desc: desc });
           },
         },
       },
@@ -3114,7 +3118,7 @@ const HOLIDAYS_2027 = {
       ...chartOptions.scales,
       y: {
         beginAtZero: false,
-        title: { display: true, text: `Температура (${tempSuffix})`, color: "#ffb36c" },
+        title: { display: true, text: i18n.t("newsWeather.Weather.temperatura2", { tempSuffix: tempSuffix }), color: "#ffb36c" },
         ticks: { color: isDarkMode ? "#aaa" : "#888", font: { size: 10 } },
         grid: {
           color: isDarkMode
@@ -3178,7 +3182,7 @@ const HOLIDAYS_2027 = {
         } else {
           if (customHolidayName.trim()) {
             if (customHolidayName.trim().length > 12) {
-              alert("Назва свята занадто довга (макс. 12 символів)!");
+              alert(i18n.t("newsWeather.Weather.nazvaSviataZanadtoDovha"));
               return;
             }
             dispatch(
@@ -3345,7 +3349,7 @@ const HOLIDAYS_2027 = {
     if (!visibleHourly || visibleHourly.length === 0) {
       return (
         <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
-          Немає даних годинного прогнозу.
+          {i18n.t("newsWeather.Weather.nemaieDanykhHodynnohoProhnozu")}
         </div>
       );
     }
@@ -3399,45 +3403,45 @@ const HOLIDAYS_2027 = {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
                   <span style={{ fontSize: "24px" }}><WeatherIcon isDarkMode={isDarkMode} item={item} /></span>
                   <span style={{ fontSize: "11px", fontWeight: "600", opacity: 0.9 }}>
-                    {item.description || getWeatherDescription(item.weather_code) || stripEmoji(item.iconPlaceholder) || "Погода"}
+                    {item.description || getWeatherDescription(item.weather_code) || stripEmoji(item.iconPlaceholder) || i18n.t("newsWeather.Weather.pohoda")}
                   </span>
                 </div>
 
                 <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: "8px", padding: "6px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
                   {!isPolarNight && (
                     <div style={{ fontWeight: "800", fontSize: "14px", color: "#ff9d3b" }}>
-                      Температура: {formatTemp(item.tempNum ?? item.temp)}
+                      {i18n.t("newsWeather.Weather.temperatura4")} {formatTemp(item.tempNum ?? item.temp)}
                     </div>
                   )}
                   {item.feels_like && (
                     <div style={{ fontSize: "10px", opacity: 0.8 }}>
-                      Відчувається: {formatTemp(item.feels_like)}
+                      {i18n.t("newsWeather.Weather.vidchuvaietsia")} {formatTemp(item.feels_like)}
                     </div>
                   )}
                   {isPolarNight && (
                     <div style={{ fontSize: "10px", color: "#4da6ff", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <BsMoonStarsFill /> Полярна ніч
+                      <BsMoonStarsFill /> {i18n.t("newsWeather.Weather.poliarnaNich")}
                     </div>
                   )}
                   {isPolarDay && (
                     <div style={{ fontSize: "10px", color: "#ffd700", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <FaSun /> Полярний день
+                      <FaSun /> {i18n.t("newsWeather.Weather.poliarnyiDen")}
                     </div>
                   )}
                 </div>
 
                 {renderBlockStats([
-                  { icon: <AnimWind><BiWind style={{ color: "#00eeff" }} /></AnimWind>, label: "Вітер", value: fmt.wind(item.windNum ?? item.wind_speed ?? item.windSpeed ?? 0), sub: windText },
-                  { icon: <AnimWind><BiWind style={{ color: "#ff9900" }} /></AnimWind>, label: "Пориви", value: item.wind_gusts_10m ? fmt.wind(item.wind_gusts_10m) : "—" },
-                  { icon: <FaDroplet style={{ color: "#4da6ff" }} />, label: "Вологість", value: formatPercent(item.relative_humidity_2m ?? item.humidity) },
-                  { icon: <GiGrassMushroom style={{ color: "#00ffcc" }} />, label: "Точка роси", value: item.dew_point_2m !== undefined ? formatTemp(item.dew_point_2m) : "—" },
-                  { icon: <FaCloudRain style={{ color: "#3399ff" }} />, label: "Опади", value: fmt.precip(item.precipitation ?? 0) },
-                  { icon: <FaSnowflake style={{ color: "#80d4ff" }} />, label: "Сніговий покрив", value: fmt.snow((item.snow_depth ?? 0) * 100) },
-                  { icon: <GiIceCube style={{ color: "#00cdff" }} />, label: "Ґрунт", value: item.soil_temperature_0cm !== undefined ? formatTemp(item.soil_temperature_0cm) : "—" },
-                  { icon: <PiThermometerFill style={{ color: "#ff9d3b" }} />, label: "Рівень 0°C", value: item.freezing_level_height !== undefined ? fmt.height(item.freezing_level_height) : "—" },
-                  { icon: <GiWaterRecycling style={{ color: "#00eeff" }} />, label: "Випаровування", value: item.evapotranspiration !== undefined ? fmt.precip(item.evapotranspiration, 2) : "—" },
-                  { icon: <MdOutlineSpeed style={{ color: "#ffb36c" }} />, label: "Тиск", value: fmt.pressure(item.pressure_msl ?? item.pressure ?? card.current?.pressure) },
-                  { icon: <FaCloud style={{ color: "#aaa" }} />, label: "Хмари", value: formatPercent(item.cloud_cover ?? card.current?.cloud_cover) },
+                  { icon: <AnimWind><BiWind style={{ color: "#00eeff" }} /></AnimWind>, label: i18n.t("newsWeather.Weather.viter"), value: fmt.wind(item.windNum ?? item.wind_speed ?? item.windSpeed ?? 0), sub: windText },
+                  { icon: <AnimWind><BiWind style={{ color: "#ff9900" }} /></AnimWind>, label: i18n.t("newsWeather.Weather.poryvy"), value: item.wind_gusts_10m ? fmt.wind(item.wind_gusts_10m) : "—" },
+                  { icon: <FaDroplet style={{ color: "#4da6ff" }} />, label: i18n.t("newsWeather.Weather.volohist"), value: formatPercent(item.relative_humidity_2m ?? item.humidity) },
+                  { icon: <GiGrassMushroom style={{ color: "#00ffcc" }} />, label: i18n.t("newsWeather.Weather.tochkaRosy"), value: item.dew_point_2m !== undefined ? formatTemp(item.dew_point_2m) : "—" },
+                  { icon: <FaCloudRain style={{ color: "#3399ff" }} />, label: i18n.t("newsWeather.Weather.opady"), value: fmt.precip(item.precipitation ?? 0) },
+                  { icon: <FaSnowflake style={{ color: "#80d4ff" }} />, label: i18n.t("newsWeather.Weather.snihovyiPokryv"), value: fmt.snow((item.snow_depth ?? 0) * 100) },
+                  { icon: <GiIceCube style={{ color: "#00cdff" }} />, label: i18n.t("newsWeather.Weather.grunt"), value: item.soil_temperature_0cm !== undefined ? formatTemp(item.soil_temperature_0cm) : "—" },
+                  { icon: <PiThermometerFill style={{ color: "#ff9d3b" }} />, label: i18n.t("newsWeather.Weather.riven0C"), value: item.freezing_level_height !== undefined ? fmt.height(item.freezing_level_height) : "—" },
+                  { icon: <GiWaterRecycling style={{ color: "#00eeff" }} />, label: i18n.t("newsWeather.Weather.vyparovuvannia"), value: item.evapotranspiration !== undefined ? fmt.precip(item.evapotranspiration, 2) : "—" },
+                  { icon: <MdOutlineSpeed style={{ color: "#ffb36c" }} />, label: i18n.t("newsWeather.Weather.tysk"), value: fmt.pressure(item.pressure_msl ?? item.pressure ?? card.current?.pressure) },
+                  { icon: <FaCloud style={{ color: "#aaa" }} />, label: i18n.t("newsWeather.Weather.khmary"), value: formatPercent(item.cloud_cover ?? card.current?.cloud_cover) },
                 ])}
               </div>
             );
@@ -3487,7 +3491,7 @@ const HOLIDAYS_2027 = {
     if (!list || list.length === 0) {
       return (
         <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
-          Немає даних годинного прогнозу.
+          {i18n.t("newsWeather.Weather.nemaieDanykhHodynnohoProhnozu")}
         </div>
       );
     }
@@ -3503,38 +3507,38 @@ const HOLIDAYS_2027 = {
     }));
     const rows = [
       {
-        key: "temp", title: "Температура", icon: <PiThermometerFill style={{ color: "#ff9d3b" }} />, unit: tempLabel(fmt.units.temp), variant: "plain",
+        key: "temp", title: i18n.t("newsWeather.Weather.temperatura"), icon: <PiThermometerFill style={{ color: "#ff9d3b" }} />, unit: tempLabel(fmt.units.temp), variant: "plain",
         cells: list.map((h) => { const c = rowsNum(h.tempNum ?? h.temp); return { text: rowsTemp(c), fg: tempColor(c, dark) }; }),
       },
       {
-        key: "feels", title: "Відчувається", icon: <PiThermometerFill style={{ color: "#ff6fa8" }} />, unit: tempLabel(fmt.units.temp), variant: "plain",
+        key: "feels", title: i18n.t("newsWeather.Weather.vidchuvaietsia2"), icon: <PiThermometerFill style={{ color: "#ff6fa8" }} />, unit: tempLabel(fmt.units.temp), variant: "plain",
         cells: list.map((h) => { const c = rowsNum(h.feels_like); return { text: rowsTemp(c), fg: tempColor(c, dark) }; }),
       },
       {
-        key: "chance", title: "Ймовірність опадів", icon: <FaDroplet style={{ color: "#4da6ff" }} />, unit: "%", variant: "plain",
+        key: "chance", title: i18n.t("newsWeather.Weather.imovirnistOpadiv2"), icon: <FaDroplet style={{ color: "#4da6ff" }} />, unit: "%", variant: "plain",
         cells: list.map((h) => ({ text: rowsPercent(h.precipitation_probability), fg: chanceColor(h.precipitation_probability, dark) })),
       },
       {
-        key: "precip", title: "Опади", icon: <FaCloudRain style={{ color: "#3399ff" }} />, unit: precipLabel(fmt.units.precip), variant: "skew",
+        key: "precip", title: i18n.t("newsWeather.Weather.opady"), icon: <FaCloudRain style={{ color: "#3399ff" }} />, unit: precipLabel(fmt.units.precip), variant: "skew",
         cells: list.map((h) => ({ text: rowsPrecip(h.precipitation ?? 0), ...precipCellStyle(h.precipitation, dark) })),
       },
       {
-        key: "wind", title: "Вітер", icon: <BiWind style={{ color: "#00c8e6" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
+        key: "wind", title: i18n.t("newsWeather.Weather.viter"), icon: <BiWind style={{ color: "#00c8e6" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
         cells: list.map((h) => { const ms = rowsNum(h.windNum ?? h.wind_speed); return { text: rowsWind(ms), ...windCellStyle(ms, dark) }; }),
       },
       {
-        key: "gusts", title: "Пориви вітру", icon: <BiWind style={{ color: "#ff9900" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
+        key: "gusts", title: i18n.t("newsWeather.Weather.poryvyVitru"), icon: <BiWind style={{ color: "#ff9900" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
         cells: list.map((h) => { const ms = rowsNum(h.wind_gusts_10m ?? h.wind_gusts); return { text: rowsWind(ms), ...windCellStyle(ms, dark) }; }),
       },
-      { key: "dir", title: "Напрямок вітру", icon: <BsCompass style={{ color: "#be90d4" }} />, variant: "arrow", cells: list.map((h) => windDirCell(h.wind_direction_10m)) },
+      { key: "dir", title: i18n.t("newsWeather.Weather.napriamokVitru"), icon: <BsCompass style={{ color: "#be90d4" }} />, variant: "arrow", cells: list.map((h) => windDirCell(h.wind_direction_10m)) },
       {
-        key: "uv", title: "УФ-індекс", icon: <FaSun style={{ color: "#ffd700" }} />, variant: "skew",
+        key: "uv", title: i18n.t("newsWeather.Weather.ufIndeks"), icon: <FaSun style={{ color: "#ffd700" }} />, variant: "skew",
         cells: list.map((h) => { const v = rowsNum(h.uv_index); return { text: v === null ? "—" : String(Math.round(v)), ...uvCellStyle(v, dark) }; }),
       },
-      { key: "hum", title: "Вологість", icon: <FaDroplet style={{ color: "#00ccff" }} />, unit: "%", variant: "plain", cells: list.map((h) => ({ text: rowsPercent(h.relative_humidity_2m ?? h.humidity) })) },
-      { key: "clouds", title: "Хмарність", icon: <FaCloud style={{ color: "#9fb3c8" }} />, unit: "%", variant: "plain", cells: list.map((h) => ({ text: rowsPercent(h.cloud_cover) })) },
+      { key: "hum", title: i18n.t("newsWeather.Weather.volohist"), icon: <FaDroplet style={{ color: "#00ccff" }} />, unit: "%", variant: "plain", cells: list.map((h) => ({ text: rowsPercent(h.relative_humidity_2m ?? h.humidity) })) },
+      { key: "clouds", title: i18n.t("newsWeather.Weather.khmarnist"), icon: <FaCloud style={{ color: "#9fb3c8" }} />, unit: "%", variant: "plain", cells: list.map((h) => ({ text: rowsPercent(h.cloud_cover) })) },
       {
-        key: "pressure", title: "Тиск", icon: <MdOutlineSpeed style={{ color: "#ffb36c" }} />, unit: pressureLabel(fmt.units.pressure), variant: "plain",
+        key: "pressure", title: i18n.t("newsWeather.Weather.tysk"), icon: <MdOutlineSpeed style={{ color: "#ffb36c" }} />, unit: pressureLabel(fmt.units.pressure), variant: "plain",
         cells: list.map((h) => ({ text: rowsPressure(h.pressure_msl ?? h.pressure) })),
       },
     ];
@@ -3545,7 +3549,7 @@ const HOLIDAYS_2027 = {
         isDarkMode={isDarkMode}
         fit={rowsFit(effectiveHourlyViewMode)}
         maxHeight={ROWS_PHONE_MAX_HEIGHT}
-        ariaLabel="Погодинний прогноз рядками"
+        ariaLabel={i18n.t("newsWeather.Weather.pohodynnyiProhnozRiadkamy")}
       />
     );
   };
@@ -3555,14 +3559,14 @@ const HOLIDAYS_2027 = {
     if (!list || list.length === 0) {
       return (
         <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
-          Немає даних 16-денного прогнозу.
+          {i18n.t("newsWeather.Weather.nemaieDanykh16Dennoho")}
         </div>
       );
     }
     const dark = isDarkMode;
     const columns = list.map((d, i) => {
       const dateType = getDateType(d.date, d.day, d.fullDate);
-      const isWeekend = d.day === "Сб" || d.day === "Нд" || d.day === "сб" || d.day === "нд" || dateType.type === "weekend";
+      const isWeekend = (d.fullDate ? isWeekendIso(d.fullDate) : /сб|нд/i.test(d.day || "")) || dateType.type === "weekend";
       return {
         key: d.fullDate || i,
         top: d.date,
@@ -3576,42 +3580,42 @@ const HOLIDAYS_2027 = {
     });
     const rows = [
       {
-        key: "day", title: "Вдень", unit: tempLabel(fmt.units.temp), variant: "plain", icon: <FaSun style={{ color: "#ff9d3b" }} />,
+        key: "day", title: i18n.t("newsWeather.Weather.vden"), unit: tempLabel(fmt.units.temp), variant: "plain", icon: <FaSun style={{ color: "#ff9d3b" }} />,
         cells: list.map((d) => { const c = rowsNum(d.temp_day ?? d.temp); return { text: rowsTemp(c), fg: tempColor(c, dark) }; }),
       },
       {
-        key: "night", title: "Вночі", unit: tempLabel(fmt.units.temp), variant: "plain", icon: <BsMoonStarsFill style={{ color: "#ff3399" }} />,
+        key: "night", title: i18n.t("newsWeather.Weather.vnochi"), unit: tempLabel(fmt.units.temp), variant: "plain", icon: <BsMoonStarsFill style={{ color: "#ff3399" }} />,
         cells: list.map((d) => { const c = rowsNum(d.temp_night ?? d.nightTemp); return { text: rowsTemp(c), fg: tempColor(c, dark) }; }),
       },
       {
-        key: "chance", title: "Ймовірність опадів", icon: <FaDroplet style={{ color: "#4da6ff" }} />, unit: "%", variant: "plain",
+        key: "chance", title: i18n.t("newsWeather.Weather.imovirnistOpadiv2"), icon: <FaDroplet style={{ color: "#4da6ff" }} />, unit: "%", variant: "plain",
         cells: list.map((d) => { const p = d.precipitation_probability_max ?? d.pop; return { text: rowsPercent(p), fg: chanceColor(p, dark) }; }),
       },
       {
-        key: "precip", title: "Опади", icon: <FaCloudRain style={{ color: "#3399ff" }} />, unit: precipLabel(fmt.units.precip), variant: "skew",
+        key: "precip", title: i18n.t("newsWeather.Weather.opady"), icon: <FaCloudRain style={{ color: "#3399ff" }} />, unit: precipLabel(fmt.units.precip), variant: "skew",
         cells: list.map((d) => { const mm = d.precipitation_sum ?? d.rain_sum ?? 0; return { text: rowsPrecip(mm), ...precipCellStyle(mm, dark) }; }),
       },
       {
-        key: "snow", title: "Сніг", icon: <FaSnowflake style={{ color: "#80d4ff" }} />, unit: fmt.units.precip === "in" ? "in" : "см", variant: "plain",
+        key: "snow", title: i18n.t("newsWeather.Weather.snih"), icon: <FaSnowflake style={{ color: "#80d4ff" }} />, unit: fmt.units.precip === "in" ? "in" : i18n.t("newsWeather.Weather.sm"), variant: "plain",
         cells: list.map((d) => {
           const v = convertSnow(d.snowfall_sum, fmt.units.precip);
           return { text: v === null ? "—" : v === 0 ? "0" : String(Math.round(v * 10) / 10), fg: v > 0 ? (dark ? "#9fdcff" : "#1f78b4") : undefined };
         }),
       },
       {
-        key: "wind", title: "Вітер (макс.)", icon: <BiWind style={{ color: "#00c8e6" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
+        key: "wind", title: i18n.t("newsWeather.Weather.viterMaks"), icon: <BiWind style={{ color: "#00c8e6" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
         cells: list.map((d) => { const ms = rowsNum(d.wind_speed); return { text: rowsWind(ms), ...windCellStyle(ms, dark) }; }),
       },
       {
-        key: "gusts", title: "Пориви вітру", icon: <BiWind style={{ color: "#ff9900" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
+        key: "gusts", title: i18n.t("newsWeather.Weather.poryvyVitru"), icon: <BiWind style={{ color: "#ff9900" }} />, unit: windLabel(fmt.units.wind), variant: "skew",
         cells: list.map((d) => { const ms = rowsNum(d.wind_gusts_max); return { text: rowsWind(ms), ...windCellStyle(ms, dark) }; }),
       },
-      { key: "dir", title: "Напрямок вітру", icon: <BsCompass style={{ color: "#be90d4" }} />, variant: "arrow", cells: list.map((d) => windDirCell(d.wind_direction_10m)) },
+      { key: "dir", title: i18n.t("newsWeather.Weather.napriamokVitru"), icon: <BsCompass style={{ color: "#be90d4" }} />, variant: "arrow", cells: list.map((d) => windDirCell(d.wind_direction_10m)) },
       {
-        key: "uv", title: "УФ-індекс", icon: <FaSun style={{ color: "#ffd700" }} />, variant: "skew",
+        key: "uv", title: i18n.t("newsWeather.Weather.ufIndeks"), icon: <FaSun style={{ color: "#ffd700" }} />, variant: "skew",
         cells: list.map((d) => { const v = rowsNum(d.uv_index); return { text: v === null ? "—" : String(Math.round(v)), ...uvCellStyle(v, dark) }; }),
       },
-      { key: "clouds", title: "Хмарність", icon: <FaCloud style={{ color: "#9fb3c8" }} />, unit: "%", variant: "plain", cells: list.map((d) => ({ text: rowsPercent(d.cloud_cover_mean) })) },
+      { key: "clouds", title: i18n.t("newsWeather.Weather.khmarnist"), icon: <FaCloud style={{ color: "#9fb3c8" }} />, unit: "%", variant: "plain", cells: list.map((d) => ({ text: rowsPercent(d.cloud_cover_mean) })) },
     ];
     return (
       <WeatherRows
@@ -3620,7 +3624,7 @@ const HOLIDAYS_2027 = {
         isDarkMode={isDarkMode}
         fit={rowsFit(effectiveDailyViewMode)}
         maxHeight={ROWS_PHONE_MAX_HEIGHT}
-        ariaLabel="Прогноз на 16 днів рядками"
+        ariaLabel={i18n.t("newsWeather.Weather.prohnozNa16Dniv")}
       />
     );
   };
@@ -3635,23 +3639,23 @@ const HOLIDAYS_2027 = {
   const renderBlocksPager = ({ page, pages, onGo, current, options, prevButton, what }) => (
     <DailyPager $isDarkMode={isDarkMode}>
       {prevButton || (
-        <button type="button" onClick={() => onGo(page - 1)} disabled={page === 0} aria-label={`Попередні ${what}`}>
+        <button type="button" onClick={() => onGo(page - 1)} disabled={page === 0} aria-label={i18n.t("newsWeather.Weather.poperedni", { what: what })}>
           <BiChevronLeft />
         </button>
       )}
-      <label className="jump" title={`Перейти до: ${what}`}>
+      <label className="jump" title={i18n.t("newsWeather.Weather.pereityDo", { what: what })}>
         <span aria-live="polite">
           {current}
-          <small> · {page + 1} з {pages}</small>
+          <small> · {page + 1} {i18n.t("newsWeather.Weather.z")} {pages}</small>
         </span>
         <BiChevronDown aria-hidden="true" />
-        <select value={page} onChange={(e) => onGo(Number(e.target.value))} aria-label={`Перейти до: ${what}`}>
+        <select value={page} onChange={(e) => onGo(Number(e.target.value))} aria-label={i18n.t("newsWeather.Weather.pereityDo", { what: what })}>
           {options.map((text, p) => (
             <option key={p} value={p}>{text}</option>
           ))}
         </select>
       </label>
-      <button type="button" onClick={() => onGo(page + 1)} disabled={page >= pages - 1} aria-label={`Наступні ${what}`}>
+      <button type="button" onClick={() => onGo(page + 1)} disabled={page >= pages - 1} aria-label={i18n.t("newsWeather.Weather.nastupni", { what: what })}>
         <BiChevronRight />
       </button>
     </DailyPager>
@@ -3673,7 +3677,7 @@ const HOLIDAYS_2027 = {
     // а сторінка — це позиція прокрутки. Підпис — дати поточної пари
     const fmtDay = (x) => `${x.date} ${x.day || ""}`.trim();
     const options = pairLabels(list, dailyBlocksPaging, fmtDay).map((text, p) =>
-      isPastDay(list[p * dailyBlocksPaging]) ? `${text} (учора)` : text
+      isPastDay(list[p * dailyBlocksPaging]) ? i18n.t("newsWeather.Weather.uchora", { text: text }) : text
     );
     const start = safeDailyBlocksPage * dailyBlocksPaging;
     const first = list[start];
@@ -3684,12 +3688,12 @@ const HOLIDAYS_2027 = {
       onGo: goToDailyBlocksPage,
       current: `${first?.date}${last && last !== first ? ` – ${last.date}` : ""}`,
       options,
-      what: "дні",
+      what: i18n.t("newsWeather.Weather.dni2"),
       // На першій сторінці «назад» веде до вчорашнього дня (якщо він є й ще схований)
       prevButton:
         safeDailyBlocksPage === 0 && hasPastDay && !showPastDay ? (
-          <button type="button" className="wide" onClick={() => setShowPastDay(true)} aria-label="Показати вчорашній день">
-            <BiChevronLeft /> Вчора
+          <button type="button" className="wide" onClick={() => setShowPastDay(true)} aria-label={i18n.t("newsWeather.Weather.pokazatyVchorashniiDen")}>
+            <BiChevronLeft /> {i18n.t("newsWeather.Weather.vchora")}
           </button>
         ) : null,
     });
@@ -3709,7 +3713,7 @@ const HOLIDAYS_2027 = {
       onGo: goToHourlyBlocksPage,
       current: `${fmtHour(first)}${last && last !== first ? ` – ${fmtHour(last)}` : ""}`,
       options: pairLabels(list, HOURLY_BLOCKS_PAGING, fmtHour),
-      what: "години",
+      what: i18n.t("newsWeather.Weather.hodyny"),
     });
   };
 
@@ -3718,7 +3722,7 @@ const HOLIDAYS_2027 = {
     if (!list || list.length === 0) {
       return (
         <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
-          Немає даних 16-денного прогнозу.
+          {i18n.t("newsWeather.Weather.nemaieDanykh16Dennoho")}
         </div>
       );
     }
@@ -3788,7 +3792,7 @@ const HOLIDAYS_2027 = {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", minWidth: 0 }}>
                     <span style={{ fontSize: "22px", flexShrink: 0, lineHeight: 1 }}><WeatherIcon isDarkMode={isDarkMode} item={d} /></span>
                     <span style={{ fontSize: "11px", fontWeight: "600" }}>
-                      {d.description || getWeatherDescription(d.weather_code) || stripEmoji(d.iconPlaceholder) || "Погода"}
+                      {d.description || getWeatherDescription(d.weather_code) || stripEmoji(d.iconPlaceholder) || i18n.t("newsWeather.Weather.pohoda")}
                     </span>
                   </div>
                 </div>
@@ -3797,37 +3801,37 @@ const HOLIDAYS_2027 = {
                 <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: "8px", padding: "3px 6px", display: "flex", flexWrap: "wrap", justifyContent: "space-around", alignItems: "center", gap: "2px 8px", fontSize: "13px", lineHeight: 1.3 }}>
                   {!isPolarNight && (
                     <div style={{ fontWeight: "800", color: "#ff9d3b", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <FaSun /> День: {formatTemp(d.temp_day || d.temp)}
+                      <FaSun /> {i18n.t("newsWeather.Weather.den3")} {formatTemp(d.temp_day || d.temp)}
                       {d.feels_like_max != null && (
                         <span style={{ fontSize: "10px", fontWeight: 600, opacity: 0.8 }}>
-                          (відч. {formatTemp(Math.round(d.feels_like_max))})
+                          {i18n.t("newsWeather.Weather.vidch")} {formatTemp(Math.round(d.feels_like_max))})
                         </span>
                       )}
                     </div>
                   )}
                   {!isPolarDay && (
                     <div style={{ fontWeight: "700", color: "#ff3399", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <BsMoonStarsFill /> Ніч: {formatTemp(d.temp_night || d.nightTemp)}
+                      <BsMoonStarsFill /> {i18n.t("newsWeather.Weather.nich3")} {formatTemp(d.temp_night || d.nightTemp)}
                       {d.feels_like_min != null && (
                         <span style={{ fontSize: "10px", fontWeight: 600, opacity: 0.8 }}>
-                          (відч. {formatTemp(Math.round(d.feels_like_min))})
+                          {i18n.t("newsWeather.Weather.vidch")} {formatTemp(Math.round(d.feels_like_min))})
                         </span>
                       )}
                     </div>
                   )}
                   {isPolarNight && (
                     <div style={{ flexBasis: "100%", justifyContent: "center", fontSize: "10px", color: "#4da6ff", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <BsMoonStarsFill /> Полярна ніч (день не показується)
+                      <BsMoonStarsFill /> {i18n.t("newsWeather.Weather.poliarnaNichDenNe")}
                     </div>
                   )}
                   {isPolarDay && (
                     <div style={{ flexBasis: "100%", justifyContent: "center", fontSize: "10px", color: "#ffd700", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <FaSun /> Полярний день (ніч не показується)
+                      <FaSun /> {i18n.t("newsWeather.Weather.poliarnyiDenNichNe")}
                     </div>
                   )}
                   {isPolarEndDay && (
                     <div style={{ flexBasis: "100%", justifyContent: "center", fontSize: "10px", color: "#00eeff", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <FaExclamationTriangle /> Закінчення полярного періоду
+                      <FaExclamationTriangle /> {i18n.t("newsWeather.Weather.zakinchenniaPoliarnohoPeriodu")}
                     </div>
                   )}
                 </div>
@@ -3835,28 +3839,28 @@ const HOLIDAYS_2027 = {
                 {renderBlockStats([
                   {
                     icon: <AnimWind><BiWind style={{ color: "#00eeff" }} /></AnimWind>,
-                    label: "Вітер",
+                    label: i18n.t("newsWeather.Weather.viter"),
                     value: fmt.wind(d.wind_speed ?? 0),
                     // Напрям — скорочено (Пд-Сх), повна назва в підказці
                     sub: (
                       <span title={windText}>
                         {getWindDirectionShort(windDeg)}
                         {d.wind_gusts_max != null && (
-                          <span style={{ display: "block", color: "#ff9900", fontWeight: 600, opacity: 1, whiteSpace: "nowrap" }}>пор. {fmt.wind(d.wind_gusts_max)}</span>
+                          <span style={{ display: "block", color: "#ff9900", fontWeight: 600, opacity: 1, whiteSpace: "nowrap" }}>{i18n.t("newsWeather.Weather.por")} {fmt.wind(d.wind_gusts_max)}</span>
                         )}
                       </span>
                     ),
                   },
-                  { icon: <AnimSpin><FaSun style={{ color: "#ffd700" }} /></AnimSpin>, label: "УФ-індекс", value: d.uv_index ?? "—" },
+                  { icon: <AnimSpin><FaSun style={{ color: "#ffd700" }} /></AnimSpin>, label: i18n.t("newsWeather.Weather.ufIndeks"), value: d.uv_index ?? "—" },
                   {
                     // Чим вища ймовірність опадів, тим насиченіша крапля
                     icon: <FaDroplet style={{ color: "#4da6ff", opacity: isNaN(rainChance) ? 0.4 : 0.2 + 0.8 * Math.min(rainChance, 100) / 100 }} />,
-                    label: "Ймовірність опадів",
+                    label: i18n.t("newsWeather.Weather.imovirnistOpadiv2"),
                     value: formatPercent(d.precipitation_probability_max ?? d.pop),
                   },
-                  { icon: <FaCloudRain style={{ color: "#3399ff" }} />, label: "Дощ", value: fmt.precip(d.rain_sum ?? d.rain ?? 0) },
-                  { icon: <FaSnowflake style={{ color: "#80d4ff" }} />, label: "Сніг", value: d.snowfall_sum != null ? fmt.snow(d.snowfall_sum) : "—" },
-                  { icon: <FaCloud style={{ color: "#c3cfdc" }} />, label: "Хмарність", value: formatPercent(d.cloud_cover_mean) },
+                  { icon: <FaCloudRain style={{ color: "#3399ff" }} />, label: i18n.t("newsWeather.Weather.doshch"), value: fmt.precip(d.rain_sum ?? d.rain ?? 0) },
+                  { icon: <FaSnowflake style={{ color: "#80d4ff" }} />, label: i18n.t("newsWeather.Weather.snih"), value: d.snowfall_sum != null ? fmt.snow(d.snowfall_sum) : "—" },
+                  { icon: <FaCloud style={{ color: "#c3cfdc" }} />, label: i18n.t("newsWeather.Weather.khmarnist"), value: formatPercent(d.cloud_cover_mean) },
                   {
                     // Найгірша видимість за день; менше 1 км або код «туман» — це туман
                     icon: (
@@ -3864,17 +3868,17 @@ const HOLIDAYS_2027 = {
                         <VisibilityFog />
                       </span>
                     ),
-                    label: isFoggy(d.visibility_min, d.weather_code) ? "Туман, видимість" : "Видимість",
+                    label: isFoggy(d.visibility_min, d.weather_code) ? i18n.t("newsWeather.Weather.tumanVydymist") : i18n.t("newsWeather.Weather.vydymist"),
                     value: d.visibility_min != null ? fmt.visibility(d.visibility_min / 1000) : "—",
                   },
-                  { icon: <GiWaterRecycling style={{ color: "#00eeff" }} />, label: "Випаровування", value: d.evapotranspiration !== undefined ? fmt.precip(d.evapotranspiration, 2) : "—" },
-                  { icon: <BsBuildings style={{ color: "#ffb36c" }} />, label: "Цивільні сутінки", value: twilight ? `${twilight.civilDawn}–${twilight.civilDusk}` : "—" },
-                  { icon: <AnimCompass><BsCompass style={{ color: "#be90d4" }} /></AnimCompass>, label: "Навігаційні сутінки", value: twilight ? `${twilight.nauticalDawn}–${twilight.nauticalDusk}` : "—" },
-                  { icon: <AnimTwinkle><BsStars style={{ color: "#a855f7" }} /></AnimTwinkle>, label: "Астрономічні сутінки", value: twilight ? `${twilight.astroDawn}–${twilight.astroDusk}` : "—" },
+                  { icon: <GiWaterRecycling style={{ color: "#00eeff" }} />, label: i18n.t("newsWeather.Weather.vyparovuvannia"), value: d.evapotranspiration !== undefined ? fmt.precip(d.evapotranspiration, 2) : "—" },
+                  { icon: <BsBuildings style={{ color: "#ffb36c" }} />, label: i18n.t("newsWeather.Weather.tsyvilniSutinky"), value: twilight ? `${twilight.civilDawn}–${twilight.civilDusk}` : "—" },
+                  { icon: <AnimCompass><BsCompass style={{ color: "#be90d4" }} /></AnimCompass>, label: i18n.t("newsWeather.Weather.navihatsiiniSutinky"), value: twilight ? `${twilight.nauticalDawn}–${twilight.nauticalDusk}` : "—" },
+                  { icon: <AnimTwinkle><BsStars style={{ color: "#a855f7" }} /></AnimTwinkle>, label: i18n.t("newsWeather.Weather.astronomichniSutinky"), value: twilight ? `${twilight.astroDawn}–${twilight.astroDusk}` : "—" },
                 ])}
                 <AstroScale
                   icon={<AnimHourglass><BsHourglassSplit style={{ color: "#3498db" }} /></AnimHourglass>}
-                  title={`Тривалість дня: ${getDayLength(d.sunrise, d.sunset)}`}
+                  title={i18n.t("newsWeather.Weather.tryvalistDnia", { v0: getDayLength(d.sunrise, d.sunset) })}
                   riseLabel={formatClock(d.sunrise)}
                   setLabel={formatClock(d.sunset)}
                   progress={sunScale.progress}
@@ -3884,8 +3888,8 @@ const HOLIDAYS_2027 = {
                     dayDiff === null || dayDiff === undefined
                       ? null
                       : dayDiff === 0
-                        ? "Тривалість дня як учора"
-                        : `День на ${Math.abs(dayDiff)} хв ${dayDiff > 0 ? "довший" : "коротший"}, ніж учора`
+                        ? i18n.t("newsWeather.Weather.tryvalistDniaIakUchora")
+                        : i18n.t(dayDiff > 0 ? "newsWeather.Weather.dayLonger" : "newsWeather.Weather.dayShorter", { Math: Math.abs(dayDiff) })
                   }
                 />
                 {moon && (
@@ -3899,7 +3903,7 @@ const HOLIDAYS_2027 = {
                     color="#9fb3c8"
                     footer={
                       moon.nextPhase
-                        ? `${moon.nextPhase.name} — ${moon.nextPhase.date.toLocaleDateString("uk", { day: "numeric", month: "long" })}`
+                        ? `${moon.nextPhase.name} — ${moon.nextPhase.date.toLocaleDateString(dateLocale(), { day: "numeric", month: "long" })}`
                         : null
                     }
                   />
@@ -3960,7 +3964,7 @@ const HOLIDAYS_2027 = {
     if (!list || list.length === 0) {
       return (
         <div style={{ padding: "20px", textAlign: "center", color: isDarkMode ? "#aaa" : "#666" }}>
-          Немає даних 16-денного прогнозу.
+          {i18n.t("newsWeather.Weather.nemaieDanykh16Dennoho")}
         </div>
       );
     }
@@ -3971,7 +3975,7 @@ const HOLIDAYS_2027 = {
           {list.map((d, idx) => {
             const isPast = isPastDay(d) || d.isPast;
             const dateType = getDateType(d.date, d.day, d.fullDate);
-            const isWeekend = d.day === "Сб" || d.day === "Нд" || dateType.type === "weekend";
+            const isWeekend = (d.fullDate ? isWeekendIso(d.fullDate) : /сб|нд/i.test(d.day || "")) || dateType.type === "weekend";
             const windDeg = d.wind_direction_10m || 0;
             const windText = getWindDirectionText(windDeg);
             const dayTemp = parseInt(d.temp_day || d.temp);
@@ -3989,23 +3993,23 @@ const HOLIDAYS_2027 = {
               borderColor = "rgba(140, 140, 140, 0.35)";
               badge = (
                 <span style={{ fontSize: "9px", background: "rgba(120,120,120,0.3)", color: "#bbb", padding: "1px 6px", borderRadius: "4px" }}>
-                Минулі дні
+                {i18n.t("newsWeather.Weather.mynuliDni")}
                 </span>
               );
             } else if (dateType.type === "holiday") {
               headerColor = "#ff4d4d";
               borderColor = "rgba(255, 77, 77, 0.7)";
-              badge = dayBadge("Вітаю зі святом!", "#ff4d4d", "rgba(255, 77, 77, 0.25)", dateType.label);
+              badge = dayBadge(i18n.t("newsWeather.Weather.vitaiuZiSviatom"), "#ff4d4d", "rgba(255, 77, 77, 0.25)", dateType.label);
             } else if (dateType.type === "custom") {
               headerColor = "#00bfff";
               borderColor = "rgba(0, 191, 255, 0.7)";
-              badge = dayBadge("Ваша подія", "#00bfff", "rgba(0, 191, 255, 0.25)", dateType.label);
+              badge = dayBadge(i18n.t("newsWeather.Weather.vashaPodiia2"), "#00bfff", "rgba(0, 191, 255, 0.25)", dateType.label);
             } else if (dateType.type === "birthday") {
               headerColor = "#e066ff";
               borderColor = "rgba(224, 102, 255, 0.7)";
               badge = (
                 <span style={{ fontSize: "9px", background: "rgba(224, 102, 255, 0.25)", color: "#e066ff", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
-                  Вітаємо з днем народження!
+                  {i18n.t("newsWeather.Weather.vitaiemoZDnemNarodzhennia2")}
                 </span>
               );
             } else if (isWeekend) {
@@ -4013,7 +4017,7 @@ const HOLIDAYS_2027 = {
               borderColor = "rgba(255, 179, 108, 0.7)";
               badge = (
                 <span style={{ fontSize: "9px", background: "rgba(255, 179, 108, 0.25)", color: "#ffb36c", padding: "1px 6px", borderRadius: "4px", fontWeight: "bold" }}>
-                  Вихідний день
+                  {i18n.t("newsWeather.Weather.vykhidnyiDen")}
                 </span>
               );
             }
@@ -4055,7 +4059,7 @@ const HOLIDAYS_2027 = {
                     <WeatherIcon isDarkMode={isDarkMode} item={d} />
                   </div>
                   <div style={{ fontSize: "10px", lineHeight: 1.3, opacity: 0.8, color: headerColor, fontWeight: 600 }}>
-                    {d.description || getWeatherDescription(d.weather_code ?? 0) || "Погода"}
+                    {d.description || getWeatherDescription(d.weather_code ?? 0) || i18n.t("newsWeather.Weather.pohoda")}
                   </div>
                 </div>
 
@@ -4069,7 +4073,7 @@ const HOLIDAYS_2027 = {
                       fontWeight: "800",
                       color: "#ff9d3b",
                     }}>
-                      День: {formatTemp(dayTemp)}
+                      {i18n.t("newsWeather.Weather.den3")} {formatTemp(dayTemp)}
                     </div>
                   )}
                   {!isPolarDay && (
@@ -4081,7 +4085,7 @@ const HOLIDAYS_2027 = {
                       fontWeight: "700",
                       color: "#ff3399",
                     }}>
-                      Ніч: {formatTemp(nightTemp)}
+                      {i18n.t("newsWeather.Weather.nich3")} {formatTemp(nightTemp)}
                     </div>
                   )}
                 </div>
@@ -4090,9 +4094,9 @@ const HOLIDAYS_2027 = {
 
                 <div style={{ fontSize: "11px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: "700", color: "#0099ff" }}>
-                    Напрямок: <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "13px" }}>⬇</span>
+                    {i18n.t("newsWeather.Weather.napriamok")} <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "13px" }}>⬇</span>
                   </div>
-                  <div style={{ fontSize: "10px" }}><span>Сила вітру: {d.wind_speed || "0"}</span></div>
+                  <div style={{ fontSize: "10px" }}><span>{i18n.t("newsWeather.Weather.sylaVitru")} {d.wind_speed || "0"}</span></div>
                   <div style={{ fontSize: "10px" }}>
                     {windText} ({Math.round(windDeg)}°)
                   </div>
@@ -4166,8 +4170,8 @@ const HOLIDAYS_2027 = {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleRenameSubmit}
-                  title="Зберегти (Enter)"
-                  aria-label="Зберегти"
+                  title={i18n.t("newsWeather.Weather.zberehtyEnter")}
+                  aria-label={i18n.t("newsWeather.Weather.zberehty")}
                   style={{
                     background: "linear-gradient(135deg, #00eeff 0%, #008cff 100%)",
                     color: "#000000",
@@ -4188,8 +4192,8 @@ const HOLIDAYS_2027 = {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsEditing(false)}
-                  title="Скасувати (Esc)"
-                  aria-label="Скасувати"
+                  title={i18n.t("newsWeather.Weather.skasuvatyEsc")}
+                  aria-label={i18n.t("newsWeather.Weather.skasuvaty")}
                   style={{
                     background: "linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%)",
                     color: "#ffffff",
@@ -4208,7 +4212,7 @@ const HOLIDAYS_2027 = {
                 </motion.button>
               </motion.div>
             ) : (
-              <Tooltip content="Двічі клацніть, щоб змінити назву" isDarkMode={isDarkMode}>
+              <Tooltip content={i18n.t("newsWeather.Weather.dvichiKlatsnitShchobZminyty")} isDarkMode={isDarkMode}>
                 <h3
                   onDoubleClick={() => setIsEditing(true)}
                   style={{
@@ -4229,7 +4233,7 @@ const HOLIDAYS_2027 = {
             )}
             {card.isMain && card.isFallbackLocation && <LocationHint isDarkMode={isDarkMode} />}
             <p style={{ fontSize: "10px", color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : "#555" }}>
-              Широта: {card.lat?.toFixed(2)}, Довгота: {card.lon?.toFixed(2)}
+              {i18n.t("newsWeather.Weather.shyrota")} {card.lat?.toFixed(2)}{i18n.t("newsWeather.Weather.dovhota")} {card.lon?.toFixed(2)}
             </p>
           </div>
           <div
@@ -4244,11 +4248,11 @@ const HOLIDAYS_2027 = {
           >
             <ActionButtons $isDarkMode={isDarkMode} style={{ position: "relative", zIndex: 2 }}>
               {isVoiceBeta && (
-                <Tooltip content={isSpeaking ? "Зупинити озвучення" : "Озвучити прогноз (бета)"} isDarkMode={isDarkMode}>
+                <Tooltip content={isSpeaking ? i18n.t("newsWeather.Weather.zupynytyOzvuchennia") : i18n.t("newsWeather.Weather.ozvuchytyProhnozBeta")} isDarkMode={isDarkMode}>
                   <button
                     type="button"
                     onClick={handleSpeakForecast}
-                    aria-label={isSpeaking ? "Зупинити озвучення" : "Озвучити прогноз"}
+                    aria-label={isSpeaking ? i18n.t("newsWeather.Weather.zupynytyOzvuchennia") : i18n.t("newsWeather.Weather.ozvuchytyProhnoz")}
                     aria-pressed={isSpeaking}
                     style={{
                       padding: "5px",
@@ -4264,7 +4268,7 @@ const HOLIDAYS_2027 = {
                   </button>
                 </Tooltip>
               )}
-              <Tooltip content="Налаштування картки" isDarkMode={isDarkMode}>
+              <Tooltip content={i18n.t("newsWeather.Weather.nalashtuvanniaKartky")} isDarkMode={isDarkMode}>
               <button
                 ref={(el) => { if (card.isMain && registerRef) registerRef('weatherGear', el); }}
                 onClick={() => {
@@ -4272,7 +4276,7 @@ const HOLIDAYS_2027 = {
                   if (isDropdownOpen) handleCloseDropdown();
                   else setIsDropdownOpen(true);
                 }}
-                aria-label="Налаштування картки"
+                aria-label={i18n.t("newsWeather.Weather.nalashtuvanniaKartky")}
                 style={{
                   padding: "5px",
                   display: "inline-flex",
@@ -4299,11 +4303,11 @@ const HOLIDAYS_2027 = {
                 <SettingsDropdownItem
                   isDarkMode={isDarkMode}
                   onClick={() => setIsUnitsModalOpen(true)}
-                  aria-label="Змінити одиниці виміру"
+                  aria-label={i18n.t("newsWeather.Weather.zminytyOdynytsiVymiru")}
                   style={{ padding: "4px 12px", gap: "0" }}
                 >
                   <MdStraighten style={{ color: "#ffb36c" }} />
-                  <span>Одиниці виміру</span>
+                  <span>{i18n.t("newsWeather.Weather.odynytsiVymiru")}</span>
                   <UnitsCycleHint
                     items={UNIT_GROUPS.map((group) => {
                       const current =
@@ -4327,7 +4331,7 @@ const HOLIDAYS_2027 = {
                           id: `weather-${card.id}`,
                           type: "weather",
                           title: card.locationName,
-                          details: `Місто: ${card.locationName}. Координати: ${card.lat?.toFixed(2)}, ${card.lon?.toFixed(2)}. Температура: ${card.current?.temp}°C, відчувається: ${card.current?.feels_like}°C. Вітер: ${card.current?.wind_speed} м/с. Вологість: ${card.current?.humidity}%. Тиск: ${card.current?.pressure} гПа.`,
+                          details: i18n.t("newsWeather.Weather.mistoKoordynatyTemperaturaC", { locationName: card.locationName, v1: card.lat?.toFixed(2), v2: card.lon?.toFixed(2), v3: card.current?.temp, v4: card.current?.feels_like, v5: card.current?.wind_speed, v6: card.current?.humidity, v7: card.current?.pressure }),
                         },
                       })
                     );
@@ -4343,9 +4347,9 @@ const HOLIDAYS_2027 = {
                     cursor: hasGeminiKey ? "pointer" : "default",
                   }}
                 >
-                  <FiPlus style={{ transform: "scale(1.2)" }} /> Прикріпити до ШІ
+                  <FiPlus style={{ transform: "scale(1.2)" }} /> {i18n.t("newsWeather.Weather.prykripytyDoShi")}
                   <SettingsItemHint>
-                    {hasGeminiKey ? "Запитати ШІ про цю погоду" : "Потрібен ключ Gemini"}
+                    {hasGeminiKey ? i18n.t("newsWeather.Weather.zapytatyShiProTsiu") : i18n.t("newsWeather.Weather.potribenKliuchGemini")}
                   </SettingsItemHint>
                 </SettingsDropdownItem>
                 {!isEditing && (
@@ -4356,8 +4360,8 @@ const HOLIDAYS_2027 = {
                       handleCloseDropdown();
                     }}
                   >
-                    <BiEdit/> Змінити назву
-                    <SettingsItemHint>Своя назва для цієї картки</SettingsItemHint>
+                    <BiEdit/> {i18n.t("newsWeather.Weather.zminytyNazvu")}
+                    <SettingsItemHint>{i18n.t("newsWeather.Weather.svoiaNazvaDliaTsiiei")}</SettingsItemHint>
                   </SettingsDropdownItem>
                 )}
                 <SettingsDropdownItem
@@ -4367,8 +4371,8 @@ const HOLIDAYS_2027 = {
                       handleCloseDropdown();
                     }}
                   >
-                    <BiImageAlt  /> Змінити фон
-                    <SettingsItemHint>Картинка позаду погоди</SettingsItemHint>
+                    <BiImageAlt  /> {i18n.t("newsWeather.Weather.zminytyFon")}
+                    <SettingsItemHint>{i18n.t("newsWeather.Weather.kartynkaPozaduPohody")}</SettingsItemHint>
                   </SettingsDropdownItem>
                 <SettingsDropdownItem
                   isDarkMode={isDarkMode}
@@ -4377,8 +4381,8 @@ const HOLIDAYS_2027 = {
                     handleCloseDropdown();
                   }}
                 >
-                  <FaCalendarPlus /> Встановити дати
-                  <SettingsItemHint>Свої свята й події в прогнозі</SettingsItemHint>
+                  <FaCalendarPlus /> {i18n.t("newsWeather.Weather.vstanovytyDaty")}
+                  <SettingsItemHint>{i18n.t("newsWeather.Weather.svoiSviataIPodii")}</SettingsItemHint>
                 </SettingsDropdownItem>
                 <SettingsDropdownItem
                   isDarkMode={isDarkMode}
@@ -4391,11 +4395,11 @@ const HOLIDAYS_2027 = {
                   ) : (
                     <MdNotificationsOff style={{ opacity: 0.6 }} />
                   )}
-                  Сповіщення про небезпеку: {cardAlertsOn ? "увімк." : "вимк."}
+                  {i18n.t("newsWeather.Weather.spovishchenniaProNebezpeku")} {cardAlertsOn ? i18n.t("newsWeather.Weather.uvimk") : i18n.t("newsWeather.Weather.vymk")}
                   <SettingsItemHint>
                     {isWeatherAlertsEnabled()
-                      ? "Гроза, ураган, злива, ожеледь для цієї картки"
-                      : "Спершу увімкніть у Налаштуваннях → Секції та новини"}
+                      ? i18n.t("newsWeather.Weather.hrozaUrahanZlyvaOzheled")
+                      : i18n.t("newsWeather.Weather.spershuUvimknitUNalashtuvanniakh")}
                   </SettingsItemHint>
                 </SettingsDropdownItem>
                 <SettingsDropdownItem
@@ -4405,35 +4409,35 @@ const HOLIDAYS_2027 = {
                   onClick={() => setMorningCardId(card.id)}
                 >
                   <MdWbTwilight style={{ color: "#fb923c", opacity: isMorningCard ? 1 : 0.6 }} />
-                  Ранковий прогноз о {MORNING_BRIEF_HOUR}:00: {isMorningCard ? "ця картка" : "обрати цю"}
+                  {i18n.t("newsWeather.Weather.rankovyiProhnozO")} {MORNING_BRIEF_HOUR}:00: {isMorningCard ? i18n.t("newsWeather.Weather.tsiaKartka") : i18n.t("newsWeather.Weather.obratyTsiu")}
                   <SettingsItemHint>
                     {morningPrefs.on
-                      ? "Щоранку: температура, опади й що вдягнути"
-                      : "Спершу увімкніть у Налаштуваннях → Секції та новини"}
+                      ? i18n.t("newsWeather.Weather.shchorankuTemperaturaOpadyI")
+                      : i18n.t("newsWeather.Weather.spershuUvimknitUNalashtuvanniakh")}
                   </SettingsItemHint>
                 </SettingsDropdownItem>
                 {/* Автоперемикання вкладок для цієї картки: перемикач + шкала 10 с – 5 хв */}
-                <SettingsDropdownItem as="div" role="group" aria-label="Автоперемикання вкладок">
+                <SettingsDropdownItem as="div" role="group" aria-label={i18n.t("newsWeather.Weather.avtoperemykanniaVkladok")}>
                   <SpinningIcon $on={tabAutoplaySeconds > 0} $seconds={tabAutoplay.seconds}>
                     <MdAutorenew style={{ color: "#00eeff", opacity: tabAutoplaySeconds > 0 ? 1 : 0.6 }} />
                   </SpinningIcon>
                   <TabAutoplayControl
-                    title="Автоперемикання вкладок"
+                    title={i18n.t("newsWeather.Weather.avtoperemykanniaVkladok")}
                     value={tabAutoplay}
                     onChange={setCardTabAutoplay}
                   />
                   <SettingsItemHint>
                     {tabAutoplayCard === null ? (
-                      "Як у загальних налаштуваннях"
+                      i18n.t("newsWeather.Weather.iakUZahalnykhNalashtuvanniakh")
                     ) : (
                       <>
-                        Лише для цієї картки ·{" "}
+                        {i18n.t("newsWeather.Weather.lysheDliaTsiieiKartky")}{" "}
                         <button
                           type="button"
                           onClick={resetCardTabAutoplay}
                           style={{ background: "none", border: "none", padding: 0, color: "#00eeff", textDecoration: "underline", cursor: "pointer", font: "inherit" }}
                         >
-                          як у загальних
+                          {i18n.t("newsWeather.Weather.iakUZahalnykh")}
                         </button>
                       </>
                     )}
@@ -4451,8 +4455,8 @@ const HOLIDAYS_2027 = {
                       <span aria-hidden="true" style={{ opacity: carouselArrowsOn ? 1 : 0.6 }}>
                         ◀▶
                       </span>
-                      Стрілки гортання: {carouselArrowsOn ? "увімк." : "вимк."}
-                      <SettingsItemHint>Кнопки ◀ ▶ по боках карток</SettingsItemHint>
+                      {i18n.t("newsWeather.Weather.strilkyHortannia")} {carouselArrowsOn ? i18n.t("newsWeather.Weather.uvimk") : i18n.t("newsWeather.Weather.vymk")}
+                      <SettingsItemHint>{i18n.t("newsWeather.Weather.knopkyPoBokakhKartok")}</SettingsItemHint>
                     </SettingsDropdownItem>
                     <SettingsDropdownItem
                       isDarkMode={isDarkMode}
@@ -4463,8 +4467,8 @@ const HOLIDAYS_2027 = {
                       <span aria-hidden="true" style={{ opacity: carouselNumbersOn ? 1 : 0.6 }}>
                         123
                       </span>
-                      Номери карток: {carouselNumbersOn ? "увімк." : "вимк."}
-                      <SettingsItemHint>Кнопки 1, 2, 3… внизу карток</SettingsItemHint>
+                      {i18n.t("newsWeather.Weather.nomeryKartok")} {carouselNumbersOn ? i18n.t("newsWeather.Weather.uvimk") : i18n.t("newsWeather.Weather.vymk")}
+                      <SettingsItemHint>{i18n.t("newsWeather.Weather.knopky123")}</SettingsItemHint>
                     </SettingsDropdownItem>
                   </>
                 )}
@@ -4494,7 +4498,7 @@ const HOLIDAYS_2027 = {
                       cursor: index === 0 ? "default" : "pointer",
                     }}
                   >
-                    Зробити вище картку
+                    {i18n.t("newsWeather.Weather.zrobytyVyshcheKartku")}
                   </button>
                   <button
                     disabled={index === totalCards - 1}
@@ -4515,16 +4519,16 @@ const HOLIDAYS_2027 = {
                       cursor: index === totalCards - 1 ? "default" : "pointer",
                     }}
                   >
-                    Зробити нижче картку
+                    {i18n.t("newsWeather.Weather.zrobytyNyzhcheKartku")}
                   </button>
                 </div>
                 {/* Стиль ліній графіка — у ряду з GPS / «Видалити»; два графіки на вибір */}
-                <SettingsDropdownItem as="div" role="group" aria-label="Стиль графіка">
-                  <BiPalette style={{ color: "#c084fc" }} /> Стиль графіка
+                <SettingsDropdownItem as="div" role="group" aria-label={i18n.t("newsWeather.Weather.stylHrafika")}>
+                  <BiPalette style={{ color: "#c084fc" }} /> {i18n.t("newsWeather.Weather.stylHrafika")}
                   <div style={{ display: "flex", gap: "4px", marginTop: "2px" }}>
                     {[
-                      { key: "hourly", label: "Годинний" },
-                      { key: "daily", label: "16 днів" },
+                      { key: "hourly", label: i18n.t("newsWeather.Weather.hodynnyi") },
+                      { key: "daily", label: i18n.t("newsWeather.Weather.16Dniv") },
                     ].map(({ key, label }) => (
                       <ChartStyleChip
                         key={key}
@@ -4546,7 +4550,7 @@ const HOLIDAYS_2027 = {
                       e.preventDefault();
                       handleGpsToggle();
                     }}
-                    title={isLocationEnabled ? "Вимкнути GPS (зараз увімкнено)" : "Увімкнути GPS (зараз вимкнено)"}
+                    title={isLocationEnabled ? i18n.t("newsWeather.Weather.vymknutyGpsZarazUvimkneno") : i18n.t("newsWeather.Weather.uvimknutyGpsZarazVymkneno")}
                     style={{
                       background: isLocationEnabled
                         ? "rgba(0,200,80,0.12)"
@@ -4557,11 +4561,11 @@ const HOLIDAYS_2027 = {
                     }}
                   >
                     <BiCurrentLocation style={{ transform: "scale(1.12)" }} />{" "}
-                    {isLocationEnabled ? "GPS Увімк." : "GPS Вимк."}
+                    {isLocationEnabled ? i18n.t("newsWeather.Weather.gpsUvimk") : i18n.t("newsWeather.Weather.gpsVymk")}
                     <SettingsItemHint>
                       {isLocationEnabled
-                        ? "Погода там, де ви зараз"
-                        : "Увімкніть, щоб бачити свою локацію"}
+                        ? i18n.t("newsWeather.Weather.pohodaTamDeVy")
+                        : i18n.t("newsWeather.Weather.uvimknitShchobBachytySvoiu")}
                     </SettingsItemHint>
                   </SettingsDropdownItem>
                 ) : (
@@ -4574,8 +4578,8 @@ const HOLIDAYS_2027 = {
                       color: "red",
                     }}
                   >
-                    <BiTrash style={{ transform: "scale(1.08)" }} /> Видалити
-                    <SettingsItemHint>Прибрати цю картку</SettingsItemHint>
+                    <BiTrash style={{ transform: "scale(1.08)" }} /> {i18n.t("newsWeather.Weather.vydalyty")}
+                    <SettingsItemHint>{i18n.t("newsWeather.Weather.prybratyTsiuKartku")}</SettingsItemHint>
                   </SettingsDropdownItem>
                 )}
               </SettingsDropdownMenu>
@@ -4584,10 +4588,10 @@ const HOLIDAYS_2027 = {
         <CustomTimersDisplay customDays={customDays} cardId={card.id} />
         <MobileTabBar>
           {[
-            { key: "current", label: "Зараз" },
-            { key: "hourly",  label: "Годинна" },
-            { key: "daily",   label: "Місячна" },
-            { key: "ai",      label: "Смарт" },
+            { key: "current", label: i18n.t("newsWeather.Weather.zaraz") },
+            { key: "hourly",  label: i18n.t("newsWeather.Weather.hodynna") },
+            { key: "daily",   label: i18n.t("newsWeather.Weather.misiachna") },
+            { key: "ai",      label: i18n.t("newsWeather.Weather.smart") },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -4629,11 +4633,11 @@ const HOLIDAYS_2027 = {
   <IndicatorCard aria-label={card.current.iconPlaceholder}>
     <IconBox $size="32px" $lh="1"><WeatherIcon isDarkMode={isDarkMode} item={card.current} /></IconBox>
     <TextContent $size="11px" $lh="1.2">
-      {stripEmoji(card.current.iconPlaceholder) || "Мінлива хмарність"}
+      {stripEmoji(card.current.iconPlaceholder) || i18n.t("newsWeather.Weather.minlyvaKhmarnist")}
     </TextContent>
   </IndicatorCard>
 
-  <IndicatorCard aria-label="Температура / Відчувається як">
+  <IndicatorCard aria-label={i18n.t("newsWeather.Weather.temperaturaVidchuvaietsiaIak")}>
     <IconBox $color={parseFloat(card.current.temp) < 5 ? "#4da6ff" : parseFloat(card.current.temp) > 25 ? "#ff4d4d" : "#ffb36c"}>
       <TempThermometer
         temp={card.current.temp}
@@ -4642,13 +4646,13 @@ const HOLIDAYS_2027 = {
     </IconBox>
     <TextContent $mt="0px">
       {formatTemp(card.current.temp)}
-      <SubText $size="9px">Відчувається: {formatTemp(card.current.feels_like)}</SubText>
+      <SubText $size="9px">{i18n.t("newsWeather.Weather.vidchuvaietsia")} {formatTemp(card.current.feels_like)}</SubText>
       {card.accuracy?.models?.length > 0 && (
         <SubText
           $size="9px"
-          title={`Медіана прогнозів: ${card.accuracy.models.map((m) => CONSENSUS_MODEL_LABELS[m] || m).join(", ")}`}
+          title={i18n.t("newsWeather.Weather.medianaProhnoziv", { v0: card.accuracy.models.map((m) => CONSENSUS_MODEL_LABELS[m] || m).join(", ") })}
         >
-          Звірено {card.accuracy.models.length} моделей
+          {i18n.t("newsWeather.Weather.zvireno")} {card.accuracy.models.length} {i18n.t("newsWeather.Weather.modelei")}
           {typeof card.accuracy.tempSpread === "number" &&
             ` · ±${(units.temp === "F" ? card.accuracy.tempSpread * 1.8 : card.accuracy.tempSpread).toFixed(1)}${units.temp === "F" ? "°F" : units.temp === "K" ? "K" : "°C"}`}
         </SubText>
@@ -4656,92 +4660,92 @@ const HOLIDAYS_2027 = {
     </TextContent>
   </IndicatorCard>
 
-  <IndicatorCard aria-label="Відносна вологість">
+  <IndicatorCard aria-label={i18n.t("newsWeather.Weather.vidnosnaVolohist")}>
     <IconBox $color="#a8d8ff">
       <HumidityGlass humidity={card.current.humidity} />
     </IconBox>
-    <TextContent $mt="10px">Вологість: {card.current.humidity ?? "—"}</TextContent>
+    <TextContent $mt="10px">{i18n.t("newsWeather.Weather.volohist2")} {card.current.humidity ?? "—"}</TextContent>
   </IndicatorCard>
 
-  <IndicatorCard aria-label={`Вітер: ${card.current.wind_speed}, Напрямок: ${card.current.wind_direction_10m}° (${getWindDirectionText(card.current.wind_direction_10m)}), Пориви: ${card.current.wind_gusts_10m} м/с`}>
+  <IndicatorCard aria-label={i18n.t("newsWeather.Weather.viterNapriamokPoryvyM", { wind_speed: card.current.wind_speed, wind_direction_10m: card.current.wind_direction_10m, v2: getWindDirectionText(card.current.wind_direction_10m), wind_gusts_10m: card.current.wind_gusts_10m })}>
     <IconBox $size="28px" $color="#00eeff" $rotate={Math.round((card.current.wind_direction_10m || 0) / 45) * 45 % 360}>⬇</IconBox>
     <TextContent $mt="-5px">
-      Швидкість вітру: {fmt.wind(card.current.windNum ?? card.current.wind_speed)}
+      {i18n.t("newsWeather.Weather.shvydkistVitru")} {fmt.wind(card.current.windNum ?? card.current.wind_speed)}
       <SubText>{card.current.wind_direction_10m}° {getWindDirectionText(card.current.wind_direction_10m)}</SubText>
       <SubText $weight="bold" $opacity={0.9} style={{ color: isExtremeWind ? "#ff4d4d" : "inherit" }}>
-        Пориви: {fmt.wind(card.current.wind_gusts_10m)}
+        {i18n.t("newsWeather.Weather.poryvy2")} {fmt.wind(card.current.wind_gusts_10m)}
       </SubText>
     </TextContent>
   </IndicatorCard>
 
-  <Tooltip content="Точка роси (температура, при якій утворюється роса)" isDarkMode={isDarkMode}>
-    <IndicatorCard aria-label="Точка роси (температура, при якій утворюється роса)">
+  <Tooltip content={i18n.t("newsWeather.Weather.tochkaRosyTemperaturaPry")} isDarkMode={isDarkMode}>
+    <IndicatorCard aria-label={i18n.t("newsWeather.Weather.tochkaRosyTemperaturaPry")}>
       <IconBox $color="#00ffcc"><GiGrassMushroom /></IconBox>
-      <TextContent>Точка роси: {formatTemp(card.current.dew_point_2m)}</TextContent>
+      <TextContent>{i18n.t("newsWeather.Weather.tochkaRosy2")} {formatTemp(card.current.dew_point_2m)}</TextContent>
     </IndicatorCard>
   </Tooltip>
 
-  <IndicatorCard aria-label="Атмосферний тиск" $pad="10px">
+  <IndicatorCard aria-label={i18n.t("newsWeather.Weather.atmosfernyiTysk")} $pad="10px">
     <IconBox $color={parseFloat(card.current.pressure) < 1000 ? "#4da6ff" : parseFloat(card.current.pressure) > 1020 ? "#ff4d4d" : "#ffb36c"}>
       <PressureGauge pressure={card.current.pressure} />
     </IconBox>
-    <TextContent>Атмосферний тиск: {fmt.pressure(card.current.pressure)}</TextContent>
+    <TextContent>{i18n.t("newsWeather.Weather.atmosfernyiTysk2")} {fmt.pressure(card.current.pressure)}</TextContent>
   </IndicatorCard>
 
-  <IndicatorCard aria-label="Хмарність">
+  <IndicatorCard aria-label={i18n.t("newsWeather.Weather.khmarnist")}>
     <IconBox $color="#c3cfdc">
       <CloudWithTrend cloudCover={card.current.cloud_cover} trend={getCloudTrend(card.current.cloud_cover, card.hourly)} />
     </IconBox>
-    <TextContent $size="11px">Хмарність: {card.current.cloud_cover}%</TextContent>
+    <TextContent $size="11px">{i18n.t("newsWeather.Weather.khmarnist4")} {card.current.cloud_cover}%</TextContent>
   </IndicatorCard>
 
-  <IndicatorCard aria-label="Видимість" $pad="0px">
+  <IndicatorCard aria-label={i18n.t("newsWeather.Weather.vydymist")} $pad="0px">
     <IconBox 
       $opacity={Math.min(1, Math.max(0.3, (card.current.visibility || 10000) / 10000))}
       $color={(card.current.visibility || 10000) < 2000 ? "#ff4d4d" : "#9fb3c8"}
     >
       <VisibilityFog />
     </IconBox>
-    <TextContent $size="10px">Видимість: {card.current.visibility !== undefined ? fmt.visibility(card.current.visibility / 1000) : "—"}</TextContent>
+    <TextContent $size="10px">{i18n.t("newsWeather.Weather.vydymist4")} {card.current.visibility !== undefined ? fmt.visibility(card.current.visibility / 1000) : "—"}</TextContent>
   </IndicatorCard>
 
-  <IndicatorCard aria-label="УФ-індекс / Сонячна радіація" $pad="10px">
+  <IndicatorCard aria-label={i18n.t("newsWeather.Weather.ufIndeksSoniachnaRadiatsiia")} $pad="10px">
     <IconBox $color={(card.current.uv_index || 0) > 5 ? "#ff4d4d" : (card.current.uv_index || 0) > 2 ? "#ff9900" : "#ffd700"}>
       <UvSun uv={card.current.uv_index} />
     </IconBox>
-    <TextContent $size="10px">УФ-індекс: {card.current.uv_index ?? 0}</TextContent>
+    <TextContent $size="10px">{i18n.t("newsWeather.Weather.ufIndeks3")} {card.current.uv_index ?? 0}</TextContent>
   </IndicatorCard>
 
-  <Tooltip content="Товщина снігового покриву (см)" isDarkMode={isDarkMode}>
-    <IndicatorCard aria-label="Сніговий покрив">
+  <Tooltip content={i18n.t("newsWeather.Weather.tovshchynaSnihovohoPokryvuSm")} isDarkMode={isDarkMode}>
+    <IndicatorCard aria-label={i18n.t("newsWeather.Weather.snihovyiPokryv")}>
       <IconBox $color={getSnowStyle((card.current.snow_depth || 0) * 100).color} $opacity={getSnowStyle((card.current.snow_depth || 0) * 100).opacity}>
         <FaSnowflake />
       </IconBox>
       <TextContent $size="10px">
-        Сніг: {fmt.snow((card.current.snow_depth || 0) * 100)}
+        {i18n.t("newsWeather.Weather.snih2")} {fmt.snow((card.current.snow_depth || 0) * 100)}
       </TextContent>
     </IndicatorCard>
   </Tooltip>
 
-  <Tooltip content="Температура ґрунту (0 см) та рівень 0°C ізотерми (висота замерзання)" isDarkMode={isDarkMode}>
-    <IndicatorCard aria-label="Замерзання та температура ґрунту">
+  <Tooltip content={i18n.t("newsWeather.Weather.temperaturaGruntu0Sm")} isDarkMode={isDarkMode}>
+    <IndicatorCard aria-label={i18n.t("newsWeather.Weather.zamerzanniaTaTemperaturaGruntu")}>
       <IconBox $color={card.current.soil_temperature_0cm <= 0 ? "#4da6ff" : "#00cdff"}>
         <GiIceCube />
       </IconBox>
       <TextContent $size="10px">
-        Ґрунт: {card.current.soil_temperature_0cm !== undefined ? formatTemp(card.current.soil_temperature_0cm) : "—"}
-        <SubText $size="9px">Рівень 0°C: {card.current.freezing_level_height != null ? fmt.height(card.current.freezing_level_height) : "—"}</SubText>
+        {i18n.t("newsWeather.Weather.grunt2")} {card.current.soil_temperature_0cm !== undefined ? formatTemp(card.current.soil_temperature_0cm) : "—"}
+        <SubText $size="9px">{i18n.t("newsWeather.Weather.riven0C2")} {card.current.freezing_level_height != null ? fmt.height(card.current.freezing_level_height) : "—"}</SubText>
       </TextContent>
     </IndicatorCard>
   </Tooltip>
 
-  <Tooltip content="Випаровування (ET0, мм). Показує швидкість втрати вологи з ґрунту та рослин. Важливо для поливу саду/городу, оцінки висихання білизни та комфорту." isDarkMode={isDarkMode}>
-    <IndicatorCard aria-label="Випаровування">
+  <Tooltip content={i18n.t("newsWeather.Weather.vyparovuvanniaEt0MmPokazuie")} isDarkMode={isDarkMode}>
+    <IndicatorCard aria-label={i18n.t("newsWeather.Weather.vyparovuvannia")}>
       <IconBox $color={card.current.evapotranspiration > 3 ? "#ff9900" : "#00eeff"}>
         <GiWaterRecycling />
       </IconBox>
       <TextContent $size="10px">
-        Випаровування: {fmt.precip(card.current.evapotranspiration ?? 0, 2)}
+        {i18n.t("newsWeather.Weather.vyparovuvannia2")} {fmt.precip(card.current.evapotranspiration ?? 0, 2)}
       </TextContent>
     </IndicatorCard>
   </Tooltip>
@@ -4771,7 +4775,7 @@ const HOLIDAYS_2027 = {
                     $isDarkMode={isDarkMode}
                     value={selectedHourlyDay}
                     onChange={(event) => setSelectedHourlyDay(Number(event.target.value))}
-                    aria-label="День погодинного прогнозу"
+                    aria-label={i18n.t("newsWeather.Weather.denPohodynnohoProhnozu")}
                   >
                     {hourlyDayGroups.map((group, index) => (
                       <option key={group.label} value={index}>
@@ -4796,8 +4800,8 @@ const HOLIDAYS_2027 = {
                         isNarrowScreen
                           ? chartBlockedTitle
                           : hourlyChartAvailable
-                            ? "Графіки"
-                            : "Графік доступний лише на перші 72 год"
+                            ? i18n.t("newsWeather.Weather.hrafiky")
+                            : i18n.t("newsWeather.Weather.hrafikDostupnyiLysheNa")
                       }
                     >
                       <BiLineChart size={18} />
@@ -4806,7 +4810,7 @@ const HOLIDAYS_2027 = {
                       $active={effectiveHourlyViewMode === "blocks"}
                       $isDarkMode={isDarkMode}
                       onClick={() => setHourlyViewMode("blocks")}
-                      title="Блоки"
+                      title={i18n.t("newsWeather.Weather.bloky")}
                     >
                       <BiGridAlt size={18} />
                     </ViewToggleButton>
@@ -4814,7 +4818,7 @@ const HOLIDAYS_2027 = {
                       $active={effectiveHourlyViewMode === "rows"}
                       $isDarkMode={isDarkMode}
                       onClick={() => setHourlyViewMode("rows")}
-                      title="Рядки"
+                      title={i18n.t("newsWeather.Weather.riadky")}
                     >
                       <BiListUl size={18} />
                     </ViewToggleButton>
@@ -4838,7 +4842,7 @@ const HOLIDAYS_2027 = {
                     }}
                   >
                     {renderChartHeader("hourly", hourlyChartPanelRef, [
-                      { key: "day", label: "Температура", color: "#ffb36c", icon: <BsThermometerSun /> },
+                      { key: "day", label: i18n.t("newsWeather.Weather.temperatura"), color: "#ffb36c", icon: <BsThermometerSun /> },
                       { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
                     ], renderWindHint("hourly"))}
                     <div style={{ position: "relative", width: "100%" }}>
@@ -4941,14 +4945,14 @@ const HOLIDAYS_2027 = {
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
                   {/* Вчорашній день — маленький перемикач-іконка (замість великого чекбокса) */}
                   {hasPastDay && (
-                    <Tooltip content={showPastDay ? "Сховати вчорашній день" : "Показати вчорашній день"} isDarkMode={isDarkMode}>
+                    <Tooltip content={showPastDay ? i18n.t("newsWeather.Weather.skhovatyVchorashniiDen") : i18n.t("newsWeather.Weather.pokazatyVchorashniiDen")} isDarkMode={isDarkMode}>
                       <ViewToggleGroup $isDarkMode={isDarkMode}>
                         <ViewToggleButton
                           type="button"
                           $active={showPastDay}
                           $isDarkMode={isDarkMode}
                           aria-pressed={showPastDay}
-                          aria-label="Показати вчорашній день"
+                          aria-label={i18n.t("newsWeather.Weather.pokazatyVchorashniiDen")}
                           onClick={() => setShowPastDay((v) => !v)}
                           style={{ padding: "4px 10px" }}
                         >
@@ -4964,7 +4968,7 @@ const HOLIDAYS_2027 = {
                       onClick={() => !isNarrowScreen && setDailyViewMode("charts")}
                       disabled={isNarrowScreen}
                       style={isNarrowScreen ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
-                      title={isNarrowScreen ? chartBlockedTitle : "Графіки"}
+                      title={isNarrowScreen ? chartBlockedTitle : i18n.t("newsWeather.Weather.hrafiky")}
                     >
                       <BiLineChart size={18} />
                     </ViewToggleButton>
@@ -4972,7 +4976,7 @@ const HOLIDAYS_2027 = {
                       $active={effectiveDailyViewMode === "table"}
                       $isDarkMode={isDarkMode}
                       onClick={() => setDailyViewMode("table")}
-                      title="Таблиця"
+                      title={i18n.t("newsWeather.Weather.tablytsia")}
                     >
                       <BiTable size={18} />
                     </ViewToggleButton>
@@ -4980,7 +4984,7 @@ const HOLIDAYS_2027 = {
                       $active={effectiveDailyViewMode === "blocks"}
                       $isDarkMode={isDarkMode}
                       onClick={() => setDailyViewMode("blocks")}
-                      title="Блоки"
+                      title={i18n.t("newsWeather.Weather.bloky")}
                     >
                       <BiGridAlt size={18} />
                     </ViewToggleButton>
@@ -4988,7 +4992,7 @@ const HOLIDAYS_2027 = {
                       $active={effectiveDailyViewMode === "rows"}
                       $isDarkMode={isDarkMode}
                       onClick={() => setDailyViewMode("rows")}
-                      title="Рядки"
+                      title={i18n.t("newsWeather.Weather.riadky")}
                     >
                       <BiListUl size={18} />
                     </ViewToggleButton>
@@ -5009,8 +5013,8 @@ const HOLIDAYS_2027 = {
                     zIndex: 10,
                   }}>
                     {renderChartLegend([
-                      { key: "day", label: "День", color: "#ffb36c", icon: <FaSun /> },
-                      { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
+                      { key: "day", label: i18n.t("newsWeather.Weather.den4"), color: "#ffb36c", icon: <FaSun /> },
+                      { key: "night", label: i18n.t("newsWeather.Weather.nich4"), color: "#ff1493", icon: <BsMoonStarsFill /> },
                       { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
                     ], dailyHeaderWrapped ? renderTrendButton() : null)}
                     {renderChartHeaderTools("daily", dailyChartPanelRef, renderWindHint("daily"), dailyHeaderWrapped)}
@@ -5029,8 +5033,8 @@ const HOLIDAYS_2027 = {
                     }}
                   >
                     {fullscreenChart === "daily" && renderChartHeader("daily", dailyChartPanelRef, [
-                      { key: "day", label: "День", color: "#ffb36c", icon: <FaSun /> },
-                      { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
+                      { key: "day", label: i18n.t("newsWeather.Weather.den4"), color: "#ffb36c", icon: <FaSun /> },
+                      { key: "night", label: i18n.t("newsWeather.Weather.nich4"), color: "#ff1493", icon: <BsMoonStarsFill /> },
                       { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
                     ], renderWindHint("daily"), dailyFsHeaderRef, dailyFsHeaderWrapped)}
                     <div style={{ position: "relative", width: "100%" }}>
@@ -5109,10 +5113,10 @@ const HOLIDAYS_2027 = {
               <SmartTopBar $isDarkMode={isDarkMode}>
                 <div
                   style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "12px", fontWeight: 700, color: isDarkMode ? "#00eeff" : "#0066aa" }}
-                  title="Аналіз на базі умов, збігів та фізичних параметрів без ШІ та інтернету"
+                  title={i18n.t("newsWeather.Weather.analizNaBaziUmov")}
                 >
                   <BiLineChart style={{ fontSize: "14px" }} />
-                  <span>Системні повідомлення</span>
+                  <span>{i18n.t("newsWeather.Weather.systemniPovidomlennia")}</span>
                 </div>
 
                 <SmartTopActions>
@@ -5150,10 +5154,10 @@ const HOLIDAYS_2027 = {
                         gap: "4px",
                         transition: "all 0.2s",
                       }}
-                      title="Скопіювати текст прогнозу"
+                      title={i18n.t("newsWeather.Weather.skopiiuvatyTekstProhnozu")}
                     >
                       <BiCheck style={{ fontSize: "14px" }} />
-                      <span>{copiedForecast ? "Скопійовано!" : "Скопіювати"}</span>
+                      <span>{copiedForecast ? i18n.t("newsWeather.Weather.skopiiovano") : i18n.t("newsWeather.Weather.skopiiuvaty")}</span>
                     </button>
                     <button
                       className="smart-full-report"
@@ -5170,7 +5174,7 @@ const HOLIDAYS_2027 = {
                         transition: "all 0.2s",
                       }}
                     >
-                      Повний звіт
+                      {i18n.t("newsWeather.Weather.povnyiZvit")}
                     </button>
                   </SmartTopActions>
               </SmartTopBar>
@@ -5193,11 +5197,11 @@ const HOLIDAYS_2027 = {
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "8px" }}>
                         {ruleForecast.allBadges.map((badge, bIdx) => (
                           <RuleBadge key={bIdx} $isDarkMode={isDarkMode}>
-                            {badge.toLowerCase().includes("дощ") && <FaCloudRain style={{ marginRight: "4px" }} />}
-                            {badge.toLowerCase().includes("вітер") && <BiWind style={{ marginRight: "4px" }} />}
-                            {badge.toLowerCase().includes("підйом") && <BiLineChart style={{ marginRight: "4px" }} />}
-                            {badge.toLowerCase().includes("спад") && <BsThermometerSnow style={{ marginRight: "4px" }} />}
-                            {(badge.toLowerCase().includes("контраст") || badge.toLowerCase().includes("ніч")) && (
+                            {badgeHas(badge, "rain") && <FaCloudRain style={{ marginRight: "4px" }} />}
+                            {badgeHas(badge, "wind") && <BiWind style={{ marginRight: "4px" }} />}
+                            {badgeHas(badge, "rise") && <BiLineChart style={{ marginRight: "4px" }} />}
+                            {badgeHas(badge, "drop") && <BsThermometerSnow style={{ marginRight: "4px" }} />}
+                            {badgeHas(badge, "night") && (
                               <BsMoonStarsFill style={{ marginRight: "4px" }} />
                             )}
                             <span>{badge}</span>
@@ -5211,7 +5215,7 @@ const HOLIDAYS_2027 = {
                   <RuleSectionCard $isDarkMode={isDarkMode} $accent="#ffb300">
                     <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("dayNight")}>
                       <BsMoonStarsFill style={{ color: "#facc15", fontSize: "14px" }} />
-                      <span>Добовий контраст (день vs ніч)</span>
+                      <span>{i18n.t("newsWeather.Weather.dobovyiKontrastDenVs")}</span>
                       {renderRuleChevron("dayNight")}
                     </RuleSectionHeader>
                     {isRuleSectionOpen("dayNight") && (
@@ -5225,7 +5229,7 @@ const HOLIDAYS_2027 = {
                   <RuleSectionCard $isDarkMode={isDarkMode} $accent="#00bfff">
                     <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("hourly")}>
                       <BsClockHistory style={{ color: "#00bfff", fontSize: "14px" }} />
-                      <span>Динаміка доби (опади, пік тепла, вітер)</span>
+                      <span>{i18n.t("newsWeather.Weather.dynamikaDobyOpadyPik")}</span>
                       {renderRuleChevron("hourly")}
                     </RuleSectionHeader>
                     {isRuleSectionOpen("hourly") && (
@@ -5250,7 +5254,7 @@ const HOLIDAYS_2027 = {
                   <RuleSectionCard $isDarkMode={isDarkMode} $accent="#a855f7">
                     <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("weekly")}>
                       <BiLineChart style={{ color: "#a855f7", fontSize: "14px" }} />
-                      <span>Тижневий тренд та динаміка</span>
+                      <span>{i18n.t("newsWeather.Weather.tyzhnevyiTrendTaDynamika")}</span>
                       {renderRuleChevron("weekly")}
                     </RuleSectionHeader>
                     {isRuleSectionOpen("weekly") && (
@@ -5268,7 +5272,7 @@ const HOLIDAYS_2027 = {
                     <RuleSectionCard $isDarkMode={isDarkMode} $accent="#10b981">
                       <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("advice")}>
                         <FaLightbulb style={{ color: "#10b981", fontSize: "14px" }} />
-                        <span>Поради та гардероб</span>
+                        <span>{i18n.t("newsWeather.Weather.poradyTaHarderob")}</span>
                         {renderRuleChevron("advice")}
                       </RuleSectionHeader>
                       {isRuleSectionOpen("advice") && (
@@ -5353,7 +5357,7 @@ const HOLIDAYS_2027 = {
                     <RuleSectionCard $isDarkMode={isDarkMode} $accent="#ec4899">
                       <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("atmosphere")}>
                         <FaGaugeHigh style={{ color: "#ec4899", fontSize: "14px" }} />
-                        <span>Атмосферний тиск та фактори</span>
+                        <span>{i18n.t("newsWeather.Weather.atmosfernyiTyskTaFaktory")}</span>
                         {renderRuleChevron("atmosphere")}
                       </RuleSectionHeader>
                       {isRuleSectionOpen("atmosphere") && (
@@ -5406,8 +5410,8 @@ const HOLIDAYS_2027 = {
                   <WeatherIcon isDarkMode={isDarkMode} item={card.current} />
                 </div>
                 <div style={SIDE_CARD_TEXT_STYLE}>
-                  <NameCardItem $active={activeTab === "current"}>Зараз: {formatTemp(card.current?.temp)}</NameCardItem>
-                  <SubNameCardItem $active={activeTab === "current"}>Відчувається: {formatTemp(card.current?.feels_like)}</SubNameCardItem>
+                  <NameCardItem $active={activeTab === "current"}>{i18n.t("newsWeather.Weather.zaraz2")} {formatTemp(card.current?.temp)}</NameCardItem>
+                  <SubNameCardItem $active={activeTab === "current"}>{i18n.t("newsWeather.Weather.vidchuvaietsia")} {formatTemp(card.current?.feels_like)}</SubNameCardItem>
                 </div>
               </div>
             </SideCardItem>
@@ -5419,8 +5423,8 @@ const HOLIDAYS_2027 = {
               <div style={SIDE_CARD_INNER_STYLE}>
                 <div style={{ ...SIDE_CARD_ICON_STYLE, color: "#ffb36c" }}><BiLineChart /></div>
                 <div style={SIDE_CARD_TEXT_STYLE}>
-                  <NameCardItem $active={activeTab === "hourly"}>Годинна(72г)</NameCardItem>
-                  <SubNameCardItem $active={activeTab === "hourly"}>Детально 72г, далі до 7 днів</SubNameCardItem>
+                  <NameCardItem $active={activeTab === "hourly"}>{i18n.t("newsWeather.Weather.hodynna72h")}</NameCardItem>
+                  <SubNameCardItem $active={activeTab === "hourly"}>{i18n.t("newsWeather.Weather.detalno72hDaliDo")}</SubNameCardItem>
                 </div>
               </div>
             </SideCardItem>
@@ -5433,8 +5437,8 @@ const HOLIDAYS_2027 = {
               <div style={SIDE_CARD_INNER_STYLE}>
                 <div style={{ ...SIDE_CARD_ICON_STYLE, color: "#ff1493" }}><FaCalendarPlus /></div>
                 <div style={SIDE_CARD_TEXT_STYLE}>
-                  <NameCardItem $active={activeTab === "daily"}>Прогноз на 16 днів</NameCardItem>
-                  <SubNameCardItem $active={activeTab === "daily"}>Бундючий графік</SubNameCardItem>
+                  <NameCardItem $active={activeTab === "daily"}>{i18n.t("newsWeather.Weather.prohnozNa16Dniv2")}</NameCardItem>
+                  <SubNameCardItem $active={activeTab === "daily"}>{i18n.t("newsWeather.Weather.bundiuchyiHrafik")}</SubNameCardItem>
                 </div>
               </div>
             </SideCardItem>
@@ -5450,10 +5454,10 @@ const HOLIDAYS_2027 = {
                 </div>
                 <div style={SIDE_CARD_TEXT_STYLE}>
                   <NameCardItem $active={activeTab === "ai"}>
-                    Смарт-прогноз
+                    {i18n.t("newsWeather.Weather.smartProhnoz")}
                   </NameCardItem>
                   <SubNameCardItem $active={activeTab === "ai"}>
-                    Експертні правила
+                    {i18n.t("newsWeather.Weather.ekspertniPravyla")}
                   </SubNameCardItem>
                 </div>
               </div>
@@ -5463,7 +5467,7 @@ const HOLIDAYS_2027 = {
             <SideCardItem
               $active={isDropdownOpen && !isDropdownClosing}
               role="button"
-              aria-label="Налаштування картки"
+              aria-label={i18n.t("newsWeather.Weather.nalashtuvanniaKartky")}
               onClick={() => {
                 if (isDropdownOpen) handleCloseDropdown();
                 else setIsDropdownOpen(true);
@@ -5475,15 +5479,15 @@ const HOLIDAYS_2027 = {
                   {
                     Icon: MdStraighten,
                     color: "#ffb36c",
-                    text: `Одиниці: ${tempLabel(units.temp)} · ${windLabel(units.wind)}`,
+                    text: i18n.t("newsWeather.Weather.odynytsi", { v0: tempLabel(units.temp), v1: windLabel(units.wind) }),
                   },
-                  { Icon: BiImageAlt, color: "#7dd3fc", text: "Змінити фон" },
-                  { Icon: FaCalendarPlus, color: "#ff1493", text: "Свої дати й свята" },
-                  { Icon: BiEdit, color: "#a3e635", text: "Змінити назву" },
+                  { Icon: BiImageAlt, color: "#7dd3fc", text: i18n.t("newsWeather.Weather.zminytyFon") },
+                  { Icon: FaCalendarPlus, color: "#ff1493", text: i18n.t("newsWeather.Weather.svoiDatyISviata") },
+                  { Icon: BiEdit, color: "#a3e635", text: i18n.t("newsWeather.Weather.zminytyNazvu") },
                   {
                     Icon: cardAlertsOn ? MdNotificationsActive : MdNotificationsOff,
                     color: "#facc15",
-                    text: `Сповіщення: ${cardAlertsOn ? "увімк." : "вимк."}`,
+                    text: i18n.t("newsWeather.Weather.spovishchennia", { v0: cardAlertsOn ? i18n.t("newsWeather.Weather.uvimk") : i18n.t("newsWeather.Weather.vymk") }),
                   },
                 ]}
               />
@@ -5495,7 +5499,7 @@ const HOLIDAYS_2027 = {
                 $active={!isCitySidebarHidden}
                 role="button"
                 aria-pressed={!isCitySidebarHidden}
-                aria-label={isCitySidebarHidden ? "Показати панель міст" : "Сховати панель міст"}
+                aria-label={isCitySidebarHidden ? i18n.t("newsWeather.Weather.pokazatyPanelMist") : i18n.t("newsWeather.Weather.skhovatyPanelMist")}
                 onClick={() =>
                   setPref(CITY_SIDEBAR_HIDDEN_KEY, isCitySidebarHidden ? "false" : "true")
                 }
@@ -5506,10 +5510,10 @@ const HOLIDAYS_2027 = {
                   </div>
                   <div style={SIDE_CARD_TEXT_STYLE}>
                     <NameCardItem $active={!isCitySidebarHidden}>
-                      {isCitySidebarHidden ? "Показати панель" : "Сховати панель"}
+                      {isCitySidebarHidden ? i18n.t("newsWeather.Weather.pokazatyPanel") : i18n.t("newsWeather.Weather.skhovatyPanel")}
                     </NameCardItem>
                     <SubNameCardItem $active={!isCitySidebarHidden}>
-                      Список міст зліва
+                      {i18n.t("newsWeather.Weather.spysokMistZliva")}
                     </SubNameCardItem>
                   </div>
                 </div>
@@ -5550,19 +5554,19 @@ const HOLIDAYS_2027 = {
 
       {styleModalChart && (
         <ChartStyleModal
-          title={styleModalChart === "hourly" ? "Стиль ліній: погодинний графік" : "Стиль ліній: графік на 16 днів"}
+          title={styleModalChart === "hourly" ? i18n.t("newsWeather.Weather.stylLiniiPohodynnyiHrafik") : i18n.t("newsWeather.Weather.stylLiniiHrafikNa")}
           lines={
             styleModalChart === "hourly"
               ? [
-                  { key: "temp", label: "Температура", color: "#ffb36c", icon: <BsThermometerSun /> },
+                  { key: "temp", label: i18n.t("newsWeather.Weather.temperatura"), color: "#ffb36c", icon: <BsThermometerSun /> },
                   { key: "right", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon, autoFill: rightMetric === "precip", wind: rightMetric === "wind" },
                 ]
               : [
-                  { key: "day", label: "День", color: "#ffb36c", icon: <FaSun /> },
-                  { key: "night", label: "Ніч", color: "#ff1493", icon: <BsMoonStarsFill /> },
+                  { key: "day", label: i18n.t("newsWeather.Weather.den4"), color: "#ffb36c", icon: <FaSun /> },
+                  { key: "night", label: i18n.t("newsWeather.Weather.nich4"), color: "#ff1493", icon: <BsMoonStarsFill /> },
                   { key: "right", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon, wind: rightMetric === "wind" },
-                  { key: "trendDay", label: "Тренд дня", color: "#ffb36c", icon: <BiTrendingUp />, trend: true },
-                  { key: "trendNight", label: "Тренд ночі", color: "#ff1493", icon: <BiTrendingUp />, trend: true },
+                  { key: "trendDay", label: i18n.t("newsWeather.Weather.trendDnia"), color: "#ffb36c", icon: <BiTrendingUp />, trend: true },
+                  { key: "trendNight", label: i18n.t("newsWeather.Weather.trendNochi"), color: "#ff1493", icon: <BiTrendingUp />, trend: true },
                 ]
           }
           styles={lineStyles[styleModalChart]}

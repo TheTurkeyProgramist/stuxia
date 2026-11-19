@@ -11,6 +11,7 @@ import { MUTE_COUNTER_KEY, MUTE_SYNC_DAILY_LIMIT, countForToday, getTodayKey } f
 import { applyNewsFilterPrefs, getNewsFilterPrefs } from "./contentFilter";
 import { getPref, removePref, setPref } from "./prefsStore.js";
 
+import i18n from "../i18n/i18n.js";
 const PENDING_KEY = "news_filter_sync_pending";
 const DEBOUNCE_MS = 2500;
 
@@ -53,7 +54,7 @@ export const pushNewsFilterToCloud = async (uid) => {
     setPending(!result.ok);
     if (!result.ok) {
       toast(
-        `Ліміт синхронізації вичерпано (${MUTE_SYNC_DAILY_LIMIT}/${MUTE_SYNC_DAILY_LIMIT} за добу). Налаштування фільтра збережено лише на цьому пристрої.`,
+        i18n.t("newsWeather.newsFilterSync.limitSynkhronizatsiiVycherpanoZa", { MUTE_SYNC_DAILY_LIMIT: MUTE_SYNC_DAILY_LIMIT, MUTE_SYNC_DAILY_LIMIT2: MUTE_SYNC_DAILY_LIMIT }),
         { id: "news-filter-sync-limit", duration: 4500 },
       );
     }

@@ -1,3 +1,4 @@
+import i18n from "../../i18n/i18n.js";
 // Ліміти власних фонів (завантажені з пристрою та додані з Wikimedia Commons)
 
 export const MAX_CUSTOM_BGS = 30;
@@ -5,11 +6,11 @@ export const MAX_IMAGE_BYTES = 200 * 1024; // картинку стискаєм�
 export const MAX_VIDEO_BYTES = 20 * 1024 * 1024;
 export const MAX_VIDEO_SECONDS = 2 * 60;
 
-export const CUSTOM_BG_LIMITS_TEXT =
-  `до ${MAX_CUSTOM_BGS} фонів · картинки стискаються до 200 КБ · відео до 20 МБ і 2 хв`;
+export const customBgLimitsText = () =>
+  i18n.t("ui.customBgLimits.limitsText", { max: MAX_CUSTOM_BGS });
 
 export const customBgLimitMessage = () =>
-  `Можна мати не більше ${MAX_CUSTOM_BGS} власних фонів. Видаліть якийсь у «Бібліотеці», щоб додати новий.`;
+  i18n.t("ui.customBgLimits.mozhnaMatyNeBilshe", { MAX_CUSTOM_BGS: MAX_CUSTOM_BGS });
 
 const loadImage = (blob) =>
   new Promise((resolve, reject) => {

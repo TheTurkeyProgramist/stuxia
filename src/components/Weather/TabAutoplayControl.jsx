@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { TAB_AUTOPLAY_STEPS, formatTabAutoplay } from "../../utils/betaFeatures";
 
+import i18n from "../../i18n/i18n.js";
 /* Мінімалістичний перемикач + шкала частоти автоперемикання вкладок картки погоди.
    Спільний для меню картки (⚙) і загальних налаштувань.
    title — якщо задано, стоїть в одному рядку з перемикачем. */
@@ -137,8 +138,8 @@ const TabAutoplayControl = ({ value, onChange, accent = "#00eeff", title = null 
           type="button"
           role="switch"
           aria-checked={value.on}
-          aria-label={`Автоперемикання вкладок: ${value.on ? "увімкнено" : "вимкнено"}`}
-          title={value.on ? "Вимкнути" : "Увімкнути"}
+          aria-label={i18n.t("newsWeather.TabAutoplayControl.avtoperemykanniaVkladok", { v0: value.on ? i18n.t("newsWeather.TabAutoplayControl.stateOn") : i18n.t("newsWeather.TabAutoplayControl.stateOff") })}
+          title={value.on ? i18n.t("newsWeather.TabAutoplayControl.vymknuty") : i18n.t("newsWeather.TabAutoplayControl.uvimknuty")}
           $on={value.on}
           $accent={accent}
           onClick={() => onChange({ ...value, on: !value.on })}
@@ -154,9 +155,9 @@ const TabAutoplayControl = ({ value, onChange, accent = "#00eeff", title = null 
             value={stepIndex}
             style={{ "--fill": fill }}
             $accent={accent}
-            aria-label="Частота автоперемикання (від 10 с до 5 хв)"
+            aria-label={i18n.t("newsWeather.TabAutoplayControl.chastotaAvtoperemykanniaVid10")}
             aria-valuetext={formatTabAutoplay(value.seconds)}
-            title="Від 10 с до 5 хв"
+            title={i18n.t("newsWeather.TabAutoplayControl.vid10SDo")}
             onChange={(e) => onChange({ ...value, seconds: TAB_AUTOPLAY_STEPS[Number(e.target.value)] })}
           />
           <Value>{formatTabAutoplay(value.seconds)}</Value>

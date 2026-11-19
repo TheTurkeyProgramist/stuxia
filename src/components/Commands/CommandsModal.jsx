@@ -5,9 +5,10 @@ import { MdClose, MdKeyboardArrowUp, MdKeyboardArrowDown, MdKeyboardReturn, MdMi
 import { getPref, setPref } from "../../utils/prefsStore.js";
 import { getCommandHost } from "./commandHost.js";
 import { getSuggestions, runCommand, tokenize, findCommand } from "./commands.js";
-import { voiceToCommand, VOICE_EXAMPLES } from "./voiceCommands.js";
+import { voiceToCommand, getVoiceExamples } from "./voiceCommands.js";
 import { useVoiceInput } from "../AiShared/useVoiceInput.js";
 
+import i18n from "../../i18n/i18n.js";
 // Розпізнавання мови є не всюди (Firefox, Android WebView) — тоді кнопки мікрофона немає
 const VOICE_SUPPORTED =
   typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -39,9 +40,9 @@ const writeHistory = (list) => {
 
 // Журнал живе між відкриттями консолі (до перезавантаження сторінки)
 let sessionLog = [
-  { text: "Введіть /help, щоб побачити команди. ↑/↓ — вибрати підказку, Enter або Tab — підставити. Історія — кнопки ↑/↓ біля поля або Esc, потім стрілки.", kind: "info" },
+  { get text() { return i18n.t("ui.CommandsModal.vveditHelpShchobPobachyty"); }, kind: "info" },
   ...(VOICE_SUPPORTED
-    ? [{ text: "🎤 Або натисніть мікрофон і скажіть: «увімкни музику», «додай погоду у Львові», «відкрий магазин».", kind: "info" }]
+    ? [{ get text() { return i18n.t("ui.CommandsModal.aboNatysnitMikrofonI"); }, kind: "info" }]
     : []),
 ];
 const sessionCtx = {};
@@ -531,7 +532,7 @@ const CommandsModal = ({ isDarkMode, onClose }) => {
       else {
         append([
           {
-            text: `Не зрозумів команду. Спробуйте: ${VOICE_EXAMPLES.map((e) => `«${e}»`).join(", ")}`,
+            text: i18n.t("ui.CommandsModal.neZrozumivKomanduSprobuite", { v0: getVoiceExamples().map((e) => `«${e}»`).join(", ") }),
             kind: "error",
           },
         ]);
@@ -563,13 +564,13 @@ const CommandsModal = ({ isDarkMode, onClose }) => {
         $dark={isDarkMode}
         role="dialog"
         aria-modal="true"
-        aria-label="Консоль команд"
+        aria-label={i18n.t("ui.CommandsModal.konsolKomand")}
         ref={panelRef}
         onKeyDown={handlePanelKeyDown}
       >
         <Head>
-          <span>/ Команди</span>
-          <CloseBtn type="button" onClick={onClose} aria-label="Закрити консоль" title="Закрити (Esc)">
+          <span>{i18n.t("ui.CommandsModal.komandy")}</span>
+          <CloseBtn type="button" onClick={onClose} aria-label={i18n.t("ui.CommandsModal.zakrytyKonsol")} title={i18n.t("ui.CommandsModal.zakrytyEsc")}>
             <MdClose aria-hidden="true" />
           </CloseBtn>
         </Head>
@@ -602,8 +603,8 @@ const CommandsModal = ({ isDarkMode, onClose }) => {
               aria-controls="commands-suggestions"
             >
               <span>
-                Підказки · {suggestions.length}
-                {collapsed ? " (Tab — доповнити)" : ""}
+                {i18n.t("ui.CommandsModal.pidkazky")} {suggestions.length}
+                {collapsed ? " " + i18n.t("ui.CommandsModal.tabDopovnyty") : ""}
               </span>
               <Chevron $open={!collapsed} aria-hidden="true">
                 ▾
@@ -611,7 +612,7 @@ const CommandsModal = ({ isDarkMode, onClose }) => {
             </SuggestToggle>
           )}
           {suggestions.length > 0 && !collapsed && (
-            <Suggestions role="listbox" id="commands-suggestions" aria-label="Підказки">
+            <Suggestions role="listbox" id="commands-suggestions" aria-label={i18n.t("ui.CommandsModal.pidkazky2")}>
               {suggestions.map((s, i) => (
                 <Suggestion
                   key={s.text}
@@ -643,7 +644,7 @@ const CommandsModal = ({ isDarkMode, onClose }) => {
               value={value}
               onChange={(e) => edit(e.target.value)}
               onKeyDown={onKeyDown}
-              aria-label="Команда"
+              aria-label={i18n.t("ui.CommandsModal.komanda")}
               aria-autocomplete="list"
               aria-controls={suggestions.length && !collapsed ? "commands-suggestions" : undefined}
               aria-activedescendant={
@@ -654,7 +655,7 @@ const CommandsModal = ({ isDarkMode, onClose }) => {
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="send"
-              placeholder={isListening ? "Слухаю… скажіть, наприклад, «увімкни музику»" : "/help"}
+              placeholder={isListening ? i18n.t("ui.CommandsModal.slukhaiuSkazhitNaprykladUvimkny") : "/help"}
             />
             {VOICE_SUPPORTED && (
               <MicBtn
@@ -663,8 +664,8 @@ const CommandsModal = ({ isDarkMode, onClose }) => {
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={toggleVoice}
                 aria-pressed={isListening}
-                aria-label={isListening ? "Зупинити запис" : "Сказати команду голосом"}
-                title={isListening ? "Слухаю… (натисніть, щоб зупинити)" : "Сказати команду голосом"}
+                aria-label={isListening ? i18n.t("ui.CommandsModal.zupynytyZapys") : i18n.t("ui.CommandsModal.skazatyKomanduHolosom")}
+                title={isListening ? i18n.t("ui.CommandsModal.slukhaiuNatysnitShchobZupynyty") : i18n.t("ui.CommandsModal.skazatyKomanduHolosom")}
               >
                 {isListening ? <MdMic aria-hidden="true" /> : <MdMicNone aria-hidden="true" />}
               </MicBtn>
@@ -674,8 +675,8 @@ const CommandsModal = ({ isDarkMode, onClose }) => {
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => stepHistory(true)}
               disabled={!history.length || historyIndex === 0}
-              aria-label="Попередня команда (↑)"
-              title="Попередня команда (↑)"
+              aria-label={i18n.t("ui.CommandsModal.poperedniaKomanda")}
+              title={i18n.t("ui.CommandsModal.poperedniaKomanda")}
             >
               <MdKeyboardArrowUp aria-hidden="true" />
             </KeyBtn>
@@ -684,16 +685,16 @@ const CommandsModal = ({ isDarkMode, onClose }) => {
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => stepHistory(false)}
               disabled={historyIndex === -1}
-              aria-label="Наступна команда (↓)"
-              title="Наступна команда (↓)"
+              aria-label={i18n.t("ui.CommandsModal.nastupnaKomanda")}
+              title={i18n.t("ui.CommandsModal.nastupnaKomanda")}
             >
               <MdKeyboardArrowDown aria-hidden="true" />
             </KeyBtn>
             <RunBtn
               type="submit"
               disabled={busy || !tokenize(value).length}
-              aria-label="Виконати (Enter)"
-              title="Виконати (Enter)"
+              aria-label={i18n.t("ui.CommandsModal.vykonatyEnter")}
+              title={i18n.t("ui.CommandsModal.vykonatyEnter")}
             >
               <MdKeyboardReturn aria-hidden="true" />
               <span>Enter</span>

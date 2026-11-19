@@ -3,6 +3,7 @@ import styled, { keyframes } from "styled-components";
 import { FiX, FiCheck, FiMinus, FiChevronDown } from "react-icons/fi";
 import { useAnimationsDisabled } from "../../utils/animationsPref.js";
 
+import i18n from "../../i18n/i18n.js";
 // Модалка «Чому треба обрати нас?» — чесне порівняння Стихії з іншими сервісами
 
 const pop = keyframes`
@@ -232,9 +233,9 @@ const CardRow = styled.div`
 `;
 
 const COLUMNS = [
-  { key: "us", label: "Стихія" },
-  { key: "weather", label: "Погодні сайти" },
-  { key: "news", label: "Новинні агрегатори" },
+  { key: "us", get label() { return i18n.t("modals.WhyUsModal.stykhiia"); } },
+  { key: "weather", get label() { return i18n.t("modals.WhyUsModal.pohodniSaity"); } },
+  { key: "news", get label() { return i18n.t("modals.WhyUsModal.novynniAhrehatory"); } },
 ];
 
 // Плавне згортання/розгортання порівняння
@@ -340,178 +341,178 @@ const TOP_ROWS = 8;
 
 const ROWS = [
   {
-    feature: "Реклама",
-    us: ["yes", "Немає взагалі"],
-    weather: ["no", "Зазвичай є банери або відео"],
-    news: ["no", "Зазвичай є, часто багато"],
+    get feature() { return i18n.t("modals.WhyUsModal.reklama"); },
+    get us() { return ["yes", i18n.t("modals.WhyUsModal.nemaieVzahali")]; },
+    get weather() { return ["no", i18n.t("modals.WhyUsModal.zazvychaiIeBaneryAbo")]; },
+    get news() { return ["no", i18n.t("modals.WhyUsModal.zazvychaiIeChastoBahato")]; },
   },
   {
-    feature: "Кілька карток погоди одночасно безкоштовно",
-    us: ["yes", "Так, без підписки"],
-    weather: ["part", "Зазвичай одне місто, більше — платно"],
+    get feature() { return i18n.t("modals.WhyUsModal.kilkaKartokPohodyOdnochasno"); },
+    get us() { return ["yes", i18n.t("modals.WhyUsModal.takBezPidpysky")]; },
+    get weather() { return ["part", i18n.t("modals.WhyUsModal.zazvychaiOdneMistoBilshe")]; },
     news: ["no", "—"],
   },
   {
-    feature: "Фільтр токсичного контенту в новинах",
-    us: ["yes", "Так, з віковими рівнями"],
+    get feature() { return i18n.t("modals.WhyUsModal.filtrToksychnohoKontentuV"); },
+    get us() { return ["yes", i18n.t("modals.WhyUsModal.takZVikovymyRivniamy")]; },
     weather: ["no", "—"],
-    news: ["part", "Рідко налаштовується"],
+    get news() { return ["part", i18n.t("modals.WhyUsModal.ridkoNalashtovuietsia")]; },
   },
   {
-    feature: "Працює без інтернету",
-    us: ["yes", "Так, показує останній прогноз"],
-    weather: ["part", "У деяких, так"],
-    news: ["part", "У деяких, так"],
+    get feature() { return i18n.t("modals.WhyUsModal.pratsiuieBezInternetu"); },
+    get us() { return ["yes", i18n.t("modals.WhyUsModal.takPokazuieOstanniiProhnoz")]; },
+    get weather() { return ["part", i18n.t("modals.WhyUsModal.uDeiakykhTak")]; },
+    get news() { return ["part", i18n.t("modals.WhyUsModal.uDeiakykhTak")]; },
   },
   {
-    feature: "Кілька кліматичних карт",
-    us: ["yes", "Windy, Ventusky, тривоги, DeepState, авіарадар, свої фрейми"],
-    weather: ["part", "Одна власна карта"],
+    get feature() { return i18n.t("modals.WhyUsModal.kilkaKlimatychnykhKart"); },
+    get us() { return ["yes", i18n.t("modals.WhyUsModal.windyVentuskyTryvohyDeepstate")]; },
+    get weather() { return ["part", i18n.t("modals.WhyUsModal.odnaVlasnaKarta")]; },
     news: ["no", "—"],
   },
   {
-    feature: "Платні підписки",
-    us: ["yes", "Немає — усе безкоштовно"],
-    weather: ["part", "Часто «Преміум» без реклами"],
-    news: ["part", "Буває платний доступ до статей"],
+    get feature() { return i18n.t("modals.WhyUsModal.platniPidpysky"); },
+    get us() { return ["yes", i18n.t("modals.WhyUsModal.nemaieUseBezkoshtovno")]; },
+    get weather() { return ["part", i18n.t("modals.WhyUsModal.chastoPremiumBezReklamy")]; },
+    get news() { return ["part", i18n.t("modals.WhyUsModal.buvaiePlatnyiDostupDo")]; },
   },
   {
-    feature: "Відкритий код",
-    us: ["yes", "Так, AGPL-3.0 на GitHub"],
-    weather: ["no", "Рідко"],
-    news: ["no", "Рідко"],
+    get feature() { return i18n.t("modals.WhyUsModal.vidkrytyiKod"); },
+    get us() { return ["yes", i18n.t("modals.WhyUsModal.takAgpl30")]; },
+    get weather() { return ["no", i18n.t("modals.WhyUsModal.ridko")]; },
+    get news() { return ["no", i18n.t("modals.WhyUsModal.ridko")]; },
   },
   {
-    feature: "Застосунок для iPhone з App Store",
-    us: ["no", "Поки немає (у планах), є «На екран Додому»"],
-    weather: ["yes", "Зазвичай є"],
-    news: ["yes", "Зазвичай є"],
+    get feature() { return i18n.t("modals.WhyUsModal.zastosunokDliaIphoneZ"); },
+    get us() { return ["no", i18n.t("modals.WhyUsModal.pokyNemaieUPlanakh")]; },
+    get weather() { return ["yes", i18n.t("modals.WhyUsModal.zazvychaiIe")]; },
+    get news() { return ["yes", i18n.t("modals.WhyUsModal.zazvychaiIe")]; },
   },
   // ——— далі — під кнопкою «Показати все порівняння» ———
   {
-    feature: "Власні джерела новин (RSS, YouTube, Telegram, Mastodon…)",
-    us: ["yes", "До 10 своїх джерел"],
+    get feature() { return i18n.t("modals.WhyUsModal.vlasniDzherelaNovynRss"); },
+    get us() { return ["yes", i18n.t("modals.WhyUsModal.do10SvoikhDzherel")]; },
     weather: ["no", "—"],
-    news: ["part", "Залежить від сервісу"],
+    get news() { return ["part", i18n.t("modals.WhyUsModal.zalezhytVidServisu")]; },
   },
   {
-    feature: "Термінові новини та push-сповіщення",
+    get feature() { return i18n.t("modals.WhyUsModal.terminoviNovynyTaPush"); },
     // Коли запрацює push (ключ Turnstile + деплой функцій) — змінити на
     // ["yes", "Позначка «Терміново» і push навіть із закритим сайтом (iPhone — з екрана «Додому»)"]
-    us: ["part", "Позначка «Терміново» і сповіщення, поки Стихія відкрита"],
-    weather: ["part", "Попередження про погоду, зазвичай у застосунку"],
-    news: ["yes", "Push навіть із закритим застосунком"],
+    get us() { return ["part", i18n.t("modals.WhyUsModal.poznachkaTerminovoISpovishchennia")]; },
+    get weather() { return ["part", i18n.t("modals.WhyUsModal.poperedzhenniaProPohoduZazvychai")]; },
+    get news() { return ["yes", i18n.t("modals.WhyUsModal.pushNavitIzZakrytym")]; },
   },
   {
-    feature: "Персональні рекомендації",
-    us: ["yes", "Обрані теми + ваші кліки, дані лише на пристрої"],
+    get feature() { return i18n.t("modals.WhyUsModal.personalniRekomendatsii"); },
+    get us() { return ["yes", i18n.t("modals.WhyUsModal.obraniTemyVashiKliky")]; },
     weather: ["no", "—"],
-    news: ["yes", "Так, але профіль зберігається на серверах сервісу"],
+    get news() { return ["yes", i18n.t("modals.WhyUsModal.takAleProfilZberihaietsia")]; },
   },
   {
-    feature: "Попередження про небезпечну погоду",
-    us: ["part", "Мітки біля міст за власними порогами прогнозу, не офіційні попередження синоптиків"],
-    weather: ["yes", "Так"],
+    get feature() { return i18n.t("modals.WhyUsModal.poperedzhenniaProNebezpechnuPohodu"); },
+    get us() { return ["part", i18n.t("modals.WhyUsModal.mitkyBiliaMistZa")]; },
+    get weather() { return ["yes", i18n.t("modals.WhyUsModal.tak")]; },
     news: ["no", "—"],
   },
   {
-    feature: "ШІ-помічник",
-    us: ["part", "Так, але потрібен свій ключ Gemini"],
-    weather: ["no", "Рідко"],
-    news: ["part", "Іноді, часто платно"],
+    get feature() { return i18n.t("modals.WhyUsModal.shiPomichnyk"); },
+    get us() { return ["part", i18n.t("modals.WhyUsModal.takAlePotribenSvii")]; },
+    get weather() { return ["no", i18n.t("modals.WhyUsModal.ridko")]; },
+    get news() { return ["part", i18n.t("modals.WhyUsModal.inodiChastoPlatno")]; },
   },
   {
-    feature: "Персоналізація вигляду (теми, фони, порядок секцій)",
-    us: ["yes", "Дуже гнучка"],
-    weather: ["part", "Мінімальна"],
-    news: ["part", "Мінімальна"],
+    get feature() { return i18n.t("modals.WhyUsModal.personalizatsiiaVyhliaduTemyFony"); },
+    get us() { return ["yes", i18n.t("modals.WhyUsModal.duzheHnuchka")]; },
+    get weather() { return ["part", i18n.t("modals.WhyUsModal.minimalna")]; },
+    get news() { return ["part", i18n.t("modals.WhyUsModal.minimalna")]; },
   },
   {
-    feature: "Синхронізація між пристроями",
-    us: ["part", "Так, з акаунтом, але є денні ліміти"],
-    weather: ["part", "Зазвичай лише в застосунку з акаунтом"],
-    news: ["part", "Залежить від сервісу"],
+    get feature() { return i18n.t("modals.WhyUsModal.synkhronizatsiiaMizhPrystroiamy"); },
+    get us() { return ["part", i18n.t("modals.WhyUsModal.takZAkauntomAle")]; },
+    get weather() { return ["part", i18n.t("modals.WhyUsModal.zazvychaiLysheVZastosunku")]; },
+    get news() { return ["part", i18n.t("modals.WhyUsModal.zalezhytVidServisu")]; },
   },
   {
-    feature: "Вбудований музичний плеєр",
-    us: ["part", "Так, але це підбірка автора, а не повний каталог"],
+    get feature() { return i18n.t("modals.WhyUsModal.vbudovanyiMuzychnyiPleier"); },
+    get us() { return ["part", i18n.t("modals.WhyUsModal.takAleTsePidbirka")]; },
     weather: ["no", "—"],
     news: ["no", "—"],
   },
   {
-    feature: "Мови інтерфейсу",
-    us: ["part", "25+ мов основного інтерфейсу; довідка й більшість налаштувань — лише українською"],
-    weather: ["part", "Зазвичай кілька"],
-    news: ["part", "Часто одна-дві"],
+    get feature() { return i18n.t("modals.WhyUsModal.movyInterfeisu"); },
+    get us() { return ["part", i18n.t("modals.WhyUsModal.25MovOsnovnohoInterfeisu")]; },
+    get weather() { return ["part", i18n.t("modals.WhyUsModal.zazvychaiKilka")]; },
+    get news() { return ["part", i18n.t("modals.WhyUsModal.chastoOdnaDvi")]; },
   },
   {
-    feature: "Застосунки для Windows, Linux та Android",
-    us: ["yes", "Так, усі три"],
-    weather: ["part", "Зазвичай лише мобільні"],
-    news: ["part", "Зазвичай лише мобільні"],
+    get feature() { return i18n.t("modals.WhyUsModal.zastosunkyDliaWindowsLinux"); },
+    get us() { return ["yes", i18n.t("modals.WhyUsModal.takUsiTry")]; },
+    get weather() { return ["part", i18n.t("modals.WhyUsModal.zazvychaiLysheMobilni")]; },
+    get news() { return ["part", i18n.t("modals.WhyUsModal.zazvychaiLysheMobilni")]; },
   },
   {
-    feature: "Віджети на екрані телефона",
-    us: ["no", "Немає"],
-    weather: ["yes", "Зазвичай є"],
-    news: ["part", "У деяких"],
+    get feature() { return i18n.t("modals.WhyUsModal.vidzhetyNaEkraniTelefona"); },
+    get us() { return ["no", i18n.t("modals.WhyUsModal.nemaie")]; },
+    get weather() { return ["yes", i18n.t("modals.WhyUsModal.zazvychaiIe")]; },
+    get news() { return ["part", i18n.t("modals.WhyUsModal.uDeiakykh")]; },
   },
   {
-    feature: "Простота для новачків",
-    us: ["part", "Багато налаштувань, треба час, щоб розібратися"],
-    weather: ["yes", "Зазвичай прості"],
-    news: ["yes", "Зазвичай прості"],
+    get feature() { return i18n.t("modals.WhyUsModal.prostotaDliaNovachkiv"); },
+    get us() { return ["part", i18n.t("modals.WhyUsModal.bahatoNalashtuvanTrebaChas")]; },
+    get weather() { return ["yes", i18n.t("modals.WhyUsModal.zazvychaiProsti")]; },
+    get news() { return ["yes", i18n.t("modals.WhyUsModal.zazvychaiProsti")]; },
   },
   {
-    feature: "Власна метеомодель / команда синоптиків",
-    us: ["no", "Ні, дані з Open-Meteo"],
-    weather: ["part", "У великих сервісів є"],
+    get feature() { return i18n.t("modals.WhyUsModal.vlasnaMeteomodelKomandaSynoptykiv"); },
+    get us() { return ["no", i18n.t("modals.WhyUsModal.niDaniZOpen")]; },
+    get weather() { return ["part", i18n.t("modals.WhyUsModal.uVelykykhServisivIe")]; },
     news: ["no", "—"],
   },
   {
-    feature: "Вікові обмеження",
+    get feature() { return i18n.t("modals.WhyUsModal.vikoviObmezhennia"); },
     // 22+ — бо вимкнений фільтр показує казино та ставки (GAMBLING_MIN_AGE в ageGate.js)
-    us: ["part", "Акаунт — від 14, ШІ — від 18, вимкнення деяких напрямків фільтру новин — від 22"],
-    weather: ["yes", "Зазвичай немає"],
-    news: ["part", "Залежить від сервісу"],
+    get us() { return ["part", i18n.t("modals.WhyUsModal.akauntVid14Shi")]; },
+    get weather() { return ["yes", i18n.t("modals.WhyUsModal.zazvychaiNemaie")]; },
+    get news() { return ["part", i18n.t("modals.WhyUsModal.zalezhytVidServisu")]; },
   },
   {
-    feature: "Швидкість на слабких пристроях",
-    us: ["part", "Важчий через багато функцій"],
-    weather: ["yes", "Зазвичай легкі"],
-    news: ["part", "Залежить від кількості реклами"],
+    get feature() { return i18n.t("modals.WhyUsModal.shvydkistNaSlabkykhPrystroiakh"); },
+    get us() { return ["part", i18n.t("modals.WhyUsModal.vazhchyiCherezBahatoFunktsii")]; },
+    get weather() { return ["yes", i18n.t("modals.WhyUsModal.zazvychaiLehki")]; },
+    get news() { return ["part", i18n.t("modals.WhyUsModal.zalezhytVidKilkostiReklamy")]; },
   },
   {
-    feature: "Команда розробників",
-    us: ["part", "Одна людина, оновлення повільніші"],
-    weather: ["yes", "Зазвичай команда"],
-    news: ["yes", "Зазвичай команда"],
+    get feature() { return i18n.t("modals.WhyUsModal.komandaRozrobnykiv"); },
+    get us() { return ["part", i18n.t("modals.WhyUsModal.odnaLiudynaOnovlenniaPovilnishi")]; },
+    get weather() { return ["yes", i18n.t("modals.WhyUsModal.zazvychaiKomanda")]; },
+    get news() { return ["yes", i18n.t("modals.WhyUsModal.zazvychaiKomanda")]; },
   },
 ];
 
-const ADVANTAGES = [
-  "Без реклами, підписок і продажу ваших даних.",
-  "Погода, безпечні новини, музика та корисні інструменти — на одній сторінці.",
-  "Ключі ШІ та чати зберігаються лише у вашому браузері.",
-  "Сайт можна «зібрати під себе»: теми, фони, порядок і видимість секцій.",
-  "Є версії для Windows, Linux та Android.",
-  "Відкритий код під ліцензією AGPL-3.0 — кожен може перевірити, що відбувається з даними.",
-  "Основний інтерфейс перекладено понад 25 мовами.",
-  "Дбаємо про доступність: можна вимкнути анімації та розмиття, а на слабких пристроях це відбувається автоматично.",
-  "Режим Декоратора дозволяє додати власний CSS і змінити сайт до дрібниць.",
-  "Акаунт необов'язковий, але з ним картки погоди, тема й фільтр новин синхронізуються між пристроями.",
-  "Вбудований музичний плеєр із підбіркою пісень і відео.",
-];
+const ADVANTAGES = () => ([
+  i18n.t("modals.WhyUsModal.bezReklamyPidpysokI"),
+  i18n.t("modals.WhyUsModal.pohodaBezpechniNovynyMuzyka"),
+  i18n.t("modals.WhyUsModal.kliuchiShiTaChaty"),
+  i18n.t("modals.WhyUsModal.saitMozhnaZibratyPid"),
+  i18n.t("modals.WhyUsModal.ieVersiiDliaWindows"),
+  i18n.t("modals.WhyUsModal.vidkrytyiKodPidLitsenziieiu"),
+  i18n.t("modals.WhyUsModal.osnovnyiInterfeisPerekladenoPonad"),
+  i18n.t("modals.WhyUsModal.dbaiemoProDostupnistMozhna"),
+  i18n.t("modals.WhyUsModal.rezhymDekoratoraDozvoliaieDodaty"),
+  i18n.t("modals.WhyUsModal.akauntNeoboviazkovyiAleZ"),
+  i18n.t("modals.WhyUsModal.vbudovanyiMuzychnyiPleierIz"),
+]);
 
 // Лише головні недоліки. Дрібніші (ліміти Firebase, помилки фільтра, складні
 // налаштування) описані в довідці: «Чесні обмеження Стихії» у faqData.json.
-const DISADVANTAGES = [
-  "Немає застосунку в App Store — на iPhone/iPad лише через Safari → «На екран Додому».",
-  "Немає власної метеомоделі: прогноз береться з Open-Meteo, тож якщо цей сервіс недоступний, свіжих даних не буде.",
-  "ШІ працює лише з вашим власним ключем Gemini (з 18 років).",
-  "Проєкт розвиває одна людина, тож оновлення можуть виходити повільніше.",
-  "Через велику кількість функцій сайт важчий за звичайний погодний — на старих пристроях може працювати повільніше.",
-];
+const DISADVANTAGES = () => ([
+  i18n.t("modals.WhyUsModal.nemaieZastosunkuVApp"),
+  i18n.t("modals.WhyUsModal.nemaieVlasnoiMeteomodeliProhnoz"),
+  i18n.t("modals.WhyUsModal.shiPratsiuieLysheZ"),
+  i18n.t("modals.WhyUsModal.proiektRozvyvaieOdnaLiudyna"),
+  i18n.t("modals.WhyUsModal.cherezVelykuKilkistFunktsii"),
+]);
 
 const MarkCell = ({ value, isDarkMode }) => {
   const [kind, text] = value;
@@ -601,11 +602,11 @@ const WhyUsModal = ({ onClose, isDarkMode, backdropProps }) => {
       onClick={(e) => e.stopPropagation()}
     >
       <Header>
-        <Title id="why-us-title">Чому треба обрати нас?</Title>
+        <Title id="why-us-title">{i18n.t("modals.WhyUsModal.chomuTrebaObratyNas")}</Title>
         <CloseButton
           type="button"
-          aria-label="Закрити"
-          title="Закрити (Esc)"
+          aria-label={i18n.t("modals.WhyUsModal.zakryty")}
+          title={i18n.t("modals.WhyUsModal.zakrytyEsc")}
           onClick={onClose}
         >
           <FiX aria-hidden="true" />
@@ -613,8 +614,7 @@ const WhyUsModal = ({ onClose, isDarkMode, backdropProps }) => {
       </Header>
       <Body ref={bodyRef}>
         <Lead>
-          Чесне порівняння Стихії з типовими погодними сайтами та новинними
-          агрегаторами — з перевагами і недоліками.
+          {i18n.t("modals.WhyUsModal.chesnePorivnianniaStykhiiZ")}
         </Lead>
         <Collapse
           style={{ height }}
@@ -626,10 +626,10 @@ const WhyUsModal = ({ onClose, isDarkMode, backdropProps }) => {
           <Table $isDarkMode={isDarkMode}>
             <thead>
               <tr>
-                <th scope="col">Можливість</th>
-                <th scope="col">Стихія</th>
-                <th scope="col">Погодні сайти</th>
-                <th scope="col">Новинні агрегатори</th>
+                <th scope="col">{i18n.t("modals.WhyUsModal.mozhlyvist")}</th>
+                <th scope="col">{i18n.t("modals.WhyUsModal.stykhiia")}</th>
+                <th scope="col">{i18n.t("modals.WhyUsModal.pohodniSaity")}</th>
+                <th scope="col">{i18n.t("modals.WhyUsModal.novynniAhrehatory")}</th>
               </tr>
             </thead>
             <tbody>
@@ -696,21 +696,21 @@ const WhyUsModal = ({ onClose, isDarkMode, backdropProps }) => {
           >
             <FiChevronDown aria-hidden="true" />
             {showAll
-              ? "Згорнути порівняння"
-              : `Показати всі порівняння (ще ${hiddenCount})`}
+              ? i18n.t("modals.WhyUsModal.zhornutyPorivniannia")
+              : i18n.t("modals.WhyUsModal.pokazatyVsiPorivnianniaShche", { hiddenCount: hiddenCount })}
           </ShowAllButton>
         )}
 
-        <SectionTitle>Переваги Стихії</SectionTitle>
+        <SectionTitle>{i18n.t("modals.WhyUsModal.perevahyStykhii")}</SectionTitle>
         <List>
-          {ADVANTAGES.map((item) => (
+          {ADVANTAGES().map((item) => (
             <li key={item}>{item}</li>
           ))}
         </List>
 
-        <SectionTitle>Чесні недоліки</SectionTitle>
+        <SectionTitle>{i18n.t("modals.WhyUsModal.chesniNedoliky")}</SectionTitle>
         <List>
-          {DISADVANTAGES.map((item) => (
+          {DISADVANTAGES().map((item) => (
             <li key={item}>{item}</li>
           ))}
         </List>

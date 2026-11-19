@@ -1,5 +1,6 @@
 import React from "react";
 
+import i18n from "../../i18n/i18n.js";
 // contentRef — для туторіалу (registerRef("weatherModal", el)) на головній картці
 const CardSettingsModal = ({ isDarkMode, onClose, contentRef }) => (
   <div
@@ -29,9 +30,9 @@ const CardSettingsModal = ({ isDarkMode, onClose, contentRef }) => (
       }}
       onClick={(e) => e.stopPropagation()}
     >
-      <h3 style={{ margin: "0 0 15px 0" }}>Налаштування картки</h3>
+      <h3 style={{ margin: "0 0 15px 0" }}>{i18n.t("modals.CardSettingsModal.nalashtuvanniaKartky")}</h3>
       <p style={{ fontSize: "13px", color: isDarkMode ? "#aaa" : "#555", marginBottom: "15px" }}>
-        Картка тепер використовує вкладки: Зараз / Годинна / Місячна / ШІ.
+        {i18n.t("modals.CardSettingsModal.kartkaTeperVykorystovuieVkladky")}
       </p>
       <button
         onClick={onClose}
@@ -46,7 +47,7 @@ const CardSettingsModal = ({ isDarkMode, onClose, contentRef }) => (
           cursor: "pointer",
         }}
       >
-        Закрити
+        {i18n.t("modals.CardSettingsModal.zakryty")}
       </button>
     </div>
   </div>

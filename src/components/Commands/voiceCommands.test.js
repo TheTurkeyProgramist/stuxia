@@ -54,3 +54,35 @@ describe("voiceToCommand", () => {
     expect(normalizeSpeech("Будь ласка, відкрий магазин!")).toBe("відкрий магазин");
   });
 });
+
+describe("voiceToCommand іншими мовами", () => {
+  const cases = [
+    ["en", "Turn on the music", "/soundtrack on"],
+    ["en", "add weather in London", "/create weather London"],
+    ["en", "open the shop", "/open shop"],
+    ["en", "dark theme", "/theme dark"],
+    ["de", "Musik aus", "/soundtrack off"],
+    ["de", "füge Wetter in Berlin hinzu", "/create weather Berlin"],
+    ["de", "öffne die Einstellungen", "/open settings"],
+    ["fr", "ouvre la boutique", "/open shop"],
+    ["fr", "supprime toutes les cartes", "/delete weather all"],
+    ["es", "pon música", "/soundtrack on"],
+    ["es", "volumen 40", "/soundtrack volume 40"],
+    ["pl", "dodaj pogodę w Warszawie", "/create weather Warszawie"],
+    ["it", "tema scuro", "/theme dark"],
+    ["zh", "播放音乐", "/soundtrack on"],
+    ["zh", "添加北京的天气", "/create weather 北京"],
+    ["ja", "ショップを開いて", "/open shop"],
+    ["ko", "음악 꺼 줘", "/soundtrack off"],
+    ["tr", "müziği kapat", "/soundtrack off"],
+    ["be", "уключы музыку", "/soundtrack on"],
+    ["ar", "افتح المتجر", "/open shop"],
+  ];
+  test.each(cases)("%s: «%s» → %s", (lng, speech, expected) => {
+    expect(voiceToCommand(speech, lng)).toBe(expected);
+  });
+
+  test("українська працює за будь-якої мови сайту", () => {
+    expect(voiceToCommand("увімкни музику", "de")).toBe("/soundtrack on");
+  });
+});

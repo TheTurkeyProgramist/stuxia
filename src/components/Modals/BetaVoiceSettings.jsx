@@ -15,6 +15,7 @@ import {
   stopSpeaking,
 } from "../../utils/weatherSpeech";
 
+import i18n from "../../i18n/i18n.js";
 // Вибір голосу для озвучення прогнозу (бета). Стиль — як у вікні «Параметри».
 
 const Wrap = styled.div`display: flex; flex-direction: column; gap: 10px;`;
@@ -161,8 +162,8 @@ const BetaVoiceSettings = () => {
       console.error("Voice preview failed:", err);
       setError(
         nextEngine === "piper"
-          ? "Не вдалося завантажити або запустити нейромережу. Перевірте інтернет і спробуйте ще раз."
-          : `Не вдалося озвучити: ${err.message}`,
+          ? i18n.t("modals.BetaVoiceSettings.neVdalosiaZavantazhytyAbo")
+          : i18n.t("modals.BetaVoiceSettings.neVdalosiaOzvuchyty", { message: err.message }),
       );
     } finally {
       setPlayingId((current) => (current === id ? null : current));
@@ -175,17 +176,17 @@ const BetaVoiceSettings = () => {
     <Wrap>
       <Row>
         <EngineButton type="button" $active={engine !== "piper"} onClick={() => saveVoiceSettings({ engine: "browser", voiceId: "" })}>
-          Голоси пристрою
-          <span>Миттєво й без завантажень, якість залежить від браузера</span>
+          {i18n.t("modals.BetaVoiceSettings.holosyPrystroiu")}
+          <span>{i18n.t("modals.BetaVoiceSettings.myttievoIBezZavantazhen")}</span>
         </EngineButton>
         <EngineButton type="button" $active={engine === "piper"} onClick={() => saveVoiceSettings({ engine: "piper", voiceId: PIPER_VOICES[0].id })}>
-          Нейромережа Piper
-          <span>Однаково на всіх пристроях, модель качається один раз</span>
+          {i18n.t("modals.BetaVoiceSettings.neiromerezhaPiper")}
+          <span>{i18n.t("modals.BetaVoiceSettings.odnakovoNaVsikhPrystroiakh")}</span>
         </EngineButton>
       </Row>
 
       <div>
-        <Label htmlFor="beta-voice-phrase">Пробна фраза (натисніть ▶ біля голосу)</Label>
+        <Label htmlFor="beta-voice-phrase">{i18n.t("modals.BetaVoiceSettings.probnaFrazaNatysnitBilia")}</Label>
         <PhraseInput
           id="beta-voice-phrase"
           value={phrase}
@@ -195,7 +196,7 @@ const BetaVoiceSettings = () => {
       </div>
 
       <Row>
-        <Label htmlFor="beta-voice-rate" style={{ minWidth: 110 }}>Швидкість: {rate.toFixed(1)}×</Label>
+        <Label htmlFor="beta-voice-rate" style={{ minWidth: 110 }}>{i18n.t("modals.BetaVoiceSettings.shvydkist")} {rate.toFixed(1)}×</Label>
         <RateInput
           id="beta-voice-rate"
           type="range"
@@ -218,14 +219,14 @@ const BetaVoiceSettings = () => {
                     {voiceId === v.id && <FiCheck />}
                     <VoiceName>{v.label}</VoiceName>
                     {isStored ? (
-                      <Badge $bg="rgba(74,222,128,0.15)" $color="#86efac">Завантажено</Badge>
+                      <Badge $bg="rgba(74,222,128,0.15)" $color="#86efac">{i18n.t("modals.BetaVoiceSettings.zavantazheno")}</Badge>
                     ) : (
-                      <Badge><FiDownloadCloud style={{ verticalAlign: "-1px" }} /> {v.sizeMb} МБ</Badge>
+                      <Badge><FiDownloadCloud style={{ verticalAlign: "-1px" }} /> {v.sizeMb} {i18n.t("modals.BetaVoiceSettings.mb")}</Badge>
                     )}
                   </VoiceSelect>
                   <PlayButton
                     type="button"
-                    aria-label={`Прослухати: ${v.label}`}
+                    aria-label={i18n.t("modals.BetaVoiceSettings.proslukhaty", { label: v.label })}
                     disabled={!!loadingId && loadingId !== v.id}
                     onClick={() => preview("piper", v.id)}
                   >
@@ -237,17 +238,16 @@ const BetaVoiceSettings = () => {
           </VoiceList>
           {loadingId && (
             <>
-              <Hint>Завантаження моделі… {progress}% (лише перший раз)</Hint>
+              <Hint>{i18n.t("modals.BetaVoiceSettings.zavantazhenniaModeli")} {progress}{i18n.t("modals.BetaVoiceSettings.lyshePershyiRaz")}</Hint>
               <Progress $percent={progress} />
             </>
           )}
           <Hint>
-            Модель зберігається в браузері, тож далі озвучення працює навіть без інтернету.
-            Перше прослуховування може тривати кілька секунд.
+            {i18n.t("modals.BetaVoiceSettings.modelZberihaietsiaVBrauzeri")}
           </Hint>
         </>
       ) : !isSpeechSupported() ? (
-        <ErrorText>Цей браузер не підтримує озвучення тексту. Спробуйте «Нейромережу Piper».</ErrorText>
+        <ErrorText>{i18n.t("modals.BetaVoiceSettings.tseiBrauzerNePidtrymuie")}</ErrorText>
       ) : (
         <>
           {visibleBrowserVoices.length > 0 ? (
@@ -257,11 +257,11 @@ const BetaVoiceSettings = () => {
                   <VoiceSelect type="button" onClick={() => selectVoice("browser", v.id)}>
                     {voiceId === v.id && <FiCheck />}
                     <VoiceName title={v.name}>{v.name}</VoiceName>
-                    {v.isNatural && <Badge $bg="rgba(250,204,21,0.15)" $color="#fde68a">Живий</Badge>}
-                    {!v.isLocal && <Badge>Онлайн</Badge>}
+                    {v.isNatural && <Badge $bg="rgba(250,204,21,0.15)" $color="#fde68a">{i18n.t("modals.BetaVoiceSettings.zhyvyi")}</Badge>}
+                    {!v.isLocal && <Badge>{i18n.t("modals.BetaVoiceSettings.onlain")}</Badge>}
                     {!v.isUkrainian && <Badge>{v.lang}</Badge>}
                   </VoiceSelect>
-                  <PlayButton type="button" aria-label={`Прослухати: ${v.name}`} onClick={() => preview("browser", v.id)}>
+                  <PlayButton type="button" aria-label={i18n.t("modals.BetaVoiceSettings.proslukhaty2", { name: v.name })} onClick={() => preview("browser", v.id)}>
                     {playingId === v.id ? <FiSquare /> : <FiPlay />}
                   </PlayButton>
                 </VoiceItem>
@@ -269,15 +269,13 @@ const BetaVoiceSettings = () => {
             </VoiceList>
           ) : (
             <Hint>
-              На цьому пристрої немає українського голосу. Найкращі живі голоси (<b>Polina</b> і <b>Ostap</b>) є в
-              браузері <b>Microsoft Edge</b>. У Windows можна додати голос: Параметри → Час і мова → Мова й регіон →
-              Українська → Мовлення. Або перемкніться на «Нейромережу Piper».
+              {i18n.t("modals.BetaVoiceSettings.naTsomuPrystroiNemaie")}<b>Polina</b> {i18n.t("modals.BetaVoiceSettings.i")} <b>Ostap</b>{i18n.t("modals.BetaVoiceSettings.ieVBrauzeri")} <b>Microsoft Edge</b>{i18n.t("modals.BetaVoiceSettings.uWindowsMozhnaDodaty")}
             </Hint>
           )}
           <Row>
             <Label style={{ cursor: "pointer", display: "flex", gap: 6, alignItems: "center" }}>
               <input type="checkbox" checked={showAllLanguages} onChange={(e) => setShowAllLanguages(e.target.checked)} />
-              Показати голоси інших мов ({browserVoices.length - ukrainianVoices.length})
+              {i18n.t("modals.BetaVoiceSettings.pokazatyHolosyInshykhMov")}{browserVoices.length - ukrainianVoices.length})
             </Label>
           </Row>
         </>

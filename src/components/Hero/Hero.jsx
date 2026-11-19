@@ -52,7 +52,7 @@ import {
   MdSearchOff,
   MdWifiOff,
 } from "react-icons/md";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import {
   addCustomDay,
   removeCustomDay,
@@ -104,6 +104,7 @@ import { usePrefValue } from "../../utils/betaFeatures";
 import { setPref } from "../../utils/prefsStore.js";
 import { OPEN_HERO_MODAL_EVENT } from "../Commands/commandHost.js";
 
+import i18n from "../../i18n/i18n.js";
 const SCROLL_TO_NEW_CARD_KEY = "hero_scroll_to_new_card";
 const bgCardThumbnails = {
   [village]: {
@@ -227,9 +228,10 @@ const shuffleArray = (array) => {
 
 
 // Зворотний геокодинг без ключа (OpenStreetMap Nominatim). Повертає [] якщо поруч немає населеного пункту
-const reverseGeocode = async (lat, lon) => {
+// lang — мова сайту: назви населених пунктів приходять нею (якщо в OSM є переклад)
+const reverseGeocode = async (lat, lon, lang = "uk") => {
   const res = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=12&accept-language=uk`,
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=12&accept-language=${lang}`,
   );
   const data = await res.json();
   const a = data?.address;
@@ -503,7 +505,7 @@ const BgLayer = React.memo((props) => {
         {known ? (
           <WallpaperScene src={$image} />
         ) : (
-          <img src={DEFAULT_HERO_BG} alt="Геройський фон" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          <img src={DEFAULT_HERO_BG} alt={i18n.t("ui.Hero.heroiskyiFon")} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         )}
       </BgLayerStyled>
     );
@@ -566,7 +568,7 @@ const BgLayer = React.memo((props) => {
         )}
         <img
           src={shownSrc}
-          alt="Геройський фон"
+          alt={i18n.t("ui.Hero.heroiskyiFon")}
           data-fit-mobile={containOnMobile ? "contain" : undefined}
           fetchPriority={$active ? "high" : "low"}
           loading={$active ? "eager" : "lazy"}
@@ -1295,6 +1297,7 @@ const ServerCityNoteBody = styled.div`
 `;
 
 const ServerCityNoteBox = ({ isDarkMode }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const bodyId = useId();
   return (
@@ -1309,28 +1312,26 @@ const ServerCityNoteBox = ({ isDarkMode }) => {
         onClick={() => setOpen((v) => !v)}
       >
         <BsLightningChargeFill aria-hidden="true" />
-        Блискавка — погода з сервера Стихії
+        {t("hero.server.title")}
         <ServerCityNoteMore $open={open}>
-          {open ? "Сховати" : "Детальніше"}
+          {open ? t("hero.server.hide") : t("hero.server.more")}
           <MdExpandMore aria-hidden="true" />
         </ServerCityNoteMore>
       </ServerCityNoteToggle>
       <ServerCityNoteBody id={bodyId} $open={open} aria-hidden={!open}>
         <div>
           <p>
-            Прогноз для цих міст сервер Стихії отримує сам і ділиться ним з усіма, тож картка
-            <b> не витрачає ваш ліміт</b> запитів до Open-Meteo.
+            <Trans i18nKey="hero.server.p1" components={{ b: <b /> }} />
           </p>
           <ul>
             <li>
-              У кожної адреси (IP) — свої <b>10 000 запитів на добу</b>. Вони лишаються для міст
-              без блискавки.
+              <Trans i18nKey="hero.server.li1" components={{ b: <b /> }} />
             </li>
             <li>
-              Сервер на всі такі міста бере до <b>6 200 на добу</b> зі свого окремого ліміту.
+              <Trans i18nKey="hero.server.li2" components={{ b: <b /> }} />
             </li>
-            <li>Картка відкривається швидше: прогноз уже готовий.</li>
-            <li>Ваша GPS-картка теж бере погоду із сервера, якщо ви ближче 5 км до такого міста.</li>
+            <li>{t("hero.server.li3")}</li>
+            <li>{t("hero.server.li4")}</li>
           </ul>
         </div>
       </ServerCityNoteBody>
@@ -1377,8 +1378,6 @@ const SearchEmptyNote = styled.div`
   }
 `;
 
-const SERVER_CITY_HINT = "Погоду готує сервер Стихії — не витрачає ваш ліміт запитів";
-
 // Скільки нових карток за добу має лишитись, щоб показати лічильник у смужці лімітів
 const DAILY_LEFT_WARN = 5;
 
@@ -1390,9 +1389,9 @@ const renderServerCityNote = (cities, isDarkMode) =>
     <ServerCityNoteBox isDarkMode={isDarkMode} />
   ) : null;
 
-const renderServerMark = (city) =>
+const renderServerMark = (city, t) =>
   findServerCity(city?.lat, city?.lon) ? (
-    <ServerCityMark title={SERVER_CITY_HINT} aria-label={SERVER_CITY_HINT} role="img">
+    <ServerCityMark title={t("hero.server.hint")} aria-label={t("hero.server.hint")} role="img">
       <BsLightningChargeFill aria-hidden="true" />
     </ServerCityMark>
   ) : null;
@@ -1500,18 +1499,18 @@ const DangerBadge = styled.span`
   }
 `;
 
-const DANGER_DAY_LABELS = ["Сьогодні", "Завтра", "Післязавтра"];
+const DANGER_DAY_KEYS = ["today", "tomorrow", "dayAfter"];
 const DANGER_REASON_ICONS = {
   heat: FaTemperatureArrowUp,
   frost: FaSnowflake,
   wind: FaWind,
   uv: FaSun,
 };
-const formatDangerReason = ({ type, value }) => {
-  if (type === "heat") return `спека до ${value}°C`;
-  if (type === "frost") return `мороз до ${String(value).replace("-", "−")}°C`;
-  if (type === "wind") return `вітер ${value} м/с`;
-  return `УФ-індекс ${value}`;
+const formatDangerReason = ({ type, value }, t) => {
+  if (type === "heat") return t("hero.danger.heat", { value });
+  if (type === "frost") return t("hero.danger.frost", { value: String(value).replace("-", "−") });
+  if (type === "wind") return t("hero.danger.wind", { value });
+  return t("hero.danger.uv", { value });
 };
 
 // Панель над підказками: ліміти карток, скільки міст уже додано й кнопка «Готово»
@@ -1707,6 +1706,9 @@ const Hero = ({
   onRetryQuickWeather,
 }) => {
   const dispatch = useDispatch();
+  const { t, i18n } = useTranslation();
+  // Мова назв міст у пошуку (Open-Meteo, Nominatim) — мова сайту
+  const geoLang = String(i18n.language || "uk").split("-")[0];
   // «Додати інше місто…» — до пошуку; нове місто саме стане на головний екран (автовибір — останнє додане)
   const handleQuickWeatherCity = (value) => {
     if (value === ADD_CITY_OPTION) {
@@ -1730,10 +1732,8 @@ const Hero = ({
   // Слоган одним рядком під пошуком (на телефоні — коротша версія, щоб влізла в рядок)
   const slogan = (
     <HeroSlogan $isDarkMode={isDarkMode}>
-      <span className="full">
-        Ви заслуговуєте на бундючий багатофункціональний прогноз, де немає політики та реклами! Гарної погоди!
-      </span>
-      <span className="short">Бундючий прогноз без політики й реклами. Гарної погоди!</span>
+      <span className="full">{t("hero.slogan.full")}</span>
+      <span className="short">{t("hero.slogan.short")}</span>
     </HeroSlogan>
   );
   const { registerRef, isActive } = useTutorial?.() || { registerRef: () => {} };
@@ -1743,9 +1743,9 @@ const Hero = ({
 
   useEffect(() => {
     const handleAutoKonotop = () => {
-      setInputValue("Конотоп");
+      setInputValue(i18n.t("ui.Hero.konotop"));
       setTimeout(() => {
-        onAddCity({ name: "Конотоп", fullName: "Конотоп (UA)", lat: 51.24, lon: 33.20 });
+        onAddCity({ name: i18n.t("ui.Hero.konotop"), fullName: "Конотоп (UA)", lat: 51.24, lon: 33.20 });
       }, 2000);
     };
     window.addEventListener("domino-auto-input-konotop", handleAutoKonotop);
@@ -1789,7 +1789,6 @@ const Hero = ({
   }, []);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const languageModalMounted = useOpenedOnce(isLanguageModalOpen);
-  const { t, i18n } = useTranslation();
   // «Language (Мова)»: англійське слово для всіх + назва мовою сайту в дужках
   const languageButtonText =
     i18n.resolvedLanguage === "en" ? "Language" : `Language (${t("hero.language")})`;
@@ -1828,20 +1827,20 @@ const Hero = ({
     <ModeRow>
     <ModePicker>
       <Tooltip
-        content={nextModeIsCoordinates ? "Шукати за широтою й довготою" : "Шукати за назвою міста чи села"}
+        content={nextModeIsCoordinates ? t("hero.mode.coordsTooltip") : t("hero.mode.cityTooltip")}
         isDarkMode={isDarkMode}
       >
         <ModeIconBtn
           type="button"
           onClick={switchSearchMode}
-          aria-label={nextModeIsCoordinates ? "Перейти на пошук за координатами" : "Перейти на пошук за назвою міста"}
+          aria-label={nextModeIsCoordinates ? t("hero.mode.toCoordsAria") : t("hero.mode.toCityAria")}
           $isDarkMode={isDarkMode}
         >
           <ModePreviewIcon key={`icon-${searchMode}`}>
             {nextModeIsCoordinates ? <FaMapLocationDot /> : <FaMountainCity />}
           </ModePreviewIcon>
           <ModePreviewText key={`text-${searchMode}`}>
-            {nextModeIsCoordinates ? "Режим координат" : "За назвою міста"}
+            {nextModeIsCoordinates ? t("hero.mode.coords") : t("hero.mode.city")}
           </ModePreviewText>
         </ModeIconBtn>
       </Tooltip>
@@ -2049,10 +2048,11 @@ const Hero = ({
       return;
     }
 
-    // Миттєвий пошук у базі міст: спершу ті, що починаються з введеного (utils/citySearch.js)
-    const localMatches = searchLocalCities(UKRAINE_CITIES_40, cleanValue).map((c) => ({
+    // Миттєвий пошук у базі міст: спершу ті, що починаються з введеного (utils/citySearch.js).
+    // Назви в базі лише українські — іншими мовами беремо тільки геокодер
+    const localMatches = (geoLang === "uk" ? searchLocalCities(UKRAINE_CITIES_40, cleanValue) : []).map((c) => ({
       name: c.name,
-      state: "Україна",
+      state: i18n.t("ui.Hero.ukraina"),
       country: "UA",
       lat: c.lat,
       lon: c.lon,
@@ -2066,7 +2066,7 @@ const Hero = ({
 
     try {
       const response = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleanValue)}&count=${currentLimit}&language=uk&format=json`,
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleanValue)}&count=${currentLimit}&language=${geoLang}&format=json`,
       );
       const data = await response.json();
       if (seq !== suggestionsSeqRef.current) return;
@@ -2142,22 +2142,22 @@ const Hero = ({
     const lon = parseFloat(longitude);
 
     if (isNaN(lat) || isNaN(lon)) {
-      alert("Будь ласка, введіть правильні координати");
+      alert(t("hero.coords.invalid"));
       return;
     }
 
     if (lat < -90 || lat > 90) {
-      alert("Широта має бути від -90 до 90");
+      alert(t("hero.coords.latRange"));
       return;
     }
 
     if (lon < -180 || lon > 180) {
-      alert("Довгота має бути від -180 до +180");
+      alert(t("hero.coords.lonRange"));
       return;
     }
 
     const currentPoint = {
-      name: "Обрана точка",
+      name: t("hero.coords.selectedPoint"),
       lat: lat,
       lon: lon,
       isManual: true,
@@ -2170,15 +2170,15 @@ const Hero = ({
     setShowCoordinateSuggestions(true);
     setIsSearchingNearby(true);
     try {
-      setNearbySearchStatus({ type: "searching", text: "Шукаємо за вказаними координатами…" });
-      const data = await reverseGeocode(lat, lon);
+      setNearbySearchStatus({ type: "searching", key: "searching" });
+      const data = await reverseGeocode(lat, lon, geoLang);
 
       if (data.length > 0) {
         setCoordinateSuggestions([currentPoint, ...data]);
-        setNearbySearchStatus({ type: "found", text: "Знайдено за координатами" });
+        setNearbySearchStatus({ type: "found", key: "found" });
         return;
       }
-      setNearbySearchStatus({ type: "searching", text: "Точно нічого немає — шукаємо найближче…" });
+      setNearbySearchStatus({ type: "searching", key: "nothingExact" });
 
       const TIMEOUT_MS = 10000;
       const startTime = Date.now();
@@ -2199,17 +2199,18 @@ const Hero = ({
 
           setNearbySearchStatus({
             type: "searching",
-            text: `Шукаємо поруч: ±${delta}° (шир. ${tryLat.toFixed(1)}°, довг. ${tryLon.toFixed(1)}°)`,
+            key: "nearby",
+            params: { delta, lat: tryLat.toFixed(1), lon: tryLon.toFixed(1) },
           });
 
           try {
             // Nominatim дозволяє не більше 1 запиту на секунду
             await new Promise((r) => setTimeout(r, 1100));
-            const tryData = await reverseGeocode(tryLat, tryLon);
+            const tryData = await reverseGeocode(tryLat, tryLon, geoLang);
 
             if (tryData.length > 0) {
               setCoordinateSuggestions([currentPoint, ...tryData]);
-              setNearbySearchStatus({ type: "found", text: `Знайдено поруч (відхилення ~${delta}°)` });
+              setNearbySearchStatus({ type: "found", key: "foundNearby", params: { delta } });
               found = true;
               break outer;
             }
@@ -2223,12 +2224,13 @@ const Hero = ({
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
         setNearbySearchStatus({
           type: "none",
-          text: `Пошук завершено (${elapsed} с) — навколо немає населених пунктів`,
+          key: "none",
+          params: { seconds: elapsed },
         });
       }
     } catch (error) {
       console.error("Помилка при пошуку за координатами:", error);
-      setNearbySearchStatus({ type: "error", text: "Помилка запиту. Спробуйте ще раз." });
+      setNearbySearchStatus({ type: "error", key: "error" });
     } finally {
       coordSearchLockRef.current = false;
       setIsSearchingNearby(false);
@@ -2275,7 +2277,7 @@ const Hero = ({
   const handleAddCustomPoint = () => {
     const point = coordinateSuggestions[0];
     if (!point) return;
-    const name = customPointName.trim().replace(/\s+/g, " ") || "Обрана точка";
+    const name = customPointName.trim().replace(/\s+/g, " ") || t("hero.coords.selectedPoint");
     addCoordinatePoint({
       name,
       fullName: `${name} (${point.lat.toFixed(2)}°, ${point.lon.toFixed(2)}°)`,
@@ -2322,12 +2324,12 @@ const Hero = ({
     if (!danger?.reasons?.length) return null;
     const [mainReason, ...rest] = danger.reasons;
     const Icon = DANGER_REASON_ICONS[mainReason.type] || FaWind;
-    const day = DANGER_DAY_LABELS[danger.dayIndex] || "Найближчі дні";
-    const fullText = `${day}: ${danger.reasons.map(formatDangerReason).join(", ")}`;
+    const day = t(`hero.danger.${DANGER_DAY_KEYS[danger.dayIndex] || "nextDays"}`);
+    const fullText = `${day}: ${danger.reasons.map((r) => formatDangerReason(r, t)).join(", ")}`;
     return (
-      <DangerBadge $level={danger.level} title={fullText} aria-label={`Небезпечна погода. ${fullText}`}>
+      <DangerBadge $level={danger.level} title={fullText} aria-label={t("hero.danger.aria", { text: fullText })}>
         <Icon aria-hidden="true" />
-        {day}: {formatDangerReason(mainReason)}
+        {day}: {formatDangerReason(mainReason, t)}
         {rest.length > 0 && ` +${rest.length}`}
       </DangerBadge>
     );
@@ -2396,28 +2398,27 @@ const Hero = ({
       cardLimits.daily !== null ? Math.max(0, cardLimits.maxDaily - cardLimits.daily) : null;
     const showDaily = dailyLeft !== null && dailyLeft <= DAILY_LEFT_WARN;
     const limitsHint =
-      `Картки: ${cardLimits.custom} з ${cardLimits.maxCustom} — стільки міст можна тримати одночасно` +
-      " (картка «Ваша локація» не рахується)." +
+      t("hero.limits.hintCards", { count: cardLimits.custom, max: cardLimits.maxCustom }) +
       (dailyLeft !== null
-        ? ` Нових карток за добу: ${cardLimits.daily} з ${cardLimits.maxDaily} — лічильник скидається опівночі.`
+        ? " " + t("hero.limits.hintDaily", { count: cardLimits.daily, max: cardLimits.maxDaily })
         : "");
     return (
       <AddedBar $isDarkMode={isDarkMode}>
         <span title={limitsHint}>
-          {addedCount > 0 && `Додано: ${addedCount} · `}
-          Картки: {cardLimits.custom} з {cardLimits.maxCustom}
+          {addedCount > 0 && `${t("hero.limits.added", { count: addedCount })} · `}
+          {t("hero.limits.cards", { count: cardLimits.custom, max: cardLimits.maxCustom })}
           {showDaily &&
-            (dailyLeft === 0
-              ? " · сьогодні нових уже не додати"
-              : ` · сьогодні можна додати ще ${dailyLeft}`)}
+            ` · ${
+              dailyLeft === 0
+                ? t("hero.limits.noMoreToday")
+                : t("hero.limits.moreToday", { count: dailyLeft })
+            }`}
         </span>
         <AddedBarActions>
           <ScrollToCardLabel
             onMouseDown={(e) => e.preventDefault()}
             title={
-              forCoordinates
-                ? "Після додавання точки прогорнути сторінку до її картки"
-                : "Після «Готово» прогорнути сторінку до картки останнього доданого міста"
+              forCoordinates ? t("hero.limits.scrollHintPoint") : t("hero.limits.scrollHintCity")
             }
           >
             <input
@@ -2425,7 +2426,7 @@ const Hero = ({
               checked={scrollToNewCard}
               onChange={(e) => setPref(SCROLL_TO_NEW_CARD_KEY, e.target.checked ? "true" : "false")}
             />
-            Прогорнути до картки
+            {t("hero.limits.scrollLabel")}
           </ScrollToCardLabel>
           {addedCount > 0 && (
             <DoneButton
@@ -2433,15 +2434,12 @@ const Hero = ({
               onMouseDown={(e) => e.preventDefault()}
               onClick={handleFinishAdding}
             >
-              Готово
+              {t("hero.limits.done")}
             </DoneButton>
           )}
         </AddedBarActions>
         {scrollToNewCard && addedCount > 1 && (
-          <AddedBarHint $isDarkMode={isDarkMode}>
-            Ви вибрали кілька варіантів — після «Готово» вас перегорне до картки останнього
-            вибраного
-          </AddedBarHint>
+          <AddedBarHint $isDarkMode={isDarkMode}>{t("hero.limits.multiHint")}</AddedBarHint>
         )}
       </AddedBar>
     );
@@ -2470,12 +2468,12 @@ const Hero = ({
       const selectedDate = new Date(newDayInput.date);
 
       if (selectedDate < today) {
-        alert("Неможливо додати подію в минулому!");
+        alert(t("hero.calendar.pastEvent"));
         return;
       }
 
       if (customHolidayName.length > 12) {
-        alert("Назва свята занадто довга (макс. 12 символів)!");
+        alert(t("hero.calendar.nameTooLong", { max: 12 }));
         return;
       }
 
@@ -2502,7 +2500,7 @@ const Hero = ({
         return {
           active: true,
           color: "#ff5252",
-          label: "З ДНЕМ НАРОДЖЕННЯ!",
+          label: t("hero.birthday"),
         };
       }
     }
@@ -2521,7 +2519,7 @@ const Hero = ({
     }
 
     return { active: false, color: "#fff59d", label: "" };
-  }, [customDays, user]);
+  }, [customDays, user, t]);
 
   const isTodayHoliday = todayHolidayInfo.active;
 
@@ -2613,25 +2611,25 @@ const Hero = ({
             <HeroFix>
               <HeroFi>
                 <HeroDate ref={timezoneMenuRef} $isDarkMode={isDarkMode}>
-                <Tooltip content="ШІ-асистент: спитайте про погоду чи сайт" isDarkMode={isDarkMode}>
+                <Tooltip content={t("hero.ai.tooltip")} isDarkMode={isDarkMode}>
                   <AiButton
                     type="button"
                     $isDarkMode={isDarkMode}
                     onClick={() => setIsAiModalOpen(true)}
-                    aria-label="Відкрити ШІ-асистента"
+                    aria-label={t("hero.ai.aria")}
                   >
                     <MdAutoAwesome aria-hidden="true" />
-                    ШІ-асистент
+                    {t("hero.ai.label")}
                     <AiAttachBadges isDarkMode={isDarkMode} />
                   </AiButton>
                 </Tooltip>
-                <Tooltip content="Змінити часовий пояс" isDarkMode={isDarkMode} wrapperStyle={{ marginLeft: "auto" }}>
+                <Tooltip content={t("hero.timezone")} isDarkMode={isDarkMode} wrapperStyle={{ marginLeft: "auto" }}>
                   <DateButton
                     type="button"
                     $isDarkMode={isDarkMode}
                     onClick={() => setShowTimezoneMenu(!showTimezoneMenu)}
                     aria-expanded={showTimezoneMenu}
-                    aria-label="Змінити часовий пояс"
+                    aria-label={t("hero.timezone")}
                   >
                     <MdAccessTime aria-hidden="true" />
                     {heroDateString}
@@ -2665,7 +2663,7 @@ const Hero = ({
                     window.dispatchEvent(new CustomEvent('domino-hero-input-change', { detail: { value: e.target.value } }));
                   }}
                   onFocus={() => (suggestions.length > 0 || searchEmpty) && setShowList(true)}
-                  placeholder="Уведіть місто, село. Наприклад: Київ..."
+                  placeholder={t("hero.search.placeholder")}
                   type="text"
                   autoComplete="off"
                   autoCorrect="off"
@@ -2673,7 +2671,7 @@ const Hero = ({
                   name="hero-city-search"
                   inputMode="search"
                   enterKeyHint="search"
-                  aria-label="Пошук міста"
+                  aria-label={t("hero.search.aria")}
                   data-form-type="other"
                   data-lpignore="true"
                 />
@@ -2751,7 +2749,7 @@ const Hero = ({
                         $exists={Boolean(existingCard)}
                         title={
                           existingCard
-                            ? `Картка «${existingCard.locationName || city.name}» вже є — натисніть, щоб перейти до неї`
+                            ? t("hero.search.cardExists", { name: existingCard.locationName || city.name })
                             : undefined
                         }
                         onMouseDown={(e) => {
@@ -2769,16 +2767,16 @@ const Hero = ({
                             {(isAdded || existingCard) && <MdCheck aria-hidden="true" />}
                             {city.name}
                             {city.state ? `, ${city.state}` : ""} ({city.country})
-                            {renderServerMark(city)}
+                            {renderServerMark(city, t)}
                             <br />
                             <CoordsLine>
-                              Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°
+                              {t("hero.coords.line", { lat: city.lat.toFixed(2), lon: city.lon.toFixed(2) })}
                             </CoordsLine>
                           </SuggestionText>
                           {renderDangerBadge(city)}
                           {(isAdded || existingCard) && (
                             <CardStatusBadge $isDarkMode={isDarkMode} $added={isAdded}>
-                              {isAdded ? "Додано" : "Є картка"}
+                              {isAdded ? t("hero.badge.added") : t("hero.badge.exists")}
                             </CardStatusBadge>
                           )}
                         </SuggestionRow>
@@ -2788,11 +2786,11 @@ const Hero = ({
 
                     {hasMore ? (
                       <LoadMoreButton $isDarkMode={isDarkMode} onClick={handleLoadMore}>
-                        Завантажити ще варіанти
+                        {t("hero.search.loadMore")}
                       </LoadMoreButton>
                     ) : (
                       <LoadMoreButton $isDarkMode={isDarkMode} disabled>
-                        Кінець списку
+                        {t("hero.search.endOfList")}
                       </LoadMoreButton>
                     )}
                   </MotionSuggestionsList>
@@ -2808,21 +2806,16 @@ const Hero = ({
                       <SearchEmptyNote $isDarkMode={isDarkMode} $error>
                         <MdWifiOff aria-hidden="true" />
                         <div>
-                          <b>Не вдалося перевірити «{searchEmpty.query}»</b>
-                          <span>
-                            Немає зв'язку з пошуком міст. Перевірте інтернет і спробуйте ще раз.
-                          </span>
+                          <b>{t("hero.search.errorTitle", { query: searchEmpty.query })}</b>
+                          <span>{t("hero.search.errorText")}</span>
                         </div>
                       </SearchEmptyNote>
                     ) : (
                       <SearchEmptyNote $isDarkMode={isDarkMode}>
                         <MdSearchOff aria-hidden="true" />
                         <div>
-                          <b>Здається, місто «{searchEmpty.query}» не існує</b>
-                          <span>
-                            Перевірте, чи немає помилки в назві. Можна написати інакше — повністю,
-                            латиницею (Konotop) — або знайти точку в режимі координат.
-                          </span>
+                          <b>{t("hero.search.notFoundTitle", { query: searchEmpty.query })}</b>
+                          <span>{t("hero.search.notFoundText")}</span>
                         </div>
                       </SearchEmptyNote>
                     )}
@@ -2847,7 +2840,7 @@ const Hero = ({
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSelectByCoordinates();
                     }}
-                    placeholder="Широта: Від -90° до +90°"
+                    placeholder={t("hero.coords.latPlaceholder")}
                     disabled={isSearchingNearby}
                     min="-90"
                     max="90"
@@ -2862,7 +2855,7 @@ const Hero = ({
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSelectByCoordinates();
                     }}
-                    placeholder="Довгота: Від -180° до +180°"
+                    placeholder={t("hero.coords.lonPlaceholder")}
                     disabled={isSearchingNearby}
                     min="-180"
                     max="180"
@@ -2875,7 +2868,7 @@ const Hero = ({
                   disabled={isSearchingNearby}
                 >
                   <MdSearch />
-                  Знайти
+                  {t("hero.coords.find")}
                 </CoordinateSearchButton>
               </CoordinatesContainer>
               <AnimatePresence>
@@ -2895,7 +2888,7 @@ const Hero = ({
                         aria-live="polite"
                       >
                         <StatusIcon className={isSearchingNearby ? "spin" : undefined} aria-hidden="true" />
-                        <span>{nearbySearchStatus.text}</span>
+                        <span>{t(`hero.coords.status.${nearbySearchStatus.key}`, nearbySearchStatus.params)}</span>
                       </CoordStatus>
                     );
                   })()}
@@ -2905,7 +2898,7 @@ const Hero = ({
                     <CustomPointBox $isDarkMode={isDarkMode}>
                       <span>
                         <MdExplore aria-hidden="true" />
-                        Ви першовідкривач! Поруч немає населених пунктів — назвіть свою точку:
+                        {t("hero.coords.pioneer")}
                       </span>
                       <CustomPointRow $isDarkMode={isDarkMode}>
                         <input
@@ -2915,12 +2908,12 @@ const Hero = ({
                           onKeyDown={(e) => {
                             if (e.key === "Enter") handleAddCustomPoint();
                           }}
-                          placeholder="Наприклад: Моя метеостанція"
+                          placeholder={t("hero.coords.customPlaceholder")}
                           maxLength={40}
-                          aria-label="Назва власної точки"
+                          aria-label={t("hero.coords.customAria")}
                         />
                         <DoneButton type="button" onClick={handleAddCustomPoint}>
-                          Додати
+                          {t("hero.coords.add")}
                         </DoneButton>
                       </CustomPointRow>
                     </CustomPointBox>
@@ -2935,7 +2928,7 @@ const Hero = ({
                         $exists={Boolean(existingCard)}
                         title={
                           existingCard
-                            ? `Картка «${existingCard.locationName || city.name}» вже є — натисніть, щоб перейти до неї`
+                            ? t("hero.search.cardExists", { name: existingCard.locationName || city.name })
                             : undefined
                         }
                         onClick={() => handleSelectCoordinateResult(city)}
@@ -2946,13 +2939,13 @@ const Hero = ({
                             {city.isManual
                               ? city.name
                               : `${city.name}${city.state ? `, ${city.state}` : ""} (${city.country})`}
-                            {renderServerMark(city)}
+                            {renderServerMark(city, t)}
                             <br />
                             <CoordsLine>
-                              Широта: {city.lat.toFixed(2)}°, Довгота: {city.lon.toFixed(2)}°
+                              {t("hero.coords.line", { lat: city.lat.toFixed(2), lon: city.lon.toFixed(2) })}
                             </CoordsLine>
                           </SuggestionText>
-                          {existingCard && <CardStatusBadge $isDarkMode={isDarkMode}>Є картка</CardStatusBadge>}
+                          {existingCard && <CardStatusBadge $isDarkMode={isDarkMode}>{t("hero.badge.exists")}</CardStatusBadge>}
                         </SuggestionRow>
                       </SuggestionItem>
                     );
@@ -2963,7 +2956,7 @@ const Hero = ({
                     onClick={closeCoordinateSuggestions}
                   >
                     <MdClose aria-hidden="true" />
-                    Закрити
+                    {t("common.close")}
                   </CloseListButton>
                 </MotionSuggestionsList>
               )}

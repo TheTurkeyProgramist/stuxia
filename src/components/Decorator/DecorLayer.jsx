@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { FiArrowUp, FiCheck, FiImage, FiRotateCw, FiTrash2 } from "react-icons/fi";
 import { useDecorator } from "./DecoratorContext";
 
+import i18n from "../../i18n/i18n.js";
 /*
  * Декор-об'єкти: власні фото, GIF і відео поверх сторінки, як наліпки.
  * Координати — у пікселях документа (прокручуються разом зі сторінкою).
@@ -304,14 +305,14 @@ const DecorObject = ({ item, editing, selected, onSelect, onCommit, onRemove, on
               onPointerDown={(e) => startGesture(e, "resize", [sx, sy])}
             />
           ))}
-          <RotateHandle title="Обернути (Shift — кроком 15°)" onPointerDown={(e) => startGesture(e, "rotate")}>
+          <RotateHandle title={i18n.t("ui.DecorLayer.obernutyShiftKrokom15")} onPointerDown={(e) => startGesture(e, "rotate")}>
             <FiRotateCw size={14} />
           </RotateHandle>
           <ItemTools onPointerDown={(e) => e.stopPropagation()}>
-            <button type="button" title="На передній план" aria-label="На передній план" onClick={() => onFront(item.id)}>
+            <button type="button" title={i18n.t("ui.DecorLayer.naPeredniiPlan")} aria-label={i18n.t("ui.DecorLayer.naPeredniiPlan")} onClick={() => onFront(item.id)}>
               <FiArrowUp />
             </button>
-            <button type="button" title="Видалити" aria-label="Видалити декор" onClick={() => onRemove(item.id)}>
+            <button type="button" title={i18n.t("ui.DecorLayer.vydalyty")} aria-label={i18n.t("ui.DecorLayer.vydalytyDekor")} onClick={() => onRemove(item.id)}>
               <FiTrash2 />
             </button>
           </ItemTools>
@@ -389,12 +390,12 @@ const DecorLayer = () => {
     if (!file) return;
     const isVideo = file.type.startsWith("video/");
     if (!isVideo && !file.type.startsWith("image/")) {
-      setError("Оберіть фото, GIF або відео");
+      setError(i18n.t("ui.DecorLayer.oberitFotoGifAbo"));
       return;
     }
     const limit = isVideo ? MAX_DECOR_VIDEO_MB : MAX_DECOR_IMAGE_MB;
     if (file.size > limit * 1024 * 1024) {
-      setError(`Завеликий файл — максимум ${limit} МБ`);
+      setError(i18n.t("ui.DecorLayer.zavelykyiFailMaksymumMb", { limit: limit }));
       return;
     }
     setError("");
@@ -438,18 +439,18 @@ const DecorLayer = () => {
       )}
 
       {isDecoratorMode && (
-        <Toolbar role="toolbar" aria-label="Редагування Декоратора" data-decorator-ignore="true">
+        <Toolbar role="toolbar" aria-label={i18n.t("ui.DecorLayer.redahuvanniaDekoratora")} data-decorator-ignore="true">
           <span>
-            <b>Редагування</b> · клацніть елемент, щоб змінити стиль
-            {decorItems.length > 0 ? " · декор тягніть, розтягуйте й обертайте" : ""}
+            <b>{i18n.t("ui.DecorLayer.redahuvannia")}</b> {i18n.t("ui.DecorLayer.klatsnitElementShchobZminyty")}
+            {decorItems.length > 0 ? " " + i18n.t("ui.DecorLayer.dekorTiahnitRoztiahuiteI") : ""}
           </span>
           {error && <ToolError role="alert">{error}</ToolError>}
-          <ToolBtn title={`Фото або GIF до ${MAX_DECOR_IMAGE_MB} МБ, відео до ${MAX_DECOR_VIDEO_MB} МБ`}>
-            <FiImage /> Фото / відео
+          <ToolBtn title={i18n.t("ui.DecorLayer.fotoAboGifDo", { MAX_DECOR_IMAGE_MB: MAX_DECOR_IMAGE_MB, MAX_DECOR_VIDEO_MB: MAX_DECOR_VIDEO_MB })}>
+            <FiImage /> {i18n.t("ui.DecorLayer.fotoVideo")}
             <input type="file" accept="image/*,video/*" onChange={onFile} />
           </ToolBtn>
           <ToolBtn as="button" type="button" $primary onClick={() => setViewMode("view")}>
-            <FiCheck /> Готово
+            <FiCheck /> {i18n.t("ui.DecorLayer.hotovo")}
           </ToolBtn>
         </Toolbar>
       )}

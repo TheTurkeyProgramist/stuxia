@@ -85,6 +85,7 @@ import {
   MUTED_NEWS_MAX,
 } from "../../utils/muteSync";
 import { Tooltip } from "../Tooltip/Tooltip";
+import i18n from "../../i18n/i18n.js";
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -133,7 +134,7 @@ const RECOMMENDED_SOURCES = [
 // Facebook не підтримуємо: безкоштовно пости не віддає, тож замість стрічки показуємо підказку
 const FACEBOOK_QUERY = /facebook|фейсбук|fb\.com|fb\.me|\bfb\b|\bфб\b/i;
 const FACEBOOK_NOTE =
-  "🪦 Facebook — мертвий сад, з якого всі йдуть, а він ще й вимагає гроші за рекламу. Тому бундючна студія звідти й пішла. Шукай їх у YouTube, Telegram або Bluesky.";
+  () => (i18n.t("newsWeather.News.facebookMertvyiSadZ"));
 
 const UNBLOCKABLE_SOURCE_URLS = new Set(
   SOURCES.filter((s) => s.unblockable).map((s) => s.url),
@@ -1338,7 +1339,7 @@ const NewsCard = ({
         <BlockOverlay>
           <span style={{ fontSize: "40px", marginBottom: "10px" }}>🔒</span>
           <h4 style={{ margin: 0, fontSize: "14px", lineHeight: "1.4" }}>
-            Дана новина була неправомірна, і ви не можете її переглянути.
+            {i18n.t("newsWeather.News.danaNovynaBulaNepravomirna")}
           </h4>
         </BlockOverlay>
       </Card>
@@ -1358,7 +1359,7 @@ const NewsCard = ({
             <FiShield aria-hidden="true" />
           </span>
           <h4 style={{ margin: 0, fontSize: "14px", lineHeight: "1.4", background: "rgba(0,0,0,0.3)", padding: "5px 10px", borderRadius: "5px" }}>
-            Небажаний контент був автозаблокований
+            {i18n.t("newsWeather.News.nebazhanyiKontentBuvAvtozablokovanyi")}
           </h4>
           <span style={{ marginTop: "6px", fontSize: "12px", opacity: 0.85, background: "rgba(0,0,0,0.3)", padding: "3px 8px", borderRadius: "999px" }}>
             {item.autoBlockReason}
@@ -1379,7 +1380,7 @@ const NewsCard = ({
               fontWeight: "bold",
             }}
           >
-            Розглушити
+            {i18n.t("newsWeather.News.rozhlushyty")}
           </button>
         </BlockOverlay>
       </Card>
@@ -1396,7 +1397,7 @@ const NewsCard = ({
         <BlockOverlay style={{ background: "rgba(128, 128, 128, 0.5)" }}>
           <span style={{ fontSize: "30px", marginBottom: "10px", background: "rgba(0,0,0,0.3)", padding: "5px 10px", borderRadius: "5px" }}>🔇</span>
           <h4 style={{ margin: 0, fontSize: "14px", lineHeight: "1.4", background: "rgba(0,0,0,0.3)", padding: "5px 10px", borderRadius: "5px" }}>
-            Новину приховано.
+            {i18n.t("newsWeather.News.novynuPrykhovano")}
           </h4>
           <button
             onClick={(e) => {
@@ -1414,7 +1415,7 @@ const NewsCard = ({
               fontWeight: "bold",
             }}
           >
-            Розглушити
+            {i18n.t("newsWeather.News.rozhlushyty")}
           </button>
           {muteSyncInfo && (
             <MuteSyncHint
@@ -1422,8 +1423,8 @@ const NewsCard = ({
               style={{ marginTop: "8px", background: "rgba(0,0,0,0.35)", padding: "3px 8px", borderRadius: "999px" }}
             >
               {muteSyncInfo.used >= muteSyncInfo.limit
-                ? `Ліміт ${muteSyncInfo.limit}/${muteSyncInfo.limit} — зміни лише на цьому пристрої`
-                : `Синхронізація: ${muteSyncInfo.used}/${muteSyncInfo.limit} за добу`}
+                ? i18n.t("newsWeather.News.limitZminyLysheNa", { limit: muteSyncInfo.limit, limit2: muteSyncInfo.limit })
+                : i18n.t("newsWeather.News.synkhronizatsiiaZaDobu", { used: muteSyncInfo.used, limit: muteSyncInfo.limit })}
             </MuteSyncHint>
           )}
         </BlockOverlay>
@@ -1433,7 +1434,7 @@ const NewsCard = ({
 
   const copyLink = () =>
     navigator.clipboard.writeText(item.link).then(() => {
-      toast.success("Посилання скопійовано!");
+      toast.success(i18n.t("newsWeather.News.posylanniaSkopiiovano"));
     });
 
   // Пункти меню «Налаштування» — спільні для звичайної картки та компактного рядка
@@ -1446,13 +1447,13 @@ const NewsCard = ({
             setIsNewsSettingsOpen(false);
           }}
         >
-          <FiLink /> Копіювати
+          <FiLink /> {i18n.t("newsWeather.News.kopiiuvaty")}
         </NewsSettingsItem>
       )}
       <NewsSettingsItem
         $color={hasGeminiKey ? "#ff69b4" : "#888"}
         disabled={!hasGeminiKey}
-        title={hasGeminiKey ? "Прикріпити до ШІ-чату" : "Додайте Gemini API-ключ"}
+        title={hasGeminiKey ? i18n.t("newsWeather.News.prykripytyDoShiChatu") : i18n.t("newsWeather.News.dodaiteGeminiApiKliuch")}
         onClick={() => {
           if (!hasGeminiKey) return;
           const cleanText = (item.description || item.title).replace(/<[^>]*>?/gm, "").trim();
@@ -1462,14 +1463,14 @@ const NewsCard = ({
                 id: `news-${item.link}`,
                 type: "news",
                 title: item.title,
-                details: `Джерело: ${item.sourceName}. Заголовок: "${item.title}". Зміст: "${cleanText}". Посилання: ${item.link}`,
+                details: i18n.t("newsWeather.News.dzhereloZaholovokZmistPosylannia", { sourceName: item.sourceName, title: item.title, cleanText: cleanText, link: item.link }),
               },
             })
           );
           setIsNewsSettingsOpen(false);
         }}
       >
-        <FiPlus /> {compact ? "До ШІ" : "Прикріпити до ШІ"}
+        <FiPlus /> {compact ? i18n.t("newsWeather.News.doShi") : i18n.t("newsWeather.News.prykripytyDoShi")}
       </NewsSettingsItem>
       <NewsSettingsItem
         onClick={() => {
@@ -1477,7 +1478,7 @@ const NewsCard = ({
           setIsNewsSettingsOpen(false);
         }}
       >
-        <TbStarsFilled /> ШІ Виклад
+        <TbStarsFilled /> {i18n.t("newsWeather.News.shiVyklad")}
       </NewsSettingsItem>
       {!BUILTIN_SOURCE_NAMES.has(item.sourceName) && (
         <NewsSettingsItem
@@ -1487,7 +1488,7 @@ const NewsCard = ({
             setIsNewsSettingsOpen(false);
           }}
         >
-          <MdReport /> {compact ? "Скарга" : "Подати скаргу"}
+          <MdReport /> {compact ? i18n.t("newsWeather.News.skarha") : i18n.t("newsWeather.News.podatySkarhu")}
         </NewsSettingsItem>
       )}
       <NewsSettingsItem
@@ -1499,12 +1500,12 @@ const NewsCard = ({
           setIsNewsSettingsOpen(false);
         }}
       >
-        <MdOutlineReportOff /> Заглушити
+        <MdOutlineReportOff /> {i18n.t("newsWeather.News.zahlushyty")}
         {muteSyncInfo && !compact && (
           <MuteSyncHint $exhausted={muteSyncInfo.used >= muteSyncInfo.limit}>
             {muteSyncInfo.used >= muteSyncInfo.limit
-              ? "Лише на цьому пристрої"
-              : `Синхронізація ${muteSyncInfo.used}/${muteSyncInfo.limit}`}
+              ? i18n.t("newsWeather.News.lysheNaTsomuPrystroi")
+              : i18n.t("newsWeather.News.synkhronizatsiia", { used: muteSyncInfo.used, limit: muteSyncInfo.limit })}
           </MuteSyncHint>
         )}
       </NewsSettingsItem>
@@ -1534,12 +1535,12 @@ const NewsCard = ({
               $fallback={isFallbackImg}
               onError={handleImgError}
             />
-            {isVisible && <CompactNewBadge>Нове</CompactNewBadge>}
+            {isVisible && <CompactNewBadge>{i18n.t("newsWeather.News.nove")}</CompactNewBadge>}
           </CompactThumb>
         )}
         <CompactBody>
           <CompactSource $isDarkMode={$isDarkMode}>
-            {item.isUrgent && <UrgentTag>Терміново</UrgentTag>}
+            {item.isUrgent && <UrgentTag>{i18n.t("newsWeather.News.terminovo")}</UrgentTag>}
             {item.sourceName}
           </CompactSource>
           <CompactTitle title={item.title}>{item.title}</CompactTitle>
@@ -1547,7 +1548,7 @@ const NewsCard = ({
         <CompactMoreBtn
           type="button"
           $isDarkMode={$isDarkMode}
-          aria-label={isNewsSettingsOpen ? "Закрити дії з новиною" : "Дії з новиною"}
+          aria-label={isNewsSettingsOpen ? i18n.t("newsWeather.News.zakrytyDiiZNovynoiu") : i18n.t("newsWeather.News.diiZNovynoiu")}
           aria-expanded={isNewsSettingsOpen}
           onClick={(e) => {
             e.preventDefault();
@@ -1589,22 +1590,22 @@ const NewsCard = ({
           minHeight: "auto",
         }}
       >
-        {isVisible && <NewBadge>Нове</NewBadge>}
+        {isVisible && <NewBadge>{i18n.t("newsWeather.News.nove")}</NewBadge>}
         <SourceFlag
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             window.open(item.sourceHome, "_blank");
           }}
-          aria-label={`Перейти на головну сторінку ${item.sourceName}`}
+          aria-label={i18n.t("newsWeather.News.pereityNaHolovnuStorinku", { sourceName: item.sourceName })}
           title={item.sourceName}
         >
           {item.sourceName}
         </SourceFlag>
-        <CardActions aria-label="Дії з новиною">
-          <Tooltip content={isNewsSettingsOpen ? "Закрити налаштування" : "Налаштування"} isDarkMode={$isDarkMode}>
+        <CardActions aria-label={i18n.t("newsWeather.News.diiZNovynoiu")}>
+          <Tooltip content={isNewsSettingsOpen ? i18n.t("newsWeather.News.zakrytyNalashtuvannia") : i18n.t("newsWeather.News.nalashtuvannia")} isDarkMode={$isDarkMode}>
             <NewsSettingsBtn
-              aria-label="Налаштування картки новини"
+              aria-label={i18n.t("newsWeather.News.nalashtuvanniaKartkyNovyny")}
               aria-expanded={isNewsSettingsOpen}
               onClick={(e) => {
                 e.preventDefault();
@@ -1660,13 +1661,13 @@ const NewsCard = ({
                     lineHeight: "1.3",
                   }}
                 >
-                  {item.isUrgent && <UrgentTag>Терміново</UrgentTag>}
+                  {item.isUrgent && <UrgentTag>{i18n.t("newsWeather.News.terminovo")}</UrgentTag>}
                   {item.title}
                 </h2>
-                <Tooltip content="Копіювати шлях" isDarkMode={$isDarkMode}>
+                <Tooltip content={i18n.t("newsWeather.News.kopiiuvatyShliakh")} isDarkMode={$isDarkMode}>
                   <CopyLinkBtn
                     type="button"
-                    aria-label="Копіювати шлях до новини"
+                    aria-label={i18n.t("newsWeather.News.kopiiuvatyShliakhDoNovyny")}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -2416,8 +2417,8 @@ const fetchTelegramFeed = async (source) => {
       const html = await fetchWithProxyFallback(url);
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, "text/html");
-      const title = doc.querySelector(".tgme_page_title")?.textContent?.trim() || "Приватний Telegram";
-      const desc = doc.querySelector(".tgme_page_description")?.textContent?.trim() || "Приватний канал або група.";
+      const title = doc.querySelector(".tgme_page_title")?.textContent?.trim() || i18n.t("newsWeather.News.pryvatnyiTelegram");
+      const desc = doc.querySelector(".tgme_page_description")?.textContent?.trim() || i18n.t("newsWeather.News.pryvatnyiKanalAboHrupa");
       const avatarEl = doc.querySelector(".tgme_page_photo_image");
       const avatar = avatarEl ? avatarEl.getAttribute("src") : "";
       
@@ -2425,7 +2426,7 @@ const fetchTelegramFeed = async (source) => {
         status: "ok",
         items: [{
           title: title,
-          description: `${desc}\n\nНадіслати контент / Приєднатися:\n${url}`,
+          description: i18n.t("newsWeather.News.nadislatyKontentPryiednatysia", { desc: desc, url: url }),
           link: url,
           pubDate: new Date().toISOString(),
           thumbnail: avatar || "",
@@ -2440,8 +2441,8 @@ const fetchTelegramFeed = async (source) => {
       return {
         status: "ok",
         items: [{
-          title: "Приватний Telegram Канал",
-          description: `Це приватний Telegram канал. Приєднайтеся за посиланням для перегляду:\n${url}`,
+          title: i18n.t("newsWeather.News.pryvatnyiTelegramKanal"),
+          description: i18n.t("newsWeather.News.tsePryvatnyiTelegramKanal", { url: url }),
           link: url,
           pubDate: new Date().toISOString(),
           thumbnail: "",
@@ -2472,7 +2473,7 @@ const fetchTelegramFeed = async (source) => {
       const textEl = msg.querySelector(".tgme_widget_message_text");
       const text = textEl ? textEl.innerHTML : "";
       
-      const title = textEl ? cleanTelegramText(text).substring(0, 100) : "Повідомлення";
+      const title = textEl ? cleanTelegramText(text).substring(0, 100) : i18n.t("newsWeather.News.povidomlennia");
       const linkEl = msg.querySelector(".tgme_widget_message_date");
       const link = linkEl ? linkEl.getAttribute("href") : home;
       
@@ -2488,8 +2489,8 @@ const fetchTelegramFeed = async (source) => {
       }
       
       items.push({
-        title: title || "Новий допис",
-        description: text ? cleanTelegramText(text) : "Перегляньте допис у Telegram.",
+        title: title || i18n.t("newsWeather.News.novyiDopys"),
+        description: text ? cleanTelegramText(text) : i18n.t("newsWeather.News.perehlianteDopysUTelegram"),
         link: link,
         pubDate: date,
         thumbnail: image || channelImage || "",
@@ -2517,7 +2518,7 @@ const fetchTelegraphFeed = async (source) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
     
-    const title = doc.querySelector("header h1")?.textContent?.trim() || doc.querySelector("title")?.textContent || "Telegraph стаття";
+    const title = doc.querySelector("header h1")?.textContent?.trim() || doc.querySelector("title")?.textContent || i18n.t("newsWeather.News.telegraphStattia");
     const author = doc.querySelector("header address a")?.textContent || "Telegraph";
     
     const imgEl = doc.querySelector("article img");
@@ -2525,7 +2526,7 @@ const fetchTelegraphFeed = async (source) => {
     const absoluteImage = image ? (image.startsWith("http") ? image : `https://telegra.ph${image}`) : "";
     
     const paragraphs = Array.from(doc.querySelectorAll("article p")).map(p => p.textContent).join("\n\n");
-    const cleanDesc = paragraphs || "Читати повну статтю на Telegraph.";
+    const cleanDesc = paragraphs || i18n.t("newsWeather.News.chytatyPovnuStattiuNa");
     
     return {
       status: "ok",
@@ -2571,9 +2572,9 @@ const fetchHiveFeed = async (source) => {
       const doc = parser.parseFromString(html, "text/html");
       
       const title = doc.querySelector('meta[property="og:title"]')?.getAttribute("content") || 
-                    doc.querySelector(".title_wrap .title")?.textContent?.trim() || "Допис у Hive";
+                    doc.querySelector(".title_wrap .title")?.textContent?.trim() || i18n.t("newsWeather.News.dopysUHive");
       const desc = doc.querySelector('meta[property="og:description"]')?.getAttribute("content") || 
-                   doc.querySelector(".post_cont")?.textContent?.trim().substring(0, 300) || "Деталі допису у спільноті Hive.";
+                   doc.querySelector(".post_cont")?.textContent?.trim().substring(0, 300) || i18n.t("newsWeather.News.detaliDopysuUSpilnoti");
       const image = doc.querySelector('meta[property="og:image"]')?.getAttribute("content") || 
                     doc.querySelector(".post_cont img")?.getAttribute("src") || "";
       
@@ -2658,7 +2659,7 @@ const fetchHiveFeed = async (source) => {
       
       items.push({
         title: title,
-        description: description || "Перегляньте допис у спільноті Hive.",
+        description: description || i18n.t("newsWeather.News.perehlianteDopysUSpilnoti"),
         link: absoluteLink,
         pubDate: date,
         thumbnail: image || "",
@@ -2684,7 +2685,7 @@ const fetchHiveFeed = async (source) => {
       const title = doc.querySelector('meta[property="og:title"]')?.getAttribute("content") || 
                     doc.querySelector(".board_cmm .title")?.textContent?.trim() || `Hive Board ${boardIdx}`;
       const desc = doc.querySelector('meta[property="og:description"]')?.getAttribute("content") || 
-                   "Перегляньте дописи у спільноті Hive.";
+                   i18n.t("newsWeather.News.perehlianteDopysyUSpilnoti");
       const image = doc.querySelector('meta[property="og:image"]')?.getAttribute("content") || "";
       
       return {
@@ -3117,7 +3118,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             blockedSourcesArr.push({
               id: docSnap.id,
               url: decodeURIComponent(docSnap.id),
-              name: data.name || "Джерело",
+              name: data.name || i18n.t("newsWeather.News.dzherelo"),
             });
             bSourcesList.push(decodeURIComponent(docSnap.id));
           }
@@ -3207,7 +3208,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         }
 
         if (!feedItems) {
-          throw new Error("Ні rss2json, ні Cloudflare не віддали стрічку");
+          throw new Error(i18n.t("newsWeather.News.niRss2jsonNiCloudflare"));
         }
 
         return withSourceInfo(feedItems, source);
@@ -3278,7 +3279,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       if (allItems.length === 0) {
         if (isMounted.current) {
           // Перелік недоступних джерел — лише в консолі (console.warn вище)
-          setLoadError("Новини тимчасово недоступні.");
+          setLoadError(i18n.t("newsWeather.News.novynyTymchasovoNedostupni"));
           setHasError(true);
           setLoadProgress(100);
           setLoading(false);
@@ -3448,7 +3449,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       }
       console.error("Справжня помилка завантаження:", e);
       if (isMounted.current) {
-        setLoadError("Новини тимчасово недоступні.");
+        setLoadError(i18n.t("newsWeather.News.novynyTymchasovoNedostupni"));
         setHasError(true);
         setLoadProgress(100);
         if (showLoader) {
@@ -3741,7 +3742,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     
     const feedsLimit = getCustomFeedsLimit();
     if (customSources.length >= feedsLimit) {
-      alert(`Ви досягли ліміту! Можна додати не більше ${feedsLimit} власних джерел. Видаліть одну зі стрічок, щоб додати нову.`);
+      alert(i18n.t("newsWeather.News.vyDosiahlyLimituMozhna", { feedsLimit: feedsLimit }));
       return;
     }
 
@@ -3775,14 +3776,14 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       const type = getSourceType(resolvedUrl);
       
       if (type === "youtube") {
-        alert("Здійснюється пошук ID YouTube каналу...");
+        alert(i18n.t("newsWeather.News.zdiisniuietsiaPoshukIdYoutube"));
         const channelId = await resolveYoutubeChannelId(resolvedUrl);
         if (channelId) {
           resolvedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
           name = `YouTube: ${domain}`;
           flag = <FaYoutube/>;
         } else {
-          alert("Не вдалося знайти ID YouTube каналу. Стрічка не буде додана.");
+          alert(i18n.t("newsWeather.News.neVdalosiaZnaityId"));
           return;
         }
       } else if (type === "telegram") {
@@ -3823,7 +3824,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       const saved = (await localforage.getItem("custom_news_sources")) || [];
       if (!saved.find((s) => s.url === resolvedUrl)) {
         if (saved.length >= getCustomFeedsLimit()) {
-          alert(`Ви досягли ліміту! Можна додати не більше ${getCustomFeedsLimit()} власних джерел. Видаліть одну зі стрічок, щоб додати нову.`);
+          alert(i18n.t("newsWeather.News.vyDosiahlyLimituMozhna2", { v0: getCustomFeedsLimit() }));
           return;
         }
         const updated = [...saved, newSource];
@@ -3834,12 +3835,12 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         setIsSearchActive(false);
         getData(true);
       } else {
-        alert("Це джерело вже додано.");
+        alert(i18n.t("newsWeather.News.tseDzhereloVzheDodano"));
       }
     } catch (e) {
       console.error(e);
       alert(
-        "Невірний формат URL. Введіть правильне посилання (наприклад, t.me/channel_name, youtube.com/@handle або rss-link)",
+        i18n.t("newsWeather.News.nevirnyiFormatUrlVvedit"),
       );
     }
   };
@@ -3849,13 +3850,13 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     e.stopPropagation();
 
     if (!user) {
-      alert("Тільки авторизовані користувачі можуть залишати скарги.");
+      alert(i18n.t("newsWeather.News.tilkyAvtoryzovaniKorystuvachiMozhut"));
       return;
     }
 
     if (
       !window.confirm(
-        "Ви дійсно хочете поскаржитися на цю новину? (Якщо скарг буде багато, вона буде заблокована)",
+        i18n.t("newsWeather.News.vyDiisnoKhochetePoskarzhytysia"),
       )
     )
       return;
@@ -3866,7 +3867,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       const firebaseUser = auth.currentUser;
       // Скарги лише від справжніх акаунтів: анонімні входи сервер відхиляє
       if (!firebaseUser || firebaseUser.isAnonymous) {
-        alert("Щоб поскаржитися, увійдіть в акаунт ще раз.");
+        alert(i18n.t("newsWeather.News.shchobPoskarzhytysiaUviiditV"));
         return;
       }
       const reportUid = firebaseUser.uid;
@@ -3884,7 +3885,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         getDoc(configRef),
       ]);
       if (reportedWithinDay(newsDoc.exists() ? newsDoc.data() : null, reportUid)) {
-        alert("Ви вже скаржилися на цю новину сьогодні.");
+        alert(i18n.t("newsWeather.News.vyVzheSkarzhylysiaNa"));
         return;
       }
       // Добовий ліміт скарг на акаунт (перевіряють і правила Firestore)
@@ -3893,7 +3894,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         CLOUD_LIMITS.reports,
       );
       if (reportsUsed >= CLOUD_LIMITS.reports.limit) {
-        alert(`Можна подати не більше ${CLOUD_LIMITS.reports.limit} скарг на добу.`);
+        alert(i18n.t("newsWeather.News.mozhnaPodatyNeBilshe", { limit: CLOUD_LIMITS.reports.limit }));
         return;
       }
 
@@ -3908,7 +3909,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           {
             reporters: { [reportUid]: serverTimestamp() },
             // Назву джерела записуємо лише один раз, при першій скарзі
-            ...(rssData?.name ? {} : { name: String(item.sourceName || "Джерело").slice(0, 100) }),
+            ...(rssData?.name ? {} : { name: String(item.sourceName || i18n.t("newsWeather.News.dzherelo")).slice(0, 100) }),
           },
           { merge: true },
         );
@@ -3923,11 +3924,11 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       );
       await batch.commit();
 
-      alert("Скаргу прийнято. Дякуємо!");
+      alert(i18n.t("newsWeather.News.skarhuPryiniatoDiakuiemo"));
       getData(true, true);
     } catch (err) {
       console.warn("Помилка відправки скарги:", err);
-      alert("Помилка відправки скарги.");
+      alert(i18n.t("newsWeather.News.pomylkaVidpravkySkarhy"));
     }
   };
 
@@ -3971,14 +3972,14 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         await localforage.removeItem(MUTE_PENDING_KEY);
         if (result.count === MUTE_SYNC_DAILY_LIMIT) {
           toast(
-            `Використано всі ${MUTE_SYNC_DAILY_LIMIT} синхронізацій на сьогодні. Далі зміни зберігатимуться лише на цьому пристрої.`,
+            i18n.t("newsWeather.News.vykorystanoVsiSynkhronizatsiiNa", { MUTE_SYNC_DAILY_LIMIT: MUTE_SYNC_DAILY_LIMIT }),
             { id: "mute-sync-limit", duration: 4500 },
           );
         }
       } else {
         await savePending();
         toast(
-          `Ліміт синхронізації вичерпано (${MUTE_SYNC_DAILY_LIMIT}/${MUTE_SYNC_DAILY_LIMIT} за добу). Зміну збережено лише на цьому пристрої.`,
+          i18n.t("newsWeather.News.limitSynkhronizatsiiVycherpanoZa", { MUTE_SYNC_DAILY_LIMIT: MUTE_SYNC_DAILY_LIMIT, MUTE_SYNC_DAILY_LIMIT2: MUTE_SYNC_DAILY_LIMIT }),
           { id: "mute-sync-limit", duration: 4500 },
         );
       }
@@ -4005,7 +4006,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   };
 
   const handleRemoveSource = async (urlToRemove) => {
-    if (!window.confirm("Видалити це джерело новин?")) return;
+    if (!window.confirm(i18n.t("newsWeather.News.vydalytyTseDzhereloNovyn"))) return;
     try {
       const saved = (await localforage.getItem("custom_news_sources")) || [];
       const updated = saved.filter((s) => s.url !== urlToRemove);
@@ -4018,7 +4019,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       getData(true);
     } catch (err) {
       console.error("Localforage error:", err);
-      alert("Помилка видалення джерела.");
+      alert(i18n.t("newsWeather.News.pomylkaVydalenniaDzherela"));
     }
   };
   const layout = user?.newsLayout || [];
@@ -4044,9 +4045,9 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             ref={(el) => registerRef('newsHeader', el)}
             style={{ marginLeft: "5px", padding: "2px", fontSize: "15px", fontWeight: "600" }}
           >
-            Новини світу та клімату!
-            <FilteredInTitle title={`За сьогодні фільтр сховав небажаних новин: ${filteredNewsCount}`}>
-              {" "}(сьогодні сховано: {filteredNewsCount})
+            {i18n.t("newsWeather.News.novynySvituTaKlimatu")}
+            <FilteredInTitle title={i18n.t("newsWeather.News.zaSohodniFiltrSkhovav", { filteredNewsCount: filteredNewsCount })}>
+              {" "}{i18n.t("newsWeather.News.sohodniSkhovano")} {filteredNewsCount})
             </FilteredInTitle>
           </span>
         </AihelpTitle>
@@ -4063,14 +4064,14 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                   $isDarkMode={$isDarkMode}
                   onClick={() => setIsHelpModalOpen(true)}
                 >
-                  Інструкція
+                  {i18n.t("newsWeather.News.instruktsiia")}
                 </FilterBtn>
                 <FilterBtn
                   $isDarkMode={$isDarkMode}
                   $active={filterSources.includes("all")}
                   onClick={() => handleToggleFilter("all")}
                 >
-                  {filterSources.includes("all") ? "☑" : "☐"} Усі
+                  {filterSources.includes("all") ? "☑" : "☐"} {i18n.t("newsWeather.News.usi")}
                 </FilterBtn>
                 {SOURCES.map((s) => (
                   <FilterBtn
@@ -4100,7 +4101,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                         color: "#ff4d4d",
                         fontWeight: "bold",
                       }}
-                      aria-label="Видалити джерело"
+                      aria-label={i18n.t("newsWeather.News.vydalytyDzherelo")}
                     >
                       ×
                     </span>
@@ -4112,7 +4113,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                     onClick={() => setIsAddingSource(!isAddingSource)}
                     style={{ borderStyle: "dashed" }}
                   >
-                    {isAddingSource ? "Скасувати" : "Додати стрічку"}
+                    {isAddingSource ? i18n.t("newsWeather.News.skasuvaty") : i18n.t("newsWeather.News.dodatyStrichku")}
                   </FilterBtn>
                 )}
                 <FilterBtn
@@ -4124,7 +4125,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                     color: "#ff4d4d",
                   }}
                 >
-                  Чорний список ({blockedSources.length})
+                  {i18n.t("newsWeather.News.chornyiSpysok")}{blockedSources.length})
                 </FilterBtn>
               </FilterContainer>
               <AnimatePresence>
@@ -4146,7 +4147,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                         type="text"
                         value={newUrl}
                         onChange={(e) => setNewUrl(e.target.value)}
-                        placeholder="Введіть URL RSS (Н-д: https://rss.com/day)"
+                        placeholder={i18n.t("newsWeather.News.vveditUrlRssN")}
                         style={{
                           padding: "5px",
                           borderRadius: "5px",
@@ -4165,7 +4166,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                         onClick={handleAddSource}
                         style={{ background: "#ffb36c", color: "#000" }}
                       >
-                        Додати
+                        {i18n.t("newsWeather.News.dodaty")}
                       </FilterBtn>
                     </div>
                   </motion.div>
@@ -4191,8 +4192,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             }}
           >
             {hasError
-              ? "Помилка завантаження!"
-              : `Шукаємо цікаві новини: ${loadProgress}%`}
+              ? i18n.t("newsWeather.News.pomylkaZavantazhennia")
+              : i18n.t("newsWeather.News.shukaiemoTsikaviNovyny", { loadProgress: loadProgress })}
           </div>
           <ProgressBar $isDarkMode={$isDarkMode}>
             <ProgressBarFill $progress={loadProgress} $isError={hasError} />
@@ -4261,13 +4262,13 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
               }
             >
               <FiPlus aria-hidden="true" />
-              Додати стрічку
+              {i18n.t("newsWeather.News.dodatyStrichku")}
             </MoreNewsButton>
             <MoreNewsButton $isDarkMode={$isDarkMode} onClick={() => setShowMoreNews(true)}>
               <FiList aria-hidden="true" />
-              Всі новини
+              {i18n.t("newsWeather.News.vsiNovyny")}
               {moreNewsCount > 0 && (
-                <MoreNewsCount aria-label={`${moreNewsCount} новин`}>
+                <MoreNewsCount aria-label={i18n.t("newsWeather.News.novyn", { moreNewsCount: moreNewsCount })}>
                   {moreNewsCount}
                 </MoreNewsCount>
               )}
@@ -4279,8 +4280,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
           {hasError
             ? loadError
             : items.length === 0
-              ? "Усі отримані новини приховані фільтром вмісту."
-              : "Для обраних джерел поки немає новин."}
+              ? i18n.t("newsWeather.News.usiOtrymaniNovynyPrykhovani")
+              : i18n.t("newsWeather.News.dliaObranykhDzherelPoky")}
         </div>
       )}
 
@@ -4298,7 +4299,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         <InfoModal
           isOpen={isHelpModalOpen}
           onClose={() => setIsHelpModalOpen(false)}
-          initialFaqQuestion="Новини: покроковий посібник"
+          initialFaqQuestion={i18n.t("newsWeather.News.novynyPokrokovyiPosibnyk")}
         />
       )}
       {/* Відкривається з Налаштувань, тож у body і вище за вікно налаштувань (z-index 100001+) */}
@@ -4309,13 +4310,12 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
             onClick={(e) => e.stopPropagation()}
           >
             <CloseButton onClick={() => setShowBlacklist(false)}>✕</CloseButton>
-            <h2 style={{ marginTop: 0 }}>Чорний список (карантин 24 год)</h2>
+            <h2 style={{ marginTop: 0 }}>{i18n.t("newsWeather.News.chornyiSpysokKarantyn24")}</h2>
             <p style={{ fontSize: "13px" }}>
-              Ці RSS-джерела отримали багато скарг і відключені для
-              всіх користувачів.
+              {i18n.t("newsWeather.News.tsiRssDzherelaOtrymaly")}
             </p>
             {blockedSources.length === 0 ? (
-              <p>Наразі немає заблокованих джерел.</p>
+              <p>{i18n.t("newsWeather.News.naraziNemaieZablokovanykhDzherel")}</p>
             ) : (
               <ul style={{ paddingLeft: "20px", marginTop: "15px" }}>
                 {blockedSources.map((s) => (
@@ -4361,19 +4361,19 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                     <FiList />
                   </MoreNewsHeaderIcon>
                   <MoreNewsHeaderText $isDarkMode={$isDarkMode}>
-                    <h2>Всі новини</h2>
+                    <h2>{i18n.t("newsWeather.News.vsiNovyny")}</h2>
                     <p>
-                      {moreNewsCount} новин · {moreGroups.length} джерел
+                      {moreNewsCount} {i18n.t("newsWeather.News.novyn2")} {moreGroups.length} {i18n.t("newsWeather.News.dzherel")}
                       {lastUpdated &&
-                        ` · оновлено о ${lastUpdated.toLocaleTimeString("uk-UA", {
+                        " " + i18n.t("newsWeather.News.onovlenoO", { lastUpdated: lastUpdated.toLocaleTimeString("uk-UA", {
                           hour: "2-digit",
                           minute: "2-digit",
-                        })}`}
+                        }) })}
                     </p>
                   </MoreNewsHeaderText>
                   <MoreNewsClose $isDarkMode={$isDarkMode}
                     type="button"
-                    aria-label="Закрити «Всі новини»"
+                    aria-label={i18n.t("newsWeather.News.zakrytyVsiNovyny")}
                     onClick={() => setShowMoreNews(false)}
                   >
                     <MdClose aria-hidden="true" />
@@ -4381,12 +4381,12 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                 </MoreNewsHeader>
                 {isMoreNewsLoading && (
                   <p role="status" style={{ margin: "0 0 12px", fontSize: "13px", opacity: 0.85 }}>
-                    Підвантажуємо ще {moreNews.pending.length} новин…
+                    {i18n.t("newsWeather.News.pidvantazhuiemoShche")} {moreNews.pending.length} {i18n.t("newsWeather.News.novyn3")}
                   </p>
                 )}
                 {moreGroups.length === 0 ? (
                   <p style={{ margin: "20px 0", textAlign: "center", opacity: 0.8 }}>
-                    Для обраних джерел поки немає новин.
+                    {i18n.t("newsWeather.News.dliaObranykhDzherelPoky")}
                   </p>
                 ) : (
                   moreGroups.map((group) => (
@@ -4450,8 +4450,8 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                     $full={customSources.length >= getCustomFeedsLimit()}
                     placeholder={
                       customSources.length >= getCustomFeedsLimit()
-                        ? `Досягнуто ліміту: ${getCustomFeedsLimit()} стрічок. Видаліть одну (×), щоб додати нову`
-                        : "Додати стрічку: назва сайту або посилання (RSS, YouTube, Telegram, Mastodon, Bluesky, Hive)"
+                        ? i18n.t("newsWeather.News.dosiahnutoLimituStrichokVydalit", { v0: getCustomFeedsLimit() })
+                        : i18n.t("newsWeather.News.dodatyStrichkuNazvaSaitu")
                     }
                   />
                   <AnimatePresence initial={false}>
@@ -4460,10 +4460,10 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                         <FeedsWarning role="status" $full={customSources.length >= getCustomFeedsLimit()}>
                           <FiAlertTriangle aria-hidden="true" />
                           <span>
-                            Стрічок: <strong>{customSources.length} з {getCustomFeedsLimit()}</strong>.{" "}
+                            {i18n.t("newsWeather.News.strichok")} <strong>{customSources.length} {i18n.t("newsWeather.News.z")} {getCustomFeedsLimit()}</strong>.{" "}
                             {customSources.length >= getCustomFeedsLimit()
-                              ? "Це максимум — видаліть одну (×), щоб додати нову."
-                              : "Кожна стрічка — ще один запит при оновленні, тож що більше стрічок, то повільніше завантажуються новини."}
+                              ? i18n.t("newsWeather.News.tseMaksymumVydalitOdnu")
+                              : i18n.t("newsWeather.News.kozhnaStrichkaShcheOdyn")}
                           </span>
                         </FeedsWarning>
                       </motion.div>
@@ -4486,13 +4486,13 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                               lineHeight: 1.5,
                             }}
                           >
-                            {FACEBOOK_NOTE}
+                            {FACEBOOK_NOTE()}
                           </div>
                         )}
                         {newUrl.trim() && !FACEBOOK_QUERY.test(newUrl) && (
                           <RecoItem onClick={() => handleAddSource()}>
                             <FiPlus />
-                            Додати «{newUrl.trim().length > 40 ? newUrl.trim().slice(0, 40) + "…" : newUrl.trim()}»
+                            {i18n.t("newsWeather.News.dodaty2")}{newUrl.trim().length > 40 ? newUrl.trim().slice(0, 40) + "…" : newUrl.trim()}»
                           </RecoItem>
                         )}
                         {RECOMMENDED_SOURCES.filter((r) => {
@@ -4514,7 +4514,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                               <SourceLogo name={r.name} url={r.url} home={r.home} size={36} />
                               {r.name}
                               {brand.domain && <small>{brand.domain}</small>}
-                              {added && <span style={{ fontSize: "11px" }}>✓ Додано</span>}
+                              {added && <span style={{ fontSize: "11px" }}>{i18n.t("newsWeather.News.dodano")}</span>}
                             </RecoItem>
                           );
                         })}
@@ -4549,7 +4549,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                             fontWeight: "bold",
                             cursor: "pointer",
                           }}
-                          aria-label="Видалити джерело"
+                          aria-label={i18n.t("newsWeather.News.vydalytyDzherelo")}
                         >
                           ×
                         </span>
@@ -4565,7 +4565,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                       }}
                     >
                       <MdBlock />
-                      Чорний список ({blockedSources.length})
+                      {i18n.t("newsWeather.News.chornyiSpysok")}{blockedSources.length})
                     </SourceTile>
                   </SourceTileGrid>
                     </motion.div>

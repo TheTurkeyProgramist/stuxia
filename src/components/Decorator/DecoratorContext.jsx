@@ -10,6 +10,7 @@ import DecoratorRuntime from "./DecoratorRuntime.jsx";
 import DecoratorDraftPrompt from "./DecoratorDraftPrompt.jsx";
 import DecorLayer from "./DecorLayer.jsx";
 
+import i18n from "../../i18n/i18n.js";
 export const DecoratorContext = createContext();
 
 export const useDecorator = () => useContext(DecoratorContext);
@@ -82,10 +83,10 @@ export const CUBE_DEFAULT_FILL = "inherit";
 // Куди зсунута задня грань. Каркас малюємо для «вгору-праворуч», решту — віддзеркаленням.
 // box — де ::before виходить за кнопку, flip — дзеркало, shift — куди «заходить» кнопка на ховері
 export const CUBE_DIRECTIONS = {
-  "up-right": { label: "Вгору-праворуч", box: ["top", "right"], flip: "none", shift: [1, -1] },
-  "up-left": { label: "Вгору-ліворуч", box: ["top", "left"], flip: "scaleX(-1)", shift: [-1, -1] },
-  "down-right": { label: "Вниз-праворуч", box: ["bottom", "right"], flip: "scaleY(-1)", shift: [1, 1] },
-  "down-left": { label: "Вниз-ліворуч", box: ["bottom", "left"], flip: "scale(-1, -1)", shift: [-1, 1] },
+  "up-right": { get label() { return i18n.t("ui.DecoratorContext.vhoruPravoruch"); }, box: ["top", "right"], flip: "none", shift: [1, -1] },
+  "up-left": { get label() { return i18n.t("ui.DecoratorContext.vhoruLivoruch"); }, box: ["top", "left"], flip: "scaleX(-1)", shift: [-1, -1] },
+  "down-right": { get label() { return i18n.t("ui.DecoratorContext.vnyzPravoruch"); }, box: ["bottom", "right"], flip: "scaleY(-1)", shift: [1, 1] },
+  "down-left": { get label() { return i18n.t("ui.DecoratorContext.vnyzLivoruch"); }, box: ["bottom", "left"], flip: "scale(-1, -1)", shift: [-1, 1] },
 };
 
 /*

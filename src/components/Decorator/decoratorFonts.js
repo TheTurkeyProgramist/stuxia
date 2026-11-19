@@ -4,27 +4,28 @@
 import { STYKHIIA_FONTS } from "../../utils/stykhiiaFont";
 import { ensureFontPack, fontPackStack } from "../../utils/customFonts";
 
+import i18n from "../../i18n/i18n.js";
 export const SYSTEM_FONT_STACK =
   'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 // Google Fonts з кирилицею (українські літери є в усіх)
 export const GOOGLE_FONTS = [
-  { name: "Unbounded", hint: "Широкий сучасний — для заголовків", fallback: "sans-serif" },
-  { name: "Montserrat", hint: "Геометричний, універсальний", fallback: "sans-serif" },
-  { name: "Inter", hint: "Чіткий для інтерфейсів", fallback: "sans-serif" },
-  { name: "Roboto", hint: "Класичний Android", fallback: "sans-serif" },
-  { name: "Rubik", hint: "Злегка заокруглений", fallback: "sans-serif" },
-  { name: "Comfortaa", hint: "Круглий і м'який", fallback: "sans-serif" },
-  { name: "Exo 2", hint: "Технологічний, футуристичний", fallback: "sans-serif" },
-  { name: "Oswald", hint: "Вузький, щільний", fallback: "sans-serif" },
-  { name: "Russo One", hint: "Масивний, спортивний", fallback: "sans-serif" },
-  { name: "Playfair Display", hint: "Елегантний із засічками", fallback: "serif" },
-  { name: "PT Serif", hint: "Книжковий із засічками", fallback: "serif" },
-  { name: "Caveat", hint: "Рукописний", fallback: "cursive" },
-  { name: "Marck Script", hint: "Каліграфічний", fallback: "cursive" },
-  { name: "Amatic SC", hint: "Тонкий рукописний, капітель", fallback: "cursive" },
-  { name: "Press Start 2P", hint: "Піксельний, як у старих іграх", fallback: "monospace" },
-  { name: "JetBrains Mono", hint: "Моноширинний для коду", fallback: "monospace" },
+  { name: "Unbounded", get hint() { return i18n.t("ui.decoratorFonts.shyrokyiSuchasnyiDliaZaholovkiv"); }, fallback: "sans-serif" },
+  { name: "Montserrat", get hint() { return i18n.t("ui.decoratorFonts.heometrychnyiUniversalnyi"); }, fallback: "sans-serif" },
+  { name: "Inter", get hint() { return i18n.t("ui.decoratorFonts.chitkyiDliaInterfeisiv"); }, fallback: "sans-serif" },
+  { name: "Roboto", get hint() { return i18n.t("ui.decoratorFonts.klasychnyiAndroid"); }, fallback: "sans-serif" },
+  { name: "Rubik", get hint() { return i18n.t("ui.decoratorFonts.zlehkaZaokruhlenyi"); }, fallback: "sans-serif" },
+  { name: "Comfortaa", get hint() { return i18n.t("ui.decoratorFonts.kruhlyiIMiakyi"); }, fallback: "sans-serif" },
+  { name: "Exo 2", get hint() { return i18n.t("ui.decoratorFonts.tekhnolohichnyiFuturystychnyi"); }, fallback: "sans-serif" },
+  { name: "Oswald", get hint() { return i18n.t("ui.decoratorFonts.vuzkyiShchilnyi"); }, fallback: "sans-serif" },
+  { name: "Russo One", get hint() { return i18n.t("ui.decoratorFonts.masyvnyiSportyvnyi"); }, fallback: "sans-serif" },
+  { name: "Playfair Display", get hint() { return i18n.t("ui.decoratorFonts.elehantnyiIzZasichkamy"); }, fallback: "serif" },
+  { name: "PT Serif", get hint() { return i18n.t("ui.decoratorFonts.knyzhkovyiIzZasichkamy"); }, fallback: "serif" },
+  { name: "Caveat", get hint() { return i18n.t("ui.decoratorFonts.rukopysnyi"); }, fallback: "cursive" },
+  { name: "Marck Script", get hint() { return i18n.t("ui.decoratorFonts.kalihrafichnyi"); }, fallback: "cursive" },
+  { name: "Amatic SC", get hint() { return i18n.t("ui.decoratorFonts.tonkyiRukopysnyiKapitel"); }, fallback: "cursive" },
+  { name: "Press Start 2P", get hint() { return i18n.t("ui.decoratorFonts.pikselnyiIakUStarykh"); }, fallback: "monospace" },
+  { name: "JetBrains Mono", get hint() { return i18n.t("ui.decoratorFonts.monoshyrynnyiDliaKodu"); }, fallback: "monospace" },
 ];
 
 const cleanName = (name) => (name || "").replace(/["'<>\\;{}]/g, "").trim();

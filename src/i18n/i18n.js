@@ -39,11 +39,41 @@ const lazyLocalesBackend = {
 };
 
 // Вибрана мова зберігається в localforage (через prefsStore), а не в localStorage
+export const LANG_CHOSEN_KEY = 'i18nLangChosen';
+
+/** Мова, яку людина вибрала сама (у вікні мов). */
+export const saveChosenLanguage = (lng) => {
+  setPref('i18nextLng', lng);
+  setPref(LANG_CHOSEN_KEY, '1');
+};
+
 const languageDetector = new LanguageDetector();
 languageDetector.addDetector({
   name: 'prefs',
-  lookup: () => getPref('i18nextLng') || undefined,
-  cacheUserLanguage: (lng) => setPref('i18nextLng', lng),
+  lookup: () => {
+    const saved = getPref('i18nextLng');
+    if (!saved) return undefined;
+    // Раніше «uk» записувалось кожному відвідувачу автоматично — таке не вважаємо вибором
+    if (saved === 'uk' && getPref(LANG_CHOSEN_KEY) !== '1') return undefined;
+    return saved;
+  },
+});
+
+// Перший вхід: перша мова браузера, яку підтримує сайт; якщо жодної — англійська
+languageDetector.addDetector({
+  name: 'browser',
+  lookup: () => {
+    if (typeof navigator === 'undefined') return undefined;
+    const list = navigator.languages?.length ? navigator.languages : [navigator.language];
+    for (const tag of list) {
+      const lower = String(tag || '').toLowerCase();
+      // Російська з Білорусі (ru-BY) — білоруська
+      if (lower === 'ru-by') return 'be';
+      const code = lower.split('-')[0];
+      if (supportedLanguages.includes(code)) return code;
+    }
+    return 'en';
+  },
 });
 
 i18n
@@ -58,10 +88,11 @@ i18n
     load: 'languageOnly',
     react: { useSuspense: false },
     interpolation: { escapeValue: false },
-    // Мову браузера не беремо: за замовчуванням українська, інша — лише якщо людина сама її вибрала
+    // Спершу мова, яку людина вибрала сама; інакше — мова браузера.
+    // Автовизначену мову не запам'ятовуємо: зміниться мова браузера — зміниться й сайт.
     detection: {
-      order: ['prefs'],
-      caches: ['prefs'],
+      order: ['prefs', 'browser'],
+      caches: [],
     },
   });
 

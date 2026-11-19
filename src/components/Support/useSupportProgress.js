@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MONTHLY_GOAL, getRaisedThisMonth } from "./supportConfig";
 
+import i18n from "../../i18n/i18n.js";
 const PATH = "/api/support-progress";
 const REFRESH_MS = 2 * 60 * 1000; // сервер кешує на 2 хв
 
@@ -108,8 +109,8 @@ export const claimSupporterBadge = async ({ name, amount }) => {
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok) return { ok: data.ok === true };
-    return { ok: false, error: data.error || "Сервер зараз недоступний. Спробуйте пізніше." };
+    return { ok: false, error: data.error || i18n.t("ui.useSupportProgress.serverZarazNedostupnyiSprobuite") };
   } catch {
-    return { ok: false, error: "Немає зв'язку з сервером. Спробуйте пізніше." };
+    return { ok: false, error: i18n.t("ui.useSupportProgress.nemaieZviazkuZServerom") };
   }
 };

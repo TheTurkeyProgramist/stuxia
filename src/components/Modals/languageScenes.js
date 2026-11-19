@@ -1,3 +1,4 @@
+import i18n from "../../i18n/i18n.js";
 // Мальки країн для вибору мови — у тому ж стилі, що й міста часових поясів
 // (viewBox 0 0 400 220, горизонт на y = 170, кольори змішуються з --shade на --night).
 // Небо й сонце малює LanguageScene, тут лише «суша».
@@ -474,23 +475,23 @@ export const SEASONAL_SNOW_LANGUAGES = new Set(["be"]);
 // Де намальована кожна власна сцена — для живих шпалер: рух сонця за
 // реальним часом цього місця (координати й часовий пояс) і підпис картки
 export const LANGUAGE_PLACES = {
-  be: { label: "Білорусь · Мірський замок", lat: 53.451, lon: 26.473, tz: "Europe/Minsk" },
-  de: { label: "Німеччина · Бранденбурзькі ворота", lat: 52.516, lon: 13.378, tz: "Europe/Berlin" },
-  fr: { label: "Франція · Ейфелева вежа", lat: 48.858, lon: 2.294, tz: "Europe/Paris" },
-  pl: { label: "Польща · Стара Варшава", lat: 52.25, lon: 21.012, tz: "Europe/Warsaw" },
-  ro: { label: "Румунія · замок Бран", lat: 45.515, lon: 25.367, tz: "Europe/Bucharest" },
-  nl: { label: "Нідерланди · вітряки", lat: 52.37, lon: 4.895, tz: "Europe/Amsterdam" },
-  el: { label: "Греція · Акрополь", lat: 37.972, lon: 23.726, tz: "Europe/Athens" },
-  cs: { label: "Чехія · Прага", lat: 50.087, lon: 14.421, tz: "Europe/Prague" },
-  hu: { label: "Угорщина · Парламент", lat: 47.507, lon: 19.046, tz: "Europe/Budapest" },
-  sv: { label: "Швеція · Гамла Стан", lat: 59.325, lon: 18.071, tz: "Europe/Stockholm" },
-  fi: { label: "Фінляндія · Гельсінкі", lat: 60.17, lon: 24.952, tz: "Europe/Helsinki" },
-  bg: { label: "Болгарія · Софія", lat: 42.696, lon: 23.333, tz: "Europe/Sofia" },
-  lt: { label: "Литва · вежа Гедиміна", lat: 54.687, lon: 25.29, tz: "Europe/Vilnius" },
-  ja: { label: "Японія · Фудзі", lat: 35.361, lon: 138.727, tz: "Asia/Tokyo" },
-  fa: { label: "Іран · вежа Азаді", lat: 35.7, lon: 51.338, tz: "Asia/Tehran" },
-  so: { label: "Сомалі · узбережжя", lat: 2.046, lon: 45.318, tz: "Africa/Mogadishu" },
-  qu: { label: "Перу · Мачу-Пікчу", lat: -13.163, lon: -72.545, tz: "America/Lima" },
+  be: { get label() { return i18n.t("modals.languageScenes.bilorusMirskyiZamok"); }, lat: 53.451, lon: 26.473, tz: "Europe/Minsk" },
+  de: { get label() { return i18n.t("modals.languageScenes.nimechchynaBrandenburzkiVorota"); }, lat: 52.516, lon: 13.378, tz: "Europe/Berlin" },
+  fr: { get label() { return i18n.t("modals.languageScenes.frantsiiaEifelevaVezha"); }, lat: 48.858, lon: 2.294, tz: "Europe/Paris" },
+  pl: { get label() { return i18n.t("modals.languageScenes.polshchaStaraVarshava"); }, lat: 52.25, lon: 21.012, tz: "Europe/Warsaw" },
+  ro: { get label() { return i18n.t("modals.languageScenes.rumuniiaZamokBran"); }, lat: 45.515, lon: 25.367, tz: "Europe/Bucharest" },
+  nl: { get label() { return i18n.t("modals.languageScenes.niderlandyVitriaky"); }, lat: 52.37, lon: 4.895, tz: "Europe/Amsterdam" },
+  el: { get label() { return i18n.t("modals.languageScenes.hretsiiaAkropol"); }, lat: 37.972, lon: 23.726, tz: "Europe/Athens" },
+  cs: { get label() { return i18n.t("modals.languageScenes.chekhiiaPraha"); }, lat: 50.087, lon: 14.421, tz: "Europe/Prague" },
+  hu: { get label() { return i18n.t("modals.languageScenes.uhorshchynaParlament"); }, lat: 47.507, lon: 19.046, tz: "Europe/Budapest" },
+  sv: { get label() { return i18n.t("modals.languageScenes.shvetsiiaHamlaStan"); }, lat: 59.325, lon: 18.071, tz: "Europe/Stockholm" },
+  fi: { get label() { return i18n.t("modals.languageScenes.finliandiiaHelsinki"); }, lat: 60.17, lon: 24.952, tz: "Europe/Helsinki" },
+  bg: { get label() { return i18n.t("modals.languageScenes.bolhariiaSofiia"); }, lat: 42.696, lon: 23.333, tz: "Europe/Sofia" },
+  lt: { get label() { return i18n.t("modals.languageScenes.lytvaVezhaHedymina"); }, lat: 54.687, lon: 25.29, tz: "Europe/Vilnius" },
+  ja: { get label() { return i18n.t("modals.languageScenes.iaponiiaFudzi"); }, lat: 35.361, lon: 138.727, tz: "Asia/Tokyo" },
+  fa: { get label() { return i18n.t("modals.languageScenes.iranVezhaAzadi"); }, lat: 35.7, lon: 51.338, tz: "Asia/Tehran" },
+  so: { get label() { return i18n.t("modals.languageScenes.somaliUzberezhzhia"); }, lat: 2.046, lon: 45.318, tz: "Africa/Mogadishu" },
+  qu: { get label() { return i18n.t("modals.languageScenes.peruMachuPikchu"); }, lat: -13.163, lon: -72.545, tz: "America/Lima" },
 };
 
 // Перефарбування готових мальків, щоб землі різних країн не зливались:

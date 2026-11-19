@@ -15,6 +15,7 @@ import {
   ensureEmailPasswordAuth,
 } from "../../firebase";
 
+import i18n from "../../i18n/i18n.js";
 const slideIn = keyframes`
   0% { 
     transform: translateY(100%) scale(0.5);
@@ -291,13 +292,13 @@ const Modal = ({
     e.preventDefault();
     if (isSubmitting) return;
     const login = email.trim().toLowerCase();
-    if (!login || !password) return setError("Введіть Gmail і пароль!");
+    if (!login || !password) return setError(i18n.t("modals.Modal.vveditGmailIParol"));
     setIsSubmitting(true);
     setError("");
     try {
       const saved = await localforage.getItem("registered_user");
       const savedUser = saved?.account?.toLowerCase() === login ? saved : null;
-      if (!savedUser) return setError("Невірний Gmail або пароль!");
+      if (!savedUser) return setError(i18n.t("modals.Modal.nevirnyiGmailAboParol"));
 
       // Старі акаунти зберігали пароль відкритим текстом — приймаємо його
       // востаннє і одразу переводимо на хеш.
@@ -324,7 +325,7 @@ const Modal = ({
         passwordOk = Boolean(firebaseUser);
         if (passwordOk) credentials = await hashPassword(password);
       }
-      if (!passwordOk) return setError("Невірний Gmail або пароль!");
+      if (!passwordOk) return setError(i18n.t("modals.Modal.nevirnyiGmailAboParol"));
 
       let loggedUser = { ...stripSecrets(savedUser), ...credentials };
       // Зміна пошти підтверджується листом: якщо підтверджено, Firebase вже
@@ -363,7 +364,7 @@ const Modal = ({
       handleClose();
     } catch (err) {
       console.error("Email login error:", err);
-      setError("Не вдалося увійти. Спробуйте ще раз.");
+      setError(i18n.t("modals.Modal.neVdalosiaUviitySprobuite"));
     } finally {
       setIsSubmitting(false);
     }
@@ -373,7 +374,7 @@ const Modal = ({
     e.preventDefault();
     e.stopPropagation();
     if (isSubmitting) return;
-    if (!accepted) return setError("Підтвердіть, що вам є 14 років, і прийміть угоду!");
+    if (!accepted) return setError(i18n.t("modals.Modal.pidtverditShchoVamIe"));
     setIsSubmitting(true);
     setError("");
     try {
@@ -385,7 +386,7 @@ const Modal = ({
         id: firebaseUser.uid,
         account: firebaseUser.email || "",
         firstName:
-          firebaseUser.displayName || firebaseUser.email || "Користувач",
+          firebaseUser.displayName || firebaseUser.email || i18n.t("modals.Modal.korystuvach"),
         avatar: firebaseUser.photoURL || "",
         photoURL: firebaseUser.photoURL || "",
         textColor: "grey",
@@ -417,7 +418,7 @@ const Modal = ({
     } catch (err) {
       console.error("Google Auth Error:", err);
       if (err?.code !== "auth/popup-closed-by-user") {
-        setError("Помилка Google: " + (err.message || err.toString()));
+        setError(i18n.t("modals.Modal.pomylkaGoogle", { v0: err.message || err.toString() }));
       }
     } finally {
       setIsSubmitting(false);
@@ -435,9 +436,9 @@ const Modal = ({
           <CloseButton onClick={handleClose} $isDarkMode={isDarkMode}>
             &times;
           </CloseButton>
-          <Title $isDarkMode={isDarkMode}>Вхід</Title>
+          <Title $isDarkMode={isDarkMode}>{i18n.t("modals.Modal.vkhid")}</Title>
           <HeaderCaption $isDarkMode={isDarkMode}>
-            Увійди через Gmail чи Google і почни вивчати погоду з комфортом.
+            {i18n.t("modals.Modal.uviidyCherezGmailChy")}
           </HeaderCaption>
 
           <FormColumn>
@@ -454,7 +455,7 @@ const Modal = ({
               <Input
                 type="password"
                 name="login-password"
-                placeholder="Пароль"
+                placeholder={i18n.t("modals.Modal.parol")}
                 value={password}
                 autoComplete="current-password"
                 onChange={(e) => setPassword(e.target.value)}
@@ -465,10 +466,10 @@ const Modal = ({
                 disabled={isSubmitting}
                 $isDarkMode={isDarkMode}
               >
-                🔒 Увійти
+                {i18n.t("modals.Modal.uviity")}
               </SubmitButton>
             </LoginForm>
-            <Divider $isDarkMode={isDarkMode}>АБО</Divider>
+            <Divider $isDarkMode={isDarkMode}>{i18n.t("modals.Modal.abo")}</Divider>
             {error && <ErrorMessage>{error}</ErrorMessage>}
 
             <CheckboxRow $isDarkMode={isDarkMode}>
@@ -479,7 +480,7 @@ const Modal = ({
                 onChange={(e) => setAccepted(e.target.checked)}
               />
               <label htmlFor="accept-terms">
-                Мені виповнилося 14 років, і я погоджуюсь з{" "}
+                {i18n.t("modals.Modal.meniVypovnylosia14Rokiv")}{" "}
                 <TermsBtn
                   type="button"
                   onClick={(e) => {
@@ -487,7 +488,7 @@ const Modal = ({
                     setShowTerms(true);
                   }}
                 >
-                  Угодою
+                  {i18n.t("modals.Modal.uhodoiu")}
                 </TermsBtn>
               </label>
             </CheckboxRow>
@@ -496,7 +497,7 @@ const Modal = ({
               onClick={handleGoogleAuth}
               disabled={!accepted || isSubmitting}
             >
-              🔑 Google Вхід
+              {i18n.t("modals.Modal.googleVkhid")}
             </GoogleButton>
           </FormColumn>
         </ModalContent>

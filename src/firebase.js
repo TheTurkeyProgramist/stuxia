@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
-import { initializeFirestore, doc, getDoc } from "firebase/firestore";
+import { initializeFirestore } from "firebase/firestore";
 
 import { firebaseConfig } from "./firebaseConfig.js";
 
@@ -57,29 +57,3 @@ export async function ensureEmailPasswordAuth(
   }
 }
 
-/**
- * Завантаження стану техробіт із Firestore.
- * Документ: config/global  →  поле isMaintenanceMode (boolean)
- *                            →  поле maintenanceEndTime  (string ISO / null)
- *                            →  поле maintenanceMessage  (string / null)
- *
- * @returns {Promise<{isMaintenanceMode: boolean, endTime: string|null, message: string|null}>}
- */
-export async function getMaintenanceStatus() {
-  try {
-    const snap = await getDoc(doc(db, "config", "global"));
-    if (!snap.exists()) {
-      return { isMaintenanceMode: false, endTime: null, message: null };
-    }
-
-    const data = snap.data();
-    return {
-      isMaintenanceMode: !!data.isMaintenanceMode,
-      endTime: data.maintenanceEndTime ?? null,
-      message: data.maintenanceMessage ?? null,
-    };
-  } catch {
-    // При помилці доступу або мережі не блокуємо сайт.
-    return { isMaintenanceMode: false, endTime: null, message: null };
-  }
-}

@@ -6,6 +6,10 @@ import {
   generateRuleBasedForecast,
   upcomingDays,
 } from "./ruleBasedForecast";
+import i18n from "../i18n/i18n.js";
+
+// Тексти в тестах українські; мова браузера в тестовому середовищі — англійська
+beforeAll(() => i18n.changeLanguage("uk"));
 
 // Година прогнозу з розумними значеннями за замовчуванням
 const hour = (time, overrides = {}) => ({

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 
+import i18n from "../../i18n/i18n.js";
 // "good" — чудовий сигнал, "weak" — слабке з'єднання, "offline" — немає мережі
 const detectStatus = () => {
   if (typeof navigator === "undefined") return "good";
@@ -34,9 +35,9 @@ export const useNetworkStatus = () => {
 };
 
 export const NETWORK_LABELS = {
-  good: "Стабільне з'єднання",
-  weak: "Слабке з'єднання",
-  offline: "Немає з'єднання",
+  get good() { return i18n.t("ui.NetworkBadge.stabilneZiednannia"); },
+  get weak() { return i18n.t("ui.NetworkBadge.slabkeZiednannia"); },
+  get offline() { return i18n.t("ui.NetworkBadge.nemaieZiednannia"); },
 };
 
 export const NETWORK_COLORS = {
