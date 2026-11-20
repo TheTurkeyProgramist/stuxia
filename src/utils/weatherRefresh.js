@@ -17,22 +17,8 @@ export const LIGHT_REFRESH_MS = 55 * 60 * 1000;
 // Не смикати ту саму картку частіше (поки йде запит або після помилки)
 export const REFRESH_RETRY_MS = 2 * 60 * 1000;
 
-// 9 змінних, 1 доба → вага 1,0 (мінімальна)
-export const LIGHT_CURRENT_VARS = [
-  "temperature_2m",
-  "relative_humidity_2m",
-  "apparent_temperature",
-  "weather_code",
-  "wind_speed_10m",
-  "wind_direction_10m",
-  "wind_gusts_10m",
-  "cloud_cover",
-  "is_day",
-];
-
-export const buildLightCurrentUrl = (lat, lon) =>
-  `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-  `&current=${LIGHT_CURRENT_VARS.join(",")}&wind_speed_unit=ms&timezone=auto&forecast_days=1`;
+// Адреса легкого оновлення живе в openMeteoUrls.js (без i18n — її бере й Cloudflare-функція)
+export { LIGHT_CURRENT_VARS, buildLightCurrentUrl } from "./openMeteoUrls.js";
 
 /** «Вчора» в часовому поясі міста (перший день картки — завжди вчора, past_days=1). */
 export const cityYesterday = (card, now = Date.now()) => {

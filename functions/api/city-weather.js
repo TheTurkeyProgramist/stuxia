@@ -21,9 +21,13 @@ import {
   SERVER_NOW_TTL_MS,
   SERVER_SEASONAL_TTL_MS,
 } from "../../src/utils/serverCities.js";
-import { buildForecastUrl, buildSeasonalUrl } from "../../src/utils/openMeteoUrls.js";
-import { buildConsensusUrl } from "../../src/utils/weatherConsensus.js";
-import { LIGHT_CURRENT_VARS } from "../../src/utils/weatherRefresh.js";
+// Лише openMeteoUrls.js: weatherConsensus.js / weatherRefresh.js тягнуть i18n, а він ламає Worker
+import {
+  buildForecastUrl,
+  buildSeasonalUrl,
+  buildConsensusUrl,
+  LIGHT_CURRENT_VARS,
+} from "../../src/utils/openMeteoUrls.js";
 
 const FETCH_TIMEOUT_MS = 15000;
 const EDGE_CACHE_SECONDS = { forecast: 300, now: 300, seasonal: 3600 };

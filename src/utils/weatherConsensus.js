@@ -7,18 +7,10 @@ import i18n from "../i18n/i18n.js";
 // (METAR, 11.11.2026): середня похибка температури 0.71 → 0.67 °C, вітру 0.80 → 0.64 м/с,
 // а на прогнозі наперед виграш від медіани зазвичай більший.
 //
-// KNMI / DMI / MET Norway не беремо: над Україною це копії ECMWF (ідентичні числа),
-// вони б перекосили медіану на користь однієї моделі.
+// Список моделей і адреса запиту — в openMeteoUrls.js (без i18n: їх бере й Cloudflare-функція).
+import { CONSENSUS_HOURLY_VARS, CONSENSUS_MODELS } from "./openMeteoUrls.js";
 
-export const CONSENSUS_MODELS = [
-  "ecmwf_ifs025", // ECMWF (Європа)
-  "icon_seamless", // DWD ICON (Німеччина)
-  "gfs_seamless", // NOAA GFS (США)
-  "ukmo_seamless", // Met Office (Велика Британія)
-  "meteofrance_seamless", // Météo-France
-  "gem_seamless", // Environment Canada
-  "jma_seamless", // JMA (Японія)
-];
+export { CONSENSUS_MODELS, buildConsensusUrl } from "./openMeteoUrls.js";
 
 export const CONSENSUS_MODEL_LABELS = {
   ecmwf_ifs025: "ECMWF",
@@ -30,20 +22,8 @@ export const CONSENSUS_MODEL_LABELS = {
   jma_seamless: "JMA",
 };
 
-// Тиск і точку роси не звіряємо: моделі тут майже не розходяться, а кожна змінна × 7 моделей
-// коштує квоти Open-Meteo. Вони лишаються з best_match (точка роси лише обрізається до температури).
-// «Відчувається» теж не запитуємо (−0,7 «виклику»): перераховуємо з медіан температури, вологості
-// й вітру — див. shiftApparent. Звірено 17.11.2026 на 5 містах × 11 діб: від медіани моделей
-// відрізняється в середньому на 0,33° погодинно і 0,41° для денного максимуму.
-// Хмарність лишаємо: best_match відходить від медіани в середньому на 17 п.п.
-const HOURLY_VARS = [
-  "temperature_2m",
-  "relative_humidity_2m",
-  "wind_speed_10m",
-  "wind_gusts_10m",
-  "cloud_cover",
-  "precipitation",
-];
+// Які погодинні змінні звіряємо і чому саме ці — див. CONSENSUS_HOURLY_VARS в openMeteoUrls.js
+const HOURLY_VARS = CONSENSUS_HOURLY_VARS;
 
 const DAILY_VARS = [
   "temperature_2m_max",
@@ -55,13 +35,8 @@ const DAILY_VARS = [
   "precipitation_sum",
 ];
 
-// Із API беремо лише денні макс/мін температури: моделі рахують їх із даних, точніших за
-// погодинні (ECMWF — до 3 °C різниці). Решту DAILY_VARS згортаємо з погодинного ряду
-// кожної моделі — це −5 змінних × 7 моделей у квоті Open-Meteo (≈ −3.5 «виклику»).
-// Звірено 15.11.2026 на 5 містах: медіана моделей відрізняється в середньому на
-// 0.1–0.3 (вітер, «відчувається»), опади — 0.4 мм: ECMWF/JMA мають крок 3–6 год, і API
-// ділить їхні суми на доби інакше; погодинна сума узгоджена з графіком картки.
-const DAILY_API_VARS = ["temperature_2m_max", "temperature_2m_min"];
+// Із API беремо лише денні макс/мін температури (CONSENSUS_DAILY_API_VARS в openMeteoUrls.js),
+// решту DAILY_VARS згортаємо з погодинного ряду кожної моделі.
 // apparent_temperature_max/min — з уже змішаного погодинного ряду (див. blendWithConsensus)
 const DAILY_FROM_HOURLY = {
   wind_speed_10m_max: ["wind_speed_10m", "max"],
@@ -82,18 +57,9 @@ const INTEGER_VARS = new Set(["relative_humidity_2m", "cloud_cover"]);
 
 // Менше трьох моделей — це вже не консенсус; лишаємо best_match
 export const MIN_CONSENSUS_SOURCES = 3;
-// Після ~10 днів у більшості моделей закінчується горизонт
-const CONSENSUS_FORECAST_DAYS = 10;
 
 const WET_MM = 0.1; // година з опадами
 const WET_DAY_MM = 0.5; // день з опадами
-
-export const buildConsensusUrl = (lat, lon) =>
-  `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-  `&hourly=${HOURLY_VARS.join(",")}` +
-  `&daily=${DAILY_API_VARS.join(",")}` +
-  `&models=${CONSENSUS_MODELS.join(",")}` +
-  `&wind_speed_unit=ms&timezone=auto&past_days=1&forecast_days=${CONSENSUS_FORECAST_DAYS}`;
 
 const isNum = (v) => typeof v === "number" && Number.isFinite(v);
 
