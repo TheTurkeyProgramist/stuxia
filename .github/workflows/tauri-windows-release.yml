@@ -131,6 +131,11 @@ jobs:
       - name: Build frontend
         run: bun run build
 
+      # Попередньо стиснені копії (.gz/.br) потрібні лише серверу; Android бачить x.js і x.js.gz
+      # як дублікати ресурсів і падає на «Duplicate resources»
+      - name: Remove precompressed assets for Android
+        run: find dist -type f \( -name '*.gz' -o -name '*.br' \) -delete
+
       - name: Sync Capacitor Android project
         run: bun x cap sync android
 
