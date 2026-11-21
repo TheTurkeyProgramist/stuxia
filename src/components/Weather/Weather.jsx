@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
 import daynight from "../../media/thumbs/day-night-clock.webp";
 import daysthunders from "../../media/thumbs/night-river-burnt-tree.webp";
+import archiveThumb from "../../media/thumbs/asium-winter-forest.webp";
 import localforage from "localforage";
 import {
   BiCog,
@@ -1665,6 +1666,7 @@ const WeatherCardComponent = ({
   const [selectedHourlyDay, setSelectedHourlyDay] = useState(0);
   const [hourlyViewMode, setHourlyViewMode] = useState("charts");
   const [dailyViewMode, setDailyViewMode] = useState("charts");
+  const [archiveViewMode, setArchiveViewMode] = useState("charts");
   const [isNarrowScreen, setIsNarrowScreen] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768
   );
@@ -5686,13 +5688,35 @@ const HOLIDAYS_2027 = {
 
           {/* Архів погоди: помісячні підсумки за ~14 місяців (Open-Meteo Archive) */}
           {activeTab === "archive" && (
+            <>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "6px" }}>
+              <ViewToggleGroup $isDarkMode={isDarkMode}>
+                {[
+                  { key: "charts", icon: <BiLineChart size={18} />, title: i18n.t("newsWeather.Weather.hrafiky") },
+                  { key: "table", icon: <BiTable size={18} />, title: i18n.t("newsWeather.Weather.tablytsia") },
+                  { key: "rows", icon: <BiListUl size={18} />, title: i18n.t("newsWeather.Weather.riadky") },
+                ].map((m) => (
+                  <ViewToggleButton
+                    key={m.key}
+                    $active={archiveViewMode === m.key}
+                    $isDarkMode={isDarkMode}
+                    onClick={() => setArchiveViewMode(m.key)}
+                    title={m.title}
+                  >
+                    {m.icon}
+                  </ViewToggleButton>
+                ))}
+              </ViewToggleGroup>
+            </div>
             <WeatherArchive
+              viewMode={archiveViewMode}
               lat={card.lat}
               lon={card.lon}
               fmt={fmt}
               formatTemp={formatTemp}
               isDarkMode={isDarkMode}
             />
+            </>
           )}
 
         </TabContentArea>
@@ -5766,6 +5790,7 @@ const HOLIDAYS_2027 = {
 
             <SideCardItem
               $active={activeTab === "archive"}
+              $bgImg={archiveThumb}
               onClick={() => setActiveTab("archive")}
             >
               <div style={SIDE_CARD_INNER_STYLE}>
