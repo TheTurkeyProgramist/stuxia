@@ -36,6 +36,19 @@ export const upcomingDays = (daily16 = [], now = new Date()) => {
   return daily16.filter((d) => !(d?.fullDate && d.fullDate < today));
 };
 
+// «29 листопада» / «November 29» з "YYYY-MM-DD" мовою інтерфейсу.
+// Для слов'янських мов Intl уже дає родовий відмінок («до 29 листопада»)
+const formatLongDate = (iso) => {
+  const m = typeof iso === "string" && iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return "";
+  const date = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12);
+  try {
+    return new Intl.DateTimeFormat(i18n.language || "uk", { day: "numeric", month: "long" }).format(date);
+  } catch {
+    return date.toLocaleDateString(undefined, { day: "numeric", month: "long" });
+  }
+};
+
 // Форматування температури із знаком
 const formatTempWithSign = (val, unit = "C") => {
   const num = parseNum(val, null);
@@ -240,6 +253,10 @@ export const analyzeHourlyTimeline = (hourly = [], unit = "C") => {
   return {
     rainWindowText,
     peakTempText,
+    // Числові макс/мін тих самих годин — щоб «день/ніч» і «пік тепла» не суперечили
+    maxTemp: maxItem.temp,
+    minTemp: minItem.temp,
+    hoursCount: itemsWithHour.length,
     windTrendText,
     windWarning,
     maxWind: roundedWind,
@@ -266,10 +283,12 @@ export const analyzeWeeklyTrends = (daily16 = [], unit = "C") => {
     };
   }
 
-  const days = daily16.slice(0, 10).map((d, idx) => ({
+  // «Тиждень» — рівно 7 днів, щоб не було «4 з 10 днів»
+  const days = daily16.slice(0, 7).map((d, idx) => ({
     index: idx,
     date: d.date || d.day || i18n.t("newsWeather.ruleBasedForecast.den", { v0: idx + 1 }),
-    dayName: d.day || d.dayName || "",
+    // Повна дата мовою інтерфейсу («29 листопада») замість скорочення «нд»
+    dayName: formatLongDate(d.fullDate) || d.dayName || d.day || "",
     tempDay: parseNum(d.temp_day, 0),
     tempNight: parseNum(d.temp_night, 0),
     pop: parseNum(d.precipitation_probability_max ?? d.pop, 0),
@@ -522,11 +541,17 @@ export const generateRuleBasedForecast = (
   const locationNameGenitive = toGenitive(locationName);
 
   // Виклики спеціалізованих блоків
-  const dayNight = analyzeDayNightContrast(current, todayDaily, unit);
   const hourlyData = analyzeHourlyTimeline(hourly, unit);
+  // Одне джерело для «вдень/вночі» і «максимум/мінімум о ...»: якщо є погодинні дані
+  // на добу, беремо їх (інакше блоки показували різні цифри — денні vs погодинні)
+  const dayRange =
+    hourlyData.hoursCount >= 12
+      ? { ...todayDaily, temp_day: hourlyData.maxTemp, temp_night: hourlyData.minTemp }
+      : todayDaily;
+  const dayNight = analyzeDayNightContrast(current, dayRange, unit);
   const weeklyData = analyzeWeeklyTrends(daily16, unit);
   const atmosphereNotes = analyzeAtmosphereAndHealth(current);
-  const lifestyleAdvice = generateActionableAdvice(current, todayDaily, hourlyData);
+  const lifestyleAdvice = generateActionableAdvice(current, dayRange, hourlyData);
 
   // Формування бейджів
   const allBadges = [];

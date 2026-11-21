@@ -32,17 +32,37 @@ export const getTurkeyMood = (item) => {
   return "cloudy";
 };
 
-const walk = keyframes`from { transform: translateX(-3px); } to { transform: translateX(3px); }`;
-const step = keyframes`0%, 100% { transform: rotate(-14deg); } 50% { transform: rotate(14deg); }`;
+/* Хода на місці: тулуб ледь підскакує на кожен крок (2 кроки за цикл ніг),
+   без ковзання вбік — раніше alternate-дрейф виглядав як «місячна хода» */
+const walk = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.7px); }
+`;
+const step = keyframes`0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); }`;
+/* Голова на кожен крок різко «виштовхується» вперед і тримається — як у справжніх птахів */
+const thrust = keyframes`
+  0% { transform: translateX(-0.9px); }
+  30%, 100% { transform: translateX(0.9px); }
+`;
+/* Прогулянка: рівномірно йде вперед, розвертається і йде назад (обличчям за напрямком).
+   Лише зсув і розворот — без гойдання тулуба */
+const roam = keyframes`
+  0% { transform: translateX(-4px) scaleX(1); }
+  44% { transform: translateX(4px) scaleX(1); }
+  50% { transform: translateX(4px) scaleX(-1); }
+  94% { transform: translateX(-4px) scaleX(-1); }
+  100% { transform: translateX(-4px) scaleX(1); }
+`;
+/* Клювання: довга пауза, швидкий удар униз аж до землі, коротке «довбання», підйом */
 const peck = keyframes`
-  0%, 55%, 100% { transform: rotate(0deg); }
-  65% { transform: rotate(32deg); }
-  72% { transform: rotate(4deg); }
-  80% { transform: rotate(30deg); }
-  88% { transform: rotate(0deg); }
+  0%, 60%, 100% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.5, 0, 1, 1); }
+  66% { transform: rotate(112deg); animation-timing-function: linear; }
+  70% { transform: rotate(104deg); animation-timing-function: linear; }
+  74% { transform: rotate(112deg); animation-timing-function: cubic-bezier(0, 0, 0.3, 1); }
+  84% { transform: rotate(0deg); }
 `;
 const bob = keyframes`0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.2px); }`;
-const strut = keyframes`0%, 100% { transform: scale(0.88); } 50% { transform: scale(1.06); }`;
+const strut = keyframes`0%, 100% { transform: scale(0.97); } 50% { transform: scale(1.03); }`;
 const sway = keyframes`0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); }`;
 const lean = keyframes`0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(-11deg); }`;
 const shiver = keyframes`0%, 100% { transform: translateX(-0.5px); } 50% { transform: translateX(0.5px); }`;
@@ -108,11 +128,14 @@ const Svg = styled.svg`
     transform-box: view-box;
   }
   .hopper.hop { animation: ${hop} 0.6s ease-out; }
-  .walker { animation: ${walk} 2.6s ease-in-out infinite alternate; }
+  /* Усе прив'язано до одного ритму: цикл ніг 0.9s = 2 кроки по 0.45s */
+  .roam { transform-origin: 36px 40px; animation: ${roam} 6.3s linear infinite; }
+  .walker { animation: ${walk} 0.45s ease-in-out infinite; }
   .legL { transform-origin: 28px 49px; animation: ${step} 0.9s ease-in-out infinite; }
   .legR { transform-origin: 34px 49px; animation: ${step} 0.9s ease-in-out infinite reverse; }
   .head { transform-origin: 39px 36px; }
-  .head.peck { animation: ${peck} 3.4s ease-in-out infinite; }
+  .head.thrust { animation: ${thrust} 0.45s ease-out infinite; }
+  .head.peck { animation: ${peck} 3s infinite; }
   .head.bob { animation: ${bob} 1.6s ease-in-out infinite; }
   .head.sleep { transform: rotate(18deg); }
   .tail { transform-origin: 24px 38px; }
@@ -180,7 +203,8 @@ const WeatherTurkey = ({ item, isDarkMode = true, size = 46 }) => {
     mood === "night" ? "breathe" : "";
   const headCls =
     mood === "night" ? "sleep" :
-    mood === "cloudy" ? "peck" : "bob";
+    mood === "cloudy" ? "peck" :
+    walking ? "thrust" : "bob";
   const tailCls =
     mood === "sunny" || mood === "hot" ? "strut" :
     mood === "wind" ? "sway" :
@@ -234,6 +258,7 @@ const WeatherTurkey = ({ item, isDarkMode = true, size = 46 }) => {
 
         <g className={`hopper${hopping ? " hop" : ""}`}>
           <g className={`whole ${wholeCls}`}>
+            <g className={walking ? "roam" : undefined}>
             <g className={walking ? "walker" : undefined}>
               {/* Хвіст-віяло */}
               <g className={`tail ${tailCls}`}>
@@ -299,6 +324,7 @@ const WeatherTurkey = ({ item, isDarkMode = true, size = 46 }) => {
                   </g>
                 )}
               </g>
+            </g>
             </g>
           </g>
         </g>

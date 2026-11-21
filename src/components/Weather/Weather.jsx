@@ -356,6 +356,8 @@ const TabContentArea = styled.div`
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    /* Стрілка гортання ◀ висить над лівим краєм картки — відсуваємо вміст, щоб не закривала текст */
+    ${(props) => props.$arrowsGap && "padding-left: 34px;"}
   }
 `;
 
@@ -4659,7 +4661,7 @@ const HOLIDAYS_2027 = {
           ))}
         </MobileTabBar>
 
-        <TabContentArea>
+        <TabContentArea $arrowsGap={carouselArrowsOn}>
 
           {activeTab === "current" && (
             <CurrentWeatherBanner
