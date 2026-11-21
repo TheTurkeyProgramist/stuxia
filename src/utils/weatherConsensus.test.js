@@ -66,7 +66,7 @@ describe("blendWithConsensus", () => {
   });
 
   it("uses the median so one outlier model cannot drag the forecast", () => {
-    // 6 моделей кажуть 4°, одна — 30°
+    // усі моделі, крім однієї, кажуть 4°, одна — 30°
     const c = makeConsensus({
       temperature_2m: (m) => (m === 0 ? [30, 30] : [4, 5]),
       precipitation: () => [1, 1],
@@ -90,8 +90,8 @@ describe("blendWithConsensus", () => {
     expect(data.hourly.rain).toEqual([0, 0]);
     expect(data.hourly.weather_code).toEqual([1, 1]);
     expect(data.current.weather_code).toBe(1);
-    // ймовірність: (80 + 1/7·100) / 2
-    expect(data.hourly.precipitation_probability[0]).toBe(47);
+    // ймовірність: (80 + частка моделей з опадами·100) / 2 — одна модель із усіх
+    expect(data.hourly.precipitation_probability[0]).toBe(Math.round((80 + 100 / CONSENSUS_MODELS.length) / 2));
   });
 
   it("keeps gusts not weaker than wind and keeps the daily max consistent", () => {

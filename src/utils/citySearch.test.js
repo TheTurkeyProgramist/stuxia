@@ -7,9 +7,11 @@ describe("searchLocalCities", () => {
   it("shows cities that start with the query first and drops matches inside case forms", () => {
     const found = names(searchLocalCities(UKRAINE_CITIES_40, "ко"));
     // Спершу ті, що починаються з «ко» (у порядку бази), потім — «ко» всередині назви
-    expect(found.slice(0, 4).sort()).toEqual(["Ковель", "Коломия", "Конотоп", "Коростень"]);
+    expect(found.slice(0, 7).sort()).toEqual(
+      ["Козятин", "Ковель", "Коломия", "Конотоп", "Коростень", "Костопіль", "Костянтинівка"].sort(),
+    );
     expect(found[0]).toBe("Конотоп");
-    expect(found.slice(4)).toEqual(["Миколаїв", "Нікополь"]);
+    expect(found.slice(7)).toEqual(["Миколаїв", "Нікополь", "Синельникове", "Старокостянтинів"]);
     // «ко» є лише у відмінковій формі «харкові» — Харкова тут бути не має
     expect(found).not.toContain("Харків");
   });

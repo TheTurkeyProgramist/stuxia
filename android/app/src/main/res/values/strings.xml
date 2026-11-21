@@ -4,4 +4,17 @@
     <string name="title_activity_main">Стихія 1.0</string>
     <string name="package_name">com.stuxia.app</string>
     <string name="custom_url_scheme">com.stuxia.app</string>
+    <string name="widget_description">Погода зараз для вашого міста зі «Стихії»</string>
+    <string name="widget_pick_city">Відкрийте застосунок, щоб вибрати місто</string>
+    <string name="widget_loading">Завантажую погоду…</string>
+    <string name="widget_refresh">Оновити</string>
+    <string name="widget_feels">Відчувається %1$s</string>
+    <string name="widget_wind">💨 %1$s м/с</string>
+    <string name="wmo_clear">Ясно</string>
+    <string name="wmo_cloudy">Хмарно</string>
+    <string name="wmo_fog">Туман</string>
+    <string name="wmo_drizzle">Мряка</string>
+    <string name="wmo_rain">Дощ</string>
+    <string name="wmo_snow">Сніг</string>
+    <string name="wmo_storm">Гроза</string>
 </resources>

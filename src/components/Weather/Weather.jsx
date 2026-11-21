@@ -65,6 +65,7 @@ import { getWindDirectionText, getWindDirectionShort } from "../../utils/windUti
 import { linearTrend } from "../../utils/chartTrend";
 import { DEFAULT_LINE_STYLES, DEFAULT_DIM, mergeLineStyles, lineStyleProps } from "../../utils/chartLineStyles";
 import { fadePlugin } from "../../utils/chartFade";
+import { syncAndroidWidget } from "../../utils/androidWidget";
 import { metricGradient, metricPointColor, metricScale } from "../../utils/metricColors";
 import { tempScale, tempGradient, hotOutlinePlugin, TEMP_LEGEND_GRADIENT } from "../../utils/tempColors";
 import CardSettingsModal from "../Modals/CardSettingsModal";
@@ -103,6 +104,7 @@ import { isFoggy } from "../../utils/dailyAggregates";
 import { AnimWind, AnimSpin, AnimHourglass, AnimTwinkle, AnimCompass, MoonPhaseIcon, AstroScale } from "./BlockAstroIcons.jsx";
 import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, CloudWithTrend, getCloudTrend, getSnowStyle } from "./AnimatedWeatherIcons.jsx"; //Анімовані іконки
 import { WeatherIcon, stripEmoji, ICON_HALO_FILTER } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
+import DailyTips from "./DailyTips.jsx"; // Повітря, ожеледиця вранці, сніг на машині
 import WeatherTurkey from "./WeatherTurkey.jsx"; //Доміно — індик-талісман, що реагує на погоду
 import { BiWind } from "react-icons/bi"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
@@ -558,7 +560,7 @@ const SideCardItem = styled.div`
 const DesktopTwoRowIndicators = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(6, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
   gap: 2px;
   width: 100%;
   height: 84%;
@@ -569,10 +571,17 @@ const DesktopTwoRowIndicators = styled.div`
   }
 
   @media (min-width: 768px) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-rows: repeat(4, minmax(0, 1fr));
     gap: 3px;
     padding: 4px;
+    /* Останній тайл заповнює порожні клітинки свого рядка (13–15 тайлів у 4 колонках) */
+    & > :nth-child(4n + 1):last-child { grid-column: span 4; }
+    & > :nth-child(4n + 2):last-child { grid-column: span 3; }
+    & > :nth-child(4n + 3):last-child { grid-column: span 2; }
+  }
+  @media (max-width: 767px) {
+    & > :nth-child(odd):last-child { grid-column: span 2; }
   }
 `;
 const IndicatorCard = styled.div`
@@ -587,6 +596,7 @@ const IndicatorCard = styled.div`
   padding: ${props => props.$pad || "2px"};
   background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
+  overflow: hidden;
 `;
 
 const IconBox = styled.div`
@@ -597,10 +607,10 @@ const IconBox = styled.div`
   transform: ${props => props.$rotate ? `rotate(${props.$rotate}deg)` : "none"};
   display: ${props => props.$rotate ? "inline-block" : "block"};
   @media (min-width: 1200px) {
-    font-size: 44px;
+    font-size: 40px;
   }
        @media (min-width: 768px) {
-    font-size: 34px;
+    font-size: 28px;
   }
 `;
 
@@ -611,10 +621,10 @@ const TextContent = styled.div`
   text-align: center;
   line-height: ${props => props.$lh || "normal"};
     @media (min-width: 1200px) {
-    font-size: 16px;
+    font-size: 14px;
   }
        @media (min-width: 768px) {
-    font-size: 14px;
+    font-size: 12px;
   }
 `;
 
@@ -623,10 +633,10 @@ const SubText = styled.div`
   font-weight: ${props => props.$weight || "normal"};
   opacity: ${props => props.$opacity || 0.8};
    @media (min-width: 1200px) {
-    font-size: 14px;
+    font-size: 12px;
   }
      @media (min-width: 768px) {
-    font-size: 12px;
+    font-size: 10px;
   }
 `;
 const MobileTabBar = styled.div`
@@ -1894,6 +1904,11 @@ const WeatherCardComponent = ({
     };
   }, [card.isMain]);
 
+  // Android-віджет показує головне місто в одиницях температури з налаштувань
+  useEffect(() => {
+    if (!card.isMain) return;
+    syncAndroidWidget({ lat: card.lat, lon: card.lon, name: card.locationName, unit });
+  }, [card.isMain, card.lat, card.lon, card.locationName, unit]);
 
   const [useGlobalLayout, setUseGlobalLayout] = useState(true);
   const [localLayout, setLocalLayout] = useState([
@@ -4923,10 +4938,10 @@ const HOLIDAYS_2027 = {
   </IndicatorCard>
 
   <IndicatorCard aria-label={i18n.t("newsWeather.Weather.viterNapriamokPoryvyM", { wind_speed: card.current.wind_speed, wind_direction_10m: card.current.wind_direction_10m, v2: getWindDirectionText(card.current.wind_direction_10m), wind_gusts_10m: card.current.wind_gusts_10m })}>
-    <IconBox $size="28px" $color="#00eeff" $rotate={Math.round((card.current.wind_direction_10m || 0) / 45) * 45 % 360}>⬇</IconBox>
-    <TextContent $mt="-5px">
+    <IconBox $size="28px" $color="#00eeff" $rotate={Math.round((card.current.wind_direction_10m || 0) / 45) * 45 % 360} style={{ fontSize: "20px", lineHeight: 1 }}>⬇</IconBox>
+    <TextContent $mt="0px" $lh="1.15">
       {i18n.t("newsWeather.Weather.shvydkistVitru")} {fmt.wind(card.current.windNum ?? card.current.wind_speed)}
-      <SubText>{card.current.wind_direction_10m}° {getWindDirectionText(card.current.wind_direction_10m)}</SubText>
+      <SubText title={`${getWindDirectionText(card.current.wind_direction_10m)} (${card.current.wind_direction_10m}°)`} style={{ whiteSpace: "nowrap" }}>{card.current.wind_direction_10m}° {getWindDirectionShort(card.current.wind_direction_10m)}</SubText>
       <SubText $weight="bold" $opacity={0.9} style={{ color: isExtremeWind ? "#ff4d4d" : "inherit" }}>
         {i18n.t("newsWeather.Weather.poryvy2")} {fmt.wind(card.current.wind_gusts_10m)}
       </SubText>
@@ -5004,6 +5019,15 @@ const HOLIDAYS_2027 = {
       </TextContent>
     </IndicatorCard>
   </Tooltip>
+  <DailyTips
+    hourly={card.hourly}
+    current={card.current}
+    lat={card.lat}
+    lon={card.lon}
+    utcOffsetSeconds={card.utcOffsetSeconds}
+    isDarkMode={isDarkMode}
+    ui={{ IndicatorCard, IconBox, TextContent, SubText }}
+  />
 </DesktopTwoRowIndicators>
               </CurrentWeatherBanne>
             </CurrentWeatherBanner>
