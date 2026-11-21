@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "Válasz megtekintése: {{q}}",
       "natysnitShchobPerehlianutyVidpovid": "Kattints a válasz megtekintéséhez.",
       "dominoVzheDyvuvavsiaShcho": "🦃 Meglepődött Dominó, hogy egy betűnél elhallgattál? Hogy újra viccelődjön, futtasd ezt a böngésző konzoljában (F12 → Console), és frissítsd az oldalt:",
+      "dominoNoGambling": "🦃 Domino titka: a Stykhiián soha nem lesz kaszinó- vagy szerencsejáték-reklám. Egy zsák magért sem.",
       "skachatyZobrazhennia": "Kép letöltése",
       "zakryty": "Bezárás",
       "zakrytyEsc": "Bezárás (Esc)",
@@ -1502,6 +1503,18 @@
       "showVerb": "megjelenítéséhez",
       "dayLonger": "A nap {{Math}} perccel hosszabb, mint tegnap",
       "dayShorter": "A nap {{Math}} perccel rövidebb, mint tegnap"
+    },
+    "WeatherTurkey": {
+      "sunny": "Domino napozik",
+      "hot": "Dominónak meleg van — árnyékot keres",
+      "night": "Domino alszik",
+      "cloudy": "Domino sétál és magokat csipeget",
+      "fog": "Domino eltévedt a ködben",
+      "rain": "Domino esernyő alá bújt",
+      "snow": "Domino hópelyheket fog",
+      "cold": "Domino sálban fagyoskodik",
+      "storm": "Domino fél a vihartól",
+      "wind": "Domino alig bír megállni a szélben"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "Nappal/éjjel különbség: {{delta}}°C",

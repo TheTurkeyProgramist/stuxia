@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "Kutichiyta qhaway: {{q}}",
       "natysnitShchobPerehlianutyVidpovid": "Kutichiyta rikunaykipaq ñitiy.",
       "dominoVzheDyvuvavsiaShcho": "🦃 Domino mancharikurqanchu huk qillqallapi upallasqaykimanta? Wakmanta asichinanpaq, navegadorpa consolanpi (F12 → Console) kayta ruray hinaspa paginata musuqchay:",
+      "dominoNoGambling": "🦃 Domino pakallapi nin: Stykhiiapiqa manan hayk’appas casinokunap pukllaykunap willakuyninkuna kanqachu. Huk costal muhupaqpas manan.",
       "skachatyZobrazhennia": "Siq'ita uraykachiy",
       "zakryty": "Wichqay",
       "zakrytyEsc": "Wichqay (Esc)",
@@ -1502,6 +1503,18 @@
       "showVerb": "rikuchinaykipaq",
       "dayLonger": "P'unchawqa qayna p'unchawmanta {{Math}} min aswan unaymi",
       "dayShorter": "P'unchawqa qayna p'unchawmanta {{Math}} min aswan pisim"
+    },
+    "WeatherTurkey": {
+      "sunny": "Domino intipi q’uñikushan",
+      "hot": "Domino ruphaymanta llanthuta maskhan",
+      "night": "Domino puñushan",
+      "cloudy": "Domino purishan, muhuta tuqllashan",
+      "fog": "Domino phuyupi chinkarqan",
+      "rain": "Domino paraguas ukhupi pakakun",
+      "snow": "Domino rit’ita hap’ishan",
+      "cold": "Domino chalinwan chiriyashan",
+      "storm": "Domino illapamanta manchakun",
+      "wind": "Domino wayrapi sinchita sayashan"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "P'unchaw/tuta tupachiy: {{delta}}°C",

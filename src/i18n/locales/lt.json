@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "Žiūrėti atsakymą: {{q}}",
       "natysnitShchobPerehlianutyVidpovid": "Spustelėkite, kad pamatytumėte atsakymą.",
       "dominoVzheDyvuvavsiaShcho": "🦃 Domino nustebo, kad nutilote ties viena raide? Kad jis vėl juokautų, paleiskite tai naršyklės konsolėje (F12 → Console) ir atnaujinkite puslapį:",
+      "dominoNoGambling": "🦃 Domino paslaptis: Stykhiia svetainėje niekada nebus kazino ir lošimų reklamos. Net už maišą grūdų.",
       "skachatyZobrazhennia": "Atsisiųsti vaizdą",
       "zakryty": "Uždaryti",
       "zakrytyEsc": "Uždaryti (Esc)",
@@ -1502,6 +1503,18 @@
       "showVerb": "parodytumėte",
       "dayLonger": "Diena {{Math}} min ilgesnė nei vakar",
       "dayShorter": "Diena {{Math}} min trumpesnė nei vakar"
+    },
+    "WeatherTurkey": {
+      "sunny": "Domino kaitinasi saulėje",
+      "hot": "Dominui karšta — ieško šešėlio",
+      "night": "Domino miega",
+      "cloudy": "Domino vaikšto ir lesa grūdus",
+      "fog": "Domino pasiklydo rūke",
+      "rain": "Domino slepiasi po skėčiu",
+      "snow": "Domino gaudo snaiges",
+      "cold": "Domino šąla su šaliku",
+      "storm": "Domino bijo perkūnijos",
+      "wind": "Domino vos atsilaiko vėjyje"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "Dienos ir nakties kontrastas: {{delta}}°C",

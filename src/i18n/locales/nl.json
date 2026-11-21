@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "Antwoord bekijken: {{q}}",
       "natysnitShchobPerehlianutyVidpovid": "Klik om het antwoord te bekijken.",
       "dominoVzheDyvuvavsiaShcho": "🦃 Vond Domino het al vreemd dat je bij één letter stil viel? Om hem nog eens een grap te laten maken, voer je in de browserconsole (F12 → Console) uit en vernieuw je de pagina:",
+      "dominoNoGambling": "🦃 Domino verklapt: op Stykhiia komt nooit reclame voor casino’s of gokken. Zelfs niet voor een zak graan.",
       "skachatyZobrazhennia": "Afbeelding downloaden",
       "zakryty": "Sluiten",
       "zakrytyEsc": "Sluiten (Esc)",
@@ -1502,6 +1503,18 @@
       "showVerb": "tonen",
       "dayLonger": "De dag is {{Math}} min langer dan gisteren",
       "dayShorter": "De dag is {{Math}} min korter dan gisteren"
+    },
+    "WeatherTurkey": {
+      "sunny": "Domino zit lekker in de zon",
+      "hot": "Domino heeft het warm — zoekt schaduw",
+      "night": "Domino slaapt",
+      "cloudy": "Domino wandelt en pikt graan",
+      "fog": "Domino is verdwaald in de mist",
+      "rain": "Domino schuilt onder een paraplu",
+      "snow": "Domino vangt sneeuwvlokken",
+      "cold": "Domino bibbert in zijn sjaal",
+      "storm": "Domino is bang voor onweer",
+      "wind": "Domino houdt het amper vol in de wind"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "Contrast dag/nacht: {{delta}}°C",

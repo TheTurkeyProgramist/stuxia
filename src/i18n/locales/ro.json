@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "Vezi răspunsul: {{q}}",
       "natysnitShchobPerehlianutyVidpovid": "Apasă ca să vezi răspunsul.",
       "dominoVzheDyvuvavsiaShcho": "🦃 Domino s-a mirat deja că ai amuțit la o literă? Ca să mai glumească o dată, rulează în consola browserului (F12 → Console) și reîmprospătează pagina:",
+      "dominoNoGambling": "🦃 Domino îți spune un secret: pe Stykhiia nu vor fi niciodată reclame la cazinouri sau jocuri de noroc. Nici pentru un sac de grăunțe.",
       "skachatyZobrazhennia": "Descarcă imaginea",
       "zakryty": "Închide",
       "zakrytyEsc": "Închide (Esc)",
@@ -1502,6 +1503,18 @@
       "showVerb": "afișa",
       "dayLonger": "Ziua e mai lungă cu {{Math}} min decât ieri",
       "dayShorter": "Ziua e mai scurtă cu {{Math}} min decât ieri"
+    },
+    "WeatherTurkey": {
+      "sunny": "Domino se încălzește la soare",
+      "hot": "Lui Domino îi e cald — caută umbră",
+      "night": "Domino doarme",
+      "cloudy": "Domino se plimbă și ciugulește grăunțe",
+      "fog": "Domino s-a rătăcit în ceață",
+      "rain": "Domino se ascunde sub umbrelă",
+      "snow": "Domino prinde fulgi de zăpadă",
+      "cold": "Domino îngheață cu fularul",
+      "storm": "Domino se teme de furtună",
+      "wind": "Domino abia se ține în vânt"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "Contrast zi/noapte: {{delta}}°C",

@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "Eeg jawaabta: {{q}}",
       "natysnitShchobPerehlianutyVidpovid": "Guji si aad u aragto jawaabta.",
       "dominoVzheDyvuvavsiaShcho": "🦃 Domino ma la yaabay inaad hal xaraf ku aamustay? Si uu mar kale u kaftamo, ku samee tan console-ka browser-ka (F12 → Console) oo dib u cusboonaysii bogga:",
+      "dominoNoGambling": "🦃 Sirta Domino: Stykhiia weligeed ma soo bandhigi doonto xayeysiis casino ama khamaar. Xitaa jawaan miro ah.",
       "skachatyZobrazhennia": "Soo deji sawirka",
       "zakryty": "Xir",
       "zakrytyEsc": "Xir (Esc)",
@@ -1502,6 +1503,18 @@
       "showVerb": "muujisid",
       "dayLonger": "Maalintu waa {{Math}} daqiiqo ka dheer shalay",
       "dayShorter": "Maalintu waa {{Math}} daqiiqo ka gaaban shalay"
+    },
+    "WeatherTurkey": {
+      "sunny": "Domino wuxuu qorraxda ku kululaanayaa",
+      "hot": "Domino waa kulul yahay — hadh ayuu raadinayaa",
+      "night": "Domino wuu hurdaa",
+      "cloudy": "Domino wuu socdaa oo miro ayuu dhufanayaa",
+      "fog": "Domino wuxuu ku lumay ceeryaamo",
+      "rain": "Domino wuxuu ku dhuuntay dallad hoosteed",
+      "snow": "Domino wuxuu qabanayaa barafka",
+      "cold": "Domino wuu qaboobayaa isagoo shaal xiran",
+      "storm": "Domino wuxuu ka baqayaa duufaanta",
+      "wind": "Domino dabaysha ayuu si dhib leh ugu adkaysanayaa"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "Kala duwanaanshaha maalin/habeen: {{delta}}°C",

@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "查看答案：{{q}}",
       "natysnitShchobPerehlianutyVidpovid": "点击查看答案。",
       "dominoVzheDyvuvavsiaShcho": "🦃 你停在一个字母上，多米诺是不是吃了一惊？想让他再开玩笑，请在浏览器控制台（F12 → Console）运行以下代码并刷新页面：",
+      "dominoNoGambling": "🦃 多米诺悄悄告诉你：Stykhiia 永远不会出现赌场和赌博广告。给一袋谷子也不行。",
       "skachatyZobrazhennia": "下载图片",
       "zakryty": "关闭",
       "zakrytyEsc": "关闭（Esc）",
@@ -1502,6 +1503,18 @@
       "showVerb": "显示",
       "dayLonger": "白昼比昨天长 {{Math}} 分钟",
       "dayShorter": "白昼比昨天短 {{Math}} 分钟"
+    },
+    "WeatherTurkey": {
+      "sunny": "多米诺在晒太阳",
+      "hot": "多米诺好热——正在找阴凉",
+      "night": "多米诺睡着了",
+      "cloudy": "多米诺在散步啄谷粒",
+      "fog": "多米诺在雾里迷路了",
+      "rain": "多米诺躲在伞下",
+      "snow": "多米诺在接雪花",
+      "cold": "多米诺围着围巾瑟瑟发抖",
+      "storm": "多米诺害怕雷雨",
+      "wind": "多米诺在风中快站不住了"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "昼夜温差：{{delta}}°C",

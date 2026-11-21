@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "Ver respuesta: {{q}}",
       "natysnitShchobPerehlianutyVidpovid": "Pulsa para ver la respuesta.",
       "dominoVzheDyvuvavsiaShcho": "🦃 ¿A Domino le extrañó que te quedaras callado en una letra? Para que bromee otra vez, ejecuta en la consola del navegador (F12 → Console) y recarga la página:",
+      "dominoNoGambling": "🦃 Domino en secreto: en Stykhiia nunca habrá anuncios de casinos ni de apuestas. Ni por un saco de grano.",
       "skachatyZobrazhennia": "Descargar imagen",
       "zakryty": "Cerrar",
       "zakrytyEsc": "Cerrar (Esc)",
@@ -1502,6 +1503,18 @@
       "showVerb": "mostrar",
       "dayLonger": "El día es {{Math}} min más largo que ayer",
       "dayShorter": "El día es {{Math}} min más corto que ayer"
+    },
+    "WeatherTurkey": {
+      "sunny": "Domino toma el sol",
+      "hot": "Domino tiene calor — busca sombra",
+      "night": "Domino duerme",
+      "cloudy": "Domino pasea y picotea granos",
+      "fog": "Domino se perdió en la niebla",
+      "rain": "Domino se esconde bajo el paraguas",
+      "snow": "Domino atrapa copos de nieve",
+      "cold": "Domino se congela con bufanda",
+      "storm": "Domino teme la tormenta",
+      "wind": "Domino apenas aguanta el viento"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "Contraste día/noche: {{delta}}°C",

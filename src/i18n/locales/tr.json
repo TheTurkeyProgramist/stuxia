@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "Cevabı gör: {{q}}",
       "natysnitShchobPerehlianutyVidpovid": "Cevabı görmek için tıklayın.",
       "dominoVzheDyvuvavsiaShcho": "🦃 Domino tek harfte sustuğunuza şaşırdı mı? Yeniden şaka yapması için tarayıcı konsolunda (F12 → Console) çalıştırın ve sayfayı yenileyin:",
+      "dominoNoGambling": "🦃 Domino’dan bir sır: Stykhiia’da asla kumarhane ya da kumar reklamı olmayacak. Bir çuval tahıla bile.",
       "skachatyZobrazhennia": "Görseli indir",
       "zakryty": "Kapat",
       "zakrytyEsc": "Kapat (Esc)",
@@ -1502,6 +1503,18 @@
       "showVerb": "göstermek",
       "dayLonger": "Gün dünden {{Math}} dk daha uzun",
       "dayShorter": "Gün dünden {{Math}} dk daha kısa"
+    },
+    "WeatherTurkey": {
+      "sunny": "Domino güneşleniyor",
+      "hot": "Domino çok sıcakladı — gölge arıyor",
+      "night": "Domino uyuyor",
+      "cloudy": "Domino geziniyor ve tane gagalıyor",
+      "fog": "Domino siste kayboldu",
+      "rain": "Domino şemsiyenin altına saklanıyor",
+      "snow": "Domino kar taneleri yakalıyor",
+      "cold": "Domino atkısıyla üşüyor",
+      "storm": "Domino fırtınadan korkuyor",
+      "wind": "Domino rüzgârda zor duruyor"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "Gündüz/gece farkı: {{delta}}°C",

@@ -99,6 +99,7 @@ import { isFoggy } from "../../utils/dailyAggregates";
 import { AnimWind, AnimSpin, AnimHourglass, AnimTwinkle, AnimCompass, MoonPhaseIcon, AstroScale } from "./BlockAstroIcons.jsx";
 import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, CloudWithTrend, getCloudTrend, getSnowStyle } from "./AnimatedWeatherIcons.jsx"; //Анімовані іконки
 import { WeatherIcon, stripEmoji, ICON_HALO_FILTER } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
+import WeatherTurkey from "./WeatherTurkey.jsx"; //Доміно — індик-талісман, що реагує на погоду
 import { BiWind } from "react-icons/bi"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
 import { MdOutlineSpeed, MdClose, MdStraighten, MdNotificationsActive, MdNotificationsOff, MdAutorenew, MdWbTwilight } from "react-icons/md"; //Тиск
@@ -760,7 +761,7 @@ const AiSummaryBox = styled(motion.div)`
   /* Під тему: темна — чорний фон, світла — білий; рамка нейтральна */
   background: ${(props) => (props.$isDarkMode ? "rgba(0, 0, 0, 0.88)" : "rgba(255, 255, 255, 0.92)")};
   border: 2px solid ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.12)")};
-  padding: 14px;
+  padding: 8px;
   font-size: 15px;
   line-height: 1.6;
   color: ${(props) => (props.$isDarkMode ? "#efefff" : "#2a2a2a")};
@@ -869,6 +870,31 @@ const RuleBadge = styled.span`
   border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(0, 238, 255, 0.35)" : "rgba(0, 180, 220, 0.35)")};
 `;
 
+/* Список секцій смарт-прогнозу: телефон — одна колонка, планшет/ПК — дві.
+   CSS-колонки (а не grid): блоки різної висоти щільно йдуть один під одним, без дірок.
+   Заголовок із бейджами й останній блок — на всю ширину */
+const RuleSectionsGrid = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  @media (min-width: 768px) {
+    display: block;
+    column-count: 2;
+    column-gap: 6px;
+    & > * {
+      break-inside: avoid;
+      margin-bottom: 6px;
+    }
+    & > :first-child,
+    & > :last-child {
+      column-span: all;
+    }
+    & > :last-child {
+      margin-bottom: 0;
+    }
+  }
+`;
+
 const RuleSectionCard = styled.div`
   background: ${(props) =>
     props.$isDarkMode ? "rgba(255, 255, 255, 0.06)" : "rgba(245, 248, 252, 0.85)"};
@@ -876,11 +902,11 @@ const RuleSectionCard = styled.div`
     props.$isDarkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)"};
   border-left: 3.5px solid ${(props) => props.$accent || "#00eeff"};
   border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
+  padding: 7px 9px;
+  margin-bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   @media (max-width: 767px) {
     padding: 6px 8px;
     margin-bottom: 0;
@@ -4248,6 +4274,11 @@ const HOLIDAYS_2027 = {
               minWidth: 0,
             }}
           >
+            {card.current && (
+              <div style={{ marginRight: "auto", marginLeft: "-6px", display: "flex", alignItems: "center" }}>
+                <WeatherTurkey item={card.current} isDarkMode={isDarkMode} />
+              </div>
+            )}
             <ActionButtons $isDarkMode={isDarkMode} style={{ position: "relative", zIndex: 2 }}>
               {isVoiceBeta && (
                 <Tooltip content={isSpeaking ? i18n.t("newsWeather.Weather.zupynytyOzvuchennia") : i18n.t("newsWeather.Weather.ozvuchytyProhnozBeta")} isDarkMode={isDarkMode}>
@@ -5182,7 +5213,7 @@ const HOLIDAYS_2027 = {
               </SmartTopBar>
 
               {/* Експертні правила без ШІ */}
-                <div style={{ display: "flex", flexDirection: "column", gap: isNarrowScreen ? "4px" : "10px" }}>
+                <RuleSectionsGrid>
                   {/* Головний статус та бейджі збігів */}
                   <div>
                     <div
@@ -5392,7 +5423,7 @@ const HOLIDAYS_2027 = {
                       )}
                     </RuleSectionCard>
                   )}
-                </div>
+                </RuleSectionsGrid>
             </AiSummaryBox>
           )}
 

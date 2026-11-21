@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "Visa svaret: {{q}}",
       "natysnitShchobPerehlianutyVidpovid": "Klicka för att visa svaret.",
       "dominoVzheDyvuvavsiaShcho": "🦃 Har Domino redan undrat varför du tystnade vid en bokstav? För att han ska skämta igen, kör i webbläsarens konsol (F12 → Console) och ladda om sidan:",
+      "dominoNoGambling": "🦃 Dominos hemlighet: på Stykhiia blir det aldrig reklam för kasinon eller spel om pengar. Inte ens för en säck korn.",
       "skachatyZobrazhennia": "Ladda ner bilden",
       "zakryty": "Stäng",
       "zakrytyEsc": "Stäng (Esc)",
@@ -1502,6 +1503,18 @@
       "showVerb": "visa",
       "dayLonger": "Dagen är {{Math}} min längre än i går",
       "dayShorter": "Dagen är {{Math}} min kortare än i går"
+    },
+    "WeatherTurkey": {
+      "sunny": "Domino solar sig",
+      "hot": "Domino är för varm — letar skugga",
+      "night": "Domino sover",
+      "cloudy": "Domino promenerar och pickar korn",
+      "fog": "Domino gick vilse i dimman",
+      "rain": "Domino gömmer sig under paraplyet",
+      "snow": "Domino fångar snöflingor",
+      "cold": "Domino fryser i halsduken",
+      "storm": "Domino är rädd för åskan",
+      "wind": "Domino står knappt emot vinden"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "Kontrast dag/natt: {{delta}}°C",

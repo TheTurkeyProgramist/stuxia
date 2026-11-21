@@ -161,7 +161,7 @@ export const getWeatherKind = (code) => {
 };
 
 // Для карток, збережених раніше без weather_code: відновлюємо з тексту.
-const inferCode = (item) => {
+export const inferCode = (item) => {
   const text = `${item?.description || ""} ${item?.iconPlaceholder || ""}`.toLowerCase();
   if (/сонячно|місячно/.test(text)) return 0;
   if (/мінлива/.test(text)) return 2;
@@ -176,7 +176,7 @@ const inferCode = (item) => {
   return 3.5;
 };
 
-const inferIsDay = (item) => {
+export const inferIsDay = (item) => {
   if (item?.is_day !== undefined && item?.is_day !== null) return Number(item.is_day) ? 1 : 0;
   const text = `${item?.description || ""} ${item?.iconPlaceholder || ""}`;
   if (/місячно|нічна|🌙/i.test(text)) return 0;

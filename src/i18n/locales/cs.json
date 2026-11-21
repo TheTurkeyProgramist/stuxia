@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "Zobrazit odpověď: {{q}}",
       "natysnitShchobPerehlianutyVidpovid": "Klikněte pro zobrazení odpovědi.",
       "dominoVzheDyvuvavsiaShcho": "🦃 Divil se už Domino, že jste se zasekli na jednom písmenu? Aby zažertoval znovu, spusťte v konzoli prohlížeče (F12 → Console) a obnovte stránku:",
+      "dominoNoGambling": "🦃 Domino prozrazuje: na Stykhiia nikdy nebude reklama na kasina a hazard. Ani za pytel zrní.",
       "skachatyZobrazhennia": "Stáhnout obrázek",
       "zakryty": "Zavřít",
       "zakrytyEsc": "Zavřít (Esc)",
@@ -1502,6 +1503,18 @@
       "showVerb": "zobrazení",
       "dayLonger": "Den je o {{Math}} min delší než včera",
       "dayShorter": "Den je o {{Math}} min kratší než včera"
+    },
+    "WeatherTurkey": {
+      "sunny": "Domino se vyhřívá na sluníčku",
+      "hot": "Dominovi je horko — hledá stín",
+      "night": "Domino spí",
+      "cloudy": "Domino se prochází a zobe zrní",
+      "fog": "Domino se ztratil v mlze",
+      "rain": "Domino se schovává pod deštníkem",
+      "snow": "Domino chytá sněhové vločky",
+      "cold": "Domino mrzne v šále",
+      "storm": "Domino se bojí bouřky",
+      "wind": "Domino se ve větru sotva drží"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "Kontrast den/noc: {{delta}}°C",

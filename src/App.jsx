@@ -7,6 +7,7 @@ import React, {
   Suspense,
   useMemo,
   useRef,
+  useLayoutEffect,
   lazy,
 } from "react";
 import styled, { keyframes, css, createGlobalStyle } from "styled-components";
@@ -91,7 +92,7 @@ import { analyzeSearchQuery } from "./utils/searchAnalyzer.js";
 import { findCityInDatabase, getCitySlug, getCitySeo } from "./utils/citiesDatabase.js";
 import { FaSmog } from "react-icons/fa6";
 import { FaSun } from "react-icons/fa";
-import { BsMoonStarsFill } from "react-icons/bs";
+import { BsMoonStarsFill, BsLightningChargeFill } from "react-icons/bs";
 import { FaCloudMoonRain, FaCloudMoon } from "react-icons/fa";
 import { LiaCloudSunRainSolid, LiaCloudMoonRainSolid, LiaCloudSunSolid } from "react-icons/lia";
 import { stripSecrets } from "./utils/passwordHash";
@@ -341,10 +342,16 @@ const ThemeWrapper = styled.div`
 
 const WeatherCardsContainer = styled.div`
   display: flex;
-  gap: 5px;
+  /* Більше за бічний відступ (42px): сусідні картки не визирають, тож на першій/останній
+     картці немає «порожнечі» замість сусіда — карусель виглядає однаково по колу */
+  gap: 46px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   padding: 0 42px;
+  /* Планшет/ПК: картки на всю ширину (під заголовком «Погода»), стрілки лежать на краях картки */
+  @media (min-width: 768px) {
+    padding: 0;
+  }
   justify-content: flex-start;
   width: 100%;
   scroll-behavior: smooth;
@@ -488,7 +495,7 @@ const CarouselNav = styled.div`
 const CarouselSideButton = styled.button`
   position: absolute;
   top: 50%;
-  ${(props) => (props.$direction === "previous" ? "left: 42px;" : "right: 42px;")}
+  ${(props) => (props.$direction === "previous" ? "left: 0;" : "right: 0;")}
   /* Телефон: стрілки майже біля країв екрана (зліва запас під 3D-грань, що виступає на 10px) */
   @media (max-width: 767px) {
     ${(props) => (props.$direction === "previous" ? "left: 12px;" : "right: 4px;")}
@@ -939,7 +946,7 @@ const CITY_SIDEBAR_DESKTOP_MEDIA = "@media (min-width: 1200px)";
 const WeatherCarouselLayout = styled.div`
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 15px;
 `;
 
 /* Колонка з картками; від неї рахуються стрілки ◀ ▶ і позиції карток при прокрутці */
@@ -957,7 +964,7 @@ const CITY_SIDEBAR_TRANSITION = "0.35s cubic-bezier(0.4, 0, 0.2, 1)";
 const CitySidebarShell = styled.div`
   flex: 0 0 ${(props) => (props.$collapsed ? "0px" : "120px")};
   min-width: 0;
-  margin-right: ${(props) => (props.$collapsed ? "-8px" : "0px")};
+  margin-right: ${(props) => (props.$collapsed ? "-15px" : "0px")};
   overflow: hidden;
   overflow: clip;
   overflow-clip-margin: 12px;
@@ -1147,6 +1154,25 @@ const CitySidebarTile = styled.button`
   }
 `;
 
+/* ⚡ біля міста, погоду для якого готує сервер Стихії (як у пошуку міст у Hero) */
+const ServerBoltMark = styled.span`
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px;
+  vertical-align: -1px;
+  color: #facc15;
+  filter: drop-shadow(0 0 2px rgba(250, 204, 21, 0.45));
+  svg {
+    width: 0.95em;
+    height: 0.95em;
+  }
+`;
+const ServerBolt = () => (
+  <ServerBoltMark title={i18n.t("hero.server.hint")} aria-label={i18n.t("hero.server.hint")} role="img">
+    <BsLightningChargeFill aria-hidden="true" />
+  </ServerBoltMark>
+);
+
 const CitySidebarTileName = styled.span`
   max-width: 100%;
   overflow: hidden;
@@ -1267,6 +1293,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
 
   const childrenArray = React.Children.toArray(children);
   const childCount = childrenArray.length;
+  const animationsDisabled = useAnimationsDisabled();
 
   const activeItemId = items[activeIndex]?.id ?? null;
   useEffect(() => {
@@ -1274,21 +1301,47 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
     window.dispatchEvent(new CustomEvent(WEATHER_ACTIVE_CARD_EVENT, { detail: { id: activeItemId } }));
   }, [activeItemId]);
 
-  const scrollToIndex = useCallback((index) => {
+  const scrollToIndex = useCallback((index, behavior = "smooth") => {
     const container = scrollRef.current;
     if (!container) return;
     const card = container.children[index];
     if (card) {
-      container.scrollTo({ left: card.offsetLeft, behavior: "smooth" });
+      container.scrollTo({ left: card.offsetLeft, behavior });
     }
   }, []);
 
+  // Безкінечна карусель: з останньої картки ▶ веде на першу (і навпаки) не перемоткою
+  // через усі картки, а миттєвим стрибком; сама картка м'яко проявляється на місці
+  const wrapPendingRef = useRef(false);
   const changeSlide = useCallback((direction) => {
     if (childCount < 2) return;
-    const nextIndex = (activeIndex + direction + childCount) % childCount;
+    const rawIndex = activeIndex + direction;
+    const wraps = rawIndex < 0 || rawIndex >= childCount;
+    const nextIndex = (rawIndex + childCount) % childCount;
     setActiveIndex(nextIndex);
-    scrollToIndex(nextIndex);
+    if (wraps) {
+      wrapPendingRef.current = true;
+      scrollToIndex(nextIndex, "instant");
+    } else {
+      scrollToIndex(nextIndex);
+    }
   }, [activeIndex, childCount, scrollToIndex]);
+
+  // Після рендеру картка вже змонтована (не порожня заглушка) — проявляємо саме її,
+  // без зсуву контейнера, тож сусідні картки й порожнеча не визирають
+  useLayoutEffect(() => {
+    if (!wrapPendingRef.current) return;
+    wrapPendingRef.current = false;
+    const card = scrollRef.current?.children[activeIndex];
+    if (!card || animationsDisabled || typeof card.animate !== "function") return;
+    card.animate(
+      [
+        { opacity: 0.25, transform: "scale(0.985)" },
+        { opacity: 1, transform: "scale(1)" },
+      ],
+      { duration: 280, easing: "ease-out" },
+    );
+  }, [activeIndex, animationsDisabled]);
 
   useEffect(() => {
     if (activeIndex >= childCount && childCount > 0) {
@@ -1460,6 +1513,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
                   >
                     <button type="button" title={label} onClick={() => jumpTo(index)}>
                       {index + 1}. {label}
+                      {items[index]?.isServer && <ServerBolt />}
                     </button>
                   </CityJumpItem>
                 ))}
@@ -1476,7 +1530,6 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
   // Схована панель лишається в розмітці згорнутою (ширина 0) — так згортання й розгортання плавні
   const isCitySidebarHidden = usePrefValue(CITY_SIDEBAR_HIDDEN_KEY, "false") === "true";
   const hasCitySidebar = isWideRow && childCount > 1;
-  const animationsDisabled = useAnimationsDisabled();
 
   // Після згортання/розгортання ширина карток змінилась — ставимо поточну точно на місце
   const handleSidebarTransitionEnd = (e) => {
@@ -1672,6 +1725,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
                   >
                     <CitySidebarTileName>
                       {index + 1}. {cityName.trim()}
+                      {items[index]?.isServer && <ServerBolt />}
                     </CitySidebarTileName>
                     {cityRest && <CitySidebarTileSub>{cityRest}</CitySidebarTileSub>}
                   </CitySidebarTile>
@@ -1989,6 +2043,8 @@ const SectionContent = memo(
               id: card.id,
               label: card.locationName || i18n.t("ui.App.kartka2"),
               isMain: !!card.isMain,
+              // Блискавка: погоду для цього міста готує сервер Стихії
+              isServer: !!findServerCity(card.lat, card.lon),
             }))}
             onReorder={onReorderCards}
           >

@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "回答を見る：{{q}}",
       "natysnitShchobPerehlianutyVidpovid": "クリックして回答を表示。",
       "dominoVzheDyvuvavsiaShcho": "🦃 1 文字で黙ってしまって、ドミノが驚いていますか？また冗談を言ってもらうには、ブラウザのコンソール（F12 → Console）でこれを実行し、ページを再読み込みしてください：",
+      "dominoNoGambling": "🦃 ドミノのひみつ：Stykhiiaにカジノやギャンブルの広告は絶対に載りません。穀物ひと袋をもらってもね。",
       "skachatyZobrazhennia": "画像をダウンロード",
       "zakryty": "閉じる",
       "zakrytyEsc": "閉じる（Esc）",
@@ -1502,6 +1503,18 @@
       "showVerb": "表示する",
       "dayLonger": "日の長さは昨日より{{Math}}分長い",
       "dayShorter": "日の長さは昨日より{{Math}}分短い"
+    },
+    "WeatherTurkey": {
+      "sunny": "ドミノはひなたぼっこ中",
+      "hot": "ドミノは暑くて日陰を探しています",
+      "night": "ドミノは寝ています",
+      "cloudy": "ドミノはお散歩して穀物をついばんでいます",
+      "fog": "ドミノは霧の中で迷子",
+      "rain": "ドミノは傘の下に隠れています",
+      "snow": "ドミノは雪をつかまえています",
+      "cold": "ドミノはマフラーで震えています",
+      "storm": "ドミノは雷が怖い",
+      "wind": "ドミノは風で立っているのがやっと"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "昼夜の差：{{delta}}°C",

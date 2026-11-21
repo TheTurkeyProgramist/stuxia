@@ -543,6 +543,7 @@
       "perehlianutyVidpovid": "Näytä vastaus: {{q}}",
       "natysnitShchobPerehlianutyVidpovid": "Näytä vastaus napsauttamalla.",
       "dominoVzheDyvuvavsiaShcho": "🦃 Ihmettelikö Domino jo, miksi hiljenit yhteen kirjaimeen? Jotta hän vitsailisi uudelleen, suorita selaimen konsolissa (F12 → Console) ja päivitä sivu:",
+      "dominoNoGambling": "🦃 Dominon salaisuus: Stykhiiassa ei koskaan näytetä kasino- tai uhkapelimainoksia. Ei edes säkillisestä jyviä.",
       "skachatyZobrazhennia": "Lataa kuva",
       "zakryty": "Sulje",
       "zakrytyEsc": "Sulje (Esc)",
@@ -1502,6 +1503,18 @@
       "showVerb": "näyttääksesi",
       "dayLonger": "Päivä on {{Math}} min pidempi kuin eilen",
       "dayShorter": "Päivä on {{Math}} min lyhyempi kuin eilen"
+    },
+    "WeatherTurkey": {
+      "sunny": "Domino paistattaa auringossa",
+      "hot": "Dominolla on kuuma — etsii varjoa",
+      "night": "Domino nukkuu",
+      "cloudy": "Domino kävelee ja nokkii jyviä",
+      "fog": "Domino eksyi sumuun",
+      "rain": "Domino piiloutuu sateenvarjon alle",
+      "snow": "Domino nappailee lumihiutaleita",
+      "cold": "Domino palelee kaulahuivissa",
+      "storm": "Domino pelkää ukkosta",
+      "wind": "Domino pysyy tuskin pystyssä tuulessa"
     },
     "ruleBasedForecast": {
       "kontrastDenNichC": "Päivän ja yön ero: {{delta}}°C",

@@ -121,20 +121,26 @@ const Conten = styled.div`
 
 // Тиха примітка в самому низу угоди: як повернути одноразову пасхалку Доміно (DominoTutorial → DominoQuip)
 const EasterEggNote = styled.p`
-  margin: 18px auto 6px;
+  margin: 10px auto 4px;
   max-width: 560px;
   text-align: center;
+  text-wrap: balance;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.35;
   opacity: 0.6;
   color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#111111")};
+
+  .line {
+    display: block;
+    margin-bottom: 4px;
+  }
 
   code {
     display: block;
     width: fit-content;
     max-width: 100%;
-    margin: 6px auto 0;
-    padding: 4px 8px;
+    margin: 4px auto 0;
+    padding: 3px 8px;
     border-radius: 6px;
     font-family: Consolas, monospace;
     font-size: 12px;
@@ -925,6 +931,7 @@ const InfoModal = ({ onClose, isOpen, initialFaqQuestion, isDarkMode }) => {
               </AccordionWrapper>
               {!searchQuery && (
                 <EasterEggNote $isDarkMode={isDarkMode}>
+                  <span className="line">{i18n.t("modals.UserSearchModal.dominoNoGambling")}</span>
                   {i18n.t("modals.UserSearchModal.dominoVzheDyvuvavsiaShcho")}
                   <code>localStorage.removeItem('domino_quip_speechless_seen')</code>
                 </EasterEggNote>
