@@ -644,7 +644,7 @@ const SubText = styled.div`
 `;
 const MobileTabBar = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   border-bottom: 1px solid rgb(0, 238, 255);
   width: 100%;
 
@@ -2259,6 +2259,7 @@ const WeatherCardComponent = ({
       phoneChartSessionRef.current = false;
       setHourlyViewMode("blocks");
       setDailyViewMode("blocks");
+      setArchiveViewMode("rows");
     }
   };
   useEffect(() => {
@@ -2284,6 +2285,7 @@ const WeatherCardComponent = ({
           phoneChartSessionRef.current = false;
           setHourlyViewMode("blocks");
           setDailyViewMode("blocks");
+          setArchiveViewMode("rows");
         }
         return;
       }
@@ -2936,6 +2938,9 @@ const formatChartTempLabel = (value, suffix) => {
     hourlyViewMode === "charts" && (!canShowHourlyChart || phoneChartHidden) ? "blocks" : hourlyViewMode;
   const effectiveDailyViewMode =
     dailyViewMode === "charts" && phoneChartHidden ? "blocks" : dailyViewMode;
+  // Графіки на телефоні (до 768 px) заблоковані — в архіві замість них лінійний вигляд
+  const effectiveArchiveViewMode =
+    archiveViewMode === "charts" && phoneChartHidden ? "rows" : archiveViewMode;
   const hourlyChartWidth = Math.max(873, (visibleHourly?.length || 24) * 35);
   const tempSuffix = unit === "F" ? "°F" : unit === "K" ? "K" : "°C";
   const toDisplayTemp = (c) => {
@@ -5210,11 +5215,11 @@ const HOLIDAYS_2027 = {
         <CustomTimersDisplay customDays={customDays} cardId={card.id} />
         <MobileTabBar>
           {[
-            { key: "current", label: i18n.t("newsWeather.Weather.zaraz") },
-            { key: "hourly",  label: i18n.t("newsWeather.Weather.hodynna") },
-            { key: "daily",   label: i18n.t("newsWeather.Weather.misiachna") },
-            { key: "ai",      label: i18n.t("newsWeather.Weather.smart") },
-            { key: "archive", label: i18n.t("newsWeather.WeatherArchive.tab") },
+            { key: "current", label: i18n.t("newsWeather.Weather.zaraz"), icon: <BiCurrentLocation /> },
+            { key: "hourly",  label: i18n.t("newsWeather.Weather.hodynna"), icon: <BiLineChart /> },
+            { key: "daily",   label: i18n.t("newsWeather.Weather.misiachna"), icon: <FaCalendarPlus /> },
+            { key: "ai",      label: i18n.t("newsWeather.Weather.smart"), icon: <BsStars /> },
+            { key: "archive", label: i18n.t("newsWeather.WeatherArchive.tab"), icon: <BiHistory /> },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -5222,6 +5227,11 @@ const HOLIDAYS_2027 = {
                 setActiveTab(tab.key)
               }
               style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "2px",
+                minWidth: 0,
                 padding: "4px 2px",
                 border: "none",
                 borderBottom: activeTab === tab.key ? "2px solid #00eeff" : "2px solid transparent",
@@ -5233,7 +5243,11 @@ const HOLIDAYS_2027 = {
                 transition: "all 0.2s",
               }}
             >
-              {tab.label}
+              <span aria-hidden="true" style={{ display: "inline-flex", fontSize: "18px", lineHeight: 1 }}>{tab.icon}</span>
+              {/* Підпис в один рядок: довгий — обрізається трикрапкою, а не рветься по літерах */}
+              <span style={{ maxWidth: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: 1.2 }}>
+                {tab.label}
+              </span>
             </button>
           ))}
         </MobileTabBar>
@@ -6047,7 +6061,7 @@ const HOLIDAYS_2027 = {
                   ].map((m) => (
                     <ViewToggleButton
                       key={m.key}
-                      $active={archiveViewMode === m.key}
+                      $active={effectiveArchiveViewMode === m.key}
                       $isDarkMode={isDarkMode}
                       onClick={() => (m.key === "charts" ? pickChartsMode("archive") : setArchiveViewMode(m.key))}
                       title={m.title}
@@ -6059,10 +6073,10 @@ const HOLIDAYS_2027 = {
               </div>
               {!archiveMonths ? (
                 <ArchiveStatus error={archiveState.error} retry={archiveState.retry} isDarkMode={isDarkMode} />
-              ) : archiveViewMode === "charts" ? (
+              ) : effectiveArchiveViewMode === "charts" ? (
                 renderArchiveChart()
               ) : (
-                <WeatherArchive months={archiveMonths} viewMode={archiveViewMode} fmt={fmt} formatTemp={formatTemp} isDarkMode={isDarkMode} />
+                <WeatherArchive months={archiveMonths} viewMode={effectiveArchiveViewMode} fmt={fmt} formatTemp={formatTemp} isDarkMode={isDarkMode} />
               )}
             </div>
           )}
