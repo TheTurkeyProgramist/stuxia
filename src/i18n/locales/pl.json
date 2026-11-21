@@ -40,7 +40,11 @@
       "title": "Wybierz punkt na mapie",
       "hint": "Kliknij mapę — współrzędne uzupełnią się same. Kółko myszy lub przyciski +/− zmieniają skalę.",
       "use": "Użyj tego punktu",
-      "close": "Zamknij"
+      "close": "Zamknij",
+      "gpsError": "Nie udało się ustalić lokalizacji. Zezwól na dostęp do lokalizacji w ustawieniach przeglądarki.",
+      "webglError": "Mapa nie wystartowała: w przeglądarce wyłączono WebGL lub przyspieszenie sprzętowe. Wpisz współrzędne ręcznie.",
+      "mapLoading": "Wczytuję mapę… Zaczekaj chwilę.",
+      "mapLoadFailed": "Mapa się nie wczytała. Sprawdź internet lub wpisz współrzędne ręcznie."
     },
     "coords": {
       "line": "Szerokość: {{lat}}°, Długość: {{lon}}°",

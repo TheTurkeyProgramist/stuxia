@@ -40,7 +40,11 @@
       "title": "Haritada bir nokta seçin",
       "hint": "Haritaya tıklayın — koordinatlar kendiliğinden dolar. Fare tekerleği veya +/− yakınlaştırmayı değiştirir.",
       "use": "Bu noktayı kullan",
-      "close": "Kapat"
+      "close": "Kapat",
+      "gpsError": "Konumunuz alınamadı. Tarayıcı ayarlarından konum erişimine izin verin.",
+      "webglError": "Harita başlatılamadı: tarayıcıda WebGL veya donanım hızlandırma kapalı. Koordinatları elle girin.",
+      "mapLoading": "Harita yükleniyor… Lütfen biraz bekleyin.",
+      "mapLoadFailed": "Harita yüklenemedi. İnternet bağlantınızı kontrol edin veya koordinatları elle girin."
     },
     "coords": {
       "line": "Enlem: {{lat}}°, Boylam: {{lon}}°",

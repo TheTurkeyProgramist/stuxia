@@ -40,7 +40,11 @@
       "title": "Dooro dhibic khariidadda ah",
       "hint": "Guji khariidadda — isku-xirayaashu naftood ayay buuxsamayaan. Giraanta jiirka ama +/− waxay beddelaan weynaynta.",
       "use": "Isticmaal dhibcadan",
-      "close": "Xir"
+      "close": "Xir",
+      "gpsError": "Goobtaada lama helin. Ogolow marinka goobta qaabaynta browser-kaaga.",
+      "webglError": "Khariidadda ma bilaabmin: WebGL ama dardargelinta hardware-ka waa naafo browser-ka. Gacanta ku geli isku-xirayaasha.",
+      "mapLoading": "Khariidadda waa la soo raraya… Fadlan hal daqiiqo sug.",
+      "mapLoadFailed": "Khariidadda ma soo shaqayn. Hubi isku-xirka internetka ama gacanta ku geli isku-xirayaasha."
     },
     "coords": {
       "line": "Loolka: {{lat}}°, Dhererka: {{lon}}°",

@@ -40,7 +40,11 @@
       "title": "Pasirinkite tašką žemėlapyje",
       "hint": "Spustelėkite žemėlapį — koordinatės įsirašys savaime. Pelės ratukas arba +/− keičia mastelį.",
       "use": "Naudoti šį tašką",
-      "close": "Uždaryti"
+      "close": "Uždaryti",
+      "gpsError": "Nepavyko nustatyti vietos. Leiskite prieigą prie vietos naršyklės nustatymuose.",
+      "webglError": "Žemėlapio nepavyko paleisti: naršyklėje išjungtas WebGL arba aparatinis spartinimas. Įveskite koordinates rankiniu būdu.",
+      "mapLoading": "Žemėlapis kraunamas… Šiek tiek palaukite.",
+      "mapLoadFailed": "Žemėlapio nepavyko įkelti. Patikrinkite internetą arba įveskite koordinates rankiniu būdu."
     },
     "coords": {
       "line": "Platuma: {{lat}}°, Ilguma: {{lon}}°",

@@ -40,7 +40,11 @@
       "title": "Punkt auf der Karte wählen",
       "hint": "Auf die Karte klicken — die Koordinaten werden automatisch eingetragen. Mausrad oder +/− ändern den Maßstab.",
       "use": "Diesen Punkt verwenden",
-      "close": "Schließen"
+      "close": "Schließen",
+      "gpsError": "Standort konnte nicht ermittelt werden. Erlauben Sie den Standortzugriff in den Browser-Einstellungen.",
+      "webglError": "Die Karte konnte nicht starten: WebGL oder Hardwarebeschleunigung ist im Browser deaktiviert. Geben Sie die Koordinaten manuell ein.",
+      "mapLoading": "Karte wird geladen… Bitte einen Moment warten.",
+      "mapLoadFailed": "Die Karte wurde nicht geladen. Prüfen Sie die Internetverbindung oder geben Sie die Koordinaten manuell ein."
     },
     "coords": {
       "line": "Breite: {{lat}}°, Länge: {{lon}}°",

@@ -40,7 +40,11 @@
       "title": "Vyberte bod na mapě",
       "hint": "Klikněte na mapu — souřadnice se doplní samy. Kolečko myši nebo +/− mění měřítko.",
       "use": "Použít tento bod",
-      "close": "Zavřít"
+      "close": "Zavřít",
+      "gpsError": "Polohu se nepodařilo zjistit. Povolte přístup k poloze v nastavení prohlížeče.",
+      "webglError": "Mapu se nepodařilo spustit: v prohlížeči je vypnuto WebGL nebo hardwarová akcelerace. Zadejte souřadnice ručně.",
+      "mapLoading": "Načítám mapu… Chvilku strpení.",
+      "mapLoadFailed": "Mapa se nenačetla. Zkontrolujte připojení k internetu nebo zadejte souřadnice ručně."
     },
     "coords": {
       "line": "Šířka: {{lat}}°, Délka: {{lon}}°",

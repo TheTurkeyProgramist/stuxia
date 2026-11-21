@@ -40,7 +40,11 @@
       "title": "Elija un punto en el mapa",
       "hint": "Haga clic en el mapa y las coordenadas se rellenan solas. La rueda del ratón o +/− cambian el zoom.",
       "use": "Usar este punto",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "gpsError": "No se pudo obtener tu ubicación. Permite el acceso a la ubicación en los ajustes del navegador.",
+      "webglError": "No se pudo iniciar el mapa: WebGL o la aceleración por hardware está desactivada en el navegador. Introduce las coordenadas manualmente.",
+      "mapLoading": "Cargando el mapa… Espera un momento.",
+      "mapLoadFailed": "El mapa no se cargó. Comprueba tu conexión o introduce las coordenadas manualmente."
     },
     "coords": {
       "line": "Latitud: {{lat}}°, Longitud: {{lon}}°",

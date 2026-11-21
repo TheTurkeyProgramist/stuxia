@@ -40,7 +40,11 @@
       "title": "Choose a point on the map",
       "hint": "Click the map and the coordinates fill in automatically. Mouse wheel or +/− buttons change the zoom.",
       "use": "Use this point",
-      "close": "Close"
+      "close": "Close",
+      "gpsError": "Couldn't get your location. Allow location access in your browser settings.",
+      "webglError": "The map couldn't start: WebGL or hardware acceleration is disabled in your browser. Enter the coordinates manually.",
+      "mapLoading": "Loading the map… Please wait a moment.",
+      "mapLoadFailed": "The map didn't load. Check your internet connection or enter the coordinates manually."
     },
     "coords": {
       "line": "Latitude: {{lat}}°, Longitude: {{lon}}°",

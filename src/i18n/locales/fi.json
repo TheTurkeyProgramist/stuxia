@@ -40,7 +40,11 @@
       "title": "Valitse piste kartalta",
       "hint": "Napauta karttaa — koordinaatit täyttyvät itsestään. Hiiren rulla tai +/− muuttaa zoomausta.",
       "use": "Käytä tätä pistettä",
-      "close": "Sulje"
+      "close": "Sulje",
+      "gpsError": "Sijaintia ei saatu selville. Salli sijaintitiedot selaimen asetuksissa.",
+      "webglError": "Karttaa ei voitu käynnistää: WebGL tai laitteistokiihdytys on poissa käytöstä selaimessa. Syötä koordinaatit käsin.",
+      "mapLoading": "Karttaa ladataan… Odota hetki.",
+      "mapLoadFailed": "Karttaa ei saatu ladattua. Tarkista verkkoyhteys tai syötä koordinaatit käsin."
     },
     "coords": {
       "line": "Leveys: {{lat}}°, Pituus: {{lon}}°",

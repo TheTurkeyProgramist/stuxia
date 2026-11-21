@@ -40,7 +40,11 @@
       "title": "Válasszon pontot a térképen",
       "hint": "Kattintson a térképre — a koordináták maguktól kitöltődnek. Az egérgörgő vagy a +/− a nagyítást állítja.",
       "use": "Pont használata",
-      "close": "Bezárás"
+      "close": "Bezárás",
+      "gpsError": "Nem sikerült meghatározni a helyzetét. Engedélyezze a helyhozzáférést a böngésző beállításaiban.",
+      "webglError": "A térkép nem indult el: a böngészőben ki van kapcsolva a WebGL vagy a hardveres gyorsítás. Adja meg kézzel a koordinátákat.",
+      "mapLoading": "A térkép betöltődik… Kérjük, várjon egy kicsit.",
+      "mapLoadFailed": "A térkép nem töltődött be. Ellenőrizze az internetkapcsolatot, vagy adja meg kézzel a koordinátákat."
     },
     "coords": {
       "line": "Szélesség: {{lat}}°, Hosszúság: {{lon}}°",

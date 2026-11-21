@@ -40,7 +40,11 @@
       "title": "Alegeți un punct pe hartă",
       "hint": "Apăsați pe hartă — coordonatele se completează singure. Rotița mouse-ului sau +/− schimbă zoom-ul.",
       "use": "Folosește acest punct",
-      "close": "Închide"
+      "close": "Închide",
+      "gpsError": "Nu am putut determina locația. Permite accesul la locație în setările browserului.",
+      "webglError": "Harta nu a pornit: WebGL sau accelerarea hardware este dezactivată în browser. Introdu coordonatele manual.",
+      "mapLoading": "Se încarcă harta… Așteaptă puțin.",
+      "mapLoadFailed": "Harta nu s-a încărcat. Verifică conexiunea la internet sau introdu coordonatele manual."
     },
     "coords": {
       "line": "Latitudine: {{lat}}°, Longitudine: {{lon}}°",

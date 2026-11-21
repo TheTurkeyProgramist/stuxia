@@ -40,7 +40,11 @@
       "title": "Choisissez un point sur la carte",
       "hint": "Cliquez sur la carte : les coordonnées se remplissent toutes seules. La molette ou +/− changent l'échelle.",
       "use": "Utiliser ce point",
-      "close": "Fermer"
+      "close": "Fermer",
+      "gpsError": "Impossible d'obtenir votre position. Autorisez la géolocalisation dans les paramètres du navigateur.",
+      "webglError": "La carte n'a pas pu démarrer : WebGL ou l'accélération matérielle est désactivé dans le navigateur. Saisissez les coordonnées manuellement.",
+      "mapLoading": "Chargement de la carte… Patientez un instant.",
+      "mapLoadFailed": "La carte ne s'est pas chargée. Vérifiez votre connexion ou saisissez les coordonnées manuellement."
     },
     "coords": {
       "line": "Latitude : {{lat}}°, Longitude : {{lon}}°",

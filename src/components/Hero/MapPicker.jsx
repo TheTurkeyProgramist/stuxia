@@ -1,39 +1,29 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styled, { css, keyframes } from "styled-components";
+import { Map as MapLibreMap, Marker, AttributionControl, setWorkerUrl } from "maplibre-gl";
+// Воркер MapLibre за замовчуванням шукають поруч із бандлом (./maplibre-gl-worker.mjs), а Vite його
+// туди не кладе — мапа «висіла» без векторних плиток. ?url змушує Vite віддати воркер окремим файлом.
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { MdAdd, MdRemove, MdClose, MdMyLocation, MdTouchApp } from "react-icons/md";
 import i18n from "../../i18n/i18n.js";
 
 // Мапа для вибору точки: тиснете — координати підставляються у режим координат.
-// Власна легка мапа на плитках OpenStreetMap (без Leaflet — нічого не додає до збірки):
-// перетягування, колесо/кнопки +/−, клік ставить позначку. Мапа на весь екран, а панелі
-// «плавають» поверх неї скляними картками; поява й зникнення — плавні.
+// MapLibre GL + безкоштовні векторні плитки OpenFreeMap (без ключа й реєстрації): перетягування,
+// зум колесом/щипком/кнопками, клік ставить позначку. Мапа на весь екран, панелі «плавають» поверх
+// неї скляними картками; поява й зникнення — плавні. Компонент ледачий, тож MapLibre вантажиться
+// лише коли мапу відкрили.
+//
+// Свої плитки (Protomaps/PMTiles у Cloudflare R2) — замінити лише STYLE_URL.
 
-const TILE = 256;
-const MIN_ZOOM = 3;
-const MAX_ZOOM = 17;
-const DRAG_THRESHOLD = 4;
+setWorkerUrl(maplibreWorkerUrl);
+
+const STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 const CLOSE_MS = 260;
-
-const worldSize = (z) => TILE * 2 ** z;
-const project = (lat, lon, z) => {
-  const s = worldSize(z);
-  const sin = Math.sin((Math.max(-85.0511, Math.min(85.0511, lat)) * Math.PI) / 180);
-  return {
-    x: ((lon + 180) / 360) * s,
-    y: (0.5 - Math.log((1 + sin) / (1 - sin)) / (4 * Math.PI)) * s,
-  };
-};
-const unproject = (x, y, z) => {
-  const s = worldSize(z);
-  const n = Math.PI - (2 * Math.PI * y) / s;
-  return {
-    lat: (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))),
-    lon: (x / s) * 360 - 180,
-  };
-};
+// Скільки чекаємо на першу відмальовку мапи, перш ніж сказати, що вона не завантажилась
+const LOAD_TIMEOUT_MS = 30000;
 const normLon = (lon) => ((((lon + 180) % 360) + 360) % 360) - 180;
-const clampLat = (lat) => Math.max(-85, Math.min(85, lat));
 
 const fadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
 const fadeOut = keyframes`from { opacity: 1; } to { opacity: 0; }`;
@@ -45,13 +35,13 @@ const slideSide = keyframes`from { opacity: 0; transform: translateX(16px); } to
 const slideSideOut = keyframes`from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(16px); }`;
 const mapZoomIn = keyframes`from { transform: scale(1.06); } to { transform: scale(1); }`;
 const mapZoomOut = keyframes`from { transform: scale(1); } to { transform: scale(1.04); }`;
-const tileIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
 const pinDrop = keyframes`
   0% { opacity: 0; transform: translateY(-34px); }
   55% { opacity: 1; transform: translateY(3px); }
   75% { transform: translateY(-5px); }
   100% { transform: none; }
 `;
+const spin = keyframes`to { transform: rotate(360deg); }`;
 const ring = keyframes`
   0% { opacity: 0.7; transform: scale(0.3); }
   100% { opacity: 0; transform: scale(2.4); }
@@ -84,24 +74,31 @@ const glass = css`
 `;
 
 const MapArea = styled.div`
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: #aad3df;
-  touch-action: none;
-  cursor: grab;
-  user-select: none;
+  /* && — вища специфічність: MapLibre вішає на контейнер клас .maplibregl-map з position: relative,
+     і без цього контейнер схлопувався до нульової висоти (мапа була порожньою) */
+  && {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #e8e4d8;
+  }
   ${motion(mapZoomIn, mapZoomOut, 420)}
-  &:active {
+
+  .maplibregl-canvas {
+    outline: none;
+    cursor: grab;
+  }
+  .maplibregl-canvas:active {
     cursor: grabbing;
   }
-  img {
-    position: absolute;
-    width: ${TILE}px;
-    height: ${TILE}px;
-    max-width: none;
-    pointer-events: none;
-    animation: ${tileIn} 0.3s ease both;
+  /* Підпис над нижньою карткою, щоб вона його не закривала */
+  .maplibregl-ctrl-bottom-left {
+    bottom: calc(max(14px, env(safe-area-inset-bottom)) + 84px);
+  }
+  .maplibregl-ctrl-attrib {
+    font-size: 11px;
   }
 `;
 
@@ -248,11 +245,84 @@ const UseBtn = styled.button`
     }
   }
 `;
-const PinWrap = styled.div`
+const Toast = styled.div`
   position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(max(14px, env(safe-area-inset-bottom)) + 96px);
+  z-index: 4;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  color: ${(p) => (p.$dark ? "#ffd9a8" : "#7a3b00")};
+  background: ${(p) => (p.$dark ? "rgba(48, 28, 6, 0.9)" : "rgba(255, 244, 224, 0.95)")};
+  border: 1px solid rgba(255, 179, 108, 0.6);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
+  animation: ${slideUp} 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`;
+
+// «Зачекайте трохи» посеред мапи, поки вантажаться стиль і перші плитки; потім плавно зникає
+const LoadingPill = styled.div`
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 48px);
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: ${(p) => (p.$hidden ? 0 : 1)};
+  visibility: ${(p) => (p.$hidden ? "hidden" : "visible")};
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+  ${glass}
+
+  ${(p) =>
+    p.$failed &&
+    css`
+      color: ${p.$dark ? "#ffd9a8" : "#7a3b00"};
+      border-color: rgba(255, 179, 108, 0.6);
+      text-align: left;
+      white-space: normal;
+    `}
+
+  &::before {
+    display: ${(p) => (p.$failed ? "none" : "block")};
+    content: "";
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 3px solid rgba(0, 217, 197, 0.3);
+    border-top-color: #00d9c5;
+    animation: ${spin} 0.9s linear infinite;
+    @media (prefers-reduced-motion: reduce) {
+      animation-duration: 2.4s;
+    }
+  }
+`;
+
+// Позначка живе в елементі маркера MapLibre (нульового розміру в точці): вістря — рівно в координатах
+const PinWrap = styled.div`
+  position: relative;
   width: 0;
   height: 0;
-  z-index: 2;
   pointer-events: none;
   &::before {
     content: "";
@@ -301,58 +371,49 @@ const PinDrop = styled.div`
     animation: none;
   }
 `;
-const Attribution = styled.a`
-  position: absolute;
-  left: 8px;
-  bottom: 4px;
-  z-index: 3;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  color: #333;
-  background: rgba(255, 255, 255, 0.75);
-  text-decoration: none;
-  ${motion(fadeIn, fadeOut, 500, 300)}
-`;
 
 const t = (key) => i18n.t(`hero.mapPicker.${key}`);
 
 export default function MapPicker({ initial, isDarkMode, onPick, onClose }) {
   const hasInitial = Number.isFinite(initial?.lat) && Number.isFinite(initial?.lon);
-  const [view, setView] = useState(() =>
-    hasInitial ? { lat: initial.lat, lon: initial.lon, zoom: 10 } : { lat: 48.9, lon: 31.4, zoom: 5 },
-  );
   const [marker, setMarker] = useState(hasInitial ? { lat: initial.lat, lon: initial.lon } : null);
   // Кількість поставлених позначок: ключ для повторної анімації «падіння»
   const [dropCount, setDropCount] = useState(0);
-  const [size, setSize] = useState({ w: 0, h: 0 });
   const [closing, setClosing] = useState(false);
-  const areaRef = useRef(null);
-  const dragRef = useRef(null);
+  const [markerEl, setMarkerEl] = useState(null);
+  // Мапа готова (стиль і перші плитки завантажені): до цього показуємо «Зачекайте трохи»
+  const [ready, setReady] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [toast, setToast] = useState({ text: "", id: 0 });
+  const mapElRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const markerAddedRef = useRef(false);
   const timerRef = useRef(0);
+  const toastTimerRef = useRef(0);
+  const initialRef = useRef({ hasInitial, initial });
+
+  const showToast = useCallback((text) => {
+    window.clearTimeout(toastTimerRef.current);
+    setToast((prev) => ({ text, id: prev.id + 1 }));
+    toastTimerRef.current = window.setTimeout(() => setToast((prev) => ({ ...prev, text: "" })), 5000);
+  }, []);
 
   // Закриття: спершу програємо зникнення, потім повідомляємо батька
-  const finish = useCallback(
-    (after) => {
-      if (timerRef.current) return;
-      setClosing(true);
-      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-      timerRef.current = window.setTimeout(after, reduce ? 0 : CLOSE_MS);
+  const finish = useCallback((after) => {
+    if (timerRef.current) return;
+    setClosing(true);
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    timerRef.current = window.setTimeout(after, reduce ? 0 : CLOSE_MS);
+  }, []);
+  useEffect(
+    () => () => {
+      window.clearTimeout(timerRef.current);
+      window.clearTimeout(toastTimerRef.current);
     },
     [],
   );
-  useEffect(() => () => window.clearTimeout(timerRef.current), []);
   const requestClose = useCallback(() => finish(onClose), [finish, onClose]);
-
-  useEffect(() => {
-    const el = areaRef.current;
-    if (!el) return undefined;
-    const measure = () => setSize({ w: el.clientWidth, h: el.clientHeight });
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && requestClose();
@@ -360,134 +421,124 @@ export default function MapPicker({ initial, isDarkMode, onPick, onClose }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [requestClose]);
 
-  // Новий масштаб так, щоб точка під курсором лишилась на місці
-  const zoomAt = useCallback(
-    (delta, px, py) => {
-      setView((v) => {
-        const zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, v.zoom + delta));
-        if (zoom === v.zoom) return v;
-        const c = project(v.lat, v.lon, v.zoom);
-        const ax = px ?? size.w / 2;
-        const ay = py ?? size.h / 2;
-        const worldX = c.x - size.w / 2 + ax;
-        const worldY = c.y - size.h / 2 + ay;
-        const point = unproject(worldX, worldY, v.zoom);
-        const np = project(point.lat, point.lon, zoom);
-        const centre = unproject(np.x - ax + size.w / 2, np.y - ay + size.h / 2, zoom);
-        return { lat: clampLat(centre.lat), lon: normLon(centre.lon), zoom };
-      });
-    },
-    [size.w, size.h],
-  );
-
-  // Колесо — нативним слухачем (React-івський onWheel пасивний і не дає зупинити прокрутку сторінки)
+  // 30 с без готової мапи — кажемо прямо, що не вийшло, і радимо ввести координати вручну
   useEffect(() => {
-    const el = areaRef.current;
-    if (!el) return undefined;
-    let lock = 0;
-    const onWheel = (e) => {
-      e.preventDefault();
-      const now = Date.now();
-      if (now - lock < 120) return;
-      lock = now;
-      const rect = el.getBoundingClientRect();
-      zoomAt(e.deltaY < 0 ? 1 : -1, e.clientX - rect.left, e.clientY - rect.top);
-    };
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, [zoomAt]);
-
-  const centre = project(view.lat, view.lon, view.zoom);
-  const originX = centre.x - size.w / 2;
-  const originY = centre.y - size.h / 2;
-
-  const tiles = [];
-  if (size.w > 0) {
-    const n = 2 ** view.zoom;
-    const x0 = Math.floor(originX / TILE);
-    const x1 = Math.floor((originX + size.w) / TILE);
-    const y0 = Math.max(0, Math.floor(originY / TILE));
-    const y1 = Math.min(n - 1, Math.floor((originY + size.h) / TILE));
-    for (let ty = y0; ty <= y1; ty++) {
-      for (let tx = x0; tx <= x1; tx++) {
-        const wrapped = ((tx % n) + n) % n;
-        tiles.push(
-          <img
-            key={`${view.zoom}/${tx}/${ty}`}
-            alt=""
-            draggable={false}
-            loading="eager"
-            src={`https://tile.openstreetmap.org/${view.zoom}/${wrapped}/${ty}.png`}
-            style={{ left: tx * TILE - originX, top: ty * TILE - originY }}
-          />,
-        );
-      }
+    if (ready) {
+      setLoadFailed(false);
+      return undefined;
     }
-  }
+    const id = window.setTimeout(() => setLoadFailed(true), LOAD_TIMEOUT_MS);
+    return () => window.clearTimeout(id);
+  }, [ready]);
 
-  const onPointerDown = (e) => {
-    if (e.button !== undefined && e.button !== 0) return;
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-    dragRef.current = { x: e.clientX, y: e.clientY, view, moved: false };
-  };
-  const onPointerMove = (e) => {
-    const d = dragRef.current;
-    if (!d) return;
-    const dx = e.clientX - d.x;
-    const dy = e.clientY - d.y;
-    if (!d.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
-    d.moved = true;
-    const c = project(d.view.lat, d.view.lon, d.view.zoom);
-    const next = unproject(c.x - dx, c.y - dy, d.view.zoom);
-    setView({ lat: clampLat(next.lat), lon: normLon(next.lon), zoom: d.view.zoom });
-  };
-  const onPointerUp = (e) => {
-    const d = dragRef.current;
-    dragRef.current = null;
-    if (!d || d.moved) return;
-    // клік без перетягування — ставимо позначку
-    const rect = areaRef.current.getBoundingClientRect();
-    const p = unproject(originX + (e.clientX - rect.left), originY + (e.clientY - rect.top), view.zoom);
-    setMarker({ lat: clampLat(p.lat), lon: normLon(p.lon) });
-    setDropCount((c) => c + 1);
-  };
+  // Створення мапи
+  useEffect(() => {
+    const { hasInitial: has, initial: init } = initialRef.current;
+    let map;
+    try {
+      map = new MapLibreMap({
+        container: mapElRef.current,
+        style: STYLE_URL,
+        center: has ? [init.lon, init.lat] : [31.4, 48.9],
+        zoom: has ? 9 : 4.3,
+        minZoom: 2,
+        maxZoom: 18,
+        attributionControl: false,
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+      });
+    } catch {
+      // без WebGL (вимкнено апаратне прискорення) мапа не запуститься
+      setReady(true); // «Зачекайте» тут марне: окреме повідомлення про WebGL нижче
+      showToast(t("webglError"));
+      return undefined;
+    }
+    map.touchZoomRotate.disableRotation();
+    map.addControl(new AttributionControl({ compact: true }), "bottom-left");
+
+    // Підписи мовою сайту: name:uk → англійська → місцева назва (шилди доріг не чіпаємо)
+    const lang = (i18n.resolvedLanguage || "en").split("-")[0];
+    map.on("load", () => {
+      setReady(true);
+      for (const layer of map.getStyle().layers) {
+        const tf = layer.layout?.["text-field"];
+        if (layer.type === "symbol" && tf && JSON.stringify(tf).includes('"name_en"')) {
+          map.setLayoutProperty(layer.id, "text-field", [
+            "coalesce",
+            ["get", `name:${lang}`],
+            ["get", "name_en"],
+            ["get", "name"],
+          ]);
+        }
+      }
+    });
+
+    map.on("click", (e) => {
+      setMarker({ lat: e.lngLat.lat, lon: normLon(e.lngLat.lng) });
+      setDropCount((c) => c + 1);
+    });
+
+    // Елемент позначки: нульового розміру, клік крізь нього йде на мапу
+    const el = document.createElement("div");
+    el.style.cssText = "width:0;height:0;pointer-events:none;";
+    markerRef.current = new Marker({ element: el, anchor: "center" });
+    setMarkerEl(el);
+
+    mapRef.current = map;
+    return () => {
+      markerRef.current?.remove();
+      markerRef.current = null;
+      markerAddedRef.current = false;
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [showToast]);
+
+  // Позначка на мапі стежить за станом
+  useEffect(() => {
+    const map = mapRef.current;
+    const m = markerRef.current;
+    if (!map || !m || !marker) return;
+    m.setLngLat([marker.lon, marker.lat]);
+    if (!markerAddedRef.current) {
+      m.addTo(map);
+      markerAddedRef.current = true;
+    }
+  }, [marker, markerEl]);
 
   // «Моє місцезнаходження»: центруємо мапу й ставимо позначку (якщо браузер дозволив)
   const locateMe = () => {
     navigator.geolocation?.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        setView({ lat: latitude, lon: longitude, zoom: 13 });
+        mapRef.current?.flyTo({ center: [longitude, latitude], zoom: 13 });
         setMarker({ lat: latitude, lon: longitude });
         setDropCount((c) => c + 1);
       },
-      () => {},
+      () => showToast(t("gpsError")),
       { enableHighAccuracy: false, timeout: 8000 },
     );
   };
 
-  const markerPos = marker ? project(marker.lat, marker.lon, view.zoom) : null;
   const dark = isDarkMode !== false;
 
   return createPortal(
     <Overlay $closing={closing} role="dialog" aria-modal="true" aria-label={t("title")}>
-      <MapArea
-        ref={areaRef}
-        $closing={closing}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={() => (dragRef.current = null)}
-      >
-        {tiles}
-        {markerPos && (
-          <PinWrap key={dropCount} style={{ left: markerPos.x - originX, top: markerPos.y - originY }}>
+      <MapArea ref={mapElRef} $closing={closing} />
+      <LoadingPill $dark={dark} $hidden={ready} $failed={loadFailed} role="status" aria-live="polite">
+        {loadFailed ? t("mapLoadFailed") : t("mapLoading")}
+      </LoadingPill>
+      {markerEl &&
+        marker &&
+        createPortal(
+          <PinWrap key={dropCount}>
             <PinDrop>
               <Pin />
             </PinDrop>
-          </PinWrap>
+          </PinWrap>,
+          markerEl,
         )}
-      </MapArea>
 
       <TopBar $dark={dark} $closing={closing}>
         <TitleBox>
@@ -500,10 +551,10 @@ export default function MapPicker({ initial, isDarkMode, onPick, onClose }) {
       </TopBar>
 
       <ZoomBox $dark={dark} $closing={closing}>
-        <RoundBtn type="button" $dark={dark} onClick={() => zoomAt(1)} aria-label="+" title="+">
+        <RoundBtn type="button" $dark={dark} onClick={() => mapRef.current?.zoomIn()} aria-label="+" title="+">
           <MdAdd />
         </RoundBtn>
-        <RoundBtn type="button" $dark={dark} onClick={() => zoomAt(-1)} aria-label="−" title="−">
+        <RoundBtn type="button" $dark={dark} onClick={() => mapRef.current?.zoomOut()} aria-label="−" title="−">
           <MdRemove />
         </RoundBtn>
         {typeof navigator !== "undefined" && navigator.geolocation && (
@@ -512,6 +563,12 @@ export default function MapPicker({ initial, isDarkMode, onPick, onClose }) {
           </RoundBtn>
         )}
       </ZoomBox>
+
+      {toast.text && (
+        <Toast key={toast.id} $dark={dark} role="status">
+          {toast.text}
+        </Toast>
+      )}
 
       <BottomCard $dark={dark} $closing={closing}>
         <CoordBox>
@@ -528,15 +585,6 @@ export default function MapPicker({ initial, isDarkMode, onPick, onClose }) {
           <MdMyLocation aria-hidden="true" /> <span>{t("use")}</span>
         </UseBtn>
       </BottomCard>
-
-      <Attribution
-        $closing={closing}
-        href="https://www.openstreetmap.org/copyright"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        © OpenStreetMap
-      </Attribution>
     </Overlay>,
     document.body,
   );

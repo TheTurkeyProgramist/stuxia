@@ -40,7 +40,11 @@
       "title": "Kies een punt op de kaart",
       "hint": "Klik op de kaart: de coördinaten worden automatisch ingevuld. Muiswiel of +/− verandert de zoom.",
       "use": "Dit punt gebruiken",
-      "close": "Sluiten"
+      "close": "Sluiten",
+      "gpsError": "Locatie kon niet worden bepaald. Sta locatietoegang toe in de browserinstellingen.",
+      "webglError": "De kaart kon niet starten: WebGL of hardwareversnelling staat uit in de browser. Voer de coördinaten handmatig in.",
+      "mapLoading": "Kaart wordt geladen… Even geduld.",
+      "mapLoadFailed": "De kaart is niet geladen. Controleer je internetverbinding of voer de coördinaten handmatig in."
     },
     "coords": {
       "line": "Breedte: {{lat}}°, Lengte: {{lon}}°",

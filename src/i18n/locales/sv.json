@@ -40,7 +40,11 @@
       "title": "Välj en punkt på kartan",
       "hint": "Klicka på kartan — koordinaterna fylls i automatiskt. Mushjulet eller +/− ändrar zoomen.",
       "use": "Använd den här punkten",
-      "close": "Stäng"
+      "close": "Stäng",
+      "gpsError": "Det gick inte att hitta din plats. Tillåt platsåtkomst i webbläsarens inställningar.",
+      "webglError": "Kartan kunde inte startas: WebGL eller hårdvaruacceleration är avstängt i webbläsaren. Ange koordinaterna manuellt.",
+      "mapLoading": "Kartan laddas… Vänta ett ögonblick.",
+      "mapLoadFailed": "Kartan laddades inte. Kontrollera internetanslutningen eller ange koordinaterna manuellt."
     },
     "coords": {
       "line": "Latitud: {{lat}}°, Longitud: {{lon}}°",

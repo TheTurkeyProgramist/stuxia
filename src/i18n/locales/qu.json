@@ -40,7 +40,11 @@
       "title": "Mapapi huk ñawpaqta akllay",
       "hint": "Mapata ñit'iy — coordenadaskuna kikinmanta hunt'akunqa. Ratón rueda utaq +/− yupayta tikran.",
       "use": "Kay ñawpaqta llamk'achiy",
-      "close": "Wisq'ay"
+      "close": "Wisq'ay",
+      "gpsError": "Maypichus kasqaykita manam tarinichu. Browser configuracionpi maypi kasqayta rikuchiyta saqiy.",
+      "webglError": "Mapa mana qallarirqanchu: browserpi WebGL utaq hardware aceleración wañusqa. Coordenadaskunata makiykiwan qillqay.",
+      "mapLoading": "Mapa apamushan… Ichikllatan suyay.",
+      "mapLoadFailed": "Mapa mana apamurqanchu. Internetniykita qhaway utaq coordenadaskunata makiykiwan qillqay."
     },
     "coords": {
       "line": "Latitud: {{lat}}°, Longitud: {{lon}}°",
