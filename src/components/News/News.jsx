@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState, useCallback, useRef } from "react";
+import React, { Fragment, useEffect, useState, useCallback, useRef, startTransition } from "react";
 import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
 import { ModalSuspense } from "../Loader/ModalLoading.jsx";
 import { createPortal } from "react-dom";
@@ -668,6 +668,11 @@ const yieldToMain = () =>
 // Пропускаємо їх через безкоштовний сервіс зменшення wsrv.nl: WebP потрібної ширини (~15–20 КБ)
 // з довгим кешем. Не відповів wsrv.nl — картка вантажить оригінал напряму (див. onError у NewsCard)
 const NEWS_IMAGE_PROXY = "https://wsrv.nl/";
+
+// Карусель: скільки новин малювати одразу і якими порціями домальовувати решту (див. carouselLimit)
+const CAROUSEL_MAX_ITEMS = 45;
+const CAROUSEL_FIRST_RENDER = 10;
+const CAROUSEL_RENDER_STEP = 12;
 const BLANK_IMG = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 
 const canProxyNewsImage = (src) =>
@@ -3486,7 +3491,25 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     isMuted: mutedNewsUrls.includes(item.link),
     isAutoBlocked: Boolean(item.autoBlockReason) && !revealedAutoBlocked.includes(item.link),
   });
-  const displayedItems = latestPerSource.slice(0, 45).map(withMuted);
+  const displayedItems = latestPerSource.slice(0, CAROUSEL_MAX_ITEMS).map(withMuted);
+  // Карусель «нескінченна»: кожна новина рендериться тричі (45 → 135 карток), і на ПК
+  // це був найдовший шматок TBT у PageSpeed. Тож спершу малюємо лише перші новини (їх видно),
+  // а решту — порціями у вільний час через startTransition: React рендерить їх частинами
+  // між кадрами, без довгих задач. Позиція прокрутки при цьому зберігається (див. нижче).
+  const [carouselLimit, setCarouselLimit] = useState(CAROUSEL_FIRST_RENDER);
+  const hasDisplayedNews = displayedItems.length > 0;
+  useEffect(() => {
+    if (!hasDisplayedNews || carouselLimit >= CAROUSEL_MAX_ITEMS) return undefined;
+    const grow = () =>
+      startTransition(() => setCarouselLimit((n) => n + CAROUSEL_RENDER_STEP));
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(grow, { timeout: 600 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = setTimeout(grow, 60);
+    return () => clearTimeout(id);
+  }, [hasDisplayedNews, carouselLimit]);
+  const carouselItems = displayedItems.slice(0, carouselLimit);
   // «Всі новини»: по 3 найсвіжіші з кожного джерела — та, що в каруселі,
   // плюс ще 2, які підвантажуються лише після відкриття модалки.
   // Порядок джерел — як у каруселі (найсвіжіші першими).
@@ -3553,13 +3576,13 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     };
   }, [showMoreNews, moreNews]);
   const infiniteItems =
-    displayedItems.length > 0
-      ? [...displayedItems, ...displayedItems, ...displayedItems]
+    carouselItems.length > 0
+      ? [...carouselItems, ...carouselItems, ...carouselItems]
       : [];
   // «Список»: ті самі новини парами — по дві в одному блоці каруселі
   const displayedPairs = [];
-  for (let i = 0; i < displayedItems.length; i += 2) {
-    displayedPairs.push(displayedItems.slice(i, i + 2));
+  for (let i = 0; i < carouselItems.length; i += 2) {
+    displayedPairs.push(carouselItems.slice(i, i + 2));
   }
   const carouselSlides = isListView
     ? displayedPairs.length > 0
@@ -3668,13 +3691,24 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     }, 150);
   };
 
+  const carouselSetRef = useRef({ width: 0, limit: 0 });
   useEffect(() => {
-    if (carouselRef.current && displayedItems.length > 0) {
-      const oneSetWidth = carouselRef.current.scrollWidth / 3;
-      carouselRef.current.scrollLeft = oneSetWidth;
-      requestAnimationFrame(updateCenteredSlide);
+    const container = carouselRef.current;
+    if (!container || carouselItems.length === 0) return;
+    const oneSetWidth = container.scrollWidth / 3;
+    const prev = carouselSetRef.current;
+    // Карусель лише домалювала наступну порцію (нові картки — в кінці кожної копії):
+    // лишаємо користувача на тій самій новині, а не повертаємо на початок
+    const offset = container.scrollLeft - prev.width;
+    if (prev.width > 0 && prev.limit !== carouselLimit && offset >= 0 && offset < prev.width) {
+      container.scrollLeft = oneSetWidth + offset;
+    } else {
+      container.scrollLeft = oneSetWidth;
     }
-  }, [displayedItems.length, filterSources, updateCenteredSlide, isListView]);
+    carouselSetRef.current = { width: oneSetWidth, limit: carouselLimit };
+    requestAnimationFrame(updateCenteredSlide);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carouselItems.length, filterSources, updateCenteredSlide, isListView]);
   useEffect(() => {
     const init = async () => {
       try {

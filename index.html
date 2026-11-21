@@ -13,6 +13,17 @@
       fetchpriority="high"
     />
     <meta charset="utf-8" />
+    <!-- Фон Hero до запуску JS (див. .boot-bg у #root): React замінює його своїм першим кадром.
+         Інакше найбільший елемент (LCP) з'являвся лише після завантаження всього JS -->
+    <style>
+      .boot-bg { position: fixed; inset: 0; overflow: hidden; background: #121212; }
+      .boot-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .boot-bg .boot-bg-blur { display: none; }
+      @media (max-width: 480px) {
+        .boot-bg .boot-bg-blur { display: block; filter: blur(28px) saturate(1.3) brightness(0.8); transform: scale(1.2); }
+        .boot-bg .boot-bg-main { object-fit: contain; }
+      }
+    </style>
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -85,7 +96,11 @@
     >
     <header></header>
     <main id="root">
-      <!-- 
+      <div class="boot-bg" aria-hidden="true">
+        <img class="boot-bg-blur" src="./src/media/backgrounds/scenes/foggy-forest-loader.webp" alt="" fetchpriority="high" decoding="async" />
+        <img class="boot-bg-main" src="./src/media/backgrounds/scenes/foggy-forest-loader.webp" alt="" fetchpriority="high" decoding="async" />
+      </div>
+      <!--
           ##############%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%################################################################################**********************************************************+++++++++++++++++++=============--------
 ###############%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%######################################################################################***********************************************************++++++++++++++++++============-------
 #################%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#############%%%#####################################################################*###*******************************************************+*++++++++++++++++++============------
