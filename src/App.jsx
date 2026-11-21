@@ -38,7 +38,6 @@ import {
   trackInviteeActivity,
   BADGES,
   INVITE_ACTIVE_DAYS,
-  INVITE_WINDOW_DAYS,
 } from "./utils/referral.js";
 import { GiSnowing } from "react-icons/gi";
 import HeroCredits from "./components/Hero/HeroCredits.jsx";
@@ -3225,7 +3224,7 @@ const App = () => {
   useEffect(() => initPushNotifications(), []);
 
   // «Запроси друга»: новий акаунт, що прийшов за посиланням, записується як запрошений,
-  // а далі раз на добу зараховується день активності (потрібно 3 дні за 14 днів)
+  // а далі раз на добу зараховується день активності (потрібно 3 різні дні, без строку)
   useEffect(() => {
     if (!user?.uid) return;
     const uid = user.uid;
@@ -3233,7 +3232,7 @@ const App = () => {
       const claimed = await claimPendingReferral(user);
       if (claimed) {
         toast.success(
-          i18n.t("ui.App.vitaiemoUStykhiiVas", { INVITE_ACTIVE_DAYS: INVITE_ACTIVE_DAYS, INVITE_WINDOW_DAYS: INVITE_WINDOW_DAYS, INVITE_ACTIVE_DAYS2: INVITE_ACTIVE_DAYS }),
+          i18n.t("ui.App.vitaiemoUStykhiiVas", { INVITE_ACTIVE_DAYS: INVITE_ACTIVE_DAYS, INVITE_ACTIVE_DAYS2: INVITE_ACTIVE_DAYS }),
           { duration: 7000 },
         );
         return;

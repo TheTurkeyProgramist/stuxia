@@ -11,6 +11,7 @@ import {
   rememberSupporter,
 } from "./supportConfig";
 import { useSupportProgress, claimSupporterBadge, kyivMonth } from "./useSupportProgress";
+import Tooltip from "../Tooltip/Tooltip.jsx";
 
 import i18n from "../../i18n/i18n.js";
 // «у листопаді» — для підпису шкали
@@ -490,7 +491,11 @@ const SupportCosts = ({ user, onUserUpdate }) => {
             <GoalLabel>
               <span>
                 {i18n.t("ui.SupportCosts.zibranoV")} {monthName}
-                {live && <LiveDot title={i18n.t("ui.SupportCosts.onovliuietsiaAvtomatychnoZDonatello")}>{i18n.t("ui.SupportCosts.nazhyvo")}</LiveDot>}
+                {live && (
+                  <Tooltip content={i18n.t("ui.SupportCosts.onovliuietsiaAvtomatychnoZDonatello")}>
+                    <LiveDot>{i18n.t("ui.SupportCosts.nazhyvo")}</LiveDot>
+                  </Tooltip>
+                )}
               </span>
               <Amount $bump={bump} key={bump ? "bump" : "still"}>
                 {formatUah(shownRaised)} / {formatUah(target)}
@@ -510,7 +515,6 @@ const SupportCosts = ({ user, onUserUpdate }) => {
               type="button"
               aria-expanded={openTable}
               aria-controls="support-costs-table"
-              title={openTable ? i18n.t("ui.SupportCosts.zhornutyTablytsiuVytrat") : i18n.t("ui.SupportCosts.rozhornutyTablytsiuVytrat")}
               onClick={() => setOpenTable((v) => !v)}
             >
               <Arrow $open={openTable} aria-hidden="true">▸</Arrow>

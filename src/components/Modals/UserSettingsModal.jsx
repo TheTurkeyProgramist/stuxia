@@ -112,6 +112,13 @@ import {
 } from "react-icons/tb";
 import { GiPalette, GiSun, GiBlackHoleBolas, GiGalaxy } from "react-icons/gi";
 import { ACCENT_COLORS, AccentSwatches, useAccentColor, getAccentLabel } from "../Header/AccentColorPicker.jsx";
+import {
+  MODAL_HEADER_HEIGHT,
+  ModalHeaderActions,
+  ModalHeaderButton,
+  ModalHeaderCloseButton,
+  ModalHeaderPrimaryButton,
+} from "./modalHeaderButtons.js";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { FaSun as FaSunIcon, FaEye, FaEyeSlash, FaWindows, FaAndroid, FaLinux, FaApple } from "react-icons/fa";
 import {
@@ -354,11 +361,19 @@ const ModalWindow = styled.div`
   }
 `;
 
+// Шапка модалки уніфікована з шапкою сайту (Header.jsx): висота 48px,
+// кнопки 40px «іконка над підписом», прозорі з підсвіткою при наведенні
 const WindowHeader = styled.div`
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 7px 10px;
+  height: ${MODAL_HEADER_HEIGHT}px; box-sizing: border-box; flex-shrink: 0;
+  /* Однаковий відступ від країв: профіль зліва й «Зберегти» справа */
+  padding: 0 12px;
+  color: var(--s-text);
+  --mhb-accent: var(--s-accent); --mhb-on-accent: var(--s-on-accent);
+  --mhb-accent-hover: var(--s-accent-hover); --mhb-danger: var(--s-red);
   @media (max-width: ${MOBILE_BP}px) {
-    padding: calc(6px + env(safe-area-inset-top)) 8px 6px 10px;
+    height: calc(48px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 8px 0 8px;
   }
   background: var(--s-panel);
   border-bottom: 1px solid rgba(var(--s-ink),0.08);
@@ -373,7 +388,8 @@ const UserBadge = styled.div`
   display: flex; align-items: center; gap: 10px;
   background: rgba(var(--s-ink),0.05);
   border: 1px solid rgba(var(--s-ink),0.08);
-  padding: 4px 12px 4px 6px; border-radius: 20px;
+  height: 40px; box-sizing: border-box;
+  padding: 0 12px 0 3px; border-radius: 20px;
   min-width: 0; max-width: min(380px, 100%);
   & > div:last-child { min-width: 0; display: flex; flex-direction: column; }
   @media (max-width: ${MOBILE_BP}px) {
@@ -382,7 +398,7 @@ const UserBadge = styled.div`
 `;
 
 const UserAvatarThumb = styled.img`
-  width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
 `;
 
 // Довга пошта обрізається посередині: «дуже-довге-ім…@gmail.com» — домен лишається видимим.
@@ -410,38 +426,18 @@ const AccountName = ({ value }) => {
   );
 };
 
-const HeaderTitle = styled.h2`font-size: 16px; font-weight: 600; margin: 0; color: var(--s-text);`;
+const HeaderTitle = styled.h2`font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2; color: var(--s-text);`;
 const HeaderSub = styled.span`
-  font-size: 11px; color: var(--s-muted);
+  font-size: 11px; line-height: 1.2; color: var(--s-muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 `;
 
-const HeaderActions = styled.div`display: flex; align-items: center; gap: 8px; flex-shrink: 0;`;
-
-const HeaderButton = styled.button`
-  background: rgba(var(--s-ink),0.06);
-  border: 1px solid rgba(var(--s-ink),0.1);
-  color: var(--s-text);
-  padding: 6px 12px; border-radius: 6px;
-  font-size: 12px; font-weight: 500; cursor: pointer;
-  display: flex; align-items: center; gap: 6px;
-  transition: all 0.15s ease;
-  &:hover { background: rgba(var(--s-ink),0.12); color: var(--s-text); }
-  /* На телефоні — лише іконка */
-  @media (max-width: ${MOBILE_BP}px) {
-    width: 36px; height: 36px; padding: 0; justify-content: center; font-size: 16px;
-    & > span { display: none; }
-  }
-`;
-
-const CloseButton = styled.button`
-  background: transparent; border: none; color: var(--s-text);
-  width: 32px; height: 32px; border-radius: 6px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 28px; transition: all 0.15s ease; flex-shrink: 0;
-  &:hover { background: #c42b1c; }
-  @media (max-width: ${MOBILE_BP}px) { width: 36px; height: 36px; font-size: 24px; }
-`;
+// Кнопки шапки — спільні для модалок (modalHeaderButtons.js), кольори з тем налаштувань:
+// див. --mhb-* у WindowHeader. «Зберегти» з $idle — приглушене, поки немає змін.
+const HeaderActions = ModalHeaderActions;
+const HeaderButton = ModalHeaderButton;
+const CloseButton = ModalHeaderCloseButton;
+const PrimaryHeaderButton = ModalHeaderPrimaryButton;
 
 const WindowBody = styled.div`
   display: flex; flex: 1; overflow: hidden;
@@ -1258,23 +1254,19 @@ const PasswordStrengthText = styled.span`
   font-size: 11px; color: ${(p) => p.$color || "var(--s-muted)"}; font-weight: 500; margin-top: 2px;
 `;
 
-// Footer
-const WindowFooter = styled.div`
-  background: var(--s-panel); border-top: 1px solid rgba(var(--s-ink),0.08);
-  padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  /* Телефон: угода й «Скинути сайт» одним рядком, під ними — кнопки на всю ширину */
-  @media (max-width: ${MOBILE_BP}px) {
-    flex-direction: column; align-items: stretch; gap: 10px;
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+// Угода й «Скинути сайт» — у сайдбарі під кнопкою режиму («Андромеда»), футера немає
+// Два рядки одним блоком: іконки в одній колонці, текст з одного краю
+const TermsRow = styled.div`
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  margin-top: 8px; padding: 0 4px; flex-shrink: 0;
+  font-size: 12px; color: var(--s-text-2);
+  @media (max-width: 768px) {
+    margin-top: 0; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px;
   }
 `;
-const TermsRow = styled.div`
-  display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--s-text-2);
-  @media (max-width: ${MOBILE_BP}px) {
-    flex-wrap: nowrap; gap: 6px; font-size: 12px;
-    & > svg { flex-shrink: 0; }
-    & > :last-child { margin-left: auto; flex-shrink: 0; }
-  }
+const TermsLine = styled.div`
+  display: flex; align-items: center; gap: 6px; min-height: 22px; min-width: 0;
+  & > svg { flex-shrink: 0; }
 `;
 const TermsLink = styled.span`color: var(--s-accent); text-decoration: underline; cursor: pointer;`;
 // ── Модалка підтвердження скидання ──────────────────────────────────────────
@@ -1674,22 +1666,16 @@ const LevelOnboarding = ({ isGuest = false, onChoose }) => {
 
 // Тиха «небезпечна» кнопка поруч з угодою: не кричить, але помітна при наведенні
 const ResetLink = styled.button`
-  display: inline-flex; align-items: center; gap: 5px;
-  margin-left: 6px; padding: 3px 9px;
-  border: 1px solid rgba(255,107,107,0.35); border-radius: 6px;
+  /* Тиха: без рамки, іконка в одну колонку з ⓘ; рамка й тло — лише при наведенні */
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 22px; padding: 2px 6px; margin-left: -6px; white-space: nowrap;
+  border: 1px solid transparent; border-radius: 6px;
   background: transparent; color: var(--s-red);
-  font: inherit; font-size: 12px; cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  &:hover:not(:disabled) { background: rgba(196,43,28,0.25); border-color: rgba(255,107,107,0.7); color: var(--s-text); }
+  font: inherit; font-size: 12px; cursor: pointer; opacity: 0.85;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  &:hover:not(:disabled) { opacity: 1; background: rgba(196,43,28,0.18); border-color: rgba(255,107,107,0.55); }
   &:focus-visible { outline: 2px solid var(--s-red); outline-offset: 2px; }
   &:disabled { opacity: 0.6; cursor: progress; }
-  @media (max-width: ${MOBILE_BP}px) { margin-left: auto; white-space: nowrap; flex-shrink: 0; }
-`;
-const FooterButtons = styled.div`
-  display: flex; align-items: center; gap: 10px;
-  @media (max-width: ${MOBILE_BP}px) {
-    & > * { flex: 1; min-height: 40px; }
-  }
 `;
 
 // Music components
@@ -2626,6 +2612,10 @@ const UserSettingsModal = ({
 
   const initialUser = useMemo(() => ({ ...user }), [user]);
 
+  // Знімок форми на момент відкриття — щоб «Зберегти» світилось лише коли є що зберігати
+  const initialNewsLayoutRef = useRef(newsLayout);
+  const formBaselineRef = useRef(null);
+
   useEffect(() => {
     if (!user) return;
     let initialY = "", initialM = "", initialD = "";
@@ -2634,7 +2624,7 @@ const UserSettingsModal = ({
       else if (user.birthDate.includes(".")) [initialD, initialM, initialY] = user.birthDate.split(".");
     }
 
-    setFormData({
+    const next = {
       name: user?.firstName || "",
       day: initialD ? String(parseInt(initialD)) : "",
       month: initialM ? String(parseInt(initialM)) : "",
@@ -2650,8 +2640,18 @@ const UserSettingsModal = ({
       syncMutedNews: user?.syncMutedNews || false,
       gestureSensitivity: user?.gestureSensitivity ?? 1.5,
       fastClicks: user?.fastClicks ?? false,
-    });
+    };
+    if (formBaselineRef.current === null) {
+      formBaselineRef.current = JSON.stringify({ ...next, newsLayout: initialNewsLayoutRef.current });
+    }
+    setFormData(next);
   }, [user]);
+
+  const hasUnsavedChanges = useMemo(
+    () => formBaselineRef.current !== null
+      && JSON.stringify({ ...formData, newsLayout }) !== formBaselineRef.current,
+    [formData, newsLayout],
+  );
 
   const getActiveAvatarUrl = () => savedGoogleAvatar || avatarPlaceholder;
 
@@ -3193,9 +3193,18 @@ const UserSettingsModal = ({
             </HeaderLeft>
             <HeaderActions>
               <HeaderButton onClick={() => setShowKatScene(true)} aria-label={i18n.t("modals.UserSettingsModal.tytry")}>
-                <FiFilm /> <span>{i18n.t("modals.UserSettingsModal.tytry")}</span>
+                <FiFilm /><span>{i18n.t("modals.UserSettingsModal.tytry")}</span>
               </HeaderButton>
-              <CloseButton onClick={handleCancel}><FiX /></CloseButton>
+              {/* Гість нічого не зберігає — для нього це просто «Закрити» */}
+              <CloseButton type="button" $thinIcon onClick={handleCancel}>
+                <FiX aria-hidden="true" />
+                <span>{isGuest ? i18n.t("modals.WeatherBgModal.zakryty") : i18n.t("modals.UserSettingsModal.skasuvaty")}</span>
+              </CloseButton>
+              {!isGuest && (
+                <PrimaryHeaderButton type="button" $thinIcon $idle={!hasUnsavedChanges} onClick={handleSubmit} disabled={isInvalidDate}>
+                  <FiCheck aria-hidden="true" /><span>{i18n.t("modals.UserSettingsModal.zberehty")}</span>
+                </PrimaryHeaderButton>
+              )}
             </HeaderActions>
           </WindowHeader>
 
@@ -3301,6 +3310,29 @@ const UserSettingsModal = ({
                   onClose={closeLevelMenu}
                 />
               )}
+              <TermsRow>
+                <TermsLine>
+                  <FiInfo style={{ color: "var(--s-accent)" }} aria-hidden="true" />
+                  <span>
+                    {i18n.t("modals.UserSettingsModal.vyPohodylysZ")}{" "}
+                    <TermsLink onClick={() => setShowTerms(true)}>{i18n.t("modals.UserSettingsModal.uhodoiu")}</TermsLink>
+                  </span>
+                </TermsLine>
+                <Tooltip
+                  content={i18n.t("modals.UserSettingsModal.vyityZAkauntaI")}
+                  placement="top"
+                  isDarkMode={isDarkMode}
+                >
+                  <ResetLink
+                    type="button"
+                    onClick={() => setShowResetDialog(true)}
+                    disabled={resetLoading}
+                  >
+                    <FiRotateCcw aria-hidden="true" />
+                    {resetLoading ? i18n.t("modals.UserSettingsModal.skydaiemo") : i18n.t("modals.UserSettingsModal.skynutySait")}
+                  </ResetLink>
+                </Tooltip>
+              </TermsRow>
             </Sidebar>
 
             <MainContentWrap>
@@ -5363,39 +5395,6 @@ const UserSettingsModal = ({
             </AnimatePresence>
             </MainContentWrap>
           </WindowBody>
-
-          {/* ── Footer ─────────────────────────────────────────────────── */}
-          <WindowFooter>
-            <TermsRow>
-              <FiInfo style={{ color: "var(--s-accent)" }} />
-              <span>
-                {i18n.t("modals.UserSettingsModal.vyPohodylysZ")}{" "}
-                <TermsLink onClick={() => setShowTerms(true)}>{i18n.t("modals.UserSettingsModal.uhodoiu")}</TermsLink>
-              </span>
-              <Tooltip
-                content={i18n.t("modals.UserSettingsModal.vyityZAkauntaI")}
-                placement="top"
-                isDarkMode={isDarkMode}
-              >
-                <ResetLink
-                  type="button"
-                  onClick={() => setShowResetDialog(true)}
-                  disabled={resetLoading}
-                >
-                  <FiRotateCcw aria-hidden="true" />
-                  {resetLoading ? i18n.t("modals.UserSettingsModal.skydaiemo") : i18n.t("modals.UserSettingsModal.skynutySait")}
-                </ResetLink>
-              </Tooltip>
-            </TermsRow>
-            <FooterButtons>
-              <WinButton onClick={handleCancel}>{i18n.t("modals.UserSettingsModal.skasuvaty")}</WinButton>
-              {!isGuest && (
-                <WinButton $primary onClick={handleSubmit} disabled={isInvalidDate}>
-                  {i18n.t("modals.UserSettingsModal.zberehty")}
-                </WinButton>
-              )}
-            </FooterButtons>
-          </WindowFooter>
 
         </ModalWindow>
       </ModalOverlay>

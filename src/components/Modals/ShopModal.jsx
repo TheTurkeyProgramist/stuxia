@@ -1,10 +1,21 @@
-import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect, useRef, useCallback, forwardRef } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { SiRedragon, SiDungeonsanddragons } from "react-icons/si";
 import { GiSpikedDragonHead } from "react-icons/gi";
+import { FiHeart, FiGift, FiX } from "react-icons/fi";
+import { LuLeaf, LuHandHeart } from "react-icons/lu";
+import { TbQrcode } from "react-icons/tb";
+import {
+  MODAL_HEADER_HEIGHT,
+  ModalHeaderActions,
+  ModalHeaderButton,
+  ModalHeaderCloseButton,
+  ModalHeaderPrimaryButton,
+} from "./modalHeaderButtons.js";
 import shop from '../../media/backgrounds/scenes/turkey-in-dragon-museum.webp';
 import SupportCosts from "../Support/SupportCosts.jsx";
+import QrPosterModal from "../Support/QrPosterModal.jsx";
+import Tooltip from "../Tooltip/Tooltip.jsx";
 import { DONATE_URL } from "../Support/supportConfig";
 import {
   inviteLink,
@@ -16,11 +27,9 @@ import {
   BADGES,
   INVITES_FOR_BADGE,
   INVITE_ACTIVE_DAYS,
-  INVITE_WINDOW_DAYS,
 } from "../../utils/referral.js";
 
 import i18n from "../../i18n/i18n.js";
-import { dateLocale } from "../../utils/weatherText.js";
 const CLOSE_DURATION_MS = 500;
 
 const slideIn = keyframes`
@@ -53,76 +62,17 @@ const Overlay = styled.div`
   z-index: 2000;
 `;
 
-const BRICK_TILE = `url("data:image/svg+xml,${encodeURIComponent(
-  "<svg xmlns='http://www.w3.org/2000/svg' width='64' height='72'><rect width='64' height='72' fill='#6b574d'/><path d='M0 1.5H64M0 37.5H64M32 0V36M0 36V72M64 36V72' fill='none' stroke='#2b1a16' stroke-width='3'/></svg>"
-)}")`;
-
-const MODAL_MAX_WIDTH = "1100px";
-const MERLON_HEIGHT = "32px";
-
-const SideTower = styled.div`
-  display: none;
-  position: absolute;
-  top: ${MERLON_HEIGHT};
-  bottom: 0;
-  ${(props) => props.$side}: 0;
-  width: calc((100vw - ${MODAL_MAX_WIDTH}) / 2);
-  background-image: ${BRICK_TILE};
-  background-size: 64px 72px;
-  filter: brightness(0.5);
-  box-shadow: inset ${(props) => (props.$side === "left" ? "-" : "")}24px 0 40px rgba(0, 0, 0, 0.6);
-  pointer-events: none;
-
-  /* зубці на вершині стіни */
-  &::before {
-    content: "";
-    position: absolute;
-    top: -${MERLON_HEIGHT};
-    left: 0;
-    right: 0;
-    height: ${MERLON_HEIGHT};
-    background-image: ${BRICK_TILE};
-    background-size: 64px 72px;
-    mask-image: repeating-linear-gradient(90deg, #000 0 40px, transparent 40px 72px);
-  }
-
-  /* бійниці */
-  &::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 16px;
-    transform: translateX(-50%);
-    background: repeating-linear-gradient(
-      180deg,
-      transparent 0 120px,
-      #1a0c0a 120px 200px,
-      transparent 200px 360px
-    );
-    border-radius: 8px 8px 0 0;
-    box-shadow: 0 0 12px rgba(255, 190, 90, 0.35);
-  }
-
-  @media (min-width: 1250px) {
-    display: block;
-  }
-`;
-
 const ShopContainer = styled.div`
   background-color: #2b1313;
   background-image: url(${shop});
   background-size: cover;
   background-position: center;
   color: #fff;
+  /* на весь екран, без рамки */
   width: 100%;
-  max-width: ${MODAL_MAX_WIDTH};
+  height: 100%;
   z-index: 1;
-  max-height: 95%;
-  border-radius: 20px;
   position: relative;
-  border: 2px solid #ff6c6c;
   overflow-y: auto;
   animation: ${(props) => (props.$isClosing ? slideOut : slideIn)} ${CLOSE_DURATION_MS}ms ease-out forwards;
 
@@ -135,24 +85,65 @@ const ShopContainer = styled.div`
   }
 `;
 
-const CloseButton = styled.button`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  line-height: 1;
-  width: 80px;
-  height: 30px;
-  border-radius: 10px;
-  background: #000000cd;
-  border: none;
-  color: #ff6c6c;
-  font-size: 15px;
-  cursor: pointer;
+// Шапка замку — як у «Параметрах» і на сайті: 48px, кнопки «іконка над підписом».
+// Липка: дії під рукою, хоч куди прогорнули
+const ShopHeader = styled.div`
+  position: sticky;
+  top: 0;
   z-index: 20;
-  transition: 0.3s;
-  &:hover {
-    transform: scale(1.1);
-    color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: ${MODAL_HEADER_HEIGHT}px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  color: #fff;
+  background: rgba(20, 8, 8, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 108, 108, 0.45);
+  --mhb-accent: #f3a83b;
+  --mhb-on-accent: #2b1313;
+  --mhb-accent-hover: #ffb84d;
+  --mhb-danger: #ff8a8a;
+
+  /* Телефон: назва схована, п'ять кнопок ділять ширину порівну й можуть стискатися
+     (інакше 5 × 64px не влазять у 360px і «Закрити» вилазить за екран) */
+  @media (max-width: 560px) {
+    padding: 0 6px;
+    & > ${ModalHeaderActions} {
+      flex: 1;
+      min-width: 0;
+      gap: 2px;
+    }
+    & > ${ModalHeaderActions} > * {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    & > ${ModalHeaderActions} > * > button,
+    & > ${ModalHeaderActions} > * > a {
+      width: 100%;
+      min-width: 0;
+      padding: 2px 2px;
+    }
+  }
+`;
+
+const ShopTitle = styled.h2`
+  margin: 0;
+  min-width: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #f8f1c6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* на телефоні місце — кнопкам */
+  @media (max-width: 560px) {
+    display: none;
   }
 `;
 
@@ -160,7 +151,7 @@ const WALL_COLOR = "rgba(20, 8, 8, 0.82)";
 
 const MERLON_PERIOD = 128;
 const MERLON_WIDTH = 72;
-const MERLON_COUNT = Math.ceil(1100 / MERLON_PERIOD);
+const MERLON_COUNT = Math.ceil(3840 / MERLON_PERIOD);
 
 const Battlements = styled.div`
   position: relative;
@@ -232,7 +223,8 @@ const FundsHeader = styled.div`
   text-align: center;
   background: rgba(8, 28, 16, 0.88);
   border-bottom: 1px solid rgba(47, 191, 113, 0.6);
-  scroll-margin-top: 20px;
+  /* не ховається під липку шапку */
+  scroll-margin-top: ${MODAL_HEADER_HEIGHT + 8}px;
 `;
 
 const FundsTitle = styled.h3`
@@ -260,45 +252,6 @@ const FundDesc = styled.div`
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 `;
 
-// Елементи в ряд, на вузькому екрані переносяться
-const InlineRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-
-  & > h2 {
-    margin: 0;
-    flex-shrink: 0;
-  }
-`;
-
-const EcoJumpButton = styled.button`
-  padding: 13px 16px;
-  border-radius: 8px;
-  border: 1px solid #b8f5cf;
-  background: rgba(8, 28, 16, 0.85);
-  color: #b8f5cf;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
-  &:hover {
-    transform: translateY(-1px);
-    background: rgba(20, 60, 35, 0.9);
-  }
-  &:focus-visible { outline: 2px solid #00afce; outline-offset: 2px; }
-`;
-
-const ShareButton = styled(EcoJumpButton)`
-  border-color: #ffb3d1;
-  color: #ffd6e6;
-  background: rgba(40, 10, 28, 0.85);
-  &:hover {
-    background: rgba(70, 20, 50, 0.9);
-  }
-`;
 
 // ───────────── «Запроси друга» ─────────────
 
@@ -314,7 +267,7 @@ const InviteBox = styled.section`
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
-  scroll-margin-top: 20px;
+  scroll-margin-top: ${MODAL_HEADER_HEIGHT + 8}px;
 `;
 
 // Вміст під заголовком (посилання, статус, умови) — розгортається плавно
@@ -581,8 +534,6 @@ const RulesInner = styled.div`
 `;
 
 const { supporter: B_SUP, inviter: B_INV, invitee: B_NEW } = BADGES;
-const fmtDate = (ms) =>
-  Number.isFinite(ms) ? new Date(ms).toLocaleDateString(dateLocale(), { day: "numeric", month: "long" }) : "";
 
 // Умови й опис значків — видно завжди, навіть без акаунта
 const InviteRulesBlock = () => {
@@ -606,7 +557,7 @@ const InviteRulesBlock = () => {
             <li>{i18n.t("modals.ShopModal.skopiiuiteIohoAboNatysnit")}</li>
             <li>{i18n.t("modals.ShopModal.druhVidkryvaiePosylanniaI")}</li>
             <li>
-              {i18n.t("modals.ShopModal.druhZakhodytUStykhiiu")} {INVITE_ACTIVE_DAYS} {i18n.t("modals.ShopModal.rizniDniProtiahom")} {INVITE_WINDOW_DAYS} {i18n.t("modals.ShopModal.dnivVidReiestratsiiDen")}
+              {i18n.t("modals.ShopModal.inviteRuleDays", { days: INVITE_ACTIVE_DAYS })}
             </li>
             <li>
               {i18n.t("modals.ShopModal.znachkyOtrymuieteObydvaVy")} {B_INV.emoji} «{B_INV.name}{i18n.t("modals.ShopModal.druh")} {B_NEW.emoji} «{B_NEW.name}{i18n.t("modals.ShopModal.shchobPobachytySviiVidkryite")}
@@ -663,7 +614,6 @@ const invitesSummary = (stats) => {
   if (stats.inProgress.length) {
     parts.push(i18n.t("modals.ShopModal.nabyraiutDni", { v0: stats.inProgress.map((d) => `${d}/${INVITE_ACTIVE_DAYS}`).join(", ") }));
   }
-  if (stats.expired) parts.push(i18n.t("modals.ShopModal.neVstyhly", { expired: stats.expired }));
   return parts.join(" · ");
 };
 
@@ -723,12 +673,11 @@ const InviteLinkBlock = ({ user, onUserUpdate }) => {
   const canShare = typeof navigator !== "undefined" && !!navigator.share;
 
   let status;
-  if (invitee && !invitee.done && !invitee.expired) {
+  if (invitee && !invitee.done) {
     status = (
       <>
         <ProgressDots value={invitee.activeDays} total={INVITE_ACTIVE_DAYS} />
-        {i18n.t("modals.ShopModal.vasZaprosyvDruhDen")} {invitee.activeDays} {i18n.t("modals.ShopModal.z")} {INVITE_ACTIVE_DAYS}{i18n.t("modals.ShopModal.zakhodteDo")}{" "}
-        {fmtDate(invitee.deadline)}
+        {i18n.t("modals.ShopModal.inviteeProgress", { day: invitee.activeDays, total: INVITE_ACTIVE_DAYS })}
       </>
     );
   } else if (failed) {
@@ -767,15 +716,16 @@ const InviteLinkBlock = ({ user, onUserUpdate }) => {
         <InviteStatus $ok={(inviterBadge || invitee?.done) && !failed} role="status">
           {status}
         </InviteStatus>
-        <RefreshButton
-          type="button"
-          onClick={check}
-          disabled={checking}
-          aria-label={i18n.t("modals.ShopModal.onovytyStanZaproshen")}
-          title={i18n.t("modals.ShopModal.onovyty")}
-        >
-          ↻
-        </RefreshButton>
+        <Tooltip content={i18n.t("modals.ShopModal.onovytyStanZaproshen")}>
+          <RefreshButton
+            type="button"
+            onClick={check}
+            disabled={checking}
+            aria-label={i18n.t("modals.ShopModal.onovytyStanZaproshen")}
+          >
+            ↻
+          </RefreshButton>
+        </Tooltip>
       </InviteFooter>
     </>
   );
@@ -812,8 +762,12 @@ const InvitePanel = forwardRef(({ user, onUserUpdate, open, onToggle }, ref) => 
           </InviteText>
         </div>
         <BadgePills>
-          <BadgePill title={i18n.t("modals.ShopModal.vam", { name: B_INV.name })}>{B_INV.emoji} {B_INV.name}</BadgePill>
-          <BadgePill title={i18n.t("modals.ShopModal.druhu", { name: B_NEW.name })}>{B_NEW.emoji} {B_NEW.name}</BadgePill>
+          <Tooltip content={i18n.t("modals.ShopModal.vam", { name: B_INV.name })}>
+            <BadgePill>{B_INV.emoji} {B_INV.name}</BadgePill>
+          </Tooltip>
+          <Tooltip content={i18n.t("modals.ShopModal.druhu", { name: B_NEW.name })}>
+            <BadgePill>{B_NEW.emoji} {B_NEW.name}</BadgePill>
+          </Tooltip>
           <InviteChevron $open={open} aria-hidden="true">›</InviteChevron>
         </BadgePills>
       </InviteHead>
@@ -882,37 +836,6 @@ const SupportBody = styled.div`
 `;
 
 
-// Маленький QR у ряду кнопок — щоб задонатити з телефона, дивлячись на комп'ютер
-const QrBox = styled.a`
-  display: block;
-  padding: 4px;
-  background: #fff;
-  border-radius: 8px;
-  line-height: 0;
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
-
-  &:hover {
-    transform: scale(1.6);
-    position: relative;
-    z-index: 5;
-  }
-  &:focus-visible {
-    outline: 2px solid #00afce;
-    outline-offset: 2px;
-  }
-
-  /* на телефоні сканувати власний екран нема сенсу */
-  @media (max-width: 600px) {
-    display: none;
-  }
-`;
-
-// Перший ряд не заходить під кнопку «Закрити»
-const TopRow = styled(InlineRow)`
-  padding-right: 90px;
-`;
-
 const RowContent = styled.div`
   display: flex;
   flex-direction: column;
@@ -975,27 +898,13 @@ const LinkButton = styled.a`
         box-shadow: 0 6px 18px rgba(47, 191, 113, 0.5);
       }
     `}
-
-  ${(props) =>
-    props.$featured &&
-    css`
-      padding:13px 16px;
-      font-size: 14px;
-      color: #2b1313;
-      background: linear-gradient(135deg, #ffd36b 0%, #f3a83b 100%);
-      border-color: #fff3c4;
-
-      &:hover {
-        background: linear-gradient(135deg, #ffe08f 0%, #ffb84d 100%);
-      }
-    `}
 `;
 
 const CharacterText = styled.div`
   color: #f8f1c6;
   font-size: 13px;
   font-style: italic;
-  flex: 1 1 280px;
+  align-self: stretch;
   background: rgba(0, 0, 0, 0.83);
   padding: 8px 12px;
   border-radius: 8px;
@@ -1055,40 +964,72 @@ const funds = [
   },
 ];
 
-const TOWER_ROWS = Array.from({ length: 10 }, (_, r) => r);
-const TOWER_COLS = Array.from({ length: 6 }, (_, c) => c);
+// Кнопка плаката в шапці: здебільшого «QR-код», а раз на кілька секунд
+// нагадує «Допомогти нам» з іншою іконкою. Обидва підписи лежать один на одному,
+// тож ширина кнопки не стрибає.
+const QR_LABEL_MS = 6000;
+const HELP_LABEL_MS = 3000;
 
-const Tower = () => (
-  <svg viewBox="0 0 100 160" width="90" height="144" aria-hidden="true" style={{ flexShrink: 0 }}>
-    <defs>
-      <clipPath id="tower-body">
-        <rect x="20" y="30" width="60" height="120" />
-      </clipPath>
-    </defs>
-    {[14, 34, 54, 74].map((x) => (
-      <rect key={x} x={x} y="4" width="12" height="12" fill="#8a7468" stroke="#2b1a16" strokeWidth="1.5" />
-    ))}
-    <rect x="14" y="16" width="72" height="14" fill="#8a7468" stroke="#2b1a16" strokeWidth="1.5" />
-    <rect x="20" y="30" width="60" height="120" fill="#7a665c" />
-    <g clipPath="url(#tower-body)" fill="#7a665c" stroke="#2b1a16" strokeWidth="1">
-      {TOWER_ROWS.map((r) =>
-        TOWER_COLS.map((c) => (
-          <rect
-            key={`${r}-${c}`}
-            x={20 + c * 15 - (r % 2 ? 7.5 : 0)}
-            y={30 + r * 12}
-            width="15"
-            height="12"
-          />
-        ))
-      )}
-    </g>
-    <rect x="43" y="56" width="14" height="24" fill="#1a0c0a" stroke="#2b1a16" strokeWidth="1.5" />
-    <rect x="46" y="60" width="8" height="8" fill="#ffd36b" />
-    <rect x="41" y="112" width="18" height="38" fill="#3a1d12" stroke="#2b1a16" strokeWidth="1.5" />
-    <rect x="12" y="150" width="76" height="6" fill="#5a4840" stroke="#2b1a16" strokeWidth="1.5" />
-  </svg>
-);
+const swapIn = keyframes`
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+`;
+
+const QrHelpButton = styled(ModalHeaderButton)`
+  ${(p) => p.$help && css`color: #ffd36b;`}
+  & > svg {
+    animation: ${swapIn} 0.35s ease;
+  }
+  & > span {
+    display: grid;
+    text-align: center;
+  }
+  & > span > span {
+    grid-area: 1 / 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity 0.3s ease;
+  }
+  & > span > span[aria-hidden="true"] {
+    opacity: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    & > svg { animation: none; }
+    & > span > span { transition: none; }
+  }
+  html[data-animations-off] & > svg { animation: none; }
+  html[data-animations-off] & > span > span { transition: none; }
+`;
+
+// paused — поки відкрите вікно плаката: сторінка під ним «засинає» (utils/pageActivity.css),
+// і нова іконка застигла б на прозорому кадрі анімації
+const QrHelpHeaderButton = ({ onClick, paused }) => {
+  const [help, setHelp] = useState(false);
+  useEffect(() => {
+    if (paused) return undefined;
+    const id = setTimeout(() => setHelp((v) => !v), help ? HELP_LABEL_MS : QR_LABEL_MS);
+    return () => clearTimeout(id);
+  }, [help, paused]);
+  const qrLabel = i18n.t("modals.QrPosterModal.qrButton");
+  const helpLabel = i18n.t("modals.QrPosterModal.helpUs");
+  return (
+    <Tooltip content={i18n.t("modals.ShopModal.tipQr")}>
+    <QrHelpButton
+      type="button"
+      aria-haspopup="dialog"
+      aria-label={`${qrLabel} — ${helpLabel}`}
+      $help={help}
+      onClick={onClick}
+    >
+      {help ? <LuHandHeart key="help" aria-hidden="true" /> : <TbQrcode key="qr" aria-hidden="true" />}
+      <span>
+        <span aria-hidden={help}>{qrLabel}</span>
+        <span aria-hidden={!help}>{helpLabel}</span>
+      </span>
+    </QrHelpButton>
+    </Tooltip>
+  );
+};
 
 const ShopModal = ({ onClose, user, onUserUpdate }) => {
   const [isClosing, setIsClosing] = useState(false);
@@ -1096,6 +1037,9 @@ const ShopModal = ({ onClose, user, onUserUpdate }) => {
   const inviteRef = useRef(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const fundsRef = useRef(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const qrOpenRef = useRef(false);
+  qrOpenRef.current = qrOpen;
 
   const handleClose = useCallback(() => {
     if (timerRef.current) return;
@@ -1105,7 +1049,7 @@ const ShopModal = ({ onClose, user, onUserUpdate }) => {
 
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.key === "Escape") handleClose();
+      if (e.key === "Escape" && !qrOpenRef.current) handleClose();
     };
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -1120,8 +1064,6 @@ const ShopModal = ({ onClose, user, onUserUpdate }) => {
 
   return (
     <Overlay onClick={handleClose}>
-      <SideTower $side="left" aria-hidden="true" />
-      <SideTower $side="right" aria-hidden="true" />
       <ShopContainer
         role="dialog"
         aria-modal="true"
@@ -1129,46 +1071,49 @@ const ShopModal = ({ onClose, user, onUserUpdate }) => {
         $isClosing={isClosing}
         onClick={(e) => e.stopPropagation()}
       >
-          <CloseButton onClick={handleClose}>
-            {i18n.t("modals.ShopModal.zakryty")}
-          </CloseButton>
+        <ShopHeader>
+          <ShopTitle>🦃 {i18n.t("modals.ShopModal.zamokDomino")}</ShopTitle>
+          <ModalHeaderActions>
+            <Tooltip content={i18n.t("modals.ShopModal.tipSupport")}>
+              <ModalHeaderPrimaryButton as="a" href={DONATE_URL} target="_blank" rel="noopener noreferrer">
+                <FiHeart aria-hidden="true" />
+                <span>{i18n.t("modals.ShopModal.hdrSupport")}</span>
+              </ModalHeaderPrimaryButton>
+            </Tooltip>
+            <QrHelpHeaderButton paused={qrOpen} onClick={() => setQrOpen(true)} />
+            <Tooltip content={i18n.t("modals.ShopModal.tipEco")}>
+              <ModalHeaderButton
+                type="button"
+                onClick={() => fundsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              >
+                <LuLeaf aria-hidden="true" />
+                <span>{i18n.t("modals.ShopModal.hdrEco")}</span>
+              </ModalHeaderButton>
+            </Tooltip>
+            <Tooltip content={i18n.t("modals.ShopModal.tipShare")}>
+              <ModalHeaderButton
+                type="button"
+                onClick={() => {
+                  setInviteOpen(true);
+                  inviteRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              >
+                <FiGift aria-hidden="true" />
+                <span>{i18n.t("modals.ShopModal.podilytysia")}</span>
+              </ModalHeaderButton>
+            </Tooltip>
+            <Tooltip content={i18n.t("modals.QrPosterModal.tipClose")}>
+              <ModalHeaderCloseButton type="button" $thinIcon onClick={handleClose}>
+                <FiX aria-hidden="true" />
+                <span>{i18n.t("modals.ShopModal.zakryty")}</span>
+              </ModalHeaderCloseButton>
+            </Tooltip>
+          </ModalHeaderActions>
+        </ShopHeader>
         <AnimatedContent>
           <SupportCard>
             <SupportBody>
-              <TopRow>
-                <CharacterText>
-  {i18n.t("modals.ShopModal.meneZvatyDominoU")}
-</CharacterText>
-              </TopRow>
-              <InlineRow>
-                <LinkButton href={DONATE_URL} target="_blank" rel="noopener noreferrer" $featured>
-                  {i18n.t("modals.ShopModal.pidtrymatyStykhiiu")}
-                </LinkButton>
-                <QrBox
-                  href={DONATE_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={i18n.t("modals.ShopModal.qrKodDliaPidtrymky")}
-                  title={i18n.t("modals.ShopModal.vidskanuiteTelefonomShchobPidtrymaty")}
-                >
-                  <QRCodeSVG value={DONATE_URL} size={42} />
-                </QrBox>
-                <EcoJumpButton
-                  type="button"
-                  onClick={() => fundsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                >
-                  {i18n.t("modals.ShopModal.aboDopomohtyEkofondam")}
-                </EcoJumpButton>
-                <ShareButton
-                  type="button"
-                  onClick={() => {
-                    setInviteOpen(true);
-                    inviteRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                >
-                  {i18n.t("modals.ShopModal.podilytysiaZnachokUPodarunok")}
-                </ShareButton>
-              </InlineRow>
+              <CharacterText>{i18n.t("modals.ShopModal.meneZvatyDominoU")}</CharacterText>
             </SupportBody>
           </SupportCard>
           <SupportCosts user={user} onUserUpdate={onUserUpdate} />
@@ -1214,6 +1159,7 @@ const ShopModal = ({ onClose, user, onUserUpdate }) => {
           </FundList>
         </AnimatedContent>
       </ShopContainer>
+      {qrOpen && <QrPosterModal onClose={() => setQrOpen(false)} />}
     </Overlay>
   );
 };

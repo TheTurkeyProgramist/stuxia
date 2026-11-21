@@ -6,12 +6,12 @@
 //  3. Друг створює НОВИЙ акаунт — у Firestore з'являється документ
 //     referrals/{uid друга} = { referrer, createdAt, activeDays: 1, lastActiveAt }.
 //     Кожен акаунт може бути запрошеним лише один раз (правила Firestore).
-//  4. Друг заходить у Стихію ще в інші дні: +1 день, не частіше разу на добу (UTC),
-//     лише протягом 14 днів від реєстрації. Усе це перевіряють правила Firestore.
+//  4. Друг заходить у Стихію ще в інші дні: +1 день, не частіше разу на добу (UTC).
+//     Строку немає — дні можна набирати скільки завгодно довго. Це перевіряють правила Firestore.
 //  5. Коли набралося 3 дні — друг отримує 🌱 «Паросток Стихії»,
 //     той, хто запросив, — 📣 «Посол Стихії».
 //
-//  УВАГА: числа 3 і 14 продубльовані в firestore.rules (match /referrals).
+//  УВАГА: число 3 продубльоване в firestore.rules (match /referrals).
 // ─────────────────────────────────────────────────────────────
 
 import { loadFirebase } from "../firebaseLazy.js";
@@ -23,11 +23,9 @@ const PENDING_KEY = "stykhia_pending_ref";
 const PENDING_TTL_MS = 30 * 24 * 60 * 60 * 1000; // посилання «живе» 30 днів
 // Акаунт має бути створений ПІСЛЯ переходу за посиланням (з невеликим запасом)
 const CREATION_SLACK_MS = 10 * 60 * 1000;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const INVITES_FOR_BADGE = 1; // скільки друзів треба для «Посла Стихії»
 export const INVITE_ACTIVE_DAYS = 3; // скільки різних днів друг має зайти
-export const INVITE_WINDOW_DAYS = 14; // за скільки днів від реєстрації
 
 export const BADGES = {
   supporter: { emoji: "🦃", get name() { return i18n.t("ui.referral.druhIndykiv"); } },
@@ -140,15 +138,11 @@ const firebaseFor = async (uid) => {
 
 const statusFrom = (data) => {
   const activeDays = Number(data?.activeDays) || 0;
-  const createdAt = toMs(data?.createdAt);
-  const deadline = Number.isFinite(createdAt) ? createdAt + INVITE_WINDOW_DAYS * DAY_MS : NaN;
   const done = activeDays >= INVITE_ACTIVE_DAYS;
   return {
     activeDays,
-    deadline,
     lastActiveAt: toMs(data?.lastActiveAt),
     done,
-    expired: !done && Number.isFinite(deadline) && Date.now() > deadline,
   };
 };
 
@@ -240,7 +234,7 @@ export const trackInviteeActivity = async (user) => {
     }
     safeSet(inviteeKey(uid), "active");
     const sameDay = Number.isFinite(status.lastActiveAt) && utcDay(status.lastActiveAt) === today;
-    if (status.expired || sameDay) {
+    if (sameDay) {
       return { activeDays: status.activeDays, done: false, justCounted: false, justDone: false };
     }
     const activeDays = status.activeDays + 1;
@@ -259,7 +253,7 @@ export const isInvitee = (user) =>
 
 // ───────────── Сторона того, хто запрошує ─────────────
 
-// Друзі за посиланням: { total, qualified, inProgress: [днів...], expired }.
+// Друзі за посиланням: { total, qualified, inProgress: [днів...] }.
 // null — не вдалося перевірити.
 export const countMyInvites = async (uid) => {
   if (!uid) return null;
@@ -269,11 +263,10 @@ export const countMyInvites = async (uid) => {
     const { fb } = session;
     const q = fb.query(fb.collection(fb.db, "referrals"), fb.where("referrer", "==", uid), fb.limit(50));
     const snap = await fb.getDocs(q);
-    const result = { total: snap.size, qualified: 0, inProgress: [], expired: 0 };
+    const result = { total: snap.size, qualified: 0, inProgress: [] };
     snap.forEach((d) => {
       const s = statusFrom(d.data());
       if (s.done) result.qualified += 1;
-      else if (s.expired) result.expired += 1;
       else result.inProgress.push(s.activeDays);
     });
     return result;

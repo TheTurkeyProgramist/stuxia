@@ -6,6 +6,7 @@
 //bun run --cwd Stuxia tauri build --bundles deb
 //bun run --cwd Stuxia tauri build --bundles deb - WSL(Linux)
 import React, { useState, useEffect, useRef, Suspense } from "react";
+import { createPortal } from "react-dom";
 import styled, { keyframes, css } from "styled-components";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { GiShop, GiExitDoor } from "react-icons/gi";
@@ -239,7 +240,8 @@ const BarSlot = styled.div`
 `;
 
 const BurgerWrap = styled.div`
-  position: relative;
+  /* static: випадне меню позиціюється від усієї шапки (вона fixed на всю ширину) */
+  position: static;
   @media (min-width: ${(p) => p.$hideFrom}px) {
     && {
       display: none;
@@ -247,63 +249,168 @@ const BurgerWrap = styled.div`
   }
 `;
 
+const burgerSlide = keyframes`
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+`;
+
+const burgerSlideUp = keyframes`
+  from { transform: translateY(0); }
+  to   { transform: translateY(-100%); }
+`;
+
+// Той самий колір, що й у шапки (HeaderDiv), лише щільніший без акценту — щоб текст читався
+const headerLikeBg = (p) => {
+  if (!p.$accentColor) {
+    return p.$isDarkMode ? "rgba(0, 0, 0, 0.82)" : "rgba(255, 255, 255, 0.94)";
+  }
+  return p.$isDarkMode
+    ? `color-mix(in srgb, ${p.$accentColor} 35%, #0d0d0d)`
+    : `color-mix(in srgb, ${p.$accentColor} 35%, #ffffff)`;
+};
+
+const burgerFadeIn = keyframes`
+  from { opacity: 0; }
+  to   { opacity: 1; }
+`;
+
+const burgerFadeOut = keyframes`
+  from { opacity: 1; }
+  to   { opacity: 0; }
+`;
+
+// Затемнення + розмиття сторінки під меню. Рендериться порталом у body:
+// у шапки є backdrop-filter, і всередині неї blur бачив би лише саму шапку, а не сайт.
+const BurgerBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 1899; /* під шапкою (1900), над сторінкою */
+  background: ${(p) => (p.$isDarkMode ? "rgba(0, 0, 0, 0.45)" : "rgba(0, 0, 0, 0.25)")};
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: ${(p) =>
+    p.$closing
+      ? css`${burgerFadeOut} 0.22s ease-in forwards`
+      : css`${burgerFadeIn} 0.28s ease-out`};
+  ${(p) => p.$closing && "pointer-events: none;"}
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 0.01s;
+  }
+`;
+
+// Зовнішня «щілина» під шапкою: обрізає панель, тож вона виїжджає саме з-під хедера
 const BurgerMenu = styled.div`
   position: absolute;
-  top: 50px;
+  top: 100%;
+  left: 0;
   right: 0;
   z-index: 2100;
-  min-width: 230px;
-  max-width: calc(100vw - 16px);
-  display: flex;
-  flex-direction: column;
-  padding: 6px;
-  gap: 2px;
-  border-radius: 12px;
-  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)")};
-  background: ${(p) => (p.$isDarkMode ? "rgba(18, 19, 24, 0.97)" : "rgba(255, 255, 255, 0.98)")};
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  padding-bottom: 28px; /* місце для тіні, щоб overflow її не різав */
+  pointer-events: none;
+`;
+
+const BurgerPanel = styled.div`
+  pointer-events: auto;
+  box-sizing: border-box;
+  max-height: calc(100dvh - 90px);
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  padding: 10px;
+  gap: 6px;
+  border-radius: 0 0 16px 16px;
+  border-bottom: ${(p) =>
+    p.$accentColor
+      ? `3px solid ${p.$accentColor}`
+      : `2px solid ${p.$isDarkMode ? "white" : "#000000"}`};
+  background: ${headerLikeBg};
+  color: ${(p) => (p.$isDarkMode ? "white" : "#000000")};
+  box-shadow: ${(p) =>
+    p.$accentColor ? `0 10px 24px ${p.$accentColor}55` : "0 12px 24px rgba(0, 0, 0, 0.35)"};
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: ${(p) =>
+    p.$closing
+      ? css`${burgerSlideUp} 0.22s cubic-bezier(0.55, 0, 0.75, 0.2) forwards`
+      : css`${burgerSlide} 0.28s cubic-bezier(0.22, 1, 0.36, 1)`};
+  ${(p) => p.$closing && "pointer-events: none;"}
+
+  /* Не "none": onAnimationEnd має спрацювати, щоб меню прибралось із DOM */
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 0.01s;
+  }
 `;
 
 const BurgerItem = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-height: 44px;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: ${(p) => (p.$isDarkMode ? "#fff" : "#1a1a1a")};
-  font-family: var(--font-family);
-  font-size: 14px;
-  text-align: left;
-  cursor: pointer;
+  && {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    margin: 0;
+    padding: 8px 12px 8px 8px;
+    box-sizing: border-box;
+    border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)")};
+    border-radius: 12px;
+    background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.025)")};
+    color: inherit;
+    font-family: var(--font-family);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.25;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
 
-  &:hover,
-  &:focus-visible {
+  &&:hover,
+  &&:focus-visible {
     background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)")};
+    border-color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.14)")};
     outline: none;
   }
 
   @media (min-width: ${(p) => p.$hideFrom}px) {
-    display: none;
+    && {
+      display: none;
+    }
   }
 `;
 
 const BurgerIcon = styled.span`
+  flex: 0 0 auto;
   display: inline-flex;
+  align-items: center;
   justify-content: center;
-  width: 22px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)")};
   font-size: 20px;
   line-height: 1;
 `;
 
+const BurgerLabel = styled.span`
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: break-word;
+`;
+
 const BurgerState = styled.span`
-  margin-left: auto;
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border-radius: 999px;
   font-size: 12px;
-  opacity: 0.65;
+  font-weight: 600;
+  white-space: nowrap;
+  color: ${(p) => (p.$on ? "#22c55e" : "inherit")};
+  background: ${(p) =>
+    p.$on ? "rgba(34,197,94,0.15)" : p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"};
+  opacity: ${(p) => (p.$on ? 1 : 0.75)};
 `;
 
 // Вхід для гостя: пігулка тієї ж форми, що й кнопка профілю, з акцентом сайту
@@ -991,6 +1098,9 @@ const Header = ({
   const [showVisualSettings, setShowVisualSettings] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
+  // Меню лишається в DOM, поки грає анімація закриття (ховається назад під шапку)
+  const [isBurgerRendered, setIsBurgerRendered] = useState(false);
+  if (isBurgerOpen && !isBurgerRendered) setIsBurgerRendered(true);
   const burgerRef = useRef(null);
   const burgerBtnRef = useRef(null);
   const [accentColor, setAccentColor] = useAccentColor(); // null = без накладення
@@ -1499,8 +1609,31 @@ const Header = ({
           <EmojiWrapper>{isBurgerOpen ? <MdClose /> : <MdMenu />}</EmojiWrapper>
           <IconLabel aria-hidden="true">{i18n.t("ui.Header.meniu")}</IconLabel>
         </IconButton>
-        {isBurgerOpen && (
-          <BurgerMenu id="header-burger-menu" role="menu" $isDarkMode={isDarkMode} onKeyDown={handleBurgerKeyDown}>
+        {isBurgerRendered &&
+          createPortal(
+            <BurgerBackdrop
+              aria-hidden="true"
+              $isDarkMode={isDarkMode}
+              $closing={!isBurgerOpen}
+              onClick={() => setIsBurgerOpen(false)}
+              onAnimationEnd={() => { if (!isBurgerOpen) setIsBurgerRendered(false); }}
+            />,
+            document.body,
+          )}
+        {isBurgerRendered && (
+          <BurgerMenu>
+          <BurgerPanel
+            id="header-burger-menu"
+            role="menu"
+            $isDarkMode={isDarkMode}
+            $accentColor={accentColor}
+            $closing={!isBurgerOpen}
+            aria-hidden={!isBurgerOpen || undefined}
+            onKeyDown={handleBurgerKeyDown}
+            onAnimationEnd={(e) => {
+              if (e.target === e.currentTarget && !isBurgerOpen) setIsBurgerRendered(false);
+            }}
+          >
             {headerActions.map((action) => (
               <BurgerItem
                 key={action.key}
@@ -1511,11 +1644,14 @@ const Header = ({
                 onClick={() => { setIsBurgerOpen(false); action.onClick(); }}
                 {...(action.prefetch ? prefetchProps(action.prefetch) : action.prefetchFn ? { onPointerEnter: action.prefetchFn, onFocus: action.prefetchFn, onTouchStart: action.prefetchFn } : null)}
               >
-                <BurgerIcon style={action.iconStyle}>{action.icon}</BurgerIcon>
-                <span>{action.menuLabel}</span>
-                {action.state && <BurgerState>{action.state}</BurgerState>}
+                <BurgerIcon $isDarkMode={isDarkMode} style={action.iconStyle}>{action.icon}</BurgerIcon>
+                <BurgerLabel>{action.menuLabel}</BurgerLabel>
+                {action.state && (
+                  <BurgerState $on={action.pressed} $isDarkMode={isDarkMode}>{action.state}</BurgerState>
+                )}
               </BurgerItem>
             ))}
+          </BurgerPanel>
           </BurgerMenu>
         )}
       </BurgerWrap>

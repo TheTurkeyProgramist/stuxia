@@ -3,7 +3,7 @@ import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
 import { ModalSuspense } from "../Loader/ModalLoading.jsx";
 import { createPortal } from "react-dom";
 import styled, { keyframes, css } from "styled-components";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import localforage from "localforage";
 import rainbow from "../../media/backgrounds/scenes/constellations.webp";
 import asiumelevenFull from "../../media/backgrounds/asium/winter-forest.webp";
@@ -41,6 +41,7 @@ import { useAnimationsDisabled } from "../../utils/animationsPref";
 import { MdOutlineReportOff } from "react-icons/md"; //Заглушити
 import { MdBlock, MdClose } from "react-icons/md";
 import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
+import { SheetHeader, SHEET_IN_MS, SHEET_OUT_MS } from "../Modals/sheetModal.jsx";
 import { FiPlus, FiList, FiLink, FiShield, FiMoreVertical, FiAlertTriangle } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
 import toast from "react-hot-toast";
@@ -507,97 +508,30 @@ const MoreNewsActions = styled.div`
 `;
 
 /* «Всі новини»: згруповані за джерелом, по 3 найсвіжіші з кожного */
-const MoreNewsPanel = styled.div`
+// Шторка на весь екран, як часовий пояс і мова (висувається знизу)
+const MoreNewsPanel = styled(motion.div)`
+  --sheet-accent: ${themed("#ffaa00", "#a35400")};
+  position: relative;
   width: 100%;
-  max-width: 1400px;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  overscroll-behavior: contain;
   background: ${themed("#111", "#f8fafc")};
-  border: 1px solid rgba(255, 170, 0, 0.4);
-  border-radius: 10px;
   padding: 0 12px 12px;
   box-sizing: border-box;
   color: ${themed("#fff", "#1a1a1a")};
+  will-change: transform;
+
+  scrollbar-width: auto;
+  scrollbar-color: ${themed("#ffaa00 rgba(255, 255, 255, 0.08)", "#a35400 rgba(0, 0, 0, 0.08)")};
 `;
 
 /* Шапка «Всіх новин»: лишається вгорі під час прокрутки */
-const MoreNewsHeader = styled.header`
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 -12px 12px;
-  padding: 12px 14px;
-  background: ${themed("rgba(17, 17, 17, 0.96)", "rgba(248, 250, 252, 0.96)")};
-  backdrop-filter: blur(6px);
-  border-bottom: 1px solid rgba(255, 170, 0, 0.25);
-  border-radius: 10px 10px 0 0;
-`;
 
-const MoreNewsHeaderIcon = styled.span`
-  flex: 0 0 38px;
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  background: rgba(255, 170, 0, 0.14);
-  color: #ffaa00;
-  font-size: 20px;
-`;
 
-const MoreNewsHeaderText = styled.div`
-  flex: 1;
-  min-width: 0;
 
-  h2 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 800;
-    line-height: 1.2;
-    color: ${themed("#ffffff", "#1a1a1a")};
-  }
-  p {
-    margin: 2px 0 0;
-    font-size: 12px;
-    color: ${themed("rgba(255, 255, 255, 0.6)", "rgba(0, 0, 0, 0.6)")};
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-`;
-
-const MoreNewsClose = styled.button`
-  flex: 0 0 38px;
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 2px solid rgba(255, 170, 0, 0.6);
-  border-radius: 50%;
-  background: ${themed("#000", "#ffffff")};
-  color: ${themed("#ffaa00", "#a35400")};
-  font-size: 20px;
-  cursor: pointer;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
-
-  &:hover,
-  &:focus-visible {
-    border-color: #ffaa00;
-    box-shadow: 0 0 12px rgba(255, 170, 0, 0.6);
-  }
-  &:focus-visible {
-    outline: none;
-  }
-  &:active {
-    transform: scale(0.94);
-  }
-`;
 
 const MoreNewsSection = styled.section`
   flex-shrink: 0;
@@ -2940,6 +2874,24 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
   const newsSectionRef = useRef(null);
   const abortRef = useRef(null);
   const [showMoreNews, setShowMoreNews] = useState(false);
+  const reduceMotion = useReducedMotion();
+
+  // «Всі новини»: без скролбару сайту (лишається лише скролбар шторки) і закриття по Esc.
+  // Скролиться html, а в дзеркальному режимі — body, тож ховаємо на обох і повертаємо як було
+  useEffect(() => {
+    if (!showMoreNews) return undefined;
+    const { documentElement: html, body } = document;
+    const prev = [html.style.overflow, body.style.overflow];
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    const onKeyDown = (e) => e.key === "Escape" && setShowMoreNews(false);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      html.style.overflow = prev[0];
+      body.style.overflow = prev[1];
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [showMoreNews]);
   // Телефон (як у каруселі, до 479px) — у «Всіх новинах» компактні рядки замість карток
   const [isPhone, setIsPhone] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 479px)").matches,
@@ -4386,34 +4338,39 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: SHEET_IN_MS / 1000 }}
               onClick={() => setShowMoreNews(false)}
-              style={{ alignItems: "center", justifyContent: "center", padding: "8px" }}
+              style={{ padding: 0, backdropFilter: "none", background: "rgba(0, 0, 0, 0.72)" }}
             >
-              <MoreNewsPanel $isDarkMode={$isDarkMode} onClick={(e) => e.stopPropagation()}>
-                <MoreNewsHeader $isDarkMode={$isDarkMode}>
-                  <MoreNewsHeaderIcon aria-hidden="true">
-                    <FiList />
-                  </MoreNewsHeaderIcon>
-                  <MoreNewsHeaderText $isDarkMode={$isDarkMode}>
-                    <h2>{i18n.t("newsWeather.News.vsiNovyny")}</h2>
-                    <p>
+              <MoreNewsPanel
+                $isDarkMode={$isDarkMode}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="more-news-title"
+                onClick={(e) => e.stopPropagation()}
+                initial={reduceMotion ? false : { y: "100%" }}
+                animate={{ y: 0, transition: { duration: SHEET_IN_MS / 1000, ease: [0.22, 1, 0.36, 1] } }}
+                exit={{ y: "100%", transition: { duration: reduceMotion ? 0 : SHEET_OUT_MS / 1000, ease: [0.55, 0, 0.75, 0.2] } }}
+              >
+                <SheetHeader
+                  light={$isDarkMode === false}
+                  titleId="more-news-title"
+                  style={{ margin: "0 -12px 12px" }}
+                  icon={<FiList />}
+                  title={i18n.t("newsWeather.News.vsiNovyny")}
+                  subtitle={
+                    <>
                       {moreNewsCount} {i18n.t("newsWeather.News.novyn2")} {moreGroups.length} {i18n.t("newsWeather.News.dzherel")}
                       {lastUpdated &&
                         " " + i18n.t("newsWeather.News.onovlenoO", { lastUpdated: lastUpdated.toLocaleTimeString(dateLocale(), {
                           hour: "2-digit",
                           minute: "2-digit",
                         }) })}
-                    </p>
-                  </MoreNewsHeaderText>
-                  <MoreNewsClose $isDarkMode={$isDarkMode}
-                    type="button"
-                    aria-label={i18n.t("newsWeather.News.zakrytyVsiNovyny")}
-                    onClick={() => setShowMoreNews(false)}
-                  >
-                    <MdClose aria-hidden="true" />
-                  </MoreNewsClose>
-                </MoreNewsHeader>
+                    </>
+                  }
+                  onClose={() => setShowMoreNews(false)}
+                  closeLabel={i18n.t("newsWeather.News.zakrytyVsiNovyny")}
+                />
                 {isMoreNewsLoading && (
                   <p role="status" style={{ margin: "0 0 12px", fontSize: "13px", opacity: 0.85 }}>
                     {i18n.t("newsWeather.News.pidvantazhuiemoShche")} {moreNews.pending.length} {i18n.t("newsWeather.News.novyn3")}

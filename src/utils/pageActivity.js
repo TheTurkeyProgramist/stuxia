@@ -24,7 +24,11 @@ const pausedVideos = new Set();
 // Модалку шукаємо загально, без реєстрації кожної: елемент у центрі екрана
 // лежить у великому position: fixed шарі. Фонові шари хіро позначені data-page-bg.
 const findOverlay = () => {
-  const dialog = document.querySelector('[aria-modal="true"]');
+  // Останній — верхній: вкладене вікно-портал (напр. QR-плакат над «Магазином»)
+  // додається в кінець body. Якби брали перший, вкладене вікно «засинало» б разом зі сторінкою
+  // і його анімація появи застигала на opacity: 0.
+  const dialogs = document.querySelectorAll('[aria-modal="true"]');
+  const dialog = dialogs[dialogs.length - 1];
   if (dialog) return dialog;
   const vw = window.innerWidth;
   const vh = window.innerHeight;

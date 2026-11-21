@@ -3,11 +3,13 @@ import { createPortal } from "react-dom";
 import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill } from "react-icons/bs";
 import { FiSunrise, FiSunset } from "react-icons/fi";
+import { MdAccessTime } from "react-icons/md";
 import * as SunCalc from "suncalc";
 import styled from "styled-components";
 import localforage from "localforage";
 import CityScene from "./CityScene.jsx";
 import DecorToggle from "../Modals/DecorToggle.jsx";
+import { SheetBackdrop, SheetHeader, sheetPanelAnim, useSheetClose } from "../Modals/sheetModal.jsx";
 import { useSceneDecor } from "../../utils/sceneDecor.js";
 import { getNow, syncClock } from "../../utils/serverClock.js";
 import { TIMEZONES } from "./timezones.js";
@@ -17,15 +19,17 @@ import { dateLocale } from "../../utils/weatherText.js";
 const TimezoneMenu = styled.div`
   position: fixed;
   /* Від 5% згори до самого низу екрана — смуга прокрутки вміщується повністю */
-  inset: 5% 0 0;
-  background: ${(p) => (p.$light ? "rgba(248, 250, 252, 0.98)" : "rgba(2, 2, 2, 0.97)")};
-  border-top: 2px solid #ffb36c;
+  inset: 0;
+  --sheet-accent: ${(p) => (p.$light ? "#c46a00" : "#ffb36c")};
+  background: ${(p) => (p.$light ? "rgba(248, 250, 252, 0.99)" : "rgba(8, 8, 9, 0.98)")};
+  border-radius: 0;
   padding: 0;
   overflow-y: auto;
   z-index: 99999;
   box-shadow: 0 0 60px rgba(0, 0, 0, ${(p) => (p.$light ? 0.35 : 0.9)});
   display: flex;
   flex-direction: column;
+  ${sheetPanelAnim}
 
   /* Видимий скролбар. scrollbar-color з html (App.css) успадковується, і тоді Chrome
      ігнорує ::-webkit-scrollbar — тож задаємо стандартні властивості явно */
@@ -43,41 +47,6 @@ const TimezoneMenu = styled.div`
     background: ${(p) => (p.$light ? "#c46a00" : "#ffb36c")};
     border-radius: 10px;
   }
-`;
-
-const TimezoneMenuHeader = styled.div`
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: ${(p) => (p.$light ? "rgba(248, 250, 252, 0.98)" : "rgba(2, 2, 2, 0.98)")};
-  border-bottom: 2px solid rgba(255, 179, 108, 0.4);
-  backdrop-filter: blur(6px);
-`;
-
-const TimezoneMenuTitle = styled.div`
-  font-weight: bold;
-  color: ${(p) => (p.$light ? "#8a4300" : "#ffb36c")};
-  font-size: 16px;
-  line-height: 1.2;
-`;
-
-const TimezoneMenuCloseBtn = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${(p) => (p.$light ? "#c25e00" : "#fb7a00")};
-  font-size: 36px;
-  font-weight: bold;
-  cursor: pointer;
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  transition: background 0.2s;
 `;
 
 const TimezoneGrid = styled.div`
@@ -357,6 +326,7 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone,
   const decorEnabled = useSceneDecor();
   const isLight = !isDarkMode;
   const plain = isLight && !decorEnabled;
+  const { closing, requestClose, onPanelAnimationEnd } = useSheetClose(isOpen, onClose);
 
   // Поки список відкритий — без скролбару сайту (лишається лише скролбар списку)
   useEffect(() => {
@@ -382,9 +352,9 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone,
 
   // Hero перемальовується щосекунди (годинник), а картки достатньо оновлювати
   // раз на хвилину — інакше ререндери 27 сцен смикають анімації.
-  const onCloseRef = useRef(onClose);
+  const onCloseRef = useRef(requestClose);
   useLayoutEffect(() => {
-    onCloseRef.current = onClose;
+    onCloseRef.current = requestClose;
   });
 
   const grid = useMemo(
@@ -493,27 +463,46 @@ const TimezoneModal = ({ isOpen, onClose, selectedTimezone, setSelectedTimezone,
 
   if (!isOpen) return null;
 
+  const current = TIMEZONES.find(
+    (tz) => tz.value === selectedTimezone || tz.legacyValues?.includes(selectedTimezone),
+  );
+  const subtitle = current ? (
+    <>
+      <b>{current.label}</b> · {formatUtcOffset(current.value, now)}
+    </>
+  ) : null;
+
   return createPortal(
-    <TimezoneMenu $light={isLight}>
-      <TimezoneMenuHeader $light={isLight}>
-        <TimezoneMenuCloseBtn
-          $light={isLight}
-          type="button"
-          onClick={onClose}
-          aria-label={i18n.t("ui.TimezoneModal.zakrytySpysokChasovykhPoiasiv")}
-        >
-          ×
-        </TimezoneMenuCloseBtn>
-        <TimezoneMenuTitle $light={isLight}>{i18n.t("ui.TimezoneModal.chasovyiPoias2")}</TimezoneMenuTitle>
-        <DecorToggle
-          label={i18n.t("ui.TimezoneModal.dekor")}
-          title={i18n.t("ui.TimezoneModal.maliunkyMistIPohodni")}
-          accent="#ffb36c"
-          isDarkMode={isDarkMode}
+    <>
+      <SheetBackdrop $light={isLight} $closing={closing} onClick={requestClose} />
+      <TimezoneMenu
+        $light={isLight}
+        $closing={closing}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="timezone-sheet-title"
+        onAnimationEnd={onPanelAnimationEnd}
+      >
+        <SheetHeader
+          light={isLight}
+          titleId="timezone-sheet-title"
+          icon={<MdAccessTime />}
+          title={i18n.t("ui.TimezoneModal.chasovyiPoias2")}
+          subtitle={subtitle}
+          onClose={requestClose}
+          closeLabel={i18n.t("ui.TimezoneModal.zakrytySpysokChasovykhPoiasiv")}
+          actions={
+            <DecorToggle
+              label={i18n.t("ui.TimezoneModal.dekor")}
+              title={i18n.t("ui.TimezoneModal.maliunkyMistIPohodni")}
+              accent="#ffb36c"
+              isDarkMode={isDarkMode}
+            />
+          }
         />
-      </TimezoneMenuHeader>
-      {grid}
-    </TimezoneMenu>,
+        {grid}
+      </TimezoneMenu>
+    </>,
     document.body,
   );
 };

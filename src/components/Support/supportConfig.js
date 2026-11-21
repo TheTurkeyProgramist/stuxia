@@ -8,6 +8,8 @@ import { getPref, setPref } from "../../utils/prefsStore.js";
 import i18n from "../../i18n/i18n.js";
 import { dateLocale } from "../../utils/weatherText.js";
 export const DONATE_URL = "https://donatello.to/TheTurkeyStudio";
+// Сама Стихія — другий QR-код на плакаті
+export const SITE_URL = "https://stuxia.com";
 
 // Комісія платформи донатів (Donatello) — частка, яка не доходить до проєкту
 export const DONATION_FEE = 0.1;

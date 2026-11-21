@@ -193,14 +193,62 @@ const PanelScrollbar = css`
   }
 `;
 
+// Декор фону панелі налаштувань: глобус із меридіанами, топографічні ізолінії з пунктирним
+// «маршрутом», крапкова сітка і два м'які світіння. Лише CSS-фон — без DOM і без анімацій
+const svgBg = (svg) => `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+const decorGlobe = (stroke) => svgBg(
+  `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200' fill='none' stroke='${stroke}' stroke-width='0.8'>` +
+  "<circle cx='100' cy='100' r='96'/>" +
+  "<ellipse cx='100' cy='100' rx='66' ry='96'/>" +
+  "<ellipse cx='100' cy='100' rx='32' ry='96'/>" +
+  "<path d='M100 4V196M4 100H196M14 58H186M14 142H186M41 24H159M41 176H159'/>" +
+  "</svg>",
+);
+const decorContours = (stroke, route) => svgBg(
+  `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 220' fill='none' stroke='${stroke}' stroke-width='0.9'>` +
+  "<path d='M40 110c20-46 104-58 140-24s12 82-46 92-114-22-94-68z'/>" +
+  "<path d='M64 110c15-32 76-40 100-17s8 56-32 63-82-15-68-46z'/>" +
+  "<path d='M88 110c9-18 44-23 58-9s4 32-18 36-48-9-40-27z'/>" +
+  "<path d='M108 110c4-8 20-10 26-4s2 14-8 16-21-4-18-12z'/>" +
+  `<path d='M6 206Q110 40 254 70' stroke='${route}' stroke-width='1.2' stroke-dasharray='4 7'/>` +
+  `<circle cx='254' cy='70' r='3' fill='${route}' stroke='none'/>` +
+  "</svg>",
+);
+
 const MobileSettingsPanel = styled.div`
   width: min(100%, 1200px);
   max-height: calc(100% - 8px);
   overflow-y: auto;
   padding: 0 10px 16px;
-  background: ${(p) => p.$isDarkMode
-    ? "linear-gradient(170deg, rgba(10,16,30,0.97) 0%, rgba(15,22,40,0.97) 60%, rgba(18,14,8,0.97) 100%)"
-    : "linear-gradient(170deg, rgba(255,252,245,0.99) 0%, rgba(255,248,235,0.99) 60%, rgba(255,243,220,0.99) 100%)"};
+  background-color: ${(p) => (p.$isDarkMode ? "rgb(12, 18, 34)" : "rgb(255, 249, 238)")};
+  background-image: ${(p) => p.$isDarkMode
+    ? `${decorGlobe("rgba(255,179,108,0.16)")},
+       ${decorContours("rgba(120,170,255,0.13)", "rgba(255,166,77,0.45)")},
+       radial-gradient(circle at 100% 100%, rgba(255,140,40,0.16), transparent 42%),
+       radial-gradient(circle at 0% 0%, rgba(60,130,255,0.2), transparent 45%),
+       radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1.3px),
+       linear-gradient(170deg, rgba(10,16,30,0.97) 0%, rgba(15,22,40,0.97) 60%, rgba(18,14,8,0.97) 100%)`
+    : `${decorGlobe("rgba(180,80,0,0.16)")},
+       ${decorContours("rgba(40,90,180,0.14)", "rgba(217,101,0,0.5)")},
+       radial-gradient(circle at 100% 100%, rgba(255,150,50,0.2), transparent 42%),
+       radial-gradient(circle at 0% 0%, rgba(80,150,255,0.14), transparent 45%),
+       radial-gradient(rgba(120,60,0,0.09) 1px, transparent 1.3px),
+       linear-gradient(170deg, rgba(255,252,245,0.99) 0%, rgba(255,248,235,0.99) 60%, rgba(255,243,220,0.99) 100%)`};
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat, no-repeat;
+  background-size:
+    min(380px, 75vw) min(380px, 75vw),
+    min(340px, 70vw) auto,
+    100% 100%,
+    100% 100%,
+    22px 22px,
+    100% 100%;
+  background-position:
+    right -90px bottom -110px,
+    left -60px top 40px,
+    0 0,
+    0 0,
+    0 0,
+    0 0;
   border: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)"};
   border-top: 1px solid ${(p) => p.$isDarkMode ? "rgba(255,179,108,0.18)" : "rgba(200,100,0,0.2)"};
   color: ${(p) => p.$isDarkMode ? "white" : "#1a0800"};

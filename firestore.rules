@@ -187,9 +187,9 @@ service cloud.firestore {
     //   { referrer, createdAt, activeDays, lastActiveAt }
     // Створює лише сам запрошений (справжній акаунт, не анонім), один раз,
     // не на себе; день реєстрації — перший активний день.
-    // Далі друг може додати +1 день: не частіше разу на добу (UTC), до 3 днів
-    // і лише протягом 14 днів від реєстрації. Значки — коли activeDays == 3.
-    // Числа 3 і 14 продубльовані в src/utils/referral.js.
+    // Далі друг може додати +1 день: не частіше разу на добу (UTC), до 3 днів.
+    // Строку немає. Значки — коли activeDays == 3.
+    // Число 3 продубльоване в src/utils/referral.js.
     // Читати запис може той, кого він стосується (запрошений або той, хто запросив).
     match /referrals/{uid} {
       allow read: if signedIn()
@@ -210,8 +210,7 @@ service cloud.firestore {
         && request.resource.data.lastActiveAt == request.time
         && request.resource.data.activeDays == resource.data.activeDays + 1
         && request.resource.data.activeDays <= 3
-        && request.time.date() > resource.data.lastActiveAt.date()
-        && request.time < resource.data.createdAt + duration.value(14, 'd');
+        && request.time.date() > resource.data.lastActiveAt.date();
       allow delete: if false;
     }
 
