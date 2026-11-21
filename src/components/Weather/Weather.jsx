@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
 import { ModalSuspense } from "../Loader/ModalLoading.jsx";
 import { motion } from "framer-motion";
@@ -2109,6 +2110,70 @@ const WeatherCardComponent = ({
   const phoneChartSessionRef = useRef(false);
   const [autoFullscreenChart, setAutoFullscreenChart] = useState(null);
 
+  // Псевдо-повноекранний режим: коли браузер не вміє requestFullscreen (iPhone/Safari) —
+  // панель графіка стає fixed-шаром на весь екран, а в портреті повертається на 90°
+  const [pseudoFs, setPseudoFs] = useState(false);
+  const [vp, setVp] = useState(() => ({
+    w: typeof window !== "undefined" ? window.innerWidth : 1024,
+    h: typeof window !== "undefined" ? window.innerHeight : 768,
+  }));
+  useEffect(() => {
+    if (!pseudoFs) return undefined;
+    const update = () => setVp({ w: window.innerWidth, h: window.innerHeight });
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, [pseudoFs]);
+  const pseudoPortrait = pseudoFs && vp.h > vp.w;
+  const pseudoPanelStyle = pseudoFs
+    ? {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: pseudoPortrait ? `${vp.h}px` : `${vp.w}px`,
+        height: pseudoPortrait ? `${vp.w}px` : `${vp.h}px`,
+        minHeight: 0,
+        transform: pseudoPortrait ? `translateX(${vp.w}px) rotate(90deg)` : undefined,
+        transformOrigin: "top left",
+        zIndex: 100000,
+        overflow: "auto",
+      }
+    : null;
+  // Висота графіка в повноекранному режимі (offset — місце під шапку й шкалу)
+  const fsChartHeight = (offset) =>
+    isCapturing
+      ? `${window.innerHeight - offset}px`
+      : pseudoFs
+        ? `${(pseudoPortrait ? vp.w : vp.h) - offset}px`
+        : `calc(100vh - ${offset}px)`;
+  const wrapFs = (key, node) => (pseudoFs && fullscreenChart === key ? createPortal(node, document.body) : node);
+
+  const exitPseudoFs = () => {
+    setPseudoFs(false);
+    setFullscreenChart(null);
+    if (phoneChartSessionRef.current) {
+      phoneChartSessionRef.current = false;
+      setHourlyViewMode("blocks");
+      setDailyViewMode("blocks");
+    }
+  };
+  useEffect(() => {
+    if (!pseudoFs) return undefined;
+    const onKey = (e) => e.key === "Escape" && exitPseudoFs();
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pseudoFs]);
+
   useEffect(() => {
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
@@ -2150,13 +2215,27 @@ const WeatherCardComponent = ({
   }, [fullscreenChart]);
 
   const toggleChartFullscreen = async (chartKey, panelRef) => {
+    if (pseudoFs) {
+      exitPseudoFs();
+      return;
+    }
     if (document.fullscreenElement) {
       await document.exitFullscreen();
       return;
     }
-    if (!panelRef.current?.requestFullscreen) return;
+    if (!panelRef.current?.requestFullscreen) {
+      setFullscreenChart(chartKey);
+      setPseudoFs(true);
+      return;
+    }
     setFullscreenChart(chartKey);
-    await panelRef.current.requestFullscreen();
+    try {
+      await panelRef.current.requestFullscreen();
+    } catch {
+      // браузер відмовив — використовуємо псевдо-повний екран
+      setPseudoFs(true);
+      return;
+    }
     if (isNarrowScreen || phoneChartSessionRef.current) {
       try { await window.screen?.orientation?.lock?.("landscape"); } catch { /* iOS / не підтримується */ }
     }
@@ -2171,7 +2250,7 @@ const WeatherCardComponent = ({
     if (!autoFullscreenChart) return undefined;
     const ref = autoFullscreenChart === "hourly" ? hourlyChartPanelRef : dailyChartPanelRef;
     const timer = setTimeout(async () => {
-      if (ref.current && !document.fullscreenElement) {
+      if (ref.current && !document.fullscreenElement && !pseudoFs) {
         phoneChartSessionRef.current = true;
         try {
           await toggleChartFullscreen(autoFullscreenChart, ref);
@@ -5001,13 +5080,14 @@ const HOLIDAYS_2027 = {
               </div>
 
               {effectiveHourlyViewMode === "charts" ? (
-                visibleHourly && visibleHourly.length > 0 && (
+                visibleHourly && visibleHourly.length > 0 && wrapFs("hourly", (
                   <div
                     ref={hourlyChartPanelRef}
                     style={{
                       position: "relative",
                       width: "100%",
                       minHeight: fullscreenChart === "hourly" ? (isCapturing ? `${window.innerHeight}px` : "100vh") : undefined,
+                      ...(fullscreenChart === "hourly" ? pseudoPanelStyle : null),
                       padding: fullscreenChart === "hourly" ? "16px" : undefined,
                       boxSizing: "border-box",
                       background: fullscreenChart === "hourly"
@@ -5023,7 +5103,7 @@ const HOLIDAYS_2027 = {
                       <ChartScrollWrapper>
                         <ChartInnerContainer
                           $width={fullscreenChart === "hourly" ? `max(100%, ${hourlyChartWidth}px)` : hourlyChartWidth}
-                          $height={fullscreenChart === "hourly" ? (isCapturing ? `${window.innerHeight - 140}px` : "calc(100vh - 140px)") : defaultChartHeight}
+                          $height={fullscreenChart === "hourly" ? fsChartHeight(140) : defaultChartHeight}
                         >
                           <Line
                             key={`hourly-${fullscreenChart || "normal"}`}
@@ -5079,7 +5159,7 @@ const HOLIDAYS_2027 = {
                     </div>
                     {renderColorScales(lineStyles.hourly.right)}
                   </div>
-                )
+                ))
               ) : effectiveHourlyViewMode === "rows" ? (
                 renderHourlyRows()
               ) : (
@@ -5192,12 +5272,14 @@ const HOLIDAYS_2027 = {
                     ], dailyHeaderWrapped ? renderTrendButton() : null)}
                     {renderChartHeaderTools("daily", dailyChartPanelRef, renderWindHint("daily"), dailyHeaderWrapped)}
                   </div>
+                  {wrapFs("daily", (
                   <div
                     ref={dailyChartPanelRef}
                     style={{
                       position: "relative",
                       width: "100%",
                       minHeight: fullscreenChart === "daily" ? (isCapturing ? `${window.innerHeight}px` : "100vh") : undefined,
+                      ...(fullscreenChart === "daily" ? pseudoPanelStyle : null),
                       padding: fullscreenChart === "daily" ? "16px" : undefined,
                       boxSizing: "border-box",
                       background: fullscreenChart === "daily"
@@ -5214,7 +5296,7 @@ const HOLIDAYS_2027 = {
                       <ChartScrollWrapper ref={dailyChartRef}>
                         <ChartInnerContainer
                           $width={fullscreenChart === "daily" ? "max(100%, 900px)" : 900}
-                          $height={fullscreenChart === "daily" ? (isCapturing ? `${window.innerHeight - 170}px` : "calc(100vh - 170px)") : defaultChartHeight}
+                          $height={fullscreenChart === "daily" ? fsChartHeight(170) : defaultChartHeight}
                         >
                           <Line
                             key={`daily-${fullscreenChart || "normal"}`}
@@ -5270,6 +5352,7 @@ const HOLIDAYS_2027 = {
                     </div>
                     {renderColorScales(lineStyles.daily.right)}
                   </div>
+                  ))}
                 </>
               ) : effectiveDailyViewMode === "table" ? (
                 renderDailyTable()
