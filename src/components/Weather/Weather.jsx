@@ -1967,9 +1967,9 @@ const WeatherCardComponent = ({
     pressure: { label: i18n.t("newsWeather.Weather.tysk"), axis: `${i18n.t("newsWeather.Weather.tysk")}, ${pressureLabel(units.pressure)}`, color: "#a78bfa", rgb: "167, 139, 250", icon: <MdOutlineSpeed /> },
     humidity: { label: i18n.t("newsWeather.Weather.volohist"), axis: `${i18n.t("newsWeather.Weather.volohist")}, %`, color: "#38bdf8", rgb: "56, 189, 248", icon: <BiWater /> },
     rainMm: { label: `${i18n.t("newsWeather.Weather.opady")} (${precipLabel(units.precip)})`, axis: `${i18n.t("newsWeather.Weather.opady")}, ${precipLabel(units.precip)}`, color: "#3b82f6", rgb: "59, 130, 246", icon: <FaCloudShowersHeavy /> },
-    dew: { label: i18n.t("newsWeather.Weather.tochkaRosy"), axis: `${i18n.t("newsWeather.Weather.tochkaRosy")}, ${tempSuffix}`, color: "#2dd4bf", rgb: "45, 212, 191", icon: <GiGrassMushroom /> },
+    dew: { label: i18n.t("newsWeather.Weather.tochkaRosy"), axis: `${i18n.t("newsWeather.Weather.tochkaRosy")}, ${tempLabel(units.temp)}`, color: "#2dd4bf", rgb: "45, 212, 191", icon: <GiGrassMushroom /> },
     snowDepth: { label: i18n.t("newsWeather.Weather.snihovyiPokryv"), axis: `${i18n.t("newsWeather.Weather.snihovyiPokryv")}, ${snowLabel(units.precip)}`, color: "#93c5fd", rgb: "147, 197, 253", icon: <FaSnowflake /> },
-    soil: { label: i18n.t("newsWeather.Weather.grunt"), axis: `${i18n.t("newsWeather.Weather.grunt")}, ${tempSuffix}`, color: "#a3e635", rgb: "163, 230, 53", icon: <PiThermometerFill /> },
+    soil: { label: i18n.t("newsWeather.Weather.grunt"), axis: `${i18n.t("newsWeather.Weather.grunt")}, ${tempLabel(units.temp)}`, color: "#a3e635", rgb: "163, 230, 53", icon: <PiThermometerFill /> },
     et0: { label: i18n.t("newsWeather.Weather.vyparovuvannia"), axis: `${i18n.t("newsWeather.Weather.vyparovuvannia")}, ${precipLabel(units.precip)}`, color: "#fbbf24", rgb: "251, 191, 36", icon: <GiWaterRecycling /> },
     freezing: { label: i18n.t("newsWeather.Weather.riven0C"), axis: `${i18n.t("newsWeather.Weather.riven0C")}, ${heightLabel(units.distance)}`, color: "#67e8f9", rgb: "103, 232, 249", icon: <GiIceCube /> },
     visibility: {
@@ -2053,8 +2053,8 @@ const WeatherCardComponent = ({
     pressure: () => pressureLabel(units.pressure),
     rainMm: () => precipLabel(units.precip),
     et0: () => precipLabel(units.precip),
-    dew: () => tempSuffix,
-    soil: () => tempSuffix,
+    dew: () => tempLabel(units.temp),
+    soil: () => tempLabel(units.temp),
     snowDepth: () => snowLabel(units.precip),
     freezing: () => heightLabel(units.distance),
   };
