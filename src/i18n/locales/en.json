@@ -2489,7 +2489,8 @@
       "zakrytyPerehliad": "Close preview",
       "zrobytyFonom": "Make background",
       "pauza": "Pause",
-      "vidtvoryty": "Play"
+      "vidtvoryty": "Play",
+      "hdrChats": "Chats"
     },
     "VoiceWaveform": {
       "khvyliaHolosuZaOstanni": "Voice wave over the last 3 seconds"

@@ -54,6 +54,7 @@ import {
   TbPlus,
   TbRefresh,
   TbX,
+  TbSparkles,
 } from "react-icons/tb";
 import toast, { Toaster } from "react-hot-toast";
 import { FaHandsHelping } from "react-icons/fa";
@@ -63,6 +64,12 @@ import { PiNewspaperClippingFill } from "react-icons/pi";
 import { FaClapperboard } from "react-icons/fa6";
 import VoiceWaveform from "./VoiceWaveform";
 import { Tooltip } from "../Tooltip/Tooltip";
+import {
+  MODAL_HEADER_HEIGHT,
+  ModalHeaderActions,
+  ModalHeaderButton,
+  ModalHeaderCloseButton,
+} from "../Modals/modalHeaderButtons.js";
 import { getPref, setPref } from "../../utils/prefsStore.js";
 import i18n from "../../i18n/i18n.js";
 //<Tooltip content="Змінити тему" isDarkMode={isDarkMode}>
@@ -295,116 +302,67 @@ const ChatMainArea = styled.div`
   transition: padding 0.28s ease;
 `;
 
+// Шапка як у «Параметрах» і «Магазині»: 48px від краю до краю,
+// кнопки «іконка над підписом» (modalHeaderButtons.js)
 const HeaderBar = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  width: 100%;
-  margin-bottom: 2px;
+  gap: 8px;
+  flex-shrink: 0;
+  height: ${MODAL_HEADER_HEIGHT}px;
+  box-sizing: border-box;
+  /* від краю до краю, попри відступи AihelpDiv */
+  margin: -12px -18px 0;
+  padding: 0 12px;
+  color: ${(p) => (p.$isDarkMode ? "#fff" : "#111")};
+  background: ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.03)")};
+  border-bottom: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.25)" : "rgba(255, 140, 0, 0.3)")};
+  --mhb-accent: ${(p) => (p.$isDarkMode ? "#ff9500" : "#d96500")};
+  --mhb-on-accent: #fff;
+  --mhb-accent-hover: #ff7a00;
+  /* Ховер «Закрити»: у світлій темі темніший червоний, щоб читався на світлому тлі */
+  --mhb-danger: ${(p) => (p.$isDarkMode ? "#ff6b6b" : "#b42318")};
+  --mhb-danger-bg: ${(p) => (p.$isDarkMode ? "rgba(196, 43, 28, 0.18)" : "rgba(196, 43, 28, 0.08)")};
+  --mhb-danger-border: ${(p) => (p.$isDarkMode ? "rgba(255, 107, 107, 0.55)" : "rgba(180, 35, 24, 0.45)")};
 `;
 
-const ChatControlsGroup = styled.div`
+// «Новий чат» — звичайна кнопка шапки, виділена лише помаранчевою іконкою
+const NewChatHeaderButton = styled(ModalHeaderButton)`
+  & > svg {
+    color: var(--mhb-accent);
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  &:disabled:hover {
+    background: transparent;
+    border-color: transparent;
+  }
+`;
+
+const HeaderTitle = styled.h2`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
-  @media (max-width: 600px) {
-    margin-right: auto;
-  }
-
-  /* Однаковий розмір іконок у всіх кнопках шапки */
-  button svg {
-    width: 21px;
-    height: 21px;
+  margin: 0;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  & > svg {
     flex-shrink: 0;
+    color: #ff9500;
+    font-size: 20px;
   }
-`;
-
-const ChatHeaderBtn = styled.button`
-  justify-content: center;
-  font-size: 18px;
-  line-height: 1;
-  background: ${(p) => (p.$isDarkMode ? "rgba(255, 160, 0, 0.15)" : "rgba(255, 140, 0, 0.12)")};
-  border: 1px solid rgba(255, 160, 0, 0.45);
-  color: ${(p) => (p.$isDarkMode ? "#ffcf9e" : "#d96500")};
-  padding: 8px 16px;
-  border-radius: 5px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-  &:hover {
-    background: rgba(255, 160, 0, 0.25);
-    border-color: #ff9500;
-    transform: translateY(-1px);
-  }
-`;
-
-/* Квадратні кнопки шапки одного розміру з кнопкою закриття (34px) */
-const SidebarToggleBtn = styled(ChatHeaderBtn)`
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  font-size: 18px;
-  flex-shrink: 0;
-`;
-
-const NewChatHeaderBtn = styled.button`
-  justify-content: center;
-  font-size: 18px;
-  line-height: 1;
-  background: linear-gradient(135deg, #ff9500, #ff6b00);
-  border: none;
-  color: #fff;
-  height: 34px;
-  padding: 0 16px;
-  border-radius: 5px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.35);
-  transition: all 0.2s ease;
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 149, 0, 0.45);
-  }
-`;
-
-const CloseAiModalHeaderBtn = styled.button`
-  background: ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)")};
-  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(0, 0, 0, 0.15)")};
-  color: ${(p) => (p.$isDarkMode ? "#fff" : "#111")};
-  width: 34px;
-  height: 34px;
-  border-radius: 5px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 2px;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-
-  &:hover {
-    background: rgba(255, 77, 77, 0.2);
-    border-color: #ff4d4d;
-    color: #ff4d4d;
-    transform: scale(1.08);
+  /* на телефоні місце — кнопкам */
+  @media (max-width: 420px) {
+    & > span {
+      display: none;
+    }
   }
 `;
 
@@ -585,19 +543,44 @@ const Message = styled.div`
   p:last-child  { margin-bottom: 0; }
 `;
 
+// Маленька кнопка в правому верхньому куті бульбашки (не вилазить за край)
 const CopyButton = styled.button`
   position: absolute;
-  right: 0px;
-  top: -10px;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
   color: inherit;
   cursor: pointer;
-  font-size: 29px;
-  border-radius: 5px;
   opacity: 0;
-  transition: opacity 0.2s, transform 0.2s;
-  ${Message}:hover & { opacity: 1; }
+  transition: opacity 0.2s, background-color 0.15s, border-color 0.15s;
+  & > svg {
+    width: 16px;
+    height: 16px;
+  }
+  ${Message}:hover &,
+  &:focus-visible {
+    opacity: 0.75;
+  }
   &:hover {
-    transform: scale(1.1);
+    opacity: 1;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    border-color: color-mix(in srgb, currentColor 18%, transparent);
+  }
+  &:focus-visible {
+    outline: 2px solid #00afce;
+    outline-offset: 2px;
+  }
+  /* На сенсорних екранах наведення немає — кнопку видно завжди, але тихо */
+  @media (hover: none) {
+    opacity: 0.55;
   }
 `;
 
@@ -2170,43 +2153,48 @@ const Aihelp = ({ isDarkMode, isStickyBgMode, onClose }) => {
           },
         }}
       />
-      <HeaderBar>
-        <ChatControlsGroup>
+      <HeaderBar $isDarkMode={isDarkMode}>
+        <HeaderTitle>
+          <TbSparkles aria-hidden="true" />
+          <span>{i18n.t("hero.ai.label")}</span>
+        </HeaderTitle>
+        <ModalHeaderActions>
           <Tooltip content={isSidebarCollapsed ? i18n.t("ui.Aihelp.pokazatySpysokChativ") : i18n.t("ui.Aihelp.zhornutySpysokChativ")} isDarkMode={isDarkMode}>
-            <SidebarToggleBtn
+            <ModalHeaderButton
               type="button"
-              $isDarkMode={isDarkMode}
               onClick={toggleSidebar}
               aria-label={isSidebarCollapsed ? i18n.t("ui.Aihelp.pokazatyBichnuPanel") : i18n.t("ui.Aihelp.zhornutyBichnuPanel")}
               aria-expanded={!isSidebarCollapsed}
             >
-              {isSidebarCollapsed ? <TbLayoutSidebarLeftExpand /> : <TbLayoutSidebarLeftCollapse />}
-            </SidebarToggleBtn>
+              {isSidebarCollapsed ? <TbLayoutSidebarLeftExpand aria-hidden="true" /> : <TbLayoutSidebarLeftCollapse aria-hidden="true" />}
+              <span>{i18n.t("ui.Aihelp.hdrChats")}</span>
+            </ModalHeaderButton>
           </Tooltip>
           <Tooltip content={i18n.t("ui.Aihelp.stvorytyNovyiParalelnyiChat")} isDarkMode={isDarkMode}>
-            <NewChatHeaderBtn
+            <NewChatHeaderButton
               type="button"
-              $isDarkMode={isDarkMode}
               onClick={handleCreateNewChat}
               disabled={chats.length >= 10}
               aria-label={i18n.t("ui.Aihelp.stvorytyNovyiParalelnyiChat")}
             >
-              <TbMessagePlus />
-            </NewChatHeaderBtn>
+              <TbMessagePlus aria-hidden="true" />
+              <span>{i18n.t("ui.Aihelp.novyiChat")}</span>
+            </NewChatHeaderButton>
           </Tooltip>
           {onClose && (
             <Tooltip content={i18n.t("ui.Aihelp.zakrytyShiAsystent")} isDarkMode={isDarkMode}>
-              <CloseAiModalHeaderBtn
+              <ModalHeaderCloseButton
                 type="button"
-                $isDarkMode={isDarkMode}
+                $thinIcon
                 onClick={onClose}
                 aria-label={i18n.t("ui.Aihelp.zakrytyShiAsystent")}
               >
-                <TbX />
-              </CloseAiModalHeaderBtn>
+                <TbX aria-hidden="true" />
+                <span>{i18n.t("modals.ShopModal.zakryty")}</span>
+              </ModalHeaderCloseButton>
             </Tooltip>
           )}
-        </ChatControlsGroup>
+        </ModalHeaderActions>
       </HeaderBar>
 
       <SettingsPanel $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>

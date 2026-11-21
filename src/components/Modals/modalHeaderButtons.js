@@ -8,7 +8,9 @@ import styled, { css } from "styled-components";
 //  Кольори беруться з currentColor і CSS-змінних батька, тож кнопки
 //  працюють і в темах налаштувань, і на темному фоні замку:
 //    --mhb-accent, --mhb-on-accent, --mhb-accent-hover — головна дія;
-//    --mhb-danger — червоний текст ховера «Закрити / Скасувати».
+//    --mhb-danger — червоний текст ховера «Закрити / Скасувати»;
+//    --mhb-danger-bg, --mhb-danger-border — тло й рамка того ж ховера
+//    (у світлій темі потрібен темніший червоний, інакше текст зливається з тлом).
 // ─────────────────────────────────────────────────────────────
 
 export const MODAL_HEADER_HEIGHT = 48;
@@ -89,8 +91,8 @@ export const ModalHeaderButton = styled.button`
 // Червоний текст на напівпрозорому червоному — читається в обох темах
 export const ModalHeaderCloseButton = styled(ModalHeaderButton)`
   &:hover {
-    background: rgba(196, 43, 28, 0.18);
-    border-color: rgba(255, 107, 107, 0.55);
+    background: var(--mhb-danger-bg, rgba(196, 43, 28, 0.18));
+    border-color: var(--mhb-danger-border, rgba(255, 107, 107, 0.55));
     color: var(--mhb-danger, #ff8a8a);
   }
   &:hover > span {

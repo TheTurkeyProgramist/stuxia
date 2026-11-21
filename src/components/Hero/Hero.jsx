@@ -348,20 +348,17 @@ const AiModalBackdrop = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
   animation: ${fadeIn} 180ms ease-out;
 `;
 
+// На весь екран, без рамки — як «Параметри» й «Магазин»
 const AiModalContainer = styled.div`
-  width: calc(100vw - 32px);
-  height: calc(100vh - 32px);
-  max-height: calc(100vh - 32px);
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  border-radius: 20px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
   animation: ${fadeIn} 220ms ease-out;
 `;
 

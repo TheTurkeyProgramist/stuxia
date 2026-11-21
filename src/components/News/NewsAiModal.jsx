@@ -7,9 +7,9 @@ import ReactMarkdown from "react-markdown";
 import { RiDeleteBack2Fill } from "react-icons/ri";
 import { FaMicrophoneAlt } from "react-icons/fa";
 import { FaLightbulb } from "react-icons/fa";
-import { FiSend, FiAlignLeft, FiGlobe } from "react-icons/fi";
+import { FiSend, FiAlignLeft, FiGlobe, FiX } from "react-icons/fi";
 import { HiSparkles } from "react-icons/hi2";
-import { IoClose } from "react-icons/io5";
+import { MODAL_HEADER_HEIGHT, ModalHeaderCloseButton } from "../Modals/modalHeaderButtons.js";
 import { MdVerified } from "react-icons/md";
 import { FaCircleInfo } from "react-icons/fa6";
 import { Tooltip } from "../Tooltip/Tooltip";
@@ -175,7 +175,7 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: ${(props) => (props.$isDarkMode ? "#121316bb" : "#fcf7f7d3")};
+  background: ${(props) => (props.$isDarkMode ? "#121316e6" : "#fcf9f8f2")};
   color: ${(props) => (props.$isDarkMode ? "#f3f4f6" : "#1f2937")};
   width: 100%;
   height: 95vh;
@@ -191,13 +191,22 @@ const ModalContent = styled.div`
   animation: ${fadeIn} 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 `;
 
+// Шапка як у «Параметрах», «Магазині» й ШІ-асистенті: 48px, кнопка «іконка над підписом»
 const Header = styled.div`
-  padding: 8px;
+  height: ${MODAL_HEADER_HEIGHT}px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  padding: 0 12px;
   border-bottom: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)")};
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.01)" : "rgba(0,0,0,0.01)")};
+  color: ${(props) => (props.$isDarkMode ? "#f3f4f6" : "#1f2937")};
+  /* Ховер «Закрити»: у світлій темі темніший червоний, щоб читався на світлому тлі */
+  --mhb-danger: ${(p) => (p.$isDarkMode ? "#ff6b6b" : "#b42318")};
+  --mhb-danger-bg: ${(p) => (p.$isDarkMode ? "rgba(196, 43, 28, 0.18)" : "rgba(196, 43, 28, 0.08)")};
+  --mhb-danger-border: ${(p) => (p.$isDarkMode ? "rgba(255, 107, 107, 0.55)" : "rgba(180, 35, 24, 0.45)")};
 `;
 
 const TitleGroup = styled.div`
@@ -208,36 +217,21 @@ const TitleGroup = styled.div`
   h3 {
     margin: 0;
     font-size: 17px;
-    font-weight: 600;
+    font-weight: 700;
+    ${(p) =>
+      p.$isDarkMode
+        ? `
     background: linear-gradient(135deg, #ffb36c 0%, #ff8a3d 100%);
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-`;
-
-const CloseBtn = styled.button`
-  background: ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)")};
-  border: none;
-  color: inherit;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
+    -webkit-text-fill-color: transparent;`
+        : `
+    color: #c2410c;`}
   }
 `;
 
 const ControlsBar = styled.div`
   padding: 8px 10px;
-  border-bottom: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)")};
+  border-bottom: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)")};
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -251,8 +245,7 @@ const QuickGroup = styled.div`
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-weight: 600;
-  opacity: 0.95;
+  font-weight: 700;
 
   > svg {
     color: #ff8a3d;
@@ -266,16 +259,16 @@ const Segmented = styled.div`
   padding: 2px;
   gap: 2px;
   border-radius: 999px;
-  background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)")};
-  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)")};
+  background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)")};
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.18)")};
 `;
 
 const SegmentButton = styled.button`
   border: none;
   border-radius: 999px;
   padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
   color: ${(p) => (p.$active ? "#1a1208" : "inherit")};
   background: ${(p) => (p.$active ? "linear-gradient(135deg, #ffb36c 0%, #ff8a3d 100%)" : "transparent")};
@@ -287,7 +280,7 @@ const SegmentButton = styled.button`
   }
 
   small {
-    opacity: 0.7;
+    opacity: 0.85;
     font-weight: 500;
     margin-left: 3px;
   }
@@ -299,13 +292,13 @@ const ToggleChip = styled.button`
   gap: 6px;
   padding: 5px 12px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
-  color: ${(p) => (p.$active ? "#ff8a3d" : "inherit")};
-  background: ${(p) => (p.$active ? "rgba(255, 138, 61, 0.14)" : "transparent")};
-  border: 1px solid ${(p) => (p.$active ? "rgba(255, 138, 61, 0.6)" : p.$isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)")};
-  opacity: ${(p) => (p.$active ? 1 : 0.7)};
+  color: ${(p) => (p.$active ? (p.$isDarkMode ? "#ff8a3d" : "#c2410c") : "inherit")};
+  background: ${(p) => (p.$active ? "rgba(255, 138, 61, 0.16)" : "transparent")};
+  border: 1px solid ${(p) => (p.$active ? "rgba(255, 138, 61, 0.7)" : p.$isDarkMode ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.25)")};
+  opacity: 1;
   transition: all 0.2s ease;
 
   &:hover {
@@ -332,8 +325,8 @@ const InputMeta = styled.div`
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.5)")};
-  font-size: 10px;
+  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.7)")};
+  font-size: 11px;
 `;
 
 const InputActions = styled.div`
@@ -350,7 +343,7 @@ const InputIconButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 179, 108, 0.35);
+  border: 1px solid rgba(255, 138, 61, 0.6);
   border-radius: 7px;
   background: ${(p) => (p.$primary ? "linear-gradient(135deg, #ffb36c, #ff8a3d)" : "transparent")};
   color: ${(p) => (p.$primary ? "#111" : "inherit")};
@@ -365,8 +358,8 @@ const InputIconButton = styled.button`
 
 const MessageMeta = styled.div`
   margin-top: 6px;
-  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)")};
-  font-size: 10px;
+  color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.7)")};
+  font-size: 11px;
 `;
 
 const SuggestedQuestions = styled.div`
@@ -428,9 +421,9 @@ const SuggestedQuestion = styled.button`
   align-items: center;
   gap: 6px;
   padding: 6px 9px;
-  border: 1px solid rgba(255, 179, 108, 0.45);
+  border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 179, 108, 0.55)" : "rgba(234, 88, 12, 0.6)")};
   border-radius: 9px;
-  background: ${(p) => (p.$isDarkMode ? "rgba(255,179,108,0.06)" : "rgba(255,138,61,0.05)")};
+  background: ${(p) => (p.$isDarkMode ? "rgba(255,179,108,0.08)" : "rgba(255,138,61,0.12)")};
   width: 100%;
   height: 46px;
   flex: 0 0 46px;
@@ -518,8 +511,8 @@ const EmptyState = styled.div`
   margin: auto;
   text-align: center;
   max-width: 320px;
-  color: ${(props) => (props.$isDarkMode ? "#888" : "#666")};
-  font-size: 13px;
+  color: ${(props) => (props.$isDarkMode ? "#b4b8c0" : "#374151")};
+  font-size: 14px;
   line-height: 1.5;
 
   span {
@@ -556,7 +549,7 @@ const Message = styled.div`
   p:last-child { margin: 0; }
 
   a {
-    color: ${(props) => (props.$isBot ? "#ffb36c" : "#000")};
+    color: ${(props) => (props.$isBot ? (props.$isDarkMode ? "#ffb36c" : "#c2410c") : "#000")};
     text-decoration: underline;
   }
 `;
@@ -583,7 +576,7 @@ const Input = styled.input`
   box-sizing: border-box;
   padding: 12px 118px 34px 18px;
   border-radius: 14px;
-  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)")};
+  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.25)")};
   background: ${(props) => (props.$isDarkMode ? "#22242a" : "#fff")};
   color: inherit;
   outline: none;
@@ -595,7 +588,7 @@ const Input = styled.input`
   }
 
   &::placeholder {
-    color: ${(props) => (props.$isDarkMode ? "#666" : "#aaa")};
+    color: ${(props) => (props.$isDarkMode ? "#9ca3af" : "#6b7280")};
   }
 `;
 
@@ -770,14 +763,15 @@ export default function NewsAiModal({ isOpen, onClose, newsItem, isDarkMode }) {
     <ModalOverlay onClick={onClose}>
       <ModalContent $isDarkMode={isDarkMode} onClick={(e) => e.stopPropagation()}>
         <Header $isDarkMode={isDarkMode}>
-          <TitleGroup>
-            <HiSparkles style={{ color: "#ff8a3d", fontSize: 18 }} />
+          <TitleGroup $isDarkMode={isDarkMode}>
+            <HiSparkles style={{ color: isDarkMode ? "#ff8a3d" : "#c2410c", fontSize: 18 }} />
             <h3>{i18n.t("newsWeather.NewsAiModal.shiVykladNovyny")}</h3>
           </TitleGroup>
           <Tooltip content={i18n.t("newsWeather.NewsAiModal.zakryty")} isDarkMode={isDarkMode}>
-            <CloseBtn $isDarkMode={isDarkMode} onClick={onClose} aria-label={i18n.t("newsWeather.NewsAiModal.zakryty")}>
-              <IoClose />
-            </CloseBtn>
+            <ModalHeaderCloseButton type="button" $thinIcon onClick={onClose} aria-label={i18n.t("newsWeather.NewsAiModal.zakryty")}>
+              <FiX aria-hidden="true" />
+              <span>{i18n.t("newsWeather.NewsAiModal.zakryty")}</span>
+            </ModalHeaderCloseButton>
           </Tooltip>
         </Header>
 
