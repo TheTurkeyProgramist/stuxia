@@ -5,7 +5,9 @@ import React, {
   useMemo,
   useCallback,
   useId,
+  startTransition,
 } from "react";
+import { removeBootBg } from "../../utils/bootBg.js";
 import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill, BsLightningChargeFill } from "react-icons/bs";
 import { createPortal } from "react-dom";
@@ -77,6 +79,32 @@ import { searchLocalCities, sortSuggestionsByQuery } from "../../utils/citySearc
 const LazyNews = React.lazy(loadNews);
 const News = (props) => {
   const EagerNews = getEagerChunk("News");
+  // Телефон: новини (~135 карток каруселі) рендеримо, лише коли блок підходить до екрана,
+  // і через startTransition — React малює їх частинами, без довгих задач (TBT у PageSpeed).
+  // ПК: новини вже в першому малюванні, як і було (eagerChunks.js)
+  const [isNear, setIsNear] = useState(Boolean(EagerNews));
+  const placeholderRef = useRef(null);
+  useEffect(() => {
+    if (isNear) return undefined;
+    const reveal = () => startTransition(() => setIsNear(true));
+    const el = placeholderRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      reveal();
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          observer.disconnect();
+          reveal();
+        }
+      },
+      { rootMargin: "400px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isNear]);
+  if (!isNear) return <NewsLazyPlaceholder ref={placeholderRef} aria-hidden="true" />;
   return EagerNews ? <EagerNews {...props} /> : <LazyNews {...props} />;
 };
 // ШІ-помічник (Gemini + markdown) вантажиться лише при відкритті модалки
@@ -580,7 +608,9 @@ const BgLayer = React.memo((props) => {
           onLoad={(e) => {
             // Одразу декодуємо картинку, щоб текстура була готова для GPU
             // до першого показу (без підвисання при зміні фону).
-            e.currentTarget.decode?.().catch(() => {});
+            const decoded = e.currentTarget.decode?.().catch(() => {});
+            // Фон Hero готовий — статичний фон з index.html більше не потрібен
+            if ($active) Promise.resolve(decoded).then(removeBootBg);
           }}
           style={{
             width: "100%",

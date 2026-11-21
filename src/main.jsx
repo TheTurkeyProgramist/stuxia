@@ -9,6 +9,7 @@ import { Provider } from "react-redux";
 import { store } from "./app/store.js";
 import App from "./App.jsx";
 import { eagerChunksReady } from "./utils/eagerChunks.js";
+import { removeBootBg } from "./utils/bootBg.js";
 import { Toaster } from "react-hot-toast";
 
 // Глобальна зупинка всіх відео при зміні вкладки/згортанні
@@ -62,4 +63,8 @@ Promise.all([eagerChunksReady(), i18nReady.catch(() => {})]).then(() => root.ren
       <Toaster position="bottom-right" reverseOrder={false} />
     </Provider>
   ),
-));
+)).then(() => {
+  // Зазвичай статичний фон прибирає Hero, щойно намалює свій. Це — запасний варіант
+  // (відео-фон, інші сторінки, фрейм)
+  setTimeout(removeBootBg, isFramed ? 0 : 4000);
+});

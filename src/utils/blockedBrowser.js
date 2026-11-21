@@ -35,6 +35,7 @@ export const renderBlockedScreen = () => {
   document.documentElement.lang = key;
   document.title = msg.title;
   root.innerHTML = "";
+  document.getElementById("boot-bg")?.remove();
   const box = document.createElement("div");
   box.style.cssText =
     "min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;" +
