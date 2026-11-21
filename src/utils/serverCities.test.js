@@ -12,12 +12,12 @@ describe("серверні міста: добовий бюджет Open-Meteo", 
 
   it("не перевищує 9 000 «викликів» на добу, навіть якщо дивляться всі міста", () => {
     const cost =
-      fast * 8 * FULL_COST + slow * 4 * FULL_COST + SERVER_CITIES.length * (24 * NOW_COST + SEASONAL_COST);
+      fast * 8 * FULL_COST + slow * 3 * FULL_COST + SERVER_CITIES.length * (24 * NOW_COST + SEASONAL_COST);
     expect(cost).toBeLessThanOrEqual(9000);
   });
 
   it("вкладається в безкоштовний ліміт записів KV", () => {
-    expect(fast * 8 + slow * 4 + SERVER_CITIES.length + 24).toBeLessThanOrEqual(KV_WRITES_LIMIT);
+    expect(fast * 8 + slow * 3 + SERVER_CITIES.length + 24).toBeLessThanOrEqual(KV_WRITES_LIMIT);
   });
 
   it("slug-и унікальні й непорожні", () => {

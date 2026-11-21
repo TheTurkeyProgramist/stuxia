@@ -3621,7 +3621,7 @@ const App = () => {
                   wind_gusts_10m: d.hourly?.wind_gusts_10m?.[dataIdx] ?? 0,
                   relative_humidity_2m:
                     d.hourly?.relative_humidity_2m?.[dataIdx] ?? null,
-                  dew_point_2m: d.hourly?.dew_point_2m?.[dataIdx] ?? 0,
+                  dew_point_2m: d.hourly?.dew_point_2m?.[dataIdx] ?? null,
                   precipitation: d.hourly?.precipitation?.[dataIdx] ?? null,
                   precipitation_probability:
                     d.hourly?.precipitation_probability?.[dataIdx] ?? 0,
@@ -3630,10 +3630,10 @@ const App = () => {
                   pressure_msl: d.hourly?.pressure_msl?.[dataIdx] ?? null,
                   cloud_cover: d.hourly?.cloud_cover?.[dataIdx] ?? null,
                   visibility: d.hourly?.visibility?.[dataIdx] ?? 0,
-                  snow_depth: d.hourly?.snow_depth?.[dataIdx] ?? 0,
+                  snow_depth: d.hourly?.snow_depth?.[dataIdx] ?? null,
                   evapotranspiration: d.hourly?.et0_fao_evapotranspiration?.[dataIdx] ?? 0,
-                  freezing_level_height: d.hourly?.freezing_level_height?.[dataIdx] ?? 0,
-                  soil_temperature_0cm: d.hourly?.soil_temperature_0cm?.[dataIdx] ?? 0,
+                  freezing_level_height: d.hourly?.freezing_level_height?.[dataIdx] ?? null,
+                  soil_temperature_0cm: d.hourly?.soil_temperature_0cm?.[dataIdx] ?? null,
                   weather_code: d.hourly?.weather_code?.[dataIdx] ?? 0,
                   is_day: hourIsDay,
                   iconPlaceholder: getWeatherIcon(

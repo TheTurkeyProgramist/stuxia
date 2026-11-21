@@ -7,7 +7,8 @@
 export const ARCHIVE_MONTHS = 14;
 // Дані ERA5 з'являються із запізненням у кілька діб — останні дні просимо не завжди.
 const ARCHIVE_LAG_DAYS = 3;
-const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+// Минулі місяці не змінюються, а запит за 14 місяців дорогий для ліміту Open-Meteo — тримаємо 3 доби
+const CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 const CACHE_PREFIX = "weather_archive_v3_";
 
 const DAILY_VARS = [

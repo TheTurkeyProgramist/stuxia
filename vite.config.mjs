@@ -330,6 +330,8 @@ export default defineConfig(({ mode }) => {
           // Мови (26 × переклади + фрази ≈ 4,8 МБ) наперед не качаємо: людині потрібна одна —
           // вона закешується правилом «i18n» у runtimeCaching, щойно її відкриють
           '**/assets/i18n/**',
+          // Карта вибору місця (Leaflet) — окремий великий чанк, потрібен лише тим, хто відкриє карту
+          '**/MapPicker-*',
         ],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',
