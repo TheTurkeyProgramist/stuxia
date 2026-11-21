@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Wie sichtbar die Linie ist, wenn sie in der Legende über dem Diagramm ausgeschaltet ist",
       "kolyVymkneno": "Wenn ausgeschaltet",
       "prozoristVymknenoiLinii": "Deckkraft der ausgeschalteten Linie {{label}}",
+      "kolirZaZnachenniam": "Die Linienfarbe ändert sich mit dem Wert: gefährliche Werte werden rot (bei Sichtweite die niedrigen)",
+      "kolirZaZnachenniam2": "Farbe nach Wert",
       "zalyvkaPidLiniieiu": "Füllung unter der Linie",
       "tochkyIkonky": "Punkte / Symbole",
       "malenkiChyslaBiliaTochok": "Kleine Zahlen neben den Diagrammpunkten",

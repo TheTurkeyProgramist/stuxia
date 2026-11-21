@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Колко се вижда линията, когато е изключена в легендата над графиката",
       "kolyVymkneno": "Когато е изключена",
       "prozoristVymknenoiLinii": "Прозрачност на изключената линия {{label}}",
+      "kolirZaZnachenniam": "Цветът на линията се променя според стойността: опасните стойности стават червени (за видимостта — ниските)",
+      "kolirZaZnachenniam2": "Цвят по стойност",
       "zalyvkaPidLiniieiu": "Запълване под линията",
       "tochkyIkonky": "Точки / икони",
       "malenkiChyslaBiliaTochok": "Малки числа до точките на графиката",

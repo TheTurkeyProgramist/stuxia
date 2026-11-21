@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "在图表上方图例中关闭某条线后，它还显示得多明显",
       "kolyVymkneno": "关闭时",
       "prozoristVymknenoiLinii": "已关闭线条的不透明度 {{label}}",
+      "kolirZaZnachenniam": "线条颜色随数值变化：危险数值变红（能见度则是低值）",
+      "kolirZaZnachenniam2": "按数值着色",
       "zalyvkaPidLiniieiu": "线下填充",
       "tochkyIkonky": "点 / 图标",
       "malenkiChyslaBiliaTochok": "图表各点旁的小数字",

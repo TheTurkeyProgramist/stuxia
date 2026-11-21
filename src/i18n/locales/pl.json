@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Jak bardzo widać linię, gdy jest wyłączona w legendzie nad wykresem",
       "kolyVymkneno": "Po wyłączeniu",
       "prozoristVymknenoiLinii": "Przezroczystość wyłączonej linii {{label}}",
+      "kolirZaZnachenniam": "Kolor linii zmienia się wraz z wartością: niebezpieczne wartości czerwienieją (dla widoczności — niskie)",
+      "kolirZaZnachenniam2": "Kolor wg wartości",
       "zalyvkaPidLiniieiu": "Wypełnienie pod linią",
       "tochkyIkonky": "Punkty / ikony",
       "malenkiChyslaBiliaTochok": "Małe liczby obok punktów wykresu",

@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "وقتی خط در راهنمای بالای نمودار خاموش است، چقدر دیده شود",
       "kolyVymkneno": "وقتی خاموش است",
       "prozoristVymknenoiLinii": "کدری خط خاموش {{label}}",
+      "kolirZaZnachenniam": "رنگ خط بر اساس مقدار تغییر می‌کند: مقادیر خطرناک قرمز می‌شوند (در دید، مقادیر پایین)",
+      "kolirZaZnachenniam2": "رنگ بر اساس مقدار",
       "zalyvkaPidLiniieiu": "پُرکردن زیر خط",
       "tochkyIkonky": "نقطه‌ها / آیکون‌ها",
       "malenkiChyslaBiliaTochok": "عددهای کوچک کنار نقطه‌های نمودار",

@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Наскільки видно лінію, коли її вимкнено в легенді над графіком",
       "kolyVymkneno": "Коли вимкнено",
       "prozoristVymknenoiLinii": "Прозорість вимкненої лінії {{label}}",
+      "kolirZaZnachenniam": "Колір лінії змінюється за значенням: небезпечні значення червоніють (для видимості — низькі)",
+      "kolirZaZnachenniam2": "Колір за значенням",
       "zalyvkaPidLiniieiu": "Заливка під лінією",
       "tochkyIkonky": "Точки / іконки",
       "malenkiChyslaBiliaTochok": "Маленькі числа біля точок графіка",

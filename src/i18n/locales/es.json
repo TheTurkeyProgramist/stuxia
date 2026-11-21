@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Qué tan visible es la línea cuando está desactivada en la leyenda sobre el gráfico",
       "kolyVymkneno": "Al desactivarla",
       "prozoristVymknenoiLinii": "Opacidad de la línea desactivada {{label}}",
+      "kolirZaZnachenniam": "El color de la línea cambia según el valor: los valores peligrosos se vuelven rojos (en visibilidad, los bajos)",
+      "kolirZaZnachenniam2": "Color según el valor",
       "zalyvkaPidLiniieiu": "Relleno bajo la línea",
       "tochkyIkonky": "Puntos / iconos",
       "malenkiChyslaBiliaTochok": "Números pequeños junto a los puntos del gráfico",

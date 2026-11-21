@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Jak moc je čára vidět, když je vypnutá v legendě nad grafem",
       "kolyVymkneno": "Když je vypnutá",
       "prozoristVymknenoiLinii": "Průhlednost vypnuté čáry {{label}}",
+      "kolirZaZnachenniam": "Barva čáry se mění podle hodnoty: nebezpečné hodnoty zčervenají (u dohlednosti ty nízké)",
+      "kolirZaZnachenniam2": "Barva podle hodnoty",
       "zalyvkaPidLiniieiu": "Výplň pod čárou",
       "tochkyIkonky": "Body / ikony",
       "malenkiChyslaBiliaTochok": "Malá čísla u bodů grafu",

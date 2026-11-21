@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "グラフ上部の凡例でオフにしたとき、線をどのくらい見せるか",
       "kolyVymkneno": "オフのとき",
       "prozoristVymknenoiLinii": "オフにした線の不透明度 {{label}}",
+      "kolirZaZnachenniam": "値に応じて線の色が変わります。危険な値は赤くなります（視程では低い値）",
+      "kolirZaZnachenniam2": "値で色分け",
       "zalyvkaPidLiniieiu": "線の下の塗りつぶし",
       "tochkyIkonky": "点 / アイコン",
       "malenkiChyslaBiliaTochok": "グラフの点の横の小さな数字",

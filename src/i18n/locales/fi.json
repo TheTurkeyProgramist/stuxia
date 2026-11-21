@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Kuinka hyvin viiva näkyy, kun se on poistettu käytöstä kaavion yläpuolella olevassa selitteessä",
       "kolyVymkneno": "Kun pois päältä",
       "prozoristVymknenoiLinii": "Pois päältä olevan viivan läpinäkyvyys {{label}}",
+      "kolirZaZnachenniam": "Viivan väri muuttuu arvon mukaan: vaaralliset arvot muuttuvat punaisiksi (näkyvyydellä matalat)",
+      "kolirZaZnachenniam2": "Väri arvon mukaan",
       "zalyvkaPidLiniieiu": "Täyttö viivan alla",
       "tochkyIkonky": "Pisteet / kuvakkeet",
       "malenkiChyslaBiliaTochok": "Pienet luvut kaavion pisteiden vieressä",

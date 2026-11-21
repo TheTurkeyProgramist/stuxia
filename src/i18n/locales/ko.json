@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "차트 위 범례에서 선을 껐을 때 얼마나 보이게 할지",
       "kolyVymkneno": "꺼졌을 때",
       "prozoristVymknenoiLinii": "꺼진 선의 불투명도 {{label}}",
+      "kolirZaZnachenniam": "값에 따라 선 색상이 바뀝니다. 위험한 값은 빨간색이 됩니다(가시거리는 낮은 값)",
+      "kolirZaZnachenniam2": "값에 따라 색상",
       "zalyvkaPidLiniieiu": "선 아래 채우기",
       "tochkyIkonky": "점 / 아이콘",
       "malenkiChyslaBiliaTochok": "차트 점 옆의 작은 숫자",

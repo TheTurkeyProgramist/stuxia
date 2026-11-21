@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Mennyire látszik a vonal, ha ki van kapcsolva a diagram feletti jelmagyarázatban",
       "kolyVymkneno": "Kikapcsolva",
       "prozoristVymknenoiLinii": "A kikapcsolt vonal átlátszatlansága: {{label}}",
+      "kolirZaZnachenniam": "A vonal színe az értéktől függ: a veszélyes értékek pirosra váltanak (látótávolságnál az alacsonyak)",
+      "kolirZaZnachenniam2": "Szín érték szerint",
       "zalyvkaPidLiniieiu": "Kitöltés a vonal alatt",
       "tochkyIkonky": "Pontok / ikonok",
       "malenkiChyslaBiliaTochok": "Kis számok a diagram pontjai mellett",

@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Hoe zichtbaar de lijn is als die in de legenda boven de grafiek is uitgeschakeld",
       "kolyVymkneno": "Indien uitgeschakeld",
       "prozoristVymknenoiLinii": "Doorzichtigheid van de uitgeschakelde lijn {{label}}",
+      "kolirZaZnachenniam": "De lijnkleur verandert met de waarde: gevaarlijke waarden worden rood (bij zicht de lage)",
+      "kolirZaZnachenniam2": "Kleur op waarde",
       "zalyvkaPidLiniieiu": "Vulling onder de lijn",
       "tochkyIkonky": "Punten / pictogrammen",
       "malenkiChyslaBiliaTochok": "Kleine getallen naast de grafiekpunten",

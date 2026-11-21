@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Cât de vizibilă e linia când e dezactivată în legenda de deasupra graficului",
       "kolyVymkneno": "Când e dezactivată",
       "prozoristVymknenoiLinii": "Opacitatea liniei dezactivate {{label}}",
+      "kolirZaZnachenniam": "Culoarea liniei se schimbă după valoare: valorile periculoase devin roșii (la vizibilitate, cele scăzute)",
+      "kolirZaZnachenniam2": "Culoare după valoare",
       "zalyvkaPidLiniieiu": "Umplere sub linie",
       "tochkyIkonky": "Puncte / pictograme",
       "malenkiChyslaBiliaTochok": "Numere mici lângă punctele graficului",

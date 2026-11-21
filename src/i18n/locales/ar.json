@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "مدى ظهور الخط عند إيقافه في وسيلة الإيضاح أعلى الرسم البياني",
       "kolyVymkneno": "عند الإيقاف",
       "prozoristVymknenoiLinii": "شفافية الخط المُوقَف {{label}}",
+      "kolirZaZnachenniam": "يتغير لون الخط حسب القيمة: تتحول القيم الخطرة إلى اللون الأحمر (وفي الرؤية، القيم المنخفضة)",
+      "kolirZaZnachenniam2": "اللون حسب القيمة",
       "zalyvkaPidLiniieiu": "تعبئة أسفل الخط",
       "tochkyIkonky": "نقاط / أيقونات",
       "malenkiChyslaBiliaTochok": "أرقام صغيرة بجانب نقاط الرسم البياني",

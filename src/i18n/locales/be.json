@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Наколькі відаць лінію, калі яе выключана ў легендзе над графікам",
       "kolyVymkneno": "Калі выключана",
       "prozoristVymknenoiLinii": "Празрыстасць выключанай лініі {{label}}",
+      "kolirZaZnachenniam": "Колер лініі змяняецца ў залежнасці ад значэння: небяспечныя значэнні чырванеюць (для бачнасці — нізкія)",
+      "kolirZaZnachenniam2": "Колер па значэнні",
       "zalyvkaPidLiniieiu": "Заліўка пад лініяй",
       "tochkyIkonky": "Кропкі / значкі",
       "malenkiChyslaBiliaTochok": "Маленькія лічбы каля кропак графіка",

@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Hur synlig linjen är när den är avstängd i förklaringen ovanför diagrammet",
       "kolyVymkneno": "När avstängd",
       "prozoristVymknenoiLinii": "Genomskinlighet för avstängd linje {{label}}",
+      "kolirZaZnachenniam": "Linjens färg ändras med värdet: farliga värden blir röda (för sikt, de låga)",
+      "kolirZaZnachenniam2": "Färg efter värde",
       "zalyvkaPidLiniieiu": "Fyllning under linjen",
       "tochkyIkonky": "Punkter / ikoner",
       "malenkiChyslaBiliaTochok": "Små siffror bredvid diagrammets punkter",

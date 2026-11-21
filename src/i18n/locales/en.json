@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "How visible the line is when it's turned off in the legend above the chart",
       "kolyVymkneno": "When turned off",
       "prozoristVymknenoiLinii": "Opacity of the turned-off line {{label}}",
+      "kolirZaZnachenniam": "Line colour changes with the value: dangerous values turn red (for visibility, low ones)",
+      "kolirZaZnachenniam2": "Colour by value",
       "zalyvkaPidLiniieiu": "Fill under the line",
       "tochkyIkonky": "Points / icons",
       "malenkiChyslaBiliaTochok": "Small numbers next to chart points",

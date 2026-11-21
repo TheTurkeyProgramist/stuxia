@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Grafiğin üstündeki açıklamada kapatıldığında çizginin ne kadar görüneceği",
       "kolyVymkneno": "Kapalıyken",
       "prozoristVymknenoiLinii": "Kapalı çizginin saydamlığı {{label}}",
+      "kolirZaZnachenniam": "Çizgi rengi değere göre değişir: tehlikeli değerler kırmızıya döner (görüş mesafesinde düşük olanlar)",
+      "kolirZaZnachenniam2": "Değere göre renk",
       "zalyvkaPidLiniieiu": "Çizginin altını doldur",
       "tochkyIkonky": "Noktalar / simgeler",
       "malenkiChyslaBiliaTochok": "Grafik noktalarının yanında küçük sayılar",

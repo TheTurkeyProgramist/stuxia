@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Kiek matoma linija, kai ji išjungta legendoje virš grafiko",
       "kolyVymkneno": "Kai išjungta",
       "prozoristVymknenoiLinii": "Išjungtos linijos neskaidrumas {{label}}",
+      "kolirZaZnachenniam": "Linijos spalva keičiasi pagal reikšmę: pavojingos reikšmės paraudonuoja (matomumui — žemos)",
+      "kolirZaZnachenniam2": "Spalva pagal reikšmę",
       "zalyvkaPidLiniieiu": "Užpildas po linija",
       "tochkyIkonky": "Taškai / piktogramos",
       "malenkiChyslaBiliaTochok": "Maži skaičiai prie grafiko taškų",

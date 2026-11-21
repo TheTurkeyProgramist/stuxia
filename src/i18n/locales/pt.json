@@ -277,6 +277,8 @@
       "naskilkyVydnoLiniiuKoly": "Quanto a linha aparece quando está desativada na legenda acima do gráfico",
       "kolyVymkneno": "Quando desativada",
       "prozoristVymknenoiLinii": "Opacidade da linha desativada {{label}}",
+      "kolirZaZnachenniam": "A cor da linha muda conforme o valor: valores perigosos ficam vermelhos (na visibilidade, os baixos)",
+      "kolirZaZnachenniam2": "Cor por valor",
       "zalyvkaPidLiniieiu": "Preenchimento sob a linha",
       "tochkyIkonky": "Pontos / ícones",
       "malenkiChyslaBiliaTochok": "Números pequenos ao lado dos pontos do gráfico",
