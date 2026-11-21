@@ -1174,13 +1174,24 @@ const ServerBolt = () => (
 );
 
 const CitySidebarTileName = styled.span`
+  display: flex;
+  align-items: center;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
   font-size: 12px;
   font-weight: bold;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+
+  /* Довга назва стискається з трикрапкою, а ⚡ завжди лишається видимим */
+  & > .city-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  & > span:not(.city-name) {
+    flex: none;
+  }
 
   ${CITY_SIDEBAR_DESKTOP_MEDIA} {
     font-size: 15px;
@@ -1710,8 +1721,11 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
           <CitySidebarList ref={sidebarListRef}>
             {matchingCities.map(({ label, index }) => {
               const isActive = index === activeIndex;
-              const [cityName, ...rest] = label.split(",");
-              const cityRest = rest.join(",").trim();
+              // «Жмеринка (Вінницька обл., Україна)» → назва + «Вінницька обл., Україна»;
+              // без дужок — як раніше, по першій комі
+              const paren = label.match(/^(.*?)\s*\((.*)\)\s*$/);
+              const [cityName, ...rest] = paren ? [paren[1]] : label.split(",");
+              const cityRest = paren ? paren[2].trim() : rest.join(",").trim();
               const cardId = items[index]?.id;
               return (
                 <li key={`city-sidebar-${index}`} data-active={isActive ? "true" : undefined}>
@@ -1724,7 +1738,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
                     onClick={() => jumpTo(index)}
                   >
                     <CitySidebarTileName>
-                      {index + 1}. {cityName.trim()}
+                      <span className="city-name">{index + 1}. {cityName.trim()}</span>
                       {items[index]?.isServer && <ServerBolt />}
                     </CitySidebarTileName>
                     {cityRest && <CitySidebarTileSub>{cityRest}</CitySidebarTileSub>}
