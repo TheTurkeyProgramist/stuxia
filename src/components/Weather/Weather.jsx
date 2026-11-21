@@ -2649,7 +2649,7 @@ const WeatherCardComponent = ({
 
   // Підказка-компас у рядку легенди (лише коли на правій осі вітер)
   const renderWindHint = (chartKey) =>
-    (chartKey === "archive" ? archiveRightMetric : rightMetric) === "wind" ? (
+    rightMetric === "wind" ? (
       <WindCompassHint
         isDarkMode={isDarkMode}
         windUnit={windLabel(units.wind)}
@@ -3707,7 +3707,7 @@ const HOLIDAYS_2027 = {
           zIndex: 10,
         }}>
           {renderChartLegend(legendItems(false), archiveHeaderWrapped ? renderTrendButton("archive") : null, archiveMetricCtx)}
-          {renderChartHeaderTools("archive", archiveChartPanelRef, renderWindHint("archive"), archiveHeaderWrapped)}
+          {renderChartHeaderTools("archive", archiveChartPanelRef, null, archiveHeaderWrapped)}
         </div>
         {wrapFs("archive", (
           <div
@@ -3722,7 +3722,7 @@ const HOLIDAYS_2027 = {
               background: isFs ? (isDarkMode ? "#000" : "#f5f5f5") : "transparent",
             }}
           >
-            {isFs && renderChartHeader("archive", archiveChartPanelRef, legendItems(true), renderWindHint("archive"), archiveFsHeaderRef, archiveFsHeaderWrapped)}
+            {isFs && renderChartHeader("archive", archiveChartPanelRef, legendItems(true), null, archiveFsHeaderRef, archiveFsHeaderWrapped)}
             <div style={{ position: "relative", width: "100%" }}>
               <ChartScrollWrapper ref={archiveChartRef}>
                 <ChartInnerContainer
