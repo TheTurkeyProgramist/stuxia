@@ -226,3 +226,13 @@ export const VisibilityFog = () => (
     ))}
   </svg>
 );
+
+// Стрілка вітру (за замовчуванням дивиться вниз, як ⬇): як у старій, але з крупнішим вістрям.
+// Колір береться з батька (currentColor), поворот задає IconBox ($rotate).
+// Палка вдвічі-півтора довша за початкову (11 → 16,5), тож viewBox вищий за ширину.
+export const WindArrow = ({ size = 26 }) => (
+  <svg width={size} height={(size * 28.5) / 24} viewBox="0 -4.5 24 28.5" aria-hidden="true" fill="currentColor" style={{ display: "block" }}>
+    <rect x="10.1" y="-4" width="3.8" height="16.5" rx="1.9" />
+    <path d="M2.2 11.5 L21.8 11.5 L12 23 Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+  </svg>
+);

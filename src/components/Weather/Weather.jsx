@@ -102,7 +102,7 @@ import { BsThermometerSnow, BsThermometerSun, BsMoonStarsFill, BsClockHistory, B
 import { formatClock, getTwilightData, getDayLength, getMoonDetails, getDayLengthDiff, getScaleProgress } from "../../utils/astro";
 import { isFoggy } from "../../utils/dailyAggregates";
 import { AnimWind, AnimSpin, AnimHourglass, AnimTwinkle, AnimCompass, MoonPhaseIcon, AstroScale } from "./BlockAstroIcons.jsx";
-import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, CloudWithTrend, getCloudTrend, getSnowStyle } from "./AnimatedWeatherIcons.jsx"; //Анімовані іконки
+import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, CloudWithTrend, WindArrow, getCloudTrend, getSnowStyle } from "./AnimatedWeatherIcons.jsx"; //Анімовані іконки
 import { WeatherIcon, stripEmoji, ICON_HALO_FILTER } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
 import DailyTips from "./DailyTips.jsx"; // Повітря, ожеледиця вранці, сніг на машині
 import WeatherTurkey from "./WeatherTurkey.jsx"; //Доміно — індик-талісман, що реагує на погоду
@@ -4938,7 +4938,7 @@ const HOLIDAYS_2027 = {
   </IndicatorCard>
 
   <IndicatorCard aria-label={i18n.t("newsWeather.Weather.viterNapriamokPoryvyM", { wind_speed: card.current.wind_speed, wind_direction_10m: card.current.wind_direction_10m, v2: getWindDirectionText(card.current.wind_direction_10m), wind_gusts_10m: card.current.wind_gusts_10m })}>
-    <IconBox $size="28px" $color="#00eeff" $rotate={Math.round((card.current.wind_direction_10m || 0) / 45) * 45 % 360} style={{ fontSize: "20px", lineHeight: 1 }}>⬇</IconBox>
+    <IconBox $size="28px" $color="#00eeff" $rotate={Math.round((card.current.wind_direction_10m || 0) / 45) * 45 % 360} style={{ lineHeight: 1 }}><WindArrow size={26} /></IconBox>
     <TextContent $mt="0px" $lh="1.15">
       {i18n.t("newsWeather.Weather.shvydkistVitru")} {fmt.wind(card.current.windNum ?? card.current.wind_speed)}
       <SubText title={`${getWindDirectionText(card.current.wind_direction_10m)} (${card.current.wind_direction_10m}°)`} style={{ whiteSpace: "nowrap" }}>{card.current.wind_direction_10m}° {getWindDirectionShort(card.current.wind_direction_10m)}</SubText>
