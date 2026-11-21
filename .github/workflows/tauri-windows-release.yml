@@ -1,9 +1,24 @@
 name: Build desktop and Android apps
 
 on:
+  # Автоматично: кожен пуш у main, що зачепив код застосунку, збирає всі платформи
+  # й оновлює реліз (версія береться з package.json). Тег вручну ставити не треба.
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "public/**"
+      - "Stuxia/**"
+      - "android/**"
+      - "package.json"
+      - "bun.lock"
+      - ".github/workflows/tauri-windows-release.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: release-build
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -139,6 +154,12 @@ jobs:
       - linux
       - android
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Read app version
+        id: version
+        run: echo "value=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Download all platform builds
         uses: actions/download-artifact@v4
         with:
@@ -148,7 +169,10 @@ jobs:
       - name: Publish platform installers
         uses: softprops/action-gh-release@v2
         with:
-          name: Stuxia ${{ github.ref_name }}
+          tag_name: v${{ steps.version.outputs.value }}
+          target_commitish: ${{ github.sha }}
+          name: Stuxia v${{ steps.version.outputs.value }}
+          make_latest: "true"
           files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

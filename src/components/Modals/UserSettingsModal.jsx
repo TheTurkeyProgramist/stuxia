@@ -4822,7 +4822,7 @@ const UserSettingsModal = ({
                       <WinButton
                         as="a"
                         $primary
-                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/download/v1.0.0/stuxia_1.0.0_x64-setup.exe"
+                        href="https://github.com/TheTurkeyProgramist/stuxia/releases/latest/download/Stuxia-Setup-Windows.exe"
                       >
                         <FiDownload /> {i18n.t("modals.UserSettingsModal.zavantazhyty")}
                       </WinButton>
