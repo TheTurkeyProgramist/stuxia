@@ -107,6 +107,8 @@ jobs:
 
   android:
     runs-on: ubuntu-latest
+    # Збій Android не блокує публікацію Windows і Linux
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -134,9 +136,18 @@ jobs:
 
       - name: Build installable Android APK
         working-directory: android
+        shell: bash
         run: |
           chmod +x ./gradlew
-          ./gradlew --no-daemon assembleDebug
+          set +e
+          ./gradlew --no-daemon assembleDebug 2>&1 | tee gradle.log
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            # Текст помилки виводимо анотацією, щоб його було видно без доступу до повних логів
+            msg=$(grep -vE '^\s*$|UP-TO-DATE|NO-SOURCE' gradle.log | tail -30 | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=Gradle failed::$msg"
+          fi
+          exit $code
 
       - name: Prepare Android APK
         run: |
