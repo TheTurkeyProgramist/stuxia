@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "캐나다 GEM"
+    },
+    "WeatherArchive": {
+      "tab": "기록",
+      "sideTitle": "날씨 기록",
+      "sideSub": "최근 14개월",
+      "title": "날씨 기록(월별)",
+      "loading": "기록을 불러오는 중…",
+      "error": "기록을 불러오지 못했습니다. 연결을 확인하세요.",
+      "retry": "다시 시도",
+      "temperature": "기온(일 최고·최저 평균)",
+      "extremes": "월 극값",
+      "cloud": "구름량(월 평균)",
+      "precip": "강수량(월 합계)",
+      "rain": "비",
+      "snow": "눈·진눈깨비",
+      "wetDays": "강수일수",
+      "wind": "평균 풍속",
+      "source": "데이터: Open-Meteo Archive(ERA5 재분석)"
     }
   },
   "weatherText": {

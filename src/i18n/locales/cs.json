@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "Kanada GEM"
+    },
+    "WeatherArchive": {
+      "tab": "Archiv",
+      "sideTitle": "Archiv počasí",
+      "sideSub": "Posledních 14 měsíců",
+      "title": "Archiv počasí (po měsících)",
+      "loading": "Načítám archiv…",
+      "error": "Archiv se nepodařilo načíst. Zkontrolujte připojení.",
+      "retry": "Zkusit znovu",
+      "temperature": "Teplota vzduchu (prům. denní max. / min.)",
+      "extremes": "Extrémy měsíce",
+      "cloud": "Oblačnost (měsíční průměr)",
+      "precip": "Srážky (měsíční součet)",
+      "rain": "Déšť",
+      "snow": "Sníh a smíšené",
+      "wetDays": "Dny se srážkami",
+      "wind": "Průměrná rychlost větru",
+      "source": "Data: Open-Meteo Archive (reanalýza ERA5)"
     }
   },
   "weatherText": {

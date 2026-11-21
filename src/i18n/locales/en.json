@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "Canada GEM"
+    },
+    "WeatherArchive": {
+      "tab": "Archive",
+      "sideTitle": "Weather archive",
+      "sideSub": "Past 14 months",
+      "title": "Weather archive (monthly)",
+      "loading": "Loading archive…",
+      "error": "Could not load the archive. Check your connection.",
+      "retry": "Retry",
+      "temperature": "Air temperature (avg. daily max / min)",
+      "extremes": "Month extremes",
+      "cloud": "Cloud cover (monthly average)",
+      "precip": "Precipitation (monthly total)",
+      "rain": "Rain",
+      "snow": "Snow and mixed",
+      "wetDays": "Days with precipitation",
+      "wind": "Average wind speed",
+      "source": "Data: Open-Meteo Archive (ERA5 reanalysis)"
     }
   },
   "weatherText": {

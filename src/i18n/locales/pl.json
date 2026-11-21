@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "Kanada GEM"
+    },
+    "WeatherArchive": {
+      "tab": "Archiwum",
+      "sideTitle": "Archiwum pogody",
+      "sideSub": "Ostatnie 14 miesięcy",
+      "title": "Archiwum pogody (miesięcznie)",
+      "loading": "Wczytuję archiwum…",
+      "error": "Nie udało się wczytać archiwum. Sprawdź połączenie.",
+      "retry": "Ponów",
+      "temperature": "Temperatura powietrza (śr. dzienna maks. / min.)",
+      "extremes": "Skrajne wartości miesiąca",
+      "cloud": "Zachmurzenie (średnia miesięczna)",
+      "precip": "Opady (suma miesięczna)",
+      "rain": "Deszcz",
+      "snow": "Śnieg i mieszane",
+      "wetDays": "Dni z opadami",
+      "wind": "Średnia prędkość wiatru",
+      "source": "Dane: Open-Meteo Archive (reanaliza ERA5)"
     }
   },
   "weatherText": {

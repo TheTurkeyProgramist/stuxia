@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "カナダ GEM"
+    },
+    "WeatherArchive": {
+      "tab": "アーカイブ",
+      "sideTitle": "天気アーカイブ",
+      "sideSub": "過去14か月",
+      "title": "天気アーカイブ(月別)",
+      "loading": "アーカイブを読み込み中…",
+      "error": "アーカイブを読み込めませんでした。接続を確認してください。",
+      "retry": "再試行",
+      "temperature": "気温(日最高・最低の平均)",
+      "extremes": "月の極値",
+      "cloud": "雲量(月平均)",
+      "precip": "降水量(月合計)",
+      "rain": "雨",
+      "snow": "雪・みぞれ",
+      "wetDays": "降水日数",
+      "wind": "平均風速",
+      "source": "データ: Open-Meteo Archive(ERA5再解析)"
     }
   },
   "weatherText": {

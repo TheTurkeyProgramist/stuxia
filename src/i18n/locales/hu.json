@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "Kanada GEM"
+    },
+    "WeatherArchive": {
+      "tab": "Archívum",
+      "sideTitle": "Időjárás-archívum",
+      "sideSub": "Utolsó 14 hónap",
+      "title": "Időjárás-archívum (havi)",
+      "loading": "Archívum betöltése…",
+      "error": "Az archívum nem tölthető be. Ellenőrizd a kapcsolatot.",
+      "retry": "Újra",
+      "temperature": "Léghőmérséklet (napi max. / min. átlaga)",
+      "extremes": "A hónap szélsőértékei",
+      "cloud": "Felhőzet (havi átlag)",
+      "precip": "Csapadék (havi összeg)",
+      "rain": "Eső",
+      "snow": "Hó és vegyes",
+      "wetDays": "Csapadékos napok",
+      "wind": "Átlagos szélsebesség",
+      "source": "Adatok: Open-Meteo Archive (ERA5 reanalízis)"
     }
   },
   "weatherText": {

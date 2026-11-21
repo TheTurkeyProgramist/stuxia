@@ -50,6 +50,7 @@ import {
   serializeTabAutoplay,
 } from "../../utils/betaFeatures";
 import TabAutoplayControl from "./TabAutoplayControl";
+import WeatherArchive from "./WeatherArchive";
 import { setPref, removePref, subscribePrefs } from "../../utils/prefsStore";
 import { useAnimationsDisabled } from "../../utils/animationsPref";
 import { buildForecastSpeech, getVoiceSettings, speak, stopSpeaking } from "../../utils/weatherSpeech";
@@ -641,7 +642,7 @@ const SubText = styled.div`
 `;
 const MobileTabBar = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   border-bottom: 1px solid rgb(0, 238, 255);
   width: 100%;
 
@@ -3583,7 +3584,7 @@ const HOLIDAYS_2027 = {
       if (Date.now() < touchPausedUntilRef.current) return;
       if (window.innerWidth >= 768) {
         setActiveTab((prev) => {
-          const order = ["current", "hourly", "daily", "ai"];
+          const order = ["current", "hourly", "daily", "ai", "archive"];
           const nextIndex = (order.indexOf(prev) + 1) % order.length;
           return order[nextIndex];
         });
@@ -4862,6 +4863,7 @@ const HOLIDAYS_2027 = {
             { key: "hourly",  label: i18n.t("newsWeather.Weather.hodynna") },
             { key: "daily",   label: i18n.t("newsWeather.Weather.misiachna") },
             { key: "ai",      label: i18n.t("newsWeather.Weather.smart") },
+            { key: "archive", label: i18n.t("newsWeather.WeatherArchive.tab") },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -5682,6 +5684,17 @@ const HOLIDAYS_2027 = {
             </AiSummaryBox>
           )}
 
+          {/* Архів погоди: помісячні підсумки за ~14 місяців (Open-Meteo Archive) */}
+          {activeTab === "archive" && (
+            <WeatherArchive
+              lat={card.lat}
+              lon={card.lon}
+              fmt={fmt}
+              formatTemp={formatTemp}
+              isDarkMode={isDarkMode}
+            />
+          )}
+
         </TabContentArea>
           </MainBannerArea>
 
@@ -5747,6 +5760,19 @@ const HOLIDAYS_2027 = {
                   <SubNameCardItem $active={activeTab === "ai"}>
                     {i18n.t("newsWeather.Weather.ekspertniPravyla")}
                   </SubNameCardItem>
+                </div>
+              </div>
+            </SideCardItem>
+
+            <SideCardItem
+              $active={activeTab === "archive"}
+              onClick={() => setActiveTab("archive")}
+            >
+              <div style={SIDE_CARD_INNER_STYLE}>
+                <div style={{ ...SIDE_CARD_ICON_STYLE, color: "#a3e635" }}><BiHistory /></div>
+                <div style={SIDE_CARD_TEXT_STYLE}>
+                  <NameCardItem $active={activeTab === "archive"}>{i18n.t("newsWeather.WeatherArchive.sideTitle")}</NameCardItem>
+                  <SubNameCardItem $active={activeTab === "archive"}>{i18n.t("newsWeather.WeatherArchive.sideSub")}</SubNameCardItem>
                 </div>
               </div>
             </SideCardItem>

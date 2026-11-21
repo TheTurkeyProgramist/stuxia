@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "Kanada GEM"
+    },
+    "WeatherArchive": {
+      "tab": "Arkiv",
+      "sideTitle": "Väderarkiv",
+      "sideSub": "Senaste 14 månaderna",
+      "title": "Väderarkiv (per månad)",
+      "loading": "Laddar arkiv…",
+      "error": "Det gick inte att ladda arkivet. Kontrollera anslutningen.",
+      "retry": "Försök igen",
+      "temperature": "Lufttemperatur (medel av dagliga max / min)",
+      "extremes": "Månadens extremer",
+      "cloud": "Molnighet (månadsmedel)",
+      "precip": "Nederbörd (månadssumma)",
+      "rain": "Regn",
+      "snow": "Snö och blandat",
+      "wetDays": "Dagar med nederbörd",
+      "wind": "Medelvindhastighet",
+      "source": "Data: Open-Meteo Archive (ERA5-återanalys)"
     }
   },
   "weatherText": {

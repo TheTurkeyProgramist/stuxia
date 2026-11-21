@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "Kanada GEM"
+    },
+    "WeatherArchive": {
+      "tab": "Archyvas",
+      "sideTitle": "Orų archyvas",
+      "sideSub": "Paskutiniai 14 mėnesių",
+      "title": "Orų archyvas (pagal mėnesius)",
+      "loading": "Įkeliamas archyvas…",
+      "error": "Nepavyko įkelti archyvo. Patikrinkite ryšį.",
+      "retry": "Bandyti dar kartą",
+      "temperature": "Oro temperatūra (vid. dienos maks. / min.)",
+      "extremes": "Mėnesio kraštutinumai",
+      "cloud": "Debesuotumas (mėnesio vidurkis)",
+      "precip": "Krituliai (mėnesio suma)",
+      "rain": "Lietus",
+      "snow": "Sniegas ir mišrūs",
+      "wetDays": "Dienos su krituliais",
+      "wind": "Vidutinis vėjo greitis",
+      "source": "Duomenys: Open-Meteo Archive (ERA5 reanalizė)"
     }
   },
   "weatherText": {

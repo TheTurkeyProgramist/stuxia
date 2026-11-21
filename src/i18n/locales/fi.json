@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "Kanada GEM"
+    },
+    "WeatherArchive": {
+      "tab": "Arkisto",
+      "sideTitle": "Säähistoria",
+      "sideSub": "Viimeiset 14 kuukautta",
+      "title": "Säähistoria (kuukausittain)",
+      "loading": "Ladataan arkistoa…",
+      "error": "Arkiston lataus epäonnistui. Tarkista yhteys.",
+      "retry": "Yritä uudelleen",
+      "temperature": "Ilman lämpötila (päivän ylin / alin keskimäärin)",
+      "extremes": "Kuukauden ääriarvot",
+      "cloud": "Pilvisyys (kuukauden keskiarvo)",
+      "precip": "Sademäärä (kuukauden summa)",
+      "rain": "Sade",
+      "snow": "Lumi ja räntä",
+      "wetDays": "Sadepäiviä",
+      "wind": "Keskituuli",
+      "source": "Data: Open-Meteo Archive (ERA5-uudelleenanalyysi)"
     }
   },
   "weatherText": {

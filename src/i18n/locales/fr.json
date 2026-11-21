@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "Canada GEM"
+    },
+    "WeatherArchive": {
+      "tab": "Archives",
+      "sideTitle": "Archives météo",
+      "sideSub": "14 derniers mois",
+      "title": "Archives météo (par mois)",
+      "loading": "Chargement des archives…",
+      "error": "Impossible de charger les archives. Vérifiez la connexion.",
+      "retry": "Réessayer",
+      "temperature": "Température de l’air (moy. max. / min. quotidiennes)",
+      "extremes": "Extrêmes du mois",
+      "cloud": "Nébulosité (moyenne mensuelle)",
+      "precip": "Précipitations (total mensuel)",
+      "rain": "Pluie",
+      "snow": "Neige et mixte",
+      "wetDays": "Jours de précipitations",
+      "wind": "Vitesse moyenne du vent",
+      "source": "Données : Open-Meteo Archive (réanalyse ERA5)"
     }
   },
   "weatherText": {

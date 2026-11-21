@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "Canada GEM"
+    },
+    "WeatherArchive": {
+      "tab": "Arhivă",
+      "sideTitle": "Arhiva vremii",
+      "sideSub": "Ultimele 14 luni",
+      "title": "Arhiva vremii (lunar)",
+      "loading": "Se încarcă arhiva…",
+      "error": "Arhiva nu a putut fi încărcată. Verifică conexiunea.",
+      "retry": "Reîncearcă",
+      "temperature": "Temperatura aerului (medie zilnică max. / min.)",
+      "extremes": "Extremele lunii",
+      "cloud": "Nebulozitate (media lunară)",
+      "precip": "Precipitații (total lunar)",
+      "rain": "Ploaie",
+      "snow": "Zăpadă și mixte",
+      "wetDays": "Zile cu precipitații",
+      "wind": "Viteza medie a vântului",
+      "source": "Date: Open-Meteo Archive (reanaliză ERA5)"
     }
   },
   "weatherText": {

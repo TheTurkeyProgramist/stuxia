@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "Kanada GEM"
+    },
+    "WeatherArchive": {
+      "tab": "Arşiv",
+      "sideTitle": "Hava durumu arşivi",
+      "sideSub": "Son 14 ay",
+      "title": "Hava durumu arşivi (aylık)",
+      "loading": "Arşiv yükleniyor…",
+      "error": "Arşiv yüklenemedi. Bağlantını kontrol et.",
+      "retry": "Tekrar dene",
+      "temperature": "Hava sıcaklığı (ort. günlük en yüksek / en düşük)",
+      "extremes": "Ayın uç değerleri",
+      "cloud": "Bulutluluk (aylık ortalama)",
+      "precip": "Yağış (aylık toplam)",
+      "rain": "Yağmur",
+      "snow": "Kar ve karışık",
+      "wetDays": "Yağışlı gün sayısı",
+      "wind": "Ortalama rüzgâr hızı",
+      "source": "Veri: Open-Meteo Archive (ERA5 yeniden analizi)"
     }
   },
   "weatherText": {

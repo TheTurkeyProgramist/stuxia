@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "加拿大 GEM"
+    },
+    "WeatherArchive": {
+      "tab": "档案",
+      "sideTitle": "天气档案",
+      "sideSub": "最近14个月",
+      "title": "天气档案(按月)",
+      "loading": "正在加载档案…",
+      "error": "无法加载档案,请检查网络连接。",
+      "retry": "重试",
+      "temperature": "气温(日最高/最低平均值)",
+      "extremes": "当月极值",
+      "cloud": "云量(月平均)",
+      "precip": "降水量(月总计)",
+      "rain": "雨",
+      "snow": "雪和混合降水",
+      "wetDays": "降水日数",
+      "wind": "平均风速",
+      "source": "数据:Open-Meteo Archive(ERA5再分析)"
     }
   },
   "weatherText": {

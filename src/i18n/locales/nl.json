@@ -1919,6 +1919,24 @@
     },
     "weatherConsensus": {
       "kanadaGem": "Canada GEM"
+    },
+    "WeatherArchive": {
+      "tab": "Archief",
+      "sideTitle": "Weerarchief",
+      "sideSub": "Laatste 14 maanden",
+      "title": "Weerarchief (per maand)",
+      "loading": "Archief laden…",
+      "error": "Archief kon niet worden geladen. Controleer je verbinding.",
+      "retry": "Opnieuw",
+      "temperature": "Luchttemperatuur (gem. dagmax. / -min.)",
+      "extremes": "Uitersten van de maand",
+      "cloud": "Bewolking (maandgemiddelde)",
+      "precip": "Neerslag (maandtotaal)",
+      "rain": "Regen",
+      "snow": "Sneeuw en gemengd",
+      "wetDays": "Dagen met neerslag",
+      "wind": "Gemiddelde windsnelheid",
+      "source": "Gegevens: Open-Meteo Archive (ERA5-heranalyse)"
     }
   },
   "weatherText": {
