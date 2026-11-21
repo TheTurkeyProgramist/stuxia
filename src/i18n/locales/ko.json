@@ -1936,7 +1936,8 @@
       "snow": "눈·진눈깨비",
       "wetDays": "강수일수",
       "wind": "평균 풍속",
-      "source": "데이터: Open-Meteo Archive(ERA5 재분석)"
+      "source": "데이터: Open-Meteo Archive(ERA5 재분석)",
+      "trendText": "추세: 낮 {{v0}}/월, 밤 {{v1}}/월"
     }
   },
   "weatherText": {

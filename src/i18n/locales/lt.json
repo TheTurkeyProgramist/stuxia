@@ -1936,7 +1936,8 @@
       "snow": "Sniegas ir mišrūs",
       "wetDays": "Dienos su krituliais",
       "wind": "Vidutinis vėjo greitis",
-      "source": "Duomenys: Open-Meteo Archive (ERA5 reanalizė)"
+      "source": "Duomenys: Open-Meteo Archive (ERA5 reanalizė)",
+      "trendText": "Tendencija: diena {{v0}}/mėn., naktis {{v1}}/mėn."
     }
   },
   "weatherText": {

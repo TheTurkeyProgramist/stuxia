@@ -51,7 +51,7 @@ import {
   serializeTabAutoplay,
 } from "../../utils/betaFeatures";
 import TabAutoplayControl from "./TabAutoplayControl";
-import WeatherArchive from "./WeatherArchive";
+import WeatherArchive, { useArchiveMonths, ArchiveStatus, archiveMonthName } from "./WeatherArchive";
 import { setPref, removePref, subscribePrefs } from "../../utils/prefsStore";
 import { useAnimationsDisabled } from "../../utils/animationsPref";
 import { buildForecastSpeech, getVoiceSettings, speak, stopSpeaking } from "../../utils/weatherSpeech";
@@ -69,7 +69,7 @@ import { DEFAULT_LINE_STYLES, DEFAULT_DIM, mergeLineStyles, lineStyleProps } fro
 import { fadePlugin } from "../../utils/chartFade";
 import { syncAndroidWidget } from "../../utils/androidWidget";
 import { metricGradient, metricPointColor, metricScale } from "../../utils/metricColors";
-import { tempScale, tempGradient, hotOutlinePlugin, TEMP_LEGEND_GRADIENT } from "../../utils/tempColors";
+import { tempScale, tempGradient, tempColorRgb, hotOutlinePlugin, TEMP_LEGEND_GRADIENT } from "../../utils/tempColors";
 import CardSettingsModal from "../Modals/CardSettingsModal";
 import {
   FaCalendarPlus,
@@ -108,7 +108,7 @@ import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, Cl
 import { WeatherIcon, stripEmoji, ICON_HALO_FILTER } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
 import DailyTips from "./DailyTips.jsx"; // Повітря, ожеледиця вранці, сніг на машині
 import WeatherTurkey from "./WeatherTurkey.jsx"; //Доміно — індик-талісман, що реагує на погоду
-import { BiWind } from "react-icons/bi"; //Пориви Вітру
+import { BiWind, BiWater } from "react-icons/bi"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
 import { MdOutlineSpeed, MdClose, MdStraighten, MdNotificationsActive, MdNotificationsOff, MdAutorenew, MdWbTwilight } from "react-icons/md"; //Тиск
 import {
@@ -1925,6 +1925,11 @@ const WeatherCardComponent = ({
   const dailyChartRef = useRef(null);
   const dailyChartPanelRef = useRef(null);
   const dailyChartInstanceRef = useRef(null);
+  const archiveChartRef = useRef(null);
+  const archiveChartPanelRef = useRef(null);
+  const archiveChartInstanceRef = useRef(null);
+  const [archiveHeaderRef, archiveHeaderWrapped] = useFlexWrapped();
+  const [archiveFsHeaderRef, archiveFsHeaderWrapped] = useFlexWrapped();
   // Чи шапка 16-денного графіка в 2 ряди (тоді кнопка тренду — у рядку легенди)
   const [dailyHeaderRef, dailyHeaderWrapped] = useFlexWrapped();
   const [dailyFsHeaderRef, dailyFsHeaderWrapped] = useFlexWrapped();
@@ -1943,6 +1948,15 @@ const WeatherCardComponent = ({
   const [globalLineStyles, setGlobalLineStyles] = useState(false); // спільні стилі для всіх карток
   const [styleModalChart, setStyleModalChart] = useState(null); // "hourly" | "daily" | null
   const [showDailyTrend, setShowDailyTrend] = useState(false);
+  // Архів: власна права вісь (в ERA5 немає УФ і видимості — натомість вологість і тиск) і власний тренд
+  const [showArchiveTrend, setShowArchiveTrend] = useState(false);
+  const [archiveRightMetric, setArchiveRightMetric] = useState("precip"); // "wind" | "precip" | "clouds" | "humidity" | "pressure"
+  const archiveState = useArchiveMonths(card.lat, card.lon, activeTab === "archive");
+  // Найсвіжіші місяці — праворуч: після завантаження прокручуємо графік у кінець
+  useEffect(() => {
+    const el = archiveChartRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [archiveState.months, archiveViewMode, activeTab]);
   const [rightMetric, setRightMetric] = useState("wind"); // "wind" | "uv" | "precip" | "clouds" | "visibility"
   const RIGHT_METRICS = {
     wind: { label: i18n.t("newsWeather.Weather.viter"), axis: fmt.windAxis, color: "#0099ff", rgb: "0, 153, 255", icon: <BiWind /> },
@@ -2006,13 +2020,17 @@ const WeatherCardComponent = ({
       </div>
     );
   };
-  const renderColorScales = (rightStyle) => (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 24px", padding: "6px 52px 0" }}>
-      {renderScaleBar(i18n.t("newsWeather.Weather.temperatura2", { tempSuffix: tempSuffix }), tempScale(toDisplayTemp))}
-      {rightStyle?.dangerColor !== false &&
-        renderScaleBar(rightMeta.axis, metricScale(rightMetric, rightConv), isPercentMetric ? "%" : "")}
-    </div>
-  );
+  // ctx — інша права вісь (архів): { meta, metric, conv, percent }
+  const renderColorScales = (rightStyle, ctx = null) => {
+    const c = ctx || { meta: rightMeta, metric: rightMetric, conv: rightConv, percent: isPercentMetric };
+    return (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 24px", padding: "6px 52px 0" }}>
+        {renderScaleBar(i18n.t("newsWeather.Weather.temperatura2", { tempSuffix: tempSuffix }), tempScale(toDisplayTemp))}
+        {rightStyle?.dangerColor !== false &&
+          renderScaleBar(c.meta.axis, metricScale(c.metric, c.conv), c.percent ? "%" : "")}
+      </div>
+    );
+  };
   const isPercentMetric = rightMetric === "precip" || rightMetric === "clouds";
   // Значення правої осі (крім вітру) для години (daily=false) або дня (daily=true)
   const rightValue = (item, daily) => {
@@ -2060,6 +2078,7 @@ const WeatherCardComponent = ({
   const LEGEND_TO_LINE = {
     hourly: { day: "temp", wind: "right" },
     daily: { day: "day", night: "night", wind: "right" },
+    archive: { day: "day", night: "night", wind: "right" },
   };
   const seriesOpacity = (chartKey) =>
     Object.fromEntries(
@@ -2070,6 +2089,7 @@ const WeatherCardComponent = ({
     );
   const hourlyOpacity = seriesOpacity("hourly");
   const dailyOpacity = seriesOpacity("daily");
+  const archiveOpacity = seriesOpacity("archive");
 
   const handleLegendSizeChange = async (newSize) => {
     const finalSize = Math.max(8, Math.min(20, newSize));
@@ -2117,6 +2137,8 @@ const WeatherCardComponent = ({
   const resetLineStyles = (chartKey) => {
     saveLineStyles({ ...lineStyles, [chartKey]: DEFAULT_LINE_STYLES[chartKey] });
   };
+
+  const toggleArchiveTrend = () => setShowArchiveTrend((v) => !v);
 
   const toggleDailyTrend = () => {
     const next = !showDailyTrend;
@@ -2260,13 +2282,13 @@ const WeatherCardComponent = ({
   };
 
   const pickChartsMode = (chartKey) => {
-    (chartKey === "hourly" ? setHourlyViewMode : setDailyViewMode)("charts");
+    (chartKey === "hourly" ? setHourlyViewMode : chartKey === "archive" ? setArchiveViewMode : setDailyViewMode)("charts");
     if (isNarrowScreen) setAutoFullscreenChart(chartKey);
   };
 
   useEffect(() => {
     if (!autoFullscreenChart) return undefined;
-    const ref = autoFullscreenChart === "hourly" ? hourlyChartPanelRef : dailyChartPanelRef;
+    const ref = autoFullscreenChart === "hourly" ? hourlyChartPanelRef : autoFullscreenChart === "archive" ? archiveChartPanelRef : dailyChartPanelRef;
     const timer = setTimeout(async () => {
       if (ref.current && !document.fullscreenElement && !pseudoFs) {
         phoneChartSessionRef.current = true;
@@ -2404,20 +2426,27 @@ const WeatherCardComponent = ({
 
   // Кнопка лінії тренду (лише 16-денний графік). Стоїть серед кнопок дій,
   // а коли шапка перенеслась на 2 ряди — у рядку легенди
-  const renderTrendButton = () => (
-    <Tooltip content={showDailyTrend ? i18n.t("newsWeather.Weather.skhovatyLiniiuTrendu", { dailyTrendText: dailyTrendText }) : i18n.t("newsWeather.Weather.pokazatyLiniiuTrenduTemperatury")} isDarkMode={isDarkMode}>
-    <ChartActionBtn $isDarkMode={isDarkMode}
-      type="button"
-      onClick={toggleDailyTrend}
-      aria-label={showDailyTrend ? i18n.t("newsWeather.Weather.skhovatyLiniiuTrendu2") : i18n.t("newsWeather.Weather.pokazatyLiniiuTrendu")}
-      aria-pressed={showDailyTrend}
-      $wide={showDailyTrend}
-    >
-      <BiTrendingUp />
-      {showDailyTrend && dailyTrendBadge}
-    </ChartActionBtn>
-    </Tooltip>
-  );
+  const renderTrendButton = (chartKey = "daily") => {
+    const isArchive = chartKey === "archive";
+    const on = isArchive ? showArchiveTrend : showDailyTrend;
+    const toggleFn = isArchive ? toggleArchiveTrend : toggleDailyTrend;
+    const text = isArchive ? archiveTrendText : dailyTrendText;
+    const badge = isArchive ? archiveTrendBadge : dailyTrendBadge;
+    return (
+      <Tooltip content={on ? i18n.t("newsWeather.Weather.skhovatyLiniiuTrendu", { dailyTrendText: text }) : i18n.t("newsWeather.Weather.pokazatyLiniiuTrenduTemperatury")} isDarkMode={isDarkMode}>
+      <ChartActionBtn $isDarkMode={isDarkMode}
+        type="button"
+        onClick={toggleFn}
+        aria-label={on ? i18n.t("newsWeather.Weather.skhovatyLiniiuTrendu2") : i18n.t("newsWeather.Weather.pokazatyLiniiuTrendu")}
+        aria-pressed={on}
+        $wide={on}
+      >
+        <BiTrendingUp />
+        {on && badge}
+      </ChartActionBtn>
+      </Tooltip>
+    );
+  };
 
   const renderChartActions = (chartKey, panelRef, trendInLegend = false) => {
     // Швидко ввімкнути/вимкнути цифри біля точок для всіх ліній цього графіка
@@ -2452,7 +2481,7 @@ const WeatherCardComponent = ({
           123
         </ChartActionBtn>
       </Tooltip>
-      {chartKey === "daily" && !trendInLegend && renderTrendButton()}
+      {(chartKey === "daily" || chartKey === "archive") && !trendInLegend && renderTrendButton(chartKey)}
       <Tooltip content={isFullscreen ? i18n.t("newsWeather.Weather.vyityZPovnohoEkrana") : i18n.t("newsWeather.Weather.naVesEkran")} isDarkMode={isDarkMode}>
       <ChartActionBtn $isDarkMode={isDarkMode}
         type="button"
@@ -2476,7 +2505,9 @@ const WeatherCardComponent = ({
   };
 
   // extra — додатковий елемент у кінці легенди (кнопка тренду, коли шапка в 2 ряди)
-  const renderChartLegend = (items, extra = null) => (
+  const renderChartLegend = (items, extra = null, metricCtx = null) => {
+    const mc = metricCtx || { meta: rightMeta, metric: rightMetric, setMetric: setRightMetric, metrics: RIGHT_METRICS };
+    return (
     <div
       style={{
         display: "flex",
@@ -2498,10 +2529,10 @@ const WeatherCardComponent = ({
             alignItems: "center",
             boxSizing: "border-box",
             height: "34px",
-            border: `1px solid ${rightMeta.color}`,
+            border: `1px solid ${mc.meta.color}`,
             borderRadius: "4px",
             background: isDarkMode ? "#222" : "#fff",
-            color: rightMeta.color,
+            color: mc.meta.color,
             opacity: hiddenSeries.wind ? 0.45 : 1,
             fontWeight: "bold",
           }}
@@ -2513,16 +2544,16 @@ const WeatherCardComponent = ({
               aria-label={i18n.t("newsWeather.Weather.skhovatyAboPokazatyPravu")}
               style={{ display: "inline-flex", alignItems: "center", padding: "3px 4px 3px 6px", border: "none", background: "transparent", color: "inherit", cursor: "pointer", fontSize: "14px" }}
             >
-              {rightMeta.icon}
+              {mc.meta.icon}
             </button>
           </Tooltip>
           <select
-            value={rightMetric}
-            onChange={(e) => setRightMetric(e.target.value)}
+            value={mc.metric}
+            onChange={(e) => mc.setMetric(e.target.value)}
             aria-label={i18n.t("newsWeather.Weather.pokaznykPravoiOsiHrafika")}
             style={{ padding: "3px 2px", border: "none", background: "transparent", color: "inherit", fontSize: "inherit", fontWeight: "bold", cursor: "pointer", outline: "none" }}
           >
-            {Object.entries(RIGHT_METRICS).map(([k, m]) => (
+            {Object.entries(mc.metrics).map(([k, m]) => (
               <option key={k} value={k} style={{ color: "#000" }}>{m.label}</option>
             ))}
           </select>
@@ -2571,7 +2602,8 @@ const WeatherCardComponent = ({
       ))}
       {extra}
     </div>
-  );
+    );
+  };
 
   // Стилі рядка шапки графіка — спільні для звичайної (sticky) і повноекранної шапки
   const chartHeaderRowStyle = {
@@ -2606,10 +2638,10 @@ const WeatherCardComponent = ({
   // У 2 ряди кнопка тренду (16 днів) переїжджає в рядок легенди.
   // headerRef/wrapped — з useFlexWrapped для цієї шапки.
   const renderChartHeader = (chartKey, panelRef, items, middle = null, headerRef = undefined, wrapped = false) => {
-    const trendInLegend = chartKey === "daily" && wrapped;
+    const trendInLegend = (chartKey === "daily" || chartKey === "archive") && wrapped;
     return (
       <div ref={headerRef} style={{ ...chartHeaderRowStyle, marginBottom: "4px" }}>
-        {renderChartLegend(items, trendInLegend ? renderTrendButton() : null)}
+        {renderChartLegend(items, trendInLegend ? renderTrendButton(chartKey) : null, chartKey === "archive" ? archiveMetricCtx : null)}
         {renderChartHeaderTools(chartKey, panelRef, middle, trendInLegend)}
       </div>
     );
@@ -2617,7 +2649,7 @@ const WeatherCardComponent = ({
 
   // Підказка-компас у рядку легенди (лише коли на правій осі вітер)
   const renderWindHint = (chartKey) =>
-    rightMetric === "wind" ? (
+    (chartKey === "archive" ? archiveRightMetric : rightMetric) === "wind" ? (
       <WindCompassHint
         isDarkMode={isDarkMode}
         windUnit={windLabel(units.wind)}
@@ -3466,6 +3498,256 @@ const HOLIDAYS_2027 = {
       }
     },
   };
+  // ───────── Архів погоди ─────────
+  // Права вісь архіву: у реаналізі ERA5 немає УФ-індексу і видимості (самі null),
+  // тому замість них — вологість і тиск, які там є.
+  const archiveMonths = archiveState.months;
+  const ARCHIVE_RIGHT = {
+    wind: { label: i18n.t("newsWeather.Weather.viter"), axis: fmt.windAxis, color: "#0099ff", rgb: "0, 153, 255", icon: <BiWind /> },
+    precip: { label: i18n.t("newsWeather.Weather.opady"), axis: `${i18n.t("newsWeather.Weather.opady")}, ${precipLabel(units.precip)}`, color: "#14b8a6", rgb: "20, 184, 166", icon: <FaCloudRain /> },
+    clouds: { label: i18n.t("newsWeather.Weather.khmarnist"), axis: i18n.t("newsWeather.Weather.khmarnist2"), color: "#9ca3af", rgb: "156, 163, 175", icon: <FaCloud /> },
+    humidity: { label: i18n.t("newsWeather.Weather.volohist"), axis: `${i18n.t("newsWeather.Weather.volohist")}, %`, color: "#38bdf8", rgb: "56, 189, 248", icon: <BiWater /> },
+    pressure: { label: i18n.t("newsWeather.Weather.tysk"), axis: `${i18n.t("newsWeather.Weather.tysk")}, ${pressureLabel(units.pressure)}`, color: "#a78bfa", rgb: "167, 139, 250", icon: <MdOutlineSpeed /> },
+  };
+  const archiveMeta = ARCHIVE_RIGHT[archiveRightMetric];
+  const archiveConv =
+    { wind: (v) => fmt.windValue(v), precip: (v) => convertPrecip(v, units.precip), pressure: (v) => convertPressure(v, units.pressure) }[archiveRightMetric] || null;
+  const archivePercent = archiveRightMetric === "clouds" || archiveRightMetric === "humidity";
+  const archiveMetricCtx = { meta: archiveMeta, metric: archiveRightMetric, setMetric: setArchiveRightMetric, metrics: ARCHIVE_RIGHT };
+  const archiveRound1 = (v) => Math.round(v * 10) / 10;
+  const archiveRightValue = (m) => {
+    const num = (v, f) => (v === null || v === undefined ? null : f(v));
+    switch (archiveRightMetric) {
+      case "wind": return num(m.wind, (v) => fmt.windValue(v));
+      case "precip": return num(m.precip, (v) => archiveRound1(convertPrecip(v, units.precip)));
+      case "clouds": return num(m.cloud, Math.round);
+      case "humidity": return num(m.humidity, Math.round);
+      default: return num(m.pressure, (v) => archiveRound1(convertPressure(v, units.pressure)));
+    }
+  };
+  const archiveRightLabelText = (v) => (v === null || v === undefined ? "" : archivePercent ? `${v}%` : `${v}`);
+  const archiveDayTemps = (archiveMonths || []).map((m) => (m.tMax == null ? null : toDisplayTemp(archiveRound1(m.tMax))));
+  const archiveNightTemps = (archiveMonths || []).map((m) => (m.tMin == null ? null : toDisplayTemp(archiveRound1(m.tMin))));
+  const archiveRightValues = (archiveMonths || []).map(archiveRightValue);
+  const archiveDayTrend = linearTrend(archiveDayTemps);
+  const archiveNightTrend = linearTrend(archiveNightTemps);
+  const archiveTrendText = i18n.t("newsWeather.WeatherArchive.trendText", { v0: fmtSlope(archiveDayTrend), v1: fmtSlope(archiveNightTrend) });
+  const archiveTrendBadge = `${fmtSlope(archiveDayTrend)} / ${fmtSlope(archiveNightTrend)}`;
+  const archiveChartWidth = Math.max(900, (archiveMonths?.length || 14) * 70);
+  const archiveChartData = {
+    labels: (archiveMonths || []).map((m) =>
+      m.month === 1 || m === archiveMonths[0] ? [archiveMonthName(m), String(m.year)] : archiveMonthName(m),
+    ),
+    datasets: [
+      {
+        label: i18n.t("newsWeather.Weather.den", { tempSuffix: tempSuffix }),
+        data: archiveDayTemps,
+        borderColor: tempGradient(unit, archiveOpacity.day, `rgba(255, 179, 108, ${archiveOpacity.day})`),
+        hotOutline: { unit, alpha: archiveOpacity.day },
+        backgroundColor: `rgba(255, 179, 108, ${archiveOpacity.day * 0.5})`,
+        hidden: archiveOpacity.day === 0,
+        pointStyle: "circle",
+        pointBackgroundColor: (archiveMonths || []).map((m) => `rgba(${tempColorRgb(m.tMax).join(", ")}, ${archiveOpacity.day})`),
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 1.5,
+        valueLabels: lineStyles.archive.day.labels ? archiveDayTemps.map((v) => formatChartTempLabel(v, tempSuffix)) : null,
+        valueLabelOffset: -12,
+        valueLabelColor: "#ffd2a6",
+        valueLabelOpacity: archiveOpacity.day,
+        ...lineStyleProps(lineStyles.archive.day, { tension: 0.3, pointRadius: 5, fill: false }),
+        yAxisID: "y",
+      },
+      {
+        label: i18n.t("newsWeather.Weather.nich", { tempSuffix: tempSuffix }),
+        data: archiveNightTemps,
+        borderColor: tempGradient(unit, archiveOpacity.night, `rgba(255, 20, 147, ${archiveOpacity.night})`),
+        hotOutline: { unit, alpha: archiveOpacity.night },
+        backgroundColor: `rgba(255, 20, 147, ${archiveOpacity.night * 0.2})`,
+        hidden: archiveOpacity.night === 0,
+        pointStyle: "circle",
+        pointBackgroundColor: (archiveMonths || []).map((m) => `rgba(${tempColorRgb(m.tMin).join(", ")}, ${archiveOpacity.night})`),
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 1.5,
+        valueLabels: lineStyles.archive.night.labels ? archiveNightTemps.map((v) => formatChartTempLabel(v, tempSuffix)) : null,
+        valueLabelOffset: 16,
+        valueLabelColor: "#ff8fd0",
+        valueLabelOpacity: archiveOpacity.night,
+        ...lineStyleProps(lineStyles.archive.night, { tension: 0.3, pointRadius: 5, fill: false }),
+        yAxisID: "y",
+      },
+      {
+        label: archiveMeta.axis,
+        data: archiveRightValues,
+        borderColor:
+          lineStyles.archive.right.dangerColor !== false
+            ? metricGradient(archiveRightMetric, archiveConv, archiveOpacity.wind, `rgba(${archiveMeta.rgb}, ${archiveOpacity.wind})`)
+            : `rgba(${archiveMeta.rgb}, ${archiveOpacity.wind})`,
+        backgroundColor: `rgba(${archiveMeta.rgb}, ${archiveOpacity.wind * 0.2})`,
+        hidden: archiveOpacity.wind === 0,
+        pointStyle: "circle",
+        pointBackgroundColor: archiveRightValues.map((v) =>
+          lineStyles.archive.right.dangerColor !== false
+            ? metricPointColor(archiveRightMetric, archiveConv, v, archiveOpacity.wind, `rgba(${archiveMeta.rgb}, ${archiveOpacity.wind})`)
+            : `rgba(${archiveMeta.rgb}, ${archiveOpacity.wind})`,
+        ),
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 1.5,
+        valueLabels: lineStyles.archive.right.labels ? archiveRightValues.map(archiveRightLabelText) : null,
+        valueLabelOffset: 12,
+        valueLabelColor: archiveMeta.color,
+        valueLabelOpacity: archiveOpacity.wind,
+        ...lineStyleProps(lineStyles.archive.right, { tension: 0.3, pointRadius: 5, fill: false }),
+        yAxisID: "y1",
+      },
+      ...(showArchiveTrend
+        ? [
+            archiveDayTrend && trendDataset(i18n.t("newsWeather.Weather.trendDen"), archiveDayTrend, "255, 179, 108", archiveOpacity.day, lineStyles.archive.trendDay),
+            archiveNightTrend && trendDataset(i18n.t("newsWeather.Weather.trendNich"), archiveNightTrend, "255, 20, 147", archiveOpacity.night, lineStyles.archive.trendNight),
+          ].filter(Boolean)
+        : []),
+    ],
+  };
+  const archiveChartOptions = {
+    ...chartOptions,
+    plugins: {
+      ...chartOptions.plugins,
+      legend: { display: false },
+      tooltip: {
+        ...chartOptions.plugins.tooltip,
+        enabled: false,
+        external: externalTooltipHandler,
+        callbacks: {
+          title: (items) => {
+            const m = archiveMonths?.[items[0].dataIndex];
+            return m ? `${archiveMonthName(m)} ${m.year}` : items[0].label;
+          },
+          label: (context) => {
+            const m = archiveMonths?.[context.dataIndex];
+            if (!m) return "";
+            if (context.datasetIndex === 0) return i18n.t("newsWeather.Weather.den2", { v0: formatTemp(m.tMax) });
+            if (context.datasetIndex === 1) return i18n.t("newsWeather.Weather.nich2", { v0: formatTemp(m.tMin) });
+            return `${archiveMeta.label}: ${archiveRightLabelText(context.parsed.y)}`;
+          },
+          afterBody: (items) => {
+            const m = archiveMonths?.[items[0]?.dataIndex];
+            if (!m) return "";
+            return [
+              `${i18n.t("newsWeather.WeatherArchive.extremes")}: ${formatTemp(m.tAbsMin)} … ${formatTemp(m.tAbsMax)}`,
+              `${i18n.t("newsWeather.WeatherArchive.wetDays")}: ${m.wetDays}`,
+            ].join("\n");
+          },
+        },
+      },
+    },
+    scales: {
+      ...chartOptions.scales,
+      y: {
+        beginAtZero: false,
+        title: { display: true, text: i18n.t("newsWeather.Weather.temperatura2", { tempSuffix: tempSuffix }), color: "#ffb36c" },
+        ticks: { color: isDarkMode ? "#aaa" : "#888", font: { size: 10 } },
+        grid: { color: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(128, 128, 128, 0.1)" },
+      },
+      y1: {
+        type: "linear",
+        display: true,
+        position: "right",
+        beginAtZero: archiveRightMetric !== "pressure",
+        ...(archivePercent ? { max: 100 } : {}),
+        title: { display: true, text: archiveMeta.axis, color: archiveMeta.color },
+        ticks: { color: archiveMeta.color, font: { size: 10 } },
+        grid: { drawOnChartArea: false },
+      },
+      x: { ...chartOptions.scales.x },
+    },
+    onClick: undefined,
+  };
+
+  // Графік архіву — та сама шапка, шкали й повний екран, що й у «16 днів»
+  const renderArchiveChart = () => {
+    const isFs = fullscreenChart === "archive";
+    const legendItems = (gradient) => [
+      { key: "day", label: i18n.t("newsWeather.Weather.den4"), color: "#ffb36c", icon: <FaSun />, gradient },
+      { key: "night", label: i18n.t("newsWeather.Weather.nich4"), color: "#ff1493", icon: <BsMoonStarsFill />, gradient },
+      { key: "wind", label: archiveMeta.label, color: archiveMeta.color, icon: archiveMeta.icon },
+    ];
+    const axisOverlay = (side) => (
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          [side]: 0,
+          width: "50px",
+          height: "calc(100% - 29px)",
+          background: isDarkMode ? "#000" : "#f5f5f5",
+          overflow: "hidden",
+          pointerEvents: "none",
+          display: isFs ? "none" : "block",
+        }}
+      >
+        <div style={{ position: "absolute", top: 0, [side]: 0, width: "1300px", height: defaultChartHeight }}>
+          <ChartInnerContainer $width={1300} $height={defaultChartHeight}>
+            <Line
+              options={{ ...archiveChartOptions, plugins: { ...archiveChartOptions.plugins, tooltip: { ...archiveChartOptions.plugins.tooltip, enabled: true } } }}
+              data={archiveChartData}
+            />
+          </ChartInnerContainer>
+        </div>
+      </div>
+    );
+    return (
+      <>
+        <div ref={archiveHeaderRef} style={{
+          ...chartHeaderRowStyle,
+          position: "sticky",
+          top: 0,
+          padding: "6px 8px",
+          background: isDarkMode ? "rgba(0, 0, 0, 0.7)" : "rgba(255, 255, 255, 0.7)",
+          backdropFilter: "blur(4px)",
+          borderBottom: "1px solid #ffb36c",
+          zIndex: 10,
+        }}>
+          {renderChartLegend(legendItems(false), archiveHeaderWrapped ? renderTrendButton("archive") : null, archiveMetricCtx)}
+          {renderChartHeaderTools("archive", archiveChartPanelRef, renderWindHint("archive"), archiveHeaderWrapped)}
+        </div>
+        {wrapFs("archive", (
+          <div
+            ref={archiveChartPanelRef}
+            style={{
+              position: "relative",
+              width: "100%",
+              minHeight: isFs ? (isCapturing ? `${window.innerHeight}px` : "100vh") : undefined,
+              ...(isFs ? pseudoPanelStyle : null),
+              padding: isFs ? "16px" : undefined,
+              boxSizing: "border-box",
+              background: isFs ? (isDarkMode ? "#000" : "#f5f5f5") : "transparent",
+            }}
+          >
+            {isFs && renderChartHeader("archive", archiveChartPanelRef, legendItems(true), renderWindHint("archive"), archiveFsHeaderRef, archiveFsHeaderWrapped)}
+            <div style={{ position: "relative", width: "100%" }}>
+              <ChartScrollWrapper ref={archiveChartRef}>
+                <ChartInnerContainer
+                  $width={isFs ? `max(100%, ${archiveChartWidth}px)` : archiveChartWidth}
+                  $height={isFs ? fsChartHeight(170) : defaultChartHeight}
+                >
+                  <Line
+                    key={`archive-${isFs ? "fs" : "normal"}`}
+                    ref={archiveChartInstanceRef}
+                    options={archiveChartOptions}
+                    data={archiveChartData}
+                    plugins={CHART_PLUGINS}
+                  />
+                </ChartInnerContainer>
+              </ChartScrollWrapper>
+              {axisOverlay("left")}
+              {axisOverlay("right")}
+            </div>
+            {renderColorScales(lineStyles.archive.right, { meta: archiveMeta, metric: archiveRightMetric, conv: archiveConv, percent: archivePercent })}
+          </div>
+        ))}
+      </>
+    );
+  };
+
   function externalTooltipHandler(context) {
     // Отримуємо об'єкт тултіпа та графік
     const { chart, tooltip } = context;
@@ -5688,35 +5970,34 @@ const HOLIDAYS_2027 = {
 
           {/* Архів погоди: помісячні підсумки за ~14 місяців (Open-Meteo Archive) */}
           {activeTab === "archive" && (
-            <>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "6px" }}>
-              <ViewToggleGroup $isDarkMode={isDarkMode}>
-                {[
-                  { key: "charts", icon: <BiLineChart size={18} />, title: i18n.t("newsWeather.Weather.hrafiky") },
-                  { key: "table", icon: <BiTable size={18} />, title: i18n.t("newsWeather.Weather.tablytsia") },
-                  { key: "rows", icon: <BiListUl size={18} />, title: i18n.t("newsWeather.Weather.riadky") },
-                ].map((m) => (
-                  <ViewToggleButton
-                    key={m.key}
-                    $active={archiveViewMode === m.key}
-                    $isDarkMode={isDarkMode}
-                    onClick={() => setArchiveViewMode(m.key)}
-                    title={m.title}
-                  >
-                    {m.icon}
-                  </ViewToggleButton>
-                ))}
-              </ViewToggleGroup>
+            <div>
+              <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "6px" }}>
+                <ViewToggleGroup $isDarkMode={isDarkMode}>
+                  {[
+                    { key: "charts", icon: <BiLineChart size={18} />, title: i18n.t("newsWeather.Weather.hrafiky") },
+                    { key: "table", icon: <BiTable size={18} />, title: i18n.t("newsWeather.Weather.tablytsia") },
+                    { key: "rows", icon: <BiListUl size={18} />, title: i18n.t("newsWeather.Weather.riadky") },
+                  ].map((m) => (
+                    <ViewToggleButton
+                      key={m.key}
+                      $active={archiveViewMode === m.key}
+                      $isDarkMode={isDarkMode}
+                      onClick={() => (m.key === "charts" ? pickChartsMode("archive") : setArchiveViewMode(m.key))}
+                      title={m.title}
+                    >
+                      {m.icon}
+                    </ViewToggleButton>
+                  ))}
+                </ViewToggleGroup>
+              </div>
+              {!archiveMonths ? (
+                <ArchiveStatus error={archiveState.error} retry={archiveState.retry} isDarkMode={isDarkMode} />
+              ) : archiveViewMode === "charts" ? (
+                renderArchiveChart()
+              ) : (
+                <WeatherArchive months={archiveMonths} viewMode={archiveViewMode} fmt={fmt} formatTemp={formatTemp} isDarkMode={isDarkMode} />
+              )}
             </div>
-            <WeatherArchive
-              viewMode={archiveViewMode}
-              lat={card.lat}
-              lon={card.lon}
-              fmt={fmt}
-              formatTemp={formatTemp}
-              isDarkMode={isDarkMode}
-            />
-            </>
           )}
 
         </TabContentArea>
@@ -5893,9 +6174,17 @@ const HOLIDAYS_2027 = {
 
       {styleModalChart && (
         <ChartStyleModal
-          title={styleModalChart === "hourly" ? i18n.t("newsWeather.Weather.stylLiniiPohodynnyiHrafik") : i18n.t("newsWeather.Weather.stylLiniiHrafikNa")}
+          title={styleModalChart === "hourly" ? i18n.t("newsWeather.Weather.stylLiniiPohodynnyiHrafik") : styleModalChart === "archive" ? i18n.t("newsWeather.WeatherArchive.title") : i18n.t("newsWeather.Weather.stylLiniiHrafikNa")}
           lines={
-            styleModalChart === "hourly"
+            styleModalChart === "archive"
+              ? [
+                  { key: "day", label: i18n.t("newsWeather.Weather.den4"), color: "#ffb36c", icon: <FaSun /> },
+                  { key: "night", label: i18n.t("newsWeather.Weather.nich4"), color: "#ff1493", icon: <BsMoonStarsFill /> },
+                  { key: "right", label: archiveMeta.label, color: archiveMeta.color, icon: archiveMeta.icon, wind: archiveRightMetric === "wind" },
+                  { key: "trendDay", label: i18n.t("newsWeather.Weather.trendDnia"), color: "#ffb36c", icon: <BiTrendingUp />, trend: true },
+                  { key: "trendNight", label: i18n.t("newsWeather.Weather.trendNochi"), color: "#ff1493", icon: <BiTrendingUp />, trend: true },
+                ]
+              : styleModalChart === "hourly"
               ? [
                   { key: "temp", label: i18n.t("newsWeather.Weather.temperatura"), color: "#ffb36c", icon: <BsThermometerSun /> },
                   { key: "right", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon, autoFill: rightMetric === "precip", wind: rightMetric === "wind" },

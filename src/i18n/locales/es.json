@@ -1936,7 +1936,8 @@
       "snow": "Nieve y mixta",
       "wetDays": "Días con precipitación",
       "wind": "Velocidad media del viento",
-      "source": "Datos: Open-Meteo Archive (reanálisis ERA5)"
+      "source": "Datos: Open-Meteo Archive (reanálisis ERA5)",
+      "trendText": "Tendencia: día {{v0}}/mes, noche {{v1}}/mes"
     }
   },
   "weatherText": {

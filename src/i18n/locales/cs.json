@@ -1936,7 +1936,8 @@
       "snow": "Sníh a smíšené",
       "wetDays": "Dny se srážkami",
       "wind": "Průměrná rychlost větru",
-      "source": "Data: Open-Meteo Archive (reanalýza ERA5)"
+      "source": "Data: Open-Meteo Archive (reanalýza ERA5)",
+      "trendText": "Trend: den {{v0}}/měs., noc {{v1}}/měs."
     }
   },
   "weatherText": {

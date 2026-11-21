@@ -1936,7 +1936,8 @@
       "snow": "Hó és vegyes",
       "wetDays": "Csapadékos napok",
       "wind": "Átlagos szélsebesség",
-      "source": "Adatok: Open-Meteo Archive (ERA5 reanalízis)"
+      "source": "Adatok: Open-Meteo Archive (ERA5 reanalízis)",
+      "trendText": "Trend: nappal {{v0}}/hó, éjjel {{v1}}/hó"
     }
   },
   "weatherText": {

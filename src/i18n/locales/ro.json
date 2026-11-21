@@ -1936,7 +1936,8 @@
       "snow": "Zăpadă și mixte",
       "wetDays": "Zile cu precipitații",
       "wind": "Viteza medie a vântului",
-      "source": "Date: Open-Meteo Archive (reanaliză ERA5)"
+      "source": "Date: Open-Meteo Archive (reanaliză ERA5)",
+      "trendText": "Tendință: zi {{v0}}/lună, noapte {{v1}}/lună"
     }
   },
   "weatherText": {

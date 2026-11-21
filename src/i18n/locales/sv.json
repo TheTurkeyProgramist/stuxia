@@ -1936,7 +1936,8 @@
       "snow": "Snö och blandat",
       "wetDays": "Dagar med nederbörd",
       "wind": "Medelvindhastighet",
-      "source": "Data: Open-Meteo Archive (ERA5-återanalys)"
+      "source": "Data: Open-Meteo Archive (ERA5-återanalys)",
+      "trendText": "Trend: dag {{v0}}/mån, natt {{v1}}/mån"
     }
   },
   "weatherText": {

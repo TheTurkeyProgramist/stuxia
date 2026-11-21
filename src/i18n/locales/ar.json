@@ -1936,7 +1936,8 @@
       "snow": "ثلج ومختلط",
       "wetDays": "أيام الهطول",
       "wind": "متوسط سرعة الرياح",
-      "source": "البيانات: Open-Meteo Archive (إعادة تحليل ERA5)"
+      "source": "البيانات: Open-Meteo Archive (إعادة تحليل ERA5)",
+      "trendText": "الاتجاه: النهار {{v0}}/شهر، الليل {{v1}}/شهر"
     }
   },
   "weatherText": {

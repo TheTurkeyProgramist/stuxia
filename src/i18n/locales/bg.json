@@ -1936,7 +1936,8 @@
       "snow": "Сняг и смесени",
       "wetDays": "Дни с валежи",
       "wind": "Средна скорост на вятъра",
-      "source": "Данни: Open-Meteo Archive (реанализ ERA5)"
+      "source": "Данни: Open-Meteo Archive (реанализ ERA5)",
+      "trendText": "Тенденция: ден {{v0}}/мес., нощ {{v1}}/мес."
     }
   },
   "weatherText": {

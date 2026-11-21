@@ -1936,7 +1936,8 @@
       "snow": "雪・みぞれ",
       "wetDays": "降水日数",
       "wind": "平均風速",
-      "source": "データ: Open-Meteo Archive(ERA5再解析)"
+      "source": "データ: Open-Meteo Archive(ERA5再解析)",
+      "trendText": "トレンド: 昼 {{v0}}/月、夜 {{v1}}/月"
     }
   },
   "weatherText": {

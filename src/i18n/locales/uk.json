@@ -1936,7 +1936,8 @@
       "snow": "Сніг і змішані",
       "wetDays": "Днів з опадами",
       "wind": "Середня швидкість вітру",
-      "source": "Дані: Open-Meteo Archive (реаналіз ERA5)"
+      "source": "Дані: Open-Meteo Archive (реаналіз ERA5)",
+      "trendText": "Тренд: день {{v0}}/міс., ніч {{v1}}/міс."
     }
   },
   "weatherText": {

@@ -1936,7 +1936,8 @@
       "snow": "雪和混合降水",
       "wetDays": "降水日数",
       "wind": "平均风速",
-      "source": "数据:Open-Meteo Archive(ERA5再分析)"
+      "source": "数据:Open-Meteo Archive(ERA5再分析)",
+      "trendText": "趋势:白天 {{v0}}/月,夜间 {{v1}}/月"
     }
   },
   "weatherText": {

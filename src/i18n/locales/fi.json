@@ -1936,7 +1936,8 @@
       "snow": "Lumi ja räntä",
       "wetDays": "Sadepäiviä",
       "wind": "Keskituuli",
-      "source": "Data: Open-Meteo Archive (ERA5-uudelleenanalyysi)"
+      "source": "Data: Open-Meteo Archive (ERA5-uudelleenanalyysi)",
+      "trendText": "Suuntaus: päivä {{v0}}/kk, yö {{v1}}/kk"
     }
   },
   "weatherText": {

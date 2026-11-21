@@ -1936,7 +1936,8 @@
       "snow": "Kar ve karışık",
       "wetDays": "Yağışlı gün sayısı",
       "wind": "Ortalama rüzgâr hızı",
-      "source": "Veri: Open-Meteo Archive (ERA5 yeniden analizi)"
+      "source": "Veri: Open-Meteo Archive (ERA5 yeniden analizi)",
+      "trendText": "Eğilim: gündüz {{v0}}/ay, gece {{v1}}/ay"
     }
   },
   "weatherText": {

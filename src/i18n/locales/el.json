@@ -1936,7 +1936,8 @@
       "snow": "Χιόνι και μικτά",
       "wetDays": "Ημέρες με υετό",
       "wind": "Μέση ταχύτητα ανέμου",
-      "source": "Δεδομένα: Open-Meteo Archive (επανανάλυση ERA5)"
+      "source": "Δεδομένα: Open-Meteo Archive (επανανάλυση ERA5)",
+      "trendText": "Τάση: ημέρα {{v0}}/μήνα, νύχτα {{v1}}/μήνα"
     }
   },
   "weatherText": {

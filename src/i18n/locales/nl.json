@@ -1936,7 +1936,8 @@
       "snow": "Sneeuw en gemengd",
       "wetDays": "Dagen met neerslag",
       "wind": "Gemiddelde windsnelheid",
-      "source": "Gegevens: Open-Meteo Archive (ERA5-heranalyse)"
+      "source": "Gegevens: Open-Meteo Archive (ERA5-heranalyse)",
+      "trendText": "Trend: dag {{v0}}/mnd, nacht {{v1}}/mnd"
     }
   },
   "weatherText": {

@@ -23,6 +23,8 @@ describe("weatherArchive", () => {
       rain_sum: [1, 0, 5],
       cloud_cover_mean: [80, 60, 20],
       wind_speed_10m_mean: [2, 4, 3],
+      relative_humidity_2m_mean: [90, 80, 70],
+      pressure_msl_mean: [1000, 1010, 1020],
     };
     const [jan, feb] = aggregateMonths(daily);
     expect(jan.key).toBe("2026-01");
@@ -35,6 +37,8 @@ describe("weatherArchive", () => {
     expect(jan.snow).toBe(2);
     expect(jan.wetDays).toBe(1);
     expect(jan.cloud).toBe(70);
+    expect(jan.humidity).toBe(85);
+    expect(jan.pressure).toBe(1005);
     expect(feb.snow).toBe(0);
   });
 

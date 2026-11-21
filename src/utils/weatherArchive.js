@@ -8,7 +8,7 @@ export const ARCHIVE_MONTHS = 14;
 // Дані ERA5 з'являються із запізненням у кілька діб — останні дні просимо не завжди.
 const ARCHIVE_LAG_DAYS = 3;
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
-const CACHE_PREFIX = "weather_archive_v1_";
+const CACHE_PREFIX = "weather_archive_v2_";
 
 const DAILY_VARS = [
   "temperature_2m_max",
@@ -17,6 +17,8 @@ const DAILY_VARS = [
   "rain_sum",
   "cloud_cover_mean",
   "wind_speed_10m_mean",
+  "relative_humidity_2m_mean",
+  "pressure_msl_mean",
 ];
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -80,6 +82,8 @@ export const aggregateMonths = (daily) => {
       snow: precipTotal !== null && rainTotal !== null ? Math.max(0, precipTotal - rainTotal) : null,
       wetDays: precip.filter((v) => v >= 1).length,
       wind: mean(pick("wind_speed_10m_mean", idx)),
+      humidity: mean(pick("relative_humidity_2m_mean", idx)),
+      pressure: mean(pick("pressure_msl_mean", idx)),
     };
   });
 };

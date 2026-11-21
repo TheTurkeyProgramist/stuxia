@@ -54,6 +54,14 @@ export const DEFAULT_LINE_STYLES = {
     trendDay: trendLine(),
     trendNight: trendLine(),
   },
+  // Архів погоди: помісячні середні (день / ніч) + права вісь
+  archive: {
+    day: line(),
+    night: line(),
+    right: line({ dangerColor: true }),
+    trendDay: trendLine(),
+    trendNight: trendLine(),
+  },
 };
 
 // Об'єднує збережені налаштування з типовими (нові поля/лінії отримують типові значення)
