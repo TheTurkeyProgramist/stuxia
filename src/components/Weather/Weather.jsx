@@ -870,27 +870,36 @@ const RuleBadge = styled.span`
   border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(0, 238, 255, 0.35)" : "rgba(0, 180, 220, 0.35)")};
 `;
 
-/* Список секцій смарт-прогнозу: телефон — одна колонка, планшет/ПК — дві.
-   CSS-колонки (а не grid): блоки різної висоти щільно йдуть один під одним, без дірок.
-   Заголовок із бейджами й останній блок — на всю ширину */
+/* Колонка секцій смарт-прогнозу. На телефоні «розчиняється» (display: contents),
+   і блоки йдуть одним списком; на планшеті/ПК — окремий стовпчик, де останній
+   блок розтягується до низу, щоб обидві колонки закінчувались на одному рівні */
+const RuleSectionsColumn = styled.div`
+  display: contents;
+  @media (min-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    & > :last-child {
+      flex: 1 1 auto;
+    }
+  }
+`;
+
+/* Список секцій смарт-прогнозу: телефон — одна колонка, планшет/ПК — дві явні
+   колонки однакової висоти (без порожнечі під коротшою). Усе, що не колонка
+   (заголовок із бейджами), — на всю ширину */
 const RuleSectionsGrid = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
   @media (min-width: 768px) {
-    display: block;
-    column-count: 2;
-    column-gap: 6px;
-    & > * {
-      break-inside: avoid;
-      margin-bottom: 6px;
-    }
-    & > :first-child,
-    & > :last-child {
-      column-span: all;
-    }
-    & > :last-child {
-      margin-bottom: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 6px;
+    & > :not(${RuleSectionsColumn}) {
+      grid-column: 1 / -1;
     }
   }
 `;
@@ -910,6 +919,8 @@ const RuleSectionCard = styled.div`
   @media (max-width: 767px) {
     padding: 6px 8px;
     margin-bottom: 0;
+    /* На телефоні зберігаємо початковий порядок блоків */
+    order: ${(props) => (props.$mobileLast ? 1 : 0)};
   }
 `;
 
@@ -5244,6 +5255,8 @@ const HOLIDAYS_2027 = {
                     )}
                   </div>
 
+                  {/* Ліва колонка */}
+                  <RuleSectionsColumn>
                   {/* 1. Блок: Добовий хід (день / ніч) */}
                   <RuleSectionCard $isDarkMode={isDarkMode} $accent="#ffb300">
                     <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("dayNight")}>
@@ -5283,6 +5296,48 @@ const HOLIDAYS_2027 = {
                     )}
                   </RuleSectionCard>
 
+                  {/* 5. Блок: Атмосфера та самопочуття */}
+                  {ruleForecast?.atmosphereNotes && ruleForecast.atmosphereNotes.length > 0 && (
+                    <RuleSectionCard $isDarkMode={isDarkMode} $accent="#ec4899" $mobileLast>
+                      <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("atmosphere")}>
+                        <FaGaugeHigh style={{ color: "#ec4899", fontSize: "14px" }} />
+                        <span>{i18n.t("newsWeather.Weather.atmosfernyiTyskTaFaktory")}</span>
+                        {renderRuleChevron("atmosphere")}
+                      </RuleSectionHeader>
+                      {isRuleSectionOpen("atmosphere") && (
+                      <RuleSectionBody $isDarkMode={isDarkMode}>
+                        {ruleForecast.atmosphereNotes.map((note, nIdx) => (
+                          <div
+                            key={nIdx}
+                            style={{
+                              display: "flex",
+                              gap: "8px",
+                              alignItems: "flex-start",
+                              marginTop: nIdx > 0 ? "4px" : 0,
+                            }}
+                          >
+                            {(note.type === "pressure_low" || note.type === "pressure_high") && (
+                              <FaGaugeHigh style={{ color: "#ec4899", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                            )}
+                            {note.type === "humidity" && (
+                              <FaDroplet style={{ color: "#38bdf8", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                            )}
+                            {note.type === "uvi" && (
+                              <GiSunRadiations style={{ color: "#eab308", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
+                            )}
+                            <div>
+                              <strong>{note.title}:</strong> {note.text}
+                            </div>
+                          </div>
+                        ))}
+                      </RuleSectionBody>
+                      )}
+                    </RuleSectionCard>
+                  )}
+                  </RuleSectionsColumn>
+
+                  {/* Права колонка */}
+                  <RuleSectionsColumn>
                   {/* 3. Блок: Тижневий тренд (різкий підйом або спад) */}
                   <RuleSectionCard $isDarkMode={isDarkMode} $accent="#a855f7">
                     <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("weekly")}>
@@ -5385,44 +5440,7 @@ const HOLIDAYS_2027 = {
                     </RuleSectionCard>
                   )}
 
-                  {/* 5. Блок: Атмосфера та самопочуття */}
-                  {ruleForecast?.atmosphereNotes && ruleForecast.atmosphereNotes.length > 0 && (
-                    <RuleSectionCard $isDarkMode={isDarkMode} $accent="#ec4899">
-                      <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("atmosphere")}>
-                        <FaGaugeHigh style={{ color: "#ec4899", fontSize: "14px" }} />
-                        <span>{i18n.t("newsWeather.Weather.atmosfernyiTyskTaFaktory")}</span>
-                        {renderRuleChevron("atmosphere")}
-                      </RuleSectionHeader>
-                      {isRuleSectionOpen("atmosphere") && (
-                      <RuleSectionBody $isDarkMode={isDarkMode}>
-                        {ruleForecast.atmosphereNotes.map((note, nIdx) => (
-                          <div
-                            key={nIdx}
-                            style={{
-                              display: "flex",
-                              gap: "8px",
-                              alignItems: "flex-start",
-                              marginTop: nIdx > 0 ? "4px" : 0,
-                            }}
-                          >
-                            {(note.type === "pressure_low" || note.type === "pressure_high") && (
-                              <FaGaugeHigh style={{ color: "#ec4899", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
-                            )}
-                            {note.type === "humidity" && (
-                              <FaDroplet style={{ color: "#38bdf8", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
-                            )}
-                            {note.type === "uvi" && (
-                              <GiSunRadiations style={{ color: "#eab308", fontSize: "14px", flexShrink: 0, marginTop: "2px" }} />
-                            )}
-                            <div>
-                              <strong>{note.title}:</strong> {note.text}
-                            </div>
-                          </div>
-                        ))}
-                      </RuleSectionBody>
-                      )}
-                    </RuleSectionCard>
-                  )}
+                  </RuleSectionsColumn>
                 </RuleSectionsGrid>
             </AiSummaryBox>
           )}
