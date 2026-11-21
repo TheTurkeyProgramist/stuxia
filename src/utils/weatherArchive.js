@@ -8,7 +8,7 @@ export const ARCHIVE_MONTHS = 14;
 // Дані ERA5 з'являються із запізненням у кілька діб — останні дні просимо не завжди.
 const ARCHIVE_LAG_DAYS = 3;
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
-const CACHE_PREFIX = "weather_archive_v2_";
+const CACHE_PREFIX = "weather_archive_v3_";
 
 const DAILY_VARS = [
   "temperature_2m_max",
@@ -19,6 +19,7 @@ const DAILY_VARS = [
   "wind_speed_10m_mean",
   "relative_humidity_2m_mean",
   "pressure_msl_mean",
+  "shortwave_radiation_sum",
 ];
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -43,12 +44,34 @@ export const buildArchiveUrl = (lat, lon, today = new Date()) => {
   );
 };
 
+// УФ-індекс в архіві ERA5 порожній, тож оцінюємо його із сонячної радіації за добу (МДж/м²):
+// пікова потужність ≈ добова сума × π / (2 × тривалість дня) (синусоїда за день),
+// а УФ-індекс ≈ 0,0105 × піковий потік (Вт/м²). Це груба оцінка (без урахування озону та висоти Сонця).
+export const dayLengthSeconds = (lat, isoDay) => {
+  const [y, m, d] = isoDay.split("-").map(Number);
+  const n = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 0)) / 86400000);
+  const decl = ((23.44 * Math.PI) / 180) * Math.sin((2 * Math.PI * (284 + n)) / 365);
+  const phi = (lat * Math.PI) / 180;
+  const cosH = -Math.tan(phi) * Math.tan(decl);
+  if (cosH >= 1) return 0; // полярна ніч
+  if (cosH <= -1) return 86400; // полярний день
+  return (2 * Math.acos(cosH) * 86400) / (2 * Math.PI);
+};
+
+export const estimateUvMax = (radiationMj, lat, isoDay) => {
+  if (!Number.isFinite(radiationMj) || !Number.isFinite(lat)) return null;
+  const len = dayLengthSeconds(lat, isoDay);
+  if (len <= 0) return 0;
+  const peak = ((radiationMj * 1e6) / len) * (Math.PI / 2);
+  return Math.max(0, Math.min(16, 0.0105 * peak));
+};
+
 const mean = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
 const sum = (arr) => arr.reduce((a, b) => a + b, 0);
 const nums = (arr) => arr.filter((v) => typeof v === "number" && Number.isFinite(v));
 
 // Денний ряд Open-Meteo → масив місяців (від старого до нового)
-export const aggregateMonths = (daily) => {
+export const aggregateMonths = (daily, lat = null) => {
   const time = daily?.time || [];
   const byMonth = new Map();
   time.forEach((day, i) => {
@@ -84,6 +107,10 @@ export const aggregateMonths = (daily) => {
       wind: mean(pick("wind_speed_10m_mean", idx)),
       humidity: mean(pick("relative_humidity_2m_mean", idx)),
       pressure: mean(pick("pressure_msl_mean", idx)),
+      uv: (() => {
+        const est = nums(idx.map((i) => estimateUvMax(daily.shortwave_radiation_sum?.[i], lat, time[i])));
+        return est.length ? mean(est) : null;
+      })(),
     };
   });
 };
@@ -114,7 +141,7 @@ export const fetchArchiveMonths = async (lat, lon, { signal, now = Date.now() } 
   const res = await fetch(buildArchiveUrl(lat, lon, new Date(now)), { signal });
   if (!res.ok) throw new Error(`archive ${res.status}`);
   const json = await res.json();
-  const months = aggregateMonths(json.daily);
+  const months = aggregateMonths(json.daily, Number(lat));
   if (!months.length) throw new Error("archive empty");
   writeCache(lat, lon, months, now);
   return months;

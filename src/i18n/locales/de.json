@@ -1937,7 +1937,8 @@
       "wetDays": "Tage mit Niederschlag",
       "wind": "Mittlere Windgeschwindigkeit",
       "source": "Daten: Open-Meteo Archive (ERA5-Reanalyse)",
-      "trendText": "Trend: Tag {{v0}}/Mon., Nacht {{v1}}/Mon."
+      "trendText": "Trend: Tag {{v0}}/Mon., Nacht {{v1}}/Mon.",
+      "uvNote": "≈ UV ist eine Schätzung aus der Sonnenstrahlung (ERA5 enthält keine UV-Daten), keine Messung."
     }
   },
   "weatherText": {

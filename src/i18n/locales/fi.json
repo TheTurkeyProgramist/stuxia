@@ -1937,7 +1937,8 @@
       "wetDays": "Sadepäiviä",
       "wind": "Keskituuli",
       "source": "Data: Open-Meteo Archive (ERA5-uudelleenanalyysi)",
-      "trendText": "Suuntaus: päivä {{v0}}/kk, yö {{v1}}/kk"
+      "trendText": "Suuntaus: päivä {{v0}}/kk, yö {{v1}}/kk",
+      "uvNote": "≈ UV on arvio auringon säteilystä (ERA5:ssä ei ole UV-dataa), ei mittaus."
     }
   },
   "weatherText": {

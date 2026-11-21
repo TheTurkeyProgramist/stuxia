@@ -1937,7 +1937,8 @@
       "wetDays": "Dny se srážkami",
       "wind": "Průměrná rychlost větru",
       "source": "Data: Open-Meteo Archive (reanalýza ERA5)",
-      "trendText": "Trend: den {{v0}}/měs., noc {{v1}}/měs."
+      "trendText": "Trend: den {{v0}}/měs., noc {{v1}}/měs.",
+      "uvNote": "≈ UV je odhad ze slunečního záření (ERA5 nemá data o UV), nikoli měření."
     }
   },
   "weatherText": {

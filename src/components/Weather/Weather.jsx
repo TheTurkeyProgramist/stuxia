@@ -95,7 +95,7 @@ const WeatherBgModal = lazyWithRetry(() => import("../Modals/WeatherBgModal"));
 const CustomDatesModal = lazyWithRetry(() => import("../Modals/CustomDatesModal"));
 const UnitsModal = lazyWithRetry(() => import("../Modals/UnitsModal"));
 import { loadCardUnits, isUnitsEventForCard, cardUnitsKey, UNITS_GLOBAL_KEY, UNITS_USE_GLOBAL_KEY } from "../../utils/unitsStorage";
-import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, tempLabel, windLabel, pressureLabel, visibilityLabel, convertVisibility, precipLabel, convertTemp, convertWind, convertPrecip, convertPressure, convertSnow } from "../../utils/units.js";
+import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, tempLabel, windLabel, pressureLabel, visibilityLabel, convertVisibility, precipLabel, snowLabel, heightLabel, convertHeight, convertTemp, convertWind, convertPrecip, convertPressure, convertSnow } from "../../utils/units.js";
 import WeatherRows, { windCellStyle, uvCellStyle, precipCellStyle, chanceColor, tempColor } from "./WeatherRows.jsx";
 import { CONSENSUS_MODEL_LABELS } from "../../utils/weatherConsensus";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
@@ -108,7 +108,8 @@ import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, Cl
 import { WeatherIcon, stripEmoji, ICON_HALO_FILTER } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
 import DailyTips from "./DailyTips.jsx"; // Повітря, ожеледиця вранці, сніг на машині
 import WeatherTurkey from "./WeatherTurkey.jsx"; //Доміно — індик-талісман, що реагує на погоду
-import { BiWind, BiWater } from "react-icons/bi"; //Пориви Вітру
+import { BiWind, BiWater } from "react-icons/bi";
+import { FaCloudShowersHeavy } from "react-icons/fa"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
 import { MdOutlineSpeed, MdClose, MdStraighten, MdNotificationsActive, MdNotificationsOff, MdAutorenew, MdWbTwilight } from "react-icons/md"; //Тиск
 import {
@@ -1950,19 +1951,27 @@ const WeatherCardComponent = ({
   const [showDailyTrend, setShowDailyTrend] = useState(false);
   // Архів: власна права вісь (в ERA5 немає УФ і видимості — натомість вологість і тиск) і власний тренд
   const [showArchiveTrend, setShowArchiveTrend] = useState(false);
-  const [archiveRightMetric, setArchiveRightMetric] = useState("precip"); // "wind" | "precip" | "clouds" | "humidity" | "pressure"
+  const [archiveRightMetric, setArchiveRightMetric] = useState("precip"); // uv (оцінка) | wind | precip | clouds | humidity | pressure
   const archiveState = useArchiveMonths(card.lat, card.lon, activeTab === "archive");
   // Найсвіжіші місяці — праворуч: після завантаження прокручуємо графік у кінець
   useEffect(() => {
     const el = archiveChartRef.current;
     if (el) el.scrollLeft = el.scrollWidth;
   }, [archiveState.months, archiveViewMode, activeTab]);
-  const [rightMetric, setRightMetric] = useState("wind"); // "wind" | "uv" | "precip" | "clouds" | "visibility"
+  const [rightMetric, setRightMetric] = useState("wind"); // wind | uv | precip | clouds | visibility | pressure | humidity | rainMm | dew | snowDepth | soil | et0 | freezing
   const RIGHT_METRICS = {
     wind: { label: i18n.t("newsWeather.Weather.viter"), axis: fmt.windAxis, color: "#0099ff", rgb: "0, 153, 255", icon: <BiWind /> },
     uv: { label: i18n.t("newsWeather.Weather.ufIndeks"), axis: i18n.t("newsWeather.Weather.ufIndeks"), color: "#a855f7", rgb: "168, 85, 247", icon: <FaSun /> },
-    precip: { label: i18n.t("newsWeather.Weather.opady"), axis: i18n.t("newsWeather.Weather.opady2"), color: "#14b8a6", rgb: "20, 184, 166", icon: <FaCloudRain /> },
+    precip: { label: i18n.t("newsWeather.Weather.opady2"), axis: i18n.t("newsWeather.Weather.opady2"), color: "#14b8a6", rgb: "20, 184, 166", icon: <FaCloudRain /> },
     clouds: { label: i18n.t("newsWeather.Weather.khmarnist"), axis: i18n.t("newsWeather.Weather.khmarnist2"), color: "#9ca3af", rgb: "156, 163, 175", icon: <FaCloud /> },
+    pressure: { label: i18n.t("newsWeather.Weather.tysk"), axis: `${i18n.t("newsWeather.Weather.tysk")}, ${pressureLabel(units.pressure)}`, color: "#a78bfa", rgb: "167, 139, 250", icon: <MdOutlineSpeed /> },
+    humidity: { label: i18n.t("newsWeather.Weather.volohist"), axis: `${i18n.t("newsWeather.Weather.volohist")}, %`, color: "#38bdf8", rgb: "56, 189, 248", icon: <BiWater /> },
+    rainMm: { label: `${i18n.t("newsWeather.Weather.opady")} (${precipLabel(units.precip)})`, axis: `${i18n.t("newsWeather.Weather.opady")}, ${precipLabel(units.precip)}`, color: "#3b82f6", rgb: "59, 130, 246", icon: <FaCloudShowersHeavy /> },
+    dew: { label: i18n.t("newsWeather.Weather.tochkaRosy"), axis: `${i18n.t("newsWeather.Weather.tochkaRosy")}, ${tempSuffix}`, color: "#2dd4bf", rgb: "45, 212, 191", icon: <GiGrassMushroom /> },
+    snowDepth: { label: i18n.t("newsWeather.Weather.snihovyiPokryv"), axis: `${i18n.t("newsWeather.Weather.snihovyiPokryv")}, ${snowLabel(units.precip)}`, color: "#93c5fd", rgb: "147, 197, 253", icon: <FaSnowflake /> },
+    soil: { label: i18n.t("newsWeather.Weather.grunt"), axis: `${i18n.t("newsWeather.Weather.grunt")}, ${tempSuffix}`, color: "#a3e635", rgb: "163, 230, 53", icon: <PiThermometerFill /> },
+    et0: { label: i18n.t("newsWeather.Weather.vyparovuvannia"), axis: `${i18n.t("newsWeather.Weather.vyparovuvannia")}, ${precipLabel(units.precip)}`, color: "#fbbf24", rgb: "251, 191, 36", icon: <GiWaterRecycling /> },
+    freezing: { label: i18n.t("newsWeather.Weather.riven0C"), axis: `${i18n.t("newsWeather.Weather.riven0C")}, ${heightLabel(units.distance)}`, color: "#67e8f9", rgb: "103, 232, 249", icon: <GiIceCube /> },
     visibility: {
       label: i18n.t("newsWeather.Weather.vydymist"),
       axis: i18n.t("newsWeather.Weather.vydymist2", { v0: visibilityLabel(units.distance) }),
@@ -1974,11 +1983,17 @@ const WeatherCardComponent = ({
   const rightMeta = RIGHT_METRICS[rightMetric];
   // Колір правої лінії за значенням (небезпека/інтенсивність) — можна вимкнути в стилі лінії
   const rightConv =
-    rightMetric === "wind"
-      ? (v) => fmt.windValue(v)
-      : rightMetric === "visibility"
-        ? (v) => convertVisibility(v, units.distance)
-        : null;
+    {
+      wind: (v) => fmt.windValue(v),
+      visibility: (v) => convertVisibility(v, units.distance),
+      pressure: (v) => convertPressure(v, units.pressure),
+      rainMm: (v) => convertPrecip(v, units.precip),
+      et0: (v) => convertPrecip(v, units.precip),
+      dew: (v) => toDisplayTemp(v),
+      soil: (v) => toDisplayTemp(v),
+      snowDepth: (v) => convertSnow(v, units.precip),
+      freezing: (v) => convertHeight(v, units.distance),
+    }[rightMetric] || null;
   const rightBorder = (style, alpha, plain) =>
     style?.dangerColor !== false ? metricGradient(rightMetric, rightConv, alpha, plain) : plain;
   const rightPoint = (style, v, alpha, plain) =>
@@ -2031,7 +2046,18 @@ const WeatherCardComponent = ({
       </div>
     );
   };
-  const isPercentMetric = rightMetric === "precip" || rightMetric === "clouds";
+  const isPercentMetric = rightMetric === "precip" || rightMetric === "clouds" || rightMetric === "humidity";
+  // Осі, яким нуль не потрібен (тиск, температури)
+  const rightBeginAtZero = !["pressure", "dew", "soil"].includes(rightMetric);
+  const rightSuffix = {
+    pressure: () => pressureLabel(units.pressure),
+    rainMm: () => precipLabel(units.precip),
+    et0: () => precipLabel(units.precip),
+    dew: () => tempSuffix,
+    soil: () => tempSuffix,
+    snowDepth: () => snowLabel(units.precip),
+    freezing: () => heightLabel(units.distance),
+  };
   // Значення правої осі (крім вітру) для години (daily=false) або дня (daily=true)
   const rightValue = (item, daily) => {
     switch (rightMetric) {
@@ -2047,6 +2073,38 @@ const WeatherCardComponent = ({
         const m = daily ? item.visibility_min : item.visibility;
         return m == null ? null : Math.round(convertVisibility(m / 1000, units.distance) * 10) / 10;
       }
+      case "pressure": {
+        const v = daily ? item.pressure_mean : item.pressure_msl;
+        return v == null ? null : Math.round(convertPressure(v, units.pressure) * 10) / 10;
+      }
+      case "humidity": {
+        const v = daily ? item.humidity_mean : item.relative_humidity_2m;
+        return v == null ? null : Math.round(v);
+      }
+      case "rainMm": {
+        const v = daily ? item.precipitation_sum : item.precipitation;
+        return v == null ? null : Math.round(convertPrecip(v, units.precip) * 100) / 100;
+      }
+      case "dew": {
+        const v = daily ? item.dew_point_mean : item.dew_point_2m;
+        return v == null ? null : toDisplayTemp(Math.round(v * 10) / 10);
+      }
+      case "snowDepth": {
+        const v = daily ? item.snow_depth_max : item.snow_depth;
+        return v == null ? null : Math.round(convertSnow(v * 100, units.precip) * 10) / 10;
+      }
+      case "soil": {
+        const v = daily ? item.soil_mean : item.soil_temperature_0cm;
+        return v == null ? null : toDisplayTemp(Math.round(v * 10) / 10);
+      }
+      case "et0": {
+        const v = item.evapotranspiration;
+        return v == null ? null : Math.round(convertPrecip(v, units.precip) * 100) / 100;
+      }
+      case "freezing": {
+        const v = daily ? item.freezing_mean : item.freezing_level_height;
+        return v == null ? null : Math.round(convertHeight(v, units.distance));
+      }
       default:
         return 0;
     }
@@ -2057,6 +2115,8 @@ const WeatherCardComponent = ({
     if (rightMetric === "precip") return i18n.t("newsWeather.Weather.imovirnistOpadiv", { Math: Math.round(value || 0) });
     if (rightMetric === "clouds") return i18n.t("newsWeather.Weather.khmarnist3", { Math: Math.round(value || 0) });
     if (rightMetric === "visibility") return i18n.t("newsWeather.Weather.vydymist3", { v0: value ?? "—", v1: visibilityLabel(units.distance) });
+    if (rightMetric === "humidity") return `${rightMeta.label}: ${Math.round(value || 0)}%`;
+    if (rightSuffix[rightMetric]) return `${rightMeta.label}: ${value ?? "—"} ${rightSuffix[rightMetric]()}`;
     return "";
   };
   // Маленькі підписи біля точок правої осі (одиниці — як на осі)
@@ -3344,7 +3404,7 @@ const HOLIDAYS_2027 = {
         type: "linear",
         display: true,
         position: "right",
-        beginAtZero: true,
+        beginAtZero: rightBeginAtZero,
         ...(isPercentMetric ? { max: 100 } : {}),
         title: {
           display: true,
@@ -3430,7 +3490,7 @@ const HOLIDAYS_2027 = {
         type: "linear",
         display: true,
         position: "right",
-        beginAtZero: true,
+        beginAtZero: rightBeginAtZero,
         ...(isPercentMetric ? { max: 100 } : {}),
         title: {
           display: true,
@@ -3499,10 +3559,11 @@ const HOLIDAYS_2027 = {
     },
   };
   // ───────── Архів погоди ─────────
-  // Права вісь архіву: у реаналізі ERA5 немає УФ-індексу і видимості (самі null),
-  // тому замість них — вологість і тиск, які там є.
+  // Права вісь архіву: у реаналізі ERA5 немає видимості, а УФ-індекс порожній (самі null) —
+  // УФ оцінюємо із сонячної радіації (utils/weatherArchive.js, з приміткою під графіком).
   const archiveMonths = archiveState.months;
   const ARCHIVE_RIGHT = {
+    uv: { label: `≈ ${i18n.t("newsWeather.Weather.ufIndeks")}`, axis: `≈ ${i18n.t("newsWeather.Weather.ufIndeks")}`, color: "#a855f7", rgb: "168, 85, 247", icon: <FaSun /> },
     wind: { label: i18n.t("newsWeather.Weather.viter"), axis: fmt.windAxis, color: "#0099ff", rgb: "0, 153, 255", icon: <BiWind /> },
     precip: { label: i18n.t("newsWeather.Weather.opady"), axis: `${i18n.t("newsWeather.Weather.opady")}, ${precipLabel(units.precip)}`, color: "#14b8a6", rgb: "20, 184, 166", icon: <FaCloudRain /> },
     clouds: { label: i18n.t("newsWeather.Weather.khmarnist"), axis: i18n.t("newsWeather.Weather.khmarnist2"), color: "#9ca3af", rgb: "156, 163, 175", icon: <FaCloud /> },
@@ -3518,6 +3579,7 @@ const HOLIDAYS_2027 = {
   const archiveRightValue = (m) => {
     const num = (v, f) => (v === null || v === undefined ? null : f(v));
     switch (archiveRightMetric) {
+      case "uv": return num(m.uv, archiveRound1);
       case "wind": return num(m.wind, (v) => fmt.windValue(v));
       case "precip": return num(m.precip, (v) => archiveRound1(convertPrecip(v, units.precip)));
       case "clouds": return num(m.cloud, Math.round);
@@ -3742,6 +3804,11 @@ const HOLIDAYS_2027 = {
               {axisOverlay("right")}
             </div>
             {renderColorScales(lineStyles.archive.right, { meta: archiveMeta, metric: archiveRightMetric, conv: archiveConv, percent: archivePercent })}
+            {archiveRightMetric === "uv" && (
+              <div style={{ padding: "4px 52px 0", fontSize: "11px", color: isDarkMode ? "#bbb" : "#555" }}>
+                {i18n.t("newsWeather.WeatherArchive.uvNote")}
+              </div>
+            )}
           </div>
         ))}
       </>

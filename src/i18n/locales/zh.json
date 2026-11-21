@@ -1937,7 +1937,8 @@
       "wetDays": "降水日数",
       "wind": "平均风速",
       "source": "数据:Open-Meteo Archive(ERA5再分析)",
-      "trendText": "趋势:白天 {{v0}}/月,夜间 {{v1}}/月"
+      "trendText": "趋势:白天 {{v0}}/月,夜间 {{v1}}/月",
+      "uvNote": "≈ 紫外线指数为根据太阳辐射得出的估算值(ERA5 没有紫外线数据),并非实测。"
     }
   },
   "weatherText": {

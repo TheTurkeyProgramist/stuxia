@@ -1937,7 +1937,8 @@
       "wetDays": "Dagar med nederbörd",
       "wind": "Medelvindhastighet",
       "source": "Data: Open-Meteo Archive (ERA5-återanalys)",
-      "trendText": "Trend: dag {{v0}}/mån, natt {{v1}}/mån"
+      "trendText": "Trend: dag {{v0}}/mån, natt {{v1}}/mån",
+      "uvNote": "≈ UV är en uppskattning från solstrålning (ERA5 saknar UV-data), inte en mätning."
     }
   },
   "weatherText": {

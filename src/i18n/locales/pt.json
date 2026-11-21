@@ -1937,7 +1937,8 @@
       "wetDays": "Dias com precipitação",
       "wind": "Velocidade média do vento",
       "source": "Dados: Open-Meteo Archive (reanálise ERA5)",
-      "trendText": "Tendência: dia {{v0}}/mês, noite {{v1}}/mês"
+      "trendText": "Tendência: dia {{v0}}/mês, noite {{v1}}/mês",
+      "uvNote": "≈ O UV é uma estimativa a partir da radiação solar (o ERA5 não tem dados de UV), não uma medição."
     }
   },
   "weatherText": {

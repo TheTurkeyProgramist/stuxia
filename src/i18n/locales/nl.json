@@ -1937,7 +1937,8 @@
       "wetDays": "Dagen met neerslag",
       "wind": "Gemiddelde windsnelheid",
       "source": "Gegevens: Open-Meteo Archive (ERA5-heranalyse)",
-      "trendText": "Trend: dag {{v0}}/mnd, nacht {{v1}}/mnd"
+      "trendText": "Trend: dag {{v0}}/mnd, nacht {{v1}}/mnd",
+      "uvNote": "≈ UV is een schatting op basis van zonnestraling (ERA5 heeft geen UV-gegevens), geen meting."
     }
   },
   "weatherText": {

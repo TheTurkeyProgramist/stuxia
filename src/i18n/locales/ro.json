@@ -1937,7 +1937,8 @@
       "wetDays": "Zile cu precipitații",
       "wind": "Viteza medie a vântului",
       "source": "Date: Open-Meteo Archive (reanaliză ERA5)",
-      "trendText": "Tendință: zi {{v0}}/lună, noapte {{v1}}/lună"
+      "trendText": "Tendință: zi {{v0}}/lună, noapte {{v1}}/lună",
+      "uvNote": "≈ UV este o estimare din radiația solară (ERA5 nu are date UV), nu o măsurătoare."
     }
   },
   "weatherText": {

@@ -3674,6 +3674,13 @@ const App = () => {
               // Середня хмарність і найгірша видимість за день — з погодинних даних
               cloud_cover_mean: hourlyByDay[t]?.cloudCoverMean ?? null,
               visibility_min: hourlyByDay[t]?.visibilityMin ?? null,
+              // Середні за добу з погодинних даних — для правої осі графіка «16 днів»
+              pressure_mean: hourlyByDay[t]?.pressureMean ?? null,
+              humidity_mean: hourlyByDay[t]?.humidityMean ?? null,
+              dew_point_mean: hourlyByDay[t]?.dewPointMean ?? null,
+              snow_depth_max: hourlyByDay[t]?.snowDepthMax ?? null,
+              freezing_mean: hourlyByDay[t]?.freezingMean ?? null,
+              soil_mean: hourlyByDay[t]?.soilMean ?? null,
               weather_code: d.daily.weather_code[i] ?? 0,
               is_day: 1,
               iconPlaceholder: getWeatherIcon(d.daily.weather_code[i] ?? 0, 1),

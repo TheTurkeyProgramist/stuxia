@@ -229,6 +229,7 @@ export default function WeatherArchive({ months, fmt, formatTemp, isDarkMode, vi
                 <th>{i18n.t("newsWeather.Weather.viter")}</th>
                 <th>{i18n.t("newsWeather.Weather.volohist")}</th>
                 <th>{i18n.t("newsWeather.Weather.tysk")}</th>
+                <th>{`≈ ${i18n.t("newsWeather.Weather.ufIndeks")}`}</th>
               </tr>
             </thead>
             <tbody>
@@ -243,11 +244,13 @@ export default function WeatherArchive({ months, fmt, formatTemp, isDarkMode, vi
                   <td>{m.wind === null ? "—" : fmt.wind(m.wind)}</td>
                   <td>{pctText(m.humidity)}</td>
                   <td>{m.pressure === null || m.pressure === undefined ? "—" : fmt.pressure(m.pressure)}</td>
+                  <td>{m.uv === null || m.uv === undefined ? "—" : (Math.round(m.uv * 10) / 10).toFixed(1)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </TableWrap>
+        <Note>{t("uvNote")}</Note>
         <Note>{t("source")}</Note>
       </Wrap>
     );
@@ -318,7 +321,15 @@ export default function WeatherArchive({ months, fmt, formatTemp, isDarkMode, vi
             <Cell key={m.key}>{m.wind === null ? "—" : fmt.wind(m.wind)}</Cell>
           ))}
         </Grid>
+
+        <SectionLabel>{`≈ ${i18n.t("newsWeather.Weather.ufIndeks")}`}</SectionLabel>
+        <Grid>
+          {months.map((m) => (
+            <Cell key={m.key}>{m.uv === null || m.uv === undefined ? "—" : (Math.round(m.uv * 10) / 10).toFixed(1)}</Cell>
+          ))}
+        </Grid>
       </Scroller>
+      <Note>{t("uvNote")}</Note>
       <Note>{t("source")}</Note>
     </Wrap>
   );

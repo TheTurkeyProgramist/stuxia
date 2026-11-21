@@ -1,4 +1,4 @@
-import { aggregateMonths, archiveRange, buildArchiveUrl } from "./weatherArchive.js";
+import { aggregateMonths, archiveRange, buildArchiveUrl, estimateUvMax, dayLengthSeconds } from "./weatherArchive.js";
 
 describe("weatherArchive", () => {
   test("межі запиту: 14 місяців, кінець з відступом", () => {
@@ -40,6 +40,16 @@ describe("weatherArchive", () => {
     expect(jan.humidity).toBe(85);
     expect(jan.pressure).toBe(1005);
     expect(feb.snow).toBe(0);
+  });
+
+  test("оцінка УФ за радіацією: літо Києва ≈ 8, зима близько нуля", () => {
+    const summer = estimateUvMax(28.9, 51.2, "2026-07-01");
+    expect(summer).toBeGreaterThan(6);
+    expect(summer).toBeLessThan(10);
+    expect(estimateUvMax(1.5, 51.2, "2026-12-21")).toBeLessThan(1);
+    expect(estimateUvMax(null, 51.2, "2026-07-01")).toBeNull();
+    expect(dayLengthSeconds(51.2, "2026-06-21") / 3600).toBeGreaterThan(16);
+    expect(dayLengthSeconds(80, "2026-12-21")).toBe(0);
   });
 
   test("пропуски (null) не ламають середні", () => {

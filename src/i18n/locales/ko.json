@@ -1937,7 +1937,8 @@
       "wetDays": "강수일수",
       "wind": "평균 풍속",
       "source": "데이터: Open-Meteo Archive(ERA5 재분석)",
-      "trendText": "추세: 낮 {{v0}}/월, 밤 {{v1}}/월"
+      "trendText": "추세: 낮 {{v0}}/월, 밤 {{v1}}/월",
+      "uvNote": "≈ UV는 일사량으로 추정한 값입니다(ERA5에는 UV 데이터가 없음). 실측이 아닙니다."
     }
   },
   "weatherText": {

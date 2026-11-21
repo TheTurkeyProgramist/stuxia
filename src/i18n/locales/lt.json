@@ -1937,7 +1937,8 @@
       "wetDays": "Dienos su krituliais",
       "wind": "Vidutinis vėjo greitis",
       "source": "Duomenys: Open-Meteo Archive (ERA5 reanalizė)",
-      "trendText": "Tendencija: diena {{v0}}/mėn., naktis {{v1}}/mėn."
+      "trendText": "Tendencija: diena {{v0}}/mėn., naktis {{v1}}/mėn.",
+      "uvNote": "≈ UV yra įvertis pagal saulės spinduliuotę (ERA5 neturi UV duomenų), o ne matavimas."
     }
   },
   "weatherText": {

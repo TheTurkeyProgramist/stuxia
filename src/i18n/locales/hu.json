@@ -1937,7 +1937,8 @@
       "wetDays": "Csapadékos napok",
       "wind": "Átlagos szélsebesség",
       "source": "Adatok: Open-Meteo Archive (ERA5 reanalízis)",
-      "trendText": "Trend: nappal {{v0}}/hó, éjjel {{v1}}/hó"
+      "trendText": "Trend: nappal {{v0}}/hó, éjjel {{v1}}/hó",
+      "uvNote": "≈ Az UV a napsugárzásból becsült érték (az ERA5-ben nincs UV-adat), nem mérés."
     }
   },
   "weatherText": {

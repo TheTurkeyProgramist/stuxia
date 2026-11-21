@@ -1937,7 +1937,8 @@
       "wetDays": "Dni z opadami",
       "wind": "Średnia prędkość wiatru",
       "source": "Dane: Open-Meteo Archive (reanaliza ERA5)",
-      "trendText": "Trend: dzień {{v0}}/mies., noc {{v1}}/mies."
+      "trendText": "Trend: dzień {{v0}}/mies., noc {{v1}}/mies.",
+      "uvNote": "≈ UV to szacunek na podstawie promieniowania słonecznego (ERA5 nie ma danych UV), a nie pomiar."
     }
   },
   "weatherText": {
