@@ -45,12 +45,12 @@ const trendLine = () => ({ dash: "dashed", width: 2 });
 export const DEFAULT_LINE_STYLES = {
   hourly: {
     temp: line({ fill: true }),
-    right: line({ fill: null, windLabel: "speed" }),
+    right: line({ fill: null, windLabel: "speed", dangerColor: true }),
   },
   daily: {
     day: line(),
     night: line(),
-    right: line({ windLabel: "speed" }),
+    right: line({ windLabel: "speed", dangerColor: true }),
     trendDay: trendLine(),
     trendNight: trendLine(),
   },
@@ -74,6 +74,7 @@ export const mergeLineStyles = (saved) => {
         const dim = Number(merged.dimOpacity);
         merged.dimOpacity = Number.isFinite(dim) ? Math.min(DIM_MAX, Math.max(0, dim)) : defaults.dimOpacity;
       }
+      if (defaults.dangerColor !== undefined) merged.dangerColor = merged.dangerColor !== false;
       if (defaults.labels !== undefined) merged.labels = merged.labels !== false;
       if (defaults.windLabel !== undefined && !WIND_LABELS[merged.windLabel]) {
         merged.windLabel = defaults.windLabel;

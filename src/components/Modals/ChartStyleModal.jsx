@@ -691,6 +691,13 @@ const ChartStyleModal = ({
               {s.points ? <BiCheck /> : <MdScatterPlot />}
               {i18n.t("modals.ChartStyleModal.tochkyIkonky")}
             </ToggleChip>
+            {s.dangerColor !== undefined && (
+              <ToggleChip $active={s.dangerColor} $color={l.color} $isDarkMode={isDarkMode} title={i18n.t("modals.ChartStyleModal.kolirZaZnachenniam", { defaultValue: "Колір лінії змінюється за значенням: небезпечні значення червоніють (для видимості — низькі)" })}>
+                <input type="checkbox" checked={s.dangerColor} onChange={(e) => set({ dangerColor: e.target.checked })} />
+                {s.dangerColor ? <BiCheck /> : <MdOutlineFormatColorFill />}
+                {i18n.t("modals.ChartStyleModal.kolirZaZnachenniam2", { defaultValue: "Колір за значенням" })}
+              </ToggleChip>
+            )}
             {s.labels !== undefined && (
               <ToggleChip $active={s.labels} $color={l.color} $isDarkMode={isDarkMode} title={i18n.t("modals.ChartStyleModal.malenkiChyslaBiliaTochok")}>
                 <input type="checkbox" checked={s.labels} onChange={(e) => set({ labels: e.target.checked })} />

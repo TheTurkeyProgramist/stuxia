@@ -63,6 +63,9 @@ import { DEFAULT_CARD_BG, CARD_BG_CHANGE_EVENT } from "./weatherShared";
 import { getWindDirectionText, getWindDirectionShort } from "../../utils/windUtils";
 import { linearTrend } from "../../utils/chartTrend";
 import { DEFAULT_LINE_STYLES, DEFAULT_DIM, mergeLineStyles, lineStyleProps } from "../../utils/chartLineStyles";
+import { fadePlugin } from "../../utils/chartFade";
+import { metricGradient, metricPointColor, metricScale } from "../../utils/metricColors";
+import { tempScale, tempGradient, hotOutlinePlugin, TEMP_LEGEND_GRADIENT } from "../../utils/tempColors";
 import CardSettingsModal from "../Modals/CardSettingsModal";
 import {
   FaCalendarPlus,
@@ -1488,7 +1491,7 @@ const DailyPager = styled.div`
 `;
 
 // Плагіни Chart.js для основних графіків (стабільний масив — щоб графік не перестворювався)
-const CHART_PLUGINS = [valueLabelsPlugin];
+const CHART_PLUGINS = [valueLabelsPlugin, hotOutlinePlugin, fadePlugin];
 
 // Підказка над графіком: як читати стрілки вітру й підписи біля точок
 // Підказка-компас стоїть у рядку легенди між кнопками, тож висоту графіка не забирає
@@ -1658,8 +1661,9 @@ const WeatherCardComponent = ({
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  // Картка на комп'ютері має фіксовану висоту (542px): 350px — щоб під графіком вміщався скролбар
-  const defaultChartHeight = isNarrowScreen ? "250px" : "350px";
+  // Картка на комп'ютері має фіксовану висоту (542px): 295px — щоб під графіком вміщались
+  // скролбар і шкала кольорів, без бокового скролбара картки
+  const defaultChartHeight = isNarrowScreen ? "250px" : "295px";
   // Розділи «Смарт» на телефоні згортаються; спочатку відкритий лише перший
   const [openRuleSections, setOpenRuleSections] = useState(["dayNight"]);
   const isRuleSectionOpen = (key) => !isNarrowScreen || openRuleSections.includes(key);
@@ -1935,6 +1939,61 @@ const WeatherCardComponent = ({
     },
   };
   const rightMeta = RIGHT_METRICS[rightMetric];
+  // Колір правої лінії за значенням (небезпека/інтенсивність) — можна вимкнути в стилі лінії
+  const rightConv =
+    rightMetric === "wind"
+      ? (v) => fmt.windValue(v)
+      : rightMetric === "visibility"
+        ? (v) => convertVisibility(v, units.distance)
+        : null;
+  const rightBorder = (style, alpha, plain) =>
+    style?.dangerColor !== false ? metricGradient(rightMetric, rightConv, alpha, plain) : plain;
+  const rightPoint = (style, v, alpha, plain) =>
+    style?.dangerColor !== false ? metricPointColor(rightMetric, rightConv, v, alpha, plain) : plain;
+  // Шкала «значення → колір» під графіком: підказує, що означає колір лінії
+  const renderScaleBar = (title, stops, suffix = "") => {
+    if (!stops.length) return null;
+    const lo = stops[0].v;
+    const hi = stops[stops.length - 1].v;
+    const pos = (v) => (hi === lo ? 0 : ((v - lo) / (hi - lo)) * 100);
+    let lastShown = -100;
+    const ticks = stops.filter((st) => {
+      const p = pos(st.v);
+      if (p - lastShown < 8) return false;
+      lastShown = p;
+      return true;
+    });
+    return (
+      <div style={{ flex: "1 1 220px", minWidth: "200px", fontSize: "11px", color: isDarkMode ? "#bbb" : "#555" }}>
+        <div style={{ marginBottom: "3px", fontWeight: "bold" }}>{title}</div>
+        <div
+          style={{
+            height: "8px",
+            borderRadius: "4px",
+            background: `linear-gradient(90deg, ${stops.map((st) => `${st.css} ${pos(st.v).toFixed(1)}%`).join(", ")})`,
+            border: `1px solid ${isDarkMode ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.2)"}`,
+          }}
+        />
+        <div style={{ position: "relative", height: "14px", marginTop: "2px" }}>
+          {ticks.map((st) => (
+            <span
+              key={st.v}
+              style={{ position: "absolute", left: `${pos(st.v)}%`, transform: "translateX(-50%)", whiteSpace: "nowrap" }}
+            >
+              {st.v}{suffix}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  const renderColorScales = (rightStyle) => (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 24px", padding: "6px 52px 0" }}>
+      {renderScaleBar(i18n.t("newsWeather.Weather.temperatura2", { tempSuffix: tempSuffix }), tempScale(toDisplayTemp))}
+      {rightStyle?.dangerColor !== false &&
+        renderScaleBar(rightMeta.axis, metricScale(rightMetric, rightConv), isPercentMetric ? "%" : "")}
+    </div>
+  );
   const isPercentMetric = rightMetric === "precip" || rightMetric === "clouds";
   // Значення правої осі (крім вітру) для години (daily=false) або дня (daily=true)
   const rightValue = (item, daily) => {
@@ -2046,10 +2105,21 @@ const WeatherCardComponent = ({
     localforage.setItem(`dailyTrend_${card.id}`, next);
   };
 
+  // Телефон: графік відкривається одразу на весь екран у горизонтальній орієнтації
+  const phoneChartSessionRef = useRef(false);
+  const [autoFullscreenChart, setAutoFullscreenChart] = useState(null);
+
   useEffect(() => {
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
         setFullscreenChart(null);
+        try { window.screen?.orientation?.unlock?.(); } catch { /* не підтримується */ }
+        if (phoneChartSessionRef.current) {
+          // після виходу з повного екрана на телефоні повертаємось до блоків
+          phoneChartSessionRef.current = false;
+          setHourlyViewMode("blocks");
+          setDailyViewMode("blocks");
+        }
         return;
       }
 
@@ -2087,7 +2157,33 @@ const WeatherCardComponent = ({
     if (!panelRef.current?.requestFullscreen) return;
     setFullscreenChart(chartKey);
     await panelRef.current.requestFullscreen();
+    if (isNarrowScreen || phoneChartSessionRef.current) {
+      try { await window.screen?.orientation?.lock?.("landscape"); } catch { /* iOS / не підтримується */ }
+    }
   };
+
+  const pickChartsMode = (chartKey) => {
+    (chartKey === "hourly" ? setHourlyViewMode : setDailyViewMode)("charts");
+    if (isNarrowScreen) setAutoFullscreenChart(chartKey);
+  };
+
+  useEffect(() => {
+    if (!autoFullscreenChart) return undefined;
+    const ref = autoFullscreenChart === "hourly" ? hourlyChartPanelRef : dailyChartPanelRef;
+    const timer = setTimeout(async () => {
+      if (ref.current && !document.fullscreenElement) {
+        phoneChartSessionRef.current = true;
+        try {
+          await toggleChartFullscreen(autoFullscreenChart, ref);
+        } catch {
+          phoneChartSessionRef.current = false;
+        }
+      }
+      setAutoFullscreenChart(null);
+    }, 60);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoFullscreenChart]);
 
   const createChartImage = async (panelRef, targetWidth = undefined, targetHeight = undefined) => {
     if (!panelRef.current) return null;
@@ -2347,9 +2443,11 @@ const WeatherCardComponent = ({
             boxSizing: "border-box",
             height: "34px",
             padding: "0 8px",
-            border: `1px solid ${item.color}`,
+            border: item.gradient ? "1px solid transparent" : `1px solid ${item.color}`,
             borderRadius: "4px",
-            background: isDarkMode ? "#222" : "#fff",
+            background: item.gradient
+              ? `linear-gradient(${isDarkMode ? "#222" : "#fff"}, ${isDarkMode ? "#222" : "#fff"}) padding-box, ${TEMP_LEGEND_GRADIENT} border-box`
+              : isDarkMode ? "#222" : "#fff",
             color: item.color,
             cursor: "pointer",
             opacity: hiddenSeries[item.key] ? 0.45 : 1,
@@ -2362,11 +2460,15 @@ const WeatherCardComponent = ({
               width: "6px",
               height: "6px",
               borderRadius: "50%",
-              background: item.color,
+              background: item.gradient ? TEMP_LEGEND_GRADIENT : item.color,
             }}
           />
           {item.icon && <span style={{ display: "inline-flex", alignItems: "center", fontSize: "14px" }}>{item.icon}</span>}
-          {item.label}
+          {item.gradient ? (
+            <span style={{ background: TEMP_LEGEND_GRADIENT, WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent" }}>
+              {item.label}
+            </span>
+          ) : item.label}
         </button>
         </Tooltip>
       ))}
@@ -2479,7 +2581,25 @@ const WeatherCardComponent = ({
         useGlobal ? "chartLineStyles_global" : `chartLineStyles_${card.id}`,
       );
       setGlobalLineStyles(useGlobal);
-      setLineStyles(mergeLineStyles(savedStyles));
+      let merged = mergeLineStyles(savedStyles);
+      // Одноразова міграція: колишнє типове «70%» для вимкнених ліній зливалось з іншими —
+      // тепер за замовчуванням вони повністю сховані (усі збережені значення скидаємо один раз)
+      try {
+        const flagKey = `dimOpacityResetV2_${useGlobal ? "global" : card.id}`;
+        if (localStorage.getItem(flagKey) !== "1") {
+          merged = Object.fromEntries(
+            Object.entries(merged).map(([chartKey, lines]) => [
+              chartKey,
+              Object.fromEntries(
+                Object.entries(lines).map(([k, s]) => [k, s.dimOpacity !== undefined ? { ...s, dimOpacity: DEFAULT_DIM } : s]),
+              ),
+            ]),
+          );
+          await localforage.setItem(useGlobal ? "chartLineStyles_global" : `chartLineStyles_${card.id}`, merged);
+          localStorage.setItem(flagKey, "1");
+        }
+      } catch { /* localStorage недоступний — просто покажемо збережене */ }
+      setLineStyles(merged);
       const savedTrend = await localforage.getItem(`dailyTrend_${card.id}`);
       if (savedTrend !== null) setShowDailyTrend(savedTrend);
     };
@@ -2620,12 +2740,13 @@ const formatChartTempLabel = (value, suffix) => {
   useEffect(() => () => cancelAnimationFrame(hourlyBlocksScrollRaf.current), []);
   const hourlyChartAvailable = hourlyDayGroups[selectedHourlyDay]?.chartAvailable !== false;
   // Графіки на телефонах заблоковані — показуємо блоки
-  const canShowHourlyChart = hourlyChartAvailable && !isNarrowScreen;
+  const canShowHourlyChart = hourlyChartAvailable;
+  // На телефоні графік показується лише на весь екран (його відкриває pickChartsMode)
+  const phoneChartHidden = isNarrowScreen && !fullscreenChart && !autoFullscreenChart;
   const effectiveHourlyViewMode =
-    hourlyViewMode === "charts" && !canShowHourlyChart ? "blocks" : hourlyViewMode;
+    hourlyViewMode === "charts" && (!canShowHourlyChart || phoneChartHidden) ? "blocks" : hourlyViewMode;
   const effectiveDailyViewMode =
-    dailyViewMode === "charts" && isNarrowScreen ? "blocks" : dailyViewMode;
-  const chartBlockedTitle = i18n.t("newsWeather.Weather.hrafikyNedostupniNaTelefoni");
+    dailyViewMode === "charts" && phoneChartHidden ? "blocks" : dailyViewMode;
   const hourlyChartWidth = Math.max(873, (visibleHourly?.length || 24) * 35);
   const tempSuffix = unit === "F" ? "°F" : unit === "K" ? "K" : "°C";
   const toDisplayTemp = (c) => {
@@ -2641,7 +2762,8 @@ const formatChartTempLabel = (value, suffix) => {
         label: i18n.t("newsWeather.Weather.temperatura2", { tempSuffix: tempSuffix }),
         data: visibleHourly?.map((h) => toDisplayTemp(h.tempNum ?? 0)) || [],
         backgroundColor: `rgba(255, 179, 108, ${hourlyOpacity.day * 0.2})`,
-        borderColor: `rgba(255, 179, 108, ${hourlyOpacity.day})`,
+        borderColor: tempGradient(unit, hourlyOpacity.day, `rgba(255, 179, 108, ${hourlyOpacity.day})`),
+        hotOutline: { unit, alpha: hourlyOpacity.day },
         hidden: hourlyOpacity.day === 0,
         pointStyle: visibleHourly?.map((h) => {
           let danger = null;
@@ -2663,7 +2785,7 @@ const formatChartTempLabel = (value, suffix) => {
         ? {
             label: fmt.windAxis,
             data: visibleHourly?.map((h) => fmt.windValue(h.windNum ?? 0)) || [],
-            borderColor: `rgba(0, 190, 235, ${hourlyOpacity.wind})`,
+            borderColor: rightBorder(lineStyles.hourly.right, hourlyOpacity.wind, `rgba(0, 190, 235, ${hourlyOpacity.wind})`),
             backgroundColor: `rgba(0, 190, 235, ${hourlyOpacity.wind * 0.1})`,
             hidden: hourlyOpacity.wind === 0,
             pointBackgroundColor:
@@ -2688,11 +2810,14 @@ const formatChartTempLabel = (value, suffix) => {
             label: rightMeta.axis,
             data:
               visibleHourly?.map((h) => rightValue(h, false)) || [],
-            borderColor: `rgba(${rightMeta.rgb}, ${hourlyOpacity.wind})`,
+            borderColor: rightBorder(lineStyles.hourly.right, hourlyOpacity.wind, `rgba(${rightMeta.rgb}, ${hourlyOpacity.wind})`),
             backgroundColor: `rgba(${rightMeta.rgb}, ${hourlyOpacity.wind * 0.15})`,
             hidden: hourlyOpacity.wind === 0,
             pointStyle: "circle",
-            pointBackgroundColor: `rgba(${rightMeta.rgb}, ${hourlyOpacity.wind})`,
+            pointBackgroundColor:
+              visibleHourly?.map((h) =>
+                rightPoint(lineStyles.hourly.right, rightValue(h, false), hourlyOpacity.wind, `rgba(${rightMeta.rgb}, ${hourlyOpacity.wind})`),
+              ) || [],
             valueLabels: lineStyles.hourly.right.labels
               ? visibleHourly?.map((h) => rightLabelText(rightValue(h, false)))
               : null,
@@ -2921,7 +3046,8 @@ const HOLIDAYS_2027 = {
       {
         label: i18n.t("newsWeather.Weather.den", { tempSuffix: tempSuffix }),
         data: dailyDayTemps,
-        borderColor: `rgba(255, 179, 108, ${dailyOpacity.day})`,
+        borderColor: tempGradient(unit, dailyOpacity.day, `rgba(255, 179, 108, ${dailyOpacity.day})`),
+        hotOutline: { unit, alpha: dailyOpacity.day },
         backgroundColor: `rgba(255, 179, 108, ${dailyOpacity.day * 0.5})`,
         hidden: dailyOpacity.day === 0,
         pointStyle: dailyList?.map((d) =>
@@ -2948,7 +3074,8 @@ const HOLIDAYS_2027 = {
       {
         label: i18n.t("newsWeather.Weather.nich", { tempSuffix: tempSuffix }),
         data: dailyNightTemps,
-        borderColor: `rgba(255, 20, 147, ${dailyOpacity.night})`,
+        borderColor: tempGradient(unit, dailyOpacity.night, `rgba(255, 20, 147, ${dailyOpacity.night})`),
+        hotOutline: { unit, alpha: dailyOpacity.night },
         backgroundColor: `rgba(255, 20, 147, ${dailyOpacity.night * 0.2})`,
         hidden: dailyOpacity.night === 0,
         pointStyle: "circle",
@@ -2965,7 +3092,7 @@ const HOLIDAYS_2027 = {
         ? {
             label: fmt.windAxis,
             data: dailyList?.map((d) => fmt.windValue(parseFloat(d.wind_speed) || 0)) || [],
-            borderColor: `rgba(0, 153, 255, ${dailyOpacity.wind})`,
+            borderColor: rightBorder(lineStyles.daily.right, dailyOpacity.wind, `rgba(0, 153, 255, ${dailyOpacity.wind})`),
             backgroundColor: `rgba(0, 153, 255, ${dailyOpacity.wind * 0.2})`,
             hidden: dailyOpacity.wind === 0,
             pointStyle: dailyList?.map((d) =>
@@ -2993,11 +3120,14 @@ const HOLIDAYS_2027 = {
             label: rightMeta.axis,
             data:
               dailyList?.map((d) => rightValue(d, true)) || [],
-            borderColor: `rgba(${rightMeta.rgb}, ${dailyOpacity.wind})`,
+            borderColor: rightBorder(lineStyles.daily.right, dailyOpacity.wind, `rgba(${rightMeta.rgb}, ${dailyOpacity.wind})`),
             backgroundColor: `rgba(${rightMeta.rgb}, ${dailyOpacity.wind * 0.2})`,
             hidden: dailyOpacity.wind === 0,
             pointStyle: "circle",
-            pointBackgroundColor: `rgba(${rightMeta.rgb}, ${dailyOpacity.wind})`,
+            pointBackgroundColor:
+              dailyList?.map((d) =>
+                rightPoint(lineStyles.daily.right, rightValue(d, true), dailyOpacity.wind, `rgba(${rightMeta.rgb}, ${dailyOpacity.wind})`),
+              ) || [],
             valueLabels: lineStyles.daily.right.labels
               ? dailyList?.map((d) => rightLabelText(rightValue(d, true)))
               : null,
@@ -4839,15 +4969,13 @@ const HOLIDAYS_2027 = {
                     <ViewToggleButton
                       $active={effectiveHourlyViewMode === "charts"}
                       $isDarkMode={isDarkMode}
-                      onClick={() => canShowHourlyChart && setHourlyViewMode("charts")}
+                      onClick={() => canShowHourlyChart && pickChartsMode("hourly")}
                       disabled={!canShowHourlyChart}
                       style={!canShowHourlyChart ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
                       title={
-                        isNarrowScreen
-                          ? chartBlockedTitle
-                          : hourlyChartAvailable
-                            ? i18n.t("newsWeather.Weather.hrafiky")
-                            : i18n.t("newsWeather.Weather.hrafikDostupnyiLysheNa")
+                        hourlyChartAvailable
+                          ? i18n.t("newsWeather.Weather.hrafiky")
+                          : i18n.t("newsWeather.Weather.hrafikDostupnyiLysheNa")
                       }
                     >
                       <BiLineChart size={18} />
@@ -4888,14 +5016,14 @@ const HOLIDAYS_2027 = {
                     }}
                   >
                     {renderChartHeader("hourly", hourlyChartPanelRef, [
-                      { key: "day", label: i18n.t("newsWeather.Weather.temperatura"), color: "#ffb36c", icon: <BsThermometerSun /> },
+                      { key: "day", label: i18n.t("newsWeather.Weather.temperatura"), color: "#ffb36c", icon: <BsThermometerSun />, gradient: true },
                       { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
                     ], renderWindHint("hourly"))}
                     <div style={{ position: "relative", width: "100%" }}>
                       <ChartScrollWrapper>
                         <ChartInnerContainer
                           $width={fullscreenChart === "hourly" ? `max(100%, ${hourlyChartWidth}px)` : hourlyChartWidth}
-                          $height={fullscreenChart === "hourly" ? (isCapturing ? `${window.innerHeight - 90}px` : "calc(100vh - 90px)") : defaultChartHeight}
+                          $height={fullscreenChart === "hourly" ? (isCapturing ? `${window.innerHeight - 140}px` : "calc(100vh - 140px)") : defaultChartHeight}
                         >
                           <Line
                             key={`hourly-${fullscreenChart || "normal"}`}
@@ -4949,6 +5077,7 @@ const HOLIDAYS_2027 = {
                         </div>
                       </div>
                     </div>
+                    {renderColorScales(lineStyles.hourly.right)}
                   </div>
                 )
               ) : effectiveHourlyViewMode === "rows" ? (
@@ -5011,10 +5140,8 @@ const HOLIDAYS_2027 = {
                     <ViewToggleButton
                       $active={effectiveDailyViewMode === "charts"}
                       $isDarkMode={isDarkMode}
-                      onClick={() => !isNarrowScreen && setDailyViewMode("charts")}
-                      disabled={isNarrowScreen}
-                      style={isNarrowScreen ? { opacity: 0.35, cursor: "not-allowed" } : undefined}
-                      title={isNarrowScreen ? chartBlockedTitle : i18n.t("newsWeather.Weather.hrafiky")}
+                      onClick={() => pickChartsMode("daily")}
+                      title={i18n.t("newsWeather.Weather.hrafiky")}
                     >
                       <BiLineChart size={18} />
                     </ViewToggleButton>
@@ -5079,15 +5206,15 @@ const HOLIDAYS_2027 = {
                     }}
                   >
                     {fullscreenChart === "daily" && renderChartHeader("daily", dailyChartPanelRef, [
-                      { key: "day", label: i18n.t("newsWeather.Weather.den4"), color: "#ffb36c", icon: <FaSun /> },
-                      { key: "night", label: i18n.t("newsWeather.Weather.nich4"), color: "#ff1493", icon: <BsMoonStarsFill /> },
+                      { key: "day", label: i18n.t("newsWeather.Weather.den4"), color: "#ffb36c", icon: <FaSun />, gradient: true },
+                      { key: "night", label: i18n.t("newsWeather.Weather.nich4"), color: "#ff1493", icon: <BsMoonStarsFill />, gradient: true },
                       { key: "wind", label: rightMeta.label, color: rightMeta.color, icon: rightMeta.icon },
                     ], renderWindHint("daily"), dailyFsHeaderRef, dailyFsHeaderWrapped)}
                     <div style={{ position: "relative", width: "100%" }}>
                       <ChartScrollWrapper ref={dailyChartRef}>
                         <ChartInnerContainer
                           $width={fullscreenChart === "daily" ? "max(100%, 900px)" : 900}
-                          $height={fullscreenChart === "daily" ? (isCapturing ? `${window.innerHeight - 120}px` : "calc(100vh - 120px)") : defaultChartHeight}
+                          $height={fullscreenChart === "daily" ? (isCapturing ? `${window.innerHeight - 170}px` : "calc(100vh - 170px)") : defaultChartHeight}
                         >
                           <Line
                             key={`daily-${fullscreenChart || "normal"}`}
@@ -5141,6 +5268,7 @@ const HOLIDAYS_2027 = {
                         </div>
                       </div>
                     </div>
+                    {renderColorScales(lineStyles.daily.right)}
                   </div>
                 </>
               ) : effectiveDailyViewMode === "table" ? (
