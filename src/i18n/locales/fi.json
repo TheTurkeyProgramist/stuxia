@@ -34,6 +34,14 @@
       "added": "Lisätty",
       "exists": "Kortti on"
     },
+    "mapPicker": {
+      "missingHint": "Eikö kaupunkiasi tai kylääsi löydy? Kirjoita lähin kaupunki tai luo piste koordinaattitilassa — voit myös napauttaa karttaa.",
+      "pickOnMap": "Valitse kartalta",
+      "title": "Valitse piste kartalta",
+      "hint": "Napauta karttaa — koordinaatit täyttyvät itsestään. Hiiren rulla tai +/− muuttaa zoomausta.",
+      "use": "Käytä tätä pistettä",
+      "close": "Sulje"
+    },
     "coords": {
       "line": "Leveys: {{lat}}°, Pituus: {{lon}}°",
       "latPlaceholder": "Leveys: -90° … +90°",

@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Aktuelles Wetter für Ihre Stadt aus Stykhiia</string>
+    <string name="widget_pick_city">App öffnen, um eine Stadt zu wählen</string>
+    <string name="widget_loading">Wetter wird geladen…</string>
+    <string name="widget_refresh">Aktualisieren</string>
+    <string name="widget_feels">Gefühlt %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Klar</string>
+    <string name="wmo_cloudy">Bewölkt</string>
+    <string name="wmo_fog">Nebel</string>
+    <string name="wmo_drizzle">Nieselregen</string>
+    <string name="wmo_rain">Regen</string>
+    <string name="wmo_snow">Schnee</string>
+    <string name="wmo_storm">Gewitter</string>
+</resources>

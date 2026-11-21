@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Tempo atual da sua cidade com a Stykhiia</string>
+    <string name="widget_pick_city">Abra a aplicação para escolher uma cidade</string>
+    <string name="widget_loading">A carregar o tempo…</string>
+    <string name="widget_refresh">Atualizar</string>
+    <string name="widget_feels">Sensação %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Limpo</string>
+    <string name="wmo_cloudy">Nublado</string>
+    <string name="wmo_fog">Nevoeiro</string>
+    <string name="wmo_drizzle">Chuvisco</string>
+    <string name="wmo_rain">Chuva</string>
+    <string name="wmo_snow">Neve</string>
+    <string name="wmo_storm">Trovoada</string>
+</resources>

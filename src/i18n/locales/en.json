@@ -34,6 +34,14 @@
       "added": "Added",
       "exists": "Card exists"
     },
+    "mapPicker": {
+      "missingHint": "Can't find your town or village? Enter a nearby city or create a point in coordinates mode — you can simply click on the map.",
+      "pickOnMap": "Pick on map",
+      "title": "Choose a point on the map",
+      "hint": "Click the map and the coordinates fill in automatically. Mouse wheel or +/− buttons change the zoom.",
+      "use": "Use this point",
+      "close": "Close"
+    },
     "coords": {
       "line": "Latitude: {{lat}}°, Longitude: {{lon}}°",
       "latPlaceholder": "Latitude: from -90° to +90°",

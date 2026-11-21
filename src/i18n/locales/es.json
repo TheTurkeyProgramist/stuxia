@@ -34,6 +34,14 @@
       "added": "Añadida",
       "exists": "Ya hay tarjeta"
     },
+    "mapPicker": {
+      "missingHint": "¿No encuentra su ciudad o pueblo? Escriba una ciudad cercana o cree un punto en el modo de coordenadas: basta con hacer clic en el mapa.",
+      "pickOnMap": "Elegir en el mapa",
+      "title": "Elija un punto en el mapa",
+      "hint": "Haga clic en el mapa y las coordenadas se rellenan solas. La rueda del ratón o +/− cambian el zoom.",
+      "use": "Usar este punto",
+      "close": "Cerrar"
+    },
     "coords": {
       "line": "Latitud: {{lat}}°, Longitud: {{lon}}°",
       "latPlaceholder": "Latitud: de -90° a +90°",

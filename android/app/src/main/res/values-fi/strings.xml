@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Kaupunkisi sää juuri nyt Stykhiialta</string>
+    <string name="widget_pick_city">Avaa sovellus valitaksesi kaupungin</string>
+    <string name="widget_loading">Ladataan säätä…</string>
+    <string name="widget_refresh">Päivitä</string>
+    <string name="widget_feels">Tuntuu kuin %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Selkeää</string>
+    <string name="wmo_cloudy">Pilvistä</string>
+    <string name="wmo_fog">Sumua</string>
+    <string name="wmo_drizzle">Tihkua</string>
+    <string name="wmo_rain">Sadetta</string>
+    <string name="wmo_snow">Lunta</string>
+    <string name="wmo_storm">Ukkosta</string>
+</resources>

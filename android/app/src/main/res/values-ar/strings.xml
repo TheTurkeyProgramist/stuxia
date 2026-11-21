@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">الطقس الحالي لمدينتك من «ستيخيا»</string>
+    <string name="widget_pick_city">افتح التطبيق لاختيار مدينة</string>
+    <string name="widget_loading">جارٍ تحميل الطقس…</string>
+    <string name="widget_refresh">تحديث</string>
+    <string name="widget_feels">الإحساس %1$s</string>
+    <string name="widget_wind">💨 %1$s م/ث</string>
+    <string name="wmo_clear">صافٍ</string>
+    <string name="wmo_cloudy">غائم</string>
+    <string name="wmo_fog">ضباب</string>
+    <string name="wmo_drizzle">رذاذ</string>
+    <string name="wmo_rain">مطر</string>
+    <string name="wmo_snow">ثلج</string>
+    <string name="wmo_storm">عاصفة رعدية</string>
+</resources>

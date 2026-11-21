@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Dabartinis jūsų miesto oras iš „Stichijos“</string>
+    <string name="widget_pick_city">Atidarykite programą ir pasirinkite miestą</string>
+    <string name="widget_loading">Kraunamas oras…</string>
+    <string name="widget_refresh">Atnaujinti</string>
+    <string name="widget_feels">Jaučiasi kaip %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Giedra</string>
+    <string name="wmo_cloudy">Debesuota</string>
+    <string name="wmo_fog">Rūkas</string>
+    <string name="wmo_drizzle">Dulksna</string>
+    <string name="wmo_rain">Lietus</string>
+    <string name="wmo_snow">Sniegas</string>
+    <string name="wmo_storm">Perkūnija</string>
+</resources>

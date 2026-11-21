@@ -34,6 +34,14 @@
       "added": "Hozzáadva",
       "exists": "Van kártya"
     },
+    "mapPicker": {
+      "missingHint": "Nem találja a városát vagy falvát? Írjon be egy közeli várost, vagy hozzon létre pontot koordináta módban — elég a térképre kattintani.",
+      "pickOnMap": "Választás térképen",
+      "title": "Válasszon pontot a térképen",
+      "hint": "Kattintson a térképre — a koordináták maguktól kitöltődnek. Az egérgörgő vagy a +/− a nagyítást állítja.",
+      "use": "Pont használata",
+      "close": "Bezárás"
+    },
     "coords": {
       "line": "Szélesség: {{lat}}°, Hosszúság: {{lon}}°",
       "latPlaceholder": "Szélesség: -90°-tól +90°-ig",

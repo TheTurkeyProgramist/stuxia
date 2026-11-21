@@ -34,6 +34,14 @@
       "added": "Eklendi",
       "exists": "Kart var"
     },
+    "mapPicker": {
+      "missingHint": "Şehriniz veya köyünüz yok mu? Yakındaki bir şehri yazın ya da koordinat modunda bir nokta oluşturun — haritaya tıklamanız yeterli.",
+      "pickOnMap": "Haritada seç",
+      "title": "Haritada bir nokta seçin",
+      "hint": "Haritaya tıklayın — koordinatlar kendiliğinden dolar. Fare tekerleği veya +/− yakınlaştırmayı değiştirir.",
+      "use": "Bu noktayı kullan",
+      "close": "Kapat"
+    },
     "coords": {
       "line": "Enlem: {{lat}}°, Boylam: {{lon}}°",
       "latPlaceholder": "Enlem: -90° ile +90° arası",

@@ -34,6 +34,14 @@
       "added": "Lagu daray",
       "exists": "Kaar waa jiraa"
     },
+    "mapPicker": {
+      "missingHint": "Ma helin magaaladaada ama tuuladaada? Geli magaalo u dhow ama samee dhibic qaabka isku-xirayaasha — kaliya guji khariidadda.",
+      "pickOnMap": "Ka dooro khariidadda",
+      "title": "Dooro dhibic khariidadda ah",
+      "hint": "Guji khariidadda — isku-xirayaashu naftood ayay buuxsamayaan. Giraanta jiirka ama +/− waxay beddelaan weynaynta.",
+      "use": "Isticmaal dhibcadan",
+      "close": "Xir"
+    },
     "coords": {
       "line": "Loolka: {{lat}}°, Dhererka: {{lon}}°",
       "latPlaceholder": "Loolka: -90° ilaa +90°",

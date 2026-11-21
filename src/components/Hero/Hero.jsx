@@ -6,11 +6,15 @@ import React, {
   useCallback,
   useId,
   startTransition,
+  lazy,
+  Suspense,
 } from "react";
 import { removeBootBg } from "../../utils/bootBg.js";
 import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill, BsLightningChargeFill } from "react-icons/bs";
 import { createPortal } from "react-dom";
+// Мапа вибору точки вантажиться лише коли її відкрили
+const MapPicker = lazy(() => import("./MapPicker.jsx"));
 import { FaMountainCity, FaTemperatureArrowUp } from "react-icons/fa6";
 import { FaSnowflake, FaWind } from "react-icons/fa";
 import { FaMapLocationDot } from "react-icons/fa6";
@@ -52,6 +56,9 @@ import {
   MdClose,
   MdExpandMore,
   MdSearchOff,
+  MdMap,
+  MdSwapVert,
+  MdSwapHoriz,
   MdWifiOff,
 } from "react-icons/md";
 import { useTranslation, Trans } from "react-i18next";
@@ -71,7 +78,7 @@ import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
 import { ModalSuspense } from "../Loader/ModalLoading.jsx";
 import { OPEN_BG_MODAL_EVENT, OPEN_TIMEZONE_EVENT } from "./heroEvents.js";
 import { getEagerChunk, loadNews } from "../../utils/eagerChunks.js";
-import { findCityInDatabase, UKRAINE_CITIES_40 } from "../../utils/citiesDatabase";
+import { findCityInDatabase, UKRAINE_CITIES_40, getCityRegion } from "../../utils/citiesDatabase";
 import { findServerCity } from "../../utils/serverCities";
 import { searchLocalCities, sortSuggestionsByQuery } from "../../utils/citySearch";
 // Новини (~120 КБ) — окремим файлом. Телефон: після першого показу сторінки, щоб не затримувати
@@ -797,13 +804,16 @@ const LanguageBtn = styled(ModeIconBtn)`
 
 const CoordinatesContainer = styled.div`
   ${modeSwapAnimation}
-  display: flex;
+  display: grid;
   width: 100%;
   box-sizing: border-box;
-  align-items: center;
+  align-items: stretch;
   gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
+  /* вузько: два поля в ряд, під ними дві кнопки; широко — усе в один рядок */
+  grid-template-columns: 1fr 1fr;
+  @media (min-width: 760px) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  }
 `;
 
 // Поля координат + випадний список під ними (список позиціонується відносно цього блоку)
@@ -813,66 +823,129 @@ const CoordSearchArea = styled.div`
   width: 100%;
 `;
 
+// Поле координати: скляна «таблетка» зі значком осі, м'яким світінням у фокусі й без стрілочок number
 const CoordinateInput = styled.div`
+  position: relative;
   display: flex;
-  flex: 1 1 180px;
   min-width: 0;
+
+  > svg {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    color: ${(p) => (p.$isDarkMode ? "#7dd3fc" : "#0369a1")};
+    opacity: 0.9;
+    pointer-events: none;
+    transition: color 0.2s ease, opacity 0.2s ease;
+  }
+  &:focus-within > svg {
+    color: ${(p) => (p.$isDarkMode ? "#00ffe5" : "#0891b2")};
+    opacity: 1;
+  }
+
   input {
     width: 100%;
-    height: 46px;
+    height: 50px;
     box-sizing: border-box;
-    padding: 0 12px;
+    padding: 0 14px 0 42px;
     font-family: var(--font-family);
-    font-size: 14px;
-    border-radius: 8px;
-    border: 1px solid transparent;
-    background: ${(p) => (p.$isDarkMode ? "#10151c" : "#fff")};
+    font-size: 15px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    border-radius: 14px;
+    border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.16)" : "rgba(0, 0, 0, 0.14)")};
+    background: ${(p) => (p.$isDarkMode ? "rgba(16, 21, 28, 0.82)" : "rgba(255, 255, 255, 0.92)")};
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
     color: ${(p) => (p.$isDarkMode ? "#f4f7fb" : "#20242b")};
-    font-weight: 500;
     outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    -moz-appearance: textfield;
+    appearance: textfield;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
 
     &::placeholder {
-      color: ${(p) => (p.$isDarkMode ? "#aab4c0" : "#68717d")};
+      font-size: 13px;
+      font-weight: 400;
+      color: ${(p) => (p.$isDarkMode ? "#9aa6b4" : "#68717d")};
     }
 
-    &:hover,
-    &:focus {
-      border-color: ${(p) => (p.$isDarkMode ? "#ecb900" : "#00fbff")};
+    &:hover {
+      border-color: ${(p) => (p.$isDarkMode ? "rgba(0, 255, 229, 0.5)" : "rgba(8, 145, 178, 0.55)")};
     }
 
     &:focus {
-      box-shadow: inset 0 0 0 1px
-        ${(p) => (p.$isDarkMode ? "#ecb900" : "#00fbff")};
+      border-color: ${(p) => (p.$isDarkMode ? "#00ffe5" : "#0891b2")};
+      box-shadow: 0 0 0 4px ${(p) => (p.$isDarkMode ? "rgba(0, 255, 229, 0.16)" : "rgba(8, 145, 178, 0.18)")};
+    }
+
+    &:disabled {
+      opacity: 0.6;
     }
   }
 `;
 
+// «Знайти» — головна дія (градієнт); друга кнопка в тому ж ряду («Вибрати на мапі») — контурна
 const CoordinateSearchButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-width: 96px;
-  height: 46px;
-  padding: 0 14px;
-  border: none;
-  border-radius: 8px;
-  background: #2f81f7;
+  gap: 8px;
+  min-width: 0;
+  height: 50px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #00d1c1, #2f81f7);
   color: #fff;
   font-family: var(--font-family);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 0.2s ease;
+  box-shadow: 0 6px 18px rgba(47, 129, 247, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 
-  &:hover:not(:disabled) {
-    background: #1f6feb;
+  svg {
+    font-size: 19px;
   }
 
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(47, 129, 247, 0.4);
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  &:focus-visible {
+    outline: 2px solid #00ffe5;
+    outline-offset: 2px;
+  }
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  &[data-secondary] {
+    background: ${(p) => (p.$isDarkMode === false ? "rgba(255, 255, 255, 0.92)" : "rgba(16, 21, 28, 0.82)")};
+    color: ${(p) => (p.$isDarkMode === false ? "#075985" : "#7dd3fc")};
+    border-color: ${(p) => (p.$isDarkMode === false ? "rgba(3, 105, 161, 0.4)" : "rgba(125, 211, 252, 0.45)")};
+    box-shadow: none;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+
+    &:hover:not(:disabled) {
+      border-color: #00ffe5;
+      box-shadow: 0 0 0 4px rgba(0, 255, 229, 0.12);
+    }
   }
 `;
 // Слоган під пошуком: завжди один рядок; довга версія — з 760px, коротка — на вужчих екранах
@@ -992,7 +1065,8 @@ const UI = {
   accentTint: listTheme("rgba(10, 132, 255, 0.16)", "rgba(0, 122, 255, 0.1)"),
   green: listTheme("#30d158", "#248a3d"),
   greenTint: listTheme("rgba(48, 209, 88, 0.16)", "rgba(52, 199, 89, 0.14)"),
-  glass: listTheme("rgba(28, 28, 30, 0.8)", "rgba(255, 255, 255, 0.82)"),
+  // Щільніше за раніше (0,8): крізь список не мають проступати новини й кнопки під ним
+  glass: listTheme("rgba(14, 14, 16, 0.95)", "rgba(255, 255, 255, 0.96)"),
   bar: listTheme("rgba(28, 28, 30, 0.92)", "rgba(250, 250, 252, 0.92)"),
 };
 
@@ -1010,8 +1084,8 @@ const SuggestionsList = styled.div`
   padding-bottom: 4px;
   border-radius: 14px;
   background: ${UI.glass};
-  -webkit-backdrop-filter: saturate(180%) blur(24px);
-  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(160%) blur(36px);
+  backdrop-filter: saturate(160%) blur(36px);
   color: ${UI.text};
   border: 0.5px solid ${listTheme("rgba(255, 255, 255, 0.14)", "rgba(0, 0, 0, 0.1)")};
   box-shadow:
@@ -1032,11 +1106,29 @@ const SuggestionsList = styled.div`
     background-clip: padding-box;
     border-radius: 999px;
   }
+
+  @media (min-width: 768px) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    align-content: start;
+    gap: 3px 4px;
+    padding: 0 6px 6px;
+
+    && > * {
+      grid-column: 1 / -1;
+    }
+    && > [data-suggestion] {
+      grid-column: auto;
+      width: auto;
+      margin: 0;
+    }
+  }
 `;
 
 // Рядок як у меню macOS: заокруглений, ледь помітна підсвітка; тонкі розділювачі з відступом
 // ховаються біля рядка під курсором
-const SuggestionItem = styled.button`
+const SuggestionItem = styled.button.attrs({ "data-suggestion": "" })`
   position: relative;
   flex-shrink: 0;
   width: calc(100% - 12px);
@@ -1070,6 +1162,14 @@ const SuggestionItem = styled.button`
   &:focus-visible::before,
   &:focus-visible + &::before {
     opacity: 0;
+  }
+
+  /* По два в ряд: горизонтальні розділювачі між «сусідами» не мають сенсу — кожне місто окремою плиткою */
+  @media (min-width: 768px) {
+    & + &::before {
+      display: none;
+    }
+    box-shadow: inset 0 0 0 1px ${UI.separator};
   }
 
   @media (hover: hover) {
@@ -1137,10 +1237,10 @@ const CustomPointBox = styled.div`
   width: calc(100% - 16px);
   box-sizing: border-box;
   margin: 0 8px 8px;
-  padding: 8px;
-  border-radius: 8px;
+  padding: 10px;
+  border-radius: 12px;
   background: rgba(255, 157, 72, 0.12);
-  border: 1px solid rgba(255, 179, 108, 0.6);
+  border: 1px solid rgba(255, 179, 108, 0.45);
   color: inherit;
   font-size: 12px;
   font-weight: 600;
@@ -1161,9 +1261,9 @@ const CustomPointRow = styled.div`
   input {
     flex: 1;
     min-width: 0;
-    padding: 6px 8px;
-    border: 1px solid rgba(255, 179, 108, 0.6);
-    border-radius: 6px;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 179, 108, 0.5);
+    border-radius: 10px;
     background: ${listTheme("#0b0f14", "#ffffff")};
     color: ${listTheme("#f4f2f2", "#0b1220")};
     font-size: 13px;
@@ -1377,6 +1477,41 @@ const LIST_MOTION = {
 };
 
 // Пошук завершився, а міст немає: «Здається, місто «коо» не існує…»
+// «Немає вашого міста чи села?» — внизу списку й у порожньому результаті пошуку
+const MissingPlaceHint = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  width: calc(100% - 12px);
+  box-sizing: border-box;
+  margin: 4px 6px 6px;
+  padding: 8px 10px;
+  border: 1px dashed ${listTheme("rgba(0, 255, 229, 0.45)", "rgba(3, 105, 161, 0.5)")};
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: ${listTheme("rgba(255, 255, 255, 0.85)", "rgba(15, 23, 42, 0.85)")};
+
+  span {
+    flex: 1 1 200px;
+  }
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    background: #00b8a9;
+    color: #001a18;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+`;
+
 const SearchEmptyNote = styled.div`
   display: flex;
   gap: 10px;
@@ -1436,11 +1571,17 @@ const CoordStatus = styled.div`
   width: 100%;
   box-sizing: border-box;
   min-height: calc(2 * 1.4em + 12px);
-  padding: 6px 10px;
-  font-size: 12px;
+  width: calc(100% - 16px);
+  margin: 8px 8px 4px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: ${(p) => (p.$isDarkMode === false ? "rgba(0, 0, 0, 0.04)" : "rgba(255, 255, 255, 0.05)")};
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.4;
   text-align: center;
+  transition: background-color 0.25s ease, color 0.25s ease;
   color: ${(p) =>
     ({
       searching: p.$isDarkMode === false ? "#0369a1" : "#38bdf8",
@@ -1449,9 +1590,17 @@ const CoordStatus = styled.div`
       error: p.$isDarkMode === false ? "#b91c1c" : "#ff6b6b",
     })[p.$type] || "inherit"};
 
+  ${(p) =>
+    ({
+      found: "background: rgba(74, 222, 128, 0.12); border-color: rgba(74, 222, 128, 0.35);",
+      searching: "background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3);",
+      none: "background: rgba(255, 179, 108, 0.12); border-color: rgba(255, 179, 108, 0.35);",
+      error: "background: rgba(255, 107, 107, 0.12); border-color: rgba(255, 107, 107, 0.35);",
+    })[p.$type] || ""}
+
   svg {
     flex-shrink: 0;
-    font-size: 16px;
+    font-size: 18px;
   }
 
   .spin {
@@ -1464,31 +1613,42 @@ const CloseListButton = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  width: calc(100% - 12px);
-  margin: 4px 6px 2px;
-  padding: 9px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  color: ${UI.accentText};
+  gap: 8px;
+  align-self: center;
+  justify-self: center;
+  margin: 8px auto 6px;
+  padding: 9px 22px;
+  border: 1px solid ${listTheme("rgba(255, 255, 255, 0.2)", "rgba(0, 0, 0, 0.16)")};
+  border-radius: 999px;
+  background: ${listTheme("rgba(255, 255, 255, 0.07)", "rgba(0, 0, 0, 0.04)")};
+  color: ${UI.text};
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.15s ease, color 0.18s ease;
+
+  svg {
+    font-size: 18px;
+    transition: transform 0.25s ease;
+  }
 
   @media (hover: hover) {
     &:hover {
-      background: ${UI.hover};
+      border-color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.14);
+      color: ${listTheme("#ffb3b3", "#b91c1c")};
+      svg {
+        transform: rotate(90deg);
+      }
     }
   }
   &:active {
-    background: ${UI.pressed};
+    transform: scale(0.95);
   }
   &:focus-visible {
     outline: 2px solid ${UI.accent};
-    outline-offset: -2px;
+    outline-offset: 2px;
   }
 `;
 
@@ -1772,7 +1932,7 @@ const Hero = ({
     const handleAutoKonotop = () => {
       setInputValue(i18n.t("ui.Hero.konotop"));
       setTimeout(() => {
-        onAddCity({ name: i18n.t("ui.Hero.konotop"), fullName: "Конотоп (UA)", lat: 51.24, lon: 33.20 });
+        onAddCity({ name: i18n.t("ui.Hero.konotop"), fullName: "Конотоп, Сумська область (UA)", lat: 51.24, lon: 33.20 });
       }, 2000);
     };
     window.addEventListener("domino-auto-input-konotop", handleAutoKonotop);
@@ -2033,6 +2193,29 @@ const Hero = ({
     setHeroBgFocal2({ x: 50, y: 50 });
   };
 
+  // Вибір точки на мапі: після вибору перемикаємось у режим координат і одразу шукаємо
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [autoCoordSearch, setAutoCoordSearch] = useState(false);
+  const openMapPicker = (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    setShowList(false);
+    setIsMapOpen(true);
+  };
+  const handleMapPick = (lat, lon) => {
+    setIsMapOpen(false);
+    if (searchMode !== "coordinates") {
+      setSearchMode("coordinates");
+      setInputValue("");
+      setSuggestions([]);
+      setShowList(false);
+    }
+    setShowCoordinateSuggestions(false);
+    setLatitude(lat.toFixed(4));
+    setLongitude(lon.toFixed(4));
+    setAutoCoordSearch(true);
+  };
+
   const [coordinateSuggestions, setCoordinateSuggestions] = useState([]);
   const [showCoordinateSuggestions, setShowCoordinateSuggestions] =
     useState(false);
@@ -2079,7 +2262,8 @@ const Hero = ({
     // Назви в базі лише українські — іншими мовами беремо тільки геокодер
     const localMatches = (geoLang === "uk" ? searchLocalCities(UKRAINE_CITIES_40, cleanValue) : []).map((c) => ({
       name: c.name,
-      state: i18n.t("ui.Hero.ukraina"),
+      // Область з бази («Сумська область»), а не просто «Україна» — так видно, яке це місто
+      state: getCityRegion(c) || i18n.t("ui.Hero.ukraina"),
       country: "UA",
       lat: c.lat,
       lon: c.lon,
@@ -2100,7 +2284,8 @@ const Hero = ({
       const apiResults = (Array.isArray(data?.results) ? data.results : []).map(
         (r) => ({
           name: r.name,
-          state: r.admin1,
+          // Район + область: сіл із однаковою назвою (Попівка) десятки, тож без району їх не розрізнити
+          state: [...new Set([r.admin2, r.admin1].filter(Boolean))].join(", "),
           country: r.country_code,
           lat: r.latitude,
           lon: r.longitude,
@@ -2312,6 +2497,23 @@ const Hero = ({
       lon: point.lon,
     });
   };
+
+  // Координати з мапи вже в полях — запускаємо пошук поруч
+  useEffect(() => {
+    if (!autoCoordSearch) return;
+    setAutoCoordSearch(false);
+    handleSelectByCoordinates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCoordSearch]);
+
+  const missingPlaceHint = (
+    <MissingPlaceHint $isDarkMode={isDarkMode}>
+      <span>{t("hero.mapPicker.missingHint")}</span>
+      <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={openMapPicker}>
+        <MdMap aria-hidden="true" /> {t("hero.mapPicker.pickOnMap")}
+      </button>
+    </MissingPlaceHint>
+  );
 
   const getCityKey = (city) => `${city.lat.toFixed(3)},${city.lon.toFixed(3)}`;
 
@@ -2820,6 +3022,7 @@ const Hero = ({
                         {t("hero.search.endOfList")}
                       </LoadMoreButton>
                     )}
+                    {missingPlaceHint}
                   </MotionSuggestionsList>
                 )}
                 {showList && suggestions.length === 0 && searchEmpty && (
@@ -2846,6 +3049,7 @@ const Hero = ({
                         </div>
                       </SearchEmptyNote>
                     )}
+                    {searchEmpty.reason !== "error" && missingPlaceHint}
                   </MotionSuggestionsList>
                 )}
                 </AnimatePresence>
@@ -2858,8 +3062,9 @@ const Hero = ({
             <HeroFormater>
               {/* Список результатів — одразу під полями, поверх короткої погоди (як у пошуку за назвою) */}
               <CoordSearchArea>
-              <CoordinatesContainer style={{ alignItems: "flex-start" }}>
+              <CoordinatesContainer>
                 <CoordinateInput $isDarkMode={isDarkMode}>
+                  <MdSwapVert aria-hidden="true" />
                   <input
                     type="number"
                     value={latitude}
@@ -2875,6 +3080,7 @@ const Hero = ({
                   />
                 </CoordinateInput>
                 <CoordinateInput $isDarkMode={isDarkMode}>
+                  <MdSwapHoriz aria-hidden="true" />
                   <input
                     type="number"
                     value={longitude}
@@ -2896,6 +3102,10 @@ const Hero = ({
                 >
                   <MdSearch />
                   {t("hero.coords.find")}
+                </CoordinateSearchButton>
+                <CoordinateSearchButton type="button" data-secondary $isDarkMode={isDarkMode} onClick={openMapPicker} disabled={isSearchingNearby}>
+                  <MdMap />
+                  {t("hero.mapPicker.pickOnMap")}
                 </CoordinateSearchButton>
               </CoordinatesContainer>
               <AnimatePresence>
@@ -3056,6 +3266,16 @@ const Hero = ({
 
 
 
+      {isMapOpen && (
+        <Suspense fallback={null}>
+          <MapPicker
+            initial={{ lat: parseFloat(latitude), lon: parseFloat(longitude) }}
+            isDarkMode={isDarkMode}
+            onPick={handleMapPick}
+            onClose={() => setIsMapOpen(false)}
+          />
+        </Suspense>
+      )}
       {isAiModalOpen && createPortal(
         <AiModalBackdrop onClick={() => setIsAiModalOpen(false)}>
           <AiModalContainer onClick={(e) => e.stopPropagation()}>

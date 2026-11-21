@@ -1723,7 +1723,9 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
               const isActive = index === activeIndex;
               // «Жмеринка (Вінницька обл., Україна)» → назва + «Вінницька обл., Україна»;
               // без дужок — як раніше, по першій комі
-              const paren = label.match(/^(.*?)\s*\((.*)\)\s*$/);
+              // (лише формат бази з областю; у «Попівка, … район, … область (UA)» дужки — код країни)
+              const parenAll = label.match(/^(.*?)\s*\((.*)\)\s*$/);
+              const paren = parenAll && /обл\.|Україна/.test(parenAll[2]) ? parenAll : null;
               const [cityName, ...rest] = paren ? [paren[1]] : label.split(",");
               const cityRest = paren ? paren[2].trim() : rest.join(",").trim();
               const cardId = items[index]?.id;

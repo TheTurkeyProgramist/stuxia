@@ -34,6 +34,14 @@
       "added": "Yapasqa",
       "exists": "Tarjeta kan"
     },
+    "mapPicker": {
+      "missingHint": "¿Manachu llaqtaykita utaq llaqtachaykita tarinki? Qayllapi llaqtata qillqay utaq coordenadas modopi ñawpaqta ruway — mapapi ñit'iylla.",
+      "pickOnMap": "Mapapi akllay",
+      "title": "Mapapi huk ñawpaqta akllay",
+      "hint": "Mapata ñit'iy — coordenadaskuna kikinmanta hunt'akunqa. Ratón rueda utaq +/− yupayta tikran.",
+      "use": "Kay ñawpaqta llamk'achiy",
+      "close": "Wisq'ay"
+    },
     "coords": {
       "line": "Latitud: {{lat}}°, Longitud: {{lon}}°",
       "latPlaceholder": "Latitud: -90° manta +90° kama",

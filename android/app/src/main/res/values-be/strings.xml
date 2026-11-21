@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Надвор\'е зараз для вашага горада са «Стыхіі»</string>
+    <string name="widget_pick_city">Адкрыйце праграму, каб выбраць горад</string>
+    <string name="widget_loading">Загружаю надвор\'е…</string>
+    <string name="widget_refresh">Абнавіць</string>
+    <string name="widget_feels">Адчуваецца %1$s</string>
+    <string name="widget_wind">💨 %1$s м/с</string>
+    <string name="wmo_clear">Ясна</string>
+    <string name="wmo_cloudy">Хмарна</string>
+    <string name="wmo_fog">Туман</string>
+    <string name="wmo_drizzle">Імжа</string>
+    <string name="wmo_rain">Дождж</string>
+    <string name="wmo_snow">Снег</string>
+    <string name="wmo_storm">Навальніца</string>
+</resources>

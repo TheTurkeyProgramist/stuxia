@@ -34,6 +34,14 @@
       "added": "Tillagd",
       "exists": "Kort finns"
     },
+    "mapPicker": {
+      "missingHint": "Hittar du inte din stad eller by? Ange en stad i närheten eller skapa en punkt i koordinatläget — klicka bara på kartan.",
+      "pickOnMap": "Välj på kartan",
+      "title": "Välj en punkt på kartan",
+      "hint": "Klicka på kartan — koordinaterna fylls i automatiskt. Mushjulet eller +/− ändrar zoomen.",
+      "use": "Använd den här punkten",
+      "close": "Stäng"
+    },
     "coords": {
       "line": "Latitud: {{lat}}°, Longitud: {{lon}}°",
       "latPlaceholder": "Latitud: från -90° till +90°",

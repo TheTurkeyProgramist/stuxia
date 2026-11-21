@@ -34,6 +34,14 @@
       "added": "Adicionado",
       "exists": "Cartão existe"
     },
+    "mapPicker": {
+      "missingHint": "Não encontra a sua cidade ou aldeia? Escreva uma cidade próxima ou crie um ponto no modo de coordenadas — basta clicar no mapa.",
+      "pickOnMap": "Escolher no mapa",
+      "title": "Escolha um ponto no mapa",
+      "hint": "Clique no mapa e as coordenadas preenchem-se sozinhas. A roda do rato ou +/− alteram o zoom.",
+      "use": "Usar este ponto",
+      "close": "Fechar"
+    },
     "coords": {
       "line": "Latitude: {{lat}}°, Longitude: {{lon}}°",
       "latPlaceholder": "Latitude: de -90° a +90°",

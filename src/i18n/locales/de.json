@@ -34,6 +34,14 @@
       "added": "Hinzugefügt",
       "exists": "Karte vorhanden"
     },
+    "mapPicker": {
+      "missingHint": "Ihr Ort fehlt? Geben Sie eine Stadt in der Nähe ein oder erstellen Sie einen Punkt im Koordinatenmodus — einfach auf die Karte klicken.",
+      "pickOnMap": "Auf Karte wählen",
+      "title": "Punkt auf der Karte wählen",
+      "hint": "Auf die Karte klicken — die Koordinaten werden automatisch eingetragen. Mausrad oder +/− ändern den Maßstab.",
+      "use": "Diesen Punkt verwenden",
+      "close": "Schließen"
+    },
     "coords": {
       "line": "Breite: {{lat}}°, Länge: {{lon}}°",
       "latPlaceholder": "Breite: von -90° bis +90°",

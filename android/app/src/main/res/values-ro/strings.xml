@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Vremea actuală din orașul tău, din Stykhiia</string>
+    <string name="widget_pick_city">Deschide aplicația pentru a alege un oraș</string>
+    <string name="widget_loading">Se încarcă vremea…</string>
+    <string name="widget_refresh">Reîmprospătează</string>
+    <string name="widget_feels">Se simte ca %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Senin</string>
+    <string name="wmo_cloudy">Înnorat</string>
+    <string name="wmo_fog">Ceață</string>
+    <string name="wmo_drizzle">Burniță</string>
+    <string name="wmo_rain">Ploaie</string>
+    <string name="wmo_snow">Ninsoare</string>
+    <string name="wmo_storm">Furtună</string>
+</resources>

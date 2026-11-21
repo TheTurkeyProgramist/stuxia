@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Aktuellt väder för din stad från Stykhiia</string>
+    <string name="widget_pick_city">Öppna appen för att välja stad</string>
+    <string name="widget_loading">Laddar vädret…</string>
+    <string name="widget_refresh">Uppdatera</string>
+    <string name="widget_feels">Känns som %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Klart</string>
+    <string name="wmo_cloudy">Molnigt</string>
+    <string name="wmo_fog">Dimma</string>
+    <string name="wmo_drizzle">Duggregn</string>
+    <string name="wmo_rain">Regn</string>
+    <string name="wmo_snow">Snö</string>
+    <string name="wmo_storm">Åska</string>
+</resources>

@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">A városod jelenlegi időjárása a Stykhiiából</string>
+    <string name="widget_pick_city">Nyisd meg az alkalmazást a város kiválasztásához</string>
+    <string name="widget_loading">Időjárás betöltése…</string>
+    <string name="widget_refresh">Frissítés</string>
+    <string name="widget_feels">Hőérzet %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Derült</string>
+    <string name="wmo_cloudy">Felhős</string>
+    <string name="wmo_fog">Köd</string>
+    <string name="wmo_drizzle">Szitálás</string>
+    <string name="wmo_rain">Eső</string>
+    <string name="wmo_snow">Hó</string>
+    <string name="wmo_storm">Zivatar</string>
+</resources>

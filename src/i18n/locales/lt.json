@@ -34,6 +34,14 @@
       "added": "Pridėta",
       "exists": "Kortelė yra"
     },
+    "mapPicker": {
+      "missingHint": "Nerandate savo miesto ar kaimo? Įveskite netoliese esantį miestą arba sukurkite tašką koordinačių režimu — tiesiog spustelėkite žemėlapį.",
+      "pickOnMap": "Pasirinkti žemėlapyje",
+      "title": "Pasirinkite tašką žemėlapyje",
+      "hint": "Spustelėkite žemėlapį — koordinatės įsirašys savaime. Pelės ratukas arba +/− keičia mastelį.",
+      "use": "Naudoti šį tašką",
+      "close": "Uždaryti"
+    },
     "coords": {
       "line": "Platuma: {{lat}}°, Ilguma: {{lon}}°",
       "latPlaceholder": "Platuma: nuo -90° iki +90°",

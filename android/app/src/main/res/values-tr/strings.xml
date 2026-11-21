@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Stykhiia\'dan şehrinizin anlık hava durumu</string>
+    <string name="widget_pick_city">Şehir seçmek için uygulamayı açın</string>
+    <string name="widget_loading">Hava durumu yükleniyor…</string>
+    <string name="widget_refresh">Yenile</string>
+    <string name="widget_feels">Hissedilen %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Açık</string>
+    <string name="wmo_cloudy">Bulutlu</string>
+    <string name="wmo_fog">Sis</string>
+    <string name="wmo_drizzle">Çiseleme</string>
+    <string name="wmo_rain">Yağmur</string>
+    <string name="wmo_snow">Kar</string>
+    <string name="wmo_storm">Gök gürültülü fırtına</string>
+</resources>

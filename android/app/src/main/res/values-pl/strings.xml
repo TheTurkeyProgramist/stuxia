@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Aktualna pogoda dla Twojego miasta ze Stykhii</string>
+    <string name="widget_pick_city">Otwórz aplikację, aby wybrać miasto</string>
+    <string name="widget_loading">Wczytuję pogodę…</string>
+    <string name="widget_refresh">Odśwież</string>
+    <string name="widget_feels">Odczuwalna %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Bezchmurnie</string>
+    <string name="wmo_cloudy">Pochmurno</string>
+    <string name="wmo_fog">Mgła</string>
+    <string name="wmo_drizzle">Mżawka</string>
+    <string name="wmo_rain">Deszcz</string>
+    <string name="wmo_snow">Śnieg</string>
+    <string name="wmo_storm">Burza</string>
+</resources>

@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Стихія 1.0</string>
-    <string name="title_activity_main">Стихія 1.0</string>
-    <string name="package_name">com.stuxia.app</string>
-    <string name="custom_url_scheme">com.stuxia.app</string>
+    <string name="app_name" translatable="false">Стихія 1.0</string>
+    <string name="title_activity_main" translatable="false">Стихія 1.0</string>
+    <string name="package_name" translatable="false">com.stuxia.app</string>
+    <string name="custom_url_scheme" translatable="false">com.stuxia.app</string>
     <string name="widget_description">Погода зараз для вашого міста зі «Стихії»</string>
     <string name="widget_pick_city">Відкрийте застосунок, щоб вибрати місто</string>
     <string name="widget_loading">Завантажую погоду…</string>

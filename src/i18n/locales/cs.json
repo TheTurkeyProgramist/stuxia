@@ -34,6 +34,14 @@
       "added": "Přidáno",
       "exists": "Karta existuje"
     },
+    "mapPicker": {
+      "missingHint": "Chybí vaše město nebo vesnice? Zadejte blízké město nebo vytvořte bod v režimu souřadnic — stačí kliknout na mapu.",
+      "pickOnMap": "Vybrat na mapě",
+      "title": "Vyberte bod na mapě",
+      "hint": "Klikněte na mapu — souřadnice se doplní samy. Kolečko myši nebo +/− mění měřítko.",
+      "use": "Použít tento bod",
+      "close": "Zavřít"
+    },
     "coords": {
       "line": "Šířka: {{lat}}°, Délka: {{lon}}°",
       "latPlaceholder": "Šířka: od -90° do +90°",

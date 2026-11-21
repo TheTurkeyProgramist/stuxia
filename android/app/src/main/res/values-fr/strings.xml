@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Météo actuelle de votre ville avec Stykhiia</string>
+    <string name="widget_pick_city">Ouvrez l\'application pour choisir une ville</string>
+    <string name="widget_loading">Chargement de la météo…</string>
+    <string name="widget_refresh">Actualiser</string>
+    <string name="widget_feels">Ressenti %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Dégagé</string>
+    <string name="wmo_cloudy">Nuageux</string>
+    <string name="wmo_fog">Brouillard</string>
+    <string name="wmo_drizzle">Bruine</string>
+    <string name="wmo_rain">Pluie</string>
+    <string name="wmo_snow">Neige</string>
+    <string name="wmo_storm">Orage</string>
+</resources>

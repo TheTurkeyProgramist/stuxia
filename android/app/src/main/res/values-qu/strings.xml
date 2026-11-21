@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Llaqtaykipa kunan pacha Stykhiia-manta</string>
+    <string name="widget_pick_city">Aplicacionta kichay llaqtata akllanaykipaq</string>
+    <string name="widget_loading">Pachata apamushan…</string>
+    <string name="widget_refresh">Musuqchay</string>
+    <string name="widget_feels">Sientekun %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Pacha q\'illu</string>
+    <string name="wmo_cloudy">Phuyusqa</string>
+    <string name="wmo_fog">Phuyu</string>
+    <string name="wmo_drizzle">Ñuñu para</string>
+    <string name="wmo_rain">Para</string>
+    <string name="wmo_snow">Rit\'i</string>
+    <string name="wmo_storm">Illapa</string>
+</resources>

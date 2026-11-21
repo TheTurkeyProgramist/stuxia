@@ -34,6 +34,14 @@
       "added": "Ajouté",
       "exists": "Carte existante"
     },
+    "mapPicker": {
+      "missingHint": "Votre ville ou village est introuvable ? Saisissez une ville proche ou créez un point en mode coordonnées — il suffit de cliquer sur la carte.",
+      "pickOnMap": "Choisir sur la carte",
+      "title": "Choisissez un point sur la carte",
+      "hint": "Cliquez sur la carte : les coordonnées se remplissent toutes seules. La molette ou +/− changent l'échelle.",
+      "use": "Utiliser ce point",
+      "close": "Fermer"
+    },
     "coords": {
       "line": "Latitude : {{lat}}°, Longitude : {{lon}}°",
       "latPlaceholder": "Latitude : de -90° à +90°",

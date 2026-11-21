@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Aktuální počasí pro vaše město ze Stykhiie</string>
+    <string name="widget_pick_city">Otevřete aplikaci a vyberte město</string>
+    <string name="widget_loading">Načítám počasí…</string>
+    <string name="widget_refresh">Obnovit</string>
+    <string name="widget_feels">Pocitově %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Jasno</string>
+    <string name="wmo_cloudy">Oblačno</string>
+    <string name="wmo_fog">Mlha</string>
+    <string name="wmo_drizzle">Mrholení</string>
+    <string name="wmo_rain">Déšť</string>
+    <string name="wmo_snow">Sníh</string>
+    <string name="wmo_storm">Bouřka</string>
+</resources>

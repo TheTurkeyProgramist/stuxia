@@ -34,6 +34,14 @@
       "added": "Aggiunta",
       "exists": "Scheda presente"
     },
+    "mapPicker": {
+      "missingHint": "Non trovi la tua città o il tuo paese? Inserisci una città vicina o crea un punto in modalità coordinate: basta cliccare sulla mappa.",
+      "pickOnMap": "Scegli sulla mappa",
+      "title": "Scegli un punto sulla mappa",
+      "hint": "Clicca sulla mappa: le coordinate si compilano da sole. La rotellina o +/− cambiano lo zoom.",
+      "use": "Usa questo punto",
+      "close": "Chiudi"
+    },
     "coords": {
       "line": "Latitudine: {{lat}}°, Longitudine: {{lon}}°",
       "latPlaceholder": "Latitudine: da -90° a +90°",

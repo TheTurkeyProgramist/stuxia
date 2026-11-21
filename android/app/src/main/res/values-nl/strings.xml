@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Actueel weer voor uw stad van Stykhiia</string>
+    <string name="widget_pick_city">Open de app om een stad te kiezen</string>
+    <string name="widget_loading">Weer laden…</string>
+    <string name="widget_refresh">Vernieuwen</string>
+    <string name="widget_feels">Voelt als %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Helder</string>
+    <string name="wmo_cloudy">Bewolkt</string>
+    <string name="wmo_fog">Mist</string>
+    <string name="wmo_drizzle">Motregen</string>
+    <string name="wmo_rain">Regen</string>
+    <string name="wmo_snow">Sneeuw</string>
+    <string name="wmo_storm">Onweer</string>
+</resources>

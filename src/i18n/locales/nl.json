@@ -34,6 +34,14 @@
       "added": "Toegevoegd",
       "exists": "Kaart bestaat"
     },
+    "mapPicker": {
+      "missingHint": "Mist uw stad of dorp? Voer een stad in de buurt in of maak een punt in de coördinatenmodus — klik gewoon op de kaart.",
+      "pickOnMap": "Kies op kaart",
+      "title": "Kies een punt op de kaart",
+      "hint": "Klik op de kaart: de coördinaten worden automatisch ingevuld. Muiswiel of +/− verandert de zoom.",
+      "use": "Dit punt gebruiken",
+      "close": "Sluiten"
+    },
     "coords": {
       "line": "Breedte: {{lat}}°, Lengte: {{lon}}°",
       "latPlaceholder": "Breedte: van -90° tot +90°",

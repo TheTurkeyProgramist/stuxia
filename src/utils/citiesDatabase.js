@@ -1244,6 +1244,16 @@ export const getCityLocative = (city) => {
 };
 
 /**
+ * Область міста для списку пошуку й назви картки: «Конотоп (Сумська обл., Україна)» →
+ * «Сумська область». Без області (Київ, Севастополь) — null.
+ */
+export const getCityRegion = (city) => {
+  const inner = (city?.fullName || "").match(/\(([^)]+)\)/)?.[1] || "";
+  const first = inner.split(",")[0].trim();
+  return /обл\./.test(first) ? first.replace(/обл\./, "область") : null;
+};
+
+/**
  * Тексти сторінки міста для Google — ЄДИНЕ джерело для статичних сторінок
  * /pohoda/<slug>/ (vite.config.mjs) і для застосунку (App.jsx), щоб після
  * завантаження JS заголовок не мінявся на інший.

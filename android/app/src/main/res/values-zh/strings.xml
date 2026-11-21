@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">来自 Stykhiia 的城市实时天气</string>
+    <string name="widget_pick_city">打开应用以选择城市</string>
+    <string name="widget_loading">正在加载天气…</string>
+    <string name="widget_refresh">刷新</string>
+    <string name="widget_feels">体感 %1$s</string>
+    <string name="widget_wind">💨 %1$s 米/秒</string>
+    <string name="wmo_clear">晴</string>
+    <string name="wmo_cloudy">多云</string>
+    <string name="wmo_fog">雾</string>
+    <string name="wmo_drizzle">毛毛雨</string>
+    <string name="wmo_rain">雨</string>
+    <string name="wmo_snow">雪</string>
+    <string name="wmo_storm">雷暴</string>
+</resources>

@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Τρέχων καιρός για την πόλη σας από το Stykhiia</string>
+    <string name="widget_pick_city">Ανοίξτε την εφαρμογή για να επιλέξετε πόλη</string>
+    <string name="widget_loading">Φόρτωση καιρού…</string>
+    <string name="widget_refresh">Ανανέωση</string>
+    <string name="widget_feels">Αίσθηση %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Αίθριος</string>
+    <string name="wmo_cloudy">Συννεφιά</string>
+    <string name="wmo_fog">Ομίχλη</string>
+    <string name="wmo_drizzle">Ψιλόβροχο</string>
+    <string name="wmo_rain">Βροχή</string>
+    <string name="wmo_snow">Χιόνι</string>
+    <string name="wmo_storm">Καταιγίδα</string>
+</resources>

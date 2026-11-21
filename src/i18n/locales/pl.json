@@ -34,6 +34,14 @@
       "added": "Dodano",
       "exists": "Karta istnieje"
     },
+    "mapPicker": {
+      "missingHint": "Nie ma Twojej miejscowości? Wpisz pobliskie miasto lub utwórz punkt w trybie współrzędnych — wystarczy kliknąć na mapie.",
+      "pickOnMap": "Wybierz na mapie",
+      "title": "Wybierz punkt na mapie",
+      "hint": "Kliknij mapę — współrzędne uzupełnią się same. Kółko myszy lub przyciski +/− zmieniają skalę.",
+      "use": "Użyj tego punktu",
+      "close": "Zamknij"
+    },
     "coords": {
       "line": "Szerokość: {{lat}}°, Długość: {{lon}}°",
       "latPlaceholder": "Szerokość: od -90° do +90°",

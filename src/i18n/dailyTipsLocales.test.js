@@ -19,3 +19,17 @@ describe("newsWeather.dailyTips у локалях", () => {
     });
   }
 });
+
+// Підказка «Немає вашого міста?» і мапа вибору точки (hero.mapPicker)
+describe("hero.mapPicker у локалях", () => {
+  const mp = (f) => JSON.parse(readFileSync(join(dir, f), "utf8")).hero?.mapPicker;
+  const uk = mp("uk.json");
+  for (const f of files) {
+    it(`${f}: усі ключі мапи на місці й не порожні`, () => {
+      const m = mp(f);
+      expect(m).toBeDefined();
+      expect(Object.keys(m).sort()).toEqual(Object.keys(uk).sort());
+      for (const k of Object.keys(uk)) expect(String(m[k]).trim().length).toBeGreaterThan(0);
+    });
+  }
+});

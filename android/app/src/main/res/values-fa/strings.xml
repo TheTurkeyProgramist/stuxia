@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">آب‌وهوای کنونی شهر شما از «استیخیا»</string>
+    <string name="widget_pick_city">برای انتخاب شهر برنامه را باز کنید</string>
+    <string name="widget_loading">در حال بارگذاری آب‌وهوا…</string>
+    <string name="widget_refresh">به‌روزرسانی</string>
+    <string name="widget_feels">احساس‌شده %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">صاف</string>
+    <string name="wmo_cloudy">ابری</string>
+    <string name="wmo_fog">مه</string>
+    <string name="wmo_drizzle">نم‌نم باران</string>
+    <string name="wmo_rain">باران</string>
+    <string name="wmo_snow">برف</string>
+    <string name="wmo_storm">رعدوبرق</string>
+</resources>

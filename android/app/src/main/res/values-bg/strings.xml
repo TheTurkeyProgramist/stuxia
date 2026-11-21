@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Времето сега за вашия град от «Стихия»</string>
+    <string name="widget_pick_city">Отворете приложението, за да изберете град</string>
+    <string name="widget_loading">Зареждам времето…</string>
+    <string name="widget_refresh">Обнови</string>
+    <string name="widget_feels">Усеща се %1$s</string>
+    <string name="widget_wind">💨 %1$s м/с</string>
+    <string name="wmo_clear">Ясно</string>
+    <string name="wmo_cloudy">Облачно</string>
+    <string name="wmo_fog">Мъгла</string>
+    <string name="wmo_drizzle">Ръмене</string>
+    <string name="wmo_rain">Дъжд</string>
+    <string name="wmo_snow">Сняг</string>
+    <string name="wmo_storm">Гръмотевична буря</string>
+</resources>

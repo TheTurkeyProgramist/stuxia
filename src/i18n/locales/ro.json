@@ -34,6 +34,14 @@
       "added": "Adăugat",
       "exists": "Card existent"
     },
+    "mapPicker": {
+      "missingHint": "Nu vă găsiți orașul sau satul? Introduceți un oraș din apropiere sau creați un punct în modul coordonate — puteți doar să apăsați pe hartă.",
+      "pickOnMap": "Alege pe hartă",
+      "title": "Alegeți un punct pe hartă",
+      "hint": "Apăsați pe hartă — coordonatele se completează singure. Rotița mouse-ului sau +/− schimbă zoom-ul.",
+      "use": "Folosește acest punct",
+      "close": "Închide"
+    },
     "coords": {
       "line": "Latitudine: {{lat}}°, Longitudine: {{lon}}°",
       "latPlaceholder": "Latitudine: de la -90° la +90°",

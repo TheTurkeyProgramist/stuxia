@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="widget_description">Cimilada hadda ee magaaladaada oo ka timid Stykhiia</string>
+    <string name="widget_pick_city">Fur app-ka si aad magaalo u doorato</string>
+    <string name="widget_loading">Cimilada waa la soo raraya…</string>
+    <string name="widget_refresh">Cusboonaysii</string>
+    <string name="widget_feels">Dareen ahaan %1$s</string>
+    <string name="widget_wind">💨 %1$s m/s</string>
+    <string name="wmo_clear">Cad</string>
+    <string name="wmo_cloudy">Daruur leh</string>
+    <string name="wmo_fog">Ceeryaamo</string>
+    <string name="wmo_drizzle">Dhibco roob ah</string>
+    <string name="wmo_rain">Roob</string>
+    <string name="wmo_snow">Baraf</string>
+    <string name="wmo_storm">Onkod</string>
+</resources>
