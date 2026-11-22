@@ -368,7 +368,9 @@ export default defineConfig(({ mode }) => {
         ],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//, /\.[a-z0-9]+$/i],
+        // Сторінки міст (/pohoda/<slug>/, /en/<slug>/) — власні статичні HTML з SEO-тегами,
+        // не підміняти їх загальним index.html
+        navigateFallbackDenylist: [/^\/api\//, /\.[a-z0-9]+$/i, /^\/pohoda\//, /^\/[a-z]{2}\/[a-z-]+\/?$/],
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
