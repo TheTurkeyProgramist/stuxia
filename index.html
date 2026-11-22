@@ -181,6 +181,16 @@
     <script type="module" src="/src/index.jsx"></script>
     <script>
       if ("serviceWorker" in navigator) {
+        // Новий SW перехопив сторінку (skipWaiting + clientsClaim) — перезавантажуємо,
+        // інакше вкладка лишається на старій збірці, чиїх файлів на сервері вже немає.
+        // Перший візит (контролера ще не було) не чіпаємо.
+        var hadSwController = !!navigator.serviceWorker.controller;
+        var swReloaded = false;
+        navigator.serviceWorker.addEventListener("controllerchange", function () {
+          if (!hadSwController || swReloaded) return;
+          swReloaded = true;
+          window.location.reload();
+        });
         window.addEventListener("load", function () {
           navigator.serviceWorker
             .register("/sw.js")

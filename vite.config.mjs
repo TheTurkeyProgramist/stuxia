@@ -353,6 +353,10 @@ export default defineConfig(({ mode }) => {
         // Firebase і ШІ без мережі все одно не працюють — не витрачаємо на них трафік наперед
         globIgnores: [
           '**/stats.html', '**/pohoda/**', 'og-image.png', 'icons/new/**',
+          // Сторінки міст 25 мовами (/en/konotop/index.html …) — ~3900 файлів, ще й із редиректом 308.
+          // У precache вони роблять установку нового SW нескінченною — і люди застрягали на старій
+          // збірці з ключами замість перекладів. Наперед кешуємо лише кореневий index.html
+          '*/**/*.html',
           '**/vendor-firebase-*.js', '**/vendor-ai-*.js',
           // Офлайн-ШІ (WebLLM ~7 МБ) качаємо лише тим, хто його ввімкне
           '**/vendor-webllm-*.js', '**/offlineLlm.worker-*.js',
