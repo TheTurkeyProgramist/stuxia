@@ -3391,8 +3391,11 @@ const HOLIDAYS_2027 = {
             borderColor: rightBorder(lineStyles.daily.right, dailyOpacity.wind, `rgba(0, 153, 255, ${dailyOpacity.wind})`),
             backgroundColor: `rgba(0, 153, 255, ${dailyOpacity.wind * 0.2})`,
             hidden: dailyOpacity.wind === 0,
+            // Дні 17–28 (EC46) без напрямку — звичайна точка замість стрілки «на північ»
             pointStyle: dailyList?.map((d) =>
-              createDirectionArrowCanvas(d.wind_direction_10m, 22, dailyOpacity.wind, parseFloat(d.wind_speed) > 10),
+              d.wind_direction_10m == null
+                ? "circle"
+                : createDirectionArrowCanvas(d.wind_direction_10m, 22, dailyOpacity.wind, parseFloat(d.wind_speed) > 10),
             ),
             pointBorderColor: "#ffffff",
             pointBorderWidth: 1.5,
@@ -4567,8 +4570,8 @@ const HOLIDAYS_2027 = {
                     value: fmt.wind(d.wind_speed ?? 0),
                     // Напрям — скорочено (Пд-Сх), повна назва в підказці
                     sub: (
-                      <span title={windText}>
-                        {getWindDirectionShort(windDeg)}
+                      <span title={d.wind_direction_10m != null ? windText : undefined}>
+                        {d.wind_direction_10m != null && getWindDirectionShort(windDeg)}
                         {d.wind_gusts_max != null && (
                           <span style={{ display: "block", color: "#ff9900", fontWeight: 600, opacity: 1, whiteSpace: "nowrap" }}>{i18n.t("newsWeather.Weather.por")} {fmt.wind(d.wind_gusts_max)}</span>
                         )}
@@ -4831,13 +4834,18 @@ const HOLIDAYS_2027 = {
                 <div style={{ width: "85%", height: "1px", background: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)", margin: "1px 0" }} />
 
                 <div style={{ fontSize: "11px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: "700", color: "#0099ff" }}>
-                    {i18n.t("newsWeather.Weather.napriamok")} <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "13px" }}>⬇</span>
-                  </div>
+                  {d.wind_direction_10m != null && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: "700", color: "#0099ff" }}>
+                      {i18n.t("newsWeather.Weather.napriamok")} <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "13px" }}>⬇</span>
+                    </div>
+                  )}
                   <div style={{ fontSize: "10px" }}><span>{i18n.t("newsWeather.Weather.sylaVitru")} {d.wind_speed || "0"}</span></div>
-                  <div style={{ fontSize: "10px" }}>
-                    {windText} ({Math.round(windDeg)}°)
-                  </div>
+                  {/* Дні 17–28 (EC46) без напрямку вітру — не показуємо вигаданий «Північний (0°)» */}
+                  {d.wind_direction_10m != null && (
+                    <div style={{ fontSize: "10px" }}>
+                      {windText} ({Math.round(windDeg)}°)
+                    </div>
+                  )}
                 </div>
               </div>
             );
