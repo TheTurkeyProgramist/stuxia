@@ -1533,7 +1533,11 @@
       "hideVerb": "hide",
       "showVerb": "show",
       "dayLonger": "The day is {{Math}} min longer than yesterday",
-      "dayShorter": "The day is {{Math}} min shorter than yesterday"
+      "dayShorter": "The day is {{Math}} min shorter than yesterday",
+      "extendedBadge": "trend",
+      "extendedSpread": "Ensemble daytime spread: {{lo}} to {{hi}}",
+      "extendedShow": "Show 28 days: days 17–28 are the ECMWF EC46 ensemble trend (marked ≈, dashed)",
+      "extendedHide": "Hide days 17–28 — keep the precise 16 days"
     },
     "WeatherTurkey": {
       "sunny": "Domino is basking in the sun",

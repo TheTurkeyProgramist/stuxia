@@ -1533,7 +1533,11 @@
       "hideVerb": "paslėptumėte",
       "showVerb": "parodytumėte",
       "dayLonger": "Diena {{Math}} min ilgesnė nei vakar",
-      "dayShorter": "Diena {{Math}} min trumpesnė nei vakar"
+      "dayShorter": "Diena {{Math}} min trumpesnė nei vakar",
+      "extendedBadge": "tendencija",
+      "extendedSpread": "Ansamblio sklaida dieną: nuo {{lo}} iki {{hi}}",
+      "extendedShow": "Rodyti 28 dienas: 17–28 dienos — ECMWF EC46 ansamblio tendencija (ženklas ≈, punktyras)",
+      "extendedHide": "Slėpti 17–28 dienas — palikti tikslias 16 dienų"
     },
     "WeatherTurkey": {
       "sunny": "Domino kaitinasi saulėje",

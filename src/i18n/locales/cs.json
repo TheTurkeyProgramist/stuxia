@@ -1533,7 +1533,11 @@
       "hideVerb": "skrytí",
       "showVerb": "zobrazení",
       "dayLonger": "Den je o {{Math}} min delší než včera",
-      "dayShorter": "Den je o {{Math}} min kratší než včera"
+      "dayShorter": "Den je o {{Math}} min kratší než včera",
+      "extendedBadge": "trend",
+      "extendedSpread": "Rozptyl ansámblu přes den: od {{lo}} do {{hi}}",
+      "extendedShow": "Zobrazit 28 dní: dny 17–28 jsou trend ansámblu ECMWF EC46 (značka ≈, čárkovaně)",
+      "extendedHide": "Skrýt dny 17–28 — ponechat přesných 16 dní"
     },
     "WeatherTurkey": {
       "sunny": "Domino se vyhřívá na sluníčku",

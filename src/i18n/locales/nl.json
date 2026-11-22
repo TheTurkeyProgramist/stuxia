@@ -1533,7 +1533,11 @@
       "hideVerb": "verbergen",
       "showVerb": "tonen",
       "dayLonger": "De dag is {{Math}} min langer dan gisteren",
-      "dayShorter": "De dag is {{Math}} min korter dan gisteren"
+      "dayShorter": "De dag is {{Math}} min korter dan gisteren",
+      "extendedBadge": "trend",
+      "extendedSpread": "Spreiding van het ensemble overdag: {{lo}} tot {{hi}}",
+      "extendedShow": "28 dagen tonen: dag 17–28 is de trend van het ECMWF-EC46-ensemble (teken ≈, gestippeld)",
+      "extendedHide": "Dag 17–28 verbergen — alleen de nauwkeurige 16 dagen"
     },
     "WeatherTurkey": {
       "sunny": "Domino zit lekker in de zon",

@@ -1533,7 +1533,11 @@
       "hideVerb": "隠す",
       "showVerb": "表示する",
       "dayLonger": "日の長さは昨日より{{Math}}分長い",
-      "dayShorter": "日の長さは昨日より{{Math}}分短い"
+      "dayShorter": "日の長さは昨日より{{Math}}分短い",
+      "extendedBadge": "傾向",
+      "extendedSpread": "アンサンブルの日中の幅: {{lo}}〜{{hi}}",
+      "extendedShow": "28日間を表示: 17〜28日目は ECMWF EC46 アンサンブルの傾向（≈印・破線）",
+      "extendedHide": "17〜28日目を隠す — 正確な16日間のみ"
     },
     "WeatherTurkey": {
       "sunny": "ドミノはひなたぼっこ中",

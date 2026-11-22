@@ -1533,7 +1533,11 @@
       "hideVerb": "숨겨요",
       "showVerb": "보여 줘요",
       "dayLonger": "낮이 어제보다 {{Math}}분 길어요",
-      "dayShorter": "낮이 어제보다 {{Math}}분 짧아요"
+      "dayShorter": "낮이 어제보다 {{Math}}분 짧아요",
+      "extendedBadge": "경향",
+      "extendedSpread": "앙상블 낮 기온 범위: {{lo}} ~ {{hi}}",
+      "extendedShow": "28일 보기: 17~28일은 ECMWF EC46 앙상블 경향 (≈ 표시, 점선)",
+      "extendedHide": "17~28일 숨기기 — 정확한 16일만"
     },
     "WeatherTurkey": {
       "sunny": "도미노가 햇볕을 쬐고 있어요",

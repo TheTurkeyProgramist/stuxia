@@ -1533,7 +1533,11 @@
       "hideVerb": "nascondere",
       "showVerb": "mostrare",
       "dayLonger": "Il giorno è più lungo di {{Math}} min rispetto a ieri",
-      "dayShorter": "Il giorno è più corto di {{Math}} min rispetto a ieri"
+      "dayShorter": "Il giorno è più corto di {{Math}} min rispetto a ieri",
+      "extendedBadge": "tendenza",
+      "extendedSpread": "Dispersione dell’ensemble di giorno: da {{lo}} a {{hi}}",
+      "extendedShow": "Mostra 28 giorni: i giorni 17–28 sono la tendenza dell’ensemble ECMWF EC46 (segno ≈, tratteggio)",
+      "extendedHide": "Nascondi i giorni 17–28: solo i 16 giorni precisi"
     },
     "WeatherTurkey": {
       "sunny": "Domino si scalda al sole",

@@ -1533,7 +1533,11 @@
       "hideVerb": "auszublenden",
       "showVerb": "einzublenden",
       "dayLonger": "Der Tag ist {{Math}} Min länger als gestern",
-      "dayShorter": "Der Tag ist {{Math}} Min kürzer als gestern"
+      "dayShorter": "Der Tag ist {{Math}} Min kürzer als gestern",
+      "extendedBadge": "Tendenz",
+      "extendedSpread": "Ensemble-Spanne tagsüber: {{lo}} bis {{hi}}",
+      "extendedShow": "28 Tage zeigen: Tage 17–28 sind die Tendenz des ECMWF-EC46-Ensembles (Zeichen ≈, gestrichelt)",
+      "extendedHide": "Tage 17–28 ausblenden — nur die genauen 16 Tage"
     },
     "WeatherTurkey": {
       "sunny": "Domino sonnt sich",

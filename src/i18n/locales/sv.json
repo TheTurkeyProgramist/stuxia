@@ -1533,7 +1533,11 @@
       "hideVerb": "dölja",
       "showVerb": "visa",
       "dayLonger": "Dagen är {{Math}} min längre än i går",
-      "dayShorter": "Dagen är {{Math}} min kortare än i går"
+      "dayShorter": "Dagen är {{Math}} min kortare än i går",
+      "extendedBadge": "trend",
+      "extendedSpread": "Ensemblets spridning dagtid: {{lo}} till {{hi}}",
+      "extendedShow": "Visa 28 dagar: dag 17–28 är trenden från ECMWF EC46-ensemblet (tecken ≈, streckad)",
+      "extendedHide": "Dölj dag 17–28 — bara de exakta 16 dagarna"
     },
     "WeatherTurkey": {
       "sunny": "Domino solar sig",

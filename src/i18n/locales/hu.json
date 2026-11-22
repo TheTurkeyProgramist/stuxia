@@ -1533,7 +1533,11 @@
       "hideVerb": "elrejtéséhez",
       "showVerb": "megjelenítéséhez",
       "dayLonger": "A nap {{Math}} perccel hosszabb, mint tegnap",
-      "dayShorter": "A nap {{Math}} perccel rövidebb, mint tegnap"
+      "dayShorter": "A nap {{Math}} perccel rövidebb, mint tegnap",
+      "extendedBadge": "tendencia",
+      "extendedSpread": "Az ensemble napközbeni szórása: {{lo}} és {{hi}} között",
+      "extendedShow": "28 nap mutatása: a 17–28. nap az ECMWF EC46 ensemble tendenciája (≈ jel, szaggatott)",
+      "extendedHide": "A 17–28. nap elrejtése — csak a pontos 16 nap"
     },
     "WeatherTurkey": {
       "sunny": "Domino napozik",

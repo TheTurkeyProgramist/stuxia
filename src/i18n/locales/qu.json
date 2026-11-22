@@ -1533,7 +1533,11 @@
       "hideVerb": "pakanaykipaq",
       "showVerb": "rikuchinaykipaq",
       "dayLonger": "P'unchawqa qayna p'unchawmanta {{Math}} min aswan unaymi",
-      "dayShorter": "P'unchawqa qayna p'unchawmanta {{Math}} min aswan pisim"
+      "dayShorter": "P'unchawqa qayna p'unchawmanta {{Math}} min aswan pisim",
+      "extendedBadge": "rikuy",
+      "extendedSpread": "P'unchawpi ensemble t'aqakuynin: {{lo}} manta {{hi}} kama",
+      "extendedShow": "28 p'unchawta rikuchiy: 17–28 p'unchawkunaqa ECMWF EC46 ensemblepa rikuyninmi (≈ unanchayuq, p'itiy siq'iyuq)",
+      "extendedHide": "17–28 p'unchawkunata pakay — 16 chiqap p'unchawllata"
     },
     "WeatherTurkey": {
       "sunny": "Domino intipi q’uñikushan",

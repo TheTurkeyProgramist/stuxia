@@ -1533,7 +1533,11 @@
       "hideVerb": "gizlemek",
       "showVerb": "göstermek",
       "dayLonger": "Gün dünden {{Math}} dk daha uzun",
-      "dayShorter": "Gün dünden {{Math}} dk daha kısa"
+      "dayShorter": "Gün dünden {{Math}} dk daha kısa",
+      "extendedBadge": "eğilim",
+      "extendedSpread": "Topluluk gündüz aralığı: {{lo}} ile {{hi}} arası",
+      "extendedShow": "28 günü göster: 17–28. günler ECMWF EC46 topluluk eğilimidir (≈ işareti, kesikli)",
+      "extendedHide": "17–28. günleri gizle — yalnızca kesin 16 gün"
     },
     "WeatherTurkey": {
       "sunny": "Domino güneşleniyor",

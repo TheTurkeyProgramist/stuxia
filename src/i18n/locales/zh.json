@@ -1533,7 +1533,11 @@
       "hideVerb": "隐藏",
       "showVerb": "显示",
       "dayLonger": "白昼比昨天长 {{Math}} 分钟",
-      "dayShorter": "白昼比昨天短 {{Math}} 分钟"
+      "dayShorter": "白昼比昨天短 {{Math}} 分钟",
+      "extendedBadge": "趋势",
+      "extendedSpread": "集合预报白天范围：{{lo}} 至 {{hi}}",
+      "extendedShow": "显示 28 天：第 17–28 天为 ECMWF EC46 集合预报趋势（≈ 标记、虚线）",
+      "extendedHide": "隐藏第 17–28 天——只保留精确的 16 天"
     },
     "WeatherTurkey": {
       "sunny": "多米诺在晒太阳",

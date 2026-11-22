@@ -1533,7 +1533,11 @@
       "hideVerb": "qarisid",
       "showVerb": "muujisid",
       "dayLonger": "Maalintu waa {{Math}} daqiiqo ka dheer shalay",
-      "dayShorter": "Maalintu waa {{Math}} daqiiqo ka gaaban shalay"
+      "dayShorter": "Maalintu waa {{Math}} daqiiqo ka gaaban shalay",
+      "extendedBadge": "isbeddel",
+      "extendedSpread": "Kala firdhinta kooxda maalintii: {{lo}} ilaa {{hi}}",
+      "extendedShow": "Muuji 28 maalmood: maalmaha 17–28 waa isbeddelka kooxda ECMWF EC46 (calaamad ≈, xariiq go'an)",
+      "extendedHide": "Qari maalmaha 17–28 — kaliya 16-ka maalmood ee saxda ah"
     },
     "WeatherTurkey": {
       "sunny": "Domino wuxuu qorraxda ku kululaanayaa",

@@ -29,6 +29,7 @@ import {
   BiChevronLeft,
   BiChevronRight,
   BiHistory,
+  BiCalendarPlus,
   BiLowVision,
   BiVolumeFull,
   BiStopCircle,
@@ -52,7 +53,7 @@ import {
 } from "../../utils/betaFeatures";
 import TabAutoplayControl from "./TabAutoplayControl";
 import WeatherArchive, { useArchiveMonths, ArchiveStatus, archiveMonthName } from "./WeatherArchive";
-import { setPref, removePref, subscribePrefs } from "../../utils/prefsStore";
+import { getPref, setPref, removePref, subscribePrefs } from "../../utils/prefsStore";
 import { useAnimationsDisabled } from "../../utils/animationsPref";
 import { buildForecastSpeech, getVoiceSettings, speak, stopSpeaking } from "../../utils/weatherSpeech";
 import {
@@ -63,7 +64,17 @@ import { getHourlyForecastDetailGroups } from "../../utils/hourlyForecast";
 import { generateRuleBasedForecast, badgeHas } from "../../utils/ruleBasedForecast";
 import { getFolkSigns } from "../../utils/folkSigns"; // Народні прикмети у Смарт-прогнозі
 import { localNowKey } from "../../utils/dailyTips";
-import { ddmmFromIso, isWeekendIso, dateLocale } from "../../utils/weatherText.js";
+import {
+  ddmmFromIso,
+  isWeekendIso,
+  dateLocale,
+  formatShortDate,
+  formatWeekdayShort,
+  getWeatherIcon,
+  getWeatherSummaryText,
+} from "../../utils/weatherText.js";
+import { getWeatherIconSymbol } from "../../utils/weatherIcons.jsx";
+import { fetchExtendedDays, pickExtensionDays } from "../../utils/extendedForecast"; // дні 17–28 (EC46)
 import { DEFAULT_CARD_BG, CARD_BG_CHANGE_EVENT } from "./weatherShared";
 import { getWindDirectionText, getWindDirectionShort } from "../../utils/windUtils";
 import { linearTrend } from "../../utils/chartTrend";
@@ -1395,6 +1406,7 @@ const BlockStatValue = styled.div`
     font-size: 12px;
   }
 `;
+const EXTENDED_DAYS_PREF = "dailyExtended28"; // перемикач «28 днів» (дні 17–28 — тенденція EC46)
 // Блоки 16 днів: "all" — усі в ряд, "2" — по 2 дні на сторінку
 const DAILY_BLOCKS_GAP = 10; // px між картками днів (і годин)
 const HOURLY_BLOCKS_PAGING = 2; // блоки годин гортаються парами, як дні
@@ -1767,10 +1779,59 @@ const WeatherCardComponent = ({
   const now = new Date();
   const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const isPastDay = (d) => Boolean(d?.fullDate) && d.fullDate < todayIso;
+  // Дні 17–28: тенденція ансамблю ECMWF EC46 (Seasonal API Open-Meteo, безкоштовно).
+  // Перемикач «28» спільний для всіх карток і запам'ятовується; за замовчуванням увімкнено
+  const [showExtended, setShowExtended] = useState(() => getPref(EXTENDED_DAYS_PREF) !== "false");
+  useEffect(
+    () =>
+      subscribePrefs((e) => {
+        if (e?.detail?.key === EXTENDED_DAYS_PREF) setShowExtended(getPref(EXTENDED_DAYS_PREF) !== "false");
+      }),
+    [],
+  );
+  const [extendedRaw, setExtendedRaw] = useState([]);
+  useEffect(() => {
+    if (!showExtended || !Number.isFinite(card.lat) || !Number.isFinite(card.lon)) return undefined;
+    const controller = new AbortController();
+    fetchExtendedDays(card.lat, card.lon, controller.signal)
+      .then(setExtendedRaw)
+      .catch(() => {}); // без EC46 просто лишаються 16 днів
+    return () => controller.abort();
+  }, [showExtended, card.lat, card.lon]);
+  const extendedDays = useMemo(() => {
+    if (!showExtended || !extendedRaw.length) return [];
+    const base = card.daily16 || card.daily || [];
+    const lastDate = base.length ? base[base.length - 1]?.fullDate : null;
+    const cityToday = localNowKey(card.utcOffsetSeconds).slice(0, 10);
+    return pickExtensionDays(extendedRaw, lastDate, cityToday).map((x) => ({
+      date: formatShortDate(x.fullDate),
+      fullDate: x.fullDate,
+      // «≈» видно в усіх виглядах (графік, таблиця, рядки, блоки): це тенденція, а не точний прогноз
+      day: `${formatWeekdayShort(x.fullDate)} ≈`,
+      temp_day: `${Math.round(x.tmax)}°C`,
+      temp_night: `${Math.round(x.tmin)}°C`,
+      uv_index: null,
+      wind_speed: `${x.wind ?? 0} м/с`,
+      wind_direction_10m: null,
+      wind_gusts_max: x.gusts,
+      precipitation_probability_max: x.precipProb ?? 0,
+      rain_sum: x.precip ?? 0,
+      precipitation_sum: x.precip ?? 0,
+      snowfall_sum: x.snow,
+      weather_code: x.code,
+      is_day: 1,
+      iconPlaceholder: getWeatherIcon(x.code, 1),
+      iconSymbol: getWeatherIconSymbol(x.code, 1),
+      description: getWeatherSummaryText(x.code, 1),
+      extended: true,
+      spread: { tmaxLo: x.tmaxLo, tmaxHi: x.tmaxHi, tminLo: x.tminLo, tminHi: x.tminHi },
+    }));
+  }, [showExtended, extendedRaw, card.daily16, card.daily, card.utcOffsetSeconds]);
   const dailyList = useMemo(() => {
     const all = card.daily16 || card.daily || [];
-    return showPastDay ? all : all.filter((d) => !(d?.fullDate && d.fullDate < todayIso));
-  }, [card.daily16, card.daily, showPastDay, todayIso]);
+    const shown = showPastDay ? all : all.filter((d) => !(d?.fullDate && d.fullDate < todayIso));
+    return extendedDays.length ? [...shown, ...extendedDays] : shown;
+  }, [card.daily16, card.daily, showPastDay, todayIso, extendedDays]);
   // Чи є в даних учорашній день (інакше перемикач «вчора» не показуємо)
   const hasPastDay = (card.daily16 || card.daily || []).some(isPastDay);
 
@@ -3269,6 +3330,10 @@ const HOLIDAYS_2027 = {
       ].filter(Boolean)
     : [];
 
+  // Дні 17–28 (тенденція EC46) — пунктиром
+  const extendedSegment = {
+    borderDash: (ctx) => (dailyList?.[ctx.p1DataIndex]?.extended ? [6, 4] : undefined),
+  };
   const dailyChartData = {
     labels: dailyList?.map((d) => `${d.date}\n${d.day}`) || [],
     datasets: [
@@ -3298,6 +3363,7 @@ const HOLIDAYS_2027 = {
         valueLabelColor: "#ffd2a6",
         valueLabelOpacity: dailyOpacity.day,
         ...lineStyleProps(lineStyles.daily.day, { tension: 0.3, pointRadius: 12, fill: false }),
+        segment: extendedSegment,
         yAxisID: "y",
       },
       {
@@ -3315,6 +3381,7 @@ const HOLIDAYS_2027 = {
         valueLabelColor: "#ff8fd0",
         valueLabelOpacity: dailyOpacity.night,
         ...lineStyleProps(lineStyles.daily.night, { tension: 0.3, pointRadius: 4, fill: false }),
+        segment: extendedSegment,
         yAxisID: "y",
       },
       rightMetric === "wind"
@@ -4669,6 +4736,20 @@ const HOLIDAYS_2027 = {
                   {i18n.t("newsWeather.Weather.vitaiemoZDnemNarodzhennia2")}
                 </span>
               );
+            } else if (d.extended) {
+              headerColor = isDarkMode ? "#c4b5fd" : "#6d28d9";
+              borderColor = "rgba(167, 139, 250, 0.6)";
+              badge = dayBadge(
+                i18n.t("newsWeather.Weather.extendedBadge"),
+                "#a78bfa",
+                "rgba(167, 139, 250, 0.22)",
+                d.spread
+                  ? i18n.t("newsWeather.Weather.extendedSpread", {
+                      lo: fmt.temp(d.spread.tmaxLo),
+                      hi: fmt.temp(d.spread.tmaxHi),
+                    })
+                  : undefined,
+              );
             } else if (isWeekend) {
               headerColor = "#ffb36c";
               borderColor = "rgba(255, 179, 108, 0.7)";
@@ -5642,6 +5723,26 @@ const HOLIDAYS_2027 = {
                       </ViewToggleGroup>
                     </Tooltip>
                   )}
+                  {/* Дні 17–28 (тенденція EC46) — спільний перемикач для всіх карток */}
+                  <Tooltip
+                    content={showExtended ? i18n.t("newsWeather.Weather.extendedHide") : i18n.t("newsWeather.Weather.extendedShow")}
+                    isDarkMode={isDarkMode}
+                  >
+                    <ViewToggleGroup $isDarkMode={isDarkMode}>
+                      <ViewToggleButton
+                        type="button"
+                        $active={showExtended}
+                        $isDarkMode={isDarkMode}
+                        aria-pressed={showExtended}
+                        aria-label={i18n.t("newsWeather.Weather.extendedShow")}
+                        onClick={() => setPref(EXTENDED_DAYS_PREF, showExtended ? "false" : "true")}
+                        style={{ padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: "4px", fontWeight: 700, fontSize: "12px" }}
+                      >
+                        <BiCalendarPlus size={16} />
+                        28
+                      </ViewToggleButton>
+                    </ViewToggleGroup>
+                  </Tooltip>
                   <ViewToggleGroup $isDarkMode={isDarkMode}>
                     <ViewToggleButton
                       $active={effectiveDailyViewMode === "charts"}

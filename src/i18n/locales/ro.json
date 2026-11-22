@@ -1533,7 +1533,11 @@
       "hideVerb": "ascunde",
       "showVerb": "afișa",
       "dayLonger": "Ziua e mai lungă cu {{Math}} min decât ieri",
-      "dayShorter": "Ziua e mai scurtă cu {{Math}} min decât ieri"
+      "dayShorter": "Ziua e mai scurtă cu {{Math}} min decât ieri",
+      "extendedBadge": "tendință",
+      "extendedSpread": "Dispersia ansamblului ziua: de la {{lo}} la {{hi}}",
+      "extendedShow": "Arată 28 de zile: zilele 17–28 sunt tendința ansamblului ECMWF EC46 (semn ≈, linie punctată)",
+      "extendedHide": "Ascunde zilele 17–28 — doar cele 16 zile precise"
     },
     "WeatherTurkey": {
       "sunny": "Domino se încălzește la soare",

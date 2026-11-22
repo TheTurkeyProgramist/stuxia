@@ -1533,7 +1533,11 @@
       "hideVerb": "piilottaaksesi",
       "showVerb": "näyttääksesi",
       "dayLonger": "Päivä on {{Math}} min pidempi kuin eilen",
-      "dayShorter": "Päivä on {{Math}} min lyhyempi kuin eilen"
+      "dayShorter": "Päivä on {{Math}} min lyhyempi kuin eilen",
+      "extendedBadge": "suuntaus",
+      "extendedSpread": "Parviennusteen hajonta päivällä: {{lo}} – {{hi}}",
+      "extendedShow": "Näytä 28 päivää: päivät 17–28 ovat ECMWF EC46 -parven suuntaus (merkki ≈, katkoviiva)",
+      "extendedHide": "Piilota päivät 17–28 — vain tarkat 16 päivää"
     },
     "WeatherTurkey": {
       "sunny": "Domino paistattaa auringossa",
