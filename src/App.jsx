@@ -218,7 +218,9 @@ const fetchSeasonalCached = async (lat, lon, url, serverSlug = null) => {
   return data;
 };
 // Ліміти карток погоди: власні картки (без GPS) і нові створення на добу (лічильник у Firestore)
-const MAX_CUSTOM_WEATHER_CARDS = 9;
+const MAX_CUSTOM_WEATHER_CARDS = 10;
+// Картки, що з'явились від входу за адресою (/pohoda/<місто>/): зберігаємо лише останні 4
+const MAX_URL_SEARCH_CARDS = 4;
 // Бета «Вимкнути GPS-картку»: її місце можна віддати ще одній власній картці
 const maxCustomCardsFor = (hideGpsCard) =>
   hideGpsCard ? MAX_CUSTOM_WEATHER_CARDS + 1 : MAX_CUSTOM_WEATHER_CARDS;
@@ -227,7 +229,7 @@ const cardLimitMessage = (hideGpsCard) =>
     ? i18n.t("ui.App.mozhnaMatyNeBilshe", { v0: maxCustomCardsFor(true) })
     : i18n.t("ui.App.mozhnaMatyNeBilshe2", { MAX_CUSTOM_WEATHER_CARDS: MAX_CUSTOM_WEATHER_CARDS });
 // Понад цю кількість — попередження про навантаження на пристрій
-const SOFT_CUSTOM_WEATHER_CARDS = 5;
+const SOFT_CUSTOM_WEATHER_CARDS = 7;
 const MAX_DAILY_CARD_ADDITIONS = 20;
 const Aihelp = lazyWithRetry(() => import("./components/Aihelp/Aihelp.jsx"));
 const ShopModal = lazyWithRetry(modalLoaders.shop);
@@ -3701,8 +3703,29 @@ const App = () => {
           });
 
           if (insertAtFirst) {
+            const wasManual = prev.some((c) => c.id === id && !c.isMain && !c.fromUrl);
             const filtered = prev.filter((c) => c.id !== id);
-            return [newCardData, ...filtered];
+            // Пошукові картки (з адреси) — не більше 4; найстарша з них випадає.
+            // Власні картки, додані вручну, ніколи не видаляються.
+            const urlCard = wasManual ? newCardData : { ...newCardData, fromUrl: true };
+            let urlKept = urlCard.fromUrl ? 1 : 0;
+            let customTotal = 1; // нова картка вже займає одне місце
+            const limit = maxCustomCardsFor(hideGpsCardRef.current);
+            const kept = [];
+            for (const c of filtered) {
+              if (c.isMain) { kept.push(c); continue; }
+              customTotal += 1;
+              if (c.fromUrl) {
+                urlKept += 1;
+                if (urlKept > MAX_URL_SEARCH_CARDS) { customTotal -= 1; continue; }
+              }
+              kept.push(c);
+            }
+            // Понад загальний ліміт — прибираємо з кінця лише ті, що з адреси
+            for (let i = kept.length - 1; i >= 0 && customTotal > limit; i--) {
+              if (kept[i].fromUrl) { kept.splice(i, 1); customTotal -= 1; }
+            }
+            return [urlCard, ...kept];
           }
 
           if (isMain) {
@@ -4111,6 +4134,21 @@ const App = () => {
         city.lon,
         true // insertAtFirst = true (індекс 0, для першості)
       );
+
+      // Карусель лишає активною стару (GPS) картку, тож після появи картки міста
+      // переходимо на неї явно; чекаємо, поки вона з'явиться в стані
+      let jumpTries = 0;
+      const jumpTimer = setInterval(() => {
+        jumpTries += 1;
+        if (weatherCardsRef.current.some((c) => c.id === city.id)) {
+          clearInterval(jumpTimer);
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent(WEATHER_CAROUSEL_JUMP_EVENT, { detail: { id: city.id } }));
+          }, 150);
+        } else if (jumpTries > 50) {
+          clearInterval(jumpTimer);
+        }
+      }, 200);
 
       // Автоскрол до картки погоди
       setTimeout(() => {
