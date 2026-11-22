@@ -1904,7 +1904,6 @@ const WeatherCardComponent = ({
   const [isBgModalOpen, setIsBgModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDropdownClosing, setIsDropdownClosing] = useState(false);
-  const [hasGeminiKey, setHasGeminiKey] = useState(false);
   const isAiAttached = useIsAiAttached(`weather-${card.id}`);
 
   useEffect(() => {
@@ -1951,13 +1950,6 @@ const WeatherCardComponent = ({
     if (isNaN(parseFloat(tempVal))) return tempVal;
     return fmt.temp(tempVal);
   };
-
-  useEffect(() => {
-    localforage.getItem("gemini_api_key").then((val) => setHasGeminiKey(!!val));
-    const onKeyChange = (e) => setHasGeminiKey(!!e.detail);
-    window.addEventListener("geminiKeyChanged", onKeyChange);
-    return () => window.removeEventListener("geminiKeyChanged", onKeyChange);
-  }, []);
 
 
   const handleCloseDropdown = () => {
@@ -5088,12 +5080,12 @@ const HOLIDAYS_2027 = {
                 <SettingsDropdownItem
                   onClick={() => {
                     handleCloseDropdown();
-                    // Уже прикріплена — кнопка відкріплює (відкріпити можна й без ключа)
+                    // Уже прикріплена — кнопка відкріплює. Ключ Gemini не потрібен:
+                    // у ШІ-чаті є офлайн-модель, провайдера людина обирає вже там
                     if (isAiAttached) {
                       removeAiAttachmentById(`weather-${card.id}`);
                       return;
                     }
-                    if (!hasGeminiKey) return;
                     window.dispatchEvent(
                       new CustomEvent("attachCardToAiHelp", {
                         detail: {
@@ -5111,11 +5103,9 @@ const HOLIDAYS_2027 = {
                     gap: "0",
                     background: isAiAttached
                       ? "linear-gradient(135deg, #3a3a46, #2c2c36)"
-                      : hasGeminiKey
-                      ? "linear-gradient(135deg, #5c1d3c, #62123d)"
-                      : "rgba(120,120,120,0.3)",
-                    color: hasGeminiKey || isAiAttached ? "#ffffff" : undefined,
-                    cursor: hasGeminiKey || isAiAttached ? "pointer" : "default",
+                      : "linear-gradient(135deg, #5c1d3c, #62123d)",
+                    color: "#ffffff",
+                    cursor: "pointer",
                   }}
                 >
                   {isAiAttached ? (
@@ -5126,9 +5116,7 @@ const HOLIDAYS_2027 = {
                   ) : (
                     <>
                       <FiPlus style={{ transform: "scale(1.2)" }} /> {i18n.t("newsWeather.Weather.prykripytyDoShi")}
-                      <SettingsItemHint>
-                        {hasGeminiKey ? i18n.t("newsWeather.Weather.zapytatyShiProTsiu") : i18n.t("newsWeather.Weather.potribenKliuchGemini")}
-                      </SettingsItemHint>
+                      <SettingsItemHint>{i18n.t("newsWeather.Weather.zapytatyShiProTsiu")}</SettingsItemHint>
                     </>
                   )}
                 </SettingsDropdownItem>

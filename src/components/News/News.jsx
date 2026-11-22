@@ -1173,7 +1173,6 @@ const NewsCard = ({
 }) => {
   const cardRef = useRef(null);
   const [isVisible, setIsVisible] = useState(item.isNew);
-  const [hasGeminiKey, setHasGeminiKey] = useState(false);
   const isAiAttached = useIsAiAttached(`news-${item.link}`);
   const [isNewsSettingsOpen, setIsNewsSettingsOpen] = useState(false);
   // Lazy-load: показуємо реальне зображення лише коли картка входить у viewport
@@ -1193,17 +1192,6 @@ const NewsCard = ({
     setImgSrc(getNewsFallbackImage(item.link || item.title || ""));
     setIsFallbackImg(true);
   };
-
-  useEffect(() => {
-    const checkKey = async () => {
-      const k = await localforage.getItem("gemini_api_key");
-      setHasGeminiKey(!!k);
-    };
-    checkKey();
-    const handleKeyChange = (e) => setHasGeminiKey(!!e.detail);
-    window.addEventListener("geminiKeyChanged", handleKeyChange);
-    return () => window.removeEventListener("geminiKeyChanged", handleKeyChange);
-  }, []);
 
 
   // IntersectionObserver: вантажимо зображення лише коли картка входить у viewport.
@@ -1393,17 +1381,15 @@ const NewsCard = ({
         </NewsSettingsItem>
       )}
       <NewsSettingsItem
-        $color={isAiAttached ? "#bbb" : hasGeminiKey ? "#ff69b4" : "#888"}
-        disabled={!hasGeminiKey && !isAiAttached}
-        title={isAiAttached ? i18n.t("ui.aiAttachments.prybratyZChatu") : hasGeminiKey ? i18n.t("newsWeather.News.prykripytyDoShiChatu") : i18n.t("newsWeather.News.dodaiteGeminiApiKliuch")}
+        $color={isAiAttached ? "#bbb" : "#ff69b4"}
+        title={isAiAttached ? i18n.t("ui.aiAttachments.prybratyZChatu") : i18n.t("newsWeather.News.prykripytyDoShiChatu")}
         onClick={() => {
-          // Уже прикріплена — кнопка відкріплює
+          // Уже прикріплена — кнопка відкріплює. Ключ Gemini не потрібен (є офлайн-модель)
           if (isAiAttached) {
             removeAiAttachmentById(`news-${item.link}`);
             setIsNewsSettingsOpen(false);
             return;
           }
-          if (!hasGeminiKey) return;
           const cleanText = (item.description || item.title).replace(/<[^>]*>?/gm, "").trim();
           window.dispatchEvent(
             new CustomEvent("attachCardToAiHelp", {
