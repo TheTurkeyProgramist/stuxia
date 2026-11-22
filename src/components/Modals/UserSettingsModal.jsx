@@ -12,6 +12,14 @@ import { useAgeGate } from "./AgeGateModal";
 import { GAMBLING_MIN_AGE } from "../../utils/ageGate";
 import localforage from "localforage";
 import { useAnimationsDisabled, useAnimationsAutoDisabled, setAnimationsDisabled } from "../../utils/animationsPref";
+import { FiArrowDown } from "react-icons/fi";
+import {
+  MAP_AUTOSCROLL_MODES,
+  useMapAutoscroll,
+  useMapScrollButtonHidden,
+  setMapAutoscroll,
+  setMapScrollButtonHidden,
+} from "../../utils/mapScrollPref";
 import { loadFirebase } from "../../firebaseLazy";
 
 // Firebase Auth (~200 КБ разом із SDK) вантажимо лише коли він справді потрібен —
@@ -1937,6 +1945,8 @@ const UserSettingsModal = ({
 
   const animationsDisabled = useAnimationsDisabled();
   const animationsAutoDisabled = useAnimationsAutoDisabled();
+  const mapAutoscroll = useMapAutoscroll();
+  const mapButtonHidden = useMapScrollButtonHidden();
 
   // Натяк «прокрутіть нижче»: показується, поки під видимою частиною є ще вміст.
   // label — назва наступного прихованого підрозділу (напр. «Застосунки Стихії»).
@@ -3613,6 +3623,61 @@ const UserSettingsModal = ({
                           {animationsDisabled ? i18n.t("modals.UserSettingsModal.vymkneno") : i18n.t("modals.UserSettingsModal.uvimkneno2")}
                         </ToggleStatusLabel>
                         <SwitchPill $checked={animationsDisabled} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  {/* Автопрокрутка до карти й тривог після завантаження */}
+                  <CardExpanded>
+                    <CardLeft>
+                      <CardIconBox $color="#34d399"><FiArrowDown /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>{i18n.t("ui.mapScroll.autoTitle")}</CardTitle>
+                        <CardDescription>{i18n.t("ui.mapScroll.autoDesc")}</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <Segmented role="radiogroup" aria-label={i18n.t("ui.mapScroll.autoTitle")}>
+                        {MAP_AUTOSCROLL_MODES.map((mode) => {
+                          const label = {
+                            off: i18n.t("ui.mapScroll.autoOff"),
+                            on: i18n.t("ui.mapScroll.autoOn"),
+                            "except-search": i18n.t("ui.mapScroll.autoExceptSearch"),
+                          }[mode];
+                          const active = mapAutoscroll === mode;
+                          return (
+                            <SegmentBtn
+                              key={mode}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              $active={active}
+                              $tone="show"
+                              onClick={() => setMapAutoscroll(mode)}
+                            >
+                              {label}
+                            </SegmentBtn>
+                          );
+                        })}
+                      </Segmented>
+                    </CardControl>
+                  </CardExpanded>
+
+                  {/* Плаваюча кнопка «До карти» — показати/приховати */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#34d399"><FiArrowDown /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>{i18n.t("ui.mapScroll.buttonTitle")}</CardTitle>
+                        <CardDescription>{i18n.t("ui.mapScroll.buttonDesc")}</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={() => setMapScrollButtonHidden(!mapButtonHidden)}>
+                        <ToggleStatusLabel $checked={!mapButtonHidden}>
+                          {mapButtonHidden ? i18n.t("ui.mapScroll.buttonHidden") : i18n.t("ui.mapScroll.buttonShown")}
+                        </ToggleStatusLabel>
+                        <SwitchPill $checked={!mapButtonHidden} />
                       </ToggleWrapper>
                     </CardControl>
                   </Card>

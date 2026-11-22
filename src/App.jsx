@@ -125,6 +125,7 @@ import {
 } from "./utils/cloudCounter";
 import { MotionConfig, Reorder, useDragControls } from "framer-motion";
 import { useAnimationsDisabled } from "./utils/animationsPref";
+import MapScrollButton from "./components/MapScrollButton";
 import {
   useBeta,
   setBetaOn,
@@ -4642,6 +4643,7 @@ const App = () => {
             onEnded={handleBgMusicEnded}
             preload="auto"
           />
+          {isHydrated && <MapScrollButton />}
           <div className="container">
             <Header
               sfxVolume={sfxVolume}

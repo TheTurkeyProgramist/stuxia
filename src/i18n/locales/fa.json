@@ -3588,6 +3588,18 @@
       "filmTitanic1997": "فیلم Titanic (1997)",
       "ahentSmit": "مأمور اسمیت",
       "filmMatrytsia": "فیلم 'ماتریکس'"
+    },
+    "mapScroll": {
+      "toMap": "To map & alerts",
+      "autoTitle": "Auto-scroll to the map",
+      "autoDesc": "After the page loads, scroll down to the map with alerts and Windy.",
+      "autoOff": "Off",
+      "autoOn": "Always",
+      "autoExceptSearch": "Except search card",
+      "buttonTitle": "“To map” button",
+      "buttonDesc": "Floating button that scrolls down to the map and alerts.",
+      "buttonShown": "Shown",
+      "buttonHidden": "Hidden"
     }
   },
   "seo": {

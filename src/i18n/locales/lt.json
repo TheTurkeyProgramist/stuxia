@@ -3588,6 +3588,18 @@
       "filmTitanic1997": "Filmas Titanic (1997)",
       "ahentSmit": "Agentas Smitas",
       "filmMatrytsia": "Filmas 'Matrica'"
+    },
+    "mapScroll": {
+      "toMap": "To map & alerts",
+      "autoTitle": "Auto-scroll to the map",
+      "autoDesc": "After the page loads, scroll down to the map with alerts and Windy.",
+      "autoOff": "Off",
+      "autoOn": "Always",
+      "autoExceptSearch": "Except search card",
+      "buttonTitle": "“To map” button",
+      "buttonDesc": "Floating button that scrolls down to the map and alerts.",
+      "buttonShown": "Shown",
+      "buttonHidden": "Hidden"
     }
   },
   "seo": {
