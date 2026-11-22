@@ -415,11 +415,11 @@
       "vkhid": "Prisijungti",
       "uviidyCherezGmailChy": "Prisijunkite su Gmail arba Google ir patogiai tyrinėkite orus.",
       "parol": "Slaptažodis",
-      "uviity": "🔒 Prisijungti",
+      "uviity": "Prisijungti",
       "abo": "ARBA",
       "meniVypovnylosia14Rokiv": "Man yra 14 metų ar daugiau ir aš sutinku su",
       "uhodoiu": "Sutartimi",
-      "googleVkhid": "🔑 Prisijungti su Google"
+      "googleVkhid": "Prisijungti su Google"
     },
     "ShopModal": {
       "umovyTaIakTse": "Sąlygos ir kaip tai veikia",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "Nutildytų naujienų ir filtro sinchronizavimas",
       "synkhronizuvatyPrykhovaniNovynyTa": "Sinchronizuokite paslėptas naujienas ir filtro nustatymus (temas, savus žodžius ir taisykles) visuose įrenginiuose. Ne daugiau kaip",
       "diiNaDobuZahlushyty": "veiksmų per dieną — «Nutildyti», «Rodyti» ir filtro keitimas skaičiuojami vienodai (keli filtro pakeitimai iš eilės yra vienas veiksmas). Tai, kas viršija limitą, išsaugoma tik šiame įrenginyje ir pateks į debesį per kitą sinchronizavimą.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 Prieinama tik registruotiems naudotojams",
+      "dostupnoTilkyDliaZareiestrovanykh": "Prieinama tik registruotiems naudotojams",
       "vydymistElementivNovyn": "Naujienų elementų matomumas",
       "uvimknitAboVymknitChastyny": "Įjunkite ar išjunkite naujienų kortelių dalis",
       "zaholovokNovyny": "Naujienos antraštė",

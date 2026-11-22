@@ -415,11 +415,11 @@
       "vkhid": "Bejelentkezés",
       "uviidyCherezGmailChy": "Jelentkezz be Gmaillel vagy Google-lel, és fedezd fel kényelmesen az időjárást.",
       "parol": "Jelszó",
-      "uviity": "🔒 Bejelentkezés",
+      "uviity": "Bejelentkezés",
       "abo": "VAGY",
       "meniVypovnylosia14Rokiv": "Elmúltam 14 éves, és elfogadom a",
       "uhodoiu": "Megállapodást",
-      "googleVkhid": "🔑 Bejelentkezés Google-lel"
+      "googleVkhid": "Bejelentkezés Google-lel"
     },
     "ShopModal": {
       "umovyTaIakTse": "Feltételek és működés",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "Elnémított hírek és a szűrő szinkronizálása",
       "synkhronizuvatyPrykhovaniNovynyTa": "Szinkronizáld az elrejtett híreket és a szűrőbeállításokat (témák, saját szavak és szabályok) minden eszközön. Legfeljebb",
       "diiNaDobuZahlushyty": "művelet naponta — az «Elnémítás», a «Megjelenítés» és a szűrő módosítása egyformán számít (több egymás utáni szűrőmódosítás egy műveletnek számít). A korlát feletti rész csak ezen az eszközön mentődik, és a következő szinkronizáláskor kerül a felhőbe.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 Csak regisztrált felhasználóknak érhető el",
+      "dostupnoTilkyDliaZareiestrovanykh": "Csak regisztrált felhasználóknak érhető el",
       "vydymistElementivNovyn": "Hírelemek láthatósága",
       "uvimknitAboVymknitChastyny": "A hírkártyák részeinek be- és kikapcsolása",
       "zaholovokNovyny": "Hír címe",

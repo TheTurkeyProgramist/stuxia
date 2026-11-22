@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { FaLock, FaGoogle } from "react-icons/fa";
 import styled, { keyframes } from "styled-components";
 import localforage from "localforage";
 import InfoModal from "./UserSearchModal.jsx";
@@ -165,6 +166,10 @@ const SubmitButton = styled.button`
   border: none;
   font-size: 16px;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   box-shadow: 0 10px 22px rgba(255, 153, 93, 0.25);
   transition: transform 0.2s ease, opacity 0.2s ease;
   &:hover:not(:disabled) {
@@ -469,6 +474,7 @@ const Modal = ({
                 disabled={isSubmitting}
                 $isDarkMode={isDarkMode}
               >
+                <FaLock aria-hidden="true" />
                 {i18n.t("modals.Modal.uviity")}
               </SubmitButton>
             </LoginForm>
@@ -500,6 +506,7 @@ const Modal = ({
               onClick={handleGoogleAuth}
               disabled={isSubmitting}
             >
+              <FaGoogle aria-hidden="true" />
               {i18n.t("modals.Modal.googleVkhid")}
             </GoogleButton>
           </FormColumn>

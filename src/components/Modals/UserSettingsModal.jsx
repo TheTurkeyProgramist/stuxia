@@ -83,6 +83,7 @@ import {
   FiCloudLightning,
   FiSunrise,
 } from "react-icons/fi";
+import { FiLock } from "react-icons/fi";
 import {
   useBeta,
   setBetaOn,
@@ -3267,7 +3268,7 @@ const UserSettingsModal = ({
                       {icon}
                     </NavIconBox>
                     {label}
-                    {locked && <LockBadge>🔒</LockBadge>}
+                    {locked && <LockBadge><FiLock /></LockBadge>}
                     {isSearching && !locked && <NavCount $zero={!count}>{count}</NavCount>}
                   </NavItem>
                 );

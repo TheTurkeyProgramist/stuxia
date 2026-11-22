@@ -415,11 +415,11 @@
       "vkhid": "Logga in",
       "uviidyCherezGmailChy": "Logga in med Gmail eller Google och börja utforska vädret bekvämt.",
       "parol": "Lösenord",
-      "uviity": "🔒 Logga in",
+      "uviity": "Logga in",
       "abo": "ELLER",
       "meniVypovnylosia14Rokiv": "Jag har fyllt 14 år och godkänner",
       "uhodoiu": "Avtalet",
-      "googleVkhid": "🔑 Logga in med Google"
+      "googleVkhid": "Logga in med Google"
     },
     "ShopModal": {
       "umovyTaIakTse": "Villkor och hur det fungerar",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "Synkning av tystade nyheter och filtret",
       "synkhronizuvatyPrykhovaniNovynyTa": "Synka dolda nyheter och filterinställningar (ämnen, egna ord och regler) mellan alla enheter. Högst",
       "diiNaDobuZahlushyty": "åtgärder per dygn — ”Tysta”, ”Visa” och ändring av filtret räknas lika (flera filterändringar i rad är en åtgärd). Det som går över gränsen sparas bara på den här enheten och går upp till molnet vid nästa synkning.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 Endast för registrerade användare",
+      "dostupnoTilkyDliaZareiestrovanykh": "Endast för registrerade användare",
       "vydymistElementivNovyn": "Synlighet för nyhetselement",
       "uvimknitAboVymknitChastyny": "Slå på eller av delar av nyhetskorten",
       "zaholovokNovyny": "Nyhetens rubrik",

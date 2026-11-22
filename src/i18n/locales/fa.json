@@ -415,11 +415,11 @@
       "vkhid": "ورود",
       "uviidyCherezGmailChy": "با Gmail یا Google وارد شوید و آسوده هوا را کاوش کنید.",
       "parol": "رمز عبور",
-      "uviity": "🔒 ورود",
+      "uviity": "ورود",
       "abo": "یا",
       "meniVypovnylosia14Rokiv": "من ۱۴ سال یا بیشتر دارم و موافقم با",
       "uhodoiu": "توافق‌نامه",
-      "googleVkhid": "🔑 ورود با Google"
+      "googleVkhid": "ورود با Google"
     },
     "ShopModal": {
       "umovyTaIakTse": "شرایط و نحوهٔ کار",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "همگام‌سازی اخبار بی‌صدا و فیلتر",
       "synkhronizuvatyPrykhovaniNovynyTa": "اخبار پنهان و تنظیمات فیلتر (موضوع‌ها، واژه‌ها و قاعده‌های خودتان) را در همهٔ دستگاه‌ها همگام کنید. نه بیش از",
       "diiNaDobuZahlushyty": "کنش در روز — «بی‌صدا»، «نمایش» و تغییر فیلتر یکسان شمرده می‌شوند (چند تغییر پیاپی فیلتر یک کنش است). آنچه از سقف بگذرد فقط روی این دستگاه ذخیره می‌شود و با همگام‌سازی بعدی به ابر می‌رسد.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 فقط برای کاربران ثبت‌نام‌شده",
+      "dostupnoTilkyDliaZareiestrovanykh": "فقط برای کاربران ثبت‌نام‌شده",
       "vydymistElementivNovyn": "نمایان بودن اجزای خبر",
       "uvimknitAboVymknitChastyny": "روشن یا خاموش کردن بخش‌های کارت‌های خبر",
       "zaholovokNovyny": "تیتر خبر",

@@ -415,11 +415,11 @@
       "vkhid": "Logowanie",
       "uviidyCherezGmailChy": "Zaloguj się przez Gmail lub Google i zacznij odkrywać pogodę w komforcie.",
       "parol": "Hasło",
-      "uviity": "🔒 Zaloguj",
+      "uviity": "Zaloguj",
       "abo": "LUB",
       "meniVypovnylosia14Rokiv": "Mam ukończone 14 lat i zgadzam się z",
       "uhodoiu": "Umową",
-      "googleVkhid": "🔑 Logowanie Google"
+      "googleVkhid": "Logowanie Google"
     },
     "ShopModal": {
       "umovyTaIakTse": "Warunki i jak to działa",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "Synchronizacja wyciszonych wiadomości i filtra",
       "synkhronizuvatyPrykhovaniNovynyTa": "Synchronizuj ukryte wiadomości i ustawienia filtra (tematy, własne słowa i reguły) między wszystkimi urządzeniami. Nie więcej niż",
       "diiNaDobuZahlushyty": "działań na dobę — «Wycisz», «Odblokuj» i zmiana filtra liczą się tak samo (kilka zmian filtra z rzędu to jedno działanie). To, co ponad limit, zapisuje się tylko na tym urządzeniu i trafi do chmury przy następnej synchronizacji.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 Dostępne tylko dla zarejestrowanych użytkowników",
+      "dostupnoTilkyDliaZareiestrovanykh": "Dostępne tylko dla zarejestrowanych użytkowników",
       "vydymistElementivNovyn": "Widoczność elementów wiadomości",
       "uvimknitAboVymknitChastyny": "Włącz lub wyłącz części kart wiadomości",
       "zaholovokNovyny": "Nagłówek wiadomości",

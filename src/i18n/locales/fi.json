@@ -415,11 +415,11 @@
       "vkhid": "Kirjautuminen",
       "uviidyCherezGmailChy": "Kirjaudu Gmaililla tai Googlella ja ala tutkia säätä mukavasti.",
       "parol": "Salasana",
-      "uviity": "🔒 Kirjaudu",
+      "uviity": "Kirjaudu",
       "abo": "TAI",
       "meniVypovnylosia14Rokiv": "Olen täyttänyt 14 vuotta ja hyväksyn",
       "uhodoiu": "Sopimuksen",
-      "googleVkhid": "🔑 Kirjaudu Googlella"
+      "googleVkhid": "Kirjaudu Googlella"
     },
     "ShopModal": {
       "umovyTaIakTse": "Ehdot ja miten se toimii",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "Mykistettyjen uutisten ja suodattimen synkronointi",
       "synkhronizuvatyPrykhovaniNovynyTa": "Synkronoi piilotetut uutiset ja suodattimen asetukset (aiheet, omat sanat ja säännöt) kaikkien laitteiden välillä. Enintään",
       "diiNaDobuZahlushyty": "toimintoa vuorokaudessa — ”Mykistä”, ”Näytä” ja suodattimen muutos lasketaan samoin (useampi suodattimen muutos peräkkäin on yksi toiminto). Rajan ylittävä osa tallennetaan vain tähän laitteeseen ja siirtyy pilveen seuraavassa synkronoinnissa.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 Vain rekisteröityneille käyttäjille",
+      "dostupnoTilkyDliaZareiestrovanykh": "Vain rekisteröityneille käyttäjille",
       "vydymistElementivNovyn": "Uutiselementtien näkyvyys",
       "uvimknitAboVymknitChastyny": "Ota uutiskorttien osia käyttöön tai pois",
       "zaholovokNovyny": "Uutisen otsikko",

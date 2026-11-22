@@ -415,11 +415,11 @@
       "vkhid": "Anmelden",
       "uviidyCherezGmailChy": "Melde dich mit Gmail oder Google an und entdecke das Wetter ganz bequem.",
       "parol": "Passwort",
-      "uviity": "🔒 Anmelden",
+      "uviity": "Anmelden",
       "abo": "ODER",
       "meniVypovnylosia14Rokiv": "Ich bin mindestens 14 Jahre alt und stimme der",
       "uhodoiu": "Vereinbarung zu",
-      "googleVkhid": "🔑 Mit Google anmelden"
+      "googleVkhid": "Mit Google anmelden"
     },
     "ShopModal": {
       "umovyTaIakTse": "Bedingungen und wie es funktioniert",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "Synchronisierung stummgeschalteter Nachrichten und des Filters",
       "synkhronizuvatyPrykhovaniNovynyTa": "Ausgeblendete Nachrichten und Filtereinstellungen (Themen, eigene Wörter und Regeln) zwischen allen Geräten synchronisieren. Nicht mehr als",
       "diiNaDobuZahlushyty": "Aktionen pro Tag — «Stummschalten», «Freigeben» und Filteränderungen zählen gleich (mehrere Filteränderungen hintereinander sind eine Aktion). Was über dem Limit liegt, wird nur auf diesem Gerät gespeichert und mit der nächsten Synchronisierung in die Cloud übernommen.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 Nur für registrierte Nutzer verfügbar",
+      "dostupnoTilkyDliaZareiestrovanykh": "Nur für registrierte Nutzer verfügbar",
       "vydymistElementivNovyn": "Sichtbarkeit der Nachrichtenelemente",
       "uvimknitAboVymknitChastyny": "Teile der Nachrichtenkarten ein- oder ausschalten",
       "zaholovokNovyny": "Überschrift",

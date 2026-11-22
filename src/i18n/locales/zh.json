@@ -415,11 +415,11 @@
       "vkhid": "登录",
       "uviidyCherezGmailChy": "使用 Gmail 或 Google 登录，轻松探索天气。",
       "parol": "密码",
-      "uviity": "🔒 登录",
+      "uviity": "登录",
       "abo": "或",
       "meniVypovnylosia14Rokiv": "我已年满 14 岁并同意",
       "uhodoiu": "协议",
-      "googleVkhid": "🔑 使用 Google 登录"
+      "googleVkhid": "使用 Google 登录"
     },
     "ShopModal": {
       "umovyTaIakTse": "条款与规则",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "同步已屏蔽新闻和过滤器",
       "synkhronizuvatyPrykhovaniNovynyTa": "在所有设备间同步隐藏的新闻和过滤器设置（主题、自定义词语和规则）。每天最多",
       "diiNaDobuZahlushyty": "次操作 —“屏蔽”“显示”和更改过滤器计数相同（连续多次更改过滤器算一次）。超出上限的部分只保存在此设备上，下次同步时上传到云端。",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 仅限注册用户",
+      "dostupnoTilkyDliaZareiestrovanykh": "仅限注册用户",
       "vydymistElementivNovyn": "新闻元素可见性",
       "uvimknitAboVymknitChastyny": "开启或关闭新闻卡片的各个部分",
       "zaholovokNovyny": "新闻标题",

@@ -415,11 +415,11 @@
       "vkhid": "로그인",
       "uviidyCherezGmailChy": "Gmail이나 Google로 로그인하고 편하게 날씨를 살펴보세요.",
       "parol": "비밀번호",
-      "uviity": "🔒 로그인",
+      "uviity": "로그인",
       "abo": "또는",
       "meniVypovnylosia14Rokiv": "저는 만 14세 이상이며 다음에 동의합니다:",
       "uhodoiu": "약관",
-      "googleVkhid": "🔑 Google로 로그인"
+      "googleVkhid": "Google로 로그인"
     },
     "ShopModal": {
       "umovyTaIakTse": "조건과 이용 방법",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "숨긴 뉴스와 필터 동기화",
       "synkhronizuvatyPrykhovaniNovynyTa": "숨긴 뉴스와 필터 설정(주제, 내 단어와 규칙)을 모든 기기에서 동기화해요. 하루 최대",
       "diiNaDobuZahlushyty": "번의 작업 — «숨기기», «표시», 필터 변경은 똑같이 계산돼요 (연속된 필터 변경은 한 번). 한도를 넘는 것은 이 기기에만 저장되고 다음 동기화 때 클라우드로 올라가요.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 가입한 사용자만 이용 가능",
+      "dostupnoTilkyDliaZareiestrovanykh": "가입한 사용자만 이용 가능",
       "vydymistElementivNovyn": "뉴스 요소 표시",
       "uvimknitAboVymknitChastyny": "뉴스 카드의 각 부분 켜기/끄기",
       "zaholovokNovyny": "뉴스 제목",

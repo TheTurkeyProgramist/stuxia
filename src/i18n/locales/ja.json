@@ -415,11 +415,11 @@
       "vkhid": "ログイン",
       "uviidyCherezGmailChy": "Gmail または Google でログインして、快適に天気をチェックしましょう。",
       "parol": "パスワード",
-      "uviity": "🔒 ログイン",
+      "uviity": "ログイン",
       "abo": "または",
       "meniVypovnylosia14Rokiv": "私は 14 歳以上で、次に同意します：",
       "uhodoiu": "規約",
-      "googleVkhid": "🔑 Google でログイン"
+      "googleVkhid": "Google でログイン"
     },
     "ShopModal": {
       "umovyTaIakTse": "条件と仕組み",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "ミュートしたニュースとフィルターの同期",
       "synkhronizuvatyPrykhovaniNovynyTa": "非表示にしたニュースとフィルター設定（トピック、自分の単語とルール）をすべての端末で同期します。1 日最大",
       "diiNaDobuZahlushyty": "回の操作 —「ミュート」「表示」とフィルターの変更は同じく数えます（連続したフィルターの変更は 1 回）。上限を超えた分はこの端末にのみ保存され、次回の同期でクラウドに送られます。",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 登録ユーザーのみ利用可能",
+      "dostupnoTilkyDliaZareiestrovanykh": "登録ユーザーのみ利用可能",
       "vydymistElementivNovyn": "ニュース要素の表示",
       "uvimknitAboVymknitChastyny": "ニュースカードの各部分をオン/オフ",
       "zaholovokNovyny": "ニュースの見出し",

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import styled, { keyframes, css } from "styled-components";
-import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaSatelliteDish, FaBolt } from "react-icons/fa";
+import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaSatelliteDish, FaBolt, FaLock } from "react-icons/fa";
 import { FiCheck, FiEdit2, FiPlay, FiPlus, FiSearch, FiSettings, FiX } from "react-icons/fi";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { MdDragIndicator } from "react-icons/md";
@@ -2187,7 +2187,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
   const handleDeactivateMap = async () => {
     setIsMapActive(false);
-    toast(t("climateMap.mapDisabled"), { icon: "🔒", duration: 1800 });
+    toast(t("climateMap.mapDisabled"), { icon: <FaLock />, duration: 1800 });
     try {
       await localforage.removeItem("map_last_unlocked_time");
     } catch (e) {

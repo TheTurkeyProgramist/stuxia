@@ -32,6 +32,7 @@ import { NEWS_SOURCES, NEWS_DESC_TRANSLATE_MAX, cleanNewsDescription } from "../
 const NewsAiModal = lazyWithRetry(() => import("./NewsAiModal"));
 import InfoModal from "../Modals/UserSearchModal.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
+import { FaLock } from "react-icons/fa";
 import { MdReport } from "react-icons/md"; //Поскаржитися
 import { FaYoutube } from "react-icons/fa6";
 import { GiTreeBeehive } from "react-icons/gi";
@@ -1267,7 +1268,7 @@ const NewsCard = ({
         as="div"
       >
         <BlockOverlay>
-          <span style={{ fontSize: "40px", marginBottom: "10px" }}>🔒</span>
+          <span style={{ fontSize: "40px", marginBottom: "10px" }}><FaLock /></span>
           <h4 style={{ margin: 0, fontSize: "14px", lineHeight: "1.4" }}>
             {i18n.t("newsWeather.News.danaNovynaBulaNepravomirna")}
           </h4>

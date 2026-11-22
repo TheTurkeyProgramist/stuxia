@@ -415,11 +415,11 @@
       "vkhid": "Přihlášení",
       "uviidyCherezGmailChy": "Přihlas se přes Gmail nebo Google a začni pohodlně zkoumat počasí.",
       "parol": "Heslo",
-      "uviity": "🔒 Přihlásit",
+      "uviity": "Přihlásit",
       "abo": "NEBO",
       "meniVypovnylosia14Rokiv": "Je mi 14 let a souhlasím se",
       "uhodoiu": "Smlouvou",
-      "googleVkhid": "🔑 Přihlášení Google"
+      "googleVkhid": "Přihlášení Google"
     },
     "ShopModal": {
       "umovyTaIakTse": "Podmínky a jak to funguje",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "Synchronizace ztlumených zpráv a filtru",
       "synkhronizuvatyPrykhovaniNovynyTa": "Synchronizovat skryté zprávy a nastavení filtru (témata, vlastní slova a pravidla) mezi všemi zařízeními. Nejvýše",
       "diiNaDobuZahlushyty": "akcí za den — „Ztlumit“, „Odkrýt“ a změna filtru se počítají stejně (několik změn filtru za sebou je jedna akce). Co je nad limit, se uloží jen v tomto zařízení a do cloudu se dostane při příští synchronizaci.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 Dostupné jen registrovaným uživatelům",
+      "dostupnoTilkyDliaZareiestrovanykh": "Dostupné jen registrovaným uživatelům",
       "vydymistElementivNovyn": "Viditelnost prvků zpráv",
       "uvimknitAboVymknitChastyny": "Zapněte nebo vypněte části karet zpráv",
       "zaholovokNovyny": "Titulek zprávy",

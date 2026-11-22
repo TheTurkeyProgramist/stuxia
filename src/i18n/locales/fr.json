@@ -415,11 +415,11 @@
       "vkhid": "Connexion",
       "uviidyCherezGmailChy": "Connectez-vous avec Gmail ou Google et découvrez la météo en tout confort.",
       "parol": "Mot de passe",
-      "uviity": "🔒 Se connecter",
+      "uviity": "Se connecter",
       "abo": "OU",
       "meniVypovnylosia14Rokiv": "J'ai au moins 14 ans et j'accepte l'",
       "uhodoiu": "Accord",
-      "googleVkhid": "🔑 Connexion Google"
+      "googleVkhid": "Connexion Google"
     },
     "ShopModal": {
       "umovyTaIakTse": "Conditions et fonctionnement",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "Synchronisation des actualités masquées et du filtre",
       "synkhronizuvatyPrykhovaniNovynyTa": "Synchroniser les actualités masquées et les réglages du filtre (thèmes, mots et règles) entre tous les appareils. Pas plus de",
       "diiNaDobuZahlushyty": "actions par jour — « Masquer », « Réafficher » et la modification du filtre comptent pareil (plusieurs modifications du filtre à la suite = une action). Ce qui dépasse la limite est enregistré uniquement sur cet appareil et passera dans le cloud à la prochaine synchronisation.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 Disponible uniquement pour les utilisateurs inscrits",
+      "dostupnoTilkyDliaZareiestrovanykh": "Disponible uniquement pour les utilisateurs inscrits",
       "vydymistElementivNovyn": "Visibilité des éléments d'actualité",
       "uvimknitAboVymknitChastyny": "Activez ou désactivez des parties des cartes d'actualité",
       "zaholovokNovyny": "Titre de l'actualité",

@@ -415,11 +415,11 @@
       "vkhid": "Σύνδεση",
       "uviidyCherezGmailChy": "Συνδέσου με Gmail ή Google και εξερεύνησε τον καιρό με άνεση.",
       "parol": "Κωδικός",
-      "uviity": "🔒 Σύνδεση",
+      "uviity": "Σύνδεση",
       "abo": "Ή",
       "meniVypovnylosia14Rokiv": "Είμαι 14 ετών ή μεγαλύτερος και αποδέχομαι τη",
       "uhodoiu": "Συμφωνία",
-      "googleVkhid": "🔑 Σύνδεση με Google"
+      "googleVkhid": "Σύνδεση με Google"
     },
     "ShopModal": {
       "umovyTaIakTse": "Όροι και πώς λειτουργεί",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "Συγχρονισμός σιγασμένων ειδήσεων και φίλτρου",
       "synkhronizuvatyPrykhovaniNovynyTa": "Συγχρόνισε κρυφές ειδήσεις και ρυθμίσεις φίλτρου (θέματα, δικές σου λέξεις και κανόνες) σε όλες τις συσκευές. Όχι περισσότερες από",
       "diiNaDobuZahlushyty": "ενέργειες την ημέρα — «Σίγαση», «Εμφάνιση» και η αλλαγή του φίλτρου μετράνε το ίδιο (πολλές αλλαγές φίλτρου στη σειρά είναι μία ενέργεια). Ό,τι ξεπερνά το όριο αποθηκεύεται μόνο σε αυτή τη συσκευή και θα φτάσει στο cloud με τον επόμενο συγχρονισμό.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 Διαθέσιμο μόνο σε εγγεγραμμένους χρήστες",
+      "dostupnoTilkyDliaZareiestrovanykh": "Διαθέσιμο μόνο σε εγγεγραμμένους χρήστες",
       "vydymistElementivNovyn": "Ορατότητα στοιχείων ειδήσεων",
       "uvimknitAboVymknitChastyny": "Ενεργοποίησε ή απενεργοποίησε μέρη των καρτών ειδήσεων",
       "zaholovokNovyny": "Τίτλος είδησης",

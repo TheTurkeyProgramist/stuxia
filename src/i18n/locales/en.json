@@ -415,11 +415,11 @@
       "vkhid": "Sign in",
       "uviidyCherezGmailChy": "Sign in with Gmail or Google and start exploring the weather in comfort.",
       "parol": "Password",
-      "uviity": "🔒 Sign in",
+      "uviity": "Sign in",
       "abo": "OR",
       "meniVypovnylosia14Rokiv": "I am 14 or older and I agree to the",
       "uhodoiu": "Agreement",
-      "googleVkhid": "🔑 Sign in with Google"
+      "googleVkhid": "Sign in with Google"
     },
     "ShopModal": {
       "umovyTaIakTse": "Terms and how it works",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "Syncing muted news and the filter",
       "synkhronizuvatyPrykhovaniNovynyTa": "Sync hidden news and filter settings (topics, custom words and rules) across all devices. No more than",
       "diiNaDobuZahlushyty": "actions per day — «Mute», «Unmute» and changing the filter count the same (several filter changes in a row are one action). Anything over the limit is saved only on this device and will reach the cloud with the next sync.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 Available only to registered users",
+      "dostupnoTilkyDliaZareiestrovanykh": "Available only to registered users",
       "vydymistElementivNovyn": "News element visibility",
       "uvimknitAboVymknitChastyny": "Turn parts of the news cards on or off",
       "zaholovokNovyny": "News headline",

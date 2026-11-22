@@ -415,11 +415,11 @@
       "vkhid": "Вход",
       "uviidyCherezGmailChy": "Влез с Gmail или Google и започни да изучаваш времето удобно.",
       "parol": "Парола",
-      "uviity": "🔒 Вход",
+      "uviity": "Вход",
       "abo": "ИЛИ",
       "meniVypovnylosia14Rokiv": "Навърших 14 години и съм съгласен със",
       "uhodoiu": "Споразумението",
-      "googleVkhid": "🔑 Вход с Google"
+      "googleVkhid": "Вход с Google"
     },
     "ShopModal": {
       "umovyTaIakTse": "Условия и как работи",
@@ -896,7 +896,7 @@
       "synkhronizatsiiaZahlushenykhNovynI": "Синхронизация на заглушените новини и филтъра",
       "synkhronizuvatyPrykhovaniNovynyTa": "Синхронизиране на скритите новини и настройките на филтъра (теми, собствени думи и правила) между всички устройства. Не повече от",
       "diiNaDobuZahlushyty": "действия на денонощие — «Заглуши», «Покажи» и промяна на филтъра се броят еднакво (няколко промени на филтъра подред — едно действие). Онова над лимита се пази само на това устройство и ще отиде в облака при следващата синхронизация.",
-      "dostupnoTilkyDliaZareiestrovanykh": "🔒 Достъпно само за регистрирани потребители",
+      "dostupnoTilkyDliaZareiestrovanykh": "Достъпно само за регистрирани потребители",
       "vydymistElementivNovyn": "Видимост на елементите на новините",
       "uvimknitAboVymknitChastyny": "Включете или изключете части от картите с новини",
       "zaholovokNovyny": "Заглавие на новината",
