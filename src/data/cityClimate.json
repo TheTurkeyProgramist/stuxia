@@ -4506,5 +4506,103 @@
    "t": -24.4,
    "date": "2017-01-07"
   }
+ },
+ "kamianske": {
+  "period": "2016–2025",
+  "elevation": 89,
+  "months": [
+   {
+    "tmax": 0.8,
+    "tmin": -4.8,
+    "precip": 46,
+    "wetDays": 9.4,
+    "snowDays": 4.3
+   },
+   {
+    "tmax": 2.7,
+    "tmin": -3.9,
+    "precip": 39,
+    "wetDays": 8.7,
+    "snowDays": 3.2
+   },
+   {
+    "tmax": 8.7,
+    "tmin": -0.3,
+    "precip": 41,
+    "wetDays": 9,
+    "snowDays": 2.1
+   },
+   {
+    "tmax": 15.9,
+    "tmin": 5.8,
+    "precip": 63,
+    "wetDays": 10.5,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 21.1,
+    "tmin": 10.8,
+    "precip": 58,
+    "wetDays": 10.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.4,
+    "tmin": 16.3,
+    "precip": 59,
+    "wetDays": 8.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 28.3,
+    "tmin": 18.2,
+    "precip": 41,
+    "wetDays": 7.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 28.6,
+    "tmin": 17.9,
+    "precip": 38,
+    "wetDays": 4.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 22.6,
+    "tmin": 12.5,
+    "precip": 38,
+    "wetDays": 6.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 15.1,
+    "tmin": 7,
+    "precip": 45,
+    "wetDays": 6.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 7.3,
+    "tmin": 1.6,
+    "precip": 52,
+    "wetDays": 8.5,
+    "snowDays": 1.1
+   },
+   {
+    "tmax": 2.9,
+    "tmin": -1.6,
+    "precip": 53,
+    "wetDays": 11.5,
+    "snowDays": 4.2
+   }
+  ],
+  "hottest": {
+   "t": 37.1,
+   "date": "2025-07-10"
+  },
+  "coldest": {
+   "t": -22.7,
+   "date": "2017-01-31"
+  }
  }
 }
