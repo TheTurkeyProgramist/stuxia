@@ -10,6 +10,9 @@ import { dateLocale } from "../../utils/weatherText.js";
 export const DONATE_URL = "https://donatello.to/TheTurkeyStudio";
 // Сама Стихія — другий QR-код на плакаті
 export const SITE_URL = "https://stuxia.com";
+// Соцмережі — ще два QR-коди на плакаті
+export const YOUTUBE_URL = "https://www.youtube.com/@TheTurkeyStudio";
+export const FACEBOOK_URL = "https://www.facebook.com/groups/33984901414490236/";
 
 // Комісія платформи донатів (Donatello) — частка, яка не доходить до проєкту
 export const DONATION_FEE = 0.1;

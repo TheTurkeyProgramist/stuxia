@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
-//  Плакат Стихії: два QR-коди (донат на Donatello і сама Стихія),
-//  піксельні Доміно й Кейт, прохання роздрукувати й повісити.
+//  Плакат Стихії: чотири QR-коди (донат, сама Стихія, YouTube, Facebook),
+//  переваги, піксельні Доміно й Кейт і фото індиків, прохання роздрукувати й повісити.
 //  «Скачати» малює повний плакат A4 (150 dpi) у PNG — з окремим текстом
 //  для тих, хто побачить його на вулиці.
 // ─────────────────────────────────────────────────────────────
@@ -11,7 +11,8 @@ import styled, { keyframes } from "styled-components";
 import { QRCodeCanvas, QRCodeSVG } from "qrcode.react";
 import { FiDownload, FiShare2, FiX } from "react-icons/fi";
 import kateAndDomino from "../../media/characters/kate-and-domino.webp?w=1000&format=webp&quality=85";
-import { DONATE_URL, SITE_URL } from "./supportConfig";
+import turkeysTeam from "../../media/characters/turkeys-team.webp?w=600&format=webp&quality=85";
+import { DONATE_URL, FACEBOOK_URL, SITE_URL, YOUTUBE_URL } from "./supportConfig";
 import {
   MODAL_HEADER_HEIGHT,
   ModalHeaderActions,
@@ -44,12 +45,27 @@ const CAN_SHARE_FILES = (() => {
 const CODES = [
   { id: "donate", url: DONATE_URL, captionKey: "donateCaption", color: "#c2410c" },
   { id: "site", url: SITE_URL, captionKey: "siteCaption", color: "#15803d" },
+  // Назви соцмереж не перекладаємо; під Facebook адресу не пишемо — задовга
+  { id: "youtube", url: YOUTUBE_URL, caption: "YouTube", label: "@TheTurkeyStudio", color: "#dc2626" },
+  { id: "facebook", url: FACEBOOK_URL, caption: "Facebook", label: "", color: "#1d4ed8" },
+];
+const captionOf = (code) => (code.captionKey ? t(code.captionKey) : code.caption);
+const labelOf = (code) => code.label ?? shortUrl(code.url);
+
+// Переваги на плакаті — тексти з «Чому треба обрати нас?», уже перекладені всіма мовами
+const PERK_KEYS = [
+  "bezReklamyPidpysokI",
+  "pohodaBezpechniNovynyMuzyka",
+  "saitMozhnaZibratyPid",
+  "rezhymDekoratoraDozvoliaieDodaty",
+  "osnovnyiInterfeisPerekladenoPonad",
+  "ieVersiiDliaWindows",
 ];
 
 // ── Плакат (canvas) ─────────────────────────────────────────
 const POSTER_W = 1240; // A4 при 150 dpi
 const POSTER_H = 1754;
-const POSTER_QR_PX = 420;
+const POSTER_QR_PX = 250;
 const INK = "#2b1313";
 const PAPER = "#fffdf7";
 const SERIF = 'Georgia, "Times New Roman", serif';
@@ -119,44 +135,100 @@ const renderPoster = async (qrCanvases) => {
   ctx.font = `36px ${SANS}`;
   drawLines(ctx, subLines, y, 46);
 
-  // Два коди поруч, під кожним — підпис і адреса
-  const gap = 120;
-  const qrY = bandH + 70;
-  const qrX0 = (POSTER_W - 2 * POSTER_QR_PX - gap) / 2;
+  // Чотири коди в ряд, під кожним — підпис і адреса
+  const gap = 40;
+  const qrY = bandH + 50;
+  const qrX0 = (POSTER_W - CODES.length * POSTER_QR_PX - (CODES.length - 1) * gap) / 2;
+  const colW = POSTER_QR_PX + gap - 10;
+  let qrBottom = qrY + POSTER_QR_PX;
   CODES.forEach((code, i) => {
     const x = qrX0 + i * (POSTER_QR_PX + gap);
     const cx = x + POSTER_QR_PX / 2;
     const src = qrCanvases[code.id];
     if (src) ctx.drawImage(src, x, qrY, POSTER_QR_PX, POSTER_QR_PX);
     ctx.fillStyle = code.color;
-    ctx.font = `bold 40px ${SANS}`;
-    ctx.fillText(t(code.captionKey), cx, qrY + POSTER_QR_PX + 22);
-    ctx.fillStyle = INK;
-    ctx.font = `600 28px ${SANS}`;
-    ctx.fillText(shortUrl(code.url), cx, qrY + POSTER_QR_PX + 72);
+    ctx.font = `bold 28px ${SANS}`;
+    let cy = qrY + POSTER_QR_PX + 14;
+    wrapText(ctx, captionOf(code), colW).forEach((l) => {
+      ctx.fillText(l, cx, cy);
+      cy += 34;
+    });
+    const label = labelOf(code);
+    if (label) {
+      ctx.fillStyle = INK;
+      ctx.font = `600 20px ${SANS}`;
+      ctx.fillText(label, cx, cy + 2);
+      cy += 28;
+    }
+    qrBottom = Math.max(qrBottom, cy);
   });
 
   // Заклик відсканувати
-  y = qrY + POSTER_QR_PX + 140;
+  y = qrBottom + 26;
   ctx.fillStyle = INK;
-  ctx.font = `bold 44px ${SANS}`;
-  y = drawLines(ctx, wrapText(ctx, t("scan"), textW), y, 56) + 20;
+  ctx.font = `bold 40px ${SANS}`;
+  y = drawLines(ctx, wrapText(ctx, t("scan"), textW), y, 50) + 26;
 
-  // Вітання внизу (міряємо заздалегідь, щоб картинка зайняла решту місця)
+  // Переваги — дві колонки з зеленими галочками
+  const perkColGap = 40;
+  const perkColW = (textW - perkColGap) / 2;
+  const perkTextW = perkColW - 46;
+  const perkLH = 31;
+  ctx.textAlign = "left";
+  for (let i = 0; i < PERK_KEYS.length; i += 2) {
+    ctx.font = `24px ${SANS}`;
+    const rows = [PERK_KEYS[i], PERK_KEYS[i + 1]].filter(Boolean).map((k) =>
+      wrapText(ctx, i18n.t(`modals.WhyUsModal.${k}`), perkTextW),
+    );
+    rows.forEach((lines, col) => {
+      const x = 80 + col * (perkColW + perkColGap);
+      ctx.fillStyle = "#15803d";
+      ctx.beginPath();
+      ctx.arc(x + 15, y + 15, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(x + 8, y + 15);
+      ctx.lineTo(x + 13, y + 21);
+      ctx.lineTo(x + 23, y + 9);
+      ctx.stroke();
+      ctx.fillStyle = INK;
+      ctx.font = `24px ${SANS}`;
+      lines.forEach((l, j) => ctx.fillText(l, x + 46, y + j * perkLH));
+    });
+    y += Math.max(...rows.map((r) => r.length)) * perkLH + 14;
+  }
+  ctx.textAlign = "center";
+  y += 10;
+
+  // Вітання внизу (міряємо заздалегідь, щоб картинки зайняли решту місця)
   const footerH = 100;
   ctx.font = `bold 46px ${SERIF}`;
   const welcomeLines = wrapText(ctx, t("posterWelcome"), textW);
   const welcomeH = welcomeLines.length * 58;
 
-  // Піксельні Доміно й Кейт — без згладжування, щоб пікселі лишились чіткими
-  const img = await loadImage(kateAndDomino);
+  // Піксельні Доміно й Кейт і мініатюра справжніх індиків — поруч, однакової висоти
+  const [img, photo] = await Promise.all([loadImage(kateAndDomino), loadImage(turkeysTeam)]);
   const ratio = img.naturalWidth / img.naturalHeight;
-  const maxImgH = POSTER_H - footerH - 40 - welcomeH - 20 - y;
-  const imgW = Math.min(780, maxImgH * ratio);
-  const imgH = imgW / ratio;
+  const photoRatio = photo.naturalWidth / photo.naturalHeight;
+  const imgGap = 40;
+  const maxImgH = POSTER_H - footerH - 30 - welcomeH - 16 - y;
+  const imgH = Math.max(0, Math.min(maxImgH, (textW - imgGap) / (ratio + photoRatio)));
+  const imgW = imgH * ratio;
+  const photoW = imgH * photoRatio;
+  const imgX = (POSTER_W - imgW - imgGap - photoW) / 2;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(img, (POSTER_W - imgW) / 2, y, imgW, imgH);
-  y += imgH + 20;
+  ctx.drawImage(img, imgX, y, imgW, imgH);
+  ctx.imageSmoothingEnabled = true;
+  const photoX = imgX + imgW + imgGap;
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(photoX, y, photoW, imgH, 18);
+  ctx.clip();
+  ctx.drawImage(photo, photoX, y, photoW, imgH);
+  ctx.restore();
+  y += imgH + 16;
 
   ctx.fillStyle = "#c2410c";
   ctx.font = `bold 46px ${SERIF}`;
@@ -330,9 +402,24 @@ const Side = styled.div`
 
 const Pixels = styled.img`
   display: block;
-  width: min(340px, 100%);
+  width: min(240px, 60%);
   height: auto;
   image-rendering: pixelated;
+`;
+
+const Pictures = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+`;
+
+// Мініатюра справжніх індиків поруч із піксельними
+const Photo = styled.img`
+  display: block;
+  width: min(150px, 40%);
+  height: auto;
+  border-radius: 10px;
 `;
 
 const Scan = styled.p`
@@ -478,18 +565,21 @@ const QrPosterModal = ({ onClose }) => {
             <QrRow>
               {CODES.map((code) => (
                 <QrCard key={code.id} style={{ "--code-color": code.color }}>
-                  <a href={code.url} target="_blank" rel="noopener noreferrer" aria-label={t(code.captionKey)}>
-                    <QRCodeSVG value={code.url} size={180} marginSize={2} level="M" />
+                  <a href={code.url} target="_blank" rel="noopener noreferrer" aria-label={captionOf(code)}>
+                    <QRCodeSVG value={code.url} size={150} marginSize={2} level="M" />
                   </a>
                   <figcaption>
-                    <strong>{t(code.captionKey)}</strong>
-                    <small>{shortUrl(code.url)}</small>
+                    <strong>{captionOf(code)}</strong>
+                    {labelOf(code) && <small>{labelOf(code)}</small>}
                   </figcaption>
                 </QrCard>
               ))}
             </QrRow>
             <Side>
-              <Pixels src={kateAndDomino} alt="" decoding="async" />
+              <Pictures>
+                <Pixels src={kateAndDomino} alt="" decoding="async" />
+                <Photo src={turkeysTeam} alt="" decoding="async" />
+              </Pictures>
               <Scan>{t("scan")}</Scan>
               <MadeBy>{t("madeBy")}</MadeBy>
             </Side>
