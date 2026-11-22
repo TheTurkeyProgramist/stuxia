@@ -1,11 +1,14 @@
 import React, { memo, useEffect, useMemo, useState } from "react";
 import { FaCar, FaSnowflake } from "react-icons/fa";
 import { MdAir } from "react-icons/md";
+import { GiMagnet } from "react-icons/gi";
 import { GiIceCube } from "react-icons/gi";
 import i18n from "../../i18n/i18n.js";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { fetchAirQuality, AQI_LEVELS, AQI_COLORS, aqiAdviceKey } from "../../utils/airQuality";
 import { iceRiskMorning, carSnowTip, localNowKey } from "../../utils/dailyTips";
+import { dateLocale } from "../../utils/weatherText.js";
+import { fetchGeomagnetic, summarizeKp, KP_LEVEL_KEYS, KP_LEVEL_COLORS } from "../../utils/geomagnetic";
 
 // Плитки «Повітря / ожеледиця вранці / сніг на машині» — в одній сітці з іншими індикаторами
 // вкладки «Зараз». Компонент повертає лише плитки (фрагмент), а стилі плиток отримує від
@@ -21,6 +24,7 @@ function DailyTips({ hourly, current, lat, lon, utcOffsetSeconds, isDarkMode, ui
   const { IndicatorCard, IconBox, TextContent, SubText } = ui;
   const [nowKey, setNowKey] = useState(() => localNowKey(utcOffsetSeconds));
   const [air, setAir] = useState({ state: "loading", data: null });
+  const [geo, setGeo] = useState({ state: "loading", data: null });
 
   // «Зараз» у місті оновлюємо раз на 5 хвилин — картка рендериться щосекунди
   useEffect(() => {
@@ -43,6 +47,21 @@ function DailyTips({ hourly, current, lat, lon, utcOffsetSeconds, isDarkMode, ui
       });
     return () => controller.abort();
   }, [lat, lon]);
+
+  // Магнітні бурі: дані спільні для планети, fetchGeomagnetic кешує їх на годину для всіх карток
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      fetchGeomagnetic()
+        .then((data) => alive && setGeo({ state: "ok", data }))
+        .catch(() => alive && setGeo((g) => (g.data ? g : { state: "error", data: null })));
+    load();
+    const id = setInterval(load, 60 * 60 * 1000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, []);
 
   const tips = useMemo(() => {
     const ice = iceRiskMorning(hourly, nowKey);
@@ -83,6 +102,41 @@ function DailyTips({ hourly, current, lat, lon, utcOffsetSeconds, isDarkMode, ui
       value: air.state === "loading" ? "…" : "—",
       color: NEUTRAL,
       advice: air.state === "loading" ? t("airLoading") : t("airUnavailable"),
+    });
+  }
+
+  // Магнітні бурі (Kp): значення — найбільший Kp сьогодні, підпис — найближча буря
+  const kp = geo.data ? summarizeKp(geo.data.series, geo.data.outlook) : null;
+  if (kp && (kp.today || kp.current)) {
+    const fmtDay = (date) =>
+      new Intl.DateTimeFormat(dateLocale(), { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
+    const todayKp = Math.max(kp.today?.kp ?? 0, kp.current?.kp ?? 0);
+    const level = Math.max(kp.today?.level ?? 0, kp.current?.level ?? 0);
+    const storm = kp.nextStorm && kp.nextStorm.date !== kp.today?.date ? kp.nextStorm : null;
+    const week = kp.days.slice(0, 7).map((d) => `${fmtDay(d.date)} — ${d.kp}`).join(", ");
+    const parts = [
+      level >= 2 ? t("kpAdviceStorm") : t("kpAdviceQuiet"),
+      kp.current ? t("kpNow", { kp: kp.current.kp }) : null,
+      week ? t("kpForecastLine", { list: week }) : null,
+      t("kpSource"),
+    ].filter(Boolean);
+    items.push({
+      key: "kp",
+      icon: <GiMagnet />,
+      title: t("kpTitle"),
+      value: `${t(`kp_${KP_LEVEL_KEYS[level]}`)} · Kp ${todayKp}`,
+      sub: storm ? t("kpNext", { date: fmtDay(storm.date), kp: storm.kp }) : t("kpNoStorms"),
+      color: KP_LEVEL_COLORS[level],
+      advice: parts.join(" "),
+    });
+  } else {
+    items.push({
+      key: "kp",
+      icon: <GiMagnet />,
+      title: t("kpTitle"),
+      value: geo.state === "loading" ? "…" : "—",
+      color: NEUTRAL,
+      advice: geo.state === "loading" ? t("kpLoading") : t("kpUnavailable"),
     });
   }
 
