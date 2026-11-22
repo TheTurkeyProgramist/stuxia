@@ -498,7 +498,7 @@ const Modal = ({
             <GoogleButton
               type="button"
               onClick={handleGoogleAuth}
-              disabled={!accepted || isSubmitting}
+              disabled={isSubmitting}
             >
               {i18n.t("modals.Modal.googleVkhid")}
             </GoogleButton>
