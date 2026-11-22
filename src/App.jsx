@@ -2377,7 +2377,7 @@ const App = () => {
         const savedLayout = await localforage.getItem("weather_card_layout");
         if (savedLayout) setWeatherCardLayout(savedLayout);
 
-        const deployId = process.env.REACT_APP_DEPLOY_ID;
+        const deployId = import.meta.env.VITE_DEPLOY_ID;
         if (deployId && lastSeenVersion !== deployId) {
           setIsUpdatePending(true);
         }
@@ -2559,7 +2559,7 @@ const App = () => {
       setIsFirstTimeHelpOpen(true);
       localforage.setItem(
         "last_deployed_version",
-        process.env.REACT_APP_DEPLOY_ID,
+        import.meta.env.VITE_DEPLOY_ID,
       );
     }
   }, [isUpdatePending, timerFinished, hasInteracted, isFirstTimeHelpOpen]);

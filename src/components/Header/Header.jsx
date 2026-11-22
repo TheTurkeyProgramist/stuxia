@@ -5,7 +5,7 @@
 //cd ~/projects/stuxia-linux-build
 //bun run --cwd Stuxia tauri build --bundles deb
 //bun run --cwd Stuxia tauri build --bundles deb - WSL(Linux)
-import React, { useState, useEffect, useRef, Suspense } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, Suspense } from "react";
 import { createPortal } from "react-dom";
 import styled, { keyframes, css } from "styled-components";
 import { BsMoonStarsFill } from "react-icons/bs";
@@ -190,10 +190,12 @@ const IconLabel = styled.span`
   }
 `;
 
-// З цієї ширини всі кнопки вміщаються в шапку — бургер не потрібен.
-// Пороги showFrom у headerActions підібрані так, щоб у бургері ніколи не лишався один пункт:
-// бургер з однією кнопкою гірший за саму кнопку.
-const BURGER_HIDE_FROM = 1280;
+// Скільки кнопок вміщується в шапці, міряємо за реальною шириною блоку кнопок (а не за порогами екрана):
+// що не влізло — у бургері, у порядку важливості (див. headerActions). Мінімальна комірка кнопки
+// з підписом + проміжок між кнопками; Тема й Параметри завжди в шапці.
+const BAR_CELL_MIN = 68;
+const BAR_CELL_GAP = 4;
+const ALWAYS_IN_BAR = 2;
 
 const LogoButton = styled.button`
   flex: 0 0 auto;
@@ -223,30 +225,17 @@ const LogoImg = styled.img`
   }
 `;
 
-// Кнопка в шапці, що з'являється лише з ширини $showFrom (до того — пункт бургера)
+// Кнопка в шапці (які саме вмістились — рахує Header за шириною блоку кнопок)
 const BarSlot = styled.div`
-  && {
-    display: none;
-  }
   & > span:first-child {
     flex: 1;
     justify-content: center;
-  }
-  @media (min-width: ${(p) => p.$showFrom}px) {
-    && {
-      display: flex;
-    }
   }
 `;
 
 const BurgerWrap = styled.div`
   /* static: випадне меню позиціюється від усієї шапки (вона fixed на всю ширину) */
   position: static;
-  @media (min-width: ${(p) => p.$hideFrom}px) {
-    && {
-      display: none;
-    }
-  }
 `;
 
 const burgerSlide = keyframes`
@@ -372,12 +361,6 @@ const BurgerItem = styled.button`
     background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)")};
     border-color: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.14)")};
     outline: none;
-  }
-
-  @media (min-width: ${(p) => p.$hideFrom}px) {
-    && {
-      display: none;
-    }
   }
 `;
 
@@ -1175,7 +1158,7 @@ const Header = ({
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [isProfileModalOpen]);
 
-  // Бургер: закривається кліком поза ним, Esc і коли екран став ширшим за поріг бургера
+  // Бургер: закривається кліком поза ним і Esc (а коли всі кнопки вмістились у шапку — див. barCount)
   useEffect(() => {
     if (!isBurgerOpen) return undefined;
     const handlePointerDown = (event) => {
@@ -1187,15 +1170,11 @@ const Header = ({
         burgerBtnRef.current?.focus();
       }
     };
-    const wide = window.matchMedia(`(min-width: ${BURGER_HIDE_FROM}px)`);
-    const handleWide = () => wide.matches && setIsBurgerOpen(false);
     document.addEventListener("mousedown", handlePointerDown);
     document.addEventListener("keydown", handleEscape);
-    wide.addEventListener("change", handleWide);
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleEscape);
-      wide.removeEventListener("change", handleWide);
     };
   }, [isBurgerOpen]);
 
@@ -1425,8 +1404,8 @@ const Header = ({
     setVisualConfig(config);
   };
 
-  // 14. Кнопки, що на вузьких екранах живуть у бургері. showFrom — з якої ширини кнопка
-  //     стоїть просто в шапці (і зникає з бургера). Тема й Параметри — завжди в шапці.
+  // 14. Кнопки, що виїжджають із бургера в шапку, коли є місце. Порядок = важливість:
+  //     першою в шапці з'являється Довідка, останньою — Подяка. Тема й Параметри — завжди в шапці.
   const headerActions = [
     {
       key: "help",
@@ -1437,18 +1416,6 @@ const Header = ({
       iconStyle: { fontWeight: 900 },
       onClick: handleHelpClick,
       prefetch: "help",
-      showFrom: 768,
-    },
-    {
-      key: "stickyBg",
-      label: i18n.t("ui.Header.fon"),
-      menuLabel: i18n.t("ui.Header.fonNaUvesSait"),
-      tooltip: i18n.t("ui.Header.fonNaUvesSait2", { v0: isStickyBgMode ? "увімкнено" : "вимкнено" }),
-      icon: <MdWallpaper />,
-      state: isStickyBgMode ? i18n.t("ui.Header.uvimkneno") : i18n.t("ui.Header.vymkneno"),
-      pressed: isStickyBgMode,
-      onClick: handleStickyBgToggle,
-      showFrom: 1024,
     },
     {
       key: "shop",
@@ -1459,7 +1426,16 @@ const Header = ({
       iconStyle: { fontSize: "19px" },
       onClick: handleShopClick,
       prefetch: "shop",
-      showFrom: BURGER_HIDE_FROM,
+    },
+    {
+      key: "stickyBg",
+      label: i18n.t("ui.Header.fon"),
+      menuLabel: i18n.t("ui.Header.fonNaUvesSait"),
+      tooltip: i18n.t("ui.Header.fonNaUvesSait2", { v0: isStickyBgMode ? "увімкнено" : "вимкнено" }),
+      icon: <MdWallpaper />,
+      state: isStickyBgMode ? i18n.t("ui.Header.uvimkneno") : i18n.t("ui.Header.vymkneno"),
+      pressed: isStickyBgMode,
+      onClick: handleStickyBgToggle,
     },
     {
       key: "commands",
@@ -1470,7 +1446,6 @@ const Header = ({
       iconStyle: { fontWeight: 900, fontFamily: "ui-monospace, Consolas, monospace" },
       onClick: () => { playSfx(relax); setIsCommandsOpen(true); },
       prefetchFn: prefetchCommands,
-      showFrom: BURGER_HIDE_FROM,
     },
     {
       key: "authors",
@@ -1481,9 +1456,35 @@ const Header = ({
       iconStyle: { fontSize: "18px" },
       onClick: () => onOpenAuthorsDirectory?.(),
       prefetch: "authors",
-      showFrom: BURGER_HIDE_FROM,
     },
   ];
+
+  // Скільки кнопок (за порядком важливості) стоїть у шапці; решта — у бургері.
+  // Якщо влізли всі — бургера немає. Якщо ні — одну комірку займає сам бургер.
+  const headerActionCount = headerActions.length;
+  const [barCount, setBarCount] = useState(0);
+  const buttonsGroupRef = useRef(null);
+  useLayoutEffect(() => {
+    const el = buttonsGroupRef.current;
+    if (!el) return undefined;
+    const total = headerActionCount;
+    const measure = () => {
+      const cells = Math.floor((el.clientWidth + BAR_CELL_GAP) / (BAR_CELL_MIN + BAR_CELL_GAP));
+      const free = cells - ALWAYS_IN_BAR;
+      setBarCount(free >= total ? total : Math.max(0, free - 1));
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [headerActionCount]);
+  const barActions = headerActions.slice(0, barCount);
+  const burgerActions = headerActions.slice(barCount);
+  // Бургер зник (усе вмістилось) — закриваємо відкрите меню
+  useEffect(() => {
+    if (burgerActions.length === 0) setIsBurgerOpen(false);
+  }, [burgerActions.length]);
 
   return (
     <><HeaderDiv
@@ -1503,7 +1504,7 @@ const Header = ({
       <LogoImg src={herotext} alt={i18n.t("ui.Header.stykhiia")} width="212" height="78" decoding="async" />
     </LogoButton>
 
-    <ButtonsGroup ref={(el) => registerRef('headerBgTheme', el)} onKeyDown={handleHeaderKeyDown}>
+    <ButtonsGroup ref={(el) => { buttonsGroupRef.current = el; registerRef('headerBgTheme', el); }} onKeyDown={handleHeaderKeyDown}>
       {/* Тема — завжди в шапці (її міні-модалка прив'язана до кнопки) */}
       <ThemePickerWrap>
         <Tooltip content={i18n.t("ui.Header.vybirTemy")} isDarkMode={isDarkMode}>
@@ -1557,9 +1558,9 @@ const Header = ({
         )}
       </ThemePickerWrap>
 
-      {/* Кнопки, що виходять з бургера, коли екран ширшає (пороги — showFrom у headerActions) */}
-      {headerActions.map((action) => (
-        <BarSlot key={action.key} $showFrom={action.showFrom}>
+      {/* Кнопки, що виїжджають із бургера, коли в шапці є місце (за важливістю — порядок у headerActions) */}
+      {barActions.map((action) => (
+        <BarSlot key={action.key}>
           <Tooltip content={action.tooltip} isDarkMode={isDarkMode}>
             <IconButton
               onClick={action.onClick}
@@ -1597,7 +1598,8 @@ const Header = ({
       </Tooltip>
 
       {/* Бургер — усе, що не вмістилось у шапку; на найширших екранах зникає */}
-      <BurgerWrap ref={burgerRef} $hideFrom={BURGER_HIDE_FROM}>
+      {burgerActions.length > 0 && (
+      <BurgerWrap ref={burgerRef}>
         <IconButton
           ref={burgerBtnRef}
           onClick={() => { playSfx(relax); setIsBurgerOpen((p) => !p); }}
@@ -1634,12 +1636,11 @@ const Header = ({
               if (e.target === e.currentTarget && !isBurgerOpen) setIsBurgerRendered(false);
             }}
           >
-            {headerActions.map((action) => (
+            {burgerActions.map((action) => (
               <BurgerItem
                 key={action.key}
                 type="button"
                 role="menuitem"
-                $hideFrom={action.showFrom}
                 $isDarkMode={isDarkMode}
                 onClick={() => { setIsBurgerOpen(false); action.onClick(); }}
                 {...(action.prefetch ? prefetchProps(action.prefetch) : action.prefetchFn ? { onPointerEnter: action.prefetchFn, onFocus: action.prefetchFn, onTouchStart: action.prefetchFn } : null)}
@@ -1655,6 +1656,7 @@ const Header = ({
           </BurgerMenu>
         )}
       </BurgerWrap>
+      )}
 
       {user ? (
         <ProfileButtonWrap>
