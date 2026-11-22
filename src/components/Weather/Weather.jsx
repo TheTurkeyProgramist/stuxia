@@ -4976,7 +4976,7 @@ const HOLIDAYS_2027 = {
                   }}
                 >
                   <span style={{ color: isDarkMode ? "white" : "black", fontWeight: 900 }}>
-                    #{index}
+                    #{index + 1}
                   </span>
                   <span style={{ color: isDarkMode ? "white" : "black", fontWeight: 900 }}>{card.locationName}</span>
                 </h3>
