@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Acest card e deja atașat!",
       "maksymumPrykriplennia": "Maximum {{MAX_AI_ATTACHMENTS}} atașamente.",
-      "prykripleno": "Atașat: {{title}}"
+      "prykripleno": "Atașat: {{title}}",
+      "vidkripytyVidShi": "Detașează de la IA",
+      "vidkripyty": "Detașează",
+      "prybratyZChatu": "Elimină din chatul IA",
+      "vidkripleno": "Detașat: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Se încarcă fișierul...",

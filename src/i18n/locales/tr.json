@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Bu kart zaten ekli!",
       "maksymumPrykriplennia": "En fazla {{MAX_AI_ATTACHMENTS}} ek.",
-      "prykripleno": "Eklendi: {{title}}"
+      "prykripleno": "Eklendi: {{title}}",
+      "vidkripytyVidShi": "Yapay zekâdan ayır",
+      "vidkripyty": "Ayır",
+      "prybratyZChatu": "Yapay zekâ sohbetinden kaldır",
+      "vidkripleno": "Ayrıldı: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Dosya yükleniyor...",

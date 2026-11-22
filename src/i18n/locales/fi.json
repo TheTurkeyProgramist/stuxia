@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Tämä kortti on jo liitetty!",
       "maksymumPrykriplennia": "Enintään {{MAX_AI_ATTACHMENTS}} liitettä.",
-      "prykripleno": "Liitetty: {{title}}"
+      "prykripleno": "Liitetty: {{title}}",
+      "vidkripytyVidShi": "Irrota tekoälystä",
+      "vidkripyty": "Irrota",
+      "prybratyZChatu": "Poista tekoälykeskustelusta",
+      "vidkripleno": "Irrotettu: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Ladataan tiedostoa...",

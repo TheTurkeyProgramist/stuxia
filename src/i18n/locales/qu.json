@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Kay tarjetaqa hap'ichisqañam!",
       "maksymumPrykriplennia": "Aswanqa {{MAX_AI_ATTACHMENTS}} hap'ichiykuna.",
-      "prykripleno": "Hap'ichisqa: {{title}}"
+      "prykripleno": "Hap'ichisqa: {{title}}",
+      "vidkripytyVidShi": "IA-manta chaqnaskata paskay",
+      "vidkripyty": "Paskay",
+      "prybratyZChatu": "IA rimanakuymanta hurquy",
+      "vidkripleno": "Paskasqa: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Archivota churachkayku...",

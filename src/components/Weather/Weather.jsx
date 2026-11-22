@@ -36,7 +36,7 @@ import {
   BiSidebar,
   BiListUl,
 } from "react-icons/bi";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiMinus } from "react-icons/fi";
 import toast from "react-hot-toast";
 import {
   useBeta,
@@ -142,6 +142,7 @@ import { Tooltip } from "../Tooltip/Tooltip";
 import { createChartWeatherIcon, getChartIconKey, createChartWindArrow, valueLabelsPlugin } from "../../utils/chartWeatherIcon";
 
 import i18n from "../../i18n/i18n.js";
+import { useIsAiAttached, removeAiAttachmentById } from "../AiShared/aiAttachments.js";
 // Кеш canvas-іконок для точок графіків: картка рендериться щосекунди, і без кешу
 // десятки іконок (з емодзі) малювались заново, а графік бачив «нові» дані
 const chartCanvasCache = new Map();
@@ -1904,6 +1905,7 @@ const WeatherCardComponent = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDropdownClosing, setIsDropdownClosing] = useState(false);
   const [hasGeminiKey, setHasGeminiKey] = useState(false);
+  const isAiAttached = useIsAiAttached(`weather-${card.id}`);
 
   useEffect(() => {
     loadCardUnits(card.id).then(({ useGlobal, units: loaded }) => {
@@ -5086,6 +5088,11 @@ const HOLIDAYS_2027 = {
                 <SettingsDropdownItem
                   onClick={() => {
                     handleCloseDropdown();
+                    // Уже прикріплена — кнопка відкріплює (відкріпити можна й без ключа)
+                    if (isAiAttached) {
+                      removeAiAttachmentById(`weather-${card.id}`);
+                      return;
+                    }
                     if (!hasGeminiKey) return;
                     window.dispatchEvent(
                       new CustomEvent("attachCardToAiHelp", {
@@ -5102,17 +5109,28 @@ const HOLIDAYS_2027 = {
                     textAlign: "center",
                     padding: "4px 12px",
                     gap: "0",
-                    background: hasGeminiKey
+                    background: isAiAttached
+                      ? "linear-gradient(135deg, #3a3a46, #2c2c36)"
+                      : hasGeminiKey
                       ? "linear-gradient(135deg, #5c1d3c, #62123d)"
                       : "rgba(120,120,120,0.3)",
-                    color: hasGeminiKey ? "#ffffff" : undefined,
-                    cursor: hasGeminiKey ? "pointer" : "default",
+                    color: hasGeminiKey || isAiAttached ? "#ffffff" : undefined,
+                    cursor: hasGeminiKey || isAiAttached ? "pointer" : "default",
                   }}
                 >
-                  <FiPlus style={{ transform: "scale(1.2)" }} /> {i18n.t("newsWeather.Weather.prykripytyDoShi")}
-                  <SettingsItemHint>
-                    {hasGeminiKey ? i18n.t("newsWeather.Weather.zapytatyShiProTsiu") : i18n.t("newsWeather.Weather.potribenKliuchGemini")}
-                  </SettingsItemHint>
+                  {isAiAttached ? (
+                    <>
+                      <FiMinus style={{ transform: "scale(1.2)" }} /> {i18n.t("ui.aiAttachments.vidkripytyVidShi")}
+                      <SettingsItemHint>{i18n.t("ui.aiAttachments.prybratyZChatu")}</SettingsItemHint>
+                    </>
+                  ) : (
+                    <>
+                      <FiPlus style={{ transform: "scale(1.2)" }} /> {i18n.t("newsWeather.Weather.prykripytyDoShi")}
+                      <SettingsItemHint>
+                        {hasGeminiKey ? i18n.t("newsWeather.Weather.zapytatyShiProTsiu") : i18n.t("newsWeather.Weather.potribenKliuchGemini")}
+                      </SettingsItemHint>
+                    </>
+                  )}
                 </SettingsDropdownItem>
                 {!isEditing && (
                   <SettingsDropdownItem

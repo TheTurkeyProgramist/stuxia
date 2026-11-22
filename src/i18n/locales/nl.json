@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Deze kaart is al bijgevoegd!",
       "maksymumPrykriplennia": "Maximaal {{MAX_AI_ATTACHMENTS}} bijlagen.",
-      "prykripleno": "Bijgevoegd: {{title}}"
+      "prykripleno": "Bijgevoegd: {{title}}",
+      "vidkripytyVidShi": "Losmaken van AI",
+      "vidkripyty": "Losmaken",
+      "prybratyZChatu": "Verwijderen uit de AI-chat",
+      "vidkripleno": "Losgemaakt: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Bestand uploaden...",

@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Tato karta už je připojená!",
       "maksymumPrykriplennia": "Maximálně {{MAX_AI_ATTACHMENTS}} přílohy.",
-      "prykripleno": "Připojeno: {{title}}"
+      "prykripleno": "Připojeno: {{title}}",
+      "vidkripytyVidShi": "Odepnout od AI",
+      "vidkripyty": "Odepnout",
+      "prybratyZChatu": "Odebrat z AI chatu",
+      "vidkripleno": "Odepnuto: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Nahrávání souboru...",

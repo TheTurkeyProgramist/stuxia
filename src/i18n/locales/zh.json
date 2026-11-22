@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "这张卡片已经附加过了！",
       "maksymumPrykriplennia": "最多 {{MAX_AI_ATTACHMENTS}} 个附件。",
-      "prykripleno": "已附加：{{title}}"
+      "prykripleno": "已附加：{{title}}",
+      "vidkripytyVidShi": "从 AI 移除",
+      "vidkripyty": "移除",
+      "prybratyZChatu": "从 AI 对话中移除",
+      "vidkripleno": "已移除：{{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "正在上传文件...",

@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "این کارت از قبل پیوست شده!",
       "maksymumPrykriplennia": "حداکثر {{MAX_AI_ATTACHMENTS}} پیوست.",
-      "prykripleno": "پیوست شد: {{title}}"
+      "prykripleno": "پیوست شد: {{title}}",
+      "vidkripytyVidShi": "جدا کردن از هوش مصنوعی",
+      "vidkripyty": "جدا کردن",
+      "prybratyZChatu": "حذف از گفتگوی هوش مصنوعی",
+      "vidkripleno": "جدا شد: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "در حال بارگذاری فایل...",

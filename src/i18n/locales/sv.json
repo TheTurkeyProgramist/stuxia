@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Det här kortet är redan bifogat!",
       "maksymumPrykriplennia": "Högst {{MAX_AI_ATTACHMENTS}} bilagor.",
-      "prykripleno": "Bifogat: {{title}}"
+      "prykripleno": "Bifogat: {{title}}",
+      "vidkripytyVidShi": "Koppla från AI",
+      "vidkripyty": "Koppla från",
+      "prybratyZChatu": "Ta bort från AI-chatten",
+      "vidkripleno": "Bortkopplad: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Laddar upp fil...",

@@ -42,7 +42,7 @@ import { MdOutlineReportOff } from "react-icons/md"; //Заглушити
 import { MdBlock, MdClose } from "react-icons/md";
 import { TbStarsFilled } from "react-icons/tb"; // ШІ Виклад
 import { SheetHeader, SHEET_IN_MS, SHEET_OUT_MS } from "../Modals/sheetModal.jsx";
-import { FiPlus, FiList, FiLink, FiShield, FiMoreVertical, FiAlertTriangle } from "react-icons/fi";
+import { FiPlus, FiMinus, FiList, FiLink, FiShield, FiMoreVertical, FiAlertTriangle } from "react-icons/fi";
 import { BiCog } from "react-icons/bi";
 import toast from "react-hot-toast";
 import {
@@ -87,6 +87,7 @@ import {
 } from "../../utils/muteSync";
 import { Tooltip } from "../Tooltip/Tooltip";
 import i18n from "../../i18n/i18n.js";
+import { useIsAiAttached, removeAiAttachmentById } from "../AiShared/aiAttachments.js";
 import { dateLocale } from "../../utils/weatherText.js";
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -1173,6 +1174,7 @@ const NewsCard = ({
   const cardRef = useRef(null);
   const [isVisible, setIsVisible] = useState(item.isNew);
   const [hasGeminiKey, setHasGeminiKey] = useState(false);
+  const isAiAttached = useIsAiAttached(`news-${item.link}`);
   const [isNewsSettingsOpen, setIsNewsSettingsOpen] = useState(false);
   // Lazy-load: показуємо реальне зображення лише коли картка входить у viewport
   const [imgSrc, setImgSrc] = useState(null);
@@ -1391,10 +1393,16 @@ const NewsCard = ({
         </NewsSettingsItem>
       )}
       <NewsSettingsItem
-        $color={hasGeminiKey ? "#ff69b4" : "#888"}
-        disabled={!hasGeminiKey}
-        title={hasGeminiKey ? i18n.t("newsWeather.News.prykripytyDoShiChatu") : i18n.t("newsWeather.News.dodaiteGeminiApiKliuch")}
+        $color={isAiAttached ? "#bbb" : hasGeminiKey ? "#ff69b4" : "#888"}
+        disabled={!hasGeminiKey && !isAiAttached}
+        title={isAiAttached ? i18n.t("ui.aiAttachments.prybratyZChatu") : hasGeminiKey ? i18n.t("newsWeather.News.prykripytyDoShiChatu") : i18n.t("newsWeather.News.dodaiteGeminiApiKliuch")}
         onClick={() => {
+          // Уже прикріплена — кнопка відкріплює
+          if (isAiAttached) {
+            removeAiAttachmentById(`news-${item.link}`);
+            setIsNewsSettingsOpen(false);
+            return;
+          }
           if (!hasGeminiKey) return;
           const cleanText = (item.description || item.title).replace(/<[^>]*>?/gm, "").trim();
           window.dispatchEvent(
@@ -1410,7 +1418,11 @@ const NewsCard = ({
           setIsNewsSettingsOpen(false);
         }}
       >
-        <FiPlus /> {compact ? i18n.t("newsWeather.News.doShi") : i18n.t("newsWeather.News.prykripytyDoShi")}
+        {isAiAttached ? (
+          <><FiMinus /> {compact ? i18n.t("ui.aiAttachments.vidkripyty") : i18n.t("ui.aiAttachments.vidkripytyVidShi")}</>
+        ) : (
+          <><FiPlus /> {compact ? i18n.t("newsWeather.News.doShi") : i18n.t("newsWeather.News.prykripytyDoShi")}</>
+        )}
       </NewsSettingsItem>
       <NewsSettingsItem
         onClick={() => {

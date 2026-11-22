@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "이 카드는 이미 첨부됐어요!",
       "maksymumPrykriplennia": "첨부는 최대 {{MAX_AI_ATTACHMENTS}}개.",
-      "prykripleno": "첨부됨: {{title}}"
+      "prykripleno": "첨부됨: {{title}}",
+      "vidkripytyVidShi": "AI에서 분리",
+      "vidkripyty": "분리",
+      "prybratyZChatu": "AI 채팅에서 제거",
+      "vidkripleno": "분리됨: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "파일 업로드 중...",

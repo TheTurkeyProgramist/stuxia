@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Kaarkan horey ayaa loogu lifaaqay!",
       "maksymumPrykriplennia": "Ugu badnaan {{MAX_AI_ATTACHMENTS}} lifaaq.",
-      "prykripleno": "Waa la lifaaqay: {{title}}"
+      "prykripleno": "Waa la lifaaqay: {{title}}",
+      "vidkripytyVidShi": "Ka saar AI",
+      "vidkripyty": "Ka saar",
+      "prybratyZChatu": "Ka saar sheekada AI",
+      "vidkripleno": "Waa laga saaray: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Faylka waa la soo gelinayaa...",

@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "هذه البطاقة مرفقة بالفعل!",
       "maksymumPrykriplennia": "{{MAX_AI_ATTACHMENTS}} مرفقات كحد أقصى.",
-      "prykripleno": "أُرفق: {{title}}"
+      "prykripleno": "أُرفق: {{title}}",
+      "vidkripytyVidShi": "إلغاء الإرفاق من الذكاء الاصطناعي",
+      "vidkripyty": "إلغاء الإرفاق",
+      "prybratyZChatu": "إزالة من محادثة الذكاء الاصطناعي",
+      "vidkripleno": "أُلغي الإرفاق: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "جارٍ رفع الملف...",

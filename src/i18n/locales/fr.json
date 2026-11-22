@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Cette carte est déjà jointe !",
       "maksymumPrykriplennia": "{{MAX_AI_ATTACHMENTS}} pièces jointes maximum.",
-      "prykripleno": "Joint : {{title}}"
+      "prykripleno": "Joint : {{title}}",
+      "vidkripytyVidShi": "Détacher de l’IA",
+      "vidkripyty": "Détacher",
+      "prybratyZChatu": "Retirer du chat IA",
+      "vidkripleno": "Détaché : {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Envoi du fichier...",

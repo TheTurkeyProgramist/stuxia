@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Diese Karte ist schon angehängt!",
       "maksymumPrykriplennia": "Maximal {{MAX_AI_ATTACHMENTS}} Anhänge.",
-      "prykripleno": "Angehängt: {{title}}"
+      "prykripleno": "Angehängt: {{title}}",
+      "vidkripytyVidShi": "Von KI lösen",
+      "vidkripyty": "Lösen",
+      "prybratyZChatu": "Aus dem KI-Chat entfernen",
+      "vidkripleno": "Gelöst: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Datei wird hochgeladen...",

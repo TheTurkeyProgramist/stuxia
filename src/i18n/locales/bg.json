@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Тази карта вече е прикачена!",
       "maksymumPrykriplennia": "Максимум {{MAX_AI_ATTACHMENTS}} прикачвания.",
-      "prykripleno": "Прикачено: {{title}}"
+      "prykripleno": "Прикачено: {{title}}",
+      "vidkripytyVidShi": "Откачи от ИИ",
+      "vidkripyty": "Откачи",
+      "prybratyZChatu": "Премахни от ИИ чата",
+      "vidkripleno": "Откачено: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Качване на файла...",

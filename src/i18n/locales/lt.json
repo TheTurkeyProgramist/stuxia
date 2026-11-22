@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Ši kortelė jau prisegta!",
       "maksymumPrykriplennia": "Daugiausia {{MAX_AI_ATTACHMENTS}} priedai.",
-      "prykripleno": "Prisegta: {{title}}"
+      "prykripleno": "Prisegta: {{title}}",
+      "vidkripytyVidShi": "Atsegti nuo DI",
+      "vidkripyty": "Atsegti",
+      "prybratyZChatu": "Pašalinti iš DI pokalbio",
+      "vidkripleno": "Atsegta: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Įkeliamas failas...",

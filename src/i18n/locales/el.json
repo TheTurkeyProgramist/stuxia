@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Αυτή η κάρτα έχει ήδη επισυναφθεί!",
       "maksymumPrykriplennia": "Έως {{MAX_AI_ATTACHMENTS}} συνημμένα.",
-      "prykripleno": "Επισυνάφθηκε: {{title}}"
+      "prykripleno": "Επισυνάφθηκε: {{title}}",
+      "vidkripytyVidShi": "Αποσύνδεση από την ΤΝ",
+      "vidkripyty": "Αποσύνδεση",
+      "prybratyZChatu": "Αφαίρεση από τη συνομιλία ΤΝ",
+      "vidkripleno": "Αποσυνδέθηκε: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Μεταφόρτωση αρχείου...",

@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Цю картку вже прикріплено!",
       "maksymumPrykriplennia": "Максимум {{MAX_AI_ATTACHMENTS}} прикріплення.",
-      "prykripleno": "Прикріплено: {{title}}"
+      "prykripleno": "Прикріплено: {{title}}",
+      "vidkripytyVidShi": "Відкріпити від ШІ",
+      "vidkripyty": "Відкріпити",
+      "prybratyZChatu": "Прибрати з ШІ-чату",
+      "vidkripleno": "Відкріплено: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Завантаження файлу...",

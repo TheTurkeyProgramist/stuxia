@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Ez a kártya már csatolva van!",
       "maksymumPrykriplennia": "Legfeljebb {{MAX_AI_ATTACHMENTS}} csatolmány.",
-      "prykripleno": "Csatolva: {{title}}"
+      "prykripleno": "Csatolva: {{title}}",
+      "vidkripytyVidShi": "Leválasztás az MI-ről",
+      "vidkripyty": "Leválasztás",
+      "prybratyZChatu": "Eltávolítás az MI-csevegésből",
+      "vidkripleno": "Leválasztva: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Fájl feltöltése...",

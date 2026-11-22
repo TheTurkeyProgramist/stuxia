@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Este cartão já está anexado!",
       "maksymumPrykriplennia": "Máximo {{MAX_AI_ATTACHMENTS}} anexos.",
-      "prykripleno": "Anexado: {{title}}"
+      "prykripleno": "Anexado: {{title}}",
+      "vidkripytyVidShi": "Desanexar da IA",
+      "vidkripyty": "Desanexar",
+      "prybratyZChatu": "Remover do chat de IA",
+      "vidkripleno": "Desanexado: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "A enviar ficheiro...",

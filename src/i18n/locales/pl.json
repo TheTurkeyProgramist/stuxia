@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Ta karta jest już dołączona!",
       "maksymumPrykriplennia": "Maksymalnie {{MAX_AI_ATTACHMENTS}} załączników.",
-      "prykripleno": "Dołączono: {{title}}"
+      "prykripleno": "Dołączono: {{title}}",
+      "vidkripytyVidShi": "Odepnij od AI",
+      "vidkripyty": "Odepnij",
+      "prybratyZChatu": "Usuń z czatu AI",
+      "vidkripleno": "Odpięto: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Przesyłanie pliku...",

@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "This card is already attached!",
       "maksymumPrykriplennia": "Maximum {{MAX_AI_ATTACHMENTS}} attachments.",
-      "prykripleno": "Attached: {{title}}"
+      "prykripleno": "Attached: {{title}}",
+      "vidkripytyVidShi": "Detach from AI",
+      "vidkripyty": "Detach",
+      "prybratyZChatu": "Remove from the AI chat",
+      "vidkripleno": "Detached: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Uploading file...",

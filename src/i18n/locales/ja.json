@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "このカードはすでに添付されています！",
       "maksymumPrykriplennia": "添付は最大 {{MAX_AI_ATTACHMENTS}} 件まで。",
-      "prykripleno": "添付しました：{{title}}"
+      "prykripleno": "添付しました：{{title}}",
+      "vidkripytyVidShi": "AIから外す",
+      "vidkripyty": "外す",
+      "prybratyZChatu": "AIチャットから削除",
+      "vidkripleno": "外しました：{{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "ファイルをアップロード中...",

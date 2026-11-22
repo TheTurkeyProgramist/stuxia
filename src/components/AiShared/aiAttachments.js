@@ -38,6 +38,14 @@ export const addAiAttachment = (card) => {
 export const removeAiAttachment = (index) =>
   setCards(cards.filter((_, i) => i !== index));
 
+/** Відкріпити картку за id (кнопка-перемикач у меню погоди й новин). */
+export const removeAiAttachmentById = (id) => {
+  const card = cards.find((c) => c.id === id);
+  if (!card) return;
+  setCards(cards.filter((c) => c.id !== id));
+  toast.success(i18n.t("ui.aiAttachments.vidkripleno", { title: card.title }));
+};
+
 export const clearAiAttachments = () => {
   if (cards.length) setCards([]);
 };
@@ -50,6 +58,10 @@ const getSnapshot = () => cards;
 
 /** Масив прикріплених карток (оновлюється в усіх компонентах одразу). */
 export const useAiAttachments = () => useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+/** Чи прикріплена картка з таким id (оновлюється одразу після прикріплення/відкріплення). */
+export const useIsAiAttached = (id) =>
+  useSyncExternalStore(subscribe, () => cards.some((c) => c.id === id), () => false);
 
 // Погода й новини надсилають картки подією — ловимо її глобально
 // (попередній слухач знімаємо, щоб гаряче перезавантаження Vite не дублювало його)

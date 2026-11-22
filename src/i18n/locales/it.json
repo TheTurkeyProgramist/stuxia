@@ -2659,7 +2659,11 @@
     "aiAttachments": {
       "tsiuKartkuVzhePrykripleno": "Questa scheda è già allegata!",
       "maksymumPrykriplennia": "Massimo {{MAX_AI_ATTACHMENTS}} allegati.",
-      "prykripleno": "Allegato: {{title}}"
+      "prykripleno": "Allegato: {{title}}",
+      "vidkripytyVidShi": "Stacca dall’IA",
+      "vidkripyty": "Stacca",
+      "prybratyZChatu": "Rimuovi dalla chat IA",
+      "vidkripleno": "Staccato: {{title}}"
     },
     "BgModal": {
       "zavantazhenniaFailu": "Caricamento del file...",
