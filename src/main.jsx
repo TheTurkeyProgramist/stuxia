@@ -11,6 +11,13 @@ import App from "./App.jsx";
 import { eagerChunksReady } from "./utils/eagerChunks.js";
 import { removeBootBg } from "./utils/bootBg.js";
 import { Toaster } from "react-hot-toast";
+import { reloadOnceForStaleBuild } from "./utils/staleBuildReload.js";
+
+// Будь-який лінивий чанк зі старої збірки не завантажився (Vite кидає цю подію) —
+// перезавантажуємо сторінку на нову збірку (staleBuildReload.js)
+window.addEventListener("vite:preloadError", (e) => {
+  if (reloadOnceForStaleBuild()) e.preventDefault();
+});
 
 // Глобальна зупинка всіх відео при зміні вкладки/згортанні
 document.addEventListener("visibilitychange", () => {

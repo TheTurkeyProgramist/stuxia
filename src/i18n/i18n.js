@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 import { getPref, setPref } from '../utils/prefsStore.js';
+import { reloadOnceForStaleBuild } from '../utils/staleBuildReload.js';
 
 export const RTL_LANGUAGES = new Set(['ar', 'fa']);
 
@@ -34,7 +35,12 @@ const lazyLocalesBackend = {
   read(lng, _ns, callback) {
     import(`./locales/${lng}.json`)
       .then((mod) => callback(null, mod.default))
-      .catch((err) => callback(err, null));
+      .catch((err) => {
+        // Файл мови зі старої збірки вже не існує — перезавантажуємо на нову
+        console.error('[i18n] locale load failed', lng, err);
+        reloadOnceForStaleBuild();
+        callback(err, null);
+      });
   },
 };
 

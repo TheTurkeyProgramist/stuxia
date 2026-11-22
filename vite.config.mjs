@@ -376,7 +376,8 @@ export default defineConfig(({ mode }) => {
             options: {
               cacheName: 'i18n',
               expiration: { maxEntries: 12, maxAgeSeconds: 60 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [200] },
+              // Неіснуючий файл Cloudflare віддає як index.html зі статусом 200 — такого не кешуємо
+              cacheableResponse: { statuses: [200], headers: { 'content-type': 'application/javascript' } },
             },
           },
           {
