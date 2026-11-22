@@ -2877,7 +2877,10 @@
       "myl": "mi",
       "km": "km",
       "m": "m",
-      "viter": "Wind ({{v0}})"
+      "viter": "Wind ({{v0}})",
+      "data": "Datum der Tage",
+      "dataCyframy": "Datum in Ziffern: 22.11.",
+      "dataMisiatsSlovom": "Monat als Wort: 22. Nov"
     },
     "customFontImport": {
       "miiShryft": "Meine Schrift",

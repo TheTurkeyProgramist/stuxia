@@ -2877,7 +2877,10 @@
       "myl": "mi",
       "km": "km",
       "m": "m",
-      "viter": "Vânt ({{v0}})"
+      "viter": "Vânt ({{v0}})",
+      "data": "Data zilelor",
+      "dataCyframy": "Dată numerică: 22.11",
+      "dataMisiatsSlovom": "Luna în cuvinte: 22 nov"
     },
     "customFontImport": {
       "miiShryft": "Fontul meu",

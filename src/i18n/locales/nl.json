@@ -2877,7 +2877,10 @@
       "myl": "mi",
       "km": "km",
       "m": "m",
-      "viter": "Wind ({{v0}})"
+      "viter": "Wind ({{v0}})",
+      "data": "Datum van de dagen",
+      "dataCyframy": "Datum in cijfers: 22-11",
+      "dataMisiatsSlovom": "Maand als woord: 22 nov"
     },
     "customFontImport": {
       "miiShryft": "Mijn lettertype",

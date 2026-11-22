@@ -108,7 +108,7 @@ const WeatherBgModal = lazyWithRetry(() => import("../Modals/WeatherBgModal"));
 const CustomDatesModal = lazyWithRetry(() => import("../Modals/CustomDatesModal"));
 const UnitsModal = lazyWithRetry(() => import("../Modals/UnitsModal"));
 import { loadCardUnits, isUnitsEventForCard, cardUnitsKey, UNITS_GLOBAL_KEY, UNITS_USE_GLOBAL_KEY } from "../../utils/unitsStorage";
-import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, tempLabel, windLabel, pressureLabel, visibilityLabel, convertVisibility, precipLabel, snowLabel, heightLabel, convertHeight, convertTemp, convertWind, convertPrecip, convertPressure, convertSnow } from "../../utils/units.js";
+import { DEFAULT_UNITS, UNIT_GROUPS, makeFormatters, formatDateLabel, tempLabel, windLabel, pressureLabel, visibilityLabel, convertVisibility, precipLabel, snowLabel, heightLabel, convertHeight, convertTemp, convertWind, convertPrecip, convertPressure, convertSnow } from "../../utils/units.js";
 import WeatherRows, { windCellStyle, uvCellStyle, precipCellStyle, chanceColor, tempColor } from "./WeatherRows.jsx";
 import { CONSENSUS_MODEL_LABELS } from "../../utils/weatherConsensus";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
@@ -1830,8 +1830,11 @@ const WeatherCardComponent = ({
   const dailyList = useMemo(() => {
     const all = card.daily16 || card.daily || [];
     const shown = showPastDay ? all : all.filter((d) => !(d?.fullDate && d.fullDate < todayIso));
-    return extendedDays.length ? [...shown, ...extendedDays] : shown;
-  }, [card.daily16, card.daily, showPastDay, todayIso, extendedDays]);
+    const list = extendedDays.length ? [...shown, ...extendedDays] : shown;
+    // Формат підпису дня з «Одиниць»: 22.11 (за замовчуванням) або 22 лист
+    if (units.date !== "month") return list;
+    return list.map((d) => (d?.fullDate ? { ...d, date: formatDateLabel(d.fullDate, "month") } : d));
+  }, [card.daily16, card.daily, showPastDay, todayIso, extendedDays, units.date]);
   // Чи є в даних учорашній день (інакше перемикач «вчора» не показуємо)
   const hasPastDay = (card.daily16 || card.daily || []).some(isPastDay);
 
@@ -3338,7 +3341,9 @@ const HOLIDAYS_2027 = {
     borderDash: (ctx) => (dailyList?.[ctx.p1DataIndex]?.extended ? [6, 4] : undefined),
   };
   const dailyChartData = {
-    labels: dailyList?.map((d) => `${d.date}\n${d.day}`) || [],
+    // Масив — два рядки (дата / день): Chart.js не розбиває «\n» у рядку, і довгий підпис
+    // повертався під 45°, залазячи першим днем під чорну смугу осі зліва
+    labels: dailyList?.map((d) => [d.date, d.day]) || [],
     datasets: [
       {
         label: i18n.t("newsWeather.Weather.den", { tempSuffix: tempSuffix }),
@@ -3617,6 +3622,9 @@ const HOLIDAYS_2027 = {
         ...chartOptions.scales.x,
         ticks: {
           ...chartOptions.scales.x.ticks,
+          // Два рядки вміщаються в ~56 px дня — без повороту й пропусків
+          maxRotation: 0,
+          autoSkip: false,
           color: (ctx) => {
             if (!dailyList || ctx.index >= dailyList.length) {
               return "#fff";
@@ -6085,6 +6093,63 @@ const HOLIDAYS_2027 = {
                       )}
                     </RuleSectionCard>
                   )}
+                  {/* 5. Блок: Народні прикмети зі звіркою з моделями — у лівій колонці, де під «Динамікою доби» було порожньо */}
+                  <RuleSectionCard $isDarkMode={isDarkMode} $accent="#d97706">
+                    <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("folk")}>
+                      <GiWheat style={{ color: "#d97706", fontSize: "14px" }} />
+                      <span>{i18n.t("newsWeather.folkSigns.title")}</span>
+                      {renderRuleChevron("folk")}
+                    </RuleSectionHeader>
+                    {isRuleSectionOpen("folk") && (
+                      <RuleSectionBody $isDarkMode={isDarkMode} style={{ whiteSpace: "normal" }}>
+                        {[...folkSigns.calendar, ...folkSigns.weather].length === 0 ? (
+                          <div style={{ opacity: 0.85 }}>
+                            {i18n.t("newsWeather.folkSigns.none", { n: folkSigns.checked })}
+                          </div>
+                        ) : (
+                          [...folkSigns.calendar, ...folkSigns.weather].map((sign, sIdx) => {
+                            const color = {
+                              agree: "#10b981",
+                              disagree: "#ef4444",
+                              neutral: isDarkMode ? "#9ca3af" : "#6b7280",
+                              far: "#a78bfa",
+                            }[sign.verdict];
+                            const detail = folkDetailText(sign.detail);
+                            const label =
+                              sign.type === "calendar"
+                                ? i18n.t("newsWeather.folkSigns.calendarLabel", {
+                                    date: new Intl.DateTimeFormat(dateLocale(), { day: "numeric", month: "long", timeZone: "UTC" }).format(
+                                      new Date(`${folkSigns.today}T12:00:00Z`),
+                                    ),
+                                  })
+                                : i18n.t("newsWeather.folkSigns.weatherLabel");
+                            return (
+                              <div key={sign.id} style={{ marginTop: sIdx > 0 ? "8px" : 0 }}>
+                                <div style={{ fontSize: "10px", fontWeight: 700, opacity: 0.65, textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                                  {label}
+                                </div>
+                                <div style={{ fontStyle: "italic" }}>
+                                  «{i18n.t(`newsWeather.folkSigns.${sign.type === "calendar" ? "c" : "s"}_${sign.id}`)}»
+                                </div>
+                                <div style={{ display: "flex", gap: "6px", alignItems: "flex-start", marginTop: "2px", fontSize: "11px" }}>
+                                  <span style={{ color, fontWeight: 700, flexShrink: 0 }}>
+                                    {sign.verdict === "agree" ? "✓" : sign.verdict === "disagree" ? "✗" : sign.verdict === "far" ? "⏳" : "≈"}
+                                  </span>
+                                  <span>
+                                    <strong style={{ color }}>{i18n.t(`newsWeather.folkSigns.verdict_${sign.verdict}`)}</strong>
+                                    {detail ? ` · ${detail}` : ""}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                        <div style={{ marginTop: "8px", fontSize: "10px", opacity: 0.6 }}>
+                          {i18n.t("newsWeather.folkSigns.intro")}
+                        </div>
+                      </RuleSectionBody>
+                    )}
+                  </RuleSectionCard>
                   </RuleSectionsColumn>
 
                   {/* Права колонка */}
@@ -6190,64 +6255,6 @@ const HOLIDAYS_2027 = {
                       )}
                     </RuleSectionCard>
                   )}
-
-                  {/* 5. Блок: Народні прикмети зі звіркою з моделями */}
-                  <RuleSectionCard $isDarkMode={isDarkMode} $accent="#d97706">
-                    <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("folk")}>
-                      <GiWheat style={{ color: "#d97706", fontSize: "14px" }} />
-                      <span>{i18n.t("newsWeather.folkSigns.title")}</span>
-                      {renderRuleChevron("folk")}
-                    </RuleSectionHeader>
-                    {isRuleSectionOpen("folk") && (
-                      <RuleSectionBody $isDarkMode={isDarkMode} style={{ whiteSpace: "normal" }}>
-                        {[...folkSigns.calendar, ...folkSigns.weather].length === 0 ? (
-                          <div style={{ opacity: 0.85 }}>
-                            {i18n.t("newsWeather.folkSigns.none", { n: folkSigns.checked })}
-                          </div>
-                        ) : (
-                          [...folkSigns.calendar, ...folkSigns.weather].map((sign, sIdx) => {
-                            const color = {
-                              agree: "#10b981",
-                              disagree: "#ef4444",
-                              neutral: isDarkMode ? "#9ca3af" : "#6b7280",
-                              far: "#a78bfa",
-                            }[sign.verdict];
-                            const detail = folkDetailText(sign.detail);
-                            const label =
-                              sign.type === "calendar"
-                                ? i18n.t("newsWeather.folkSigns.calendarLabel", {
-                                    date: new Intl.DateTimeFormat(dateLocale(), { day: "numeric", month: "long", timeZone: "UTC" }).format(
-                                      new Date(`${folkSigns.today}T12:00:00Z`),
-                                    ),
-                                  })
-                                : i18n.t("newsWeather.folkSigns.weatherLabel");
-                            return (
-                              <div key={sign.id} style={{ marginTop: sIdx > 0 ? "8px" : 0 }}>
-                                <div style={{ fontSize: "10px", fontWeight: 700, opacity: 0.65, textTransform: "uppercase", letterSpacing: "0.03em" }}>
-                                  {label}
-                                </div>
-                                <div style={{ fontStyle: "italic" }}>
-                                  «{i18n.t(`newsWeather.folkSigns.${sign.type === "calendar" ? "c" : "s"}_${sign.id}`)}»
-                                </div>
-                                <div style={{ display: "flex", gap: "6px", alignItems: "flex-start", marginTop: "2px", fontSize: "11px" }}>
-                                  <span style={{ color, fontWeight: 700, flexShrink: 0 }}>
-                                    {sign.verdict === "agree" ? "✓" : sign.verdict === "disagree" ? "✗" : sign.verdict === "far" ? "⏳" : "≈"}
-                                  </span>
-                                  <span>
-                                    <strong style={{ color }}>{i18n.t(`newsWeather.folkSigns.verdict_${sign.verdict}`)}</strong>
-                                    {detail ? ` · ${detail}` : ""}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                        <div style={{ marginTop: "8px", fontSize: "10px", opacity: 0.6 }}>
-                          {i18n.t("newsWeather.folkSigns.intro")}
-                        </div>
-                      </RuleSectionBody>
-                    )}
-                  </RuleSectionCard>
 
                   </RuleSectionsColumn>
                 </RuleSectionsGrid>

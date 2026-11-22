@@ -2877,7 +2877,10 @@
       "myl": "mi",
       "km": "km",
       "m": "m",
-      "viter": "바람 ({{v0}})"
+      "viter": "바람 ({{v0}})",
+      "data": "날짜 표시",
+      "dataCyframy": "숫자: 11. 22.",
+      "dataMisiatsSlovom": "월을 글자로: 11월 22일"
     },
     "customFontImport": {
       "miiShryft": "내 글꼴",

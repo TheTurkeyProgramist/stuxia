@@ -1,4 +1,5 @@
 import i18n from "../i18n/i18n.js";
+import { dateLocale } from "./weatherText.js";
 // Одиниці виміру. Усі дані в картках зберігаються в SI-подібних базових одиницях:
 // °C, м/с, гПа, км (видимість), мм (опади), см (сніг), м (висота).
 
@@ -8,6 +9,7 @@ export const DEFAULT_UNITS = {
   pressure: "hpa",
   distance: "km",
   precip: "mm",
+  date: "num", // підпис дня: "num" — 22.11, "month" — 22 лист
 };
 
 export const METRIC_UNITS = { ...DEFAULT_UNITS };
@@ -19,7 +21,24 @@ export const IMPERIAL_UNITS = {
   precip: "in",
 };
 
-const sameUnits = (a, b) => Object.keys(DEFAULT_UNITS).every((k) => a?.[k] === b[k]);
+// Система (метрична/імперська) — лише за одиницями виміру; формат дати на неї не впливає
+const MEASURE_KEYS = ["temp", "wind", "pressure", "distance", "precip"];
+const sameUnits = (a, b) => MEASURE_KEYS.every((k) => a?.[k] === b[k]);
+
+// ---- Дата в підписах днів (вхід ISO "YYYY-MM-DD") ----
+// "num" — 22.11, "month" — 22 лист (місяць словом мовою сайту, без крапки скорочення)
+export const formatDateLabel = (iso, mode = "num") => {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return "";
+  const d = new Date(`${String(iso).slice(0, 10)}T12:00:00`);
+  if (mode === "month") {
+    return d.toLocaleDateString(dateLocale(), { day: "numeric", month: "short" }).replace(/\.$/, "");
+  }
+  return d.toLocaleDateString(dateLocale(), { day: "numeric", month: "2-digit" });
+};
+const todayIso = () => {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+};
 
 // "metric" | "imperial" | "custom" — визначається за поточним набором одиниць
 export const detectSystem = (units) =>
@@ -69,6 +88,14 @@ export const UNIT_GROUPS = [
     options: [
       { key: "mm", get label() { return i18n.t("ui.units.mmSm"); }, get hint() { return i18n.t("ui.units.milimetryTaSantymetry"); } },
       { key: "in", get label() { return i18n.t("ui.units.diuimy"); }, get hint() { return i18n.t("ui.units.diuimy2"); } },
+    ],
+  },
+  {
+    key: "date",
+    get title() { return i18n.t("ui.units.data"); },
+    options: [
+      { key: "num", get label() { return formatDateLabel(todayIso(), "num"); }, get hint() { return i18n.t("ui.units.dataCyframy"); } },
+      { key: "month", get label() { return formatDateLabel(todayIso(), "month"); }, get hint() { return i18n.t("ui.units.dataMisiatsSlovom"); } },
     ],
   },
 ];
@@ -156,6 +183,7 @@ export const makeFormatters = (units) => {
     snow: (cm, digits = 1) => out(convertSnow(cm, u.precip), snowLabel(u.precip), u.precip === "in" ? 2 : digits),
     visibility: (km) => out(convertVisibility(km, u.distance), visibilityLabel(u.distance), 1),
     height: (m) => out(convertHeight(m, u.distance), heightLabel(u.distance), 0),
+    date: (iso) => formatDateLabel(iso, u.date),
     // числові значення для графіків
     windValue: (ms) => round(convertWind(ms, u.wind) ?? 0, 1),
     windAxis: i18n.t("ui.units.viter", { v0: windLabel(u.wind) }),

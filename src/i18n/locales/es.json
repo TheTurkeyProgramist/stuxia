@@ -2877,7 +2877,10 @@
       "myl": "mi",
       "km": "km",
       "m": "m",
-      "viter": "Viento ({{v0}})"
+      "viter": "Viento ({{v0}})",
+      "data": "Fecha de los días",
+      "dataCyframy": "Fecha en números: 22/11",
+      "dataMisiatsSlovom": "Mes en palabra: 22 nov"
     },
     "customFontImport": {
       "miiShryft": "Mi fuente",

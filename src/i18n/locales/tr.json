@@ -2877,7 +2877,10 @@
       "myl": "mil",
       "km": "km",
       "m": "m",
-      "viter": "Rüzgâr ({{v0}})"
+      "viter": "Rüzgâr ({{v0}})",
+      "data": "Gün tarihi",
+      "dataCyframy": "Rakamla tarih: 22.11",
+      "dataMisiatsSlovom": "Ay adıyla: 22 Kas"
     },
     "customFontImport": {
       "miiShryft": "Yazı tipim",

@@ -2877,7 +2877,10 @@
       "myl": "mi",
       "km": "km",
       "m": "m",
-      "viter": "Szél ({{v0}})"
+      "viter": "Szél ({{v0}})",
+      "data": "Napok dátuma",
+      "dataCyframy": "Számokkal: 11. 22.",
+      "dataMisiatsSlovom": "Hónap szóval: nov. 22"
     },
     "customFontImport": {
       "miiShryft": "Saját betűtípus",

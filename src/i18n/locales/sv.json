@@ -2877,7 +2877,10 @@
       "myl": "mi",
       "km": "km",
       "m": "m",
-      "viter": "Vind ({{v0}})"
+      "viter": "Vind ({{v0}})",
+      "data": "Datum för dagarna",
+      "dataCyframy": "Datum i siffror: 22/11",
+      "dataMisiatsSlovom": "Månad i ord: 22 nov"
     },
     "customFontImport": {
       "miiShryft": "Mitt typsnitt",

@@ -2877,7 +2877,10 @@
       "myl": "mi",
       "km": "km",
       "m": "m",
-      "viter": "Vėjas ({{v0}})"
+      "viter": "Vėjas ({{v0}})",
+      "data": "Dienų data",
+      "dataCyframy": "Skaičiais: 11-22",
+      "dataMisiatsSlovom": "Mėnuo žodžiu: lapkr. 22"
     },
     "customFontImport": {
       "miiShryft": "Mano šriftas",

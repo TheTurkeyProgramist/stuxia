@@ -2877,7 +2877,10 @@
       "myl": "英里",
       "km": "公里",
       "m": "米",
-      "viter": "风（{{v0}}）"
+      "viter": "风（{{v0}}）",
+      "data": "日期显示",
+      "dataCyframy": "数字日期：11/22",
+      "dataMisiatsSlovom": "月份用文字：11月22日"
     },
     "customFontImport": {
       "miiShryft": "我的字体",

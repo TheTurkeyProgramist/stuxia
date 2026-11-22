@@ -2877,7 +2877,10 @@
       "myl": "міль",
       "km": "км",
       "m": "м",
-      "viter": "Вецер ({{v0}})"
+      "viter": "Вецер ({{v0}})",
+      "data": "Дата дзён",
+      "dataCyframy": "Дата лічбамі: 22.11",
+      "dataMisiatsSlovom": "Месяц словам: 22 ліст"
     },
     "customFontImport": {
       "miiShryft": "Мой шрыфт",

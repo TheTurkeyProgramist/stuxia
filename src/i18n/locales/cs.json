@@ -2877,7 +2877,10 @@
       "myl": "mi",
       "km": "km",
       "m": "m",
-      "viter": "Vítr ({{v0}})"
+      "viter": "Vítr ({{v0}})",
+      "data": "Datum dní",
+      "dataCyframy": "Datum číslicemi: 22. 11.",
+      "dataMisiatsSlovom": "Měsíc slovem: 22. lis"
     },
     "customFontImport": {
       "miiShryft": "Moje písmo",

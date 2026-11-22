@@ -2877,7 +2877,10 @@
       "myl": "mil",
       "km": "km",
       "m": "m",
-      "viter": "Wiatr ({{v0}})"
+      "viter": "Wiatr ({{v0}})",
+      "data": "Data dni",
+      "dataCyframy": "Data cyframi: 22.11",
+      "dataMisiatsSlovom": "Miesiąc słownie: 22 lis"
     },
     "customFontImport": {
       "miiShryft": "Moja czcionka",

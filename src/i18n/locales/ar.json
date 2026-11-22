@@ -2877,7 +2877,10 @@
       "myl": "ميل",
       "km": "كم",
       "m": "م",
-      "viter": "الرياح ({{v0}})"
+      "viter": "الرياح ({{v0}})",
+      "data": "تاريخ الأيام",
+      "dataCyframy": "تاريخ بالأرقام: 22/11",
+      "dataMisiatsSlovom": "الشهر بالكلمات: 22 نوفمبر"
     },
     "customFontImport": {
       "miiShryft": "خطّي",

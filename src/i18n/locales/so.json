@@ -2877,7 +2877,10 @@
       "myl": "mayl",
       "km": "km",
       "m": "m",
-      "viter": "Dabaysha ({{v0}})"
+      "viter": "Dabaysha ({{v0}})",
+      "data": "Taariikhda maalmaha",
+      "dataCyframy": "Taariikh tiro ah: 22/11",
+      "dataMisiatsSlovom": "Bisha oo eray ah: 22 Nof"
     },
     "customFontImport": {
       "miiShryft": "Farta aan leeyahay",

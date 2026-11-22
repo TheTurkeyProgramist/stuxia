@@ -2877,7 +2877,10 @@
       "myl": "mi",
       "km": "km",
       "m": "m",
-      "viter": "Tuuli ({{v0}})"
+      "viter": "Tuuli ({{v0}})",
+      "data": "Päivien päiväys",
+      "dataCyframy": "Numeroina: 22.11.",
+      "dataMisiatsSlovom": "Kuukausi sanana: 22. marrask"
     },
     "customFontImport": {
       "miiShryft": "Oma fonttini",

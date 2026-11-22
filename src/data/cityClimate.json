@@ -1272,5 +1272,3239 @@
    "t": -27.5,
    "date": "2023-01-08"
   }
+ },
+ "kyiv": {
+  "period": "2016–2025",
+  "elevation": 169,
+  "months": [
+   {
+    "tmax": 0.1,
+    "tmin": -4.8,
+    "precip": 42,
+    "wetDays": 11.1,
+    "snowDays": 5.5
+   },
+   {
+    "tmax": 2.1,
+    "tmin": -4,
+    "precip": 39,
+    "wetDays": 8.5,
+    "snowDays": 3.9
+   },
+   {
+    "tmax": 7.9,
+    "tmin": -0.3,
+    "precip": 40,
+    "wetDays": 9.4,
+    "snowDays": 2.3
+   },
+   {
+    "tmax": 14.8,
+    "tmin": 5.1,
+    "precip": 55,
+    "wetDays": 9.7,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 19.8,
+    "tmin": 9.9,
+    "precip": 66,
+    "wetDays": 11.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.5,
+    "tmin": 15.6,
+    "precip": 63,
+    "wetDays": 10.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.3,
+    "tmin": 16.8,
+    "precip": 76,
+    "wetDays": 11.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.3,
+    "tmin": 16.2,
+    "precip": 42,
+    "wetDays": 6.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 20.9,
+    "tmin": 11.6,
+    "precip": 34,
+    "wetDays": 7.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 13.4,
+    "tmin": 6.2,
+    "precip": 58,
+    "wetDays": 8.7,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 6,
+    "tmin": 1,
+    "precip": 51,
+    "wetDays": 9.5,
+    "snowDays": 2.6
+   },
+   {
+    "tmax": 1.8,
+    "tmin": -2.1,
+    "precip": 61,
+    "wetDays": 13.6,
+    "snowDays": 6.7
+   }
+  ],
+  "hottest": {
+   "t": 35.9,
+   "date": "2024-07-14"
+  },
+  "coldest": {
+   "t": -22.8,
+   "date": "2021-02-19"
+  }
+ },
+ "kharkiv": {
+  "period": "2016–2025",
+  "elevation": 121,
+  "months": [
+   {
+    "tmax": -0.6,
+    "tmin": -6.3,
+    "precip": 51,
+    "wetDays": 10.4,
+    "snowDays": 5.9
+   },
+   {
+    "tmax": 0.8,
+    "tmin": -5.7,
+    "precip": 40,
+    "wetDays": 9.5,
+    "snowDays": 4.8
+   },
+   {
+    "tmax": 7.3,
+    "tmin": -1.4,
+    "precip": 40,
+    "wetDays": 8.9,
+    "snowDays": 2.1
+   },
+   {
+    "tmax": 15.5,
+    "tmin": 4.8,
+    "precip": 56,
+    "wetDays": 10.2,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 20.3,
+    "tmin": 9.6,
+    "precip": 62,
+    "wetDays": 10.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.9,
+    "tmin": 15.1,
+    "precip": 49,
+    "wetDays": 8.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.7,
+    "tmin": 16.9,
+    "precip": 53,
+    "wetDays": 8.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.9,
+    "tmin": 16.5,
+    "precip": 29,
+    "wetDays": 5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 21.7,
+    "tmin": 11.3,
+    "precip": 28,
+    "wetDays": 4.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 14,
+    "tmin": 5.7,
+    "precip": 55,
+    "wetDays": 8.8,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 5.7,
+    "tmin": 0.2,
+    "precip": 54,
+    "wetDays": 8.9,
+    "snowDays": 2.1
+   },
+   {
+    "tmax": 1.2,
+    "tmin": -3,
+    "precip": 60,
+    "wetDays": 12.3,
+    "snowDays": 5.5
+   }
+  ],
+  "hottest": {
+   "t": 37.2,
+   "date": "2016-07-17"
+  },
+  "coldest": {
+   "t": -24.9,
+   "date": "2021-01-21"
+  }
+ },
+ "odesa": {
+  "period": "2016–2025",
+  "elevation": 57,
+  "months": [
+   {
+    "tmax": 3.6,
+    "tmin": -1.8,
+    "precip": 45,
+    "wetDays": 7,
+    "snowDays": 2.8
+   },
+   {
+    "tmax": 5.7,
+    "tmin": -0.5,
+    "precip": 23,
+    "wetDays": 5.1,
+    "snowDays": 1.5
+   },
+   {
+    "tmax": 9.4,
+    "tmin": 2.1,
+    "precip": 35,
+    "wetDays": 7.3,
+    "snowDays": 1.2
+   },
+   {
+    "tmax": 14.8,
+    "tmin": 6.9,
+    "precip": 41,
+    "wetDays": 6.9,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 20,
+    "tmin": 12.1,
+    "precip": 51,
+    "wetDays": 9.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.1,
+    "tmin": 18.2,
+    "precip": 50,
+    "wetDays": 7.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 28.7,
+    "tmin": 20.2,
+    "precip": 35,
+    "wetDays": 4.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 28.9,
+    "tmin": 20.1,
+    "precip": 34,
+    "wetDays": 4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 23.2,
+    "tmin": 15.7,
+    "precip": 44,
+    "wetDays": 4.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 16.7,
+    "tmin": 10.1,
+    "precip": 40,
+    "wetDays": 5.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 10.2,
+    "tmin": 5,
+    "precip": 45,
+    "wetDays": 7.8,
+    "snowDays": 0.6
+   },
+   {
+    "tmax": 6,
+    "tmin": 1.4,
+    "precip": 38,
+    "wetDays": 8.3,
+    "snowDays": 0.7
+   }
+  ],
+  "hottest": {
+   "t": 37.4,
+   "date": "2024-07-17"
+  },
+  "coldest": {
+   "t": -16.5,
+   "date": "2016-01-25"
+  }
+ },
+ "dnipro": {
+  "period": "2016–2025",
+  "elevation": 82,
+  "months": [
+   {
+    "tmax": 0.9,
+    "tmin": -4.7,
+    "precip": 46,
+    "wetDays": 9.6,
+    "snowDays": 4.2
+   },
+   {
+    "tmax": 2.7,
+    "tmin": -3.9,
+    "precip": 39,
+    "wetDays": 9,
+    "snowDays": 3.6
+   },
+   {
+    "tmax": 8.6,
+    "tmin": 0,
+    "precip": 42,
+    "wetDays": 8.6,
+    "snowDays": 1.8
+   },
+   {
+    "tmax": 16,
+    "tmin": 6.1,
+    "precip": 62,
+    "wetDays": 10,
+    "snowDays": 0.4
+   },
+   {
+    "tmax": 21.1,
+    "tmin": 11.3,
+    "precip": 58,
+    "wetDays": 10.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.6,
+    "tmin": 16.9,
+    "precip": 54,
+    "wetDays": 8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 28.6,
+    "tmin": 18.8,
+    "precip": 45,
+    "wetDays": 8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 28.8,
+    "tmin": 18.3,
+    "precip": 34,
+    "wetDays": 4.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 22.8,
+    "tmin": 13.1,
+    "precip": 36,
+    "wetDays": 5.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 15.2,
+    "tmin": 7.4,
+    "precip": 40,
+    "wetDays": 7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 7.4,
+    "tmin": 2.1,
+    "precip": 50,
+    "wetDays": 8.3,
+    "snowDays": 0.9
+   },
+   {
+    "tmax": 3,
+    "tmin": -1.3,
+    "precip": 51,
+    "wetDays": 11.4,
+    "snowDays": 4
+   }
+  ],
+  "hottest": {
+   "t": 37.8,
+   "date": "2016-07-17"
+  },
+  "coldest": {
+   "t": -22.1,
+   "date": "2017-01-30"
+  }
+ },
+ "lviv": {
+  "period": "2016–2025",
+  "elevation": 286,
+  "months": [
+   {
+    "tmax": 1.4,
+    "tmin": -3.9,
+    "precip": 50,
+    "wetDays": 12.7,
+    "snowDays": 7.1
+   },
+   {
+    "tmax": 3.9,
+    "tmin": -2.5,
+    "precip": 53,
+    "wetDays": 11.5,
+    "snowDays": 3.6
+   },
+   {
+    "tmax": 8.4,
+    "tmin": -0.1,
+    "precip": 51,
+    "wetDays": 11.5,
+    "snowDays": 2.3
+   },
+   {
+    "tmax": 14.1,
+    "tmin": 4.4,
+    "precip": 56,
+    "wetDays": 10.8,
+    "snowDays": 1.1
+   },
+   {
+    "tmax": 18.4,
+    "tmin": 8.8,
+    "precip": 81,
+    "wetDays": 14.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 23.5,
+    "tmin": 14.3,
+    "precip": 83,
+    "wetDays": 13.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.4,
+    "tmin": 15.4,
+    "precip": 100,
+    "wetDays": 13.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.8,
+    "tmin": 15.2,
+    "precip": 59,
+    "wetDays": 10.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 19.9,
+    "tmin": 11.3,
+    "precip": 88,
+    "wetDays": 10.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 13.8,
+    "tmin": 6.5,
+    "precip": 54,
+    "wetDays": 10.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 7,
+    "tmin": 1.5,
+    "precip": 50,
+    "wetDays": 11.1,
+    "snowDays": 2.6
+   },
+   {
+    "tmax": 2.9,
+    "tmin": -1.5,
+    "precip": 65,
+    "wetDays": 13.7,
+    "snowDays": 6
+   }
+  ],
+  "hottest": {
+   "t": 34.2,
+   "date": "2024-07-13"
+  },
+  "coldest": {
+   "t": -22.3,
+   "date": "2018-03-01"
+  }
+ },
+ "zaporizhzhia": {
+  "period": "2016–2025",
+  "elevation": 88,
+  "months": [
+   {
+    "tmax": 1.8,
+    "tmin": -4,
+    "precip": 46,
+    "wetDays": 9.3,
+    "snowDays": 3.5
+   },
+   {
+    "tmax": 3.7,
+    "tmin": -3.3,
+    "precip": 35,
+    "wetDays": 8.5,
+    "snowDays": 2.8
+   },
+   {
+    "tmax": 9.6,
+    "tmin": 0.3,
+    "precip": 38,
+    "wetDays": 7.8,
+    "snowDays": 1.1
+   },
+   {
+    "tmax": 16.6,
+    "tmin": 6.3,
+    "precip": 63,
+    "wetDays": 9.2,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 21.5,
+    "tmin": 11.4,
+    "precip": 54,
+    "wetDays": 10,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.1,
+    "tmin": 17,
+    "precip": 60,
+    "wetDays": 8.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 29.2,
+    "tmin": 18.9,
+    "precip": 43,
+    "wetDays": 6.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 29.6,
+    "tmin": 18.9,
+    "precip": 31,
+    "wetDays": 3.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 23.5,
+    "tmin": 13.6,
+    "precip": 38,
+    "wetDays": 5.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 15.9,
+    "tmin": 7.7,
+    "precip": 38,
+    "wetDays": 6.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 8.3,
+    "tmin": 2.4,
+    "precip": 49,
+    "wetDays": 8,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 3.7,
+    "tmin": -0.7,
+    "precip": 51,
+    "wetDays": 10.8,
+    "snowDays": 2.8
+   }
+  ],
+  "hottest": {
+   "t": 37.7,
+   "date": "2024-07-18"
+  },
+  "coldest": {
+   "t": -22.6,
+   "date": "2017-01-30"
+  }
+ },
+ "kryvyi-rih": {
+  "period": "2016–2025",
+  "elevation": 99,
+  "months": [
+   {
+    "tmax": 1.7,
+    "tmin": -4.2,
+    "precip": 40,
+    "wetDays": 8.7,
+    "snowDays": 4.3
+   },
+   {
+    "tmax": 4,
+    "tmin": -3.3,
+    "precip": 32,
+    "wetDays": 8,
+    "snowDays": 1.9
+   },
+   {
+    "tmax": 9.5,
+    "tmin": 0,
+    "precip": 36,
+    "wetDays": 7.9,
+    "snowDays": 1.5
+   },
+   {
+    "tmax": 16.4,
+    "tmin": 5.9,
+    "precip": 55,
+    "wetDays": 10,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 21.4,
+    "tmin": 11,
+    "precip": 56,
+    "wetDays": 10.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.1,
+    "tmin": 16.6,
+    "precip": 53,
+    "wetDays": 8.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 29.2,
+    "tmin": 18.5,
+    "precip": 39,
+    "wetDays": 6.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 29.4,
+    "tmin": 18.3,
+    "precip": 35,
+    "wetDays": 5.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 23.4,
+    "tmin": 13,
+    "precip": 41,
+    "wetDays": 5.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 15.8,
+    "tmin": 7.4,
+    "precip": 45,
+    "wetDays": 6.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 8.1,
+    "tmin": 2.2,
+    "precip": 56,
+    "wetDays": 8.2,
+    "snowDays": 0.8
+   },
+   {
+    "tmax": 3.7,
+    "tmin": -1,
+    "precip": 49,
+    "wetDays": 10.6,
+    "snowDays": 3.1
+   }
+  ],
+  "hottest": {
+   "t": 37.8,
+   "date": "2024-07-17"
+  },
+  "coldest": {
+   "t": -22,
+   "date": "2017-01-30"
+  }
+ },
+ "mykolaiv": {
+  "period": "2016–2025",
+  "elevation": 10,
+  "months": [
+   {
+    "tmax": 2.9,
+    "tmin": -3.3,
+    "precip": 40,
+    "wetDays": 7.2,
+    "snowDays": 2.7
+   },
+   {
+    "tmax": 5.5,
+    "tmin": -2.1,
+    "precip": 25,
+    "wetDays": 5.7,
+    "snowDays": 1.2
+   },
+   {
+    "tmax": 10.1,
+    "tmin": 0.9,
+    "precip": 31,
+    "wetDays": 6.7,
+    "snowDays": 1
+   },
+   {
+    "tmax": 16.5,
+    "tmin": 6.4,
+    "precip": 43,
+    "wetDays": 7.5,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 21.6,
+    "tmin": 11.5,
+    "precip": 54,
+    "wetDays": 10.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.4,
+    "tmin": 17.2,
+    "precip": 57,
+    "wetDays": 8.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 29.9,
+    "tmin": 19.2,
+    "precip": 33,
+    "wetDays": 5.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 30.2,
+    "tmin": 18.8,
+    "precip": 30,
+    "wetDays": 4.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.3,
+    "tmin": 13.6,
+    "precip": 44,
+    "wetDays": 5.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 16.8,
+    "tmin": 8.2,
+    "precip": 37,
+    "wetDays": 4.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 9.5,
+    "tmin": 3,
+    "precip": 47,
+    "wetDays": 7.2,
+    "snowDays": 0.8
+   },
+   {
+    "tmax": 5.1,
+    "tmin": 0.2,
+    "precip": 38,
+    "wetDays": 8.5,
+    "snowDays": 1.4
+   }
+  ],
+  "hottest": {
+   "t": 39.5,
+   "date": "2024-07-16"
+  },
+  "coldest": {
+   "t": -22.1,
+   "date": "2016-01-25"
+  }
+ },
+ "vinnytsia": {
+  "period": "2016–2025",
+  "elevation": 232,
+  "months": [
+   {
+    "tmax": 0.8,
+    "tmin": -4.9,
+    "precip": 38,
+    "wetDays": 9.6,
+    "snowDays": 5.4
+   },
+   {
+    "tmax": 3.4,
+    "tmin": -3.6,
+    "precip": 37,
+    "wetDays": 8.5,
+    "snowDays": 3.7
+   },
+   {
+    "tmax": 8.5,
+    "tmin": -0.6,
+    "precip": 36,
+    "wetDays": 9.4,
+    "snowDays": 2.3
+   },
+   {
+    "tmax": 15,
+    "tmin": 4.3,
+    "precip": 48,
+    "wetDays": 9.7,
+    "snowDays": 0.7
+   },
+   {
+    "tmax": 19.3,
+    "tmin": 8.9,
+    "precip": 74,
+    "wetDays": 11.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.8,
+    "tmin": 14.6,
+    "precip": 63,
+    "wetDays": 11.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.8,
+    "tmin": 15.9,
+    "precip": 70,
+    "wetDays": 10.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.2,
+    "tmin": 15.3,
+    "precip": 44,
+    "wetDays": 7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 21,
+    "tmin": 11.1,
+    "precip": 51,
+    "wetDays": 8.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 14,
+    "tmin": 5.9,
+    "precip": 45,
+    "wetDays": 8.3,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 6.5,
+    "tmin": 1,
+    "precip": 42,
+    "wetDays": 8.8,
+    "snowDays": 2
+   },
+   {
+    "tmax": 2.3,
+    "tmin": -2.1,
+    "precip": 49,
+    "wetDays": 11.7,
+    "snowDays": 4.4
+   }
+  ],
+  "hottest": {
+   "t": 35.7,
+   "date": "2023-08-29"
+  },
+  "coldest": {
+   "t": -23.6,
+   "date": "2018-03-02"
+  }
+ },
+ "poltava": {
+  "period": "2016–2025",
+  "elevation": 170,
+  "months": [
+   {
+    "tmax": -0.3,
+    "tmin": -5.8,
+    "precip": 50,
+    "wetDays": 10.4,
+    "snowDays": 6
+   },
+   {
+    "tmax": 1.4,
+    "tmin": -5.2,
+    "precip": 39,
+    "wetDays": 8.6,
+    "snowDays": 3.9
+   },
+   {
+    "tmax": 7.7,
+    "tmin": -1,
+    "precip": 40,
+    "wetDays": 9.5,
+    "snowDays": 2.3
+   },
+   {
+    "tmax": 15.5,
+    "tmin": 5,
+    "precip": 51,
+    "wetDays": 10.5,
+    "snowDays": 0.4
+   },
+   {
+    "tmax": 20.4,
+    "tmin": 9.9,
+    "precip": 62,
+    "wetDays": 11.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.8,
+    "tmin": 15.4,
+    "precip": 52,
+    "wetDays": 9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.5,
+    "tmin": 17,
+    "precip": 60,
+    "wetDays": 7.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.8,
+    "tmin": 16.7,
+    "precip": 44,
+    "wetDays": 5.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 21.6,
+    "tmin": 11.6,
+    "precip": 39,
+    "wetDays": 5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 14.2,
+    "tmin": 6,
+    "precip": 49,
+    "wetDays": 8.4,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 6.2,
+    "tmin": 0.7,
+    "precip": 54,
+    "wetDays": 9.2,
+    "snowDays": 1.2
+   },
+   {
+    "tmax": 1.9,
+    "tmin": -2.5,
+    "precip": 64,
+    "wetDays": 11.5,
+    "snowDays": 4.9
+   }
+  ],
+  "hottest": {
+   "t": 36.7,
+   "date": "2025-07-10"
+  },
+  "coldest": {
+   "t": -26.8,
+   "date": "2016-01-04"
+  }
+ },
+ "chernihiv": {
+  "period": "2016–2025",
+  "elevation": 133,
+  "months": [
+   {
+    "tmax": -1,
+    "tmin": -5.9,
+    "precip": 47,
+    "wetDays": 12,
+    "snowDays": 6.4
+   },
+   {
+    "tmax": 1.1,
+    "tmin": -4.9,
+    "precip": 37,
+    "wetDays": 9,
+    "snowDays": 4.3
+   },
+   {
+    "tmax": 7.2,
+    "tmin": -1.1,
+    "precip": 41,
+    "wetDays": 10.1,
+    "snowDays": 2.8
+   },
+   {
+    "tmax": 14.3,
+    "tmin": 4.5,
+    "precip": 54,
+    "wetDays": 10.3,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 19.6,
+    "tmin": 9.4,
+    "precip": 59,
+    "wetDays": 11.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.9,
+    "tmin": 14.9,
+    "precip": 70,
+    "wetDays": 9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.7,
+    "tmin": 16.2,
+    "precip": 76,
+    "wetDays": 10.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.6,
+    "tmin": 15.5,
+    "precip": 50,
+    "wetDays": 6.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 20.2,
+    "tmin": 10.8,
+    "precip": 38,
+    "wetDays": 6.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 12.8,
+    "tmin": 5.7,
+    "precip": 67,
+    "wetDays": 9.6,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 5.2,
+    "tmin": 0.4,
+    "precip": 50,
+    "wetDays": 9.6,
+    "snowDays": 2.1
+   },
+   {
+    "tmax": 1.1,
+    "tmin": -2.7,
+    "precip": 59,
+    "wetDays": 12.9,
+    "snowDays": 6.3
+   }
+  ],
+  "hottest": {
+   "t": 35.4,
+   "date": "2024-07-14"
+  },
+  "coldest": {
+   "t": -26.6,
+   "date": "2016-01-04"
+  }
+ },
+ "cherkasy": {
+  "period": "2016–2025",
+  "elevation": 111,
+  "months": [
+   {
+    "tmax": 0.7,
+    "tmin": -4.6,
+    "precip": 43,
+    "wetDays": 10.1,
+    "snowDays": 5.3
+   },
+   {
+    "tmax": 2.6,
+    "tmin": -3.8,
+    "precip": 38,
+    "wetDays": 8.7,
+    "snowDays": 3
+   },
+   {
+    "tmax": 8.2,
+    "tmin": -0.1,
+    "precip": 42,
+    "wetDays": 9.4,
+    "snowDays": 2.6
+   },
+   {
+    "tmax": 15.2,
+    "tmin": 5.6,
+    "precip": 54,
+    "wetDays": 10,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 20.4,
+    "tmin": 11.1,
+    "precip": 64,
+    "wetDays": 10.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.7,
+    "tmin": 16.7,
+    "precip": 60,
+    "wetDays": 10.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.1,
+    "tmin": 17.9,
+    "precip": 63,
+    "wetDays": 8.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.2,
+    "tmin": 17.6,
+    "precip": 34,
+    "wetDays": 5.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 21.6,
+    "tmin": 12.8,
+    "precip": 40,
+    "wetDays": 7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 14.3,
+    "tmin": 7,
+    "precip": 58,
+    "wetDays": 8.3,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 6.8,
+    "tmin": 1.8,
+    "precip": 54,
+    "wetDays": 9,
+    "snowDays": 1.6
+   },
+   {
+    "tmax": 2.7,
+    "tmin": -1.5,
+    "precip": 62,
+    "wetDays": 12,
+    "snowDays": 4.2
+   }
+  ],
+  "hottest": {
+   "t": 36.1,
+   "date": "2025-07-09"
+  },
+  "coldest": {
+   "t": -24.3,
+   "date": "2017-01-31"
+  }
+ },
+ "zhytomyr": {
+  "period": "2016–2025",
+  "elevation": 224,
+  "months": [
+   {
+    "tmax": 0.3,
+    "tmin": -4.7,
+    "precip": 41,
+    "wetDays": 10.8,
+    "snowDays": 6.1
+   },
+   {
+    "tmax": 2.6,
+    "tmin": -3.8,
+    "precip": 39,
+    "wetDays": 9.9,
+    "snowDays": 4.3
+   },
+   {
+    "tmax": 7.9,
+    "tmin": -0.6,
+    "precip": 46,
+    "wetDays": 10.4,
+    "snowDays": 2.7
+   },
+   {
+    "tmax": 14.5,
+    "tmin": 4.2,
+    "precip": 49,
+    "wetDays": 10.4,
+    "snowDays": 0.7
+   },
+   {
+    "tmax": 19.1,
+    "tmin": 8.9,
+    "precip": 74,
+    "wetDays": 11.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.7,
+    "tmin": 14.7,
+    "precip": 72,
+    "wetDays": 12,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.5,
+    "tmin": 15.9,
+    "precip": 82,
+    "wetDays": 10.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.9,
+    "tmin": 15.2,
+    "precip": 49,
+    "wetDays": 7.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 20.7,
+    "tmin": 11,
+    "precip": 54,
+    "wetDays": 8.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 13.4,
+    "tmin": 6,
+    "precip": 49,
+    "wetDays": 9.8,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 6.1,
+    "tmin": 1,
+    "precip": 44,
+    "wetDays": 9.2,
+    "snowDays": 2.6
+   },
+   {
+    "tmax": 2,
+    "tmin": -2.1,
+    "precip": 56,
+    "wetDays": 13.3,
+    "snowDays": 5.4
+   }
+  ],
+  "hottest": {
+   "t": 35.8,
+   "date": "2024-07-14"
+  },
+  "coldest": {
+   "t": -23.5,
+   "date": "2021-02-19"
+  }
+ },
+ "khmelnytskyi": {
+  "period": "2016–2025",
+  "elevation": 294,
+  "months": [
+   {
+    "tmax": 0.6,
+    "tmin": -4.8,
+    "precip": 36,
+    "wetDays": 10,
+    "snowDays": 5.7
+   },
+   {
+    "tmax": 3.1,
+    "tmin": -3.7,
+    "precip": 39,
+    "wetDays": 10.7,
+    "snowDays": 4.5
+   },
+   {
+    "tmax": 8,
+    "tmin": -0.8,
+    "precip": 40,
+    "wetDays": 9.7,
+    "snowDays": 2.5
+   },
+   {
+    "tmax": 14.3,
+    "tmin": 4.1,
+    "precip": 42,
+    "wetDays": 10.2,
+    "snowDays": 1
+   },
+   {
+    "tmax": 18.8,
+    "tmin": 8.7,
+    "precip": 69,
+    "wetDays": 12.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.1,
+    "tmin": 14.3,
+    "precip": 64,
+    "wetDays": 11.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.9,
+    "tmin": 15.3,
+    "precip": 83,
+    "wetDays": 12.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.6,
+    "tmin": 15,
+    "precip": 44,
+    "wetDays": 6.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 20.5,
+    "tmin": 11,
+    "precip": 64,
+    "wetDays": 9.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 13.4,
+    "tmin": 5.8,
+    "precip": 48,
+    "wetDays": 8.8,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 6.2,
+    "tmin": 1,
+    "precip": 45,
+    "wetDays": 10.2,
+    "snowDays": 2.9
+   },
+   {
+    "tmax": 2.1,
+    "tmin": -2.4,
+    "precip": 48,
+    "wetDays": 12.2,
+    "snowDays": 5
+   }
+  ],
+  "hottest": {
+   "t": 34.8,
+   "date": "2024-07-15"
+  },
+  "coldest": {
+   "t": -25,
+   "date": "2018-03-02"
+  }
+ },
+ "rivne": {
+  "period": "2016–2025",
+  "elevation": 191,
+  "months": [
+   {
+    "tmax": 0.9,
+    "tmin": -4.1,
+    "precip": 47,
+    "wetDays": 11.9,
+    "snowDays": 6.8
+   },
+   {
+    "tmax": 3.1,
+    "tmin": -3.3,
+    "precip": 44,
+    "wetDays": 11.2,
+    "snowDays": 4.1
+   },
+   {
+    "tmax": 8.2,
+    "tmin": -0.5,
+    "precip": 43,
+    "wetDays": 11.1,
+    "snowDays": 2.3
+   },
+   {
+    "tmax": 14.3,
+    "tmin": 4.2,
+    "precip": 47,
+    "wetDays": 9.4,
+    "snowDays": 0.9
+   },
+   {
+    "tmax": 18.8,
+    "tmin": 8.8,
+    "precip": 68,
+    "wetDays": 12.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.2,
+    "tmin": 14.4,
+    "precip": 78,
+    "wetDays": 13.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.9,
+    "tmin": 15.6,
+    "precip": 85,
+    "wetDays": 12.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.4,
+    "tmin": 15.1,
+    "precip": 52,
+    "wetDays": 8.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 20.4,
+    "tmin": 11.2,
+    "precip": 58,
+    "wetDays": 9.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 13.6,
+    "tmin": 6.3,
+    "precip": 55,
+    "wetDays": 10.8,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 6.5,
+    "tmin": 1.6,
+    "precip": 41,
+    "wetDays": 9.9,
+    "snowDays": 2.3
+   },
+   {
+    "tmax": 2.5,
+    "tmin": -1.7,
+    "precip": 61,
+    "wetDays": 13.6,
+    "snowDays": 5.2
+   }
+  ],
+  "hottest": {
+   "t": 34.6,
+   "date": "2024-07-13"
+  },
+  "coldest": {
+   "t": -22.2,
+   "date": "2018-03-01"
+  }
+ },
+ "chernivtsi": {
+  "period": "2016–2025",
+  "elevation": 258,
+  "months": [
+   {
+    "tmax": 2.5,
+    "tmin": -4.6,
+    "precip": 28,
+    "wetDays": 8.1,
+    "snowDays": 3.8
+   },
+   {
+    "tmax": 4.9,
+    "tmin": -3.2,
+    "precip": 37,
+    "wetDays": 8,
+    "snowDays": 3
+   },
+   {
+    "tmax": 9.7,
+    "tmin": -0.3,
+    "precip": 37,
+    "wetDays": 9.8,
+    "snowDays": 1.6
+   },
+   {
+    "tmax": 15.7,
+    "tmin": 4.7,
+    "precip": 45,
+    "wetDays": 9,
+    "snowDays": 1
+   },
+   {
+    "tmax": 19.9,
+    "tmin": 9.4,
+    "precip": 74,
+    "wetDays": 12.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.2,
+    "tmin": 15.1,
+    "precip": 85,
+    "wetDays": 12.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.4,
+    "tmin": 16.2,
+    "precip": 77,
+    "wetDays": 10.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.9,
+    "tmin": 15.9,
+    "precip": 39,
+    "wetDays": 6.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 21.8,
+    "tmin": 11.7,
+    "precip": 63,
+    "wetDays": 8.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 15,
+    "tmin": 6.1,
+    "precip": 44,
+    "wetDays": 7.4,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 7.8,
+    "tmin": 1.3,
+    "precip": 40,
+    "wetDays": 8.7,
+    "snowDays": 2
+   },
+   {
+    "tmax": 3.5,
+    "tmin": -2.1,
+    "precip": 44,
+    "wetDays": 10.9,
+    "snowDays": 3.8
+   }
+  ],
+  "hottest": {
+   "t": 36.2,
+   "date": "2024-07-16"
+  },
+  "coldest": {
+   "t": -23.4,
+   "date": "2018-03-02"
+  }
+ },
+ "kremenchuk": {
+  "period": "2016–2025",
+  "elevation": 70,
+  "months": [
+   {
+    "tmax": 1,
+    "tmin": -4.6,
+    "precip": 50,
+    "wetDays": 9.5,
+    "snowDays": 4.6
+   },
+   {
+    "tmax": 2.9,
+    "tmin": -3.8,
+    "precip": 38,
+    "wetDays": 8.4,
+    "snowDays": 2.4
+   },
+   {
+    "tmax": 8.7,
+    "tmin": -0.2,
+    "precip": 39,
+    "wetDays": 8.9,
+    "snowDays": 2
+   },
+   {
+    "tmax": 15.9,
+    "tmin": 5.8,
+    "precip": 52,
+    "wetDays": 9.6,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 21,
+    "tmin": 10.8,
+    "precip": 70,
+    "wetDays": 10.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.2,
+    "tmin": 16.3,
+    "precip": 52,
+    "wetDays": 9.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.9,
+    "tmin": 17.9,
+    "precip": 53,
+    "wetDays": 8.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 28.2,
+    "tmin": 17.5,
+    "precip": 35,
+    "wetDays": 5.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 22.4,
+    "tmin": 12.5,
+    "precip": 43,
+    "wetDays": 6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 14.8,
+    "tmin": 7,
+    "precip": 56,
+    "wetDays": 8.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 7.1,
+    "tmin": 1.8,
+    "precip": 53,
+    "wetDays": 8.6,
+    "snowDays": 0.9
+   },
+   {
+    "tmax": 3,
+    "tmin": -1.4,
+    "precip": 61,
+    "wetDays": 11.5,
+    "snowDays": 4.7
+   }
+  ],
+  "hottest": {
+   "t": 36.2,
+   "date": "2024-07-16"
+  },
+  "coldest": {
+   "t": -22.6,
+   "date": "2017-01-30"
+  }
+ },
+ "ternopil": {
+  "period": "2016–2025",
+  "elevation": 322,
+  "months": [
+   {
+    "tmax": 1,
+    "tmin": -4.4,
+    "precip": 39,
+    "wetDays": 10.7,
+    "snowDays": 6.5
+   },
+   {
+    "tmax": 3.5,
+    "tmin": -3.4,
+    "precip": 41,
+    "wetDays": 10.2,
+    "snowDays": 3.5
+   },
+   {
+    "tmax": 8.3,
+    "tmin": -0.8,
+    "precip": 43,
+    "wetDays": 11.1,
+    "snowDays": 2.9
+   },
+   {
+    "tmax": 14.4,
+    "tmin": 4,
+    "precip": 45,
+    "wetDays": 10.2,
+    "snowDays": 1.1
+   },
+   {
+    "tmax": 18.8,
+    "tmin": 8.6,
+    "precip": 72,
+    "wetDays": 13.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.2,
+    "tmin": 14.2,
+    "precip": 79,
+    "wetDays": 14,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.1,
+    "tmin": 15.2,
+    "precip": 88,
+    "wetDays": 13,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.8,
+    "tmin": 14.9,
+    "precip": 52,
+    "wetDays": 7.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 20.5,
+    "tmin": 10.9,
+    "precip": 72,
+    "wetDays": 9.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 13.7,
+    "tmin": 5.6,
+    "precip": 44,
+    "wetDays": 9,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 6.5,
+    "tmin": 0.9,
+    "precip": 42,
+    "wetDays": 9.2,
+    "snowDays": 2.7
+   },
+   {
+    "tmax": 2.4,
+    "tmin": -2.3,
+    "precip": 54,
+    "wetDays": 12.9,
+    "snowDays": 5.6
+   }
+  ],
+  "hottest": {
+   "t": 35.3,
+   "date": "2024-07-16"
+  },
+  "coldest": {
+   "t": -24.1,
+   "date": "2018-03-02"
+  }
+ },
+ "ivano-frankivsk": {
+  "period": "2016–2025",
+  "elevation": 264,
+  "months": [
+   {
+    "tmax": 2.4,
+    "tmin": -4,
+    "precip": 36,
+    "wetDays": 10.1,
+    "snowDays": 5.1
+   },
+   {
+    "tmax": 4.7,
+    "tmin": -2.9,
+    "precip": 41,
+    "wetDays": 9.8,
+    "snowDays": 3.4
+   },
+   {
+    "tmax": 9.1,
+    "tmin": -0.6,
+    "precip": 51,
+    "wetDays": 11.7,
+    "snowDays": 3.1
+   },
+   {
+    "tmax": 14.9,
+    "tmin": 4.1,
+    "precip": 51,
+    "wetDays": 10.6,
+    "snowDays": 0.9
+   },
+   {
+    "tmax": 19,
+    "tmin": 8.8,
+    "precip": 90,
+    "wetDays": 14.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.1,
+    "tmin": 14.2,
+    "precip": 97,
+    "wetDays": 14,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.1,
+    "tmin": 15.4,
+    "precip": 94,
+    "wetDays": 12.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.7,
+    "tmin": 14.9,
+    "precip": 46,
+    "wetDays": 8.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 20.8,
+    "tmin": 10.9,
+    "precip": 80,
+    "wetDays": 10.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 14.5,
+    "tmin": 5.6,
+    "precip": 45,
+    "wetDays": 8.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 7.6,
+    "tmin": 1.1,
+    "precip": 44,
+    "wetDays": 9.1,
+    "snowDays": 2.3
+   },
+   {
+    "tmax": 3.5,
+    "tmin": -1.9,
+    "precip": 54,
+    "wetDays": 12.2,
+    "snowDays": 5.7
+   }
+  ],
+  "hottest": {
+   "t": 35.1,
+   "date": "2024-07-13"
+  },
+  "coldest": {
+   "t": -24.2,
+   "date": "2018-03-02"
+  }
+ },
+ "lutsk": {
+  "period": "2016–2025",
+  "elevation": 191,
+  "months": [
+   {
+    "tmax": 1.2,
+    "tmin": -3.9,
+    "precip": 49,
+    "wetDays": 11.9,
+    "snowDays": 6.1
+   },
+   {
+    "tmax": 3.4,
+    "tmin": -2.9,
+    "precip": 46,
+    "wetDays": 11.5,
+    "snowDays": 3.5
+   },
+   {
+    "tmax": 8.3,
+    "tmin": -0.4,
+    "precip": 44,
+    "wetDays": 10.2,
+    "snowDays": 2.1
+   },
+   {
+    "tmax": 14.3,
+    "tmin": 4.3,
+    "precip": 47,
+    "wetDays": 10.2,
+    "snowDays": 0.9
+   },
+   {
+    "tmax": 18.9,
+    "tmin": 8.9,
+    "precip": 76,
+    "wetDays": 13,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.1,
+    "tmin": 14.4,
+    "precip": 76,
+    "wetDays": 11.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.9,
+    "tmin": 15.6,
+    "precip": 87,
+    "wetDays": 13.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.3,
+    "tmin": 15.2,
+    "precip": 57,
+    "wetDays": 8.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 20.2,
+    "tmin": 11.3,
+    "precip": 66,
+    "wetDays": 9.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 13.7,
+    "tmin": 6.3,
+    "precip": 53,
+    "wetDays": 10.3,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 6.7,
+    "tmin": 1.7,
+    "precip": 43,
+    "wetDays": 9.2,
+    "snowDays": 2.2
+   },
+   {
+    "tmax": 2.6,
+    "tmin": -1.5,
+    "precip": 62,
+    "wetDays": 13.2,
+    "snowDays": 5
+   }
+  ],
+  "hottest": {
+   "t": 34.4,
+   "date": "2024-07-13"
+  },
+  "coldest": {
+   "t": -23.4,
+   "date": "2021-01-19"
+  }
+ },
+ "bila-tserkva": {
+  "period": "2016–2025",
+  "elevation": 174,
+  "months": [
+   {
+    "tmax": 0.7,
+    "tmin": -4.7,
+    "precip": 39,
+    "wetDays": 10.8,
+    "snowDays": 5.4
+   },
+   {
+    "tmax": 2.9,
+    "tmin": -3.8,
+    "precip": 37,
+    "wetDays": 8.2,
+    "snowDays": 3.8
+   },
+   {
+    "tmax": 8.5,
+    "tmin": -0.4,
+    "precip": 37,
+    "wetDays": 9.6,
+    "snowDays": 2.1
+   },
+   {
+    "tmax": 15.2,
+    "tmin": 4.8,
+    "precip": 52,
+    "wetDays": 9,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 20,
+    "tmin": 9.5,
+    "precip": 69,
+    "wetDays": 11.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.4,
+    "tmin": 15.2,
+    "precip": 67,
+    "wetDays": 11.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.5,
+    "tmin": 16.4,
+    "precip": 76,
+    "wetDays": 10.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.5,
+    "tmin": 15.7,
+    "precip": 34,
+    "wetDays": 6.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 21.3,
+    "tmin": 11.3,
+    "precip": 40,
+    "wetDays": 6.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 14,
+    "tmin": 6.1,
+    "precip": 54,
+    "wetDays": 8.4,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 6.4,
+    "tmin": 1.1,
+    "precip": 50,
+    "wetDays": 9.6,
+    "snowDays": 2.4
+   },
+   {
+    "tmax": 2.3,
+    "tmin": -1.9,
+    "precip": 58,
+    "wetDays": 12.7,
+    "snowDays": 5.8
+   }
+  ],
+  "hottest": {
+   "t": 36,
+   "date": "2024-07-14"
+  },
+  "coldest": {
+   "t": -22.2,
+   "date": "2021-02-19"
+  }
+ },
+ "uzhhorod": {
+  "period": "2016–2025",
+  "elevation": 111,
+  "months": [
+   {
+    "tmax": 2.2,
+    "tmin": -3.5,
+    "precip": 72,
+    "wetDays": 12.4,
+    "snowDays": 5.7
+   },
+   {
+    "tmax": 6,
+    "tmin": -1.3,
+    "precip": 66,
+    "wetDays": 10.6,
+    "snowDays": 2.2
+   },
+   {
+    "tmax": 10.6,
+    "tmin": 0.9,
+    "precip": 62,
+    "wetDays": 8.8,
+    "snowDays": 0.6
+   },
+   {
+    "tmax": 16.1,
+    "tmin": 5.6,
+    "precip": 59,
+    "wetDays": 9.7,
+    "snowDays": 0.5
+   },
+   {
+    "tmax": 20.2,
+    "tmin": 10,
+    "precip": 84,
+    "wetDays": 12.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.4,
+    "tmin": 15.3,
+    "precip": 98,
+    "wetDays": 12.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.5,
+    "tmin": 16.2,
+    "precip": 84,
+    "wetDays": 10.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.1,
+    "tmin": 16.4,
+    "precip": 60,
+    "wetDays": 7.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 21.9,
+    "tmin": 12.3,
+    "precip": 73,
+    "wetDays": 9.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 15.2,
+    "tmin": 7.1,
+    "precip": 72,
+    "wetDays": 9.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 8.7,
+    "tmin": 2.8,
+    "precip": 78,
+    "wetDays": 11.4,
+    "snowDays": 1.3
+   },
+   {
+    "tmax": 3.8,
+    "tmin": -0.7,
+    "precip": 73,
+    "wetDays": 12.7,
+    "snowDays": 3.4
+   }
+  ],
+  "hottest": {
+   "t": 34.9,
+   "date": "2017-08-04"
+  },
+  "coldest": {
+   "t": -20.8,
+   "date": "2017-01-08"
+  }
+ },
+ "uman": {
+  "period": "2016–2025",
+  "elevation": 220,
+  "months": [
+   {
+    "tmax": 0.9,
+    "tmin": -4.7,
+    "precip": 40,
+    "wetDays": 8.9,
+    "snowDays": 4.5
+   },
+   {
+    "tmax": 3.4,
+    "tmin": -3.7,
+    "precip": 35,
+    "wetDays": 8.2,
+    "snowDays": 2.9
+   },
+   {
+    "tmax": 8.9,
+    "tmin": -0.4,
+    "precip": 39,
+    "wetDays": 8.1,
+    "snowDays": 2.3
+   },
+   {
+    "tmax": 15.4,
+    "tmin": 4.9,
+    "precip": 57,
+    "wetDays": 8.7,
+    "snowDays": 0.7
+   },
+   {
+    "tmax": 20,
+    "tmin": 9.7,
+    "precip": 59,
+    "wetDays": 11.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.5,
+    "tmin": 15.3,
+    "precip": 61,
+    "wetDays": 10.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27,
+    "tmin": 16.7,
+    "precip": 58,
+    "wetDays": 9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.1,
+    "tmin": 16.3,
+    "precip": 34,
+    "wetDays": 5.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 21.8,
+    "tmin": 11.8,
+    "precip": 41,
+    "wetDays": 6.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 14.6,
+    "tmin": 6.5,
+    "precip": 53,
+    "wetDays": 7.4,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 6.9,
+    "tmin": 1.2,
+    "precip": 47,
+    "wetDays": 9.5,
+    "snowDays": 1.8
+   },
+   {
+    "tmax": 2.6,
+    "tmin": -2,
+    "precip": 50,
+    "wetDays": 11.3,
+    "snowDays": 4.3
+   }
+  ],
+  "hottest": {
+   "t": 37.2,
+   "date": "2024-07-15"
+  },
+  "coldest": {
+   "t": -20.5,
+   "date": "2016-01-25"
+  }
+ },
+ "berdychiv": {
+  "period": "2016–2025",
+  "elevation": 238,
+  "months": [
+   {
+    "tmax": 0.5,
+    "tmin": -4.8,
+    "precip": 43,
+    "wetDays": 11.1,
+    "snowDays": 6
+   },
+   {
+    "tmax": 2.9,
+    "tmin": -3.7,
+    "precip": 40,
+    "wetDays": 10.5,
+    "snowDays": 3.6
+   },
+   {
+    "tmax": 8.1,
+    "tmin": -0.6,
+    "precip": 42,
+    "wetDays": 10.2,
+    "snowDays": 2.5
+   },
+   {
+    "tmax": 14.6,
+    "tmin": 4.3,
+    "precip": 50,
+    "wetDays": 10.1,
+    "snowDays": 0.6
+   },
+   {
+    "tmax": 19.1,
+    "tmin": 8.8,
+    "precip": 74,
+    "wetDays": 12.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.5,
+    "tmin": 14.5,
+    "precip": 70,
+    "wetDays": 11.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.4,
+    "tmin": 15.7,
+    "precip": 79,
+    "wetDays": 11.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.7,
+    "tmin": 15.1,
+    "precip": 46,
+    "wetDays": 6.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 20.7,
+    "tmin": 11,
+    "precip": 53,
+    "wetDays": 9.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 13.6,
+    "tmin": 6,
+    "precip": 45,
+    "wetDays": 9.5,
+    "snowDays": 0.4
+   },
+   {
+    "tmax": 6.1,
+    "tmin": 0.9,
+    "precip": 45,
+    "wetDays": 9.8,
+    "snowDays": 2.9
+   },
+   {
+    "tmax": 2.1,
+    "tmin": -2.2,
+    "precip": 55,
+    "wetDays": 13.1,
+    "snowDays": 5
+   }
+  ],
+  "hottest": {
+   "t": 35.1,
+   "date": "2025-07-07"
+  },
+  "coldest": {
+   "t": -24.6,
+   "date": "2021-02-19"
+  }
+ },
+ "drohobych": {
+  "period": "2016–2025",
+  "elevation": 299,
+  "months": [
+   {
+    "tmax": 1.9,
+    "tmin": -3.8,
+    "precip": 51,
+    "wetDays": 12.1,
+    "snowDays": 6.7
+   },
+   {
+    "tmax": 4.3,
+    "tmin": -2.2,
+    "precip": 57,
+    "wetDays": 12.5,
+    "snowDays": 5.1
+   },
+   {
+    "tmax": 8.6,
+    "tmin": -0.2,
+    "precip": 58,
+    "wetDays": 11.6,
+    "snowDays": 3.2
+   },
+   {
+    "tmax": 14.2,
+    "tmin": 4.3,
+    "precip": 64,
+    "wetDays": 12.5,
+    "snowDays": 1.1
+   },
+   {
+    "tmax": 18,
+    "tmin": 8.5,
+    "precip": 97,
+    "wetDays": 15.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 23.2,
+    "tmin": 13.9,
+    "precip": 114,
+    "wetDays": 14.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.2,
+    "tmin": 15.1,
+    "precip": 105,
+    "wetDays": 14.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 24.6,
+    "tmin": 14.7,
+    "precip": 71,
+    "wetDays": 11,
+    "snowDays": 0
+   },
+   {
+    "tmax": 19.9,
+    "tmin": 11.1,
+    "precip": 94,
+    "wetDays": 11.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 14.3,
+    "tmin": 6.3,
+    "precip": 65,
+    "wetDays": 9.6,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 7.6,
+    "tmin": 1.4,
+    "precip": 59,
+    "wetDays": 11.1,
+    "snowDays": 2.6
+   },
+   {
+    "tmax": 3.2,
+    "tmin": -1.8,
+    "precip": 66,
+    "wetDays": 12.7,
+    "snowDays": 6.2
+   }
+  ],
+  "hottest": {
+   "t": 33.2,
+   "date": "2021-07-14"
+  },
+  "coldest": {
+   "t": -22.3,
+   "date": "2018-03-01"
+  }
+ },
+ "nikopol": {
+  "period": "2016–2025",
+  "elevation": 63,
+  "months": [
+   {
+    "tmax": 2.2,
+    "tmin": -3.2,
+    "precip": 43,
+    "wetDays": 9.1,
+    "snowDays": 3.3
+   },
+   {
+    "tmax": 4.1,
+    "tmin": -2.5,
+    "precip": 34,
+    "wetDays": 7.5,
+    "snowDays": 2.2
+   },
+   {
+    "tmax": 9.5,
+    "tmin": 0.9,
+    "precip": 34,
+    "wetDays": 8.2,
+    "snowDays": 1.2
+   },
+   {
+    "tmax": 16.3,
+    "tmin": 6.7,
+    "precip": 58,
+    "wetDays": 8.6,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 21.6,
+    "tmin": 11.9,
+    "precip": 46,
+    "wetDays": 9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.2,
+    "tmin": 17.5,
+    "precip": 52,
+    "wetDays": 8.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 29.5,
+    "tmin": 19.5,
+    "precip": 42,
+    "wetDays": 5.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 29.8,
+    "tmin": 19.4,
+    "precip": 30,
+    "wetDays": 3.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 23.5,
+    "tmin": 14.1,
+    "precip": 37,
+    "wetDays": 5.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 16,
+    "tmin": 8.5,
+    "precip": 42,
+    "wetDays": 6.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 8.6,
+    "tmin": 3.1,
+    "precip": 52,
+    "wetDays": 7.8,
+    "snowDays": 0.4
+   },
+   {
+    "tmax": 4.2,
+    "tmin": -0.1,
+    "precip": 52,
+    "wetDays": 10.7,
+    "snowDays": 2.6
+   }
+  ],
+  "hottest": {
+   "t": 37.9,
+   "date": "2024-07-18"
+  },
+  "coldest": {
+   "t": -19.2,
+   "date": "2021-01-20"
+  }
+ },
+ "brovary": {
+  "period": "2016–2025",
+  "elevation": 130,
+  "months": [
+   {
+    "tmax": 0.1,
+    "tmin": -4.9,
+    "precip": 42,
+    "wetDays": 10.9,
+    "snowDays": 5.4
+   },
+   {
+    "tmax": 2.2,
+    "tmin": -4,
+    "precip": 39,
+    "wetDays": 8.9,
+    "snowDays": 4.1
+   },
+   {
+    "tmax": 8,
+    "tmin": -0.5,
+    "precip": 40,
+    "wetDays": 9.5,
+    "snowDays": 2.3
+   },
+   {
+    "tmax": 14.9,
+    "tmin": 4.9,
+    "precip": 57,
+    "wetDays": 10.2,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 19.9,
+    "tmin": 9.7,
+    "precip": 64,
+    "wetDays": 11.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.4,
+    "tmin": 15.4,
+    "precip": 59,
+    "wetDays": 10.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.2,
+    "tmin": 16.6,
+    "precip": 73,
+    "wetDays": 10.5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.3,
+    "tmin": 16,
+    "precip": 44,
+    "wetDays": 6.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 21,
+    "tmin": 11.4,
+    "precip": 31,
+    "wetDays": 6.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 13.5,
+    "tmin": 6.2,
+    "precip": 64,
+    "wetDays": 9.4,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 6,
+    "tmin": 1,
+    "precip": 50,
+    "wetDays": 9.3,
+    "snowDays": 1.9
+   },
+   {
+    "tmax": 1.9,
+    "tmin": -2.1,
+    "precip": 62,
+    "wetDays": 13.1,
+    "snowDays": 6.5
+   }
+  ],
+  "hottest": {
+   "t": 35.1,
+   "date": "2024-07-14"
+  },
+  "coldest": {
+   "t": -21.2,
+   "date": "2017-02-09"
+  }
+ },
+ "pavlohrad": {
+  "period": "2016–2025",
+  "elevation": 66,
+  "months": [
+   {
+    "tmax": 1.1,
+    "tmin": -5.4,
+    "precip": 50,
+    "wetDays": 10.3,
+    "snowDays": 4.6
+   },
+   {
+    "tmax": 3,
+    "tmin": -4.2,
+    "precip": 39,
+    "wetDays": 8.5,
+    "snowDays": 3.4
+   },
+   {
+    "tmax": 9.1,
+    "tmin": -0.5,
+    "precip": 40,
+    "wetDays": 9,
+    "snowDays": 1.7
+   },
+   {
+    "tmax": 16.6,
+    "tmin": 5.4,
+    "precip": 63,
+    "wetDays": 9.5,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 21.6,
+    "tmin": 10.4,
+    "precip": 60,
+    "wetDays": 9.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.1,
+    "tmin": 15.9,
+    "precip": 51,
+    "wetDays": 8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 29.1,
+    "tmin": 17.7,
+    "precip": 52,
+    "wetDays": 7.3,
+    "snowDays": 0
+   },
+   {
+    "tmax": 29.3,
+    "tmin": 17.5,
+    "precip": 33,
+    "wetDays": 4.1,
+    "snowDays": 0
+   },
+   {
+    "tmax": 23.1,
+    "tmin": 12.2,
+    "precip": 32,
+    "wetDays": 4.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 15.5,
+    "tmin": 6.4,
+    "precip": 45,
+    "wetDays": 7.4,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 7.6,
+    "tmin": 1.2,
+    "precip": 45,
+    "wetDays": 8.6,
+    "snowDays": 0.8
+   },
+   {
+    "tmax": 3,
+    "tmin": -1.7,
+    "precip": 50,
+    "wetDays": 10.8,
+    "snowDays": 3.7
+   }
+  ],
+  "hottest": {
+   "t": 38.8,
+   "date": "2016-07-17"
+  },
+  "coldest": {
+   "t": -25.6,
+   "date": "2016-01-05"
+  }
+ },
+ "severodonetsk": {
+  "period": "2016–2025",
+  "elevation": 67,
+  "months": [
+   {
+    "tmax": 0.4,
+    "tmin": -5.5,
+    "precip": 53,
+    "wetDays": 13,
+    "snowDays": 6.6
+   },
+   {
+    "tmax": 1.8,
+    "tmin": -4.9,
+    "precip": 42,
+    "wetDays": 9.9,
+    "snowDays": 4.7
+   },
+   {
+    "tmax": 8.3,
+    "tmin": -1,
+    "precip": 49,
+    "wetDays": 9.1,
+    "snowDays": 2.7
+   },
+   {
+    "tmax": 16.4,
+    "tmin": 5.5,
+    "precip": 51,
+    "wetDays": 10,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 21.7,
+    "tmin": 10.4,
+    "precip": 58,
+    "wetDays": 10.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.1,
+    "tmin": 15.7,
+    "precip": 45,
+    "wetDays": 7.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 29.2,
+    "tmin": 17.7,
+    "precip": 36,
+    "wetDays": 7.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 29.2,
+    "tmin": 17.4,
+    "precip": 35,
+    "wetDays": 4.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 22.5,
+    "tmin": 11.6,
+    "precip": 31,
+    "wetDays": 5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 14.7,
+    "tmin": 6.1,
+    "precip": 59,
+    "wetDays": 9.7,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 6.6,
+    "tmin": 0.5,
+    "precip": 55,
+    "wetDays": 9.1,
+    "snowDays": 1.7
+   },
+   {
+    "tmax": 1.7,
+    "tmin": -2.7,
+    "precip": 50,
+    "wetDays": 10.8,
+    "snowDays": 5.1
+   }
+  ],
+  "hottest": {
+   "t": 38,
+   "date": "2025-07-12"
+  },
+  "coldest": {
+   "t": -26.9,
+   "date": "2017-01-30"
+  }
+ },
+ "berdyansk": {
+  "period": "2016–2025",
+  "elevation": 7,
+  "months": [
+   {
+    "tmax": 2.4,
+    "tmin": -2.1,
+    "precip": 51,
+    "wetDays": 10.4,
+    "snowDays": 3.2
+   },
+   {
+    "tmax": 3.2,
+    "tmin": -1.8,
+    "precip": 40,
+    "wetDays": 8.1,
+    "snowDays": 2.1
+   },
+   {
+    "tmax": 7.4,
+    "tmin": 1.7,
+    "precip": 31,
+    "wetDays": 7.6,
+    "snowDays": 0.7
+   },
+   {
+    "tmax": 13.9,
+    "tmin": 7.7,
+    "precip": 40,
+    "wetDays": 7.4,
+    "snowDays": 0.2
+   },
+   {
+    "tmax": 19.7,
+    "tmin": 13.1,
+    "precip": 63,
+    "wetDays": 10.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.7,
+    "tmin": 18.7,
+    "precip": 40,
+    "wetDays": 7.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 28.7,
+    "tmin": 20.9,
+    "precip": 33,
+    "wetDays": 5.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 28.4,
+    "tmin": 20.8,
+    "precip": 28,
+    "wetDays": 4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 22.1,
+    "tmin": 15.6,
+    "precip": 33,
+    "wetDays": 5,
+    "snowDays": 0
+   },
+   {
+    "tmax": 15.2,
+    "tmin": 9.5,
+    "precip": 36,
+    "wetDays": 6.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 8.6,
+    "tmin": 4.2,
+    "precip": 45,
+    "wetDays": 6.9,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 4.1,
+    "tmin": 0.5,
+    "precip": 50,
+    "wetDays": 10.6,
+    "snowDays": 1.3
+   }
+  ],
+  "hottest": {
+   "t": 36.6,
+   "date": "2024-07-17"
+  },
+  "coldest": {
+   "t": -18.2,
+   "date": "2021-01-20"
+  }
+ },
+ "kamianets-podilskyi": {
+  "period": "2016–2025",
+  "elevation": 208,
+  "months": [
+   {
+    "tmax": 1.7,
+    "tmin": -4.3,
+    "precip": 28,
+    "wetDays": 7.9,
+    "snowDays": 3.3
+   },
+   {
+    "tmax": 4.2,
+    "tmin": -3,
+    "precip": 34,
+    "wetDays": 9.2,
+    "snowDays": 2.6
+   },
+   {
+    "tmax": 9.3,
+    "tmin": -0.2,
+    "precip": 36,
+    "wetDays": 10,
+    "snowDays": 1.4
+   },
+   {
+    "tmax": 15.5,
+    "tmin": 4.9,
+    "precip": 45,
+    "wetDays": 9.7,
+    "snowDays": 1
+   },
+   {
+    "tmax": 19.9,
+    "tmin": 9.7,
+    "precip": 71,
+    "wetDays": 11.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.2,
+    "tmin": 15.3,
+    "precip": 68,
+    "wetDays": 12.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.1,
+    "tmin": 16.3,
+    "precip": 79,
+    "wetDays": 10.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.6,
+    "tmin": 16.1,
+    "precip": 43,
+    "wetDays": 6.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 21.4,
+    "tmin": 11.9,
+    "precip": 70,
+    "wetDays": 8.9,
+    "snowDays": 0
+   },
+   {
+    "tmax": 14.5,
+    "tmin": 6.3,
+    "precip": 43,
+    "wetDays": 7.6,
+    "snowDays": 0.1
+   },
+   {
+    "tmax": 7.3,
+    "tmin": 1.7,
+    "precip": 42,
+    "wetDays": 9.1,
+    "snowDays": 1.8
+   },
+   {
+    "tmax": 3,
+    "tmin": -2,
+    "precip": 42,
+    "wetDays": 10.6,
+    "snowDays": 3.8
+   }
+  ],
+  "hottest": {
+   "t": 36.1,
+   "date": "2024-07-14"
+  },
+  "coldest": {
+   "t": -21.4,
+   "date": "2018-03-02"
+  }
+ },
+ "oleksandriia": {
+  "period": "2016–2025",
+  "elevation": 96,
+  "months": [
+   {
+    "tmax": 1,
+    "tmin": -5,
+    "precip": 46,
+    "wetDays": 9.4,
+    "snowDays": 4.8
+   },
+   {
+    "tmax": 3.1,
+    "tmin": -4,
+    "precip": 39,
+    "wetDays": 7.9,
+    "snowDays": 2.7
+   },
+   {
+    "tmax": 8.8,
+    "tmin": -0.7,
+    "precip": 40,
+    "wetDays": 8.7,
+    "snowDays": 1.9
+   },
+   {
+    "tmax": 15.8,
+    "tmin": 5.2,
+    "precip": 47,
+    "wetDays": 9.2,
+    "snowDays": 0.3
+   },
+   {
+    "tmax": 20.8,
+    "tmin": 10.2,
+    "precip": 67,
+    "wetDays": 10.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.1,
+    "tmin": 15.7,
+    "precip": 63,
+    "wetDays": 9.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 27.8,
+    "tmin": 17.2,
+    "precip": 46,
+    "wetDays": 8.4,
+    "snowDays": 0
+   },
+   {
+    "tmax": 28.2,
+    "tmin": 17.1,
+    "precip": 38,
+    "wetDays": 6.2,
+    "snowDays": 0
+   },
+   {
+    "tmax": 22.4,
+    "tmin": 12,
+    "precip": 45,
+    "wetDays": 6.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 15,
+    "tmin": 6.5,
+    "precip": 51,
+    "wetDays": 7.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 7.2,
+    "tmin": 1.4,
+    "precip": 51,
+    "wetDays": 7.9,
+    "snowDays": 1.3
+   },
+   {
+    "tmax": 3,
+    "tmin": -1.8,
+    "precip": 55,
+    "wetDays": 11.1,
+    "snowDays": 3.8
+   }
+  ],
+  "hottest": {
+   "t": 35.8,
+   "date": "2017-08-05"
+  },
+  "coldest": {
+   "t": -23.7,
+   "date": "2017-01-30"
+  }
+ },
+ "mukachevo": {
+  "period": "2016–2025",
+  "elevation": 130,
+  "months": [
+   {
+    "tmax": 2.1,
+    "tmin": -3.7,
+    "precip": 95,
+    "wetDays": 14,
+    "snowDays": 6.5
+   },
+   {
+    "tmax": 6,
+    "tmin": -1.5,
+    "precip": 80,
+    "wetDays": 11,
+    "snowDays": 2.5
+   },
+   {
+    "tmax": 10.6,
+    "tmin": 0.6,
+    "precip": 68,
+    "wetDays": 9.8,
+    "snowDays": 0.9
+   },
+   {
+    "tmax": 16,
+    "tmin": 5.4,
+    "precip": 63,
+    "wetDays": 10.7,
+    "snowDays": 0.5
+   },
+   {
+    "tmax": 20.1,
+    "tmin": 9.9,
+    "precip": 95,
+    "wetDays": 13.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 25.2,
+    "tmin": 15.1,
+    "precip": 99,
+    "wetDays": 13.7,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.3,
+    "tmin": 16,
+    "precip": 87,
+    "wetDays": 11.8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 26.9,
+    "tmin": 16.3,
+    "precip": 65,
+    "wetDays": 8,
+    "snowDays": 0
+   },
+   {
+    "tmax": 21.7,
+    "tmin": 12.1,
+    "precip": 88,
+    "wetDays": 9.6,
+    "snowDays": 0
+   },
+   {
+    "tmax": 15.2,
+    "tmin": 6.9,
+    "precip": 77,
+    "wetDays": 10,
+    "snowDays": 0
+   },
+   {
+    "tmax": 8.8,
+    "tmin": 2.6,
+    "precip": 89,
+    "wetDays": 12.5,
+    "snowDays": 1.8
+   },
+   {
+    "tmax": 3.9,
+    "tmin": -0.8,
+    "precip": 94,
+    "wetDays": 13.1,
+    "snowDays": 4.4
+   }
+  ],
+  "hottest": {
+   "t": 34.5,
+   "date": "2017-08-04"
+  },
+  "coldest": {
+   "t": -24.4,
+   "date": "2017-01-07"
+  }
  }
 }

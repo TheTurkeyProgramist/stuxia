@@ -2877,7 +2877,10 @@
       "myl": "mi",
       "km": "km",
       "m": "m",
-      "viter": "風（{{v0}}）"
+      "viter": "風（{{v0}}）",
+      "data": "日付の表示",
+      "dataCyframy": "数字: 11/22",
+      "dataMisiatsSlovom": "月を文字で: 11月22日"
     },
     "customFontImport": {
       "miiShryft": "マイフォント",

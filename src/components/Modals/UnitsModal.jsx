@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
-import { FaThermometerHalf, FaCloudRain, FaRulerHorizontal, FaGlobeEurope, FaFlagUsa, FaSlidersH, FaUndo, FaTimes } from "react-icons/fa";
+import { FaThermometerHalf, FaCloudRain, FaRulerHorizontal, FaGlobeEurope, FaFlagUsa, FaSlidersH, FaUndo, FaTimes, FaRegCalendarAlt } from "react-icons/fa";
 import { BiWind } from "react-icons/bi";
 import { MdOutlineSpeed } from "react-icons/md";
 import {
@@ -20,6 +20,7 @@ const GROUP_META = {
   pressure: { icon: <MdOutlineSpeed />, color: "#b362ff", example: (f) => f.pressure(1013) },
   distance: { icon: <FaRulerHorizontal />, color: "#4ade80", example: (f) => `${f.visibility(10)} · ${f.height(1000)}` },
   precip: { icon: <FaCloudRain />, color: "#14b8a6", example: (f) => `${f.precip(2.5)} · ${f.snow(10)}` },
+  date: { icon: <FaRegCalendarAlt />, color: "#f472b6", example: (f) => f.date(new Date().toISOString().slice(0, 10)) },
 };
 
 // Формули відповідають коефіцієнтам у utils/units.js (базові одиниці: °C, м/с, гПа, км, м, мм, см)
@@ -413,7 +414,7 @@ const UnitsModal = ({ units, onChange, onClose, isDarkMode, allCards = true, onT
                 $isDarkMode={isDarkMode}
                 onClick={() => {
                   setForcedCustom(s.key === "custom");
-                  if (s.units) onChange({ ...s.units });
+                  if (s.units) onChange({ ...units, ...s.units });
                 }}
               >
                 <span className="icon">{s.icon}</span>

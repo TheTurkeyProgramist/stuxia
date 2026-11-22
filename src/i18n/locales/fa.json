@@ -2877,7 +2877,10 @@
       "myl": "مایل",
       "km": "کم",
       "m": "م",
-      "viter": "باد ({{v0}})"
+      "viter": "باد ({{v0}})",
+      "data": "تاریخ روزها",
+      "dataCyframy": "تاریخ عددی: ۲۲/۱۱",
+      "dataMisiatsSlovom": "ماه با حروف: ۲۲ نوامبر"
     },
     "customFontImport": {
       "miiShryft": "قلم من",

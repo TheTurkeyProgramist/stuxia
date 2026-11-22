@@ -2877,7 +2877,10 @@
       "myl": "миль",
       "km": "км",
       "m": "м",
-      "viter": "Вітер ({{v0}})"
+      "viter": "Вітер ({{v0}})",
+      "data": "Дата днів",
+      "dataCyframy": "Дата цифрами: 22.11",
+      "dataMisiatsSlovom": "Місяць словом: 22 лист"
     },
     "customFontImport": {
       "miiShryft": "Мій шрифт",
