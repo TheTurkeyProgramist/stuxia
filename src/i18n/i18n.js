@@ -21,7 +21,7 @@ export const INTL_LOCALE_MAP = {
   en: 'en-US',
 };
 
-const supportedLanguages = [
+export const supportedLanguages = [
   'uk', 'en', 'be', 'de', 'fr', 'es', 'it', 'pl', 'ro', 'nl', 'pt', 'el',
   'cs', 'hu', 'sv', 'fi', 'bg', 'lt', 'zh', 'ar', 'ja', 'tr', 'ko', 'fa',
   'so', 'qu',
@@ -48,6 +48,21 @@ export const saveChosenLanguage = (lng) => {
 };
 
 const languageDetector = new LanguageDetector();
+
+/**
+ * Мова з адреси сторінки міста: /en/konotop/ → en, /pohoda/konotop/ → uk.
+ * Стоїть першою: людина (і Google) з англійської сторінки має бачити англійську,
+ * а сам сайт без мови в адресі (/) далі бере вибір людини чи мову браузера.
+ */
+export const languageFromPath = (pathname = '') => {
+  if (/^\/pohoda\//.test(pathname)) return 'uk';
+  const m = pathname.match(/^\/([a-z]{2})\/[a-z-]+\/?$/);
+  return m && m[1] !== 'uk' && supportedLanguages.includes(m[1]) ? m[1] : undefined;
+};
+languageDetector.addDetector({
+  name: 'path',
+  lookup: () => (typeof window === 'undefined' ? undefined : languageFromPath(window.location.pathname)),
+});
 languageDetector.addDetector({
   name: 'prefs',
   lookup: () => {
@@ -92,7 +107,7 @@ export const i18nReady = i18n
     // Спершу мова, яку людина вибрала сама; інакше — мова браузера.
     // Автовизначену мову не запам'ятовуємо: зміниться мова браузера — зміниться й сайт.
     detection: {
-      order: ['prefs', 'browser'],
+      order: ['path', 'prefs', 'browser'],
       caches: [],
     },
   });

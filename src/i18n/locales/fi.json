@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agentti Smith",
       "filmMatrytsia": "Elokuva 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Sää {{city}} — tänään, huomenna ja 28 päivää | {{brand}}",
+      "shortTitle": "Sää {{city}} | {{brand}}",
+      "heading": "Sää {{city}}",
+      "description": "Sää {{city}} (Ukraina) tänään: lämpötila nyt, tuntiennuste, tuuli, sademäärä, UV-indeksi, magneettimyrskyt ja 28 päivän kaaviot.",
+      "text": "{{brand}} näyttää sään kohteessa {{city}} reaaliajassa: lämpötilan ja tuntuman, kosteuden, paineen, tuulen ja puuskat, sateen, UV-indeksin, auringonnousun ja -laskun. Päivitys tunneittain: 16 tarkkaa päivää ja suuntaus 28 päivään.",
+      "climateTitle": "Ilmasto kuukausittain",
+      "climateSummary": "Vuosina {{period}} lämpimin kuukausi oli {{warmMonth}}: päivällä {{warmDay}}, yöllä {{warmNight}}. Kylmin oli {{coldMonth}}: päivällä {{coldDay}} ja yöllä {{coldNight}}. Vuodessa sataa noin {{precip}}. Vuosikymmenen ennätykset: {{hot}} ({{hotDate}}) ja {{cold}} ({{coldDate}}).",
+      "tableSummary": "Taulukko: lämpötila ja sademäärä kuukausittain ({{period}})",
+      "colMonth": "Kuukausi",
+      "colDay": "Päivä",
+      "colNight": "Yö",
+      "colPrecip": "Sade",
+      "colWetDays": "Sadepäiviä",
+      "colSnowDays": "Lumipäiviä",
+      "daylightTitle": "Päivän pituus",
+      "daylightText": "21. joulukuuta aurinko nousee kohteessa {{city}} klo {{wr}} ja laskee klo {{ws}} — lyhin päivä kestää {{wl}}. 21. kesäkuuta: nousu {{sr}}, lasku {{ss}}, päivä {{sl}}.",
+      "duration": "{{h}} h {{m}} min",
+      "nearbyTitle": "Sää lähistöllä",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Ilmasto: keskiarvot {{period}} Open-Meteon arkistosta (ERA5-uusanalyysi), korkeus {{elev}} m merenpinnasta. Auringonnousu ja -lasku Kiovan aikaa.",
+      "otherLanguages": "Muut kielet"
+    }
   }
 }

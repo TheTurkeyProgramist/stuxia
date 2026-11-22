@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agente Smith",
       "filmMatrytsia": "Film 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Meteo {{city}} — oggi, domani e 28 giorni | {{brand}}",
+      "shortTitle": "Meteo {{city}} | {{brand}}",
+      "heading": "Meteo {{city}}",
+      "description": "Meteo {{city}} (Ucraina) oggi: temperatura attuale, previsioni orarie, vento, precipitazioni, indice UV, tempeste magnetiche e grafici a 28 giorni.",
+      "text": "{{brand}} mostra il meteo di {{city}} in tempo reale: temperatura e percepita, umidità, pressione, vento e raffiche, precipitazioni, indice UV, alba e tramonto. Aggiornato ogni ora: 16 giorni precisi e tendenza fino a 28 giorni.",
+      "climateTitle": "Clima mese per mese",
+      "climateSummary": "Nel periodo {{period}} il mese più caldo è stato {{warmMonth}}: {{warmDay}} di giorno e {{warmNight}} di notte. Il più freddo {{coldMonth}}: {{coldDay}} di giorno e {{coldNight}} di notte. In un anno cadono circa {{precip}} di precipitazioni. Record del decennio: {{hot}} ({{hotDate}}) e {{cold}} ({{coldDate}}).",
+      "tableSummary": "Tabella: temperatura e precipitazioni per mese ({{period}})",
+      "colMonth": "Mese",
+      "colDay": "Giorno",
+      "colNight": "Notte",
+      "colPrecip": "Precipitazioni",
+      "colWetDays": "Giorni piovosi",
+      "colSnowDays": "Giorni di neve",
+      "daylightTitle": "Ore di luce",
+      "daylightText": "Il 21 dicembre a {{city}} il sole sorge alle {{wr}} e tramonta alle {{ws}}: il giorno più corto dura {{wl}}. Il 21 giugno: alba {{sr}}, tramonto {{ss}}, giorno {{sl}}.",
+      "duration": "{{h}} h {{m}} min",
+      "nearbyTitle": "Meteo nei dintorni",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Clima: medie {{period}} dall’archivio Open-Meteo (rianalisi ERA5), altitudine {{elev}} m. Alba e tramonto in ora di Kyiv.",
+      "otherLanguages": "Altre lingue"
+    }
   }
 }

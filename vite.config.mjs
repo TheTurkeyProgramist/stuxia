@@ -1,7 +1,15 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { VitePWA } from 'vite-plugin-pwa';
-import { UKRAINE_CITIES_40, getCitySlug, getCitySeo } from './src/utils/citiesDatabase.js';
+import { UKRAINE_CITIES_40, getCitySlug, getCitySeo, CITY_PAGE_LANGS } from './src/utils/citiesDatabase.js';
+import {
+  buildLocalizedCityPage,
+  buildHreflangLinks,
+  buildLanguageLinks,
+  loadSeoStrings,
+  RTL_LANGS,
+  OG_LOCALE,
+} from './scripts/cityPageI18n.mjs';
 import {
   REGIONS,
   buildCitySection,
@@ -134,8 +142,11 @@ function cityPagesPlugin() {
       `$1${escapeHtml(value)}$2`,
     );
   // Заголовок, опис, og/twitter, canonical і JSON-LD — однаково для міст і областей
-  const renderPage = (base, { url, title, shortTitle, description, section, jsonLd }) => {
+  const renderPage = (base, { url, title, shortTitle, description, section, jsonLd, lang = 'uk', hreflang = '' }) => {
     let html = base.replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`);
+    // Мова сторінки: <html lang/dir> і og:locale (застосунок потім бере ту саму мову з адреси)
+    html = html.replace(/<html lang="[^"]*"/, `<html lang="${lang}"${RTL_LANGS.has(lang) ? ' dir="rtl"' : ''}`);
+    html = setMeta(html, 'property', 'og:locale', OG_LOCALE[lang] || 'uk_UA');
     html = setMeta(html, 'name', 'description', description);
     html = setMeta(html, 'property', 'og:url', url);
     html = setMeta(html, 'property', 'og:title', shortTitle);
@@ -149,10 +160,11 @@ function cityPagesPlugin() {
     const ld = jsonLd
       .map((item) => `<script type="application/ld+json">${JSON.stringify(item).replace(/</g, '\\u003c')}</script>`)
       .join('\n  ');
-    return html.replace('</head>', `${ld}\n  </head>`);
+    return html.replace('</head>', `${hreflang ? `${hreflang}\n    ` : ''}${ld}\n  </head>`);
   };
+  // slug — шлях усередині dist: «pohoda/konotop» або «en/konotop»
   const writePage = (slug, html) => {
-    const dir = path.join(outDir, 'pohoda', slug);
+    const dir = path.join(outDir, ...slug.split('/'));
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, 'index.html'), html);
   };
@@ -173,6 +185,8 @@ function cityPagesPlugin() {
         const urls = [{ loc: `${SITE_URL}/`, priority: '1.0' }];
         const climatePath = path.resolve('src/data/cityClimate.json');
         const climate = fs.existsSync(climatePath) ? JSON.parse(fs.readFileSync(climatePath, 'utf8')) : {};
+        const seoStrings = Object.fromEntries(CITY_PAGE_LANGS.map((l) => [l, loadSeoStrings(l)]));
+        let localizedCount = 0;
 
         for (const city of UKRAINE_CITIES_40) {
           const slug = getCitySlug(city);
@@ -180,26 +194,40 @@ function cityPagesPlugin() {
           const url = `${SITE_URL}/pohoda/${slug}/`;
           // Ті самі тексти ставить і застосунок (App.jsx), тож після JS заголовок не зміниться
           const seo = getCitySeo(city);
+          const hreflang = buildHreflangLinks(city);
+          const ukSection = buildCitySection(city, UKRAINE_CITIES_40, climate).replace(
+            /\s*<\/section>$/,
+            `\n      ${buildLanguageLinks(city, 'uk', 'Іншими мовами')}\n    </section>`,
+          );
           writePage(
-            slug,
+            `pohoda/${slug}`,
             renderPage(base, {
               url,
               title: seo.title,
               shortTitle: seo.shortTitle,
               description: seo.description,
-              section: buildCitySection(city, UKRAINE_CITIES_40, climate),
+              section: ukSection,
               jsonLd: buildCityJsonLd(city, url),
+              hreflang,
             }),
           );
           // Сторінки з кліматом повніші — трохи вищий пріоритет
           urls.push({ loc: url, priority: climate[slug] ? '0.9' : '0.8' });
+
+          // Та сама сторінка 25 іншими мовами: /en/konotop/, /de/konotop/ …
+          for (const lang of CITY_PAGE_LANGS) {
+            const page = buildLocalizedCityPage(city, lang, UKRAINE_CITIES_40, climate, seoStrings[lang]);
+            writePage(`${lang}/${slug}`, renderPage(base, { ...page, lang, hreflang }));
+            urls.push({ loc: page.url, priority: climate[slug] ? '0.7' : '0.6' });
+            localizedCount += 1;
+          }
         }
 
         for (const region of REGIONS) {
           const page = buildRegionPage(region, UKRAINE_CITIES_40, climate);
           const url = `${SITE_URL}/pohoda/${region.slug}/`;
           writePage(
-            region.slug,
+            `pohoda/${region.slug}`,
             renderPage(base, {
               url,
               title: page.title,
@@ -241,7 +269,8 @@ ${urls
         fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemap);
         const withClimate = UKRAINE_CITIES_40.filter((c) => climate[getCitySlug(c)]).length;
         console.log(
-          `\n🏙️  Сторінки міст: ${urls.length - 1 - REGIONS.length} (з кліматом: ${withClimate}), ` +
+          `\n🏙️  Сторінки міст: ${urls.length - 1 - REGIONS.length - localizedCount} (з кліматом: ${withClimate}), ` +
+            `іншими мовами: ${localizedCount}, ` +
             `областей: ${REGIONS.length}; sitemap.xml оновлено`,
         );
       },

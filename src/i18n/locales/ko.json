@@ -3584,5 +3584,32 @@
       "ahentSmit": "스미스 요원",
       "filmMatrytsia": "영화 '매트릭스'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "{{city}} 날씨 — 오늘, 내일, 28일 예보 | {{brand}}",
+      "shortTitle": "{{city}} 날씨 | {{brand}}",
+      "heading": "{{city}} 날씨",
+      "description": "오늘의 {{city}}(우크라이나) 날씨: 현재 기온, 시간별 예보, 바람, 강수, 자외선 지수, 지자기 폭풍, 28일 그래프.",
+      "text": "{{brand}}는 {{city}}의 날씨를 실시간으로 보여 줍니다: 기온과 체감 온도, 습도, 기압, 바람과 돌풍, 강수, 자외선 지수, 일출과 일몰. 매시간 업데이트: 정확한 16일과 28일까지의 경향.",
+      "climateTitle": "월별 기후",
+      "climateSummary": "{{period}}년 동안 가장 따뜻한 달은 {{warmMonth}}: 낮 {{warmDay}}, 밤 {{warmNight}}. 가장 추운 달은 {{coldMonth}}: 낮 {{coldDay}}, 밤 {{coldNight}}. 연간 강수량은 약 {{precip}}. 10년 기록: {{hot}}({{hotDate}}), {{cold}}({{coldDate}}).",
+      "tableSummary": "표: 월별 기온과 강수량({{period}})",
+      "colMonth": "월",
+      "colDay": "낮",
+      "colNight": "밤",
+      "colPrecip": "강수량",
+      "colWetDays": "강수일",
+      "colSnowDays": "강설일",
+      "daylightTitle": "낮의 길이",
+      "daylightText": "12월 21일 {{city}}의 일출은 {{wr}}, 일몰은 {{ws}} — 가장 짧은 낮은 {{wl}}. 6월 21일: 일출 {{sr}}, 일몰 {{ss}}, 낮 {{sl}}.",
+      "duration": "{{h}}시간 {{m}}분",
+      "nearbyTitle": "근처 날씨",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "기후: Open-Meteo 아카이브(ERA5 재분석)의 {{period}}년 평균, 해발 {{elev}} m. 일출·일몰은 키이우 시간.",
+      "otherLanguages": "다른 언어"
+    }
   }
 }

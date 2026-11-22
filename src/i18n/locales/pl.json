@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agent Smith",
       "filmMatrytsia": "Film 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Pogoda {{city}} — na dziś, jutro i 28 dni | {{brand}}",
+      "shortTitle": "Pogoda {{city}} | {{brand}}",
+      "heading": "Pogoda {{city}}",
+      "description": "Pogoda {{city}} (Ukraina) dziś: temperatura teraz, prognoza godzinowa, wiatr, opady, indeks UV, burze magnetyczne i wykresy na 28 dni.",
+      "text": "{{brand}} pokazuje pogodę {{city}} na żywo: temperaturę i odczuwalną, wilgotność, ciśnienie, wiatr i porywy, opady, indeks UV, wschód i zachód słońca. Aktualizacja co godzinę: 16 dokładnych dni i tendencja do 28 dni.",
+      "climateTitle": "Klimat według miesięcy",
+      "climateSummary": "W latach {{period}} najcieplejszy był {{warmMonth}}: w dzień {{warmDay}}, w nocy {{warmNight}}. Najzimniejszy — {{coldMonth}}: {{coldDay}} w dzień i {{coldNight}} w nocy. Rocznie spada około {{precip}} opadów. Rekordy dekady: {{hot}} ({{hotDate}}) i {{cold}} ({{coldDate}}).",
+      "tableSummary": "Tabela: temperatura i opady według miesięcy ({{period}})",
+      "colMonth": "Miesiąc",
+      "colDay": "W dzień",
+      "colNight": "W nocy",
+      "colPrecip": "Opady",
+      "colWetDays": "Dni z opadem",
+      "colSnowDays": "Dni ze śniegiem",
+      "daylightTitle": "Długość dnia",
+      "daylightText": "21 grudnia w mieście {{city}} słońce wschodzi o {{wr}} i zachodzi o {{ws}} — najkrótszy dzień trwa {{wl}}. 21 czerwca: wschód {{sr}}, zachód {{ss}}, dzień {{sl}}.",
+      "duration": "{{h}} godz. {{m}} min",
+      "nearbyTitle": "Pogoda w pobliżu",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Klimat: średnie z lat {{period}} z archiwum Open-Meteo (reanaliza ERA5), wysokość {{elev}} m n.p.m. Wschód i zachód słońca według czasu kijowskiego.",
+      "otherLanguages": "Inne języki"
+    }
   }
 }

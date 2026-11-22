@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agent Smith",
       "filmMatrytsia": "Film 'The Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Weather in {{city}} — today, tomorrow and 28-day forecast | {{brand}}",
+      "shortTitle": "Weather in {{city}} | {{brand}}",
+      "heading": "Weather in {{city}}",
+      "description": "Weather in {{city}}, Ukraine today: current temperature, hourly forecast, wind, precipitation, UV index, geomagnetic storms and 28-day charts.",
+      "text": "{{brand}} shows the weather in {{city}} in real time: temperature and feels-like, humidity, pressure, wind and gusts, precipitation, UV index, sunrise and sunset. Updated hourly: 16 precise days plus a trend up to 28 days.",
+      "climateTitle": "Climate by month",
+      "climateSummary": "Over {{period}} the warmest month was {{warmMonth}}: {{warmDay}} by day and {{warmNight}} at night. The coldest was {{coldMonth}}: {{coldDay}} by day and {{coldNight}} at night. About {{precip}} of precipitation falls per year. Records of the decade: {{hot}} ({{hotDate}}) and {{cold}} ({{coldDate}}).",
+      "tableSummary": "Table: temperature and precipitation by month ({{period}})",
+      "colMonth": "Month",
+      "colDay": "Day",
+      "colNight": "Night",
+      "colPrecip": "Precipitation",
+      "colWetDays": "Wet days",
+      "colSnowDays": "Snow days",
+      "daylightTitle": "Daylight",
+      "daylightText": "On 21 December the sun in {{city}} rises at {{wr}} and sets at {{ws}} — the shortest day lasts {{wl}}. On 21 June: sunrise {{sr}}, sunset {{ss}}, day length {{sl}}.",
+      "duration": "{{h}} h {{m}} min",
+      "nearbyTitle": "Weather nearby",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Climate: averages for {{period}} from the Open-Meteo archive (ERA5 reanalysis), elevation {{elev}} m above sea level. Sunrise and sunset in Kyiv time.",
+      "otherLanguages": "Other languages"
+    }
   }
 }

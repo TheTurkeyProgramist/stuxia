@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agent Smith",
       "filmMatrytsia": "Film 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Počasí {{city}} — předpověď na dnes, zítra a 28 dní | {{brand}}",
+      "shortTitle": "Počasí {{city}} | {{brand}}",
+      "heading": "Počasí {{city}}",
+      "description": "Počasí {{city}} (Ukrajina) dnes: aktuální teplota, hodinová předpověď, vítr, srážky, UV index, geomagnetické bouře a grafy na 28 dní.",
+      "text": "{{brand}} ukazuje počasí {{city}} v reálném čase: teplotu i pocitovou teplotu, vlhkost, tlak, vítr a nárazy, srážky, UV index, východ a západ slunce. Aktualizace každou hodinu: 16 přesných dní a trend až na 28 dní.",
+      "climateTitle": "Klima po měsících",
+      "climateSummary": "V letech {{period}} byl nejteplejší měsíc {{warmMonth}}: ve dne {{warmDay}}, v noci {{warmNight}}. Nejchladnější {{coldMonth}}: {{coldDay}} ve dne a {{coldNight}} v noci. Ročně spadne asi {{precip}} srážek. Rekordy desetiletí: {{hot}} ({{hotDate}}) a {{cold}} ({{coldDate}}).",
+      "tableSummary": "Tabulka: teplota a srážky po měsících ({{period}})",
+      "colMonth": "Měsíc",
+      "colDay": "Ve dne",
+      "colNight": "V noci",
+      "colPrecip": "Srážky",
+      "colWetDays": "Dny se srážkami",
+      "colSnowDays": "Dny se sněhem",
+      "daylightTitle": "Délka dne",
+      "daylightText": "21. prosince vychází slunce ve městě {{city}} v {{wr}} a zapadá v {{ws}} — nejkratší den trvá {{wl}}. 21. června: východ {{sr}}, západ {{ss}}, den {{sl}}.",
+      "duration": "{{h}} h {{m}} min",
+      "nearbyTitle": "Počasí v okolí",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Klima: průměry za {{period}} z archivu Open-Meteo (reanalýza ERA5), nadmořská výška {{elev}} m. Východ a západ slunce v kyjevském čase.",
+      "otherLanguages": "Další jazyky"
+    }
   }
 }

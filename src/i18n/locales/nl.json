@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agent Smith",
       "filmMatrytsia": "Film 'The Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Weer in {{city}} — vandaag, morgen en 28 dagen | {{brand}}",
+      "shortTitle": "Weer in {{city}} | {{brand}}",
+      "heading": "Weer in {{city}}",
+      "description": "Weer in {{city}} (Oekraïne) vandaag: huidige temperatuur, verwachting per uur, wind, neerslag, uv-index, magnetische stormen en grafieken voor 28 dagen.",
+      "text": "{{brand}} toont het weer in {{city}} in realtime: temperatuur en gevoelstemperatuur, luchtvochtigheid, luchtdruk, wind en windstoten, neerslag, uv-index, zonsopkomst en zonsondergang. Elk uur bijgewerkt: 16 nauwkeurige dagen en een trend tot 28 dagen.",
+      "climateTitle": "Klimaat per maand",
+      "climateSummary": "In {{period}} was {{warmMonth}} de warmste maand: overdag {{warmDay}}, 's nachts {{warmNight}}. De koudste was {{coldMonth}}: overdag {{coldDay}} en 's nachts {{coldNight}}. Per jaar valt ongeveer {{precip}} neerslag. Records van het decennium: {{hot}} ({{hotDate}}) en {{cold}} ({{coldDate}}).",
+      "tableSummary": "Tabel: temperatuur en neerslag per maand ({{period}})",
+      "colMonth": "Maand",
+      "colDay": "Overdag",
+      "colNight": "'s Nachts",
+      "colPrecip": "Neerslag",
+      "colWetDays": "Dagen met neerslag",
+      "colSnowDays": "Dagen met sneeuw",
+      "daylightTitle": "Daglicht",
+      "daylightText": "Op 21 december komt de zon in {{city}} op om {{wr}} en gaat onder om {{ws}} — de kortste dag duurt {{wl}}. Op 21 juni: zonsopkomst {{sr}}, zonsondergang {{ss}}, daglengte {{sl}}.",
+      "duration": "{{h}} u {{m}} min",
+      "nearbyTitle": "Weer in de buurt",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Klimaat: gemiddelden {{period}} uit het Open-Meteo-archief (ERA5-heranalyse), hoogte {{elev}} m boven zeeniveau. Zonsopkomst en -ondergang in Kyiv-tijd.",
+      "otherLanguages": "Andere talen"
+    }
   }
 }

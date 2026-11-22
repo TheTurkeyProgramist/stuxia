@@ -3584,5 +3584,32 @@
       "ahentSmit": "Smith ügynök",
       "filmMatrytsia": "Film: 'Mátrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Időjárás – {{city}}: ma, holnap és 28 nap | {{brand}}",
+      "shortTitle": "Időjárás – {{city}} | {{brand}}",
+      "heading": "Időjárás – {{city}}",
+      "description": "Időjárás – {{city}} (Ukrajna) ma: aktuális hőmérséklet, óránkénti előrejelzés, szél, csapadék, UV-index, mágneses viharok és 28 napos grafikonok.",
+      "text": "A {{brand}} valós időben mutatja {{city}} időjárását: hőmérséklet és hőérzet, páratartalom, légnyomás, szél és széllökések, csapadék, UV-index, napkelte és napnyugta. Óránként frissül: 16 pontos nap és 28 napig tartó tendencia.",
+      "climateTitle": "Éghajlat havonta",
+      "climateSummary": "{{period}} között a legmelegebb hónap a(z) {{warmMonth}} volt: nappal {{warmDay}}, éjjel {{warmNight}}. A leghidegebb a(z) {{coldMonth}}: nappal {{coldDay}}, éjjel {{coldNight}}. Évente kb. {{precip}} csapadék hullik. Az évtized rekordjai: {{hot}} ({{hotDate}}) és {{cold}} ({{coldDate}}).",
+      "tableSummary": "Táblázat: hőmérséklet és csapadék havonta ({{period}})",
+      "colMonth": "Hónap",
+      "colDay": "Nappal",
+      "colNight": "Éjjel",
+      "colPrecip": "Csapadék",
+      "colWetDays": "Csapadékos napok",
+      "colSnowDays": "Havas napok",
+      "daylightTitle": "Nappalok hossza",
+      "daylightText": "December 21-én {{city}} településen a nap {{wr}}-kor kel és {{ws}}-kor nyugszik — a legrövidebb nap {{wl}}. Június 21-én: napkelte {{sr}}, napnyugta {{ss}}, nappal {{sl}}.",
+      "duration": "{{h}} óra {{m}} perc",
+      "nearbyTitle": "Időjárás a közelben",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Éghajlat: {{period}} átlagai az Open-Meteo archívumából (ERA5 reanalízis), tengerszint feletti magasság {{elev}} m. Napkelte és napnyugta kijevi idő szerint.",
+      "otherLanguages": "Más nyelveken"
+    }
   }
 }

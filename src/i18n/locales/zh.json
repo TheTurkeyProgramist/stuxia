@@ -3584,5 +3584,32 @@
       "ahentSmit": "史密斯特工",
       "filmMatrytsia": "电影《黑客帝国》"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "{{city}}天气 — 今天、明天及28天预报 | {{brand}}",
+      "shortTitle": "{{city}}天气 | {{brand}}",
+      "heading": "{{city}}天气",
+      "description": "{{city}}（乌克兰）今日天气：当前气温、逐小时预报、风、降水、紫外线指数、地磁暴及28天图表。",
+      "text": "{{brand}}实时显示{{city}}的天气：气温与体感温度、湿度、气压、风与阵风、降水、紫外线指数、日出日落。每小时更新：16天精确预报及最长28天的趋势。",
+      "climateTitle": "逐月气候",
+      "climateSummary": "{{period}}年间最暖的月份是{{warmMonth}}：白天{{warmDay}}，夜间{{warmNight}}。最冷的是{{coldMonth}}：白天{{coldDay}}，夜间{{coldNight}}。年降水量约{{precip}}。十年纪录：{{hot}}（{{hotDate}}）和{{cold}}（{{coldDate}}）。",
+      "tableSummary": "表格：逐月气温和降水（{{period}}）",
+      "colMonth": "月份",
+      "colDay": "白天",
+      "colNight": "夜间",
+      "colPrecip": "降水",
+      "colWetDays": "降水日数",
+      "colSnowDays": "降雪日数",
+      "daylightTitle": "日照时长",
+      "daylightText": "12月21日，{{city}}日出{{wr}}，日落{{ws}}——最短的白天持续{{wl}}。6月21日：日出{{sr}}，日落{{ss}}，白天{{sl}}。",
+      "duration": "{{h}}小时{{m}}分",
+      "nearbyTitle": "附近天气",
+      "km": "{{v}} 公里",
+      "mm": "{{v}} 毫米",
+      "sourceNote": "气候：Open-Meteo 档案（ERA5 再分析）{{period}}年平均值，海拔{{elev}}米。日出日落为基辅时间。",
+      "otherLanguages": "其他语言"
+    }
   }
 }

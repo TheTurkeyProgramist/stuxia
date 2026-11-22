@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agentul Smith",
       "filmMatrytsia": "Filmul 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Vremea în {{city}} — azi, mâine și 28 de zile | {{brand}}",
+      "shortTitle": "Vremea în {{city}} | {{brand}}",
+      "heading": "Vremea în {{city}}",
+      "description": "Vremea în {{city}} (Ucraina) azi: temperatura acum, prognoză orară, vânt, precipitații, indice UV, furtuni magnetice și grafice pe 28 de zile.",
+      "text": "{{brand}} arată vremea în {{city}} în timp real: temperatura și cea resimțită, umiditatea, presiunea, vântul și rafalele, precipitațiile, indicele UV, răsăritul și apusul. Actualizare orară: 16 zile precise și tendință până la 28 de zile.",
+      "climateTitle": "Climă pe luni",
+      "climateSummary": "În {{period}} cea mai caldă lună a fost {{warmMonth}}: ziua {{warmDay}}, noaptea {{warmNight}}. Cea mai rece a fost {{coldMonth}}: ziua {{coldDay}} și noaptea {{coldNight}}. Anual cad circa {{precip}} de precipitații. Recordurile deceniului: {{hot}} ({{hotDate}}) și {{cold}} ({{coldDate}}).",
+      "tableSummary": "Tabel: temperatură și precipitații pe luni ({{period}})",
+      "colMonth": "Luna",
+      "colDay": "Ziua",
+      "colNight": "Noaptea",
+      "colPrecip": "Precipitații",
+      "colWetDays": "Zile cu precipitații",
+      "colSnowDays": "Zile cu zăpadă",
+      "daylightTitle": "Durata zilei",
+      "daylightText": "Pe 21 decembrie, în {{city}}, soarele răsare la {{wr}} și apune la {{ws}} — cea mai scurtă zi durează {{wl}}. Pe 21 iunie: răsărit {{sr}}, apus {{ss}}, zi {{sl}}.",
+      "duration": "{{h}} h {{m}} min",
+      "nearbyTitle": "Vremea în apropiere",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Climă: medii {{period}} din arhiva Open-Meteo (reanaliza ERA5), altitudine {{elev}} m. Răsăritul și apusul după ora Kievului.",
+      "otherLanguages": "Alte limbi"
+    }
   }
 }

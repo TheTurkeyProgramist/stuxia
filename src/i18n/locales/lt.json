@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agentas Smitas",
       "filmMatrytsia": "Filmas 'Matrica'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Orai {{city}} — šiandien, rytoj ir 28 dienų prognozė | {{brand}}",
+      "shortTitle": "Orai {{city}} | {{brand}}",
+      "heading": "Orai {{city}}",
+      "description": "Orai {{city}} (Ukraina) šiandien: dabartinė temperatūra, valandinė prognozė, vėjas, krituliai, UV indeksas, magnetinės audros ir 28 dienų grafikai.",
+      "text": "{{brand}} realiu laiku rodo orus mieste {{city}}: temperatūrą ir kaip ji jaučiama, drėgmę, slėgį, vėją ir gūsius, kritulius, UV indeksą, saulėtekį ir saulėlydį. Atnaujinama kas valandą: 16 tikslių dienų ir tendencija iki 28 dienų.",
+      "climateTitle": "Klimatas pagal mėnesius",
+      "climateSummary": "{{period}} m. šilčiausias mėnuo buvo {{warmMonth}}: dieną {{warmDay}}, naktį {{warmNight}}. Šalčiausias — {{coldMonth}}: dieną {{coldDay}}, naktį {{coldNight}}. Per metus iškrenta apie {{precip}} kritulių. Dešimtmečio rekordai: {{hot}} ({{hotDate}}) ir {{cold}} ({{coldDate}}).",
+      "tableSummary": "Lentelė: temperatūra ir krituliai pagal mėnesius ({{period}})",
+      "colMonth": "Mėnuo",
+      "colDay": "Dieną",
+      "colNight": "Naktį",
+      "colPrecip": "Krituliai",
+      "colWetDays": "Dienų su krituliais",
+      "colSnowDays": "Dienų su sniegu",
+      "daylightTitle": "Dienos trukmė",
+      "daylightText": "Gruodžio 21 d. mieste {{city}} saulė teka {{wr}} ir leidžiasi {{ws}} — trumpiausia diena trunka {{wl}}. Birželio 21 d.: saulėtekis {{sr}}, saulėlydis {{ss}}, diena {{sl}}.",
+      "duration": "{{h}} val. {{m}} min.",
+      "nearbyTitle": "Orai netoliese",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Klimatas: {{period}} m. vidurkiai iš Open-Meteo archyvo (ERA5 reanalizė), aukštis {{elev}} m virš jūros lygio. Saulėtekis ir saulėlydis Kyjivo laiku.",
+      "otherLanguages": "Kitomis kalbomis"
+    }
   }
 }

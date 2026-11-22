@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agente Smith",
       "filmMatrytsia": "Filme 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Previsão do tempo em {{city}} — hoje, amanhã e 28 dias | {{brand}}",
+      "shortTitle": "Tempo em {{city}} | {{brand}}",
+      "heading": "Tempo em {{city}}",
+      "description": "Tempo em {{city}} (Ucrânia) hoje: temperatura atual, previsão hora a hora, vento, precipitação, índice UV, tempestades magnéticas e gráficos de 28 dias.",
+      "text": "{{brand}} mostra o tempo em {{city}} em tempo real: temperatura e sensação térmica, umidade, pressão, vento e rajadas, precipitação, índice UV, nascer e pôr do sol. Atualizado a cada hora: 16 dias precisos e tendência até 28 dias.",
+      "climateTitle": "Clima por mês",
+      "climateSummary": "Em {{period}} o mês mais quente foi {{warmMonth}}: {{warmDay}} de dia e {{warmNight}} à noite. O mais frio foi {{coldMonth}}: {{coldDay}} de dia e {{coldNight}} à noite. Por ano caem cerca de {{precip}} de precipitação. Recordes da década: {{hot}} ({{hotDate}}) e {{cold}} ({{coldDate}}).",
+      "tableSummary": "Tabela: temperatura e precipitação por mês ({{period}})",
+      "colMonth": "Mês",
+      "colDay": "Dia",
+      "colNight": "Noite",
+      "colPrecip": "Precipitação",
+      "colWetDays": "Dias com chuva",
+      "colSnowDays": "Dias com neve",
+      "daylightTitle": "Duração do dia",
+      "daylightText": "Em 21 de dezembro o sol em {{city}} nasce às {{wr}} e se põe às {{ws}} — o dia mais curto dura {{wl}}. Em 21 de junho: nascer {{sr}}, pôr {{ss}}, dia {{sl}}.",
+      "duration": "{{h}} h {{m}} min",
+      "nearbyTitle": "Tempo nas proximidades",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Clima: médias de {{period}} do arquivo Open-Meteo (reanálise ERA5), altitude {{elev}} m. Nascer e pôr do sol no horário de Kyiv.",
+      "otherLanguages": "Outros idiomas"
+    }
   }
 }

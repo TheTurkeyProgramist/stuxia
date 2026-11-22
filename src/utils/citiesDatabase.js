@@ -1266,10 +1266,53 @@ export const getCitySeo = (city) => {
     "область",
   );
   return {
-    title: `Погода ${inCity} — прогноз на сьогодні, завтра і 16 днів | Стихія`,
+    title: `Погода ${inCity} — прогноз на сьогодні, завтра і 28 днів | Стихія`,
     shortTitle: `Погода ${inCity} | Стихія`,
     heading: `Погода ${inCity}`,
-    description: `Погода ${inCity} сьогодні: детальний прогноз для міста ${city.name} (${region}) — температура зараз, погодинно, вітер, опади, УФ-індекс і графіки на 16 днів.`,
-    text: `Стихія показує погоду ${inCity} в реальному часі: температуру і як вона відчувається, вологість, тиск, швидкість і пориви вітру, ймовірність опадів, УФ-індекс, схід і захід сонця. Прогноз оновлюється щогодини — погодинно на сьогодні й завтра та по днях на 16 днів уперед.`,
+    description: `Погода ${inCity} сьогодні: детальний прогноз для міста ${city.name} (${region}) — температура зараз, погодинно, вітер, опади, УФ-індекс, магнітні бурі й графіки на 28 днів.`,
+    text: `Стихія показує погоду ${inCity} в реальному часі: температуру і як вона відчувається, вологість, тиск, швидкість і пориви вітру, ймовірність опадів, УФ-індекс, магнітні бурі, схід і захід сонця. Прогноз оновлюється щогодини — погодинно на сьогодні й завтра, по днях на 16 днів і тенденція до 28 днів.`,
+  };
+};
+
+// ── Сторінки міст іншими мовами: /en/konotop/, /de/konotop/ … (українська — /pohoda/<slug>/) ──
+
+/** Мови сайту, крім української, що мають власні сторінки міст. Порядок — як у i18n.js. */
+export const CITY_PAGE_LANGS = [
+  "en", "be", "de", "fr", "es", "it", "pl", "ro", "nl", "pt", "el",
+  "cs", "hu", "sv", "fi", "bg", "lt", "zh", "ar", "ja", "tr", "ko", "fa",
+  "so", "qu",
+];
+
+// Кирилицею читають білоруси й болгари — їм лишаємо українську назву, решті — латиницю
+const CYRILLIC_LANGS = new Set(["uk", "be", "bg"]);
+
+/** «bila tserkva» → «Bila Tserkva», «ivano-frankivsk» → «Ivano-Frankivsk». */
+export const getCityLatinName = (city) => {
+  const alias = (city.aliases || []).find((a) => /^[a-z][a-z -]*$/.test(a)) || "";
+  return alias.replace(/(^|[ -])([a-z])/g, (_, sep, ch) => sep + ch.toUpperCase());
+};
+
+/** Назва міста для мови сторінки. */
+export const getCityNameForLang = (city, lang) =>
+  CYRILLIC_LANGS.has(lang) ? city.name : getCityLatinName(city) || city.name;
+
+/** Шлях сторінки міста: українська — /pohoda/<slug>/, інші — /<мова>/<slug>/. */
+export const getCityPagePath = (city, lang = "uk") =>
+  lang === "uk" ? `/pohoda/${getCitySlug(city)}/` : `/${lang}/${getCitySlug(city)}/`;
+
+/**
+ * SEO-тексти сторінки міста мовою lang. t(key, vars) — переклад ключа seo.cityPage.<key>:
+ * у застосунку це i18n.t, у збірці — читання з JSON локалі. Українська — getCitySeo
+ * (з місцевим відмінком, якого шаблон не дасть).
+ */
+export const getCitySeoLocalized = (city, lang, t) => {
+  if (lang === "uk") return getCitySeo(city);
+  const vars = { city: getCityNameForLang(city, lang), brand: t("brand") };
+  return {
+    title: t("title", vars),
+    shortTitle: t("shortTitle", vars),
+    heading: t("heading", vars),
+    description: t("description", vars),
+    text: t("text", vars),
   };
 };

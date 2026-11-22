@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agente Smith",
       "filmMatrytsia": "Película 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "{{city}} llaqtapi pacha — kunan, paqarin, 28 p'unchaw | {{brand}}",
+      "shortTitle": "{{city}} pacha | {{brand}}",
+      "heading": "{{city}} llaqtapi pacha",
+      "description": "{{city}} (Ucrania) llaqtapi kunan pacha: kunan q'uñi-chiri, sapa hora willakuy, wayra, para, UV, magnetico wayra-para, 28 p'unchaw siq'ikuna.",
+      "text": "{{brand}} {{city}} llaqtapa pachanta kunanpacha rikuchin: q'uñi-chiri, hump'iy, saruy, wayra, para, UV, inti lluqsiy, inti yaykuy. Sapa hora musuqyachin: 16 chiqap p'unchaw, 28 p'unchaw kama rikuy.",
+      "climateTitle": "Sapa killapa pachan",
+      "climateSummary": "{{period}} watakunapi aswan q'uñi killa {{warmMonth}}: p'unchawpi {{warmDay}}, tutapi {{warmNight}}. Aswan chiri {{coldMonth}}: p'unchawpi {{coldDay}}, tutapi {{coldNight}}. Sapa wata {{precip}} hina paran. Chunka watapa hatun yupaykuna: {{hot}} ({{hotDate}}), {{cold}} ({{coldDate}}).",
+      "tableSummary": "Siq'i: sapa killapa q'uñi-chirin, paran ({{period}})",
+      "colMonth": "Killa",
+      "colDay": "P'unchaw",
+      "colNight": "Tuta",
+      "colPrecip": "Para",
+      "colWetDays": "Parayuq p'unchawkuna",
+      "colSnowDays": "Rit'iyuq p'unchawkuna",
+      "daylightTitle": "P'unchawpa sayaynin",
+      "daylightText": "21 diciembre {{city}} llaqtapi inti {{wr}} pachapi lluqsin, {{ws}} pachapi yaykun — aswan uchuy p'unchaw {{wl}}. 21 junio: lluqsiy {{sr}}, yaykuy {{ss}}, p'unchaw {{sl}}.",
+      "duration": "{{h}} h {{m}} min",
+      "nearbyTitle": "Qaylla pacha",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Pacha: {{period}} chawpi yupaykuna Open-Meteo archivomanta (ERA5), {{elev}} m hanaq. Inti lluqsiy, yaykuy Kyiv horapi.",
+      "otherLanguages": "Huk simikunapi"
+    }
   }
 }

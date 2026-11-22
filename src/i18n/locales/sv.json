@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agent Smith",
       "filmMatrytsia": "Filmen 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Väder i {{city}} — idag, imorgon och 28 dagar | {{brand}}",
+      "shortTitle": "Väder i {{city}} | {{brand}}",
+      "heading": "Väder i {{city}}",
+      "description": "Väder i {{city}} (Ukraina) idag: temperatur nu, prognos timme för timme, vind, nederbörd, UV-index, magnetstormar och diagram för 28 dagar.",
+      "text": "{{brand}} visar vädret i {{city}} i realtid: temperatur och känns som, luftfuktighet, lufttryck, vind och byar, nederbörd, UV-index, soluppgång och solnedgång. Uppdateras varje timme: 16 exakta dagar och en trend upp till 28 dagar.",
+      "climateTitle": "Klimat per månad",
+      "climateSummary": "Under {{period}} var {{warmMonth}} varmast: {{warmDay}} på dagen och {{warmNight}} på natten. Kallast var {{coldMonth}}: {{coldDay}} på dagen och {{coldNight}} på natten. Per år faller omkring {{precip}} nederbörd. Decenniets rekord: {{hot}} ({{hotDate}}) och {{cold}} ({{coldDate}}).",
+      "tableSummary": "Tabell: temperatur och nederbörd per månad ({{period}})",
+      "colMonth": "Månad",
+      "colDay": "Dag",
+      "colNight": "Natt",
+      "colPrecip": "Nederbörd",
+      "colWetDays": "Dagar med nederbörd",
+      "colSnowDays": "Dagar med snö",
+      "daylightTitle": "Dagsljus",
+      "daylightText": "Den 21 december går solen i {{city}} upp {{wr}} och ned {{ws}} — den kortaste dagen varar {{wl}}. Den 21 juni: uppgång {{sr}}, nedgång {{ss}}, dag {{sl}}.",
+      "duration": "{{h}} h {{m}} min",
+      "nearbyTitle": "Väder i närheten",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Klimat: medelvärden {{period}} från Open-Meteos arkiv (ERA5-återanalys), höjd {{elev}} m ö.h. Soluppgång och solnedgång i Kyiv-tid.",
+      "otherLanguages": "Andra språk"
+    }
   }
 }

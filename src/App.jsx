@@ -88,7 +88,7 @@ import { IoThunderstorm, IoRainy } from "react-icons/io5";
 import DecoratorOverlay from "./components/Decorator/DecoratorOverlay.jsx";
 import SiteContextMenu from "./components/SiteContextMenu.jsx";
 import { analyzeSearchQuery } from "./utils/searchAnalyzer.js";
-import { findCityInDatabase, getCitySlug, getCitySeo } from "./utils/citiesDatabase.js";
+import { findCityInDatabase, getCitySeoLocalized, getCityPagePath } from "./utils/citiesDatabase.js";
 import { FaSmog } from "react-icons/fa6";
 import { FaSun } from "react-icons/fa";
 import { BsMoonStarsFill, BsLightningChargeFill } from "react-icons/bs";
@@ -4053,9 +4053,13 @@ const App = () => {
       const city = analysis.cityData;
 
       // Динамічне оновлення заголовка та мета-опису. Для міст із бази — ті самі тексти,
-      // що й у статичній сторінці /pohoda/<slug>/ (getCitySeo), щоб Google бачив один заголовок
+      // що й у статичній сторінці /pohoda/<slug>/ чи /en/<slug>/ (getCitySeoLocalized),
+      // щоб Google бачив один заголовок. Мова — з адреси (для ?q=… — українська, як було)
       const dbCity = findCityInDatabase(analysis.cityName);
-      const seo = dbCity ? getCitySeo(dbCity) : null;
+      const pageLang = analysis.pageLang || "uk";
+      const seo = dbCity
+        ? getCitySeoLocalized(dbCity, pageLang, (key, vars) => i18n.t(`seo.cityPage.${key}`, vars))
+        : null;
       document.title =
         seo?.title || i18n.t("ui.App.pohodaVMistiTochnyi", { cityName: analysis.cityName });
       const metaDesc = document.querySelector('meta[name="description"]');
@@ -4075,7 +4079,7 @@ const App = () => {
         const seoSearchUrl = `https://stuxia.com/?q=погода+${encodeURIComponent(analysis.cityName.toLowerCase())}`;
         canonical.setAttribute(
           "href",
-          dbCity ? `https://stuxia.com/pohoda/${getCitySlug(dbCity)}/` : seoSearchUrl
+          dbCity ? `https://stuxia.com${getCityPagePath(dbCity, pageLang)}` : seoSearchUrl
         );
       }
 

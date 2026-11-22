@@ -1,4 +1,4 @@
-import { findCityInDatabase, findCityBySlug } from "./citiesDatabase";
+import { findCityInDatabase, findCityBySlug, CITY_PAGE_LANGS } from "./citiesDatabase";
 
 /**
  * Аналізатор пошуку під капотом.
@@ -6,14 +6,16 @@ import { findCityInDatabase, findCityBySlug } from "./citiesDatabase";
  */
 export const analyzeSearchQuery = (searchString = "", hashString = "", pathname = "") => {
   try {
-    // Статичні сторінки міст для пошуковиків: /pohoda/konotop/
-    const pathMatch = pathname.match(/^\/pohoda\/([a-z-]+)\/?$/);
-    const slugCity = pathMatch && findCityBySlug(pathMatch[1]);
+    // Статичні сторінки міст для пошуковиків: /pohoda/konotop/ і мовні /en/konotop/
+    const pathMatch = pathname.match(/^\/(pohoda|[a-z]{2})\/([a-z-]+)\/?$/);
+    const pathPrefixOk = pathMatch && (pathMatch[1] === "pohoda" || CITY_PAGE_LANGS.includes(pathMatch[1]));
+    const slugCity = pathPrefixOk && findCityBySlug(pathMatch[2]);
     if (slugCity) {
       return {
         isSearchEntry: true,
         query: slugCity.name,
         cityName: slugCity.name,
+        pageLang: pathMatch[1] === "pohoda" ? "uk" : pathMatch[1],
         cityData: {
           id: `search-${slugCity.name.toLowerCase()}`,
           name: slugCity.name,

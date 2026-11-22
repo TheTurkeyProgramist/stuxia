@@ -19,9 +19,15 @@ const START = "2016-01-01";
 const END = "2025-12-31";
 const PERIOD = "2016–2025";
 const VARS = ["temperature_2m_max", "temperature_2m_min", "precipitation_sum", "snowfall_sum"];
-const PAUSE_MS = 15000;
-// Поки що — Сумщина (почали з Конотопа); інші області — розширити цей фільтр
-const WANTED = (city) => /Сумська/.test(city.fullName);
+// Ліміти безкоштовного Open-Meteo: 600/хв, 5 000/год, 10 000/добу. Місто ≈ 104 виклики,
+// тож пауза 80 с тримає ~45 міст на годину, а --limit=90 — у межах доби.
+const PAUSE_MS = Number(process.env.CLIMATE_PAUSE_MS) || 80000;
+// Без --all — лише Сумщина (як було); з --all — усі міста бази
+// (`bun scripts/fetch-city-climate.mjs --all --limit=90`, решту — наступного дня).
+const all = process.argv.includes("--all");
+const WANTED = (city) => all || /Сумська/.test(city.fullName);
+const limitArg = process.argv.find((a) => a.startsWith("--limit="));
+const LIMIT = limitArg ? Number(limitArg.split("=")[1]) : Infinity;
 
 const force = process.argv.includes("--force");
 const existing = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, "utf8")) : {};
@@ -73,12 +79,19 @@ const summarize = (daily) => {
 let totalCost = 0;
 const result = { ...existing };
 const cities = UKRAINE_CITIES_40.filter(WANTED);
-for (const [n, city] of cities.entries()) {
+let fetched = 0;
+for (const city of cities) {
   const slug = getCitySlug(city);
   if (!force && existing[slug]?.period === PERIOD) {
     console.log(`= ${city.name}: уже є`);
     continue;
   }
+  if (fetched >= LIMIT) {
+    console.log(`Ліміт ${LIMIT} міст за запуск — решту завантажте наступного разу`);
+    break;
+  }
+  if (fetched > 0) await sleep(PAUSE_MS);
+  fetched += 1;
   const url =
     `https://archive-api.open-meteo.com/v1/archive?latitude=${city.lat}&longitude=${city.lon}` +
     `&start_date=${START}&end_date=${END}&daily=${VARS.join(",")}&timezone=Europe%2FKyiv`;
@@ -94,6 +107,5 @@ for (const [n, city] of cities.entries()) {
   console.log(`✓ ${city.name}: вартість ${cost} викликів`);
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, `${JSON.stringify(result, null, 1)}\n`);
-  if (n < cities.length - 1) await sleep(PAUSE_MS);
 }
 console.log(`Готово: ${Object.keys(result).length} міст у ${path.relative(root, OUT)}; витрачено ${round1(totalCost)} викликів Open-Meteo`);

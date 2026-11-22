@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agent Smith",
       "filmMatrytsia": "Film 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Wetter in {{city}} — heute, morgen und 28-Tage-Prognose | {{brand}}",
+      "shortTitle": "Wetter in {{city}} | {{brand}}",
+      "heading": "Wetter in {{city}}",
+      "description": "Wetter in {{city}} (Ukraine) heute: aktuelle Temperatur, stündliche Vorhersage, Wind, Niederschlag, UV-Index, Magnetstürme und Diagramme für 28 Tage.",
+      "text": "{{brand}} zeigt das Wetter in {{city}} in Echtzeit: Temperatur und gefühlte Temperatur, Luftfeuchtigkeit, Luftdruck, Wind und Böen, Niederschlag, UV-Index, Sonnenauf- und -untergang. Stündlich aktualisiert: 16 genaue Tage plus Tendenz bis 28 Tage.",
+      "climateTitle": "Klima nach Monaten",
+      "climateSummary": "In den Jahren {{period}} war der wärmste Monat der {{warmMonth}}: tagsüber {{warmDay}}, nachts {{warmNight}}. Der kälteste war der {{coldMonth}}: {{coldDay}} tagsüber und {{coldNight}} nachts. Pro Jahr fallen rund {{precip}} Niederschlag. Rekorde des Jahrzehnts: {{hot}} ({{hotDate}}) und {{cold}} ({{coldDate}}).",
+      "tableSummary": "Tabelle: Temperatur und Niederschlag nach Monaten ({{period}})",
+      "colMonth": "Monat",
+      "colDay": "Tag",
+      "colNight": "Nacht",
+      "colPrecip": "Niederschlag",
+      "colWetDays": "Tage mit Niederschlag",
+      "colSnowDays": "Tage mit Schnee",
+      "daylightTitle": "Tageslicht",
+      "daylightText": "Am 21. Dezember geht die Sonne in {{city}} um {{wr}} auf und um {{ws}} unter — der kürzeste Tag dauert {{wl}}. Am 21. Juni: Aufgang {{sr}}, Untergang {{ss}}, Tageslänge {{sl}}.",
+      "duration": "{{h}} Std. {{m}} Min.",
+      "nearbyTitle": "Wetter in der Nähe",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Klima: Mittelwerte {{period}} aus dem Open-Meteo-Archiv (ERA5-Reanalyse), Höhe {{elev}} m über dem Meer. Sonnenauf- und -untergang in Kyjiwer Zeit.",
+      "otherLanguages": "Andere Sprachen"
+    }
   }
 }

@@ -3584,5 +3584,32 @@
       "ahentSmit": "Ajan Smith",
       "filmMatrytsia": "'Matrix' filmi"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "{{city}} hava durumu — bugün, yarın ve 28 gün | {{brand}}",
+      "shortTitle": "{{city}} hava durumu | {{brand}}",
+      "heading": "{{city}} hava durumu",
+      "description": "{{city}} (Ukrayna) bugün hava durumu: anlık sıcaklık, saatlik tahmin, rüzgâr, yağış, UV indeksi, manyetik fırtınalar ve 28 günlük grafikler.",
+      "text": "{{brand}}, {{city}} hava durumunu anlık gösterir: sıcaklık ve hissedilen, nem, basınç, rüzgâr ve hamleler, yağış, UV indeksi, gün doğumu ve batımı. Saatlik güncellenir: 16 kesin gün ve 28 güne kadar eğilim.",
+      "climateTitle": "Aylara göre iklim",
+      "climateSummary": "{{period}} yıllarında en sıcak ay {{warmMonth}} oldu: gündüz {{warmDay}}, gece {{warmNight}}. En soğuk ay {{coldMonth}}: gündüz {{coldDay}}, gece {{coldNight}}. Yılda yaklaşık {{precip}} yağış düşer. On yılın rekorları: {{hot}} ({{hotDate}}) ve {{cold}} ({{coldDate}}).",
+      "tableSummary": "Tablo: aylara göre sıcaklık ve yağış ({{period}})",
+      "colMonth": "Ay",
+      "colDay": "Gündüz",
+      "colNight": "Gece",
+      "colPrecip": "Yağış",
+      "colWetDays": "Yağışlı gün",
+      "colSnowDays": "Karlı gün",
+      "daylightTitle": "Gün ışığı",
+      "daylightText": "21 Aralık'ta {{city}} kentinde güneş {{wr}}'de doğar ve {{ws}}'de batar — en kısa gün {{wl}} sürer. 21 Haziran: doğuş {{sr}}, batış {{ss}}, gün {{sl}}.",
+      "duration": "{{h}} sa {{m}} dk",
+      "nearbyTitle": "Yakındaki hava durumu",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "İklim: Open-Meteo arşivinden {{period}} ortalamaları (ERA5 yeniden analizi), rakım {{elev}} m. Gün doğumu ve batımı Kiev saatiyle.",
+      "otherLanguages": "Diğer diller"
+    }
   }
 }

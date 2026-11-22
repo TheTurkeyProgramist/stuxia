@@ -3584,5 +3584,32 @@
       "ahentSmit": "Wakiil Smith",
       "filmMatrytsia": "Filimka 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Cimilada {{city}} — maanta, berri iyo 28 maalmood | {{brand}}",
+      "shortTitle": "Cimilada {{city}} | {{brand}}",
+      "heading": "Cimilada {{city}}",
+      "description": "Cimilada {{city}} (Ukrain) maanta: heerkulka hadda, saadaal saacadle ah, dabayl, roob, tusaha UV, duufaanno magnetic iyo jaantusyo 28 maalmood.",
+      "text": "{{brand}} wuxuu si toos ah u muujiyaa cimilada {{city}}: heerkulka iyo sida loo dareemo, qoyaanka, cadaadiska, dabaysha iyo neecawda, roobka, tusaha UV, qorrax ka soo bax iyo qorrax dhac. Saacad kasta waa la cusboonaysiiyaa: 16 maalmood oo sax ah iyo isbeddel ilaa 28 maalmood.",
+      "climateTitle": "Cimilada bil kasta",
+      "climateSummary": "Sannadaha {{period}} bisha ugu kulul waxay ahayd {{warmMonth}}: maalintii {{warmDay}}, habeenkii {{warmNight}}. Tan ugu qabow {{coldMonth}}: maalintii {{coldDay}}, habeenkii {{coldNight}}. Sannadkii waxaa da'a qiyaastii {{precip}} roob. Rikoorrada tobanka sano: {{hot}} ({{hotDate}}) iyo {{cold}} ({{coldDate}}).",
+      "tableSummary": "Shax: heerkulka iyo roobka bil kasta ({{period}})",
+      "colMonth": "Bil",
+      "colDay": "Maalin",
+      "colNight": "Habeen",
+      "colPrecip": "Roob",
+      "colWetDays": "Maalmo roob",
+      "colSnowDays": "Maalmo baraf",
+      "daylightTitle": "Dhererka maalinta",
+      "daylightText": "21 December qorraxdu {{city}} waxay ka soo baxdaa {{wr}} waxayna dhacdaa {{ws}} — maalinta ugu gaaban waa {{wl}}. 21 June: soo bax {{sr}}, dhac {{ss}}, maalin {{sl}}.",
+      "duration": "{{h}} saac {{m}} daqiiqo",
+      "nearbyTitle": "Cimilada u dhow",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Cimilo: celceliska {{period}} ee kaydka Open-Meteo (ERA5), joogga {{elev}} m. Qorrax ka soo bax iyo dhac waqtiga Kyiv.",
+      "otherLanguages": "Luqado kale"
+    }
   }
 }

@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agente Smith",
       "filmMatrytsia": "Película 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "El tiempo en {{city}}: hoy, mañana y 28 días | {{brand}}",
+      "shortTitle": "El tiempo en {{city}} | {{brand}}",
+      "heading": "El tiempo en {{city}}",
+      "description": "El tiempo en {{city}} (Ucrania) hoy: temperatura actual, pronóstico por horas, viento, precipitación, índice UV, tormentas geomagnéticas y gráficos de 28 días.",
+      "text": "{{brand}} muestra el tiempo en {{city}} en tiempo real: temperatura y sensación térmica, humedad, presión, viento y rachas, precipitación, índice UV, salida y puesta del sol. Se actualiza cada hora: 16 días precisos y tendencia hasta 28 días.",
+      "climateTitle": "Clima por meses",
+      "climateSummary": "En {{period}} el mes más cálido fue {{warmMonth}}: {{warmDay}} de día y {{warmNight}} de noche. El más frío fue {{coldMonth}}: {{coldDay}} de día y {{coldNight}} de noche. Al año caen unos {{precip}} de precipitación. Récords de la década: {{hot}} ({{hotDate}}) y {{cold}} ({{coldDate}}).",
+      "tableSummary": "Tabla: temperatura y precipitación por meses ({{period}})",
+      "colMonth": "Mes",
+      "colDay": "Día",
+      "colNight": "Noche",
+      "colPrecip": "Precipitación",
+      "colWetDays": "Días con precipitación",
+      "colSnowDays": "Días con nieve",
+      "daylightTitle": "Horas de luz",
+      "daylightText": "El 21 de diciembre el sol en {{city}} sale a las {{wr}} y se pone a las {{ws}}: el día más corto dura {{wl}}. El 21 de junio: salida {{sr}}, puesta {{ss}}, día {{sl}}.",
+      "duration": "{{h}} h {{m}} min",
+      "nearbyTitle": "El tiempo cerca",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Clima: medias de {{period}} del archivo de Open-Meteo (reanálisis ERA5), altitud {{elev}} m. Salida y puesta del sol en hora de Kiev.",
+      "otherLanguages": "Otros idiomas"
+    }
   }
 }

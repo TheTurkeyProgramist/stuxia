@@ -3584,5 +3584,32 @@
       "ahentSmit": "エージェント・スミス",
       "filmMatrytsia": "映画『マトリックス』"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "{{city}}の天気 — 今日・明日・28日間予報 | {{brand}}",
+      "shortTitle": "{{city}}の天気 | {{brand}}",
+      "heading": "{{city}}の天気",
+      "description": "{{city}}（ウクライナ）の今日の天気：現在の気温、1時間ごとの予報、風、降水量、UV指数、磁気嵐、28日間のグラフ。",
+      "text": "{{brand}}は{{city}}の天気をリアルタイムで表示します：気温と体感温度、湿度、気圧、風と突風、降水、UV指数、日の出と日の入り。毎時更新：正確な16日間と28日までの傾向。",
+      "climateTitle": "月別の気候",
+      "climateSummary": "{{period}}年で最も暖かい月は{{warmMonth}}：日中{{warmDay}}、夜{{warmNight}}。最も寒い月は{{coldMonth}}：日中{{coldDay}}、夜{{coldNight}}。年間降水量は約{{precip}}。この10年の記録：{{hot}}（{{hotDate}}）と{{cold}}（{{coldDate}}）。",
+      "tableSummary": "表：月別の気温と降水量（{{period}}）",
+      "colMonth": "月",
+      "colDay": "日中",
+      "colNight": "夜",
+      "colPrecip": "降水量",
+      "colWetDays": "降水日数",
+      "colSnowDays": "降雪日数",
+      "daylightTitle": "日照時間",
+      "daylightText": "12月21日、{{city}}の日の出は{{wr}}、日の入りは{{ws}} — 最も短い日は{{wl}}。6月21日：日の出{{sr}}、日の入り{{ss}}、昼の長さ{{sl}}。",
+      "duration": "{{h}}時間{{m}}分",
+      "nearbyTitle": "近くの天気",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "気候：Open-Meteoアーカイブ（ERA5再解析）による{{period}}年の平均、標高{{elev}} m。日の出・日の入りはキーウ時間。",
+      "otherLanguages": "他の言語"
+    }
   }
 }

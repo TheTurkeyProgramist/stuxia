@@ -3584,5 +3584,32 @@
       "ahentSmit": "Agent Smith",
       "filmMatrytsia": "Film 'Matrix'"
     }
+  },
+  "seo": {
+    "cityPage": {
+      "brand": "Stuxia",
+      "title": "Météo à {{city}} — aujourd’hui, demain et 28 jours | {{brand}}",
+      "shortTitle": "Météo à {{city}} | {{brand}}",
+      "heading": "Météo à {{city}}",
+      "description": "Météo à {{city}} (Ukraine) aujourd’hui : température actuelle, prévisions heure par heure, vent, précipitations, indice UV, orages magnétiques et graphiques sur 28 jours.",
+      "text": "{{brand}} affiche la météo à {{city}} en temps réel : température et ressenti, humidité, pression, vent et rafales, précipitations, indice UV, lever et coucher du soleil. Mise à jour chaque heure : 16 jours précis et une tendance jusqu’à 28 jours.",
+      "climateTitle": "Climat par mois",
+      "climateSummary": "Sur {{period}}, le mois le plus chaud a été {{warmMonth}} : {{warmDay}} le jour et {{warmNight}} la nuit. Le plus froid : {{coldMonth}}, {{coldDay}} le jour et {{coldNight}} la nuit. Il tombe environ {{precip}} de précipitations par an. Records de la décennie : {{hot}} ({{hotDate}}) et {{cold}} ({{coldDate}}).",
+      "tableSummary": "Tableau : température et précipitations par mois ({{period}})",
+      "colMonth": "Mois",
+      "colDay": "Jour",
+      "colNight": "Nuit",
+      "colPrecip": "Précipitations",
+      "colWetDays": "Jours de pluie",
+      "colSnowDays": "Jours de neige",
+      "daylightTitle": "Durée du jour",
+      "daylightText": "Le 21 décembre, à {{city}}, le soleil se lève à {{wr}} et se couche à {{ws}} : le jour le plus court dure {{wl}}. Le 21 juin : lever {{sr}}, coucher {{ss}}, durée {{sl}}.",
+      "duration": "{{h}} h {{m}} min",
+      "nearbyTitle": "Météo à proximité",
+      "km": "{{v}} km",
+      "mm": "{{v}} mm",
+      "sourceNote": "Climat : moyennes {{period}} de l’archive Open-Meteo (réanalyse ERA5), altitude {{elev}} m. Lever et coucher du soleil à l’heure de Kyiv.",
+      "otherLanguages": "Autres langues"
+    }
   }
 }
