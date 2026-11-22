@@ -40,9 +40,19 @@ jobs:
         working-directory: Stuxia
         run: bun install
 
+      # Кожна збірка — нова версія (1.0.<номер запуску>): файли в релізі більше не перезаписуються
+      - name: Build version
+        id: ver
+        shell: bash
+        run: |
+          base=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+          v="$base.${{ github.run_number }}"
+          echo "value=$v" >> "$GITHUB_OUTPUT"
+          node -e "require('fs').writeFileSync('Stuxia/ver.json', JSON.stringify({version: process.argv[1]}))" "$v"
+
       - name: Build Windows installers
         working-directory: Stuxia
-        run: bun run tauri build --bundles nsis,msi
+        run: bun run tauri build --bundles nsis,msi --config ver.json
 
       - name: Prepare Windows installers
         shell: pwsh
@@ -88,9 +98,15 @@ jobs:
         working-directory: Stuxia
         run: bun install
 
+      - name: Build version
+        shell: bash
+        run: |
+          base=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+          node -e "require('fs').writeFileSync('Stuxia/ver.json', JSON.stringify({version: process.argv[1]}))" "$base.${{ github.run_number }}"
+
       - name: Build Linux packages
         working-directory: Stuxia
-        run: bun run tauri build --bundles appimage,deb
+        run: bun run tauri build --bundles appimage,deb --config ver.json
 
       - name: Prepare Linux packages
         run: |
@@ -177,7 +193,9 @@ jobs:
 
       - name: Read app version
         id: version
-        run: echo "value=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+        run: |
+          base=$(node -p "require('./package.json').version.split('.').slice(0,2).join('.')")
+          echo "value=$base.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
 
       - name: Download all platform builds
         uses: actions/download-artifact@v4
