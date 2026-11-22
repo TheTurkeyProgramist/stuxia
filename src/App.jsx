@@ -2202,7 +2202,7 @@ const App = () => {
   const [activeBgTrackId, setActiveBgTrackId] = useState(23); // ID для індиків за замовчуванням
   const [trackRepeatCounter, setTrackRepeatCounter] = useState(0);
   const [bgMusicVolume, setBgMusicVolume] = useState(0.2);
-  const [sfxVolume, setSfxVolume] = useState(0.2);
+  const [sfxVolume, setSfxVolume] = useState(0);
   const [loadingStrategy, setLoadingStrategy] = useState("eager"); // eager, lazy, delayed
   const [bgMusicSpeed, setBgMusicSpeed] = useState(1);
   const [customBgTracks, setCustomBgTracks] = useState([]); // [{name, file}]

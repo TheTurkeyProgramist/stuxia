@@ -1810,7 +1810,7 @@ const UserSettingsModal = ({
   activeBgTrackId, setActiveBgTrackId = () => {},
   onResetBgPosition = () => {},
   onSkipBgTrack = () => {},
-  sfxVolume = 0.2, setSfxVolume = () => {},
+  sfxVolume = 0, setSfxVolume = () => {},
   bgAudioRef, bgAudioRef2,
   onLogout = () => {},
   initialTab = null,

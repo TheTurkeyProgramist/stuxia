@@ -1054,7 +1054,7 @@ const ThemePickerContent = ({ isDarkMode, accentColor, onPickTheme, onPickAccent
 
 const Header = ({
   isIntroDone = true, // false, поки лоадер на екрані — хедер чекає і не виїжджає
-  sfxVolume = 0.2,
+  sfxVolume = 0,
   onOpenRegister,
   onOpenSettings,
   onOpenVip,
