@@ -61,6 +61,8 @@ import {
 } from "../../features/counter/Counter.js";
 import { getHourlyForecastDetailGroups } from "../../utils/hourlyForecast";
 import { generateRuleBasedForecast, badgeHas } from "../../utils/ruleBasedForecast";
+import { getFolkSigns } from "../../utils/folkSigns"; // Народні прикмети у Смарт-прогнозі
+import { localNowKey } from "../../utils/dailyTips";
 import { ddmmFromIso, isWeekendIso, dateLocale } from "../../utils/weatherText.js";
 import { DEFAULT_CARD_BG, CARD_BG_CHANGE_EVENT } from "./weatherShared";
 import { getWindDirectionText, getWindDirectionShort } from "../../utils/windUtils";
@@ -124,7 +126,7 @@ import {
   MORNING_BRIEF_HOUR,
 } from "../../utils/emergencyAlerts";
 import { FaSnowflake, FaSun, FaExclamationTriangle } from "react-icons/fa"; //Іконки
-import { GiSunRadiations, GiSnowing, GiWaterRecycling, GiIceCube } from "react-icons/gi";//Сонячна радіація
+import { GiSunRadiations, GiSnowing, GiWaterRecycling, GiIceCube, GiWheat } from "react-icons/gi";//Сонячна радіація
 import { Tooltip } from "../Tooltip/Tooltip";
 import { createChartWeatherIcon, getChartIconKey, createChartWindArrow, valueLabelsPlugin } from "../../utils/chartWeatherIcon";
 
@@ -1726,6 +1728,39 @@ const WeatherCardComponent = ({
   const ruleForecast = useMemo(() => {
     return generateRuleBasedForecast(card, { unit, currentTimeString: forecastTimeString });
   }, [card, unit, forecastTimeString]);
+
+  // Народні прикмети: «сьогодні так → завтра так» + звірка з моделями.
+  // Час — місцевий для міста картки, оновлюється разом із forecastTimeString
+  const folkSigns = useMemo(
+    () => getFolkSigns(card, localNowKey(card?.utcOffsetSeconds)),
+    [card, forecastTimeString],
+  );
+  const folkDetailText = (detail) => {
+    if (!detail) return "";
+    const ft = (k, o) => i18n.t(`newsWeather.folkSigns.${k}`, o);
+    if (detail.kind === "temp") {
+      const v = Math.round((unit === "F" ? detail.delta * 1.8 : detail.delta) * 10) / 10;
+      const label = unit === "F" ? "°F" : unit === "K" ? " K" : "°C";
+      return ft("detail_temp", { delta: `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}${label}` });
+    }
+    if (detail.kind === "precip") return ft("detail_precip", { mm: fmt.precip(detail.mm), prob: detail.prob });
+    if (detail.kind === "snow") return ft("detail_snow", { n: detail.n });
+    if (detail.kind === "range") return ft("detail_range", { min: fmt.temp(detail.min), max: fmt.temp(detail.max) });
+    if (detail.kind === "storm") return ft("detail_storm", { n: detail.n, gust: fmt.wind(detail.gust) });
+    if (detail.kind === "cloud") return ft("detail_cloud", { c: detail.c });
+    if (detail.kind === "compare") {
+      const date = new Intl.DateTimeFormat(dateLocale(), { day: "numeric", month: "long", timeZone: "UTC" }).format(
+        new Date(`${detail.date}T12:00:00Z`),
+      );
+      return ft("detail_compare", {
+        date,
+        desc: detail.desc,
+        max: detail.max === null ? "—" : fmt.temp(detail.max),
+        min: detail.min === null ? "—" : fmt.temp(detail.min),
+      });
+    }
+    return "";
+  };
 
   // Минулий день (вчора) у 16-денному прогнозі показується лише з чекбоксом
   const [showPastDay, setShowPastDay] = useState(false);
@@ -6043,6 +6078,64 @@ const HOLIDAYS_2027 = {
                       )}
                     </RuleSectionCard>
                   )}
+
+                  {/* 5. Блок: Народні прикмети зі звіркою з моделями */}
+                  <RuleSectionCard $isDarkMode={isDarkMode} $accent="#d97706">
+                    <RuleSectionHeader $isDarkMode={isDarkMode} {...ruleHeaderProps("folk")}>
+                      <GiWheat style={{ color: "#d97706", fontSize: "14px" }} />
+                      <span>{i18n.t("newsWeather.folkSigns.title")}</span>
+                      {renderRuleChevron("folk")}
+                    </RuleSectionHeader>
+                    {isRuleSectionOpen("folk") && (
+                      <RuleSectionBody $isDarkMode={isDarkMode} style={{ whiteSpace: "normal" }}>
+                        {[...folkSigns.calendar, ...folkSigns.weather].length === 0 ? (
+                          <div style={{ opacity: 0.85 }}>
+                            {i18n.t("newsWeather.folkSigns.none", { n: folkSigns.checked })}
+                          </div>
+                        ) : (
+                          [...folkSigns.calendar, ...folkSigns.weather].map((sign, sIdx) => {
+                            const color = {
+                              agree: "#10b981",
+                              disagree: "#ef4444",
+                              neutral: isDarkMode ? "#9ca3af" : "#6b7280",
+                              far: "#a78bfa",
+                            }[sign.verdict];
+                            const detail = folkDetailText(sign.detail);
+                            const label =
+                              sign.type === "calendar"
+                                ? i18n.t("newsWeather.folkSigns.calendarLabel", {
+                                    date: new Intl.DateTimeFormat(dateLocale(), { day: "numeric", month: "long", timeZone: "UTC" }).format(
+                                      new Date(`${folkSigns.today}T12:00:00Z`),
+                                    ),
+                                  })
+                                : i18n.t("newsWeather.folkSigns.weatherLabel");
+                            return (
+                              <div key={sign.id} style={{ marginTop: sIdx > 0 ? "8px" : 0 }}>
+                                <div style={{ fontSize: "10px", fontWeight: 700, opacity: 0.65, textTransform: "uppercase", letterSpacing: "0.03em" }}>
+                                  {label}
+                                </div>
+                                <div style={{ fontStyle: "italic" }}>
+                                  «{i18n.t(`newsWeather.folkSigns.${sign.type === "calendar" ? "c" : "s"}_${sign.id}`)}»
+                                </div>
+                                <div style={{ display: "flex", gap: "6px", alignItems: "flex-start", marginTop: "2px", fontSize: "11px" }}>
+                                  <span style={{ color, fontWeight: 700, flexShrink: 0 }}>
+                                    {sign.verdict === "agree" ? "✓" : sign.verdict === "disagree" ? "✗" : sign.verdict === "far" ? "⏳" : "≈"}
+                                  </span>
+                                  <span>
+                                    <strong style={{ color }}>{i18n.t(`newsWeather.folkSigns.verdict_${sign.verdict}`)}</strong>
+                                    {detail ? ` · ${detail}` : ""}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                        <div style={{ marginTop: "8px", fontSize: "10px", opacity: 0.6 }}>
+                          {i18n.t("newsWeather.folkSigns.intro")}
+                        </div>
+                      </RuleSectionBody>
+                    )}
+                  </RuleSectionCard>
 
                   </RuleSectionsColumn>
                 </RuleSectionsGrid>
