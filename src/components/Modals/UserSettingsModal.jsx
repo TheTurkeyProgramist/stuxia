@@ -4816,6 +4816,9 @@ const UserSettingsModal = ({
                       <CardInfo>
                         <CardTitle>{i18n.t("modals.UserSettingsModal.versiiaDliaWindows")}</CardTitle>
                         <CardDescription>{i18n.t("modals.UserSettingsModal.zavantazhytyZastosunokStuxiaDlia")}</CardDescription>
+                        <CardDescription style={{ fontSize: 11, opacity: 0.85 }}>
+                          {i18n.t("modals.UserSettingsModal.smartscreenPidkazka")}
+                        </CardDescription>
                       </CardInfo>
                     </CardLeft>
                     <CardControl>
