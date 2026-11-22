@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import styled, { keyframes } from "styled-components";
 import localforage from "localforage";
 import InfoModal from "./UserSearchModal.jsx";
@@ -425,7 +426,9 @@ const Modal = ({
     }
   };
 
-  return (
+  // Портал у body: інакше overlay потрапляє в stacking-контекст предка,
+  // і секції сторінки (Погода) перекривають модалку.
+  return createPortal(
     <>
       <ModalOverlay $isClosing={isClosing} onClick={handleClose}>
         <ModalContent
@@ -509,7 +512,8 @@ const Modal = ({
           onClose={() => setShowTerms(false)}
         />
       )}
-    </>
+    </>,
+    document.body
   );
 };
 export default Modal;
