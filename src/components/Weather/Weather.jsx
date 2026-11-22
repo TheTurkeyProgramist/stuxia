@@ -3038,6 +3038,9 @@ const formatChartTempLabel = (value, suffix) => {
   const effectiveArchiveViewMode =
     archiveViewMode === "charts" && phoneChartHidden ? "rows" : archiveViewMode;
   const hourlyChartWidth = Math.max(873, (visibleHourly?.length || 24) * 35);
+  // Денний графік: ~56 px на день, як було для 16 днів (900 px). З днями 17–28 він ширшає
+  // і гортається, а не стискає іконки й підписи один на одного
+  const dailyChartWidth = Math.max(900, (dailyList?.length || 16) * 56);
   const tempSuffix = unit === "F" ? "°F" : unit === "K" ? "K" : "°C";
   const toDisplayTemp = (c) => {
     if (!Number.isFinite(c)) return c;
@@ -5830,7 +5833,7 @@ const HOLIDAYS_2027 = {
                     <div style={{ position: "relative", width: "100%" }}>
                       <ChartScrollWrapper ref={dailyChartRef}>
                         <ChartInnerContainer
-                          $width={fullscreenChart === "daily" ? "max(100%, 900px)" : 900}
+                          $width={fullscreenChart === "daily" ? `max(100%, ${dailyChartWidth}px)` : dailyChartWidth}
                           $height={fullscreenChart === "daily" ? fsChartHeight(170) : defaultChartHeight}
                         >
                           <Line
