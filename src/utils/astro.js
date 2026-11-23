@@ -116,6 +116,32 @@ export const getDayLengthDiff = (dateStr, lat = DEFAULT_LAT, lon = DEFAULT_LON) 
   }
 };
 
+// Полярна ніч / полярний день на дату: Сонце цілу добу під горизонтом / над ним.
+// Повертає { type: "night" | "day", days, endDate } — скільки діб лишилось до першої звичайної доби,
+// або null, якщо Сонце сьогодні сходить і заходить.
+export const getPolarInfo = (dateStr, lat = DEFAULT_LAT, lon = DEFAULT_LON) => {
+  try {
+    if (lat == null || lon == null || Math.abs(lat) < 60) return null;
+    const date = new Date(dateStr || Date.now());
+    date.setHours(12, 0, 0, 0);
+    const isNormal = (d) => {
+      const t = SunCalc.getTimes(d, lat, lon);
+      // suncalc 2.x віддає null, коли Сонце не сходить/не заходить (старіші — Invalid Date)
+      return !!t.sunrise && !!t.sunset && !isNaN(t.sunrise.getTime()) && !isNaN(t.sunset.getTime());
+    };
+    if (isNormal(date)) return null;
+    const noon = SunCalc.getTimes(date, lat, lon).solarNoon;
+    const type = SunCalc.getPosition(noon, lat, lon).altitude < 0 ? "night" : "day";
+    for (let i = 1; i <= 200; i++) {
+      const next = new Date(date.getTime() + i * 86400000);
+      if (isNormal(next)) return { type, days: i, endDate: next };
+    }
+    return { type, days: null, endDate: null };
+  } catch (e) {
+    return null;
+  }
+};
+
 // Місяць для шкали: фаза, освітленість, схід/захід і наступна головна фаза
 export const getMoonDetails = (dateStr, lat = DEFAULT_LAT, lon = DEFAULT_LON) => {
   try {

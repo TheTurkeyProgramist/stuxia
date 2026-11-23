@@ -2040,7 +2040,11 @@
     "waningCrescent": "Φθίνων μηνίσκος",
     "noRise": "Δεν ανατέλλει",
     "noSet": "Δεν δύει",
-    "dayLength": "{{h}} ώ {{m}} λ"
+    "dayLength": "{{h}} ώ {{m}} λ",
+    "polarNightTitle": "Polar night: {{n}} d left",
+    "polarDayTitle": "Polar day: {{n}} d left",
+    "polarNightEnd": "The sun returns on {{date}}",
+    "polarDayEnd": "The sun sets on {{date}}"
   },
   "ui": {
     "Header": {

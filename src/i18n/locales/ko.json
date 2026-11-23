@@ -2040,7 +2040,11 @@
     "waningCrescent": "그믐달",
     "noRise": "뜨지 않음",
     "noSet": "지지 않음",
-    "dayLength": "{{h}}시간 {{m}}분"
+    "dayLength": "{{h}}시간 {{m}}분",
+    "polarNightTitle": "Polar night: {{n}} d left",
+    "polarDayTitle": "Polar day: {{n}} d left",
+    "polarNightEnd": "The sun returns on {{date}}",
+    "polarDayEnd": "The sun sets on {{date}}"
   },
   "ui": {
     "Header": {

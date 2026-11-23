@@ -2040,7 +2040,11 @@
     "waningCrescent": "Спадаючий серп",
     "noRise": "Не сходить",
     "noSet": "Не заходить",
-    "dayLength": "{{h}}г {{m}}хв"
+    "dayLength": "{{h}}г {{m}}хв",
+    "polarNightTitle": "Полярна ніч: ще {{n}} дн.",
+    "polarDayTitle": "Полярний день: ще {{n}} дн.",
+    "polarNightEnd": "Сонце зійде {{date}}",
+    "polarDayEnd": "Сонце зайде {{date}}"
   },
   "ui": {
     "Header": {
@@ -2074,7 +2078,7 @@
       "vybirTemyAltT": "Вибір теми (Alt + T)",
       "tema": "Тема",
       "nalashtuvannia": "Налаштування",
-      "parametry": "Параметри",
+      "parametry": "Опції",
       "meniu": "Меню",
       "vashProfil": "Ваш профіль",
       "druhIndykiv": "Друг індиків",

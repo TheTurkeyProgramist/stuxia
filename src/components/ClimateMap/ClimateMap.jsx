@@ -50,6 +50,13 @@ const AihelpTitle = styled.div`
     border-left: 1px solid rgb(255, 179, 108);
   margin-right: 4px;
   z-index: 300;
+  white-space: nowrap;
+  justify-content: center;
+  @media (max-width: 480px) {
+    font-size: 13px;
+    letter-spacing: 0;
+    padding: 6px 4px;
+  }
   ${(props) =>
     props.$isStickyBgMode
       ? css`

@@ -40,6 +40,7 @@ import {
   INVITE_ACTIVE_DAYS,
 } from "./utils/referral.js";
 import { GiSnowing } from "react-icons/gi";
+import { TbCloudOff } from "react-icons/tb";
 import HeroCredits from "./components/Hero/HeroCredits.jsx";
 import { getEagerChunk, loadWeather } from "./utils/eagerChunks.js";
 import { lazyWithRetry } from "./utils/lazyWithRetry.js";
@@ -420,16 +421,93 @@ const WeatherCardSkeletonBox = styled.div`
   }
 `;
 
-// Якщо прогноз так і не прийшов (немає мережі) — прибираємо порожню заглушку
-const WEATHER_SKELETON_MAX_MS = 20000;
+// Прогноз не прийшов за цей час (або немає мережі) — замість порожньої рамки показуємо помилку з кнопкою
+const WEATHER_SKELETON_MAX_MS = 10000;
 
-const WeatherCardSkeleton = ({ isDarkMode }) => {
+const WeatherCardErrorBox = styled(WeatherCardSkeletonBox)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+  animation: none;
+  color: ${(props) => (props.$isDarkMode ? "#e5e7eb" : "#1f2937")};
+
+  svg {
+    font-size: 40px;
+    color: #94a3b8;
+  }
+  strong {
+    font-size: 17px;
+  }
+  span {
+    font-size: 14px;
+    opacity: 0.75;
+  }
+  button {
+    margin-top: 6px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1.5px solid #004cff;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #004cff33;
+  }
+`;
+
+// onRetry є лише в заглушці першого завантаження; у Suspense-запасі (картка вже є) помилки не буде
+const WeatherCardSkeleton = ({ isDarkMode, onRetry }) => {
   const [isExpired, setIsExpired] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [offline, setOffline] = useState(
+    () => typeof navigator !== "undefined" && navigator.onLine === false,
+  );
   useEffect(() => {
+    if (!onRetry) return undefined;
     const timer = setTimeout(() => setIsExpired(true), WEATHER_SKELETON_MAX_MS);
     return () => clearTimeout(timer);
+  }, [attempt, onRetry]);
+  useEffect(() => {
+    const goOffline = () => setOffline(true);
+    const goOnline = () => setOffline(false);
+    window.addEventListener("offline", goOffline);
+    window.addEventListener("online", goOnline);
+    return () => {
+      window.removeEventListener("offline", goOffline);
+      window.removeEventListener("online", goOnline);
+    };
   }, []);
-  if (isExpired) return null;
+  if (onRetry && (isExpired || offline)) {
+    return (
+      <WeatherCardErrorBox $isDarkMode={isDarkMode} role="alert">
+        <TbCloudOff aria-hidden="true" />
+        <strong>{i18n.t("newsWeather.QuickWeather.neVdalosiaZavantazhytyPohodu")}</strong>
+        <span>
+          {offline
+            ? i18n.t("newsWeather.QuickWeather.nemaieZiednanniaZInternetom")
+            : i18n.t("newsWeather.QuickWeather.servisProhnozuNeVidpovidaie")}
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            setIsExpired(false);
+            setOffline(typeof navigator !== "undefined" && navigator.onLine === false);
+            setAttempt((n) => n + 1);
+            onRetry();
+          }}
+        >
+          {i18n.t("newsWeather.QuickWeather.sprobuvatyShche")}
+        </button>
+      </WeatherCardErrorBox>
+    );
+  }
   return (
     <WeatherCardSkeletonBox
       $isDarkMode={isDarkMode}
@@ -2028,6 +2106,7 @@ const SectionContent = memo(
     heroDateString,
     hideGpsCard,
     onReorderCards,
+    onRetryWeather,
   }) => {
     if (!section) return null;
 
@@ -2069,7 +2148,7 @@ const SectionContent = memo(
           >
             {weatherCards.length === 0 && !hideGpsCard && (
               <div key="weather-skeleton">
-                <WeatherCardSkeleton isDarkMode={isDarkMode} />
+                <WeatherCardSkeleton isDarkMode={isDarkMode} onRetry={onRetryWeather} />
               </div>
             )}
             {weatherCards.map((card, index) => {
@@ -4622,6 +4701,7 @@ const App = () => {
                   heroDateString={heroDateString}
                   hideGpsCard={hideGpsCard}
                   onReorderCards={isDragCardsBeta ? reorderWeatherCards : undefined}
+                  onRetryWeather={handleRetryQuickWeather}
                 />
               </StyledSectionContainer>
             ),

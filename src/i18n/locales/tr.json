@@ -2040,7 +2040,11 @@
     "waningCrescent": "Hilal (küçülen)",
     "noRise": "Doğmuyor",
     "noSet": "Batmıyor",
-    "dayLength": "{{h}} sa {{m}} dk"
+    "dayLength": "{{h}} sa {{m}} dk",
+    "polarNightTitle": "Polar night: {{n}} d left",
+    "polarDayTitle": "Polar day: {{n}} d left",
+    "polarNightEnd": "The sun returns on {{date}}",
+    "polarDayEnd": "The sun sets on {{date}}"
   },
   "ui": {
     "Header": {

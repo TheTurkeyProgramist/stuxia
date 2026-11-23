@@ -2040,7 +2040,11 @@
     "waningCrescent": "Спадальны серп",
     "noRise": "Не ўзыходзіць",
     "noSet": "Не заходзіць",
-    "dayLength": "{{h}}г {{m}}хв"
+    "dayLength": "{{h}}г {{m}}хв",
+    "polarNightTitle": "Polar night: {{n}} d left",
+    "polarDayTitle": "Polar day: {{n}} d left",
+    "polarNightEnd": "The sun returns on {{date}}",
+    "polarDayEnd": "The sun sets on {{date}}"
   },
   "ui": {
     "Header": {

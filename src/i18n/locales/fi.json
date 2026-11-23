@@ -2040,7 +2040,11 @@
     "waningCrescent": "Vähenevä sirppi",
     "noRise": "Ei nouse",
     "noSet": "Ei laske",
-    "dayLength": "{{h}} t {{m}} min"
+    "dayLength": "{{h}} t {{m}} min",
+    "polarNightTitle": "Polar night: {{n}} d left",
+    "polarDayTitle": "Polar day: {{n}} d left",
+    "polarNightEnd": "The sun returns on {{date}}",
+    "polarDayEnd": "The sun sets on {{date}}"
   },
   "ui": {
     "Header": {

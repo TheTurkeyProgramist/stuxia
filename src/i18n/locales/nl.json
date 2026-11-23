@@ -2040,7 +2040,11 @@
     "waningCrescent": "Afnemende sikkel",
     "noRise": "Komt niet op",
     "noSet": "Gaat niet onder",
-    "dayLength": "{{h}} u {{m}} min"
+    "dayLength": "{{h}} u {{m}} min",
+    "polarNightTitle": "Polar night: {{n}} d left",
+    "polarDayTitle": "Polar day: {{n}} d left",
+    "polarNightEnd": "The sun returns on {{date}}",
+    "polarDayEnd": "The sun sets on {{date}}"
   },
   "ui": {
     "Header": {

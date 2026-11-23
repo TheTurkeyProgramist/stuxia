@@ -114,7 +114,7 @@ import { CONSENSUS_MODEL_LABELS } from "../../utils/weatherConsensus";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
 import { PiThermometerFill } from "react-icons/pi"; //Нормальна температура
 import { BsThermometerSnow, BsThermometerSun, BsMoonStarsFill, BsClockHistory, BsHourglassSplit, BsBuildings, BsCompass, BsStars } from "react-icons/bs"; //Холодна температура / Ніч / Астрономія
-import { formatClock, getTwilightData, getDayLength, getMoonDetails, getDayLengthDiff, getScaleProgress } from "../../utils/astro";
+import { formatClock, getTwilightData, getDayLength, getMoonDetails, getDayLengthDiff, getScaleProgress, getPolarInfo } from "../../utils/astro";
 import { isFoggy } from "../../utils/dailyAggregates";
 import { AnimWind, AnimSpin, AnimHourglass, AnimTwinkle, AnimCompass, MoonPhaseIcon, AstroScale } from "./BlockAstroIcons.jsx";
 import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, CloudWithTrend, WindArrow, getCloudTrend, getSnowStyle } from "./AnimatedWeatherIcons.jsx"; //Анімовані іконки
@@ -1892,6 +1892,7 @@ const WeatherCardComponent = ({
         twilight: getTwilightData(d.fullDate, card.lat, card.lon),
         moon: getMoonDetails(d.fullDate, card.lat, card.lon),
         dayDiff: getDayLengthDiff(d.fullDate, card.lat, card.lon),
+        polar: getPolarInfo(d.fullDate, card.lat, card.lon),
       })),
     [dailyList, card.lat, card.lon],
   );
@@ -4483,10 +4484,15 @@ const HOLIDAYS_2027 = {
             const isPolarNight = d.isPolarNight || card.current?.isPolarNight;
             const isPolarDay = d.isPolarDay || card.current?.isPolarDay;
             const isPolarEndDay = d.isPolarEndDay;
-            const { twilight, moon, dayDiff } = dailyAstro[idx] || {};
+            const { twilight, moon, dayDiff, polar } = dailyAstro[idx] || {};
             const sunScale = getScaleProgress(d.sunrise, d.sunset);
             const moonScale = getScaleProgress(moon?.riseDate, moon?.setDate);
             const rainChance = Number(d.precipitation_probability_max ?? d.pop);
+            // Полярна ніч/день: замість прочерків — скільки діб лишилось і коли Сонце повернеться
+            const polarKey = polar ? (polar.type === "night" ? "Night" : "Day") : null;
+            const polarEnd = polar?.endDate
+              ? polar.endDate.toLocaleDateString(dateLocale(), { day: "numeric", month: "long" })
+              : null;
 
             return (
               <div
@@ -4610,14 +4616,18 @@ const HOLIDAYS_2027 = {
                 ])}
                 <AstroScale
                   icon={<AnimHourglass><BsHourglassSplit style={{ color: "#3498db" }} /></AnimHourglass>}
-                  title={i18n.t("newsWeather.Weather.tryvalistDnia", { v0: getDayLength(d.sunrise, d.sunset) })}
-                  riseLabel={formatClock(d.sunrise)}
-                  setLabel={formatClock(d.sunset)}
-                  progress={sunScale.progress}
-                  isActive={sunScale.isActive}
+                  title={polar
+                    ? i18n.t(`astro.polar${polarKey}Title`, { n: polar.days ?? "200+" })
+                    : i18n.t("newsWeather.Weather.tryvalistDnia", { v0: getDayLength(d.sunrise, d.sunset) })}
+                  riseLabel={polar ? i18n.t(polar.type === "night" ? "astro.noRise" : "astro.noSet") : formatClock(d.sunrise)}
+                  setLabel={polar ? i18n.t(polar.type === "night" ? "astro.noRise" : "astro.noSet") : formatClock(d.sunset)}
+                  progress={polar ? null : sunScale.progress}
+                  isActive={polar ? false : sunScale.isActive}
                   color="#ffd700"
                   footer={
-                    dayDiff === null || dayDiff === undefined
+                    polar
+                      ? (polarEnd ? i18n.t(`astro.polar${polarKey}End`, { date: polarEnd }) : null)
+                      : dayDiff === null || dayDiff === undefined
                       ? null
                       : dayDiff === 0
                         ? i18n.t("newsWeather.Weather.tryvalistDniaIakUchora")

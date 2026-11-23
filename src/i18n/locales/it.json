@@ -2040,7 +2040,11 @@
     "waningCrescent": "Falce calante",
     "noRise": "Non sorge",
     "noSet": "Non tramonta",
-    "dayLength": "{{h}} h {{m}} min"
+    "dayLength": "{{h}} h {{m}} min",
+    "polarNightTitle": "Polar night: {{n}} d left",
+    "polarDayTitle": "Polar day: {{n}} d left",
+    "polarNightEnd": "The sun returns on {{date}}",
+    "polarDayEnd": "The sun sets on {{date}}"
   },
   "ui": {
     "Header": {
