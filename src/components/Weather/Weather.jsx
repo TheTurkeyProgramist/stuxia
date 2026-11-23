@@ -116,6 +116,7 @@ import { PiThermometerFill } from "react-icons/pi"; //Нормальна тем�
 import { BsThermometerSnow, BsThermometerSun, BsMoonStarsFill, BsClockHistory, BsHourglassSplit, BsBuildings, BsCompass, BsStars } from "react-icons/bs"; //Холодна температура / Ніч / Астрономія
 import { formatClock, getTwilightData, getDayLength, getMoonDetails, getDayLengthDiff, getScaleProgress, getPolarInfo } from "../../utils/astro";
 import { isFoggy } from "../../utils/dailyAggregates";
+import { getYesterdayDiff } from "../../utils/yesterdayDiff";
 import { AnimWind, AnimSpin, AnimHourglass, AnimTwinkle, AnimCompass, MoonPhaseIcon, AstroScale } from "./BlockAstroIcons.jsx";
 import { HumidityGlass, TempThermometer, PressureGauge, VisibilityFog, UvSun, CloudWithTrend, WindArrow, getCloudTrend, getSnowStyle } from "./AnimatedWeatherIcons.jsx"; //Анімовані іконки
 import { WeatherIcon, stripEmoji, ICON_HALO_FILTER } from "./WeatherConditionIcon.jsx"; //Власні іконки погоди
@@ -1722,6 +1723,14 @@ const WeatherCardComponent = ({
   const [units, setUnits] = useState(DEFAULT_UNITS);
   const [unitsGlobal, setUnitsGlobal] = useState(true); // одиниці спільні для всіх карток
   const unit = units.temp; // "C", "K", "F"
+  // Похибка прогнозу (розбіжність моделей) для підпису біля температури: «±1.0°C»
+  const tempSpreadLabel =
+    card.accuracy?.models?.length > 0 && typeof card.accuracy.tempSpread === "number"
+      ? `±${(unit === "F" ? card.accuracy.tempSpread * 1.8 : card.accuracy.tempSpread).toFixed(1)}${unit === "F" ? "°F" : unit === "K" ? "K" : "°C"}`
+      : null;
+  const tempSpreadTitle = tempSpreadLabel
+    ? i18n.t("newsWeather.Weather.medianaProhnoziv", { v0: card.accuracy.models.map((m) => CONSENSUS_MODEL_LABELS[m] || m).join(", ") })
+    : undefined;
   const fmt = makeFormatters(units);
   const [isUnitsModalOpen, setIsUnitsModalOpen] = useState(false);
 
@@ -5434,17 +5443,21 @@ const HOLIDAYS_2027 = {
     </IconBox>
     <TextContent $mt="0px">
       {formatTemp(card.current.temp)}
-      <SubText $size="9px">{i18n.t("newsWeather.Weather.vidchuvaietsia")} {formatTemp(card.current.feels_like)}</SubText>
-      {card.accuracy?.models?.length > 0 && (
-        <SubText
-          $size="9px"
-          title={i18n.t("newsWeather.Weather.medianaProhnoziv", { v0: card.accuracy.models.map((m) => CONSENSUS_MODEL_LABELS[m] || m).join(", ") })}
-        >
-          {i18n.t("newsWeather.Weather.zvireno")} {card.accuracy.models.length} {i18n.t("newsWeather.Weather.modelei")}
-          {typeof card.accuracy.tempSpread === "number" &&
-            ` · ±${(units.temp === "F" ? card.accuracy.tempSpread * 1.8 : card.accuracy.tempSpread).toFixed(1)}${units.temp === "F" ? "°F" : units.temp === "K" ? "K" : "°C"}`}
-        </SubText>
+      {tempSpreadLabel && (
+        // Похибка прогнозу: розбіжність моделей — сірим у дужках біля температури; які моделі — у підказці
+        <span style={{ marginLeft: "4px", fontSize: "11px", fontWeight: 500, color: "#9aa4b2", cursor: "help" }} title={tempSpreadTitle}>
+          ({tempSpreadLabel})
+        </span>
       )}
+      <SubText $size="9px">{i18n.t("newsWeather.Weather.vidchuvaietsia")} {formatTemp(card.current.feels_like)}</SubText>
+      {(() => {
+        // «Порівняно з учора»: різниця з учорашньою температурою о цій же годині
+        const diffC = getYesterdayDiff(card);
+        if (diffC === null) return null;
+        const diff = Math.round(units.temp === "F" ? diffC * 1.8 : diffC);
+        const key = diff === 0 ? "vsYesterdaySame" : diff > 0 ? "vsYesterdayWarmer" : "vsYesterdayColder";
+        return <SubText $size="9px" $weight="bold">{i18n.t(`newsWeather.Weather.${key}`, { n: Math.abs(diff) })}</SubText>;
+      })()}
     </TextContent>
   </IndicatorCard>
 
@@ -6325,7 +6338,7 @@ const HOLIDAYS_2027 = {
                   <WeatherIcon isDarkMode={isDarkMode} item={card.current} />
                 </div>
                 <div style={SIDE_CARD_TEXT_STYLE}>
-                  <NameCardItem $active={activeTab === "current"}>{i18n.t("newsWeather.Weather.zaraz2")} {formatTemp(card.current?.temp)}</NameCardItem>
+                  <NameCardItem $active={activeTab === "current"}>{i18n.t("newsWeather.Weather.zaraz2")} {formatTemp(card.current?.temp)}{tempSpreadLabel && (<span style={{ marginLeft: "4px", fontSize: "0.75em", fontWeight: 500, color: "#9aa4b2" }} title={tempSpreadTitle}>({tempSpreadLabel})</span>)}</NameCardItem>
                   <SubNameCardItem $active={activeTab === "current"}>{i18n.t("newsWeather.Weather.vidchuvaietsia")} {formatTemp(card.current?.feels_like)}</SubNameCardItem>
                 </div>
               </div>

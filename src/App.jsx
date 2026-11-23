@@ -41,6 +41,7 @@ import {
 } from "./utils/referral.js";
 import { GiSnowing } from "react-icons/gi";
 import { TbCloudOff } from "react-icons/tb";
+import { buildYesterdayTemps } from "./utils/yesterdayDiff.js";
 import HeroCredits from "./components/Hero/HeroCredits.jsx";
 import { getEagerChunk, loadWeather } from "./utils/eagerChunks.js";
 import { lazyWithRetry } from "./utils/lazyWithRetry.js";
@@ -3631,6 +3632,8 @@ const App = () => {
             id: id,
             isMain: isMain,
             windUnit: "ms",
+            // Температура вчорашніх 24 годин — для рядка «Порівняно з учора»
+            yesterdayTemps: buildYesterdayTemps(d.hourly, d.daily?.time?.[0]),
             fetchedAt,
             updatedAt: fetchedAt,
             // Серверне місто (slug) — дані з нашого сервера, а не з ліміту відвідувача
