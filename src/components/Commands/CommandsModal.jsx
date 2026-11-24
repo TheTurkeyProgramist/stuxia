@@ -526,7 +526,7 @@ const CommandsModal = ({ isDarkMode, onClose }) => {
   // Голос: фраза → команда (voiceCommands.js) → виконання, як ніби її набрали
   const { isListening, toggle: toggleVoice } = useVoiceInput({
     onText: (speech) => {
-      append([{ text: `🎤 «${speech}»`, kind: "info" }]);
+      append([{ text: `«${speech}»`, kind: "info" }]);
       const cmd = voiceToCommand(speech);
       if (cmd) execute(cmd);
       else {

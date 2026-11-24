@@ -30,6 +30,10 @@ import {
 } from "../../utils/referral.js";
 
 import i18n from "../../i18n/i18n.js";
+// Значок: іконка (Посол, Паросток) або індик — єдине дозволене емодзі
+const BadgeIcon = ({ badge }) =>
+  badge?.Icon ? <badge.Icon aria-hidden="true" style={{ verticalAlign: "-2px" }} /> : badge?.emoji || null;
+
 const CLOSE_DURATION_MS = 500;
 
 const slideIn = keyframes`
@@ -560,7 +564,7 @@ const InviteRulesBlock = () => {
               {i18n.t("modals.ShopModal.inviteRuleDays", { days: INVITE_ACTIVE_DAYS })}
             </li>
             <li>
-              {i18n.t("modals.ShopModal.znachkyOtrymuieteObydvaVy")} {B_INV.emoji} «{B_INV.name}{i18n.t("modals.ShopModal.druh")} {B_NEW.emoji} «{B_NEW.name}{i18n.t("modals.ShopModal.shchobPobachytySviiVidkryite")}
+              {i18n.t("modals.ShopModal.znachkyOtrymuieteObydvaVy")} <BadgeIcon badge={B_INV} /> «{B_INV.name}{i18n.t("modals.ShopModal.druh")} <BadgeIcon badge={B_NEW} /> «{B_NEW.name}{i18n.t("modals.ShopModal.shchobPobachytySviiVidkryite")}
             </li>
           </ol>
 
@@ -588,9 +592,9 @@ const InviteRulesBlock = () => {
 
           <h4>{i18n.t("modals.ShopModal.usiZnachkyStykhii")}</h4>
           <ul>
-            <li>{B_SUP.emoji} «{B_SUP.name}{i18n.t("modals.ShopModal.zaPidtrymkuStykhiiDonatom")}</li>
-            <li>{B_INV.emoji} «{B_INV.name}{i18n.t("modals.ShopModal.zaDruhaIakohoVy")}</li>
-            <li>{B_NEW.emoji} «{B_NEW.name}{i18n.t("modals.ShopModal.dliaDruhaIakyiPryishov")}</li>
+            <li><BadgeIcon badge={B_SUP} /> «{B_SUP.name}{i18n.t("modals.ShopModal.zaPidtrymkuStykhiiDonatom")}</li>
+            <li><BadgeIcon badge={B_INV} /> «{B_INV.name}{i18n.t("modals.ShopModal.zaDruhaIakohoVy")}</li>
+            <li><BadgeIcon badge={B_NEW} /> «{B_NEW.name}{i18n.t("modals.ShopModal.dliaDruhaIakyiPryishov")}</li>
           </ul>
 
           <h4>{i18n.t("modals.ShopModal.proZnachky")}</h4>
@@ -763,10 +767,10 @@ const InvitePanel = forwardRef(({ user, onUserUpdate, open, onToggle }, ref) => 
         </div>
         <BadgePills>
           <Tooltip content={i18n.t("modals.ShopModal.vam", { name: B_INV.name })}>
-            <BadgePill>{B_INV.emoji} {B_INV.name}</BadgePill>
+            <BadgePill><BadgeIcon badge={B_INV} /> {B_INV.name}</BadgePill>
           </Tooltip>
           <Tooltip content={i18n.t("modals.ShopModal.druhu", { name: B_NEW.name })}>
-            <BadgePill>{B_NEW.emoji} {B_NEW.name}</BadgePill>
+            <BadgePill><BadgeIcon badge={B_NEW} /> {B_NEW.name}</BadgePill>
           </Tooltip>
           <InviteChevron $open={open} aria-hidden="true">›</InviteChevron>
         </BadgePills>

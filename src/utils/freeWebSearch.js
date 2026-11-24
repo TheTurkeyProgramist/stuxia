@@ -68,15 +68,15 @@ export const fetchOpenMeteoWeather = async (query) => {
     const wData = await wRes.json();
 
     const getWmoDesc = (code) => {
-      if (code === 0) return "☀️ Сонячно / Ясно";
-      if (code >= 1 && code <= 3) return "⛅ Мінлива хмарність / Частково сонячно";
-      if (code === 45 || code === 48) return "🌫️ Туман";
-      if (code >= 51 && code <= 55) return "🌧️ Мряка";
-      if (code >= 61 && code <= 65) return "🌧️ Дощ";
-      if (code >= 71 && code <= 75) return "❄️ Сніг";
-      if (code >= 80 && code <= 82) return "🌦️ Злива";
-      if (code >= 95) return "⛈️ Гроза";
-      return "🌤️ Помірно";
+      if (code === 0) return "Сонячно / Ясно";
+      if (code >= 1 && code <= 3) return "Мінлива хмарність / Частково сонячно";
+      if (code === 45 || code === 48) return "Туман";
+      if (code >= 51 && code <= 55) return "Мряка";
+      if (code >= 61 && code <= 65) return "Дощ";
+      if (code >= 71 && code <= 75) return "Сніг";
+      if (code >= 80 && code <= 82) return "Злива";
+      if (code >= 95) return "Гроза";
+      return "Помірно";
     };
 
     const current = wData.current;

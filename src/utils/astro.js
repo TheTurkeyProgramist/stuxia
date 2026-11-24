@@ -22,14 +22,14 @@ export const getMoonData = (dateStr, lat = DEFAULT_LAT, lon = DEFAULT_LON) => {
     const moonTimes = SunCalc.getMoonTimes(date, lat || DEFAULT_LAT, lon || DEFAULT_LON);
     const phase = illum.phase;
     let phaseText = "";
-    if (phase === 0) phaseText = `🌑 ${at("newMoon")}`;
-    else if (phase < 0.25) phaseText = `🌒 ${at("waxingCrescent")}`;
-    else if (phase === 0.25) phaseText = `🌓 ${at("firstQuarter")}`;
-    else if (phase < 0.5) phaseText = `🌔 ${at("waxingGibbous")}`;
-    else if (phase === 0.5) phaseText = `🌕 ${at("fullMoon")}`;
-    else if (phase < 0.75) phaseText = `🌖 ${at("waningGibbous")}`;
-    else if (phase === 0.75) phaseText = `🌗 ${at("lastQuarter")}`;
-    else phaseText = `🌘 ${at("waningCrescent")}`;
+    if (phase === 0) phaseText = at("newMoon");
+    else if (phase < 0.25) phaseText = at("waxingCrescent");
+    else if (phase === 0.25) phaseText = at("firstQuarter");
+    else if (phase < 0.5) phaseText = at("waxingGibbous");
+    else if (phase === 0.5) phaseText = at("fullMoon");
+    else if (phase < 0.75) phaseText = at("waningGibbous");
+    else if (phase === 0.75) phaseText = at("lastQuarter");
+    else phaseText = at("waningCrescent");
 
     const rise = moonTimes.rise ? formatClock(moonTimes.rise) : at("noRise");
     const set = moonTimes.set ? formatClock(moonTimes.set) : at("noSet");

@@ -81,7 +81,12 @@ const stripTags = (html) => (html || "").replace(/<[^>]*>?/gm, " ");
 // fresh — мітка інтервалу: інший URL = повз годинний кеш Cloudflare (для набору новин кожні 10 хв)
 const loadFeed = async (feed, fresh = "") => {
   const freshParam = fresh ? `&fresh=${encodeURIComponent(fresh)}` : "";
-  const res = await fetch(`${SITE}/api/news-feed?url=${encodeURIComponent(feed.url)}${freshParam}`, {
+  // Лише ?source=<id>: довільний ?url= Cloudflare віддає тільки сторінкам Стихії (інакше 403),
+  // а сервер Firebase не шле Origin/Referer — через це з 19.11 усі стрічки «падали»
+  const query = feed.id
+    ? `source=${encodeURIComponent(feed.id)}`
+    : `url=${encodeURIComponent(feed.url)}`;
+  const res = await fetch(`${SITE}/api/news-feed?${query}${freshParam}`, {
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`${feed.name}: HTTP ${res.status}`);
@@ -759,6 +764,12 @@ export const refreshNewsBundle = onSchedule(
 
     if (items.length === 0) {
       logger.error("Набір новин порожній — попередній лишаємо без змін", { failed });
+      return;
+    }
+    // Жодна стрічка не відповіла — НЕ ставимо свіжий updatedAt: інакше сайти вважали б
+    // старі новини свіжими й не вантажили б стрічки самі (через годину вони так і зроблять)
+    if (failed.length === FEEDS.length) {
+      logger.error("Жодна стрічка не відповіла — набір новин не оновлюємо", { failed });
       return;
     }
     await ref.set({

@@ -24,6 +24,10 @@ export const CITY_SIDEBAR_HIDDEN_KEY = "city_sidebar_hidden";
 export const CAROUSEL_ARROWS_HIDDEN_KEY = "carousel_arrows_hidden";
 export const CAROUSEL_NUMBERS_HIDDEN_KEY = "carousel_numbers_hidden";
 
+/** Вигляд вкладки «Зараз» картки погоди: "detailed" (усі показники, за замовчуванням) | "simple"
+    (лише температура, опади й що вдягти — для тих, кому 20 блоків забагато). */
+export const WEATHER_VIEW_KEY = "weather_card_view";
+
 /** Автоперемикання вкладок картки погоди (Зараз → Годинна → 16 днів → Смарт).
     Значення — рядок "on:30" / "off:30" (увімк./вимк. + секунди, щоб після вимкнення
     пам'ятати частоту). Загальне + необов'язкове своє для кожної картки. */

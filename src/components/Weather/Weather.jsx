@@ -52,7 +52,9 @@ import {
   serializeTabAutoplay,
 } from "../../utils/betaFeatures";
 import TabAutoplayControl from "./TabAutoplayControl";
-import WeatherArchive, { useArchiveMonths, ArchiveStatus, archiveMonthName } from "./WeatherArchive";
+import WeatherArchive, { useArchiveMonths, ArchiveStatus, ArchiveRecords, HolidayWeather, archiveMonthName } from "./WeatherArchive";
+import SimpleNowView from "./SimpleNowView.jsx";
+import { WEATHER_VIEW_KEY } from "../../utils/betaFeatures";
 import { getPref, setPref, removePref, subscribePrefs } from "../../utils/prefsStore";
 import { useAnimationsDisabled } from "../../utils/animationsPref";
 import { buildForecastSpeech, getVoiceSettings, speak, stopSpeaking } from "../../utils/weatherSpeech";
@@ -125,7 +127,8 @@ import WeatherTurkey from "./WeatherTurkey.jsx"; //Доміно — індик-�
 import { BiWind, BiWater } from "react-icons/bi";
 import { FaCloudShowersHeavy } from "react-icons/fa"; //Пориви Вітру
 import { GiGrassMushroom } from "react-icons/gi"; //Точка роси
-import { MdOutlineSpeed, MdClose, MdStraighten, MdNotificationsActive, MdNotificationsOff, MdAutorenew, MdWbTwilight } from "react-icons/md"; //Тиск
+import { MdOutlineSpeed, MdClose, MdStraighten, MdNotificationsActive, MdNotificationsOff, MdAutorenew, MdWbTwilight, MdHourglassEmpty } from "react-icons/md"; //Тиск
+import { FaArrowDown } from "react-icons/fa"; // Напрям вітру в блоках (замість ⬇)
 import {
   isWeatherAlertsEnabled,
   isCardWeatherAlertsOn,
@@ -273,25 +276,65 @@ const CardHeader = styled.div`
   }
 `;
 
+/* Кнопки в шапці картки — у стилі кнопок шапки сайту: прозорі, іконка + підпис під нею */
 const ActionButtons = styled.div`
   position: relative;
   display: flex;
-  align-self: stretch;
-  align-items: stretch;
-  gap: 4px;
+  align-self: center;
+  align-items: center;
+  gap: 2px;
   button {
-    background: ${(props) => (props.$isDarkMode === false ? "#e5e7eb" : "#333")};
-    color: #fff;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    min-width: 44px;
+    height: 40px;
+    padding: 2px 4px;
+    box-sizing: border-box;
+    background: transparent;
+    color: ${(props) => (props.$isDarkMode === false ? "#1a1a1a" : "#fff")};
     border: none;
-    padding: 3px;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 13px;
-    transition: background 0.2s ease;
-    &:hover {
-      background: ${(props) => (props.$isDarkMode === false ? "#d1d5db" : "#555")};
+    transition: background-color 0.15s ease;
+    &:hover,
+    &[aria-expanded="true"] {
+      background-color: ${(props) => (props.$isDarkMode === false ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.1)")};
+    }
+    &:focus-visible {
+      outline: 2px solid #00afce;
+      outline-offset: 2px;
     }
   }
+`;
+
+/* Права частина шапки картки: Доміно й «Опції». На дуже вузьких екранах Доміно стоїть під
+   шестернею — так назві міста й підказці лишається вся ширина */
+const CardHeaderRight = styled.div`
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+
+  @media (max-width: 400px) {
+    flex-direction: column-reverse;
+    gap: 0;
+  }
+`;
+
+/* Підпис під іконкою, як у шапці сайту */
+const ActionLabel = styled.span`
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+  opacity: 0.85;
 `;
 const CurrentWeatherBanner = styled.div`
   gap: 4px;
@@ -998,6 +1041,14 @@ const ViewToggleGroup = styled.div`
   padding: 3px;
   gap: 2px;
   border: 2px solid ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.95)" : "rgb(255, 253, 253)")};
+
+  /* Телефон: компактніше — усі перемикачі (вчора, 28, вигляд) вміщаються в один ряд */
+  @media (max-width: 480px) {
+    padding: 2px;
+    gap: 1px;
+    border-width: 1px;
+    border-radius: 8px;
+  }
 `;
 
 const ViewToggleButton = styled.button`
@@ -1018,6 +1069,17 @@ const ViewToggleButton = styled.button`
   gap: 5px;
   transition: all 0.2s ease;
   box-shadow: ${(props) => (props.$active ? "0 2px 8px rgba(138, 43, 226, 0.4)" : "none")};
+
+  @media (max-width: 480px) {
+    height: 26px;
+    padding: 0 7px !important;
+    font-size: 12px;
+    border-radius: 7px;
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
 `;
 
 // Вибір дня погодинного прогнозу — у парі з перемикачем вигляду (та сама висота й акцент)
@@ -1146,7 +1208,14 @@ const SettingsDropdownMenu = styled.div`
   overflow-x: hidden;
   overflow-y: auto;
   height: calc(522px - 100% - 6px);
-grid-template-columns: repeat(2, 1fr);
+  /* minmax(0, 1fr): довгий підпис (напр. «Одиниці виміру») не роздуває свою колонку —
+     інакше на телефоні друга колонка стискалась до літери в рядок */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  & > * {
+    min-width: 0;
+    overflow: hidden;
+    overflow-wrap: break-word;
+  }
   /* Ряди за висотою вмісту (а не всі як найвищий), вільне місце ділиться між ними —
      так усі пункти влазять без прокрутки */
   grid-auto-rows: auto;
@@ -1159,7 +1228,22 @@ grid-template-columns: repeat(2, 1fr);
     /* Висота за вмістом, щоб усі пункти було видно; прокрутка лише на дуже низьких екранах */
     height: auto;
     max-height: 90vh;
-    grid-template-columns: repeat(2, 1fr);
+    /* Телефон: гнучкий ряд по 2 пункти. Пункт, що лишився сам у ряду (напр. GPS), розтягується
+       сам — без залежності від парності, яку ламав широкий пункт автоперемикання */
+    display: flex;
+    /* row явно: у базових стилях лишився flex-direction: column (для сітки він не діяв),
+       і пункти ставали в один стовпчик на всю ширину */
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    & > * {
+      flex: 1 1 calc(50% - 2px);
+      box-sizing: border-box;
+    }
+    /* Пункт із перемикачем і шкалою у пів ширини не вміщається — на весь ряд */
+    & > .wide-mobile {
+      flex-basis: 100%;
+    }
     overflow-y: auto;
     /* Рядки за висотою вмісту, щоб пояснення не обрізались */
     grid-auto-rows: auto;
@@ -1169,7 +1253,9 @@ grid-template-columns: repeat(2, 1fr);
 const SettingsIconSwap = styled.span`
   position: relative;
   display: inline-flex;
-  font-size: 28px;
+  flex-shrink: 0;
+  /* Як іконки в шапці сайту — разом із підписом «Опції» влазить у 40px */
+  font-size: 22px;
   width: 1em;
   height: 1em;
 
@@ -1331,17 +1417,18 @@ const SettingsItemHint = styled.span`
   }
 `;
 /* Підказка під назвою головної картки, коли показано Київ замість GPS-локації */
+/* Звичайний текст з іконкою всередині рядка — переноситься словами, а не стовпчиком */
 const LocationHintText = styled.p`
-  display: flex;
-  align-items: center;
-  gap: 3px;
   margin: 2px 0 0;
   font-size: 11px;
+  line-height: 1.3;
   color: ${(props) => (props.$isDarkMode ? "#fcfcfc" : "#555")};
   opacity: 0.85;
+  /* inline-block: загальні стилі роблять svg блоком, і шестерня падала на окремий рядок */
   svg {
+    display: inline-block;
     font-size: 13px;
-    flex-shrink: 0;
+    vertical-align: -2px;
   }
 `;
 const LocationHint = ({ isDarkMode }) => (
@@ -1444,6 +1531,24 @@ const DailyPager = styled.div`
       font-size: 16px;
       opacity: 0.8;
     }
+    /* Дати — цілим рядком, без трикрапки; «1 з 8» на телефоні — дрібно другим рядком */
+    > span {
+      min-width: 0;
+      white-space: nowrap;
+      text-align: center;
+      line-height: 1.15;
+    }
+    @media (max-width: 420px) {
+      padding: 2px 4px;
+      font-size: 12px;
+      > span small {
+        display: block;
+        font-size: 10px;
+      }
+      .pager-dot {
+        display: none;
+      }
+    }
     &:hover {
       background: ${(p) => (p.$isDarkMode ? "rgba(138, 43, 226, 0.3)" : "rgba(138, 43, 226, 0.12)")};
     }
@@ -1504,8 +1609,17 @@ const DailyPager = styled.div`
     svg {
       max-width: none;
     }
+    @media (max-width: 420px) {
+      width: 28px;
+      height: 28px;
+      font-size: 18px;
+    }
     /* «‹ Вчора» — кнопка з підписом */
     &.wide {
+      @media (max-width: 420px) {
+        padding: 0 6px 0 2px;
+        font-size: 12px;
+      }
       display: inline-flex;
       align-items: center;
       gap: 2px;
@@ -1911,6 +2025,8 @@ const WeatherCardComponent = ({
   const isCitySidebarHidden = usePrefValue(CITY_SIDEBAR_HIDDEN_KEY, "false") === "true";
   const carouselArrowsOn = usePrefValue(CAROUSEL_ARROWS_HIDDEN_KEY, "false") !== "true";
   const carouselNumbersOn = usePrefValue(CAROUSEL_NUMBERS_HIDDEN_KEY, "false") !== "true";
+  // Простий вигляд «Зараз»: лише температура, опади й що вдягти (Параметри → вигляд картки погоди)
+  const isSimpleView = usePrefValue(WEATHER_VIEW_KEY, "detailed") === "simple";
   const [isBgModalOpen, setIsBgModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDropdownClosing, setIsDropdownClosing] = useState(false);
@@ -3483,7 +3599,7 @@ const HOLIDAYS_2027 = {
               if (temp < -30) dangers.push(i18n.t("newsWeather.Weather.moroz"));
 
               if (dangers.length > 0) {
-                label += ` ⚠️ ${dangers.join(", ")}`;
+                label += ` · ${dangers.join(", ")}`; // підказка графіка — текст на canvas, без емодзі
               }
               return label;
             } else if (context.datasetIndex === 1 && rightMetric !== "wind") {
@@ -4388,7 +4504,10 @@ const HOLIDAYS_2027 = {
       <label className="jump" title={i18n.t("newsWeather.Weather.pereityDo", { what: what })}>
         <span aria-live="polite">
           {current}
-          <small> · {page + 1} {i18n.t("newsWeather.Weather.z")} {pages}</small>
+          <small>
+            <span className="pager-dot"> · </span>
+            {page + 1} {i18n.t("newsWeather.Weather.z")} {pages}
+          </small>
         </span>
         <BiChevronDown aria-hidden="true" />
         <select value={page} onChange={(e) => onGo(Number(e.target.value))} aria-label={i18n.t("newsWeather.Weather.pereityDo", { what: what })}>
@@ -4860,7 +4979,7 @@ const HOLIDAYS_2027 = {
                 <div style={{ fontSize: "11px", display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
                   {d.wind_direction_10m != null && (
                     <div style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: "700", color: "#0099ff" }}>
-                      {i18n.t("newsWeather.Weather.napriamok")} <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "13px" }}>⬇</span>
+                      {i18n.t("newsWeather.Weather.napriamok")} <span style={{ display: "inline-block", transform: `rotate(${windDeg}deg)`, fontSize: "13px", verticalAlign: "-2px" }}><FaArrowDown aria-hidden="true" /></span>
                     </div>
                   )}
                   <div style={{ fontSize: "10px" }}><span>{i18n.t("newsWeather.Weather.sylaVitru")} {d.wind_speed || "0"}</span></div>
@@ -4903,7 +5022,8 @@ const HOLIDAYS_2027 = {
             background: isDarkMode ? "#040404" : "rgb(246, 246, 246)",
           }}
         >
-          <div>
+          {/* Назва може стискатись і переноситись — індик і «Опції» праворуч завжди вміщаються */}
+          <div style={{ flex: "1 1 auto", minWidth: 0 }}>
             {isEditing ? (
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
@@ -5003,22 +5123,16 @@ const HOLIDAYS_2027 = {
             )}
             {card.isMain && card.isFallbackLocation && <LocationHint isDarkMode={isDarkMode} />}
             <p style={{ fontSize: "10px", color: isDarkMode ? "rgba(255, 255, 255, 0.7)" : "#555" }}>
-              {i18n.t("newsWeather.Weather.shyrota")} {card.lat?.toFixed(2)}{i18n.t("newsWeather.Weather.dovhota")} {card.lon?.toFixed(2)}
+              {/* Кожна координата — цілим шматком: переноситься лише між ними, а не «Довгота: / 30.52» */}
+              {/* У перекладі «Довгота» починається з коми — переносимо кому в кінець першого шматка */}
+              <span style={{ whiteSpace: "nowrap" }}>{i18n.t("newsWeather.Weather.shyrota")} {card.lat?.toFixed(2)},</span>{" "}
+              <span style={{ whiteSpace: "nowrap" }}>{i18n.t("newsWeather.Weather.dovhota").replace(/^\s*,\s*/, "")} {card.lon?.toFixed(2)}</span>
             </p>
           </div>
-          <div
-            style={{
-              position: "relative",
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              flex: 1,
-              minWidth: 0,
-            }}
-          >
+          <CardHeaderRight>
             {card.current && (
-              <div style={{ marginRight: "auto", marginLeft: "-6px", display: "flex", alignItems: "center" }}>
-                <WeatherTurkey item={card.current} isDarkMode={isDarkMode} />
+              <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+                <WeatherTurkey item={card.current} isDarkMode={isDarkMode} size={isNarrowScreen ? 36 : 46} />
               </div>
             )}
             <ActionButtons $isDarkMode={isDarkMode} style={{ position: "relative", zIndex: 2 }}>
@@ -5030,13 +5144,8 @@ const HOLIDAYS_2027 = {
                     aria-label={isSpeaking ? i18n.t("newsWeather.Weather.zupynytyOzvuchennia") : i18n.t("newsWeather.Weather.ozvuchytyProhnoz")}
                     aria-pressed={isSpeaking}
                     style={{
-                      padding: "5px",
-                      display: "inline-flex",
-                      height: "100%",
-                      boxSizing: "border-box",
-                      alignItems: "center",
-                      fontSize: "18px",
-                      color: isSpeaking ? "#facc15" : isDarkMode ? "rgb(251, 251, 251)" : "rgb(3, 3, 3)",
+                      fontSize: "21px",
+                      ...(isSpeaking && { color: "#facc15" }),
                     }}
                   >
                     {isSpeaking ? <BiStopCircle /> : <BiVolumeFull />}
@@ -5052,24 +5161,17 @@ const HOLIDAYS_2027 = {
                   else setIsDropdownOpen(true);
                 }}
                 aria-label={i18n.t("newsWeather.Weather.nalashtuvanniaKartky")}
-                style={{
-                  padding: "5px",
-                  display: "inline-flex",
-                  height: "100%",
-                  boxSizing: "border-box",
-                  color: `${isDarkMode ? "rgb(251, 251, 251)" : "rgb(3, 3, 3)"}`,
-                  alignItems: "center",
-                  gap: "4px",
-                }}
+                aria-expanded={isDropdownOpen && !isDropdownClosing}
               >
                 <SettingsIconSwap $open={isDropdownOpen && !isDropdownClosing}>
                   <BiCog />
                   <MdClose />
                 </SettingsIconSwap>
+                <ActionLabel aria-hidden="true">{i18n.t("ui.Header.parametry")}</ActionLabel>
               </button>
               </Tooltip>
             </ActionButtons>
-          </div>
+          </CardHeaderRight>
           {(isDropdownOpen || isDropdownClosing) && (
             <SettingsDropdownMenu
               $isDarkMode={isDarkMode}
@@ -5161,6 +5263,18 @@ const HOLIDAYS_2027 = {
                     <BiImageAlt  /> {i18n.t("newsWeather.Weather.zminytyFon")}
                     <SettingsItemHint>{i18n.t("newsWeather.Weather.kartynkaPozaduPohody")}</SettingsItemHint>
                   </SettingsDropdownItem>
+                {/* Простий / Докладний вигляд «Зараз» — те саме, що в Параметрах (для всіх карток) */}
+                <SettingsDropdownItem
+                  isDarkMode={isDarkMode}
+                  role="switch"
+                  aria-checked={isSimpleView}
+                  onClick={() => setPref(WEATHER_VIEW_KEY, isSimpleView ? "detailed" : "simple")}
+                >
+                  <BiGridAlt style={{ color: "#00eeff", opacity: isSimpleView ? 1 : 0.6 }} />
+                  {i18n.t("newsWeather.Weather.vyhliadZaraz")}{" "}
+                  {isSimpleView ? i18n.t("newsWeather.Weather.vyhliadProstyi") : i18n.t("newsWeather.Weather.vyhliadDokladnyi")}
+                  <SettingsItemHint>{i18n.t("newsWeather.Weather.vyhliadHint")}</SettingsItemHint>
+                </SettingsDropdownItem>
                 <SettingsDropdownItem
                   isDarkMode={isDarkMode}
                   onClick={() => {
@@ -5204,7 +5318,7 @@ const HOLIDAYS_2027 = {
                   </SettingsItemHint>
                 </SettingsDropdownItem>
                 {/* Автоперемикання вкладок для цієї картки: перемикач + шкала 10 с – 5 хв */}
-                <SettingsDropdownItem as="div" role="group" aria-label={i18n.t("newsWeather.Weather.avtoperemykanniaVkladok")}>
+                <SettingsDropdownItem as="div" className="wide-mobile" role="group" aria-label={i18n.t("newsWeather.Weather.avtoperemykanniaVkladok")}>
                   <SpinningIcon $on={tabAutoplaySeconds > 0} $seconds={tabAutoplay.seconds}>
                     <MdAutorenew style={{ color: "#00eeff", opacity: tabAutoplaySeconds > 0 ? 1 : 0.6 }} />
                   </SpinningIcon>
@@ -5312,7 +5426,7 @@ const HOLIDAYS_2027 = {
                 {/* Стиль ліній графіка — у ряду з GPS / «Видалити»; два графіки на вибір */}
                 <SettingsDropdownItem as="div" role="group" aria-label={i18n.t("newsWeather.Weather.stylHrafika")}>
                   <BiPalette style={{ color: "#c084fc" }} /> {i18n.t("newsWeather.Weather.stylHrafika")}
-                  <div style={{ display: "flex", gap: "4px", marginTop: "2px" }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px", marginTop: "2px" }}>
                     {[
                       { key: "hourly", label: i18n.t("newsWeather.Weather.hodynnyi") },
                       { key: "daily", label: i18n.t("newsWeather.Weather.16Dniv") },
@@ -5398,7 +5512,9 @@ const HOLIDAYS_2027 = {
                 background: "transparent",
                 color: activeTab === tab.key ? "#00eeff" : isDarkMode ? "#aaa" : "#555",
                 fontWeight: activeTab === tab.key ? 700 : 400,
-                fontSize: "11px",
+                // 10px і трохи щільніше — «Годинна», «Місячна» вміщаються навіть на вузькому телефоні
+                fontSize: "10px",
+                letterSpacing: "-0.2px",
                 cursor: "pointer",
                 transition: "all 0.2s",
               }}
@@ -5414,7 +5530,14 @@ const HOLIDAYS_2027 = {
 
         <TabContentArea $arrowsGap={carouselArrowsOn}>
 
-          {activeTab === "current" && (
+          {activeTab === "current" && isSimpleView && (
+            <CurrentWeatherBanner style={{ borderRadius: 0 }}>
+              <CurrentWeatherBanne style={{ position: "relative", borderRadius: 0, padding: "2px", background: "rgba(0, 0, 0, 0.43)" }}>
+                <SimpleNowView card={card} isDarkMode={isDarkMode} formatTemp={formatTemp} tempSpreadLabel={tempSpreadLabel} />
+              </CurrentWeatherBanne>
+            </CurrentWeatherBanner>
+          )}
+          {activeTab === "current" && !isSimpleView && (
             <CurrentWeatherBanner
               style={{ borderRadius: 0 }}
             >
@@ -5427,7 +5550,7 @@ const HOLIDAYS_2027 = {
                 }}
               >
                 <DesktopTwoRowIndicators>
-  <IndicatorCard aria-label={card.current.iconPlaceholder}>
+  <IndicatorCard aria-label={stripEmoji(card.current.iconPlaceholder)}>
     <IconBox $size="32px" $lh="1"><WeatherIcon isDarkMode={isDarkMode} item={card.current} /></IconBox>
     <TextContent $size="11px" $lh="1.2">
       {stripEmoji(card.current.iconPlaceholder) || i18n.t("newsWeather.Weather.minlyvaKhmarnist")}
@@ -5752,7 +5875,7 @@ const HOLIDAYS_2027 = {
                 {effectiveDailyViewMode === "blocks" && dailyBlocksPaging > 0 && (
                   <div style={{ flex: "1 1 240px", minWidth: 0 }}>{renderDailyPager()}</div>
                 )}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: isNarrowScreen ? "4px" : "8px", flexWrap: "wrap", justifyContent: "flex-end" }}>
                   {/* Вчорашній день — маленький перемикач-іконка (замість великого чекбокса) */}
                   {hasPastDay && (
                     <Tooltip content={showPastDay ? i18n.t("newsWeather.Weather.skhovatyVchorashniiDen") : i18n.t("newsWeather.Weather.pokazatyVchorashniiDen")} isDarkMode={isDarkMode}>
@@ -6162,7 +6285,7 @@ const HOLIDAYS_2027 = {
                                 </div>
                                 <div style={{ display: "flex", gap: "6px", alignItems: "flex-start", marginTop: "2px", fontSize: "11px" }}>
                                   <span style={{ color, fontWeight: 700, flexShrink: 0 }}>
-                                    {sign.verdict === "agree" ? "✓" : sign.verdict === "disagree" ? "✗" : sign.verdict === "far" ? "⏳" : "≈"}
+                                    {sign.verdict === "agree" ? "✓" : sign.verdict === "disagree" ? "✗" : sign.verdict === "far" ? <MdHourglassEmpty aria-hidden="true" style={{ verticalAlign: "-2px" }} /> : "≈"}
                                   </span>
                                   <span>
                                     <strong style={{ color }}>{i18n.t(`newsWeather.folkSigns.verdict_${sign.verdict}`)}</strong>
@@ -6312,6 +6435,11 @@ const HOLIDAYS_2027 = {
                   ))}
                 </ViewToggleGroup>
               </div>
+              {archiveMonths && (
+                <div style={{ marginBottom: "6px" }}>
+                  <ArchiveRecords months={archiveMonths} fmt={fmt} formatTemp={formatTemp} isDarkMode={isDarkMode} />
+                </div>
+              )}
               {!archiveMonths ? (
                 <ArchiveStatus error={archiveState.error} retry={archiveState.retry} isDarkMode={isDarkMode} />
               ) : effectiveArchiveViewMode === "charts" ? (
@@ -6319,6 +6447,10 @@ const HOLIDAYS_2027 = {
               ) : (
                 <WeatherArchive months={archiveMonths} viewMode={effectiveArchiveViewMode} fmt={fmt} formatTemp={formatTemp} isDarkMode={isDarkMode} />
               )}
+              {/* Погода на свята (Новий рік, Різдво, Великдень) за останні роки — окремий запит до архіву */}
+              <div style={{ marginTop: "6px" }}>
+                <HolidayWeather lat={card.lat} lon={card.lon} fmt={fmt} formatTemp={formatTemp} isDarkMode={isDarkMode} />
+              </div>
             </div>
           )}
 

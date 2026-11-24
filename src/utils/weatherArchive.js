@@ -9,7 +9,7 @@ export const ARCHIVE_MONTHS = 14;
 const ARCHIVE_LAG_DAYS = 3;
 // Минулі місяці не змінюються, а запит за 14 місяців дорогий для ліміту Open-Meteo — тримаємо 3 доби
 const CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
-const CACHE_PREFIX = "weather_archive_v3_";
+const CACHE_PREFIX = "weather_archive_v4_";
 
 const DAILY_VARS = [
   "temperature_2m_max",
@@ -91,6 +91,15 @@ export const aggregateMonths = (daily, lat = null) => {
     const rainTotal = rain.length ? Math.min(sum(rain), precipTotal ?? Infinity) : null;
     const dayMax = pick("temperature_2m_max", idx);
     const dayMin = pick("temperature_2m_min", idx);
+    // День, на який припав максимум/мінімум місяця (для «рекордів»)
+    const extremeDay = (name, better) => {
+      let best = null;
+      idx.forEach((i) => {
+        const v = daily[name]?.[i];
+        if (typeof v === "number" && Number.isFinite(v) && (best === null || better(v, best.v))) best = { v, day: time[i] };
+      });
+      return best?.day ?? null;
+    };
     return {
       key,
       year,
@@ -100,6 +109,8 @@ export const aggregateMonths = (daily, lat = null) => {
       tMin: mean(dayMin),
       tAbsMax: dayMax.length ? Math.max(...dayMax) : null,
       tAbsMin: dayMin.length ? Math.min(...dayMin) : null,
+      tAbsMaxDay: extremeDay("temperature_2m_max", (a, b) => a > b),
+      tAbsMinDay: extremeDay("temperature_2m_min", (a, b) => a < b),
       cloud: mean(pick("cloud_cover_mean", idx)),
       precip: precipTotal,
       rain: rainTotal,
@@ -114,6 +125,22 @@ export const aggregateMonths = (daily, lat = null) => {
       })(),
     };
   });
+};
+
+// Рекорди за весь архів: найспекотніший і найхолодніший день, найдощовіший повний місяць.
+// Місяць, що ще триває (або неповний через запізнення ERA5), в «найдощовіший» не береться.
+export const getArchiveRecords = (months) => {
+  if (!Array.isArray(months) || !months.length) return null;
+  let hottest = null;
+  let coldest = null;
+  let wettest = null;
+  months.forEach((m) => {
+    if (m.tAbsMax != null && m.tAbsMaxDay && (!hottest || m.tAbsMax > hottest.value)) hottest = { value: m.tAbsMax, day: m.tAbsMaxDay };
+    if (m.tAbsMin != null && m.tAbsMinDay && (!coldest || m.tAbsMin < coldest.value)) coldest = { value: m.tAbsMin, day: m.tAbsMinDay };
+    const full = m.days >= new Date(m.year, m.month, 0).getDate();
+    if (full && m.precip != null && (!wettest || m.precip > wettest.value)) wettest = { value: m.precip, year: m.year, month: m.month };
+  });
+  return hottest || coldest || wettest ? { hottest, coldest, wettest } : null;
 };
 
 const cacheKey = (lat, lon) => `${CACHE_PREFIX}${Number(lat).toFixed(2)}_${Number(lon).toFixed(2)}`;

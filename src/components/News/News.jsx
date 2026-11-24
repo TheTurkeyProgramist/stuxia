@@ -32,7 +32,9 @@ import { NEWS_SOURCES, NEWS_DESC_TRANSLATE_MAX, cleanNewsDescription } from "../
 const NewsAiModal = lazyWithRetry(() => import("./NewsAiModal"));
 import InfoModal from "../Modals/UserSearchModal.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
-import { FaLock } from "react-icons/fa";
+import { FaLock, FaTelegramPlane } from "react-icons/fa";
+import { FaBluesky, FaMastodon } from "react-icons/fa6";
+import { MdCheckBox, MdCheckBoxOutlineBlank } from "react-icons/md";
 import { MdReport } from "react-icons/md"; //Поскаржитися
 import { FaYoutube } from "react-icons/fa6";
 import { GiTreeBeehive } from "react-icons/gi";
@@ -375,6 +377,41 @@ const CarouselHintItem = styled.button`
   &:active {
     transform: translateY(calc(-50% + 2px)) scale(0.96);
   }
+
+  /* Телефон: менші стрілки (як у картках погоди) — менше закривають новини */
+  @media (max-width: 767px) {
+    ${(props) => (props.$direction === "previous" ? "left: 12px;" : "right: 8px;")}
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+    border-width: 1.5px;
+    border-radius: 5px;
+    &::before {
+      top: -7px;
+      left: -7px;
+      width: 30px;
+      height: 27px;
+      border-width: 1.5px;
+    }
+    &::after {
+      top: -7px;
+      left: -7px;
+      width: 37px;
+      height: 37px;
+      background-size: 10px 10px;
+    }
+    &:hover::before {
+      top: -8px;
+      left: -8px;
+    }
+    &:hover::after {
+      top: -8px;
+      left: -8px;
+      width: 38px;
+      height: 38px;
+      background-size: 11px 11px;
+    }
+  }
 `;
 const CarouselSlide = styled.div`
   flex: 0 0 270px;
@@ -648,6 +685,14 @@ const NewsImg = styled.img`
     transform: scale(1.08);
   `}
 `;
+
+// Галочка у фільтрі джерел — іконкою (без символів ☑ ☐)
+const FilterCheck = ({ on }) =>
+  on ? (
+    <MdCheckBox aria-hidden="true" style={{ verticalAlign: "-3px", fontSize: "16px" }} />
+  ) : (
+    <MdCheckBoxOutlineBlank aria-hidden="true" style={{ verticalAlign: "-3px", fontSize: "16px" }} />
+  );
 
 const SourceFlag = styled.span`
   position: absolute;
@@ -1326,7 +1371,9 @@ const NewsCard = ({
         as="div"
       >
         <BlockOverlay style={{ background: "rgba(128, 128, 128, 0.5)" }}>
-          <span style={{ fontSize: "30px", marginBottom: "10px", background: "rgba(0,0,0,0.3)", padding: "5px 10px", borderRadius: "5px" }}>🔇</span>
+          <span style={{ display: "inline-flex", fontSize: "30px", marginBottom: "10px", background: "rgba(0,0,0,0.3)", padding: "5px 10px", borderRadius: "5px" }}>
+            <MdOutlineReportOff aria-hidden="true" />
+          </span>
           <h4 style={{ margin: 0, fontSize: "14px", lineHeight: "1.4", background: "rgba(0,0,0,0.3)", padding: "5px 10px", borderRadius: "5px" }}>
             {i18n.t("newsWeather.News.novynuPrykhovano")}
           </h4>
@@ -2371,7 +2418,7 @@ const fetchTelegramFeed = async (source) => {
           thumbnail: avatar || "",
           displayImage: avatar || rainbow,
           sourceName: source.name,
-          sourceFlag: "🔒",
+          sourceFlag: "lock",
           sourceHome: url,
           sourceUrl: url,
         }]
@@ -2387,7 +2434,7 @@ const fetchTelegramFeed = async (source) => {
           thumbnail: "",
           displayImage: rainbow,
           sourceName: source.name,
-          sourceFlag: "🔒",
+          sourceFlag: "lock",
           sourceHome: url,
           sourceUrl: url,
         }]
@@ -2435,7 +2482,7 @@ const fetchTelegramFeed = async (source) => {
         thumbnail: image || channelImage || "",
         displayImage: image || channelImage || rainbow,
         sourceName: channelTitle,
-        sourceFlag: "📢",
+        sourceFlag: "telegram",
         sourceHome: home,
         sourceUrl: url,
       });
@@ -2477,7 +2524,7 @@ const fetchTelegraphFeed = async (source) => {
         thumbnail: absoluteImage || "",
         displayImage: absoluteImage || rainbow,
         sourceName: author,
-        sourceFlag: "📝",
+        sourceFlag: "blog",
         sourceHome: "https://telegra.ph",
         sourceUrl: source.url,
       }]
@@ -2527,7 +2574,7 @@ const fetchHiveFeed = async (source) => {
           thumbnail: image || "",
           displayImage: image || rainbow,
           sourceName: source.name,
-          sourceFlag: "🐝",
+          sourceFlag: "hive",
           sourceHome: url.split("/board/")[0],
           sourceUrl: url,
         }]
@@ -2604,7 +2651,7 @@ const fetchHiveFeed = async (source) => {
         thumbnail: image || "",
         displayImage: image || rainbow,
         sourceName: source.name,
-        sourceFlag: "🐝",
+        sourceFlag: "hive",
         sourceHome: `https://community.withhive.com/${gameCode}`,
         sourceUrl: url,
       });
@@ -2637,7 +2684,7 @@ const fetchHiveFeed = async (source) => {
           thumbnail: image || "",
           displayImage: image || rainbow,
           sourceName: source.name,
-          sourceFlag: "🐝",
+          sourceFlag: "hive",
           sourceHome: `https://community.withhive.com/${gameCode}`,
           sourceUrl: url,
         }]
@@ -3776,7 +3823,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         const parts = resolvedUrl.split("/");
         const channelName = parts[parts.length - 1] || parts[parts.length - 2];
         name = `Telegram: ${channelName}`;
-        flag = resolvedUrl.includes("+") || resolvedUrl.includes("joinchat") ? "🔒" : "📢";
+        flag = resolvedUrl.includes("+") || resolvedUrl.includes("joinchat") ? <FaLock/> : <FaTelegramPlane/>;
         home = resolvedUrl;
       } else if (type === "telegraph") {
         name = `Telegraph`;
@@ -3790,10 +3837,10 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         home = `https://community.withhive.com/${game}`;
       } else if (/^bsky\.app$/i.test(domain) && urlObj.pathname.startsWith("/profile/")) {
         name = `Bluesky: ${urlObj.pathname.split("/")[2] || domain}`;
-        flag = "🦋";
+        flag = <FaBluesky/>;
       } else if (/^\/@[^/]+\/?$/.test(urlObj.pathname)) {
         name = `Mastodon: ${urlObj.pathname.replace(/\//g, "")}@${domain}`;
-        flag = "🐘";
+        flag = <FaMastodon/>;
       } else {
         name = domain;
         flag = <PiNewspaperClippingFill/>;
@@ -4057,7 +4104,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                   $active={filterSources.includes("all")}
                   onClick={() => handleToggleFilter("all")}
                 >
-                  {filterSources.includes("all") ? "☑" : "☐"} {i18n.t("newsWeather.News.usi")}
+                  <FilterCheck on={filterSources.includes("all")} /> {i18n.t("newsWeather.News.usi")}
                 </FilterBtn>
                 {SOURCES.map((s) => (
                   <FilterBtn
@@ -4066,7 +4113,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                     $active={filterSources.includes(s.name)}
                     onClick={() => handleToggleFilter(s.name)}
                   >
-                    {filterSources.includes(s.name) ? "☑" : "☐"} {s.name}
+                    <FilterCheck on={filterSources.includes(s.name)} /> {s.name}
                   </FilterBtn>
                 ))}
                 {customSources.map((s) => (
@@ -4076,7 +4123,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
                     $active={filterSources.includes(s.name)}
                     onClick={() => handleToggleFilter(s.name)}
                   >
-                    {filterSources.includes(s.name) ? "☑" : "☐"} {s.name}
+                    <FilterCheck on={filterSources.includes(s.name)} /> {s.name}
                     <span
                       onClick={(e) => {
                         e.stopPropagation();

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef } from "react";
+import { FaHeart, FaRegHeart } from "react-icons/fa"; // Оцінка фону: серце замість емодзі
 import { createPortal } from "react-dom";
 import styled, { keyframes } from "styled-components";
 import localforage from "localforage";
@@ -1352,7 +1353,7 @@ const BgModal = ({
               <BgItem key={idx} $active={heroBg === bg.src || heroBg2 === bg.src}>
                 <RatingOverlay>
                   <HeartIcon $color={rating === 2 ? "gold" : rating === 1 ? "#ff4d4d" : "white"} onClick={() => handleRate(bg.src)}>
-                    {rating === 2 ? "💛" : rating === 1 ? "❤️" : "🤍"}
+                    {rating > 0 ? <FaHeart aria-hidden="true" /> : <FaRegHeart aria-hidden="true" />}
                   </HeartIcon>
                   <div style={{ display: "flex", gap: "4px" }}>
                     <Tooltip content={i18n.t("ui.BgModal.naVesEkran")} isDarkMode={isDarkMode}>

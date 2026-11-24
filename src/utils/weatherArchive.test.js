@@ -68,3 +68,22 @@ describe("weatherArchive", () => {
     expect(m.snow).toBeNull();
   });
 });
+
+describe("рекорди архіву", () => {
+  test("найспекотніший, найхолодніший день і найдощовіший повний місяць", async () => {
+    const { aggregateMonths, getArchiveRecords } = await import("./weatherArchive.js");
+    const time = [];
+    const tmax = [];
+    const tmin = [];
+    const pr = [];
+    for (let d = 1; d <= 31; d++) { time.push(`2026-07-${String(d).padStart(2, "0")}`); tmax.push(d === 10 ? 35 : 25); tmin.push(15); pr.push(1); }
+    for (let d = 1; d <= 28; d++) { time.push(`2026-02-${String(d).padStart(2, "0")}`); tmax.push(0); tmin.push(d === 3 ? -20 : -5); pr.push(0.5); }
+    for (let d = 1; d <= 5; d++) { time.push(`2026-08-0${d}`); tmax.push(20); tmin.push(10); pr.push(50); }
+    const months = aggregateMonths({ time, temperature_2m_max: tmax, temperature_2m_min: tmin, precipitation_sum: pr });
+    const r = getArchiveRecords(months);
+    expect(r.hottest).toEqual({ value: 35, day: "2026-07-10" });
+    expect(r.coldest).toEqual({ value: -20, day: "2026-02-03" });
+    expect(r.wettest.month).toBe(7); // серпень неповний — не рахується
+    expect(getArchiveRecords([])).toBeNull();
+  });
+});

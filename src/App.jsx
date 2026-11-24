@@ -41,6 +41,8 @@ import {
 } from "./utils/referral.js";
 import { GiSnowing } from "react-icons/gi";
 import { TbCloudOff } from "react-icons/tb";
+import { MdPlace, MdWarning } from "react-icons/md";
+import WeatherViewOffer, { canOfferWeatherView } from "./components/DominoTutorial/WeatherViewOffer.jsx";
 import { buildYesterdayTemps } from "./utils/yesterdayDiff.js";
 import HeroCredits from "./components/Hero/HeroCredits.jsx";
 import { getEagerChunk, loadWeather } from "./utils/eagerChunks.js";
@@ -353,6 +355,11 @@ const WeatherCardsContainer = styled.div`
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   padding: 0 42px;
+  /* Телефон: картка ширша (менші поля під маленькі стрілки); проміжок і далі більший за поле */
+  @media (max-width: 767px) {
+    gap: 26px;
+    padding: 0 22px;
+  }
   /* Планшет/ПК: картки на всю ширину (під заголовком «Погода»), стрілки лежать на краях картки */
   @media (min-width: 768px) {
     padding: 0;
@@ -530,6 +537,9 @@ const CarouselNav = styled.div`
   justify-content: center;
   gap: 6px;
   flex-wrap: wrap;
+  @media (max-width: 480px) {
+    gap: 4px;
+  }
   z-index: 9000;
   margin-top: 8px;
   max-height: 200px;
@@ -576,12 +586,10 @@ const CarouselNav = styled.div`
 `;
 const CarouselSideButton = styled.button`
   position: absolute;
-  top: 50%;
+  /* Посередині видимої частини карток (--carousel-arrow-y рахує WeatherCarousel при прокрутці),
+     а не посередині всієї картки, яка буває вища за екран */
+  top: var(--carousel-arrow-y, 50%);
   ${(props) => (props.$direction === "previous" ? "left: 0;" : "right: 0;")}
-  /* Телефон: стрілки майже біля країв екрана (зліва запас під 3D-грань, що виступає на 10px) */
-  @media (max-width: 767px) {
-    ${(props) => (props.$direction === "previous" ? "left: 12px;" : "right: 4px;")}
-  }
   width: 44px;
   height: 44px;
   display: inline-flex;
@@ -690,10 +698,54 @@ const CarouselSideButton = styled.button`
   &:active {
     transform: translateY(calc(-50% + 2px)) scale(0.96);
   }
+
+  /* Телефон: менші стрілки біля самих країв — менше закривають картку.
+     Зліва запас під 3D-грань, що виступає на 7px */
+  @media (max-width: 767px) {
+    ${(props) => (props.$direction === "previous" ? "left: 7px;" : "right: 0;")}
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+    border-width: 1.5px;
+    border-radius: 5px;
+    &::before {
+      top: -7px;
+      left: -7px;
+      width: 30px;
+      height: 27px;
+      border-width: 1.5px;
+    }
+    &::after {
+      top: -7px;
+      left: -7px;
+      width: 37px;
+      height: 37px;
+      background-size: 10px 10px;
+    }
+    &:hover::before {
+      top: -8px;
+      left: -8px;
+    }
+    &:hover::after {
+      top: -8px;
+      left: -8px;
+      width: 38px;
+      height: 38px;
+      background-size: 11px 11px;
+    }
+  }
 `;
 const CarouselPageButton = styled.button`
-  width: 30px;
+  /* flex-shrink + min-width: 10 кнопок вміщаються в один ряд навіть на вузькому телефоні */
+  flex: 0 1 30px;
+  min-width: 22px;
   height: 30px;
+  padding: 0;
+  @media (max-width: 480px) {
+    flex-basis: 27px;
+    height: 27px;
+    font-size: 14px;
+  }
   background: ${(props) => (props.$active ? "#fc7a00" : "#00ffe5")};
   color: #000;
   border: none;
@@ -848,7 +900,7 @@ const ReorderRow = ({ item, index, isDarkMode, onDragEnd }) => {
         <FaGripVertical />
       </DragHandle>
       <span title={item.label}>
-        {index + 1}. {item.isMain ? "📍 " : ""}
+        {index + 1}. {item.isMain && <MdPlace aria-hidden="true" style={{ verticalAlign: "-2px", color: "#00ffe5" }} />}{item.isMain ? " " : ""}
         {item.label}
       </span>
     </ReorderRowItem>
@@ -1388,6 +1440,41 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
   const childCount = childrenArray.length;
   const animationsDisabled = useAnimationsDisabled();
 
+  // Стрілки ◀ ▶ — посередині ВИДИМОЇ частини карток: картка на телефоні вища за екран,
+  // і стрілка посередині всієї картки то зникала за краєм, то сиділа на тексті.
+  // Пишемо CSS-змінну напряму (без setState) — прокрутка не перемальовує карусель
+  const carouselMainRef = useRef(null);
+  useEffect(() => {
+    if (childCount < 2) return undefined;
+    let raf = 0;
+    const EDGE = 30; // стрілка не підходить до краю картки ближче
+    const update = () => {
+      raf = 0;
+      const main = carouselMainRef.current;
+      const cards = scrollRef.current;
+      if (!main || !cards) return;
+      const m = main.getBoundingClientRect();
+      const c = cards.getBoundingClientRect();
+      const visTop = Math.max(c.top, 0);
+      const visBottom = Math.min(c.bottom, window.innerHeight);
+      const center = visBottom - visTop > 2 * EDGE ? (visTop + visBottom) / 2 : (c.top + c.bottom) / 2;
+      const y = Math.min(Math.max(center, c.top + EDGE), c.bottom - EDGE) - m.top;
+      main.style.setProperty("--carousel-arrow-y", `${Math.round(y)}px`);
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    // capture: ловимо прокрутку і сторінки, і будь-якого контейнера-прокрутника
+    window.addEventListener("scroll", schedule, { capture: true, passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", schedule, { capture: true });
+      window.removeEventListener("resize", schedule);
+    };
+  }, [childCount]);
+
   const activeItemId = items[activeIndex]?.id ?? null;
   useEffect(() => {
     lastActiveWeatherCardId = activeItemId;
@@ -1869,7 +1956,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
     <WeatherCarouselWrapper>
       <WeatherCarouselLayout>
       {citySidebar}
-      <CarouselMain>
+      <CarouselMain ref={carouselMainRef}>
       {!isWideRow && cityJumpBlock}
       <WeatherCardsContainer ref={scrollRef}>
         {/* Монтуємо лише видиму картку та сусідні; далекі — порожні заглушки тієї ж ширини, щоб не тримати їх у пам'яті */}
@@ -2412,6 +2499,8 @@ const App = () => {
         if (savedLocationEnabled !== null) setIsLocationEnabled(savedLocationEnabled);
 
         const savedCards = await localforage.getItem("weather_cards");
+        // Збережені картки є — людина не нова: пропозиція простого вигляду прийде з наступною доданою карткою
+        if (Array.isArray(savedCards) && savedCards.length) hadCardsBeforeRef.current = true;
         if (savedCards) setWeatherCards((prev) => mergeSavedWeatherCards(prev, savedCards).map(relocalizeCard));
 
         const savedHideUntil = await localforage.getItem(
@@ -2649,6 +2738,37 @@ const App = () => {
 
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [weatherCards, setWeatherCards] = useState([]);
+
+  // Пропозиція Доміно «Хочете менше інформації в картці?» (простий вигляд) — один раз.
+  // Новий відвідувач — після першої своєї картки (GPS чи доданої). Хто прийшов з пошуковика
+  // (картка з адреси) або вже мав картки раніше — коли сам додасть наступну картку.
+  const [isViewOfferOpen, setIsViewOfferOpen] = useState(false);
+  const viewOfferTimerRef = useRef(null);
+  const hadCardsBeforeRef = useRef(getPref("weather_cards_seen") === "true");
+  const isSearchEntryRef = useRef(
+    typeof window !== "undefined" &&
+      analyzeSearchQuery(window.location.search, window.location.hash, window.location.pathname).isSearchEntry,
+  );
+  // firstCard — показ «новому відвідувачу»: перевіряємо ще раз у момент показу, бо збережені
+  // картки з пам'яті пристрою могли підвантажитись уже після появи GPS-картки
+  const requestViewOffer = useCallback((firstCard = false) => {
+    if (viewOfferTimerRef.current || !canOfferWeatherView()) return;
+    // Невелика пауза: спершу людина бачить саму картку
+    viewOfferTimerRef.current = setTimeout(() => {
+      viewOfferTimerRef.current = null;
+      if (firstCard && hadCardsBeforeRef.current) return;
+      if (canOfferWeatherView()) setIsViewOfferOpen(true);
+    }, 2500);
+  }, []);
+  useEffect(() => () => clearTimeout(viewOfferTimerRef.current), []);
+  useEffect(() => {
+    if (!weatherCards.some((c) => c.current)) return;
+    setPref("weather_cards_seen", "true");
+    if (!hadCardsBeforeRef.current && !isSearchEntryRef.current && weatherCards.some((c) => c.current && !c.fromUrl)) {
+      requestViewOffer(true);
+    }
+  }, [weatherCards, requestViewOffer]);
+
   // Зміна мови — перебудовуємо підписи погоди (опис, дні тижня, дати) у вже завантажених картках
   useEffect(() => {
     const onLang = () => setWeatherCards((prev) => prev.map(relocalizeCard));
@@ -3418,7 +3538,7 @@ const App = () => {
             }
             toast(i18n.t("ui.App.vzheIeSeredVashykh", { locationName: duplicateCard.locationName }), {
               id: "duplicate-city-card",
-              icon: "📍",
+              icon: <MdPlace style={{ color: "#00ffe5", fontSize: "18px" }} />,
             });
             return false;
           }
@@ -3431,7 +3551,7 @@ const App = () => {
             return false;
           }
           if (customCardsCount >= SOFT_CUSTOM_WEATHER_CARDS) {
-            toast(i18n.t("ui.App.bilsheKartokSprychyniaieNavantazhennia", { SOFT_CUSTOM_WEATHER_CARDS: SOFT_CUSTOM_WEATHER_CARDS }), { icon: "⚠️", duration: 4000 });
+            toast(i18n.t("ui.App.bilsheKartokSprychyniaieNavantazhennia", { SOFT_CUSTOM_WEATHER_CARDS: SOFT_CUSTOM_WEATHER_CARDS }), { icon: <MdWarning style={{ color: "#ffb300", fontSize: "18px" }} />, duration: 4000 });
           }
 
           // Незареєстровані користувачі не мають ліміту на 3 картки/тиждень
@@ -4332,12 +4452,14 @@ const App = () => {
         const added = (await fetchWeather(cityObj, false, null, null, false, notify)) !== false;
         // Приємний момент: людина вже стежить за 3+ містами
         if (added && customCardsCount + 1 >= 3) notifySupportMoment("cards");
+        // Людина сама додала картку — слушний момент запропонувати простий вигляд
+        if (added) requestViewOffer();
         return added;
       });
       addCityQueueRef.current = task.catch(() => {});
       return task;
     },
-    [fetchWeather],
+    [fetchWeather, requestViewOffer],
   );
 
   const handleRenameCard = useCallback((id, newName) => {
@@ -4717,6 +4839,7 @@ const App = () => {
     <DecoratorProvider isDarkMode={isDarkMode}>
       <SiteContextMenu isDarkMode={isDarkMode} onToggleTheme={toggleTheme}>
       <DominoTutorial user={user} />
+      <WeatherViewOffer open={isViewOfferOpen} onClose={() => setIsViewOfferOpen(false)} />
       <GlobalFilterLock $locked={isFsActive && lockFiltersInFs} />
       <ThemeWrapper $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
         <div className="App">

@@ -20,7 +20,7 @@ export const SETTINGS_LEVELS = [
     get star() { return i18n.t("modals.settingsLevels.betelheize"); },
     get story() { return i18n.t("modals.settingsLevels.odnaZoriaSkromnoV"); },
     get about() { return i18n.t("modals.settingsLevels.lysheOsnovneChasTema"); },
-    count: 18,
+    count: 19,
     color: "#fb923c",
   },
   {
@@ -29,7 +29,7 @@ export const SETTINGS_LEVELS = [
     star: "TON 618",
     get story() { return i18n.t("modals.settingsLevels.velykaZoriaZChasom"); },
     get about() { return i18n.t("modals.settingsLevels.shcheNovynySektsiiAktsentnyi"); },
-    count: 37,
+    count: 38,
     color: "#60cdff",
   },
   {
@@ -38,7 +38,7 @@ export const SETTINGS_LEVELS = [
     get star() { return i18n.t("modals.settingsLevels.andromeda"); },
     get story() { return i18n.t("modals.settingsLevels.halaktykaZoriIChorni"); },
     get about() { return i18n.t("modals.settingsLevels.dekoratorShryftyFonyPravyla"); },
-    count: 61,
+    count: 62,
     color: "#a78bfa",
   },
 ];

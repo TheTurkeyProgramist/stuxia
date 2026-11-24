@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { MdLanguage } from 'react-icons/md';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { FiSearch, FiCheck } from 'react-icons/fi';
@@ -287,7 +288,8 @@ const LanguagePicker = () => {
       {/* Info note about RTL */}
       {!search && (
         <InfoNote>
-          🌐 {t('settings.language.rtlNote')}
+          <MdLanguage aria-hidden="true" style={{ verticalAlign: "-3px", marginRight: "4px" }} />
+          {t('settings.language.rtlNote')}
         </InfoNote>
       )}
 

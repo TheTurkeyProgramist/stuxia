@@ -98,6 +98,7 @@ import {
   usePrefValue,
   LOADER_POWERED_BY_KEY,
   TAB_AUTOPLAY_KEY,
+  WEATHER_VIEW_KEY,
   TAB_AUTOPLAY_DEFAULT,
   parseTabAutoplay,
   serializeTabAutoplay,
@@ -128,7 +129,8 @@ import {
   ModalHeaderCloseButton,
   ModalHeaderPrimaryButton,
 } from "./modalHeaderButtons.js";
-import { BsMoonStarsFill } from "react-icons/bs";
+import { BsMoonStarsFill, BsGrid3X3GapFill } from "react-icons/bs";
+import { MdCheckCircle, MdError, MdWarning, MdHourglassEmpty, MdScience } from "react-icons/md";
 import { FaSun as FaSunIcon, FaEye, FaEyeSlash, FaWindows, FaAndroid, FaLinux, FaApple } from "react-icons/fa";
 import {
   BASE_BG_TRACKS,
@@ -1259,6 +1261,73 @@ const PasswordStrengthBar = styled.div`
   width: ${(p) => p.$width || "0%"};
   transition: width 0.3s ease, background-color 0.3s ease; margin-top: 4px;
 `;
+// Статуси пошти й видалення акаунта. Раніше колір брався з емодзі на початку тексту (✅ ❌ ⚠️ ⏳);
+// емодзі з сайту прибрано, тож тон визначаємо за тим, який саме переклад показано
+const STATUS_TONE_KEYS = {
+  ok: ["lystPidtverdzhenniaNadislanoNa", "akauntVydalenoZarazOchystymo", "akauntIPoviazaniZ", "googleAkauntPidtverdzheno", "googleAkauntVidviazanoUspishno"],
+  error: [
+    "vveditKorektnuElektronnuPoshtu",
+    "tsiaPoshtaVzheVykorystovuietsia",
+    "nepravylnyiFormatElektronnoiPoshty",
+    "neVdalosiaNadislatyLyst",
+    "slovoVvedenoNepravylnoAkaunt",
+    "nepravylnyiParolAkauntNe",
+    "serverNeDozvolyvSterty",
+    "neVdalosiaVydalytyAkaunt",
+  ],
+  warn: [
+    "tseVzhePotochnaPoshta",
+    "khmarnyiAkauntNeaktyvnyiVyidit2",
+    "poshtaTsohoProfiliuKeruietsia",
+    "potribnaPovtornaAvtoryzatsiiaVyidit",
+    "oberitToiSamyiGoogle",
+    "tseiGoogleAkauntNe",
+    "tseiGoogleAkauntUzhe",
+  ],
+  pending: ["nadsylaiemoLyst", "pidtverditShchoTseVy", "vydaliaiemoDani"],
+};
+const STATUS_TONES = {
+  ok: { color: "#4caf50", Icon: MdCheckCircle },
+  error: { color: "#f44336", Icon: MdError },
+  warn: { color: "#ffb300", Icon: MdWarning },
+  pending: { color: "var(--s-accent)", Icon: MdHourglassEmpty },
+};
+const statusTone = (text) => {
+  if (!text) return null;
+  const MARK = "\u0001";
+  for (const [tone, keys] of Object.entries(STATUS_TONE_KEYS)) {
+    const hit = keys.some((k) => {
+      // Початок перекладу до першої підстановки ({{v0}}, {{trimmed}}…)
+      const base = i18n
+        .t(`modals.UserSettingsModal.${k}`, { v0: MARK, trimmed: MARK, email: MARK })
+        .split(MARK)[0]
+        .trim();
+      return base && text.startsWith(base);
+    });
+    if (hit) return tone;
+  }
+  return null;
+};
+const StatusLine = ({ text }) => {
+  const tone = STATUS_TONES[statusTone(text)];
+  const Icon = tone?.Icon;
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "flex-start",
+        gap: "4px",
+        fontSize: "11px",
+        lineHeight: 1.5,
+        color: tone ? tone.color : "var(--s-muted)",
+      }}
+    >
+      {Icon && <Icon aria-hidden="true" style={{ flexShrink: 0, marginTop: "2px" }} />}
+      <span>{text}</span>
+    </span>
+  );
+};
+
 const PasswordStrengthText = styled.span`
   font-size: 11px; color: ${(p) => p.$color || "var(--s-muted)"}; font-weight: 500; margin-top: 2px;
 `;
@@ -1859,6 +1928,7 @@ const UserSettingsModal = ({
   const loaderPoweredBy = usePrefValue(LOADER_POWERED_BY_KEY, "full");
   // Загальне автоперемикання вкладок карток погоди ({ on, seconds })
   const tabAutoplay = parseTabAutoplay(usePrefValue(TAB_AUTOPLAY_KEY, null)) || TAB_AUTOPLAY_DEFAULT;
+  const weatherView = usePrefValue(WEATHER_VIEW_KEY, "detailed") === "simple" ? "simple" : "detailed";
   // Відкрите вікно стилю ліній для всіх карток: "hourly" | "daily" | null
   const [globalStyleChart, setGlobalStyleChart] = useState(null);
   // «Підглядання»: розділ відкрили напряму (з новин — до «Моїх стрічок», або з пошуку), а він з важчого режиму.
@@ -3433,20 +3503,10 @@ const UserSettingsModal = ({
                             disabled={relinkLoading}
                           />
                           <WinButton type="button" $primary onClick={handleRebindEmail} style={{ whiteSpace: "nowrap" }} disabled={relinkLoading}>
-                            {relinkLoading ? "⏳..." : i18n.t("modals.UserSettingsModal.nadislatyLyst")}
+                            {relinkLoading ? "…" : i18n.t("modals.UserSettingsModal.nadislatyLyst")}
                           </WinButton>
                         </div>
-                        {relinkStatus && (
-                          <span style={{
-                            fontSize: "11px",
-                            color: relinkStatus.startsWith("✅") ? "#4caf50"
-                              : relinkStatus.startsWith("❌") ? "#f44336"
-                              : relinkStatus.startsWith("⚠️") ? "#ffb300"
-                              : relinkStatus.startsWith("📝") ? "var(--s-accent)"
-                              : "var(--s-muted)",
-                            lineHeight: "1.5"
-                          }}>{relinkStatus}</span>
-                        )}
+                        {relinkStatus && <StatusLine text={relinkStatus} />}
                       </div>
                       )}
                     </div>
@@ -3505,7 +3565,7 @@ const UserSettingsModal = ({
                           onClick={handleDeleteAccount}
                           disabled={deleteLoading || !hasFirebaseSession}
                         >
-                          {deleteLoading ? "⏳..." : i18n.t("modals.UserSettingsModal.vydalytyAkaunt")}
+                          {deleteLoading ? "…" : i18n.t("modals.UserSettingsModal.vydalytyAkaunt")}
                         </WinButton>
                       </div>
                       {!hasFirebaseSession && (
@@ -3513,15 +3573,7 @@ const UserSettingsModal = ({
                           {i18n.t("modals.UserSettingsModal.khmarnyiAkauntNeaktyvnyiVyidit3")}
                         </span>
                       )}
-                      {deleteStatus && (
-                        <span style={{
-                          fontSize: "11px",
-                          color: deleteStatus.startsWith("❌") ? "#f44336"
-                            : deleteStatus.startsWith("⚠️") ? "#ffb300"
-                            : "var(--s-muted)",
-                          lineHeight: "1.5",
-                        }}>{deleteStatus}</span>
-                      )}
+                      {deleteStatus && <StatusLine text={deleteStatus} />}
                     </div>
                   </CardExpanded>
                 </CardGroup>
@@ -3681,6 +3733,41 @@ const UserSettingsModal = ({
                       </ToggleWrapper>
                     </CardControl>
                   </Card>
+
+                  {/* Вигляд вкладки «Зараз»: простий (3 плитки) чи докладний (усі показники).
+                      Окремо від режимів «Параметрів» — стосується лише картки погоди */}
+                  <CardExpanded>
+                    <CardLeft>
+                      <CardIconBox $color="#00eeff"><BsGrid3X3GapFill /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.weatherViewTitle")}</CardTitle>
+                        <CardDescription>
+                          {weatherView === "simple"
+                            ? i18n.t("modals.UserSettingsModal.weatherViewSimpleDesc")
+                            : i18n.t("modals.UserSettingsModal.weatherViewDetailedDesc")}
+                        </CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <Segmented role="radiogroup" aria-label={i18n.t("modals.UserSettingsModal.weatherViewTitle")}>
+                        {["simple", "detailed"].map((mode) => (
+                          <SegmentBtn
+                            key={mode}
+                            type="button"
+                            role="radio"
+                            aria-checked={weatherView === mode}
+                            $active={weatherView === mode}
+                            $tone="show"
+                            onClick={() => setPref(WEATHER_VIEW_KEY, mode)}
+                          >
+                            {mode === "simple"
+                              ? i18n.t("modals.UserSettingsModal.weatherViewSimple")
+                              : i18n.t("modals.UserSettingsModal.weatherViewDetailed")}
+                          </SegmentBtn>
+                        ))}
+                      </Segmented>
+                    </CardControl>
+                  </CardExpanded>
 
                   {/* Автоперемикання вкладок карток погоди (Зараз → Годинна → 16 днів → Смарт) */}
                   <CardExpanded>
@@ -4770,7 +4857,7 @@ const UserSettingsModal = ({
                           border: "1px solid rgba(217,70,239,0.22)",
                         }}
                       >
-                        <span aria-hidden="true" style={{ fontSize: "15px", lineHeight: 1.3 }}>🧪</span>
+                        <MdScience aria-hidden="true" style={{ fontSize: "17px", flexShrink: 0, color: "#d946ef" }} />
                         <span>
                           {i18n.t("modals.UserSettingsModal.dekoratorPokyShchoEksperymentalnyi")}
                         </span>

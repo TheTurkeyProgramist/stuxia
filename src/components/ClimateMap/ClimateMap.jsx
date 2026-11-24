@@ -5,7 +5,7 @@ import styled, { keyframes, css } from "styled-components";
 import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaSatelliteDish, FaBolt, FaLock } from "react-icons/fa";
 import { FiCheck, FiEdit2, FiPlay, FiPlus, FiSearch, FiSettings, FiX } from "react-icons/fi";
 import { Tooltip } from "../Tooltip/Tooltip";
-import { MdDragIndicator } from "react-icons/md";
+import { MdDragIndicator, MdVolumeUp, MdMap, MdPlace, MdPushPin, MdDeleteOutline, MdFullscreen } from "react-icons/md";
 import { Reorder, motion, useDragControls } from "framer-motion";
 import climate from "../../media/third-party/services/ventusky-map.webp";
 import localforage from "localforage";
@@ -2144,7 +2144,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
   const handleSetProvider = async (newProvider) => {
     if (VOICE_SOURCES.has(newProvider) && newProvider !== provider) {
-      toast(t("climateMap.voiceWarning"), { icon: "🔊", duration: 8000 });
+      toast(t("climateMap.voiceWarning"), { icon: <MdVolumeUp style={{ color: "#ffaa00", fontSize: "18px" }} />, duration: 8000 });
     }
     setProvider(newProvider);
     try {
@@ -2184,7 +2184,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
   const handleActivateMap = async () => {
     setIsMapActive(true);
-    toast.success(t("climateMap.mapEnabled"), { icon: "🗺️", duration: 1800 });
+    toast.success(t("climateMap.mapEnabled"), { icon: <MdMap style={{ color: "#00ffe5", fontSize: "18px" }} />, duration: 1800 });
     try {
       await localforage.setItem("map_last_unlocked_time", Date.now());
     } catch (e) {
@@ -2522,7 +2522,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       });
       await localforage.setItem("selected_climate_provider", provider);
       setIsPinned(true);
-      toast.success(t("climateMap.locationPinned"), { duration: 3000, icon: "📍" });
+      toast.success(t("climateMap.locationPinned"), { duration: 3000, icon: <MdPlace style={{ color: "#00ffe5", fontSize: "18px" }} /> });
     } catch (error) {
       console.error("Error pinning location:", error);
       toast.error(t("climateMap.pinError"));
@@ -2534,7 +2534,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     try {
       await localforage.removeItem("pinned_map_location");
       setIsPinned(false);
-      toast(t("climateMap.locationUnpinned"), { icon: "📌", duration: 2000 });
+      toast(t("climateMap.locationUnpinned"), { icon: <MdPushPin style={{ fontSize: "18px" }} />, duration: 2000 });
     } catch (error) {
       console.error("Error unpinning location:", error);
     }
@@ -3093,7 +3093,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                           style={{ background: "transparent", border: "none", color: "rgba(255,80,80,0.7)", cursor: "pointer", fontSize: "13px", padding: "2px 4px", borderRadius: "4px" }}
                           title={t("climateMap.delete")}
                         >
-                          🗑️
+                          <MdDeleteOutline aria-hidden="true" style={{ verticalAlign: "-2px", fontSize: "16px" }} />
                         </button>
                       </div>
                     ))}
@@ -3146,7 +3146,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                 </p>
                 {hasVoiceSource && (
                   <p style={{ maxWidth: 520, margin: "4px auto", padding: "8px 12px", borderRadius: 10, background: "rgba(255, 170, 0, 0.18)", border: "1px solid rgba(255, 170, 0, 0.5)" }}>
-                    🔊 {t("climateMap.voiceWarning")}
+                    <MdVolumeUp aria-hidden="true" style={{ verticalAlign: "-3px", marginRight: "4px" }} />
+                    {t("climateMap.voiceWarning")}
                   </p>
                 )}
                 <p>{t("climateMap.credits")}</p>
@@ -3372,7 +3373,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
                   toggleFullscreen(miniPlayerRef);
                 }}
               >
-                {isFullscreen ? t("climateMap.collapse") : "⛶"}
+                {isFullscreen ? t("climateMap.collapse") : <MdFullscreen aria-hidden="true" style={{ fontSize: "18px", verticalAlign: "-4px" }} />}
               </ActionButton>
               <ActionButton
                 onClick={(e) => {

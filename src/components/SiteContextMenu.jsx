@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { MdMouse } from "react-icons/md";
 import { createPortal } from "react-dom";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import toast from "react-hot-toast";
@@ -142,7 +143,7 @@ export default function SiteContextMenu({ children, isDarkMode }) {
    *  Єдиний спосіб — Shift + права кнопка миші. Показуємо підказку. */
   const openNativeMenu = () => {
     toast(i18n.t("ui.SiteContextMenu.utrymaiteShiftINatysnit"), {
-      icon: "🖥️",
+      icon: <MdMouse style={{ fontSize: "18px" }} />,
       duration: 5000,
     });
   };

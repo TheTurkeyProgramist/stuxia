@@ -165,7 +165,7 @@ const showThemeAlert = (message, isDarkMode) => {
       padding: "10px 16px",
       backdropFilter: "blur(4px)", // Додає приємне розмиття фону під напівпрозорим кольором
     },
-    icon: '⚠️', 
+    icon: <MdWarningAmber style={{ color: "#ffb300", fontSize: "18px" }} />,
   });
 };
 const fadeIn = keyframes`
@@ -2738,7 +2738,7 @@ const Hero = ({
       return {
         active: true,
         color: "#fff59d",
-        label: customDay.reason.toUpperCase() + "! 🎉",
+        label: customDay.reason.toUpperCase() + "!",
       };
     }
 

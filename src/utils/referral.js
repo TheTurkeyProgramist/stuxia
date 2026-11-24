@@ -8,12 +8,13 @@
 //     Кожен акаунт може бути запрошеним лише один раз (правила Firestore).
 //  4. Друг заходить у Стихію ще в інші дні: +1 день, не частіше разу на добу (UTC).
 //     Строку немає — дні можна набирати скільки завгодно довго. Це перевіряють правила Firestore.
-//  5. Коли набралося 3 дні — друг отримує 🌱 «Паросток Стихії»,
-//     той, хто запросив, — 📣 «Посол Стихії».
+//  5. Коли набралося 3 дні — друг отримує «Паросток Стихії»,
+//     той, хто запросив, — «Посол Стихії».
 //
 //  УВАГА: число 3 продубльоване в firestore.rules (match /referrals).
 // ─────────────────────────────────────────────────────────────
 
+import { MdCampaign, MdEco } from "react-icons/md";
 import { loadFirebase } from "../firebaseLazy.js";
 import { getPref, setPref, removePref } from "./prefsStore.js";
 
@@ -29,8 +30,9 @@ export const INVITE_ACTIVE_DAYS = 3; // скільки різних днів д�
 
 export const BADGES = {
   supporter: { emoji: "🦃", get name() { return i18n.t("ui.referral.druhIndykiv"); } },
-  inviter: { emoji: "📣", get name() { return i18n.t("ui.referral.posolStykhii"); } },
-  invitee: { emoji: "🌱", get name() { return i18n.t("ui.referral.parostokStykhii"); } },
+  // Емодзі на сайті лише в індика; решта значків — іконки (Icon), у текстових рядках emoji порожній
+  inviter: { emoji: "", Icon: MdCampaign, get name() { return i18n.t("ui.referral.posolStykhii"); } },
+  invitee: { emoji: "", Icon: MdEco, get name() { return i18n.t("ui.referral.parostokStykhii"); } },
 };
 
 const UID_RE = /^[A-Za-z0-9_-]{6,128}$/;
