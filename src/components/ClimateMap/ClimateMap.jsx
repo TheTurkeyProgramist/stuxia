@@ -1,11 +1,11 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import styled, { keyframes, css } from "styled-components";
-import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaSatelliteDish, FaBolt, FaLock } from "react-icons/fa";
+import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaSatelliteDish, FaBolt, FaLock, FaFilm } from "react-icons/fa";
 import { FiCheck, FiEdit2, FiPlay, FiPlus, FiSearch, FiSettings, FiX } from "react-icons/fi";
 import { Tooltip } from "../Tooltip/Tooltip";
-import { MdDragIndicator, MdVolumeUp, MdMap, MdPlace, MdPushPin, MdDeleteOutline, MdFullscreen } from "react-icons/md";
+import { MdDragIndicator, MdVolumeUp, MdMap, MdPlace, MdPushPin, MdDeleteOutline, MdFullscreen, MdPublic } from "react-icons/md";
 import { Reorder, motion, useDragControls } from "framer-motion";
 import climate from "../../media/third-party/services/ventusky-map.webp";
 import localforage from "localforage";
@@ -27,6 +27,9 @@ import coverAirTraffic from "../../media/third-party/services/air-traffic.webp?w
 import coverDeepState from "../../media/third-party/services/deepstate.webp?w=360&format=webp&quality=62";
 import { usePageActive } from "../../utils/pageActivity.js";
 import FunTicker from "./FunTicker";
+import { START_MAP_PICK_EVENT, takePendingMapPick, reportMapPick } from "../Hero/heroEvents.js";
+// «Карта Стихії» — бета: лише на localhost (dev), у збірку не потрапляє
+const StyxiaMap = import.meta.env.DEV ? lazy(() => import("./StyxiaMap")) : null;
 // Ctrl + Alt + M: Активувати/деактивувати мапу
 // Ctrl + Alt + F: Відкрити на весь екран
 // Ctrl + Alt + P: Відкрити/закрити міні-плеєр
@@ -1610,6 +1613,10 @@ const FormCancelButton = styled(FormButton)`
 `;
 
 const BUILTIN_SOURCES = [
+  // Карта Стихії — перша в списку
+  ...(import.meta.env.DEV
+    ? [{ id: "styxia", titleKey: "climateMap.sources.styxiaTitle", subtitleKey: "climateMap.sources.styxiaSubtitle", Icon: MdPublic, bg: "linear-gradient(135deg, #0b3d5c, #e07000)" }]
+    : []),
   { id: "ventusky", title: "Ventusky", subtitleKey: "climateMap.sources.ventuskySubtitle", Icon: FaCloudSun, bg: "linear-gradient(135deg, #1e3c72, #2a8bd8)", cover: coverVentusky },
   { id: "windy", title: "Windy", subtitleKey: "climateMap.sources.windySubtitle", Icon: FaWind, bg: "linear-gradient(135deg, #3b1d8f, #1fa2b8)", cover: coverWindy },
   { id: "alerts-ua", titleKey: "climateMap.sources.alertsTitle", subtitleKey: "climateMap.sources.alertsSubtitle", Icon: FaBell, bg: "linear-gradient(135deg, #5c1010, #d63333)", cover: coverAlerts },
@@ -1621,6 +1628,8 @@ const BUILTIN_SOURCES = [
   { id: "airtraffic", titleKey: "climateMap.sources.airTrafficTitle", subtitle: "TheAirTraffic (ADS-B)", Icon: FaPlane, bg: "linear-gradient(135deg, #0b2545, #d98a0b)", cover: coverAirTraffic },
   { id: "deepstate", title: "DeepState", subtitleKey: "climateMap.sources.deepStateSubtitle", Icon: FaMapMarkedAlt, bg: "linear-gradient(135deg, #1b2a3a, #3d6b4f)", cover: coverDeepState },
   { id: "blitzortung", title: "Blitzortung", subtitleKey: "climateMap.sources.blitzortungSubtitle", Icon: FaBolt, bg: "linear-gradient(135deg, #1a1446, #e0b100)" },
+  // Онлайн-кінотеатр: безкоштовні фільми з Internet Archive (вільні від авторських прав), сторінка дозволяє вбудовування
+  { id: "cinema", titleKey: "climateMap.sources.cinemaTitle", subtitleKey: "climateMap.sources.cinemaSubtitle", Icon: FaFilm, bg: "linear-gradient(135deg, #3b0d2e, #b8451f)" },
 ];
 
 const BUILTIN_PROVIDERS = BUILTIN_SOURCES.map((s) => s.id);
@@ -1937,7 +1946,7 @@ const checkFrameEmbeddable = async (url) => {
   }
 };
 
-const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
+const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) => {
   const { t, i18n } = useTranslation();
   const isUkrainian = (i18n.resolvedLanguage || i18n.language) === "uk";
   const [lat, setLat] = useState(48.379);
@@ -1957,7 +1966,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   const [pipWindow, setPipWindow] = useState(null);
   const [miniFrame, setMiniFrame] = useState(0);
   const [isMiniLoading, setIsMiniLoading] = useState(true);
-  const [provider, setProvider] = useState("ventusky");
+  // На першому запуску відкривається Карта Стихії (там, де вона підключена); збережений вибір людини має пріоритет
+  const [provider, setProvider] = useState(StyxiaMap ? "styxia" : "ventusky");
   const [isPinned, setIsPinned] = useState(false);
 
   const [keyboardShortcutMode, setKeyboardShortcutMode] = useState("auto");
@@ -2074,7 +2084,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     all.forEach((item, i) => {
       if (placed.has(item.id) || item.frame) return;
       const at = i > 0 ? ordered.findIndex((x) => x.id === all[i - 1].id) : -1;
-      if (at === -1) ordered.push(item);
+      if (i === 0) ordered.unshift(item);
+      else if (at === -1) ordered.push(item);
       else ordered.splice(at + 1, 0, item);
       placed.add(item.id);
     });
@@ -2202,30 +2213,46 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
     }
   };
 
-  // «Налаштування Стихії» на кнопці завжди, під ним по черзі змінюються підказки
-  const settingsTitle = t("climateMap.settingsTitle");
-  const settingButtonTexts = useMemo(() => [
-    t(isWideLayout ? "climateMap.rotating.shortcuts" : "climateMap.rotating.addFrames"),
-    t("climateMap.rotating.pinLocation"),
-    t("climateMap.rotating.mapsAndFeatures"),
-    t("climateMap.rotating.miniPlayer"),
-    t("climateMap.rotating.fullscreen"),
-  ], [isWideLayout, t]);
+  // ── Режим створення міста: кнопка «Вибрати на мапі» (Hero) переносить сюди, на Карту Стихії,
+  // де людина показує точку. Те саме робить і кнопка «+» на самій карті
+  const [pickSignal, setPickSignal] = useState(0);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const dataLoadedRef = useRef(false);
+  const wantPickRef = useRef(false);
+  const startPick = () => {
+    if (!StyxiaMap) return;
+    if (!isMapActive) handleActivateMap();
+    handleSetProvider("styxia");
+    setPickSignal((n) => n + 1);
+    mapWrapperRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+  const startPickRef = useRef(startPick);
+  startPickRef.current = startPick;
+  useEffect(() => {
+    // Збережений вибір джерела вантажиться не одразу й перекрив би наш — тому, поки він не готовий, чекаємо
+    const onRequest = () => {
+      takePendingMapPick();
+      if (dataLoadedRef.current) startPickRef.current();
+      else wantPickRef.current = true;
+    };
+    window.addEventListener(START_MAP_PICK_EVENT, onRequest);
+    // Запит прийшов, поки карту ще не змонтовано (вона вантажиться, коли до неї доскролили)
+    if (takePendingMapPick()) wantPickRef.current = true;
+    return () => window.removeEventListener(START_MAP_PICK_EVENT, onRequest);
+  }, []);
+  useEffect(() => {
+    if (!dataLoaded || !wantPickRef.current) return;
+    wantPickRef.current = false;
+    startPickRef.current();
+  }, [dataLoaded]);
 
-  const [textIndex, setTextIndex] = useState(0);
+  // Кнопка налаштувань — лише назва, без підказок, що змінюються
+  const settingsTitle = t("climateMap.settingsTitle");
   const settingsButtonContent = (
     <SettingsButtonLabel>
       <strong>{settingsTitle}</strong>
-      <SettingsHint key={textIndex}>{settingButtonTexts[textIndex]}</SettingsHint>
     </SettingsButtonLabel>
   );
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTextIndex((prev) => (prev + 1) % settingButtonTexts.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [settingButtonTexts]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -2273,6 +2300,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
         }
       } catch (error) {
         console.error("Error loading map data:", error);
+      } finally {
+        dataLoadedRef.current = true;
+        setDataLoaded(true);
       }
     };
     loadData();
@@ -2753,6 +2783,10 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
       return `https://map.blitzortung.org/#${zoom}/${lat}/${lon}`;
     }
 
+    if (provider === "cinema") {
+      return "https://archive.org/details/feature_films";
+    }
+
     const foundFrame = customFrames.find((f) => f.id === provider);
     if (foundFrame) {
       return foundFrame.url;
@@ -2795,9 +2829,11 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
 
   // Перемикання джерела прямо в міні-плеєрі: змінює той фрейм, що в ньому показано.
   // У режимі двох фреймів джерело іншого фрейму зі списку прибираємо — щоб не стало два однакових
-  const miniCurrentId = miniShowsSecond ? secondProvider : provider;
+  // Власна карта в міні-плеєрі поки не працює — там замість неї Ventusky
+  const miniRawId = miniShowsSecond ? secondProvider : provider;
+  const miniCurrentId = miniRawId === "styxia" ? "ventusky" : miniRawId;
   const miniOtherId = isSplitActive ? (miniShowsSecond ? provider : secondProvider) : null;
-  const miniSources = orderedSources.filter((item) => item.id !== miniOtherId);
+  const miniSources = orderedSources.filter((item) => item.id !== miniOtherId && item.id !== "styxia");
   const handleMiniSelectSource = (id) => {
     if (id === miniCurrentId) return;
     if (miniShowsSecond) handleSetSecondProvider(id);
@@ -2835,6 +2871,14 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
   }, [miniEmbedUrl, isOnline, isMiniPlayerOpen]);
 
   const showFullscreenStrip = isMapFullscreen && !isMiniPlayerOpen;
+
+  // Власна карта малюється не у фреймі, а компонентом
+  const renderStyxiaMap = (onReady) =>
+    isMapActive && isOnline && (
+      <Suspense fallback={null}>
+        <StyxiaMap key={`${lat},${lon},${zoom}`} lat={lat} lon={lon} zoom={zoom} onReady={onReady} weatherCards={weatherCards} gpsEnabled={gpsEnabled} isDarkMode={isDarkMode} pickSignal={pickSignal} onPick={reportMapPick} />
+      </Suspense>
+    );
 
   return (
     <OuterContainer>
@@ -3158,31 +3202,39 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode }) => {
               $bottomInset={showFullscreenStrip ? FULLSCREEN_STRIP_HEIGHT : 0}
             >
               <FramePane>
-                <StyledIframe
-                  aria-label="Weather Map"
-                  src={isMapActive && isOnline ? embedUrl : undefined}
-                  $isLoading={isLoading}
-                  $isReady={isMapActive}
-                  onLoad={() => setIsLoading(false)}
-                  allowFullScreen
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  loading="lazy"
-                />
-              </FramePane>
-              {isSplitActive && (
-                <FramePane>
+                {StyxiaMap && provider === "styxia" ? (
+                  renderStyxiaMap(() => setIsLoading(false))
+                ) : (
                   <StyledIframe
-                    aria-label={`Weather Map (${t("climateMap.secondFrame")})`}
-                    src={isMapActive && isOnline ? secondEmbedUrl : undefined}
-                    $isLoading={isLoadingSecond}
+                    aria-label="Weather Map"
+                    src={isMapActive && isOnline ? embedUrl : undefined}
+                    $isLoading={isLoading}
                     $isReady={isMapActive}
-                    onLoad={() => setIsLoadingSecond(false)}
+                    onLoad={() => setIsLoading(false)}
                     allowFullScreen
                     sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                     referrerPolicy="strict-origin-when-cross-origin"
                     loading="lazy"
                   />
+                )}
+              </FramePane>
+              {isSplitActive && (
+                <FramePane>
+                  {StyxiaMap && secondProvider === "styxia" ? (
+                    renderStyxiaMap(() => setIsLoadingSecond(false))
+                  ) : (
+                    <StyledIframe
+                      aria-label={`Weather Map (${t("climateMap.secondFrame")})`}
+                      src={isMapActive && isOnline ? secondEmbedUrl : undefined}
+                      $isLoading={isLoadingSecond}
+                      $isReady={isMapActive}
+                      onLoad={() => setIsLoadingSecond(false)}
+                      allowFullScreen
+                      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      loading="lazy"
+                    />
+                  )}
                 </FramePane>
               )}
             </FramesGrid>

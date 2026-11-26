@@ -76,7 +76,7 @@ import { HeroVersionBadge } from "./HeroCredits";
 import QuickWeather, { ADD_CITY_OPTION } from "./QuickWeather.jsx";
 import { lazyWithRetry } from "../../utils/lazyWithRetry.js";
 import { ModalSuspense } from "../Loader/ModalLoading.jsx";
-import { OPEN_BG_MODAL_EVENT, OPEN_TIMEZONE_EVENT } from "./heroEvents.js";
+import { OPEN_BG_MODAL_EVENT, OPEN_TIMEZONE_EVENT, MAP_PICKED_EVENT, STYXIA_MAP_AVAILABLE, requestMapPick } from "./heroEvents.js";
 import { getEagerChunk, loadNews } from "../../utils/eagerChunks.js";
 import { findCityInDatabase, UKRAINE_CITIES_40, getCityRegion } from "../../utils/citiesDatabase";
 import { findServerCity } from "../../utils/serverCities";
@@ -2200,6 +2200,13 @@ const Hero = ({
     e?.preventDefault?.();
     e?.stopPropagation?.();
     setShowList(false);
+    // Карта Стихії на сторінці: точку показують на ній, а не в модалці. Модалка — лише запасний варіант
+    const mapSection = STYXIA_MAP_AVAILABLE ? document.getElementById("map") : null;
+    if (mapSection) {
+      requestMapPick();
+      mapSection.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     setIsMapOpen(true);
   };
   const handleMapPick = (lat, lon) => {
@@ -2215,6 +2222,18 @@ const Hero = ({
     setLongitude(lon.toFixed(4));
     setAutoCoordSearch(true);
   };
+
+  // Точка з Карти Стихії: далі так само, як після модалки, а сторінка повертає людину до результатів пошуку
+  const handleMapPickRef = useRef(handleMapPick);
+  handleMapPickRef.current = handleMapPick;
+  useEffect(() => {
+    const onPicked = (event) => {
+      handleMapPickRef.current(event.detail.lat, event.detail.lon);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    window.addEventListener(MAP_PICKED_EVENT, onPicked);
+    return () => window.removeEventListener(MAP_PICKED_EVENT, onPicked);
+  }, []);
 
   const [coordinateSuggestions, setCoordinateSuggestions] = useState([]);
   const [showCoordinateSuggestions, setShowCoordinateSuggestions] =
@@ -2998,7 +3017,7 @@ const Hero = ({
                             {city.state ? `, ${city.state}` : ""} ({city.country})
                             {renderServerMark(city, t)}
                             <br />
-                            <CoordsLine>
+                            <CoordsLine $isDarkMode={isDarkMode}>
                               {t("hero.coords.line", { lat: city.lat.toFixed(2), lon: city.lon.toFixed(2) })}
                             </CoordsLine>
                           </SuggestionText>
@@ -3178,7 +3197,7 @@ const Hero = ({
                               : `${city.name}${city.state ? `, ${city.state}` : ""} (${city.country})`}
                             {renderServerMark(city, t)}
                             <br />
-                            <CoordsLine>
+                            <CoordsLine $isDarkMode={isDarkMode}>
                               {t("hero.coords.line", { lat: city.lat.toFixed(2), lon: city.lon.toFixed(2) })}
                             </CoordsLine>
                           </SuggestionText>

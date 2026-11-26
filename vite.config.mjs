@@ -125,6 +125,36 @@ function newsFeedPlugin() {
   };
 }
 
+// Повітряні тривоги для «Карти Стихії» (бета, лише localhost): ubilling.net.ua не віддає CORS,
+// тож dev-сервер ходить по дані сам і кешує їх на 30 секунд. У збірку це не потрапляє
+function airAlertsPlugin() {
+  let cached = null;
+  return {
+    name: 'vite-plugin-air-alerts',
+    configureServer(server) {
+      server.middlewares.use('/api/air-alerts', async (req, res) => {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        try {
+          if (!cached || Date.now() - cached.time > 30_000) {
+            const upstream = await fetch('https://ubilling.net.ua/aerialalerts/', { signal: AbortSignal.timeout(10_000) });
+            if (!upstream.ok) throw new Error(`ubilling ${upstream.status}`);
+            cached = { time: Date.now(), body: await upstream.text() };
+          }
+          res.end(cached.body);
+        } catch (err) {
+          // Старі дані краще за порожнечу, але лише якщо вони не застарілі зовсім
+          if (cached && Date.now() - cached.time < 5 * 60_000) {
+            res.end(cached.body);
+            return;
+          }
+          res.statusCode = 502;
+          res.end(JSON.stringify({ error: String(err.message || err) }));
+        }
+      });
+    },
+  };
+}
+
 const SITE_URL = 'https://stuxia.com';
 
 // Після збірки: статична сторінка на кожне місто з бази (dist/pohoda/<slug>/index.html)
@@ -306,6 +336,7 @@ export default defineConfig(({ mode }) => {
   return {
   plugins: [
     newsFeedPlugin(),
+    airAlertsPlugin(),
     // Кожна іконка react-icons — окремий модуль, щоб іконки модалок не вантажились на старті
     reactIconsSplit(),
     react(),

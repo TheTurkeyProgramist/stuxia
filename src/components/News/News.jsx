@@ -32,13 +32,13 @@ import { NEWS_SOURCES, NEWS_DESC_TRANSLATE_MAX, cleanNewsDescription } from "../
 const NewsAiModal = lazyWithRetry(() => import("./NewsAiModal"));
 import InfoModal from "../Modals/UserSearchModal.jsx";
 import { useTutorial } from "../DominoTutorial/TutorialContext.jsx";
-import { FaLock, FaTelegramPlane } from "react-icons/fa";
-import { FaBluesky, FaMastodon } from "react-icons/fa6";
+import { FaLock } from "react-icons/fa";
+
 import { MdCheckBox, MdCheckBoxOutlineBlank } from "react-icons/md";
 import { MdReport } from "react-icons/md"; //Поскаржитися
-import { FaYoutube } from "react-icons/fa6";
-import { GiTreeBeehive } from "react-icons/gi";
-import { PiNewspaperClippingFill } from "react-icons/pi";
+
+
+
 import SourceLogo, { getSourceBrand } from "./SourceLogo.jsx";
 import { useAnimationsDisabled } from "../../utils/animationsPref";
 import { MdOutlineReportOff } from "react-icons/md"; //Заглушити
@@ -3782,7 +3782,6 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
     try {
       let resolvedUrl = inputUrl;
       let name = "";
-      let flag = <PiNewspaperClippingFill/>;
       let home = "";
       
       // @user@instance.social → профіль Mastodon
@@ -3814,7 +3813,6 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         if (channelId) {
           resolvedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
           name = `YouTube: ${domain}`;
-          flag = <FaYoutube/>;
         } else {
           alert(i18n.t("newsWeather.News.neVdalosiaZnaityId"));
           return;
@@ -3823,33 +3821,27 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         const parts = resolvedUrl.split("/");
         const channelName = parts[parts.length - 1] || parts[parts.length - 2];
         name = `Telegram: ${channelName}`;
-        flag = resolvedUrl.includes("+") || resolvedUrl.includes("joinchat") ? <FaLock/> : <FaTelegramPlane/>;
         home = resolvedUrl;
       } else if (type === "telegraph") {
         name = `Telegraph`;
-        flag = <PiNewspaperClippingFill/>;
         home = "https://telegra.ph";
       } else if (type === "hive") {
         const match = resolvedUrl.match(/withhive\.com\/([a-zA-Z0-9_-]+)/);
         const game = match ? match[1] : "Hive";
         name = `Hive: ${game}`;
-        flag = <GiTreeBeehive/>;
         home = `https://community.withhive.com/${game}`;
       } else if (/^bsky\.app$/i.test(domain) && urlObj.pathname.startsWith("/profile/")) {
         name = `Bluesky: ${urlObj.pathname.split("/")[2] || domain}`;
-        flag = <FaBluesky/>;
       } else if (/^\/@[^/]+\/?$/.test(urlObj.pathname)) {
         name = `Mastodon: ${urlObj.pathname.replace(/\//g, "")}@${domain}`;
-        flag = <FaMastodon/>;
       } else {
         name = domain;
-        flag = <PiNewspaperClippingFill/>;
       }
       
+      // Лише прості дані: об’єкт зберігається в IndexedDB, React-елемент там дає DataCloneError
       const newSource = {
         url: resolvedUrl,
         name: (typeof nameOverride === "string" && nameOverride) || name,
-        flag: flag,
         home: home,
         type: type
       };

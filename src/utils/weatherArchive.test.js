@@ -87,3 +87,9 @@ describe("рекорди архіву", () => {
     expect(getArchiveRecords([])).toBeNull();
   });
 });
+
+test("без опадів плитки «найдощовіший місяць» немає", async () => {
+  const { getArchiveRecords } = await import("./weatherArchive.js");
+  const r = getArchiveRecords([{ year: 2025, month: 10, days: 31, precip: 0, tAbsMax: 10, tAbsMaxDay: "2025-10-01", tAbsMin: 1, tAbsMinDay: "2025-10-02" }]);
+  expect(r.wettest).toBeNull();
+});

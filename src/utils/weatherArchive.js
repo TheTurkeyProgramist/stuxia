@@ -138,7 +138,8 @@ export const getArchiveRecords = (months) => {
     if (m.tAbsMax != null && m.tAbsMaxDay && (!hottest || m.tAbsMax > hottest.value)) hottest = { value: m.tAbsMax, day: m.tAbsMaxDay };
     if (m.tAbsMin != null && m.tAbsMinDay && (!coldest || m.tAbsMin < coldest.value)) coldest = { value: m.tAbsMin, day: m.tAbsMinDay };
     const full = m.days >= new Date(m.year, m.month, 0).getDate();
-    if (full && m.precip != null && (!wettest || m.precip > wettest.value)) wettest = { value: m.precip, year: m.year, month: m.month };
+    // менше пів міліметра за місяць показувалось би як «0 мм» — тоді плитки немає
+    if (full && m.precip != null && m.precip >= 0.5 && (!wettest || m.precip > wettest.value)) wettest = { value: m.precip, year: m.year, month: m.month };
   });
   return hottest || coldest || wettest ? { hottest, coldest, wettest } : null;
 };

@@ -220,6 +220,27 @@ body[data-theme="dark"]::-webkit-scrollbar-thumb:hover {
   background-color: rgba(255, 255, 255, 1);
 }
 
+/* Денна тема: сторінка світла, а білий скролбар на світлому не видно. Синій повзунок із сірою доріжкою видно
+   і на світлому, і на темному фоні. Тему ставить App.jsx: <html data-scroll-theme="light"> */
+html[data-scroll-theme="light"] {
+  scrollbar-color: rgba(0, 120, 215, 0.9) rgba(128, 128, 128, 0.22);
+}
+html[data-scroll-theme="light"]::-webkit-scrollbar-track {
+  background: rgba(128, 128, 128, 0.22);
+}
+html[data-scroll-theme="light"]::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 120, 215, 0.9);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+html[data-scroll-theme="light"]::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 95, 184, 1);
+}
+/* Дзеркальний режим: сторінку прокручує body */
+html.site-mirrored[data-scroll-theme="light"] body {
+  scrollbar-color: rgba(0, 120, 215, 0.9) rgba(128, 128, 128, 0.22);
+}
+
 /* Горизонтальні скролбари всередині блоків (годинна таблиця/блоки/графіки) */
 *::-webkit-scrollbar-track {
   background: rgba(128, 128, 128, 0.18);

@@ -368,24 +368,11 @@ const WeatherCardsContainer = styled.div`
   width: 100%;
   scroll-behavior: smooth;
 
+  /* Без нижньої смужки прокрутки: гортають стрілки, номери, список міст і свайп/колесо */
+  scrollbar-width: none;
+
   &::-webkit-scrollbar {
-    height: 18px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.12);
-    border-radius: 999px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: linear-gradient(90deg, #00ffe5, #8bdcff);
-    border-radius: 999px;
-    border: 3px solid transparent;
-    background-clip: padding-box;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(90deg, #6ef5ea, #b3ecff);
+    display: none;
   }
 
   > * {
@@ -803,6 +790,39 @@ const ReorderToggle = styled.button`
   }
 `;
 
+/* Телефон: перемикачі «◀▶» і «123» у рядку над картками — бічної панелі з ними там немає */
+const CarouselSwitchButton = styled.button`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 8px 8px;
+  border-radius: 8px;
+  border: 2px solid #00ffe5;
+  background: ${(props) => (props.$active ? "#00ffe5" : props.$isDarkMode ? "#000" : "#fff")};
+  color: ${(props) => (props.$active ? "#000" : props.$isDarkMode ? "#00ffe5" : "#006b61")};
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: -0.5px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 255, 229, 0.25);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 0 16px rgba(0, 255, 229, 0.5);
+  }
+
+  @media (max-width: 380px) {
+    min-width: 36px;
+    padding: 8px 5px;
+    font-size: 12px;
+  }
+`;
+
 const ReorderHint = styled.p`
   margin: 0 0 6px;
   font-size: 12px;
@@ -1037,12 +1057,52 @@ const CityJumpInput = styled.input`
   }
 `;
 
+/* Тонка смужка прокрутки в стилі панелі: без стрілок ▲▼ і товстої системної смуги.
+   dark: true — темна панель, false — денна (темніший бірюзовий і підсвічена доріжка, щоб було видно на білому),
+   без аргумента — для списків, що не знають теми */
+const thinScrollbarFor = (dark) => {
+  const thumb = dark === false ? "#00a896" : dark ? "#00ffe5" : "#00bfa8";
+  const hover = dark === false ? "#007f70" : "#8bdcff";
+  const track = dark === false ? "rgba(0, 107, 97, 0.14)" : dark ? "rgba(0, 255, 229, 0.14)" : "rgba(0, 191, 168, 0.18)";
+  return css`
+    scrollbar-width: thin;
+    scrollbar-color: ${thumb} ${track};
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: ${track};
+      border-radius: 999px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: ${thumb};
+      border-radius: 999px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: ${hover};
+    }
+
+    &::-webkit-scrollbar-button {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+  `;
+};
+
 const CityJumpList = styled.ul`
   list-style: none;
   margin: 0;
   padding: 0;
   max-height: 240px;
   overflow-y: auto;
+  /* Лише вертикальна прокрутка: довга назва не розтягує список і не дає нижньої смужки */
+  overflow-x: hidden;
+  ${thinScrollbarFor()}
 `;
 
 const CityJumpItem = styled.li`
@@ -1142,6 +1202,12 @@ const CitySidebar = styled.aside`
   color: ${(props) => (props.$isDarkMode ? "#00ffe5" : "#006b61")};
   box-shadow: 0 0 10px rgba(0, 255, 229, 0.25);
   z-index: 9500;
+
+  /* Список міст і режим перетягування — теж тонка смужка без горизонтальної прокрутки */
+  ul {
+    overflow-x: hidden;
+    ${(props) => thinScrollbarFor(props.$isDarkMode)}
+  }
 
   ${CityJumpInput} {
     margin: 0;
@@ -1250,11 +1316,16 @@ const CitySidebarList = styled(CityJumpList)`
   flex: 1;
   min-height: 0;
   max-height: none;
+
+  & > li {
+    min-width: 0;
+  }
 `;
 
 /* Місто в панелі — плитка з фото фону цієї картки (як «Годинна» / «Прогноз на 16 днів») */
 const CitySidebarTile = styled.button`
   width: 100%;
+  max-width: 100%;
   min-height: 52px;
   box-sizing: border-box;
   display: flex;
@@ -1355,6 +1426,7 @@ const sidebarReorderGroupStyle = {
   margin: 0,
   padding: 0,
   overflowY: "auto",
+  overflowX: "hidden",
 };
 
 // Два місця ближче за це (км) вважаємо одним містом — щоб не було однакових карток
@@ -1608,6 +1680,9 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
     .map((label, index) => ({ label: label || i18n.t("ui.App.kartka", { v0: index + 1 }), index }))
     .filter(({ label }) => !normalizedQuery || label.toLowerCase().includes(normalizedQuery));
 
+  const showArrows = usePrefValue(CAROUSEL_ARROWS_HIDDEN_KEY, "false") !== "true";
+  const showNumbers = usePrefValue(CAROUSEL_NUMBERS_HIDDEN_KEY, "false") !== "true";
+
   const cityJumpBlock = childCount > 1 && (
         <CityJumpWrapper ref={cityJumpRef}>
           <CityJumpToggle
@@ -1641,6 +1716,30 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
               <span>{i18n.t("ui.App.poriadok")}</span>
             </ReorderToggle>
           )}
+          <CarouselSwitchButton
+            type="button"
+            role="switch"
+            $isDarkMode={isDarkMode}
+            $active={showArrows}
+            aria-checked={showArrows}
+            title={showArrows ? i18n.t("ui.App.skhovatyStrilky") : i18n.t("ui.App.pokazatyStrilky")}
+            aria-label={i18n.t("ui.App.strilkyHortanniaKartok")}
+            onClick={() => togglePrefFlag(CAROUSEL_ARROWS_HIDDEN_KEY)}
+          >
+            ◀▶
+          </CarouselSwitchButton>
+          <CarouselSwitchButton
+            type="button"
+            role="switch"
+            $isDarkMode={isDarkMode}
+            $active={showNumbers}
+            aria-checked={showNumbers}
+            title={showNumbers ? i18n.t("ui.App.skhovatyNomeryKartok") : i18n.t("ui.App.pokazatyNomeryKartok")}
+            aria-label={i18n.t("ui.App.nomeryKartok")}
+            onClick={() => togglePrefFlag(CAROUSEL_NUMBERS_HIDDEN_KEY)}
+          >
+            123
+          </CarouselSwitchButton>
           {isReorderOpen && onReorder && (
             <CityJumpDropdown $isDarkMode={isDarkMode}>
               <ReorderHint $isDarkMode={isDarkMode}>
@@ -1759,8 +1858,6 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
   }, [isWideRow, activeIndex, childCount]);
 
   // Окремо вимикаються в «Налаштування» картки та в панелі міст
-  const showArrows = usePrefValue(CAROUSEL_ARROWS_HIDDEN_KEY, "false") !== "true";
-  const showNumbers = usePrefValue(CAROUSEL_NUMBERS_HIDDEN_KEY, "false") !== "true";
   const numbersInCard = isWideRow && !!sidebarBox;
   // Номери — по центру смуги між основною частиною картки й її нижньою рамкою.
   // Якщо смуга вужча за кнопки (30px + запас) — притискаємо до низу основної частини
@@ -2279,7 +2376,14 @@ const SectionContent = memo(
     return (
       <div id={section.key}>
         {section.key === "map" && (
-          <LazyClimateMap isDarkMode={isDarkMode} isStickyBgMode={isStickyBgMode} />
+          <LazyClimateMap
+            isDarkMode={isDarkMode}
+            isStickyBgMode={isStickyBgMode}
+            // Власні картки — точками на «Карті Стихії» (бета, лише localhost)
+            weatherCards={import.meta.env.DEV ? weatherCards : undefined}
+            // Поки GPS на картці вимкнено, головна картка — звичайна, без позначки GPS
+            gpsEnabled={import.meta.env.DEV ? isLocationEnabled : undefined}
+          />
         )}
         {section.key === "prison" && <Prison />}
       </div>

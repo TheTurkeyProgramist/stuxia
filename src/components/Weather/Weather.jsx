@@ -1837,9 +1837,9 @@ const WeatherCardComponent = ({
   const [units, setUnits] = useState(DEFAULT_UNITS);
   const [unitsGlobal, setUnitsGlobal] = useState(true); // одиниці спільні для всіх карток
   const unit = units.temp; // "C", "K", "F"
-  // Похибка прогнозу (розбіжність моделей) для підпису біля температури: «±1.0°C»
+  // Похибка прогнозу (розбіжність моделей) для підпису біля температури: «±1.0°C»; менше 0,1° — не показуємо
   const tempSpreadLabel =
-    card.accuracy?.models?.length > 0 && typeof card.accuracy.tempSpread === "number"
+    card.accuracy?.models?.length > 0 && typeof card.accuracy.tempSpread === "number" && card.accuracy.tempSpread >= 0.1
       ? `±${(unit === "F" ? card.accuracy.tempSpread * 1.8 : card.accuracy.tempSpread).toFixed(1)}${unit === "F" ? "°F" : unit === "K" ? "K" : "°C"}`
       : null;
   const tempSpreadTitle = tempSpreadLabel

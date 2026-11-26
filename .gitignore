@@ -45,3 +45,6 @@ pb_data/
 
 # Тимчасові файли wrangler (деплой на Cloudflare)
 .wrangler/
+
+# Дані Карти Стихії (bun run weather:build)
+weather-data/

@@ -55,6 +55,7 @@
     "dev:cloudflare": "bun run build && bun x wrangler pages dev",
     "test": "bun test src",
     "test:rules": "bun x firebase-tools@13.35.1 emulators:exec --only firestore --project demo-stuxia \"node tests/firestore.rules.test.mjs\"",
+    "weather:build": "bun scripts/weather-map/build.mjs",
     "star": "node server/index.js"
   },
   "eslintConfig": {
