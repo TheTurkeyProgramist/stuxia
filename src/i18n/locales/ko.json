@@ -210,7 +210,9 @@
       "temperature": "기온",
       "wind": "바람",
       "noData": "지도 데이터가 없습니다. 터미널에서 실행하세요:",
-      "dataTime": "데이터 시각"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "기후 지도",
     "sources": {

@@ -210,7 +210,9 @@
       "temperature": "الحرارة",
       "wind": "الرياح",
       "noData": "لا توجد بيانات للخريطة. نفّذ في الطرفية:",
-      "dataTime": "البيانات بتاريخ"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "الخريطة المناخية",
     "sources": {

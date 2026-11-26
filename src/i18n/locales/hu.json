@@ -210,7 +210,9 @@
       "temperature": "Hőmérséklet",
       "wind": "Szél",
       "noData": "Nincsenek térképadatok. Futtasd a terminálban:",
-      "dataTime": "Adatok időpontja"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "Klímatérkép",
     "sources": {

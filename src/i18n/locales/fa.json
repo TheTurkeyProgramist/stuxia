@@ -210,7 +210,9 @@
       "temperature": "دما",
       "wind": "باد",
       "noData": "داده‌ای برای نقشه نیست. در ترمینال اجرا کنید:",
-      "dataTime": "داده‌ها در"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "نقشهٔ اقلیمی",
     "sources": {

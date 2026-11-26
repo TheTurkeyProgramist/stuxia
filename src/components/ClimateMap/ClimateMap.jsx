@@ -28,8 +28,8 @@ import coverDeepState from "../../media/third-party/services/deepstate.webp?w=36
 import { usePageActive } from "../../utils/pageActivity.js";
 import FunTicker from "./FunTicker";
 import { START_MAP_PICK_EVENT, takePendingMapPick, reportMapPick } from "../Hero/heroEvents.js";
-// «Карта Стихії» — бета: лише на localhost (dev), у збірку не потрапляє
-const StyxiaMap = import.meta.env.DEV ? lazy(() => import("./StyxiaMap")) : null;
+// «Карта Стихії» — власна карта, окремим чанком (дані оновлює .github/workflows/cloudflare.yml)
+const StyxiaMap = lazy(() => import("./StyxiaMap"));
 // Ctrl + Alt + M: Активувати/деактивувати мапу
 // Ctrl + Alt + F: Відкрити на весь екран
 // Ctrl + Alt + P: Відкрити/закрити міні-плеєр
@@ -1614,9 +1614,7 @@ const FormCancelButton = styled(FormButton)`
 
 const BUILTIN_SOURCES = [
   // Карта Стихії — перша в списку
-  ...(import.meta.env.DEV
-    ? [{ id: "styxia", titleKey: "climateMap.sources.styxiaTitle", subtitleKey: "climateMap.sources.styxiaSubtitle", Icon: MdPublic, bg: "linear-gradient(135deg, #0b3d5c, #e07000)" }]
-    : []),
+  { id: "styxia", titleKey: "climateMap.sources.styxiaTitle", subtitleKey: "climateMap.sources.styxiaSubtitle", Icon: MdPublic, bg: "linear-gradient(135deg, #0b3d5c, #e07000)" },
   { id: "ventusky", title: "Ventusky", subtitleKey: "climateMap.sources.ventuskySubtitle", Icon: FaCloudSun, bg: "linear-gradient(135deg, #1e3c72, #2a8bd8)", cover: coverVentusky },
   { id: "windy", title: "Windy", subtitleKey: "climateMap.sources.windySubtitle", Icon: FaWind, bg: "linear-gradient(135deg, #3b1d8f, #1fa2b8)", cover: coverWindy },
   { id: "alerts-ua", titleKey: "climateMap.sources.alertsTitle", subtitleKey: "climateMap.sources.alertsSubtitle", Icon: FaBell, bg: "linear-gradient(135deg, #5c1010, #d63333)", cover: coverAlerts },
@@ -1967,7 +1965,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
   const [miniFrame, setMiniFrame] = useState(0);
   const [isMiniLoading, setIsMiniLoading] = useState(true);
   // На першому запуску відкривається Карта Стихії (там, де вона підключена); збережений вибір людини має пріоритет
-  const [provider, setProvider] = useState(StyxiaMap ? "styxia" : "ventusky");
+  const [provider, setProvider] = useState("styxia");
   const [isPinned, setIsPinned] = useState(false);
 
   const [keyboardShortcutMode, setKeyboardShortcutMode] = useState("auto");
@@ -2220,7 +2218,6 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
   const dataLoadedRef = useRef(false);
   const wantPickRef = useRef(false);
   const startPick = () => {
-    if (!StyxiaMap) return;
     if (!isMapActive) handleActivateMap();
     handleSetProvider("styxia");
     setPickSignal((n) => n + 1);
@@ -3202,7 +3199,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
               $bottomInset={showFullscreenStrip ? FULLSCREEN_STRIP_HEIGHT : 0}
             >
               <FramePane>
-                {StyxiaMap && provider === "styxia" ? (
+                {provider === "styxia" ? (
                   renderStyxiaMap(() => setIsLoading(false))
                 ) : (
                   <StyledIframe
@@ -3220,7 +3217,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
               </FramePane>
               {isSplitActive && (
                 <FramePane>
-                  {StyxiaMap && secondProvider === "styxia" ? (
+                  {secondProvider === "styxia" ? (
                     renderStyxiaMap(() => setIsLoadingSecond(false))
                   ) : (
                     <StyledIframe

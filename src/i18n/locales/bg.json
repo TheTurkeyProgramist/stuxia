@@ -210,7 +210,9 @@
       "temperature": "Температура",
       "wind": "Вятър",
       "noData": "Няма данни за картата. Изпълнете в терминала:",
-      "dataTime": "Данни към"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "Климатична карта",
     "sources": {

@@ -210,7 +210,9 @@
       "temperature": "Тэмпература",
       "wind": "Вецер",
       "noData": "Няма даных карты. Выканайце ў тэрмінале:",
-      "dataTime": "Даныя на"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "Кліматычная мапа",
     "sources": {

@@ -125,8 +125,8 @@ function newsFeedPlugin() {
   };
 }
 
-// Повітряні тривоги для «Карти Стихії» (бета, лише localhost): ubilling.net.ua не віддає CORS,
-// тож dev-сервер ходить по дані сам і кешує їх на 30 секунд. У збірку це не потрапляє
+// Повітряні тривоги для «Карти Стихії» : ubilling.net.ua не віддає CORS,
+// тож dev-сервер ходить по дані сам і кешує їх на 30 секунд. У проді це functions/api/air-alerts.js
 function airAlertsPlugin() {
   let cached = null;
   return {
@@ -396,6 +396,8 @@ export default defineConfig(({ mode }) => {
           '**/assets/i18n/**',
           // Карта вибору місця (Leaflet) — окремий великий чанк, потрібен лише тим, хто відкриє карту
           '**/MapPicker-*',
+          // Карта Стихії з MapLibre: без мережі вона все одно не працює
+          '**/maplibre-gl*', '**/StyxiaMap-*',
         ],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',

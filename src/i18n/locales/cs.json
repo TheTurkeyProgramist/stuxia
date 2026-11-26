@@ -210,7 +210,9 @@
       "temperature": "Teplota",
       "wind": "Vítr",
       "noData": "Chybí data mapy. Spusťte v terminálu:",
-      "dataTime": "Data k"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "Klimatická mapa",
     "sources": {

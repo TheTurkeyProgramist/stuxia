@@ -210,7 +210,9 @@
       "temperature": "Temperatur",
       "wind": "Vind",
       "noData": "Kartdata saknas. Kör i terminalen:",
-      "dataTime": "Data från"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "Klimatkarta",
     "sources": {

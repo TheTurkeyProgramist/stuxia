@@ -210,7 +210,9 @@
       "temperature": "Température",
       "wind": "Vent",
       "noData": "Aucune donnée pour la carte. Exécutez dans le terminal :",
-      "dataTime": "Données du"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "Carte climatique",
     "sources": {

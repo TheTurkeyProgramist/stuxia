@@ -210,7 +210,9 @@
       "temperature": "Sıcaklık",
       "wind": "Rüzgâr",
       "noData": "Harita verisi yok. Terminalde çalıştırın:",
-      "dataTime": "Veri zamanı"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "İklim haritası",
     "sources": {

@@ -210,7 +210,9 @@
       "temperature": "Temperatura",
       "wind": "Viento",
       "noData": "No hay datos del mapa. Ejecuta en la terminal:",
-      "dataTime": "Datos del"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "Mapa climático",
     "sources": {

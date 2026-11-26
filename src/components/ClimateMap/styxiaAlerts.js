@@ -1,7 +1,7 @@
 // Повітряні тривоги на «Карті Стихії»: безкоштовно, без ключа.
 // Стан областей — ubilling.net.ua (неофіційний агрегатор), межі — geoBoundaries (OSM, ODbL).
 // Браузер не може читати ubilling напряму (немає CORS), тому запит іде через /api/air-alerts
-// (у dev — проксі з vite.config.mjs).
+// (у dev — проксі з vite.config.mjs, у проді — functions/api/air-alerts.js).
 
 export const ALERTS_URL = "/api/air-alerts";
 

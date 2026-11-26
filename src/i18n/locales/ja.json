@@ -210,7 +210,9 @@
       "temperature": "気温",
       "wind": "風",
       "noData": "地図データがありません。ターミナルで実行してください：",
-      "dataTime": "データ時刻"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "気候マップ",
     "sources": {

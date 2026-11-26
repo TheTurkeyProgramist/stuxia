@@ -210,7 +210,9 @@
       "temperature": "Temperatuur",
       "wind": "Wind",
       "noData": "Geen kaartgegevens. Voer uit in de terminal:",
-      "dataTime": "Gegevens van"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "Klimaatkaart",
     "sources": {

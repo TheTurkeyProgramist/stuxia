@@ -3,8 +3,7 @@ export const OPEN_BG_MODAL_EVENT = "hero-open-bg-modal";
 export const OPEN_TIMEZONE_EVENT = "hero-open-timezone";
 
 // «Вибрати на мапі»: замість модалки Hero переносить на Карту Стихії, де людина показує точку.
-// Карта підключена лише там, де вона вже є на сторінці (поки — localhost); решта користується модалкою.
-export const STYXIA_MAP_AVAILABLE = Boolean(import.meta.env?.DEV);
+export const STYXIA_MAP_AVAILABLE = true;
 export const START_MAP_PICK_EVENT = "styxia-start-map-pick";
 export const MAP_PICKED_EVENT = "styxia-map-picked";
 

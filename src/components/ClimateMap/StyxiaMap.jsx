@@ -1,4 +1,4 @@
-// «Карта Стихії» (бета, лише localhost): власна карта на MapLibre + OpenFreeMap.
+// «Карта Стихії»: власна карта на MapLibre + OpenFreeMap.
 // Дані GFS готує `bun run weather:build` у weather-data/ (див. scripts/weather-map/build.mjs).
 // Обраний шар (styxiaLayers.js) — растр під підписами, вітер — частинки на окремому canvas,
 // унизу повзунок часу прогнозу, у Україні — заливка областей із повітряною тривогою.
@@ -20,6 +20,7 @@ import {
 import { fetchAirAlerts, regionsWithAlerts, alertLabels, alertSummary, sinceLabel } from "./styxiaAlerts.js";
 import { isobarFeatures } from "./styxiaIsolines.js";
 import { collectPlaces, buildGrids, createTaken, placeFeatures } from "./styxiaPlaces.js";
+import { uniquePoints, notDuplicate, atFrame } from "./styxiaDedupe.js";
 import { fadeUp, slideIn, pulse, revealed, pressable, themeTokens } from "./styxiaMotion.js";
 import StyxiaPanel from "./StyxiaPanel.jsx";
 import StyxiaTimeline from "./StyxiaTimeline.jsx";
@@ -309,7 +310,7 @@ const Sensor = styled.div`
   b {
     position: absolute;
     left: 12px;
-    top: 12px;
+    bottom: 16px;
     padding: 3px 11px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.96);
@@ -326,8 +327,8 @@ const Sensor = styled.div`
   }
 
   &[data-fy="1"] b {
-    top: auto;
-    bottom: 12px;
+    bottom: auto;
+    top: 16px;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -784,6 +785,17 @@ const Message = styled.p`
     display: block;
     margin-top: 4px;
   }
+`;
+
+const AlertsDisclaimer = styled.p`
+  margin: 0;
+  max-width: 220px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(10, 16, 28, 0.78);
+  color: #fff;
+  font-size: 10px;
+  line-height: 1.3;
 `;
 
 const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMode = true, pickSignal = 0, onPick }) => {
@@ -1264,7 +1276,8 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     const box = containerRef.current;
     // Біля правого й нижнього країв плашка перекидається на інший бік курсора
     el.dataset.fx = pointer.x > box.clientWidth - 150 ? "1" : "0";
-    el.dataset.fy = pointer.y > box.clientHeight - 70 ? "1" : "0";
+    // Типово плашка над курсором; під самим верхнім краєм — під ним
+    el.dataset.fy = pointer.y < 60 ? "1" : "0";
     el.style.transform = `translate(${pointer.x}px, ${pointer.y}px)`;
     el.style.opacity = "1";
   }, []);
@@ -1566,7 +1579,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
   );
 
   useEffect(() => {
-    if (!meta || !showPlaces) return undefined;
+    if (!meta || !(showPlaces || (showOwn && !liveNow))) return undefined;
     let cancelled = false;
     // Затримка: під час відтворення кадри міняються швидко, а завантажувати на кожен три файли не варто
     const timer = setTimeout(() => {
@@ -1582,16 +1595,17 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [meta, frame, showPlaces, ensureGrids]);
+  }, [meta, frame, showPlaces, showOwn, liveNow, ensureGrids]);
 
   useEffect(() => {
     if (!pointsReady) return;
-    const own = showOwn ? ownFeatures(weatherCards, { gps: gpsEnabled }) : [];
-    const notNear = (list, dx, dy) => ({ geometry: { coordinates: [x, y] } }) =>
-      list.every(({ geometry: { coordinates: [ox, oy] } }) => Math.abs(ox - x) > dx || Math.abs(oy - y) > dy);
-    // Місто, на яке вже є власна картка, не дублюємо
-    const server = showServer ? serverFeatures(lang, liveNow ? null : forecast).filter(notNear(own, 0.07, 0.05)) : [];
-    const world = showWorld && forecast ? worldFeatures(cityData, forecast, lang).filter(notNear(own, 0.3, 0.2)) : [];
+    let own = showOwn ? uniquePoints(ownFeatures(weatherCards, { gps: gpsEnabled })) : [];
+    // На інших кадрах картки показують прогноз моделі на той самий час, що й фон, а не «зараз»
+    if (!liveNow) own = atFrame(own, grids?.frame === frame ? grids.data : null, new Date(validTime));
+    // Місто, на яке вже є власна картка, не дублюємо: лишається одна мітка кольору картки
+    const free = notDuplicate(own);
+    const server = showServer ? serverFeatures(lang, liveNow ? null : forecast).filter(free) : [];
+    const world = showWorld && forecast ? worldFeatures(cityData, forecast, lang).filter(free) : [];
     const curated = [...server, ...world, ...own];
     // Решта міст і сіл із плиток — лише там, де ще нічого немає: не поруч із готовою точкою й не з тією ж назвою
     let places = [];
@@ -1599,13 +1613,13 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
       const zoom = mapRef.current.getZoom();
       const taken = createTaken(curated, Math.max(0.01, 0.5 / 2 ** (zoom - 3)));
       const validAt = new Date(Date.parse(meta.time) + meta.hours[grids.frame] * 3600000);
-      places = placeFeatures(placeList, grids.data, validAt, taken);
+      places = placeFeatures(placeList, grids.data, validAt, taken).filter(free);
     }
     // Біля міст значення вибраного шару (опади, тиск…), а не завжди температура
     const all = [...places, ...curated];
     const decorated = valuePlane && layer && valuePlane.layerId === layer.id ? applyLayerValues(all, layer, valuePlane.plane, meta) : all;
     mapRef.current.getSource("styxia-points").setData({ type: "FeatureCollection", features: decorated });
-  }, [pointsReady, showServer, showWorld, showOwn, showPlaces, placeList, grids, meta, weatherCards, serverVersion, lang, forecast, liveNow, cityData, gpsEnabled, layer, valuePlane]);
+  }, [pointsReady, showServer, showWorld, showOwn, showPlaces, placeList, grids, meta, weatherCards, serverVersion, lang, forecast, liveNow, cityData, gpsEnabled, layer, valuePlane, frame, validTime]);
 
   // Коли малюємо власні назви міст і сіл (з погодою), підписи самої підкладки ховаємо: інакше кожне місто
   // підписане двічі. Підписи країн, областей, островів і околиць лишаються; хутори малюємо самі
@@ -2060,12 +2074,13 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
             {meta && (
               <div className="more" aria-hidden={!legendOpen}>
                 <span>
-                  {t("climateMap.styxia.dataTime")}: {new Date(meta.time).toLocaleString(lang, { dateStyle: "short", timeStyle: "short" })}
+                  {t("climateMap.styxia.dataTime")}: {new Date(meta.time).toLocaleString(lang, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>
             )}
           </LegendCard>
         )}
+        {alertsOn && <AlertsDisclaimer>{t("climateMap.styxia.alertsDisclaimer")}</AlertsDisclaimer>}
         {showWatermark && (
           <Watermark>
             <img src={stuxiaIcon} alt="" />
@@ -2115,8 +2130,8 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
       )}
       {failed && (
         <Message role="alert">
-          {t("climateMap.styxia.noData")}
-          <code>bun run weather:build</code>
+          {t(import.meta.env.DEV ? "climateMap.styxia.noData" : "climateMap.styxia.noDataPublic")}
+          {import.meta.env.DEV && <code>bun run weather:build</code>}
         </Message>
       )}
     </Root>

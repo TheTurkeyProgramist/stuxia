@@ -210,7 +210,9 @@
       "temperature": "Q'uñi kay",
       "wind": "Wayra",
       "noData": "Mapapaq willay mana kanchu. Terminalpi puririchiy:",
-      "dataTime": "Willaypa pachan"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "Pacha kawsay mapa",
     "sources": {

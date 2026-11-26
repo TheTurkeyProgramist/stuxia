@@ -210,7 +210,9 @@
       "temperature": "Heerkulka",
       "wind": "Dabayl",
       "noData": "Xog khariidad ma jirto. Ku socodsii terminal-ka:",
-      "dataTime": "Xogta taariikhda"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "Khariidadda cimilada",
     "sources": {

@@ -210,7 +210,9 @@
       "temperature": "Temperatură",
       "wind": "Vânt",
       "noData": "Nu există date pentru hartă. Rulează în terminal:",
-      "dataTime": "Date din"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "Hartă climatică",
     "sources": {

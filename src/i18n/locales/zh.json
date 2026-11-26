@@ -210,7 +210,9 @@
       "temperature": "温度",
       "wind": "风",
       "noData": "没有地图数据。请在终端运行：",
-      "dataTime": "数据时间"
+      "dataTime": "GFS model run:",
+      "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
     },
     "title": "气候地图",
     "sources": {

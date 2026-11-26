@@ -2,9 +2,18 @@ name: Deploy to Cloudflare Pages
 on:
   push:
     branches: [main]
+  # Свіжі дані «Карти Стихії»: GFS запускається о 00/06/12/18 UTC і викладається приблизно за 5 год
+  schedule:
+    - cron: "20 5,11,17,23 * * *"
+  workflow_dispatch:
+# Деплої по черзі, щоб запуск за розкладом не перегнав свіжіший push
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: false
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       deployments: write
@@ -13,6 +22,31 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run build
+
+      # Остання вдала збірка погоди — на випадок, якщо NOAA зараз недоступна
+      - uses: actions/cache/restore@v4
+        with:
+          path: weather-data
+          key: weather-data-${{ github.run_id }}
+          restore-keys: weather-data-
+      - name: Дані Карти Стихії (GFS)
+        id: weather
+        run: |
+          if [ -d weather-data ]; then cp -r weather-data weather-data.prev; fi
+          if bun run weather:build; then
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Не вдалося зібрати свіжі дані GFS, лишаються попередні"
+            rm -rf weather-data
+            if [ -d weather-data.prev ]; then mv weather-data.prev weather-data; fi
+          fi
+          if [ -d weather-data ]; then cp -r weather-data dist/weather-data; fi
+      - uses: actions/cache/save@v4
+        if: steps.weather.outputs.fresh == 'true'
+        with:
+          path: weather-data
+          key: weather-data-${{ github.run_id }}
+
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
