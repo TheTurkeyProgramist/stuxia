@@ -411,6 +411,8 @@ const UserBadge = styled.div`
 
 const UserAvatarThumb = styled.img`
   width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  /* На вузькому екрані місце потрібніше назві й кнопкам */
+  @media (max-width: 420px) { display: none; }
 `;
 
 // Довга пошта обрізається посередині: «дуже-довге-ім…@gmail.com» — домен лишається видимим.
@@ -438,7 +440,7 @@ const AccountName = ({ value }) => {
   );
 };
 
-const HeaderTitle = styled.h2`font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2; color: var(--s-text);`;
+const HeaderTitle = styled.h2`font-size: 15px; font-weight: 600; margin: 0; line-height: 1.2; color: var(--s-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`;
 const HeaderSub = styled.span`
   font-size: 11px; line-height: 1.2; color: var(--s-muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -446,7 +448,14 @@ const HeaderSub = styled.span`
 
 // Кнопки шапки — спільні для модалок (modalHeaderButtons.js), кольори з тем налаштувань:
 // див. --mhb-* у WindowHeader. «Зберегти» з $idle — приглушене, поки немає змін.
-const HeaderActions = ModalHeaderActions;
+// Телефон: чотири кнопки вужчі, щоб не наїжджати на «Параметри»
+const HeaderActions = styled(ModalHeaderActions)`
+  @media (max-width: 520px) {
+    gap: 0;
+    & > button { min-width: 44px; padding: 2px 3px; }
+    & > button > span { font-size: 9px; }
+  }
+`;
 const HeaderButton = ModalHeaderButton;
 const CloseButton = ModalHeaderCloseButton;
 const PrimaryHeaderButton = ModalHeaderPrimaryButton;
