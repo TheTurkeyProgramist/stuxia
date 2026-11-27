@@ -212,7 +212,9 @@
       "noData": "Geen kaartgegevens. Voer uit in de terminal:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Hoogte",
+      "auto": "Auto"
     },
     "title": "Klimaatkaart",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Volledig scherm"
     },
     "invalidUrl": "Voer een geldige link in (https://...)",
+    "frameLimit": "Je kunt maximaal {{max}} eigen frames toevoegen. Verwijder er een om een nieuwe toe te voegen.",
     "frameBlocked": "{{host}} staat weergave in een frame niet toe en kan dus niet worden toegevoegd.",
     "selfFrame": "De site kan niet in zichzelf worden ingesloten. Kies een andere site.",
     "frameChecking": "Controleren…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Vul je Gmail en wachtwoord in!",
       "nevirnyiGmailAboParol": "Verkeerde Gmail of verkeerd wachtwoord!",
       "neVdalosiaUviitySprobuite": "Inloggen mislukt. Probeer het opnieuw.",
+      "accountsLimit": "Op één apparaat kun je maximaal {{max}} accounts gebruiken.",
       "pidtverditShchoVamIe": "Bevestig dat je minstens 14 bent en accepteer de overeenkomst!",
       "korystuvach": "Gebruiker",
       "pomylkaGoogle": "Google-fout: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Overeenkomst",
       "vyityZAkauntaI": "Uitloggen en alle sitegegevens op dit apparaat wissen",
       "skynutySait": "Site resetten",
+      "limitsButton": "Limieten",
+      "limitsTitle": "Limieten van vandaag",
+      "limitsSettings": "Instellingen, eigen feeds en frames",
+      "limitsCards": "Weerkaarten",
+      "limitsMute": "Gedempt nieuws",
+      "limitsAdditions": "Kaarten toevoegen",
+      "limitsReports": "Meldingen over nieuws",
+      "limitsReset": "Vernieuwd om middernacht UTC.",
+      "limitsSavedTitle": "Opgeslagen",
+      "limitsFeeds": "Eigen feeds",
+      "limitsFrames": "Eigen frames",
+      "limitsNote": "We zijn een niet-commercieel project, dus je kunt de limieten niet verhogen!",
+      "limitsAccounts": "Accounts op dit apparaat",
+      "limitsSyncNote": "Synclimiet op? Blijf gerust wijzigen: alles blijft op dit apparaat en komt de volgende dag op de andere. Kaarten toevoegen en melden kan morgen weer. De limieten komen door de quota van Firebase.",
       "deleteConfirmWord": "VERWIJDEREN"
     },
     "WeatherBgModal": {

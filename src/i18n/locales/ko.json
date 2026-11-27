@@ -212,7 +212,9 @@
       "noData": "지도 데이터가 없습니다. 터미널에서 실행하세요:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "고도",
+      "auto": "자동"
     },
     "title": "기후 지도",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "전체 화면 모드"
     },
     "invalidUrl": "올바른 링크를 입력하세요 (https://...)",
+    "frameLimit": "사용자 프레임은 최대 {{max}}개까지 추가할 수 있습니다. 새로 추가하려면 하나를 삭제하세요.",
     "frameBlocked": "{{host}}은(는) 프레임 안에서 표시를 허용하지 않아 추가할 수 없습니다.",
     "selfFrame": "이 사이트는 자기 자신 안에 삽입할 수 없습니다. 다른 사이트를 선택하세요.",
     "frameChecking": "확인 중…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Gmail과 비밀번호를 입력하세요!",
       "nevirnyiGmailAboParol": "Gmail 또는 비밀번호가 틀렸어요!",
       "neVdalosiaUviitySprobuite": "로그인하지 못했어요. 다시 시도하세요.",
+      "accountsLimit": "한 기기에서는 계정을 최대 {{max}}개까지 사용할 수 있습니다.",
       "pidtverditShchoVamIe": "만 14세 이상임을 확인하고 약관에 동의하세요!",
       "korystuvach": "사용자",
       "pomylkaGoogle": "Google 오류: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "약관",
       "vyityZAkauntaI": "계정에서 로그아웃하고 이 기기의 모든 사이트 데이터 삭제",
       "skynutySait": "사이트 초기화",
+      "limitsButton": "한도",
+      "limitsTitle": "오늘의 한도",
+      "limitsSettings": "설정, 사용자 피드와 프레임",
+      "limitsCards": "날씨 카드",
+      "limitsMute": "숨긴 뉴스",
+      "limitsAdditions": "카드 추가",
+      "limitsReports": "뉴스 신고",
+      "limitsReset": "UTC 자정에 초기화됩니다.",
+      "limitsSavedTitle": "저장된 항목",
+      "limitsFeeds": "사용자 피드",
+      "limitsFrames": "사용자 프레임",
+      "limitsNote": "비영리 프로젝트이므로 한도를 늘릴 수 없습니다!",
+      "limitsAccounts": "이 기기의 계정",
+      "limitsSyncNote": "동기화 한도를 다 썼나요? 계속 수정하세요. 변경 내용은 이 기기에 저장되고 다음 날 다른 기기에 반영됩니다. 카드 추가와 신고는 내일 가능합니다. 한도는 Firebase 할당량 때문입니다.",
       "deleteConfirmWord": "삭제"
     },
     "WeatherBgModal": {

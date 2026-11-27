@@ -1,4 +1,11 @@
-// Дні шкали часу «Карти Стихії»: кадри за місцевими датами людини.
+// Дні шкали часу «Карти Стихії»: кадри за місцевими датами людини. Тут же підпис висоти.
+
+/** «1 500 м» мовою сайту; з милями — у футах (до сотень). */
+export const altitudeText = (meters, lang, distance) => {
+  const feet = distance === "mi";
+  const value = feet ? Math.round((meters * 3.28084) / 100) * 100 : meters;
+  return new Intl.NumberFormat(lang, { style: "unit", unit: feet ? "foot" : "meter", unitDisplay: "short" }).format(value);
+};
 
 export const dayKey = (date) => `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 

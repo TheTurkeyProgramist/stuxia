@@ -11,7 +11,7 @@ import chessFull from "../../media/backgrounds/scenes/chess.webp";
 import studiFull from "../../media/backgrounds/scenes/art-studio.webp";
 import fireFull from "../../media/backgrounds/scenes/volcano.webp";
 import slivkishowFull from "../../media/third-party/youtube/slivkishow-cookie-flight.webp";
-import asiumelevenThumb from "../../media/thumbs/asium-winter-forest.webp";
+import asiumelevenThumb from "../../media/thumbs/asium-winter-forest.webp?format=webp&quality=35";
 import chessThumb from "../../media/thumbs/chess.webp";
 import studiThumb from "../../media/thumbs/art-studio.webp";
 import fireThumb from "../../media/thumbs/volcano.webp";
@@ -2917,6 +2917,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 
   // 1. Стан розмонтування для Memory Leak Protection
   const isMounted = useRef(true);
+  const getDataRef = useRef(null);
   const newsSectionRef = useRef(null);
   const abortRef = useRef(null);
   const [showMoreNews, setShowMoreNews] = useState(false);
@@ -3468,6 +3469,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       }
     }
   }, []);
+  getDataRef.current = getData;
   const filteredItems = items.filter((item) => {
     return filterSources.includes("all") || filterSources.includes(item.sourceName);
   });
@@ -3854,6 +3856,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
         }
         const updated = [...saved, newSource];
         await localforage.setItem("custom_news_sources", updated);
+        markSourcesChanged();
         setCustomSources(updated);
         setNewUrl("");
         setIsAddingSource(false);
@@ -4036,6 +4039,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
       const saved = (await localforage.getItem("custom_news_sources")) || [];
       const updated = saved.filter((s) => s.url !== urlToRemove);
       await localforage.setItem("custom_news_sources", updated);
+      markSourcesChanged();
       setCustomSources(updated);
       const removedName = saved.find((s) => s.url === urlToRemove)?.name;
       if (removedName && filterSources.includes(removedName)) {

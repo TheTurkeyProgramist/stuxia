@@ -212,7 +212,9 @@
       "noData": "Nėra žemėlapio duomenų. Paleiskite terminale:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Aukštis",
+      "auto": "Auto"
     },
     "title": "Klimato žemėlapis",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Viso ekrano režimas"
     },
     "invalidUrl": "Įveskite teisingą nuorodą (https://...)",
+    "frameLimit": "Galima pridėti daugiausia {{max}} savus rėmelius. Norėdami pridėti naują, vieną ištrinkite.",
     "frameBlocked": "Svetainė {{host}} neleidžia rodyti rėmelyje, todėl jos pridėti negalima.",
     "selfFrame": "Svetainės negalima įterpti į ją pačią — pasirinkite kitą svetainę.",
     "frameChecking": "Tikrinama…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Įveskite savo Gmail ir slaptažodį!",
       "nevirnyiGmailAboParol": "Neteisingas Gmail arba slaptažodis!",
       "neVdalosiaUviitySprobuite": "Nepavyko prisijungti. Bandykite dar kartą.",
+      "accountsLimit": "Viename įrenginyje galima naudoti daugiausia {{max}} paskyras.",
       "pidtverditShchoVamIe": "Patvirtinkite, kad jums yra 14 metų ar daugiau, ir sutikite su sutartimi!",
       "korystuvach": "Naudotojas",
       "pomylkaGoogle": "Google klaida: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Sutartimi",
       "vyityZAkauntaI": "Atsijungti nuo paskyros ir ištrinti visus svetainės duomenis šiame įrenginyje",
       "skynutySait": "Atstatyti svetainę",
+      "limitsButton": "Limitai",
+      "limitsTitle": "Šiandienos limitai",
+      "limitsSettings": "Nustatymai, savi srautai ir rėmeliai",
+      "limitsCards": "Orų kortelės",
+      "limitsMute": "Nutildytos naujienos",
+      "limitsAdditions": "Kortelių pridėjimas",
+      "limitsReports": "Pranešimai apie naujienas",
+      "limitsReset": "Atnaujinami vidurnaktį UTC.",
+      "limitsSavedTitle": "Kiek išsaugota",
+      "limitsFeeds": "Savi srautai",
+      "limitsFrames": "Savi rėmeliai",
+      "limitsNote": "Esame nekomercinis projektas, todėl limitų padidinti negalėsite!",
+      "limitsAccounts": "Paskyros šiame įrenginyje",
+      "limitsSyncNote": "Baigėsi sinchronizavimo limitas? Keiskite toliau: viskas liks šiame įrenginyje, o kitus pasieks kitą dieną. Kortelės ir pranešimai – tik rytoj. Limitai yra dėl „Firebase“ kvotų.",
       "deleteConfirmWord": "IŠTRINTI"
     },
     "WeatherBgModal": {

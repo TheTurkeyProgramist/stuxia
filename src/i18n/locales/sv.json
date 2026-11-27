@@ -212,7 +212,9 @@
       "noData": "Kartdata saknas. Kör i terminalen:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Höjd",
+      "auto": "Auto"
     },
     "title": "Klimatkarta",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Helskärmsläge"
     },
     "invalidUrl": "Ange en giltig länk (https://...)",
+    "frameLimit": "Du kan lägga till högst {{max}} egna ramar. Ta bort en för att lägga till en ny.",
     "frameBlocked": "{{host}} tillåter inte visning i en ram och kan därför inte läggas till.",
     "selfFrame": "Webbplatsen kan inte bäddas in i sig själv. Välj en annan webbplats.",
     "frameChecking": "Kontrollerar…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Ange Gmail och lösenord!",
       "nevirnyiGmailAboParol": "Fel Gmail eller lösenord!",
       "neVdalosiaUviitySprobuite": "Inloggningen misslyckades. Försök igen.",
+      "accountsLimit": "På en enhet kan du använda högst {{max}} konton.",
       "pidtverditShchoVamIe": "Bekräfta att du är minst 14 år och godkänn avtalet!",
       "korystuvach": "Användare",
       "pomylkaGoogle": "Google-fel: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Avtalet",
       "vyityZAkauntaI": "Logga ut från kontot och radera all sajtdata på den här enheten",
       "skynutySait": "Återställ sajten",
+      "limitsButton": "Gränser",
+      "limitsTitle": "Dagens gränser",
+      "limitsSettings": "Inställningar, egna flöden och ramar",
+      "limitsCards": "Väderkort",
+      "limitsMute": "Tystade nyheter",
+      "limitsAdditions": "Lägga till kort",
+      "limitsReports": "Anmälda nyheter",
+      "limitsReset": "Återställs vid midnatt UTC.",
+      "limitsSavedTitle": "Sparat",
+      "limitsFeeds": "Egna flöden",
+      "limitsFrames": "Egna ramar",
+      "limitsNote": "Vi är ett icke-kommersiellt projekt, så gränserna kan inte höjas!",
+      "limitsAccounts": "Konton på den här enheten",
+      "limitsSyncNote": "Slut på synkningar? Fortsätt ändra: allt sparas på den här enheten och når de andra nästa dag. Nya kort och anmälningar först i morgon. Gränserna beror på Firebases kvoter.",
       "deleteConfirmWord": "RADERA"
     },
     "WeatherBgModal": {

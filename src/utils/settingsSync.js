@@ -6,7 +6,7 @@
 // протягом дня (UTC), а settingsSyncAt ставить сервер (serverTimestamp()).
 export { getTodayKey, countForToday, toDayKey, isPermissionDenied } from "./muteSync";
 
-export const SETTINGS_SYNC_DAILY_LIMIT = 100;
+export const SETTINGS_SYNC_DAILY_LIMIT = 200;
 export const SETTINGS_SYNC_COUNTER_KEY = "settings_sync_counter";
 export const SETTINGS_SYNC_PENDING_KEY = "settings_sync_pending";
 // Швидкі зміни поспіль (перетягування секцій, перемикачі) — один запис

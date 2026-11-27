@@ -212,7 +212,9 @@
       "noData": "Mapapaq willay mana kanchu. Terminalpi puririchiy:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Hanay kay",
+      "auto": "Auto"
     },
     "title": "Pacha kawsay mapa",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Hunt'a pantalla"
     },
     "invalidUrl": "Allin enlaceta qillqay (https://...)",
+    "frameLimit": "Aswan achka {{max}} kikiykipa marcokunata yapayta atinki. Musuqta yapanaykipaq hukta pichay.",
     "frameBlocked": "{{host}} mana frame ukhupi rikuchikuyta saqinchu, chayrayku mana yapayta atikunchu.",
     "selfFrame": "Kay sitioqa manam kikinpi churakuyta atinchu. Huk sitiota akllay.",
     "frameChecking": "Qhawachkan…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Gmailniykita hinaspa contraseñaykita qillqay!",
       "nevirnyiGmailAboParol": "Gmail utaq contraseña pantasqa!",
       "neVdalosiaUviitySprobuite": "Mana yaykuyta atikurqanchu. Wakmanta ruray.",
+      "accountsLimit": "Huk antanapi aswan achka {{max}} cuentakunallatam llamkachiy atikun.",
       "pidtverditShchoVamIe": "14 watayuq utaq aswan kasqaykita takyachiy hinaspa acuerdota chaskiy!",
       "korystuvach": "Runa",
       "pomylkaGoogle": "Google pantay: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Acuerdota",
       "vyityZAkauntaI": "Cuentamanta lluqsiy hinaspa kay equipopi lliw sitio datokunata pichay",
       "skynutySait": "Sitiota musuqchay",
+      "limitsButton": "Saywakuna",
+      "limitsTitle": "Kunan punchaw saywakuna",
+      "limitsSettings": "Allichaykuna, kikiyki willaykuna, marcokuna",
+      "limitsCards": "Pacha tarjetakuna",
+      "limitsMute": "Upallachisqa willakuykuna",
+      "limitsAdditions": "Tarjeta yapay",
+      "limitsReports": "Willakuymanta quejakuy",
+      "limitsReset": "UTC kuska tutapi musuqyan.",
+      "limitsSavedTitle": "Waqaychasqa",
+      "limitsFeeds": "Kikiyki willaykuna",
+      "limitsFrames": "Kikiyki marcokuna",
+      "limitsNote": "Mana qullqipaqchu ruwayku, chayrayku saywakunata mana yapayta atinkichu!",
+      "limitsAccounts": "Kay antanapi cuentakuna",
+      "limitsSyncNote": "Tinkuchiy tukukunchu? Tikraylla: kay antanapi waqaychakun, hukkunamanqa paqarin chayan. Tarjeta yapayqa paqarinmi. Saywakunaqa Firebase kamachinraykum.",
       "deleteConfirmWord": "QULLUCHIY"
     },
     "WeatherBgModal": {

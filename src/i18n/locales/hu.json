@@ -212,7 +212,9 @@
       "noData": "Nincsenek térképadatok. Futtasd a terminálban:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Magasság",
+      "auto": "Auto"
     },
     "title": "Klímatérkép",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Teljes képernyő"
     },
     "invalidUrl": "Adj meg érvényes hivatkozást (https://...)",
+    "frameLimit": "Legfeljebb {{max}} saját keretet adhat hozzá. Új hozzáadásához töröljön egyet.",
     "frameBlocked": "A(z) {{host}} nem engedi a keretben való megjelenítést, ezért nem adható hozzá.",
     "selfFrame": "Az oldal nem ágyazható be önmagába. Válassz másik oldalt.",
     "frameChecking": "Ellenőrzés…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Add meg a Gmail-címed és a jelszavad!",
       "nevirnyiGmailAboParol": "Hibás Gmail vagy jelszó!",
       "neVdalosiaUviitySprobuite": "Nem sikerült bejelentkezni. Próbáld újra.",
+      "accountsLimit": "Egy eszközön legfeljebb {{max}} fiók használható.",
       "pidtverditShchoVamIe": "Erősítsd meg, hogy elmúltál 14 éves, és fogadd el a megállapodást!",
       "korystuvach": "Felhasználó",
       "pomylkaGoogle": "Google-hiba: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Megállapodást",
       "vyityZAkauntaI": "Kijelentkezés a fiókból és az oldal összes adatának törlése ezen az eszközön",
       "skynutySait": "Webhely visszaállítása",
+      "limitsButton": "Korlátok",
+      "limitsTitle": "Mai korlátok",
+      "limitsSettings": "Beállítások, saját hírcsatornák és keretek",
+      "limitsCards": "Időjárás-kártyák",
+      "limitsMute": "Némított hírek",
+      "limitsAdditions": "Kártyák hozzáadása",
+      "limitsReports": "Hírek bejelentése",
+      "limitsReset": "UTC szerint éjfélkor frissülnek.",
+      "limitsSavedTitle": "Mentett elemek",
+      "limitsFeeds": "Saját hírcsatornák",
+      "limitsFrames": "Saját keretek",
+      "limitsNote": "Nem kereskedelmi projekt vagyunk, ezért a korlátok nem növelhetők!",
+      "limitsAccounts": "Fiókok ezen az eszközön",
+      "limitsSyncNote": "Elfogyott a szinkronizálási keret? Módosítson tovább: minden megmarad ezen az eszközön, a többire másnap jut el. Kártyák és bejelentések csak holnap. A korlátok a Firebase kvótái miatt vannak.",
       "deleteConfirmWord": "TÖRLÉS"
     },
     "WeatherBgModal": {

@@ -55,26 +55,27 @@ const Legend = styled.ul`
   li { display: flex; align-items: center; gap: 6px; }
 `;
 
-const FlagIcon = ({ id, label }) => {
+const FlagIcon = ({ id, label, silent }) => {
   const { Icon, text, bg, color } = FLAGS[id];
   return (
-    <Flag $bg={bg} $color={color} title={label} role="img" aria-label={label}>
+    <Flag $bg={bg} $color={color} title={silent ? undefined : label} role="img" aria-label={label}>
       {Icon ? <Icon aria-hidden="true" /> : text}
     </Flag>
   );
 };
 
-const useFlagLabel = () => {
+export const useFlagLabel = () => {
   const { t } = useTranslation();
   return (id) => t(FLAGS[id].labelKey, { min: GAME_LIMIT_MINUTES });
 };
 
-export const SourceFlags = ({ flags }) => {
+// silent — без title: на картці значення значків уже є в її підказці
+export const SourceFlags = ({ flags, silent }) => {
   const label = useFlagLabel();
   if (!flags?.length) return null;
   return (
     <Row>
-      {flags.map((id) => <FlagIcon key={id} id={id} label={label(id)} />)}
+      {flags.map((id) => <FlagIcon key={id} id={id} label={label(id)} silent={silent} />)}
     </Row>
   );
 };

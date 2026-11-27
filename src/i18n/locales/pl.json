@@ -212,7 +212,9 @@
       "noData": "Brak danych mapy. Uruchom w terminalu:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Wysokość",
+      "auto": "Auto"
     },
     "title": "Mapa klimatyczna",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Tryb pełnoekranowy"
     },
     "invalidUrl": "Wpisz poprawny link (https://...)",
+    "frameLimit": "Możesz dodać najwyżej {{max}} własne ramki. Usuń jedną, aby dodać nową.",
     "frameBlocked": "Strona {{host}} nie pozwala na wyświetlanie w ramce, więc nie można jej dodać.",
     "selfFrame": "Strony nie można osadzić w niej samej — wybierz inną stronę.",
     "frameChecking": "Sprawdzanie…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Wpisz Gmail i hasło!",
       "nevirnyiGmailAboParol": "Nieprawidłowy Gmail lub hasło!",
       "neVdalosiaUviitySprobuite": "Nie udało się zalogować. Spróbuj ponownie.",
+      "accountsLimit": "Na jednym urządzeniu można używać najwyżej {{max}} kont.",
       "pidtverditShchoVamIe": "Potwierdź, że masz 14 lat, i zaakceptuj umowę!",
       "korystuvach": "Użytkownik",
       "pomylkaGoogle": "Błąd Google: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Umową",
       "vyityZAkauntaI": "Wyloguj się z konta i usuń wszystkie dane strony na tym urządzeniu",
       "skynutySait": "Zresetuj stronę",
+      "limitsButton": "Limity",
+      "limitsTitle": "Dzisiejsze limity",
+      "limitsSettings": "Ustawienia, własne kanały i ramki",
+      "limitsCards": "Karty pogody",
+      "limitsMute": "Wyciszone wiadomości",
+      "limitsAdditions": "Dodawanie kart",
+      "limitsReports": "Zgłoszenia wiadomości",
+      "limitsReset": "Odnawiają się o północy UTC.",
+      "limitsSavedTitle": "Ile zapisano",
+      "limitsFeeds": "Własne kanały",
+      "limitsFrames": "Własne ramki",
+      "limitsNote": "Jesteśmy projektem niekomercyjnym, dlatego nie można zwiększyć limitów!",
+      "limitsAccounts": "Konta na tym urządzeniu",
+      "limitsSyncNote": "Wyczerpany limit synchronizacji? Zmieniaj dalej: wszystko zostaje na tym urządzeniu, a na inne dotrze następnego dnia. Karty i zgłoszenia dopiero jutro. Limity wynikają z przydziałów Firebase.",
       "deleteConfirmWord": "USUŃ"
     },
     "WeatherBgModal": {

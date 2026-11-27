@@ -212,7 +212,9 @@
       "noData": "داده‌ای برای نقشه نیست. در ترمینال اجرا کنید:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "ارتفاع",
+      "auto": "خودکار"
     },
     "title": "نقشهٔ اقلیمی",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "حالت تمام‌صفحه"
     },
     "invalidUrl": "لطفاً یک پیوند معتبر وارد کنید (https://...)",
+    "frameLimit": "حداکثر می‌توانید {{max}} قاب شخصی اضافه کنید. برای افزودن قاب جدید، یکی را حذف کنید.",
     "frameBlocked": "سایت {{host}} اجازه نمایش در فریم را نمی‌دهد، بنابراین افزوده نمی‌شود.",
     "selfFrame": "این سایت را نمی‌توان درون خودش جاسازی کرد. لطفاً سایت دیگری انتخاب کنید.",
     "frameChecking": "در حال بررسی…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Gmail و رمز عبور خود را وارد کنید!",
       "nevirnyiGmailAboParol": "Gmail یا رمز عبور نادرست است!",
       "neVdalosiaUviitySprobuite": "ورود ممکن نشد. دوباره تلاش کنید.",
+      "accountsLimit": "روی یک دستگاه حداکثر {{max}} حساب قابل استفاده است.",
       "pidtverditShchoVamIe": "تأیید کنید که ۱۴ سال یا بیشتر دارید و توافق‌نامه را بپذیرید!",
       "korystuvach": "کاربر",
       "pomylkaGoogle": "خطای Google: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "توافق‌نامه",
       "vyityZAkauntaI": "خروج از حساب و پاک کردن همهٔ داده‌های سایت روی این دستگاه",
       "skynutySait": "بازنشانی سایت",
+      "limitsButton": "سقف‌ها",
+      "limitsTitle": "سقف‌های امروز",
+      "limitsSettings": "تنظیمات، خوراک‌ها و قاب‌های شخصی",
+      "limitsCards": "کارت‌های آب‌وهوا",
+      "limitsMute": "خبرهای بی‌صدا",
+      "limitsAdditions": "افزودن کارت",
+      "limitsReports": "گزارش خبرها",
+      "limitsReset": "در نیمه‌شب UTC تازه می‌شوند.",
+      "limitsSavedTitle": "موارد ذخیره‌شده",
+      "limitsFeeds": "خوراک‌های شخصی",
+      "limitsFrames": "قاب‌های شخصی",
+      "limitsNote": "ما پروژه‌ای غیرتجاری هستیم، بنابراین نمی‌توانید سقف‌ها را افزایش دهید!",
+      "limitsAccounts": "حساب‌های این دستگاه",
+      "limitsSyncNote": "سقف همگام‌سازی تمام شد؟ تغییر دادن را ادامه دهید: تغییرها روی همین دستگاه می‌مانند و روز بعد به دستگاه‌های دیگر می‌رسند. افزودن کارت و گزارش تا فردا. این سقف‌ها به‌خاطر سهمیه‌های Firebase است.",
       "deleteConfirmWord": "حذف"
     },
     "WeatherBgModal": {

@@ -18,7 +18,7 @@ import { decodeGrib2 } from "./grib2.mjs";
 import { buildRegions } from "./regions.mjs";
 import { loadCities } from "./cities.mjs";
 import { KINDS, apparentTemperature, sampleGrid, weatherKind } from "../../src/components/ClimateMap/styxiaWeather.js";
-import { DATA_VERSION, LAYERS, WIND_RANGE, colorFor, encodeValue } from "../../src/components/ClimateMap/styxiaLayers.js";
+import { ALTITUDES, DATA_VERSION, LAYERS, WIND_RANGE, colorFor, encodeValue } from "../../src/components/ClimateMap/styxiaLayers.js";
 
 const BUCKET = "https://noaa-gfs-bdp-pds.s3.amazonaws.com";
 const OUT_DIR = fileURLToPath(new URL("../../weather-data/", import.meta.url));
@@ -51,6 +51,11 @@ const SOURCES = {
   visibility: [":VIS:surface:", (m) => m / 1000], // м → км
   land: [":LAND:surface:", (x) => x], // маска суші для мініатюр (лише для 0-ї години): 1 — суша
 };
+for (const { meters, mb } of ALTITUDES) {
+  SOURCES[`u${meters}`] = [`:UGRD:${mb} mb:`, (x) => x];
+  SOURCES[`v${meters}`] = [`:VGRD:${mb} mb:`, (x) => x];
+  SOURCES[`t${meters}`] = [`:TMP:${mb} mb:`, (k) => k - 273.15];
+}
 
 // read — читання тіла відповіді: воно теж може обірватися за тайм-аутом, тож повторюється разом із запитом
 const fetchOk = async (url, read, options, attempts = 5) => {
@@ -148,6 +153,10 @@ for (const layer of LAYERS) {
   if (layer.fromWind) continue;
   FILES[layer.file] ||= [];
   FILES[layer.file][layer.channel] = [layer.id, layer];
+}
+const temperatureLayer = LAYERS.find((l) => l.id === "temperature");
+for (const { meters } of ALTITUDES) {
+  FILES[`h${meters}`] = [[`u${meters}`, wind], [`v${meters}`, wind], [`t${meters}`, temperatureLayer]];
 }
 
 // Сітку 0.25° проріджуємо вдвічі — вона збігається з 0.5°
@@ -309,6 +318,6 @@ await writeFile(OUT_DIR + "cities.txt", JSON.stringify({ cities, frames: citySam
 // meta — останнім: поки його не оновлено, карта не вважає дані новими
 await writeFile(
   `${OUT_DIR}meta.txt`,
-  JSON.stringify({ version: DATA_VERSION, time: new Date(FRAMES[0].time).toISOString(), run: run.date.toISOString(), width: grid.width, height: grid.height, hours: HOURS, step: STEP }),
+  JSON.stringify({ version: DATA_VERSION, time: new Date(FRAMES[0].time).toISOString(), run: run.date.toISOString(), width: grid.width, height: grid.height, hours: HOURS, step: STEP, levels: ALTITUDES.map((a) => a.meters) }),
 );
 console.log(`Готово: weather-data/ (${HOURS.length} кадрів, ${grid.width}×${grid.height})`);

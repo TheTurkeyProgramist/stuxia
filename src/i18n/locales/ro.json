@@ -212,7 +212,9 @@
       "noData": "Nu există date pentru hartă. Rulează în terminal:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Altitudine",
+      "auto": "Auto"
     },
     "title": "Hartă climatică",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Ecran complet"
     },
     "invalidUrl": "Introdu un link valid (https://...)",
+    "frameLimit": "Puteți adăuga cel mult {{max}} cadre proprii. Ștergeți unul pentru a adăuga altul.",
     "frameBlocked": "{{host}} nu permite afișarea într-un cadru, așa că nu poate fi adăugat.",
     "selfFrame": "Site-ul nu poate fi încorporat în el însuși. Alegeți alt site.",
     "frameChecking": "Se verifică…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Introdu Gmail și parola!",
       "nevirnyiGmailAboParol": "Gmail sau parolă greșită!",
       "neVdalosiaUviitySprobuite": "Autentificarea a eșuat. Încearcă din nou.",
+      "accountsLimit": "Pe un dispozitiv se pot folosi cel mult {{max}} conturi.",
       "pidtverditShchoVamIe": "Confirmă că ai cel puțin 14 ani și acceptă acordul!",
       "korystuvach": "Utilizator",
       "pomylkaGoogle": "Eroare Google: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Acordul",
       "vyityZAkauntaI": "Ieși din cont și șterge toate datele site-ului pe acest dispozitiv",
       "skynutySait": "Resetează site-ul",
+      "limitsButton": "Limite",
+      "limitsTitle": "Limitele de azi",
+      "limitsSettings": "Setări, fluxuri și cadre proprii",
+      "limitsCards": "Carduri meteo",
+      "limitsMute": "Știri ascunse",
+      "limitsAdditions": "Adăugare de carduri",
+      "limitsReports": "Raportări de știri",
+      "limitsReset": "Se resetează la miezul nopții UTC.",
+      "limitsSavedTitle": "Elemente salvate",
+      "limitsFeeds": "Fluxuri proprii",
+      "limitsFrames": "Cadre proprii",
+      "limitsNote": "Suntem un proiect necomercial, așa că nu puteți mări limitele!",
+      "limitsAccounts": "Conturi pe acest dispozitiv",
+      "limitsSyncNote": "Ați epuizat sincronizările? Modificați în continuare: totul rămâne pe acest dispozitiv și ajunge pe celelalte a doua zi. Carduri noi și raportări abia mâine. Limitele vin din cotele Firebase.",
       "deleteConfirmWord": "ȘTERGE"
     },
     "WeatherBgModal": {

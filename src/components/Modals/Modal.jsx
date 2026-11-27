@@ -15,7 +15,10 @@ import {
   googleProvider,
   signInWithPopup,
   ensureEmailPasswordAuth,
+  signOut,
 } from "../../firebase";
+import { rememberDeviceAccount } from "../../utils/deviceAccounts";
+import { MAX_DEVICE_ACCOUNTS } from "../../utils/ownLimits";
 
 import i18n from "../../i18n/i18n.js";
 const slideIn = keyframes`
@@ -386,6 +389,11 @@ const Modal = ({
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseUser = result.user;
+      if (!(await rememberDeviceAccount(firebaseUser.uid))) {
+        await signOut(auth);
+        setError(i18n.t("modals.Modal.accountsLimit", { max: MAX_DEVICE_ACCOUNTS }));
+        return;
+      }
 
       const registrationData = {
         uid: firebaseUser.uid,

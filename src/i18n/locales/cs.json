@@ -212,7 +212,9 @@
       "noData": "Chybí data mapy. Spusťte v terminálu:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Výška",
+      "auto": "Auto"
     },
     "title": "Klimatická mapa",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Režim celé obrazovky"
     },
     "invalidUrl": "Zadejte platný odkaz (https://...)",
+    "frameLimit": "Můžete přidat nejvýše {{max}} vlastní rámce. Chcete-li přidat další, jeden smažte.",
     "frameBlocked": "Web {{host}} nepovoluje zobrazení v rámu, proto ho nelze přidat.",
     "selfFrame": "Web nelze vložit sám do sebe — vyberte jiný web.",
     "frameChecking": "Kontrola…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Zadejte Gmail a heslo!",
       "nevirnyiGmailAboParol": "Nesprávný Gmail nebo heslo!",
       "neVdalosiaUviitySprobuite": "Přihlášení se nezdařilo. Zkuste to znovu.",
+      "accountsLimit": "Na jednom zařízení lze používat nejvýše {{max}} účtů.",
       "pidtverditShchoVamIe": "Potvrďte, že je vám 14 let, a přijměte smlouvu!",
       "korystuvach": "Uživatel",
       "pomylkaGoogle": "Chyba Google: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Smlouvou",
       "vyityZAkauntaI": "Odhlásit se z účtu a smazat všechna data webu v tomto zařízení",
       "skynutySait": "Obnovit web",
+      "limitsButton": "Limity",
+      "limitsTitle": "Dnešní limity",
+      "limitsSettings": "Nastavení, vlastní kanály a rámce",
+      "limitsCards": "Karty počasí",
+      "limitsMute": "Ztlumené zprávy",
+      "limitsAdditions": "Přidávání karet",
+      "limitsReports": "Nahlášení zpráv",
+      "limitsReset": "Obnovují se o půlnoci UTC.",
+      "limitsSavedTitle": "Kolik je uloženo",
+      "limitsFeeds": "Vlastní kanály",
+      "limitsFrames": "Vlastní rámce",
+      "limitsNote": "Jsme nekomerční projekt, proto limity zvýšit nelze!",
+      "limitsAccounts": "Účty na tomto zařízení",
+      "limitsSyncNote": "Došel limit synchronizací? Upravujte dál: změny zůstanou v tomto zařízení a na ostatní dorazí další den. Přidávání karet a hlášení počkají do zítřka. Limity jsou kvůli kvótám Firebase.",
       "deleteConfirmWord": "SMAZAT"
     },
     "WeatherBgModal": {

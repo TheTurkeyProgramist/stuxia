@@ -168,6 +168,7 @@ export const startParticles = (map, canvas, { getWind, getFps, getColor, onFps }
       last = now;
       return;
     }
+    // «Авто» — Infinity: інтервал нуль, малюємо кожен кадр екрана
     const interval = 1000 / getFps();
     // 0,9: rAF вирівнюється по кадру екрана, і суворе порівняння пропускало б кожен другий кадр
     if (now - last < interval * 0.9) return;

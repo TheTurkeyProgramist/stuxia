@@ -11,7 +11,11 @@ import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { ownFeatures, serverFeatures, worldFeatures, forecastFor, loadVisibleServerWeather, conditionKey, applyLayerValues } from "./styxiaPoints.js";
 import { addWeatherIcons, weatherIconUrl, LAYER_ICONS } from "./styxiaIcons.jsx";
-import { LAYERS, decodeValue, formatLayerValue } from "./styxiaLayers.js";
+import { LAYERS, ALTITUDE_LAYERS, decodeValue, formatLayerValue } from "./styxiaLayers.js";
+import StyxiaAltitude from "./StyxiaAltitude.jsx";
+import { AnimatePresence, motion } from "framer-motion";
+import { fade, riseIn, sideIn } from "./mapMotion.js";
+import { altitudeText } from "./styxiaDays.js";
 import { sampleGrid } from "./styxiaWeather.js";
 import {
   DATA_URL, MERCATOR_LIMIT, fetchData, loadMeta, nearestFrame, loadRgba, windPlanes, channelPlane, speedPlane,
@@ -21,7 +25,7 @@ import { fetchAirAlerts, regionsWithAlerts, alertLabels, alertSummary, sinceLabe
 import { isobarFeatures } from "./styxiaIsolines.js";
 import { collectPlaces, buildGrids, createTaken, placeFeatures } from "./styxiaPlaces.js";
 import { uniquePoints, notDuplicate, atFrame } from "./styxiaDedupe.js";
-import { fadeUp, slideIn, pulse, revealed, pressable, themeTokens } from "./styxiaMotion.js";
+import { fadeUp, pulse, revealed, pressable, themeTokens } from "./styxiaMotion.js";
 import StyxiaPanel from "./StyxiaPanel.jsx";
 import { layerUnit, shortTemp } from "./styxiaUnits.js";
 import { groupDays, dayKey } from "./styxiaDays.js";
@@ -99,7 +103,8 @@ const WATERMARK_STORAGE_KEY = "styxia_map_watermark";
 const ALERTS_REFRESH_MS = 60 * 1000;
 // Швидкість — у кадрах прогнозу за секунду: ×1 = 2 кадри/с (6 годин прогнозу за секунду)
 const SPEEDS = [0.5, 1, 2, 4];
-const FPS_OPTIONS = [10, 15, 24, 30, 60];
+// Infinity — «Авто»: без ліміту, скільки дає екран
+const FPS_OPTIONS = [10, 15, 24, 30, 60, Infinity];
 
 const readLayerId = () => {
   try {
@@ -601,7 +606,6 @@ const AlertChip = styled.div`
   font-size: 11.5px;
   font-weight: 700;
   transition: background 0.3s ease;
-  animation: ${fadeUp} 0.3s ease both;
 
   &::before {
     content: "";
@@ -633,7 +637,6 @@ const Watermark = styled.div`
   color: var(--sx-text);
   font-size: 11px;
   font-weight: 600;
-  animation: ${fadeUp} 0.3s ease both;
 
   img {
     width: 24px;
@@ -689,7 +692,6 @@ const PickBanner = styled.div`
   font-size: 13px;
   font-weight: 700;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-  animation: ${fadeUp} 0.25s ease both;
 
   button {
     display: flex;
@@ -737,7 +739,6 @@ const Banner = styled.div`
   color: #fff;
   font-size: 12px;
   line-height: 1.4;
-  animation: ${slideIn} 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
   span {
     flex: 1;
@@ -817,6 +818,8 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
   const [pointsReady, setPointsReady] = useState(false);
   const [layerId, setLayerId] = useState(readLayerId);
   const layer = LAYERS.find((l) => l.id === layerId);
+  // Висота над землею: лише для шарів, у яких вона є (і для самих частинок вітру)
+  const [altitude, setAltitude] = useState(0);
   const [panelOpen, setPanelOpen] = useState(readPanelOpen);
   // Легенда типово згорнута (менше закриває карту); вибір пам'ятаємо
   const [legendOpen, setLegendOpen] = useState(() => {
@@ -937,34 +940,44 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     };
   }, [fail]);
 
+  const levels = meta?.levels || [];
+  const level = (!layer || ALTITUDE_LAYERS.has(layer.id)) && levels.includes(altitude) ? altitude : 0;
+  const levelRef = useRef(level);
+  levelRef.current = level;
+  const levelFile = level ? `h${level}` : "field";
+  const windKey = useCallback((k) => `${level}:${k}`, [level]);
+  const layerKey = useCallback((target) => (level && ALTITUDE_LAYERS.has(target.id) ? `${target.id}@${level}` : target.id), [level]);
+
   const ensureWind = useCallback(
     (k) => {
-      const cached = windFrames.current.get(k);
+      const key = windKey(k);
+      const cached = windFrames.current.get(key);
       if (cached) return Promise.resolve(cached);
-      let promise = windPending.current.get(k);
+      let promise = windPending.current.get(key);
       if (!promise) {
-        promise = loadRgba(meta, meta.hours[k], "field", abortRef.current.signal)
+        promise = loadRgba(meta, meta.hours[k], levelFile, abortRef.current.signal)
           .then((rgba) => {
             const result = windPlanes(rgba);
-            windFrames.current.set(k, result);
-            windPending.current.delete(k);
+            windFrames.current.set(key, result);
+            windPending.current.delete(key);
             return result;
           })
           .catch((error) => {
-            windPending.current.delete(k);
+            windPending.current.delete(key);
             throw error;
           });
-        windPending.current.set(k, promise);
+        windPending.current.set(key, promise);
       }
       return promise;
     },
-    [meta],
+    [meta, levelFile, windKey],
   );
 
   // Байти шару на кадр (одне значення на клітинку сітки): з них будуються і картинка, і ізобари, і значення під курсором
   const ensurePlane = useCallback(
     (target, k) => {
-      const key = `${target.id}:${k}`;
+      const id = layerKey(target);
+      const key = `${id}:${k}`;
       const cached = planeCache.current.get(key);
       if (cached) return Promise.resolve(cached);
       let promise = planePending.current.get(key);
@@ -972,13 +985,13 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
         promise = (async () =>
           target.fromWind
             ? speedPlane(await ensureWind(k), target)
-            : channelPlane(await loadRgba(meta, meta.hours[k], target.file, abortRef.current.signal), target.channel))()
+            : channelPlane(await loadRgba(meta, meta.hours[k], id === target.id ? target.file : levelFile, abortRef.current.signal), target.channel))()
           .then((plane) => {
             planeCache.current.set(key, plane);
             planePending.current.delete(key);
             // Байти лише трьох останніх шарів: решта легко докачується, а пам'ять не росте
-            if (recentLayers.current[0] !== target.id) {
-              recentLayers.current = [target.id, ...recentLayers.current.filter((id) => id !== target.id)].slice(0, 3);
+            if (recentLayers.current[0] !== id) {
+              recentLayers.current = [id, ...recentLayers.current.filter((other) => other !== id)].slice(0, 3);
               for (const stored of planeCache.current.keys()) {
                 if (!recentLayers.current.includes(stored.split(":")[0])) planeCache.current.delete(stored);
               }
@@ -993,7 +1006,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
       }
       return promise;
     },
-    [meta, ensureWind],
+    [meta, ensureWind, layerKey, levelFile],
   );
   ensurePlaneRef.current = ensurePlane;
   layerRef.current = layer;
@@ -1003,7 +1016,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
   // Картинка шару на кадр: blob-адреса, готова для MapLibre
   const ensureImage = useCallback(
     (target, k) => {
-      const key = `${target.id}:${k}`;
+      const key = `${layerKey(target)}:${k}`;
       let promise = imagePending.current.get(key);
       if (!promise) {
         promise = (async () => {
@@ -1018,7 +1031,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
       }
       return promise;
     },
-    [meta, ensurePlane],
+    [meta, ensurePlane, layerKey],
   );
 
   // Вітер поточного кадру — для частинок
@@ -1053,7 +1066,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     const count = last - first + 1;
     const from = Math.max(0, frameRef.current - first);
     const order = Array.from({ length: count }, (_, i) => first + ((from + i) % count));
-    const isDone = (k) => (layer ? imageReady.current.has(`${layer.id}:${k}`) : windFrames.current.has(k));
+    const isDone = (k) => (layer ? imageReady.current.has(`${layerKey(layer)}:${k}`) : windFrames.current.has(windKey(k)));
     const queue = order.filter((k) => !isDone(k));
     let done = count - queue.length;
     setLoaded(done);
@@ -1094,7 +1107,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     return () => {
       cancelled = true;
     };
-  }, [meta, dayWindow, layer, showWind, ensureImage, ensureWind]);
+  }, [meta, dayWindow, layer, showWind, ensureImage, ensureWind, layerKey, windKey]);
 
   // Відтворення: наступний кадр лише коли він уже завантажений, а не раніше
   useEffect(() => {
@@ -1103,13 +1116,13 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     let timer;
     const tick = () => {
       const next = (frameRef.current + 1) % count;
-      const ready = (!layer || imageReady.current.has(`${layer.id}:${next}`)) && (!showWind || windFrames.current.has(next));
+      const ready = (!layer || imageReady.current.has(`${layerKey(layer)}:${next}`)) && (!showWind || windFrames.current.has(windKey(next)));
       if (ready) setFrame(next);
       timer = setTimeout(tick, 1000 / (2 * speed));
     };
     timer = setTimeout(tick, 1000 / (2 * speed));
     return () => clearTimeout(timer);
-  }, [playing, speed, meta, layer, showWind]);
+  }, [playing, speed, meta, layer, showWind, layerKey, windKey]);
 
   useEffect(() => {
     const view = initialView.current;
@@ -1281,7 +1294,8 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
       el.style.opacity = "0";
       return;
     }
-    const plane = planeCache.current.get(`${current.id}:${frameRef.current}`);
+    const aloft = levelRef.current && ALTITUDE_LAYERS.has(current.id) ? `@${levelRef.current}` : "";
+    const plane = planeCache.current.get(`${current.id}${aloft}:${frameRef.current}`);
     if (!plane) {
       el.style.opacity = "0";
       // Байти кадру ще не готові (щойно змінили шар чи кадр) — докачуємо й малюємо знову
@@ -1328,7 +1342,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
   // Кадр, шар чи «сховати все» змінились, а курсор стоїть — оновлюємо значення на місці
   useEffect(() => {
     renderSensor();
-  }, [frame, layer, meta, clean, units, renderSensor]);
+  }, [frame, layer, meta, clean, units, level, renderSensor]);
 
   // ── Режим створення
   useEffect(() => {
@@ -1516,14 +1530,14 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
 
   // Байти вибраного шару на поточний кадр — з них беруться значення біля міст (температура тут не потрібна)
   useEffect(() => {
-    if (!meta || !layer || layer.id === "temperature") {
+    if (!meta || !layer || (layer.id === "temperature" && !level)) {
       setValuePlane(null);
       return undefined;
     }
     let cancelled = false;
     ensurePlane(layer, frame)
       .then((plane) => {
-        if (!cancelled) setValuePlane({ layerId: layer.id, frame, plane });
+        if (!cancelled) setValuePlane({ layerId: layer.id, level, frame, plane });
       })
       .catch(() => {
         /* без значень шару біля міст лишається температура */
@@ -1531,7 +1545,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     return () => {
       cancelled = true;
     };
-  }, [meta, layer, frame, ensurePlane]);
+  }, [meta, layer, level, frame, ensurePlane]);
 
   // ── Усі міста й села: самі пункти беремо з плиток підкладки (OpenStreetMap), погоду в них рахуємо з моделі
   useEffect(() => {
@@ -1646,11 +1660,11 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     }
     // Біля міст значення вибраного шару (опади, тиск…), а не завжди температура
     const all = [...places, ...curated];
-    const decorated = valuePlane && layer && valuePlane.layerId === layer.id && layer.id !== "temperature"
-      ? applyLayerValues(all, layer, valuePlane.plane, meta, layerUnit(layer.id, units))
+    const decorated = valuePlane && layer && valuePlane.layerId === layer.id && valuePlane.level === level && (layer.id !== "temperature" || level)
+      ? applyLayerValues(all, layer, valuePlane.plane, meta, { ...layerUnit(layer.id, units), aloft: level > 0 })
       : all.map((item) => ({ ...item, properties: { ...item.properties, short: shortTemp(item.properties.temp, units.temp) } }));
     mapRef.current.getSource("styxia-points").setData({ type: "FeatureCollection", features: decorated });
-  }, [pointsReady, showServer, showWorld, showOwn, showPlaces, placeList, grids, meta, weatherCards, serverVersion, lang, forecast, liveNow, cityData, gpsEnabled, layer, valuePlane, frame, validTime, units]);
+  }, [pointsReady, showServer, showWorld, showOwn, showPlaces, placeList, grids, meta, weatherCards, serverVersion, lang, forecast, liveNow, cityData, gpsEnabled, layer, level, valuePlane, frame, validTime, units]);
 
   // Коли малюємо власні назви міст і сіл (з погодою), підписи самої підкладки ховаємо: інакше кожне місто
   // підписане двічі. Підписи країн, областей, островів і околиць лишаються; хутори малюємо самі
@@ -2063,6 +2077,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
           },
           fps,
           fpsOptions: FPS_OPTIONS,
+          autoLabel: t("climateMap.styxia.auto"),
           onFps: (value) => {
             setFps(value);
             saveValue("styxia_map_fps", value);
@@ -2078,18 +2093,38 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
         onHideAll={() => setClean(true)}
       />
 
+      <AnimatePresence>
+      {!clean && levels.length > 0 && (!layer || ALTITUDE_LAYERS.has(layer.id)) && (
+        <StyxiaAltitude
+          key="altitude"
+          motionProps={sideIn}
+          levels={[0, ...levels]}
+          value={level}
+          onChange={setAltitude}
+          lang={lang}
+          distance={units.distance}
+          label={t("climateMap.styxia.altitude")}
+        />
+      )}
+      </AnimatePresence>
+
       <BottomLeft $hidden={clean} inert={clean}>
+        <AnimatePresence>
         {alertsOn && (summary || alertsError) && (
-          <AlertChip $active={Boolean(summary?.active)}>
+          <AlertChip key="alerts" as={motion.div} {...riseIn} $active={Boolean(summary?.active)}>
             {summary
               ? t("climateMap.styxia.alertsSummary", { active: summary.active, total: summary.total })
               : t("climateMap.styxia.alertsError")}
           </AlertChip>
         )}
+        </AnimatePresence>
         {layer && (
           <LegendCard key={layer.id} data-open={legendOpen}>
             <div className="head">
-              <strong>{t(`climateMap.styxia.${layer.id}`)}</strong>
+              <strong>
+                {t(`climateMap.styxia.${layer.id}`)}
+                {level ? ` · ${altitudeText(level, lang, units.distance)}` : ""}
+              </strong>
               {/* Без title: системна підказка з'являється із затримкою й закриває легенду; назву дає aria-label */}
               <button
                 type="button"
@@ -2121,9 +2156,10 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
             )}
           </LegendCard>
         )}
-        {alertsOn && <AlertsDisclaimer>{t("climateMap.styxia.alertsDisclaimer")}</AlertsDisclaimer>}
+        <AnimatePresence>
+        {alertsOn && <AlertsDisclaimer key="disclaimer" as={motion.div} {...riseIn}>{t("climateMap.styxia.alertsDisclaimer")}</AlertsDisclaimer>}
         {showWatermark && (
-          <Watermark>
+          <Watermark key="watermark" as={motion.div} {...riseIn}>
             <img src={stuxiaIcon} alt="" />
             <span>{t("climateMap.styxia.madeWithLove")}</span>
             <button
@@ -2135,6 +2171,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
             </button>
           </Watermark>
         )}
+        </AnimatePresence>
       </BottomLeft>
 
       {meta && (
@@ -2152,23 +2189,27 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
           hidden={clean}
         />
       )}
+      <AnimatePresence>
       {picking && (
-        <PickBanner role="status">
+        <PickBanner key="pick" as={motion.div} {...fade} role="status">
           <span>{t("climateMap.styxia.pickHint")}</span>
           <button type="button" aria-label={t("climateMap.styxia.pickCancel")} onClick={() => setPicking(false)}>
             <FiX aria-hidden="true" />
           </button>
         </PickBanner>
       )}
+      </AnimatePresence>
       <StyxiaAttribution t={t} ukrainian={isUkrainian} lifted={!clean} />
+      <AnimatePresence>
       {!clean && lowFpsTip && !panelOpen && (
-        <Banner role="status">
+        <Banner key="fps" as={motion.div} {...riseIn} role="status">
           <span>{lowFpsTip}</span>
           <button type="button" aria-label={t("climateMap.styxia.closePanel")} onClick={() => setTipDismissed(true)}>
             <FiX aria-hidden="true" />
           </button>
         </Banner>
       )}
+      </AnimatePresence>
       {failed && (
         <Message role="alert">
           {t(import.meta.env.DEV ? "climateMap.styxia.noData" : "climateMap.styxia.noDataPublic")}

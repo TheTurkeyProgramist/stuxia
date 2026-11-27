@@ -212,7 +212,9 @@
       "noData": "Няма данни за картата. Изпълнете в терминала:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Височина",
+      "auto": "Авто"
     },
     "title": "Климатична карта",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Цял екран"
     },
     "invalidUrl": "Моля, въведете валиден линк (https://...)",
+    "frameLimit": "Можете да добавите най-много {{max}} собствени рамки. Изтрийте една, за да добавите нова.",
     "frameBlocked": "Сайтът {{host}} забранява показване във фрейм — не може да бъде добавен.",
     "selfFrame": "Сайтът не може да бъде вграден в самия себе си — изберете друг сайт.",
     "frameChecking": "Проверка…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Въведете Gmail и парола!",
       "nevirnyiGmailAboParol": "Грешен Gmail или парола!",
       "neVdalosiaUviitySprobuite": "Неуспешен вход. Опитайте отново.",
+      "accountsLimit": "На едно устройство може да се ползват най-много {{max}} профила.",
       "pidtverditShchoVamIe": "Потвърдете, че сте на 14 години, и приемете споразумението!",
       "korystuvach": "Потребител",
       "pomylkaGoogle": "Грешка от Google: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Споразумението",
       "vyityZAkauntaI": "Изход от акаунта и изтриване на всички данни на сайта на това устройство",
       "skynutySait": "Нулирай сайта",
+      "limitsButton": "Лимити",
+      "limitsTitle": "Лимити за днес",
+      "limitsSettings": "Настройки, собствени емисии и рамки",
+      "limitsCards": "Карти за времето",
+      "limitsMute": "Заглушени новини",
+      "limitsAdditions": "Добавяне на карти",
+      "limitsReports": "Сигнали за новини",
+      "limitsReset": "Нулират се в полунощ по UTC.",
+      "limitsSavedTitle": "Колко е запазено",
+      "limitsFeeds": "Собствени емисии",
+      "limitsFrames": "Собствени рамки",
+      "limitsNote": "Ние сме нетърговски проект, затова не можете да увеличите лимитите!",
+      "limitsAccounts": "Профили на това устройство",
+      "limitsSyncNote": "Изчерпахте лимита за синхронизация? Продължете да променяте: всичко остава на това устройство и стига до другите на следващия ден. Картите и сигналите чакат до утре. Лимитите са заради квотите на Firebase.",
       "deleteConfirmWord": "ИЗТРИЙ"
     },
     "WeatherBgModal": {

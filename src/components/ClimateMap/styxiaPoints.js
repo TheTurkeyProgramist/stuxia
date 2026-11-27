@@ -203,7 +203,8 @@ export const compactValue = (value, layerId, digits = null) => {
  * у weatherIcon — для картки-тултіпа.
  */
 export const applyLayerValues = (features, layer, plane, meta, unit = null) => {
-  if (!layer || !plane || layer.id === "temperature") return features;
+  // Приземна температура вже є в точках; на висоті (unit.aloft) беремо її з шару
+  if (!layer || !plane || (layer.id === "temperature" && !unit?.aloft)) return features;
   return features.map((feature) => {
     const [lon, lat] = feature.geometry.coordinates;
     const value = decodeValue(Math.round(sampleGrid(plane, meta.width, meta.height, lon + 180, lat)), layer);
@@ -213,7 +214,7 @@ export const applyLayerValues = (features, layer, plane, meta, unit = null) => {
         ...feature.properties,
         short: compactValue(unit ? unit.convert(value) : value, layer.id, unit?.digits),
         weatherIcon: feature.properties.icon,
-        icon: layer.id === "feelsLike" ? feature.properties.icon : `layer-${layer.id}`,
+        icon: layer.id === "feelsLike" || layer.id === "temperature" ? feature.properties.icon : `layer-${layer.id}`,
       },
     };
   });

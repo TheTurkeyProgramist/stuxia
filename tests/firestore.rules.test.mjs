@@ -103,7 +103,7 @@ const run = async () => {
   await expectAllow("лічильник зріс до 2", () =>
     setDoc(aliceCfg, counted({ settings: { isDarkMode: false } }, "settingsSyncCount", "settingsSyncAt", 2), { merge: true }));
   await expectDeny("лічильник понад ліміт (101)", () =>
-    setDoc(aliceCfg, counted({ settings }, "settingsSyncCount", "settingsSyncAt", 101), { merge: true }));
+    setDoc(aliceCfg, counted({ settings }, "settingsSyncCount", "settingsSyncAt", 201), { merge: true }));
   await expectDeny("час з браузера замість серверного (підробка дати)", () =>
     setDoc(aliceCfg, { settings, settingsSyncCount: 1, settingsSyncAt: Timestamp.fromDate(new Date(Date.now() - 2 * 864e5)) }, { merge: true }));
   await expectDeny("скинути лічильник без зміни налаштувань", () =>
@@ -114,6 +114,12 @@ const run = async () => {
     setDoc(aliceCfg, { junk: "spam" }, { merge: true }));
   await expectDeny("надто довга адреса фону", () =>
     setDoc(aliceCfg, counted({ settings: { heroBg: "x".repeat(3000) } }, "settingsSyncCount", "settingsSyncAt", 3), { merge: true }));
+  await expectDeny("власні стрічки без лічильника", () =>
+    setDoc(aliceCfg, { customFeeds: [] }, { merge: true }));
+  await expectDeny("понад 30 власних фреймів", () =>
+    setDoc(aliceCfg, counted({ customFrames: Array(31).fill({ url: "https://a.b" }) }, "settingsSyncCount", "settingsSyncAt", 3), { merge: true }));
+  await expectAllow("власні стрічки й фрейми зі спільним лічильником", () =>
+    setDoc(aliceCfg, counted({ customFeeds: [{ url: "https://a.b/rss" }], customFrames: [] }, "settingsSyncCount", "settingsSyncAt", 3), { merge: true }));
   await expectDeny("видалення свого config", () => deleteDoc(aliceCfg));
   await expectDeny("чужий акаунт пише в config/alice", () =>
     setDoc(doc(bob, "config", "alice"), counted({ settings }, "settingsSyncCount", "settingsSyncAt", 50), { merge: true }));
@@ -124,7 +130,7 @@ const run = async () => {
   console.log("\nconfig/{uid}: нова доба");
   await clearAll();
   await seed("config/alice", {
-    settingsSyncCount: { integerValue: "100" },
+    settingsSyncCount: { integerValue: "200" },
     settingsSyncAt: { timestampValue: yesterdayIso() },
   });
   await expectAllow("учора було 100 — сьогодні знову з 1", () =>

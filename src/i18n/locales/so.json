@@ -212,7 +212,9 @@
       "noData": "Xog khariidad ma jirto. Ku socodsii terminal-ka:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Joogga",
+      "auto": "Otomaatig"
     },
     "title": "Khariidadda cimilada",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Shaashad buuxda"
     },
     "invalidUrl": "Fadlan geli xiriir sax ah (https://...)",
+    "frameLimit": "Waxaad ku dari kartaa ugu badnaan {{max}} jir oo adiga kuu gaar ah. Mid tirtir si aad mid cusub ugu darto.",
     "frameBlocked": "{{host}} ma oggola in lagu muujiyo frame gudihiis, sidaa darteed lama dari karo.",
     "selfFrame": "Goobta laguma dhex dhejin karo nafteeda. Fadlan dooro goob kale.",
     "frameChecking": "Waa la hubinayaa…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Geli Gmail-kaaga iyo eraygaaga sirta ah!",
       "nevirnyiGmailAboParol": "Gmail ama erayga sirta ah waa khalad!",
       "neVdalosiaUviitySprobuite": "Lama soo gali karin. Fadlan mar kale isku day.",
+      "accountsLimit": "Hal qalab waxaad ku isticmaali kartaa ugu badnaan {{max}} akoon.",
       "pidtverditShchoVamIe": "Xaqiiji inaad tahay 14 jir ama ka weyn oo aqbal heshiiska!",
       "korystuvach": "Isticmaale",
       "pomylkaGoogle": "Khaladka Google: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Heshiiska",
       "vyityZAkauntaI": "Ka bax akoonka oo tirtir dhammaan xogta goobta ee qalabkan",
       "skynutySait": "Dib u dejinta goobta",
+      "limitsButton": "Xadadka",
+      "limitsTitle": "Xadadka maanta",
+      "limitsSettings": "Dejinta, quudinta iyo jirarka adiga kuu gaarka ah",
+      "limitsCards": "Kaadhadhka cimilada",
+      "limitsMute": "Wararka la aamusiyay",
+      "limitsAdditions": "Ku darista kaadhadhka",
+      "limitsReports": "Warbixinnada wararka",
+      "limitsReset": "Waxay cusboonaadaan saqda dhexe ee UTC.",
+      "limitsSavedTitle": "Waxa la keydiyay",
+      "limitsFeeds": "Quudintaada",
+      "limitsFrames": "Jirarkaaga",
+      "limitsNote": "Waxaan nahay mashruuc aan ganacsi ahayn, sidaas darteed ma kordhin kartid xadadka!",
+      "limitsAccounts": "Akoonnada qalabkan",
+      "limitsSyncNote": "Ma dhammaatay xadka isku-dubaridku? Sii wad wax ka beddelka: wax walba qalabkan ayay ku kaydsanaanayaan, kuwa kalena waxay gaarayaan maalinta xigta. Kaadhadhka iyo warbixinnada berri. Xadadku waxay ka yimaadeen qoondada Firebase.",
       "deleteConfirmWord": "TIRTIR"
     },
     "WeatherBgModal": {

@@ -6,8 +6,8 @@ import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import styled, { keyframes, css } from "styled-components";
 import daynight from "../../media/thumbs/day-night-clock.webp";
-import daysthunders from "../../media/thumbs/night-river-burnt-tree.webp";
-import archiveThumb from "../../media/thumbs/asium-winter-forest.webp";
+import daysthunders from "../../media/thumbs/night-river-burnt-tree.webp?format=webp&quality=45";
+import archiveThumb from "../../media/thumbs/asium-winter-forest.webp?format=webp&quality=35";
 import localforage from "localforage";
 import {
   BiCog,

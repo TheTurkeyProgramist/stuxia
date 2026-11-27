@@ -6,13 +6,16 @@ import { loadFirebase } from "../firebaseLazy";
 import { getTodayKey, toDayKey, isPermissionDenied } from "./muteSync";
 
 export const CLOUD_LIMITS = {
-  settings: { countKey: "settingsSyncCount", atKey: "settingsSyncAt", limit: 100 },
+  settings: { countKey: "settingsSyncCount", atKey: "settingsSyncAt", limit: 200 },
   cards: { countKey: "cardsSyncCount", atKey: "cardsSyncAt", limit: 100 },
   // Спільний ліміт для заглушених новин і налаштувань фільтра новин (newsFilter)
   mute: { countKey: "muteSyncCount", atKey: "muteSyncAt", limit: 50 },
   cardAdditions: { countKey: "cardAdditionsCount", atKey: "cardAdditionsAt", limit: 20 },
   reports: { countKey: "reportCount", atKey: "reportAt", limit: 20 },
 };
+
+// Подія після вдалого запису — щоб лічильник у налаштуваннях оновлювався одразу
+export const CLOUD_WRITE_EVENT = "stuxia:cloud-write";
 
 // Скільки вже використано сьогодні за даними з хмари
 export const usedTodayFromCloud = (cloudData, { countKey, atKey }) =>
@@ -52,6 +55,7 @@ export const writeWithDailyCounter = async ({
       { ...data, [countKey]: count, [atKey]: serverTimestamp() },
       { merge: true },
     );
+    window.dispatchEvent(new CustomEvent(CLOUD_WRITE_EVENT, { detail: { countKey, count } }));
     return { ok: true, count };
   };
 

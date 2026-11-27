@@ -427,7 +427,7 @@ const StyxiaPanel = ({
           <select value={animation.fps} onChange={(e) => animation.onFps(Number(e.target.value))}>
             {animation.fpsOptions.map((value) => (
               <option key={value} value={value}>
-                {value}
+                {value === Infinity ? animation.autoLabel : value}
               </option>
             ))}
           </select>

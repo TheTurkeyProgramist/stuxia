@@ -212,7 +212,9 @@
       "noData": "没有地图数据。请在终端运行：",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "高度",
+      "auto": "自动"
     },
     "title": "气候地图",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "全屏模式"
     },
     "invalidUrl": "请输入有效链接 (https://...)",
+    "frameLimit": "最多可添加 {{max}} 个自定义框架。请先删除一个再添加新的。",
     "frameBlocked": "{{host}} 不允许在框架中显示，因此无法添加。",
     "selfFrame": "该网站不能嵌入自身，请选择其他网站。",
     "frameChecking": "正在检查…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "请输入你的 Gmail 和密码！",
       "nevirnyiGmailAboParol": "Gmail 或密码错误！",
       "neVdalosiaUviitySprobuite": "登录失败。请重试。",
+      "accountsLimit": "一台设备最多可使用 {{max}} 个账户。",
       "pidtverditShchoVamIe": "请确认你已年满 14 岁并接受协议！",
       "korystuvach": "用户",
       "pomylkaGoogle": "Google 错误：{{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "协议",
       "vyityZAkauntaI": "退出账户并清除此设备上的所有网站数据",
       "skynutySait": "重置网站",
+      "limitsButton": "限额",
+      "limitsTitle": "今日限额",
+      "limitsSettings": "设置、自定义订阅源和框架",
+      "limitsCards": "天气卡片",
+      "limitsMute": "屏蔽的新闻",
+      "limitsAdditions": "添加卡片",
+      "limitsReports": "新闻举报",
+      "limitsReset": "UTC 零点重置。",
+      "limitsSavedTitle": "已保存",
+      "limitsFeeds": "自定义订阅源",
+      "limitsFrames": "自定义框架",
+      "limitsNote": "我们是非商业项目，因此无法提高限额！",
+      "limitsAccounts": "本设备上的账户",
+      "limitsSyncNote": "同步次数用完了？可以继续修改：内容保存在本设备上，次日同步到其他设备。添加卡片和举报要等到明天。限额源于 Firebase 的配额。",
       "deleteConfirmWord": "删除"
     },
     "WeatherBgModal": {

@@ -212,7 +212,9 @@
       "noData": "Sem dados do mapa. Execute no terminal:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Altitude",
+      "auto": "Auto"
     },
     "title": "Mapa climático",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Tela cheia"
     },
     "invalidUrl": "Insira um link válido (https://...)",
+    "frameLimit": "Pode adicionar no máximo {{max}} molduras próprias. Elimine uma para adicionar outra.",
     "frameBlocked": "{{host}} não permite ser exibido num frame, por isso não pode ser adicionado.",
     "selfFrame": "O site não pode ser incorporado em si mesmo. Escolha outro site.",
     "frameChecking": "A verificar…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Digite seu Gmail e a senha!",
       "nevirnyiGmailAboParol": "Gmail ou senha incorretos!",
       "neVdalosiaUviitySprobuite": "Não foi possível entrar. Tente novamente.",
+      "accountsLimit": "Num dispositivo pode usar no máximo {{max}} contas.",
       "pidtverditShchoVamIe": "Confirme que você tem pelo menos 14 anos e aceite o acordo!",
       "korystuvach": "Usuário",
       "pomylkaGoogle": "Erro do Google: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Acordo",
       "vyityZAkauntaI": "Sair da conta e apagar todos os dados do site neste dispositivo",
       "skynutySait": "Redefinir o site",
+      "limitsButton": "Limites",
+      "limitsTitle": "Limites de hoje",
+      "limitsSettings": "Definições, feeds e molduras próprios",
+      "limitsCards": "Cartões do tempo",
+      "limitsMute": "Notícias silenciadas",
+      "limitsAdditions": "Adicionar cartões",
+      "limitsReports": "Denúncias de notícias",
+      "limitsReset": "Repostos à meia-noite UTC.",
+      "limitsSavedTitle": "Itens guardados",
+      "limitsFeeds": "Feeds próprios",
+      "limitsFrames": "Molduras próprias",
+      "limitsNote": "Somos um projeto não comercial, por isso não é possível aumentar os limites!",
+      "limitsAccounts": "Contas neste dispositivo",
+      "limitsSyncNote": "Esgotou as sincronizações? Continue a alterar: tudo fica neste dispositivo e chega aos outros no dia seguinte. Novos cartões e denúncias só amanhã. Os limites devem-se às quotas do Firebase.",
       "deleteConfirmWord": "EXCLUIR"
     },
     "WeatherBgModal": {

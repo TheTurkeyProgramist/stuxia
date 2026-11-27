@@ -212,7 +212,9 @@
       "noData": "Δεν υπάρχουν δεδομένα χάρτη. Εκτελέστε στο τερματικό:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Υψόμετρο",
+      "auto": "Αυτόματο"
     },
     "title": "Κλιματικός χάρτης",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Πλήρης οθόνη"
     },
     "invalidUrl": "Εισαγάγετε έγκυρο σύνδεσμο (https://...)",
+    "frameLimit": "Μπορείτε να προσθέσετε έως {{max}} δικά σας πλαίσια. Διαγράψτε ένα για να προσθέσετε νέο.",
     "frameBlocked": "Ο ιστότοπος {{host}} δεν επιτρέπει την εμφάνιση σε πλαίσιο, οπότε δεν μπορεί να προστεθεί.",
     "selfFrame": "Ο ιστότοπος δεν μπορεί να ενσωματωθεί στον εαυτό του. Επιλέξτε άλλον ιστότοπο.",
     "frameChecking": "Έλεγχος…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Γράψε το Gmail και τον κωδικό σου!",
       "nevirnyiGmailAboParol": "Λάθος Gmail ή κωδικός!",
       "neVdalosiaUviitySprobuite": "Η σύνδεση απέτυχε. Δοκίμασε ξανά.",
+      "accountsLimit": "Σε μία συσκευή μπορούν να χρησιμοποιηθούν έως {{max}} λογαριασμοί.",
       "pidtverditShchoVamIe": "Επιβεβαίωσε ότι είσαι 14 ετών ή μεγαλύτερος και αποδέξου τη συμφωνία!",
       "korystuvach": "Χρήστης",
       "pomylkaGoogle": "Σφάλμα Google: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Συμφωνία",
       "vyityZAkauntaI": "Αποσύνδεση από τον λογαριασμό και διαγραφή όλων των δεδομένων του ιστότοπου σε αυτή τη συσκευή",
       "skynutySait": "Επαναφορά ιστότοπου",
+      "limitsButton": "Όρια",
+      "limitsTitle": "Σημερινά όρια",
+      "limitsSettings": "Ρυθμίσεις, δικές σας ροές και πλαίσια",
+      "limitsCards": "Κάρτες καιρού",
+      "limitsMute": "Σιγασμένες ειδήσεις",
+      "limitsAdditions": "Προσθήκη καρτών",
+      "limitsReports": "Αναφορές ειδήσεων",
+      "limitsReset": "Ανανεώνονται τα μεσάνυχτα UTC.",
+      "limitsSavedTitle": "Πόσα έχουν αποθηκευτεί",
+      "limitsFeeds": "Δικές σας ροές",
+      "limitsFrames": "Δικά σας πλαίσια",
+      "limitsNote": "Είμαστε μη εμπορικό έργο, γι' αυτό δεν μπορείτε να αυξήσετε τα όρια!",
+      "limitsAccounts": "Λογαριασμοί σε αυτή τη συσκευή",
+      "limitsSyncNote": "Εξαντλήθηκε το όριο συγχρονισμού; Συνεχίστε τις αλλαγές: μένουν σε αυτή τη συσκευή και φτάνουν στις άλλες την επόμενη ημέρα. Νέες κάρτες και αναφορές από αύριο. Τα όρια οφείλονται στις ποσοστώσεις του Firebase.",
       "deleteConfirmWord": "ΔΙΑΓΡΑΦΗ"
     },
     "WeatherBgModal": {

@@ -122,6 +122,8 @@ import {
   stableStringify,
   toFirestoreSafe,
 } from "./utils/settingsSync";
+import { MAX_CUSTOM_WEATHER_CARDS } from "./utils/ownLimits";
+import { SOURCES_CHANGED_EVENT, readLocalSources, clearSourcesPending, mergeSourcesFromCloud } from "./utils/sourcesSync";
 import {
   CLOUD_LIMITS,
   usedTodayFromCloud,
@@ -222,8 +224,7 @@ const fetchSeasonalCached = async (lat, lon, url, serverSlug = null) => {
   }
   return data;
 };
-// Ліміти карток погоди: власні картки (без GPS) і нові створення на добу (лічильник у Firestore)
-const MAX_CUSTOM_WEATHER_CARDS = 10;
+// Ліміти карток погоди: власні картки (без GPS, ownLimits.js) і нові створення на добу (лічильник у Firestore)
 // Картки, що з'явились від входу за адресою (/pohoda/<місто>/): зберігаємо лише останні 4
 const MAX_URL_SEARCH_CARDS = 4;
 // Бета «Вимкнути GPS-картку»: її місце можна віддати ще одній власній картці
@@ -2949,7 +2950,7 @@ const App = () => {
     }
   }, [weatherCards, isHydrated]);
 
-  // ── Синхронізація налаштувань з акаунтом: до 100 записів на добу ──
+  // ── Синхронізація налаштувань з акаунтом: до 200 записів на добу ──
   const settingsSyncRef = useRef({ date: null, count: 0 }); // використано сьогодні
   const lastSyncedSettingsRef = useRef(null); // стабільний JSON того, що вже в хмарі
   const latestSettingsRef = useRef(null); // поточні налаштування для відправки
@@ -3002,6 +3003,54 @@ const App = () => {
       markPending();
     }
   }, []);
+
+  // ── Власні стрічки й фрейми: той самий добовий ліміт, що й у налаштувань ──
+  const lastSyncedSourcesRef = useRef(null);
+  const pushSourcesToCloud = useCallback(async () => {
+    const uid = userRef.current?.uid;
+    // Спершу треба прочитати акаунт, щоб не затерти списки з інших пристроїв
+    if (!uid || cloudSettingsLoadedForRef.current !== uid) return;
+    try {
+      const data = await readLocalSources();
+      const json = `${uid}|${stableStringify(data)}`;
+      if (json === lastSyncedSourcesRef.current) {
+        clearSourcesPending();
+        return;
+      }
+      const result = await writeWithDailyCounter({
+        uid,
+        data,
+        limitConfig: CLOUD_LIMITS.settings,
+        counterRef: settingsSyncRef,
+        storageKey: SETTINGS_SYNC_COUNTER_KEY,
+      });
+      if (result.ok) {
+        lastSyncedSourcesRef.current = json;
+        clearSourcesPending();
+        return;
+      }
+      toast(
+        i18n.t("ui.App.limitSynkhronizatsiiNalashtuvanNa", { SETTINGS_SYNC_DAILY_LIMIT: SETTINGS_SYNC_DAILY_LIMIT }),
+        { id: "settings-sync-limit", duration: 5000 },
+      );
+    } catch (e) {
+      // Позначка pending лишилась — відправиться з наступною зміною або входом
+      console.error("Firestore sources sync failed:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    let timer = null;
+    const schedule = () => {
+      clearTimeout(timer);
+      timer = setTimeout(pushSourcesToCloud, SETTINGS_SYNC_DEBOUNCE_MS);
+    };
+    window.addEventListener(SOURCES_CHANGED_EVENT, schedule);
+    return () => {
+      window.removeEventListener(SOURCES_CHANGED_EVENT, schedule);
+      clearTimeout(timer);
+    };
+  }, [pushSourcesToCloud]);
 
   // ── Синхронізація списку карток погоди: до 100 записів на добу ──
   const cardsSyncRef = useRef({ date: null, count: 0 });
@@ -3143,6 +3192,7 @@ const App = () => {
           if (hasPendingSettings || !cloudData.settings) {
             pushSettingsToCloud();
           }
+          if (await mergeSourcesFromCloud(syncUid, cloudData)) await pushSourcesToCloud();
         } catch (e) {
           console.error("Error syncing from Firestore:", e);
         }

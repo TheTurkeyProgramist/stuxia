@@ -20,12 +20,6 @@ export const NEWS_SOURCES = [
     home: "https://www.sciencedaily.com",
   },
   {
-    id: "nature",
-    url: "https://www.nature.com/nature.rss",
-    name: "Nature",
-    home: "https://www.nature.com",
-  },
-  {
     id: "mongabay",
     url: "https://news.mongabay.com/feed/",
     name: "Mongabay",
@@ -51,12 +45,6 @@ export const NEWS_SOURCES = [
     url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
     name: "BBC Science & Environment",
     home: "https://www.bbc.com/news/science_and_environment",
-  },
-  {
-    id: "new-scientist-environment",
-    url: "https://www.newscientist.com/subject/environment/feed/",
-    name: "New Scientist",
-    home: "https://www.newscientist.com/subject/environment/",
   },
   {
     id: "carbon-brief",

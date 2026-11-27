@@ -212,7 +212,9 @@
       "noData": "地図データがありません。ターミナルで実行してください：",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "高度",
+      "auto": "自動"
     },
     "title": "気候マップ",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "全画面モード"
     },
     "invalidUrl": "有効なリンクを入力してください (https://...)",
+    "frameLimit": "独自のフレームは最大{{max}}個まで追加できます。新しく追加するには1つ削除してください。",
     "frameBlocked": "{{host}} はフレーム内での表示を許可していないため、追加できません。",
     "selfFrame": "このサイトを自分自身の中に埋め込むことはできません。別のサイトを選んでください。",
     "frameChecking": "確認中…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Gmail とパスワードを入力してください！",
       "nevirnyiGmailAboParol": "Gmail またはパスワードが違います！",
       "neVdalosiaUviitySprobuite": "ログインできませんでした。もう一度お試しください。",
+      "accountsLimit": "1台の端末で使えるアカウントは{{max}}個までです。",
       "pidtverditShchoVamIe": "14 歳以上であることを確認し、規約に同意してください！",
       "korystuvach": "ユーザー",
       "pomylkaGoogle": "Google エラー：{{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "規約",
       "vyityZAkauntaI": "アカウントからログアウトし、この端末のすべてのサイトデータを消去",
       "skynutySait": "サイトをリセット",
+      "limitsButton": "上限",
+      "limitsTitle": "今日の上限",
+      "limitsSettings": "設定・独自のフィードとフレーム",
+      "limitsCards": "天気カード",
+      "limitsMute": "ミュートしたニュース",
+      "limitsAdditions": "カードの追加",
+      "limitsReports": "ニュースの通報",
+      "limitsReset": "UTCの午前0時にリセットされます。",
+      "limitsSavedTitle": "保存済み",
+      "limitsFeeds": "独自のフィード",
+      "limitsFrames": "独自のフレーム",
+      "limitsNote": "当サイトは非営利プロジェクトのため、上限を増やすことはできません！",
+      "limitsAccounts": "この端末のアカウント",
+      "limitsSyncNote": "同期の上限に達しても編集は続けられます。変更はこの端末に保存され、翌日以降ほかの端末に反映されます。カード追加と通報は翌日までできません。上限はFirebaseの利用枠によるものです。",
       "deleteConfirmWord": "削除"
     },
     "WeatherBgModal": {

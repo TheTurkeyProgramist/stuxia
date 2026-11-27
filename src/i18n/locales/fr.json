@@ -212,7 +212,9 @@
       "noData": "Aucune donnée pour la carte. Exécutez dans le terminal :",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Altitude",
+      "auto": "Auto"
     },
     "title": "Carte climatique",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Mode plein écran"
     },
     "invalidUrl": "Veuillez saisir un lien valide (https://...)",
+    "frameLimit": "Vous pouvez ajouter au maximum {{max}} cadres personnels. Supprimez-en un pour en ajouter un autre.",
     "frameBlocked": "{{host}} n’autorise pas l’affichage dans un cadre, il ne peut donc pas être ajouté.",
     "selfFrame": "Le site ne peut pas être intégré en lui-même. Choisissez un autre site.",
     "frameChecking": "Vérification…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Saisissez votre Gmail et votre mot de passe !",
       "nevirnyiGmailAboParol": "Gmail ou mot de passe incorrect !",
       "neVdalosiaUviitySprobuite": "Connexion impossible. Réessayez.",
+      "accountsLimit": "Vous pouvez utiliser au maximum {{max}} comptes sur un appareil.",
       "pidtverditShchoVamIe": "Confirmez que vous avez au moins 14 ans et acceptez l'accord !",
       "korystuvach": "Utilisateur",
       "pomylkaGoogle": "Erreur Google : {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Accord",
       "vyityZAkauntaI": "Se déconnecter du compte et effacer toutes les données du site sur cet appareil",
       "skynutySait": "Réinitialiser le site",
+      "limitsButton": "Limites",
+      "limitsTitle": "Limites du jour",
+      "limitsSettings": "Réglages, flux et cadres personnels",
+      "limitsCards": "Cartes météo",
+      "limitsMute": "Actualités masquées",
+      "limitsAdditions": "Ajout de cartes",
+      "limitsReports": "Signalements d'actualités",
+      "limitsReset": "Réinitialisation à minuit UTC.",
+      "limitsSavedTitle": "Éléments enregistrés",
+      "limitsFeeds": "Flux personnels",
+      "limitsFrames": "Cadres personnels",
+      "limitsNote": "Nous sommes un projet non commercial : vous ne pouvez donc pas augmenter les limites !",
+      "limitsAccounts": "Comptes sur cet appareil",
+      "limitsSyncNote": "Limite de synchronisation atteinte ? Continuez : tout reste sur cet appareil et arrive sur les autres le lendemain. Ajout de cartes et signalements : demain. Les limites viennent des quotas de Firebase.",
       "deleteConfirmWord": "SUPPRIMER"
     },
     "WeatherBgModal": {

@@ -5,7 +5,7 @@ rules_version = '2';
 // Доба рахується за UTC (request.time), час запису ставить сервер (serverTimestamp()).
 //
 // Добові ліміти на акаунт (поля в config/{uid}):
-//   settings          → settingsSyncCount / settingsSyncAt  — 100
+//   settings + customFeeds + customFrames → settingsSyncCount / settingsSyncAt — 200 (спільний)
 //   savedWeatherCards → cardsSyncCount    / cardsSyncAt     — 100
 //   mutedNews + newsFilter → muteSyncCount / muteSyncAt — 50 (спільний лічильник)
 //   додавання карток  → cardAdditionsCount / cardAdditionsAt — 20
@@ -108,9 +108,15 @@ service cloud.firestore {
           'savedWeatherCards', 'cardsSyncCount', 'cardsSyncAt',
           'mutedNews', 'newsFilter', 'muteSyncCount', 'muteSyncAt',
           'cardAdditionsCount', 'cardAdditionsAt',
-          'reportCount', 'reportAt'
+          'reportCount', 'reportAt', 'customFeeds', 'customFrames'
         ])
-        && counterOk(keys, 'settings', 'settingsSyncCount', 'settingsSyncAt', 100)
+        && counterOk(keys, 'settings', 'settingsSyncCount', 'settingsSyncAt', 200)
+        && counterOk(keys, 'customFeeds', 'settingsSyncCount', 'settingsSyncAt', 200)
+        && counterOk(keys, 'customFrames', 'settingsSyncCount', 'settingsSyncAt', 200)
+        && (!keys.hasAny(['customFeeds'])
+            || (d.customFeeds is list && d.customFeeds.size() <= 30))
+        && (!keys.hasAny(['customFrames'])
+            || (d.customFrames is list && d.customFrames.size() <= 30))
         && counterOk(keys, 'savedWeatherCards', 'cardsSyncCount', 'cardsSyncAt', 100)
         && counterOk(keys, 'mutedNews', 'muteSyncCount', 'muteSyncAt', 50)
         && counterOk(keys, 'newsFilter', 'muteSyncCount', 'muteSyncAt', 50)

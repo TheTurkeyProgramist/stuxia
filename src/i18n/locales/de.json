@@ -212,7 +212,9 @@
       "noData": "Keine Kartendaten. Im Terminal ausführen:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Höhe",
+      "auto": "Auto"
     },
     "title": "Klimakarte",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Vollbildmodus"
     },
     "invalidUrl": "Bitte gib einen gültigen Link ein (https://...)",
+    "frameLimit": "Du kannst höchstens {{max}} eigene Frames hinzufügen. Lösche einen, um einen neuen hinzuzufügen.",
     "frameBlocked": "{{host}} erlaubt keine Anzeige in einem Frame und kann daher nicht hinzugefügt werden.",
     "selfFrame": "Die Seite kann nicht in sich selbst eingebettet werden. Bitte wähle eine andere Seite.",
     "frameChecking": "Wird geprüft…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Gib deine Gmail-Adresse und dein Passwort ein!",
       "nevirnyiGmailAboParol": "Falsche Gmail-Adresse oder falsches Passwort!",
       "neVdalosiaUviitySprobuite": "Anmeldung fehlgeschlagen. Bitte versuche es erneut.",
+      "accountsLimit": "Auf einem Gerät können höchstens {{max}} Konten verwendet werden.",
       "pidtverditShchoVamIe": "Bestätige, dass du mindestens 14 Jahre alt bist, und akzeptiere die Vereinbarung!",
       "korystuvach": "Nutzer",
       "pomylkaGoogle": "Google-Fehler: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Vereinbarung zugestimmt",
       "vyityZAkauntaI": "Vom Konto abmelden und alle Website-Daten auf diesem Gerät löschen",
       "skynutySait": "Website zurücksetzen",
+      "limitsButton": "Limits",
+      "limitsTitle": "Heutige Limits",
+      "limitsSettings": "Einstellungen, eigene Feeds und Frames",
+      "limitsCards": "Wetterkarten",
+      "limitsMute": "Stummgeschaltete News",
+      "limitsAdditions": "Karten hinzufügen",
+      "limitsReports": "Gemeldete News",
+      "limitsReset": "Zurückgesetzt um Mitternacht (UTC).",
+      "limitsSavedTitle": "Gespeichert",
+      "limitsFeeds": "Eigene Feeds",
+      "limitsFrames": "Eigene Frames",
+      "limitsNote": "Wir sind ein nicht-kommerzielles Projekt, deshalb kannst du die Limits nicht erhöhen!",
+      "limitsAccounts": "Konten auf diesem Gerät",
+      "limitsSyncNote": "Sync-Limit erreicht? Ändere ruhig weiter: Alles bleibt auf diesem Gerät und kommt am nächsten Tag auf den anderen an. Karten hinzufügen und Meldungen erst morgen. Die Limits kommen von den Firebase-Kontingenten.",
       "deleteConfirmWord": "LÖSCHEN"
     },
     "WeatherBgModal": {

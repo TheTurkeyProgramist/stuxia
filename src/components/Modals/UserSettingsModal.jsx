@@ -217,6 +217,7 @@ import {
   WEATHER_ALERT_HOURS,
 } from "../../utils/emergencyAlerts";
 import { MUTE_SYNC_DAILY_LIMIT } from "../../utils/muteSync";
+import SyncUsageRing from "./SyncUsageRing.jsx";
 import { applySiteMirror, getSiteMirror } from "../../utils/siteMirror";
 import { getPref, setPref, removePref } from "../../utils/prefsStore.js";
 import { applySettingsSearch, clearSettingsSearch, getSearchWords } from "./settingsSearch";
@@ -3273,6 +3274,7 @@ const UserSettingsModal = ({
               </UserBadge>
             </HeaderLeft>
             <HeaderActions>
+              {!isGuest && <SyncUsageRing uid={user?.uid} />}
               <HeaderButton onClick={() => setShowKatScene(true)} aria-label={i18n.t("modals.UserSettingsModal.tytry")}>
                 <FiFilm /><span>{i18n.t("modals.UserSettingsModal.tytry")}</span>
               </HeaderButton>

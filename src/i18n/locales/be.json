@@ -212,7 +212,9 @@
       "noData": "Няма даных карты. Выканайце ў тэрмінале:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Вышыня",
+      "auto": "Аўта"
     },
     "title": "Кліматычная мапа",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Поўнаэкранны рэжым"
     },
     "invalidUrl": "Калі ласка, увядзіце карэктную спасылку (https://...)",
+    "frameLimit": "Можна дадаць не больш за {{max}} уласныя фрэймы. Выдаліце адзін, каб дадаць новы.",
     "frameBlocked": "Сайт {{host}} забараняе паказ у фрэйме — дадаць яго не атрымаецца.",
     "selfFrame": "Сайт нельга ўкласці самога ў сябе — абярыце іншы сайт.",
     "frameChecking": "Праверка…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Увядзіце Gmail і пароль!",
       "nevirnyiGmailAboParol": "Няправільны Gmail або пароль!",
       "neVdalosiaUviitySprobuite": "Не ўдалося ўвайсці. Паспрабуйце яшчэ раз.",
+      "accountsLimit": "На адной прыладзе можна выкарыстоўваць не больш за {{max}} акаўнтаў.",
       "pidtverditShchoVamIe": "Пацвердзіце, што вам ёсць 14 гадоў, і прыміце пагадненне!",
       "korystuvach": "Карыстальнік",
       "pomylkaGoogle": "Памылка Google: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Пагадненнем",
       "vyityZAkauntaI": "Выйсці з акаўнта і сцерці ўсе даныя сайта на гэтай прыладзе",
       "skynutySait": "Скінуць сайт",
+      "limitsButton": "Ліміты",
+      "limitsTitle": "Ліміты на сёння",
+      "limitsSettings": "Налады, уласныя стужкі і фрэймы",
+      "limitsCards": "Карткі надвор'я",
+      "limitsMute": "Заглушаныя навіны",
+      "limitsAdditions": "Даданне картак",
+      "limitsReports": "Скаргі на навіны",
+      "limitsReset": "Абнаўляюцца апоўначы паводле UTC.",
+      "limitsSavedTitle": "Колькі захавана",
+      "limitsFeeds": "Уласныя стужкі",
+      "limitsFrames": "Уласныя фрэймы",
+      "limitsNote": "Мы некамерцыйны праект, таму павялічыць ліміты вы не зможаце!",
+      "limitsAccounts": "Акаўнты на гэтай прыладзе",
+      "limitsSyncNote": "Скончыўся ліміт сінхранізацыі? Змяняйце далей: усё захаваецца на гэтай прыладзе, а на іншыя дойдзе наступнымі суткамі. Карткі і скаргі — толькі заўтра. Ліміты ёсць праз квоты Firebase.",
       "deleteConfirmWord": "ВЫДАЛІЦЬ"
     },
     "WeatherBgModal": {

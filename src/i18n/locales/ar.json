@@ -212,7 +212,9 @@
       "noData": "لا توجد بيانات للخريطة. نفّذ في الطرفية:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "الارتفاع",
+      "auto": "تلقائي"
     },
     "title": "الخريطة المناخية",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "وضع ملء الشاشة"
     },
     "invalidUrl": "يرجى إدخال رابط صالح (https://...)",
+    "frameLimit": "يمكنك إضافة {{max}} إطارات خاصة كحد أقصى. احذف واحدًا لإضافة آخر.",
     "frameBlocked": "الموقع {{host}} لا يسمح بعرضه داخل إطار، لذا لا يمكن إضافته.",
     "selfFrame": "لا يمكن تضمين هذا الموقع داخل نفسه. يُرجى اختيار موقع آخر.",
     "frameChecking": "جارٍ التحقق…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "أدخل Gmail وكلمة المرور!",
       "nevirnyiGmailAboParol": "Gmail أو كلمة المرور خاطئة!",
       "neVdalosiaUviitySprobuite": "تعذّر تسجيل الدخول. حاول مرة أخرى.",
+      "accountsLimit": "لا يمكن استخدام أكثر من {{max}} حسابات على جهاز واحد.",
       "pidtverditShchoVamIe": "أكّد أن عمرك 14 عامًا أو أكثر واقبل الاتفاقية!",
       "korystuvach": "مستخدم",
       "pomylkaGoogle": "خطأ Google: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "الاتفاقية",
       "vyityZAkauntaI": "تسجيل الخروج من الحساب ومسح كل بيانات الموقع على هذا الجهاز",
       "skynutySait": "إعادة ضبط الموقع",
+      "limitsButton": "الحدود",
+      "limitsTitle": "حدود اليوم",
+      "limitsSettings": "الإعدادات والخلاصات والإطارات الخاصة",
+      "limitsCards": "بطاقات الطقس",
+      "limitsMute": "الأخبار المكتومة",
+      "limitsAdditions": "إضافة البطاقات",
+      "limitsReports": "بلاغات الأخبار",
+      "limitsReset": "تتجدد عند منتصف الليل بتوقيت UTC.",
+      "limitsSavedTitle": "العناصر المحفوظة",
+      "limitsFeeds": "الخلاصات الخاصة",
+      "limitsFrames": "الإطارات الخاصة",
+      "limitsNote": "نحن مشروع غير تجاري، لذلك لا يمكنك زيادة هذه الحدود!",
+      "limitsAccounts": "الحسابات على هذا الجهاز",
+      "limitsSyncNote": "نفد حد المزامنة؟ واصل التعديل: تبقى التغييرات على هذا الجهاز وتصل إلى أجهزتك الأخرى في اليوم التالي. إضافة البطاقات والبلاغات تنتظر الغد. الحدود بسبب حصص Firebase.",
       "deleteConfirmWord": "حذف"
     },
     "WeatherBgModal": {

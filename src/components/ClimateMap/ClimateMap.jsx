@@ -6,9 +6,12 @@ import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, F
 import { FiCheck, FiEdit2, FiPlay, FiPlus, FiSearch, FiSettings, FiX } from "react-icons/fi";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { MdDragIndicator, MdVolumeUp, MdMap, MdPlace, MdPushPin, MdDeleteOutline, MdFullscreen, MdPublic } from "react-icons/md";
-import { Reorder, motion, useDragControls } from "framer-motion";
+import { Reorder, motion, useDragControls, AnimatePresence } from "framer-motion";
+import { riseIn, popIn, fade, overlayMotion, panelMotion } from "./mapMotion.js";
 import climate from "../../media/third-party/services/ventusky-map.webp";
 import localforage from "localforage";
+import { markSourcesChanged, SOURCES_SYNCED_EVENT } from "../../utils/sourcesSync";
+import { MAX_CUSTOM_FRAMES } from "../../utils/ownLimits";
 import { BsFillPinAngleFill } from "react-icons/bs";
 import { FaMapLocationDot } from "react-icons/fa6";
 import { LuFullscreen } from "react-icons/lu";
@@ -17,26 +20,26 @@ import { GiLockedChest } from "react-icons/gi";
 import turkey from "../../media/characters/kate-and-domino.webm";
 import toast, { Toaster } from "react-hot-toast";
 // Обкладинки карток показуються ~170–240 px — збираємо копії шириною 360 px (оригінали ~1400 px)
-import coverVentusky from "../../media/third-party/services/ventusky.webp?w=360&format=webp&quality=62";
-import coverWindy from "../../media/third-party/services/windy.webp?w=360&format=webp&quality=62";
-import coverAlerts from "../../media/third-party/services/air-alerts.webp?w=360&format=webp&quality=62";
-import coverAirTargets from "../../media/third-party/services/air-targets.webp?w=360&format=webp&quality=62";
-import coverExcalidraw from "../../media/third-party/services/excalidraw.webp?w=360&format=webp&quality=62";
-import coverSaveEcoBot from "../../media/third-party/services/saveecobot.webp?w=360&format=webp&quality=62";
-import coverAirTraffic from "../../media/third-party/services/air-traffic.webp?w=360&format=webp&quality=62";
-import coverDeepState from "../../media/third-party/services/deepstate.webp?w=360&format=webp&quality=62";
-import coverStyxia from "../../media/covers/styxia-map.webp?w=360&format=webp&quality=62";
-import coverTrivogaOnline from "../../media/third-party/services/trivoga-online.webp?w=360&format=webp&quality=62";
-import coverBlitzortung from "../../media/third-party/services/blitzortung.webp?w=360&format=webp&quality=62";
-import coverCinema from "../../media/third-party/services/internet-archive.webp?w=360&format=webp&quality=62";
-import coverLifecellTv from "../../media/third-party/services/lifecell-tv.webp?w=360&format=webp&quality=62";
-import coverSweetTv from "../../media/third-party/services/sweet-tv.webp?w=360&format=webp&quality=62";
-import coverGameBlockly from "../../media/third-party/services/blockly-games.webp?w=360&format=webp&quality=62";
-import coverGameOffline from "../../media/covers/mind-trainer.webp?w=360&format=webp&quality=62";
+import coverVentusky from "../../media/third-party/services/ventusky.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverWindy from "../../media/third-party/services/windy.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverAlerts from "../../media/third-party/services/air-alerts.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverAirTargets from "../../media/third-party/services/air-targets.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverExcalidraw from "../../media/third-party/services/excalidraw.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverSaveEcoBot from "../../media/third-party/services/saveecobot.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverAirTraffic from "../../media/third-party/services/air-traffic.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverDeepState from "../../media/third-party/services/deepstate.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverStyxia from "../../media/covers/styxia-map.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverTrivogaOnline from "../../media/third-party/services/trivoga-online.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverBlitzortung from "../../media/third-party/services/blitzortung.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverCinema from "../../media/third-party/services/internet-archive.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverLifecellTv from "../../media/third-party/services/lifecell-tv.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverSweetTv from "../../media/third-party/services/sweet-tv.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverGameBlockly from "../../media/third-party/services/blockly-games.webp?w=180;360&format=webp&quality=62&as=srcset";
+import coverGameOffline from "../../media/covers/mind-trainer.webp?w=180;360&format=webp&quality=62&as=srcset";
 import { usePageActive } from "../../utils/pageActivity.js";
 import FunTicker from "./FunTicker";
 import OfflineGames from "./OfflineGames";
-import { SourceFlags, FlagsLegend } from "./SourceFlags";
+import { SourceFlags, FlagsLegend, useFlagLabel } from "./SourceFlags";
 import { useGameLimit, formatGameTime } from "./gameLimit.js";
 import { START_MAP_PICK_EVENT, takePendingMapPick, reportMapPick } from "../Hero/heroEvents.js";
 // «Карта Стихії» — власна карта, окремим чанком (дані оновлює .github/workflows/cloudflare.yml)
@@ -1007,7 +1010,26 @@ const iconFloatOut = keyframes`
 
 // На ПК 5 блоків налаштувань сіткою 3 + 2, іконка велика над заголовком; на телефоні — звичайний список.
 // Порядок дітей: 1 клавіші, 2 підпис «Карта», 3 скриня, 4 шпилька, 5 повний екран, 6 міні-плеєр
+// Картки налаштувань випливають по черзі
+const cardIn = keyframes`
+  from { opacity: 0; transform: translateY(26px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+`;
+
 const SettingsGrid = styled.div`
+  /* backwards, а не both: після появи картка знову слухається своїх стилів і наведення */
+  && > * { animation: ${cardIn} 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+  && > :nth-child(2) { animation-delay: 0.07s; }
+  && > :nth-child(3) { animation-delay: 0.14s; }
+  && > :nth-child(4) { animation-delay: 0.21s; }
+  && > :nth-child(5) { animation-delay: 0.28s; }
+  && > :nth-child(6) { animation-delay: 0.35s; }
+  && > :nth-child(n + 7) { animation-delay: 0.42s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    && > * { animation: none; }
+  }
+
   && > * > svg { transform-origin: center; }
   && > :nth-child(1):hover > svg { animation: ${iconKeyTap} 0.5s ease; }
   && > :nth-child(3):hover > svg { animation: ${iconChestShake} 0.6s ease; }
@@ -1712,6 +1734,18 @@ const TV_SOURCE_URLS = {
 // Джерела лише для України: на інших мовах сайту їх не показуємо
 const UKRAINE_ONLY_SOURCES = new Set(["alerts-ua", "ukrainealarm", "trivoga-online", "saveecobot", "deepstate", "lifecell-tv", "sweet-tv"]);
 
+// Показана ширина обкладинки: бічна панель або слайдер (браузер сам бере 180 чи 360 px з урахуванням щільності екрана)
+const COVER_SIZES = "260px";
+const SLIDER_COVER_SIZES = "180px";
+
+// Підказка картки: повна назва, підпис (на вузькій картці обрізаний) і значення значків
+const useCardHint = ({ title, subtitle, note, flags }) => {
+  const flagLabel = useFlagLabel();
+  return [title, subtitle, note, ...(flags || []).map(flagLabel)].filter(Boolean).join(" · ");
+};
+// Підказка кнопки на картці чіпляється до іконки всередині: сама кнопка лишається absolute
+const ICON_HINT_STYLE = { width: "100%", height: "100%", alignItems: "center", justifyContent: "center" };
+
 // Картка джерела; перетягується лише за ручку, щоб не заважати прокрутці на дотик
 // editForm — форма редагування власного фрейму, що показується замість картки
 // reorderReady — чи вже ввімкнено перетягування (див. SourceCardPlain).
@@ -1722,6 +1756,7 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, spli
   const { t } = useTranslation();
   const controls = useDragControls();
   const { id, title, subtitle, note, flags, Icon, bg, frame, cover, favicon } = item;
+  const hint = useCardHint(item);
   // Пам'ятаємо, яка саме іконка не завантажилась: після зміни адреси фрейму пробуємо нову
   const [failedFavicon, setFailedFavicon] = useState(null);
   const faviconFailed = failedFavicon === favicon;
@@ -1740,52 +1775,54 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, spli
   }
   return (
     <Wrap {...wrapProps}>
-      <SourceCard
-        type="button"
-        $bg={bg}
-        $active={isActive}
-        aria-pressed={isActive}
-        title={title}
-        onClick={(e) => onSelect(id, e)}
-      >
-        <CardCorner $active={isActive}><FiPlay /></CardCorner>
-        {cover ? (
-          <CardImage src={cover} alt="" loading="lazy" draggable={false} />
-        ) : favicon && !faviconFailed ? (
-          <>
-            <CardFaviconBackdrop src={favicon} alt="" draggable={false} />
-            <CardFavicon>
-              <img
-                src={favicon}
-                alt=""
-                draggable={false}
-                referrerPolicy="no-referrer"
-                onError={() => setFailedFavicon(favicon)}
-              />
-            </CardFavicon>
-          </>
-        ) : frame ? (
-          <CardInitial>{(title || "?").trim().charAt(0)}</CardInitial>
-        ) : (
-          <CardArt><Icon /></CardArt>
-        )}
-        <CardText>
-          {note && <CardNote>{note}</CardNote>}
-          <SourceFlags flags={flags} />
-          <strong>{title}</strong>
-          <small>{subtitle}</small>
-        </CardText>
-      </SourceCard>
+      <Tooltip content={hint} placement="left" isDarkMode={isDarkMode} wrapperStyle={{ display: "block" }}>
+        <SourceCard
+          type="button"
+          $bg={bg}
+          $active={isActive}
+          aria-pressed={isActive}
+          onClick={(e) => onSelect(id, e)}
+        >
+          <CardCorner $active={isActive}><FiPlay /></CardCorner>
+          {cover ? (
+            <CardImage srcSet={cover} sizes={COVER_SIZES} alt="" loading="lazy" draggable={false} />
+          ) : favicon && !faviconFailed ? (
+            <>
+              <CardFaviconBackdrop src={favicon} alt="" draggable={false} />
+              <CardFavicon>
+                <img
+                  src={favicon}
+                  alt=""
+                  draggable={false}
+                  referrerPolicy="no-referrer"
+                  onError={() => setFailedFavicon(favicon)}
+                />
+              </CardFavicon>
+            </>
+          ) : frame ? (
+            <CardInitial>{(title || "?").trim().charAt(0)}</CardInitial>
+          ) : (
+            <CardArt><Icon /></CardArt>
+          )}
+          <CardText>
+            {note && <CardNote>{note}</CardNote>}
+            <SourceFlags flags={flags} silent />
+            <strong>{title}</strong>
+            <small>{subtitle}</small>
+          </CardText>
+        </SourceCard>
+      </Tooltip>
       <DragHandle
         type="button"
         aria-label={t("climateMap.dragItem", { title })}
-        title={t("climateMap.dragHint")}
         onPointerDown={(e) => {
           if (reorderReady) controls.start(e);
           else onNeedReorder?.(id, e);
         }}
       >
-        <MdDragIndicator />
+        <Tooltip content={t("climateMap.dragHint")} placement="left" isDarkMode={isDarkMode} wrapperStyle={ICON_HINT_STYLE}>
+          <MdDragIndicator />
+        </Tooltip>
       </DragHandle>
       {splitAvailable && (
         <SplitCheck $withDelete={!!frame}>
@@ -1808,18 +1845,20 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, spli
           <CardEdit
             type="button"
             aria-label={t("climateMap.editItem", { title })}
-            title={t("climateMap.edit")}
             onClick={() => onEdit(frame)}
           >
-            <FiEdit2 />
+            <Tooltip content={t("climateMap.edit")} isDarkMode={isDarkMode} wrapperStyle={ICON_HINT_STYLE}>
+              <FiEdit2 />
+            </Tooltip>
           </CardEdit>
           <CardDelete
             type="button"
             aria-label={t("climateMap.deleteItem", { title })}
-            title={t("climateMap.delete")}
             onClick={() => onDelete(frame)}
           >
-            <FiX />
+            <Tooltip content={t("climateMap.delete")} isDarkMode={isDarkMode} wrapperStyle={ICON_HINT_STYLE}>
+              <FiX />
+            </Tooltip>
           </CardDelete>
         </>
       )}
@@ -1831,6 +1870,7 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, spli
 const MobileSourceCard = ({ item, isActive, onSelect }) => {
   const { id, title, subtitle, note, flags, Icon, bg, frame, cover, favicon } = item;
   const [faviconFailed, setFaviconFailed] = useState(false);
+  const hint = useCardHint(item);
   const cardRef = useRef(null);
 
   // Активну картку одразу показуємо у слайдері; гортаємо лише сам слайдер, щоб панель не стрибала вертикально
@@ -1842,42 +1882,43 @@ const MobileSourceCard = ({ item, isActive, onSelect }) => {
 
   return (
     <MobileSourceSlide ref={cardRef}>
-      <SourceCard
-        type="button"
-        $bg={bg}
-        $active={isActive}
-        aria-pressed={isActive}
-        title={title}
-        onClick={() => onSelect(id)}
-      >
-        <CardCorner $active={isActive}><FiPlay /></CardCorner>
-        {cover ? (
-          <CardImage src={cover} alt="" loading="lazy" draggable={false} />
-        ) : favicon && !faviconFailed ? (
-          <>
-            <CardFaviconBackdrop src={favicon} alt="" draggable={false} />
-            <CardFavicon>
-              <img
-                src={favicon}
-                alt=""
-                draggable={false}
-                referrerPolicy="no-referrer"
-                onError={() => setFaviconFailed(true)}
-              />
-            </CardFavicon>
-          </>
-        ) : frame ? (
-          <CardInitial>{(title || "?").trim().charAt(0)}</CardInitial>
-        ) : (
-          <CardArt><Icon /></CardArt>
-        )}
-        <CardText>
-          {note && <CardNote>{note}</CardNote>}
-          <SourceFlags flags={flags} />
-          <strong>{title}</strong>
-          <small>{subtitle}</small>
-        </CardText>
-      </SourceCard>
+      <Tooltip content={hint} placement="top" wrapperStyle={{ display: "block" }}>
+        <SourceCard
+          type="button"
+          $bg={bg}
+          $active={isActive}
+          aria-pressed={isActive}
+          onClick={() => onSelect(id)}
+        >
+          <CardCorner $active={isActive}><FiPlay /></CardCorner>
+          {cover ? (
+            <CardImage srcSet={cover} sizes={SLIDER_COVER_SIZES} alt="" loading="lazy" draggable={false} />
+          ) : favicon && !faviconFailed ? (
+            <>
+              <CardFaviconBackdrop src={favicon} alt="" draggable={false} />
+              <CardFavicon>
+                <img
+                  src={favicon}
+                  alt=""
+                  draggable={false}
+                  referrerPolicy="no-referrer"
+                  onError={() => setFaviconFailed(true)}
+                />
+              </CardFavicon>
+            </>
+          ) : frame ? (
+            <CardInitial>{(title || "?").trim().charAt(0)}</CardInitial>
+          ) : (
+            <CardArt><Icon /></CardArt>
+          )}
+          <CardText>
+            {note && <CardNote>{note}</CardNote>}
+            <SourceFlags flags={flags} silent />
+            <strong>{title}</strong>
+            <small>{subtitle}</small>
+          </CardText>
+        </SourceCard>
+      </Tooltip>
     </MobileSourceSlide>
   );
 };
@@ -2388,10 +2429,21 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
     loadData();
   }, []);
 
+  // Фрейми прийшли з акаунта — показуємо їх без перезавантаження сторінки
+  useEffect(() => {
+    const reload = async () => {
+      const saved = await localforage.getItem("climate_custom_user_frames");
+      setCustomFrames(Array.isArray(saved) ? saved : []);
+    };
+    window.addEventListener(SOURCES_SYNCED_EVENT, reload);
+    return () => window.removeEventListener(SOURCES_SYNCED_EVENT, reload);
+  }, []);
+
   const saveCustomFrames = async (newFrames) => {
     setCustomFrames(newFrames);
     try {
       await localforage.setItem("climate_custom_user_frames", newFrames);
+      markSourcesChanged();
     } catch (err) {
       console.error("Error saving custom frames:", err);
     }
@@ -2453,12 +2505,20 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
     return targetUrl;
   };
 
+  // true — місця для нового фрейму немає (і пояснюємо це)
+  const isFrameLimitReached = () => {
+    if (customFrames.length < MAX_CUSTOM_FRAMES) return false;
+    toast.error(t("climateMap.frameLimit", { max: MAX_CUSTOM_FRAMES }));
+    return true;
+  };
+
   // Одна форма і для додавання, і для редагування (editingFrameId ≠ null)
   const handleAddFrame = async (e) => {
     e.preventDefault();
     if (!newFrameUrl.trim() || isCheckingFrame) return;
 
     const editing = editingFrameId ? customFrames.find((f) => f.id === editingFrameId) : null;
+    if (!editing && isFrameLimitReached()) return;
     const targetUrl = await resolveFrameUrl(newFrameUrl, editing?.url);
     if (!targetUrl) return;
 
@@ -2487,6 +2547,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
   };
 
   const handleStartAddFrame = () => {
+    if (isFrameLimitReached()) return;
     handleCancelAddFrame();
     setIsAddingFrame(true);
   };
@@ -2494,6 +2555,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
   // Повноекранний режим: «+ Додати фрейм» відкриває налаштування одразу на формі власного фрейму
   const settingsFrameFormRef = useRef(null);
   const handleAddFrameFromStrip = () => {
+    if (isFrameLimitReached()) return;
     handleCancelAddFrame();
     setIsControlsOpen(true);
     setTimeout(() => {
@@ -2981,7 +3043,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
 
   const renderPane = (id, url, loading, onReady, label) => {
     if (isGameBlocked(id)) {
-      return isMapActive && <LimitScreen role="status">{t("climateMap.games.over")}</LimitScreen>;
+      return isMapActive && <LimitScreen as={motion.div} {...fade} role="status">{t("climateMap.games.over")}</LimitScreen>;
     }
     if (id === "styxia") return renderStyxiaMap(onReady);
     const timeLeft = isMapActive && GAME_SOURCES.has(id) && (
@@ -3004,8 +3066,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
           loading="lazy"
         />
         {timeLeft}
+        <AnimatePresence>
         {isMapActive && TV_SOURCE_URLS[id] && !closedTvHints.includes(id) && (
-          <FrameBar>
+          <FrameBar key="tv-hint" as={motion.div} {...fade}>
             <span>{t("climateMap.tv.hint")}</span>
             <a href={TV_SOURCE_URLS[id]} target="_blank" rel="noopener noreferrer">{t("climateMap.tv.open")}</a>
             <button type="button" aria-label={t("common.close")} title={t("common.close")} onClick={() => setClosedTvHints((list) => [...list, id])}>
@@ -3013,6 +3076,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
             </button>
           </FrameBar>
         )}
+        </AnimatePresence>
       </>
     );
   };
@@ -3068,15 +3132,19 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
         $isFullscreen={isFullscreen}
         onClick={() => !isMapActive && handleActivateMap()}
       >
+        <AnimatePresence>
         {isControlsOpen && (
           <MobileSettingsOverlay
+            key="settings"
+            as={motion.div}
+            {...overlayMotion}
             $isDarkMode={isDarkMode}
             $stack={showFunTicker}
             // Повноекранний режим: нижня панель (джерела, пошук) лишається доступною під налаштуваннями
             $bottomInset={showFullscreenStrip ? FULLSCREEN_STRIP_HEIGHT : 0}
             onClick={() => setIsControlsOpen(false)}
           >
-            <MobileSettingsPanel $isDarkMode={isDarkMode} $joined={showFunTicker} onClick={(e) => e.stopPropagation()}>
+            <MobileSettingsPanel as={motion.div} {...panelMotion} $isDarkMode={isDarkMode} $joined={showFunTicker} onClick={(e) => e.stopPropagation()}>
               <MobileSettingsHeading $isDarkMode={isDarkMode}>
                 <div>
                   <h2>
@@ -3288,6 +3356,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
             {showFunTicker && <FunTicker isDarkMode={isDarkMode} />}
           </MobileSettingsOverlay>
         )}
+        </AnimatePresence>
 
         {isMiniPlayerOpen ? (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#222', color: 'rgba(255,255,255,0.6)', zIndex: 5, padding: '20px', textAlign: 'center' }}>
@@ -3351,8 +3420,9 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
           </>
         )}
 
+        <AnimatePresence>
         {showFullscreenStrip && (
-          <FullscreenStripBar $isDarkMode={isDarkMode}>
+          <FullscreenStripBar key="strip" as={motion.div} {...riseIn} $isDarkMode={isDarkMode}>
             {/* Бічна панель у повноекранному режимі поза екраном — налаштування й пошук тут */}
             <FullscreenStripTools>
               <FullscreenSettingsButton
@@ -3400,6 +3470,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
             </FullscreenSourcesStrip>
           </FullscreenStripBar>
         )}
+        </AnimatePresence>
       </MapWrapper>
 
       {isWideLayout && (
@@ -3512,8 +3583,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
           </div>,
           pipWindow.document.body
         )
-      ) : isMiniPlayerOpen && (
+      ) : null}
+      <AnimatePresence>
+      {isMiniPlayerOpen && !(pipWindow && !miniShowsStyxia) && (
         <MiniPlayerWindow
+          key="mini"
+          as={motion.div}
+          {...popIn}
           ref={miniPlayerRef}
           onDoubleClick={() => setIsMiniPlayerOpen(false)}
           style={{
@@ -3577,6 +3653,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
           </MiniPlayerBody>
         </MiniPlayerWindow>
       )}
+      </AnimatePresence>
     </OuterContainer>
   );
 };

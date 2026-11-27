@@ -212,7 +212,9 @@
       "noData": "Karttadataa ei ole. Suorita päätteessä:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Korkeus",
+      "auto": "Auto"
     },
     "title": "Ilmastokartta",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Koko näyttö"
     },
     "invalidUrl": "Anna kelvollinen linkki (https://...)",
+    "frameLimit": "Voit lisätä enintään {{max}} omaa kehystä. Poista yksi lisätäksesi uuden.",
     "frameBlocked": "{{host}} ei salli näyttämistä kehyksessä, joten sitä ei voi lisätä.",
     "selfFrame": "Sivustoa ei voi upottaa itseensä. Valitse toinen sivusto.",
     "frameChecking": "Tarkistetaan…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Anna Gmail ja salasana!",
       "nevirnyiGmailAboParol": "Väärä Gmail tai salasana!",
       "neVdalosiaUviitySprobuite": "Kirjautuminen epäonnistui. Yritä uudelleen.",
+      "accountsLimit": "Yhdellä laitteella voi käyttää enintään {{max}} tiliä.",
       "pidtverditShchoVamIe": "Vahvista, että olet vähintään 14-vuotias, ja hyväksy sopimus!",
       "korystuvach": "Käyttäjä",
       "pomylkaGoogle": "Google-virhe: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Sopimuksen",
       "vyityZAkauntaI": "Kirjaudu ulos tililtä ja poista kaikki sivuston tiedot tältä laitteelta",
       "skynutySait": "Nollaa sivusto",
+      "limitsButton": "Rajat",
+      "limitsTitle": "Päivän rajat",
+      "limitsSettings": "Asetukset, omat syötteet ja kehykset",
+      "limitsCards": "Sääkortit",
+      "limitsMute": "Mykistetyt uutiset",
+      "limitsAdditions": "Korttien lisääminen",
+      "limitsReports": "Uutisten ilmiannot",
+      "limitsReset": "Nollautuvat keskiyöllä UTC-aikaa.",
+      "limitsSavedTitle": "Tallennettu",
+      "limitsFeeds": "Omat syötteet",
+      "limitsFrames": "Omat kehykset",
+      "limitsNote": "Olemme epäkaupallinen hanke, joten rajoja ei voi nostaa!",
+      "limitsAccounts": "Tilit tällä laitteella",
+      "limitsSyncNote": "Synkronointiraja täynnä? Jatka muokkaamista: muutokset säilyvät tällä laitteella ja siirtyvät muille seuraavana päivänä. Korttien lisäys ja ilmiannot vasta huomenna. Rajat johtuvat Firebasen kiintiöistä.",
       "deleteConfirmWord": "POISTA"
     },
     "WeatherBgModal": {

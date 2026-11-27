@@ -212,7 +212,9 @@
       "noData": "No map data. Run in the terminal:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Altitude",
+      "auto": "Auto"
     },
     "title": "Climate map",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Fullscreen mode"
     },
     "invalidUrl": "Please enter a valid link (https://...)",
+    "frameLimit": "You can add up to {{max}} custom frames. Delete one to add another.",
     "frameBlocked": "{{host}} doesn't allow being shown in a frame, so it can't be added.",
     "selfFrame": "Stykhiia can't be embedded inside itself. Please choose another site.",
     "frameChecking": "Checking…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Enter your Gmail and password!",
       "nevirnyiGmailAboParol": "Wrong Gmail or password!",
       "neVdalosiaUviitySprobuite": "Couldn't sign in. Please try again.",
+      "accountsLimit": "You can use no more than {{max}} accounts on one device.",
       "pidtverditShchoVamIe": "Confirm that you are 14 or older and accept the agreement!",
       "korystuvach": "User",
       "pomylkaGoogle": "Google error: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Agreement",
       "vyityZAkauntaI": "Sign out of the account and erase all site data on this device",
       "skynutySait": "Reset site",
+      "limitsButton": "Limits",
+      "limitsTitle": "Today's limits",
+      "limitsSettings": "Settings, custom feeds and frames",
+      "limitsCards": "Weather cards",
+      "limitsMute": "Muted news",
+      "limitsAdditions": "Adding cards",
+      "limitsReports": "News reports",
+      "limitsReset": "Reset at midnight UTC.",
+      "limitsSavedTitle": "Saved items",
+      "limitsFeeds": "Custom feeds",
+      "limitsFrames": "Custom frames",
+      "limitsNote": "We are a non-commercial project, so you cannot increase these limits!",
+      "limitsAccounts": "Accounts on this device",
+      "limitsSyncNote": "Out of syncs? Keep editing: changes stay on this device and reach your other devices the next day. Adding cards and reports wait until tomorrow. The limits come from Firebase quotas.",
       "deleteConfirmWord": "DELETE"
     },
     "WeatherBgModal": {

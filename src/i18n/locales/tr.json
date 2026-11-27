@@ -212,7 +212,9 @@
       "noData": "Harita verisi yok. Terminalde çalıştırın:",
       "dataTime": "GFS model run:",
       "alertsDisclaimer": "Unofficial data, may be delayed. Follow sirens and the official app.",
-      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map."
+      "noDataPublic": "Map data is temporarily unavailable. Try later or pick another map.",
+      "altitude": "Yükseklik",
+      "auto": "Otomatik"
     },
     "title": "İklim haritası",
     "sources": {
@@ -269,6 +271,7 @@
       "fullscreen": "Tam ekran modu"
     },
     "invalidUrl": "Lütfen geçerli bir bağlantı girin (https://...)",
+    "frameLimit": "En fazla {{max}} özel çerçeve ekleyebilirsiniz. Yenisini eklemek için birini silin.",
     "frameBlocked": "{{host}} bir çerçeve içinde gösterilmeye izin vermiyor, bu yüzden eklenemiyor.",
     "selfFrame": "Site kendi içine yerleştirilemez. Lütfen başka bir site seçin.",
     "frameChecking": "Kontrol ediliyor…",
@@ -536,6 +539,7 @@
       "vveditGmailIParol": "Gmail ve şifrenizi girin!",
       "nevirnyiGmailAboParol": "Gmail veya şifre yanlış!",
       "neVdalosiaUviitySprobuite": "Giriş yapılamadı. Tekrar deneyin.",
+      "accountsLimit": "Bir cihazda en fazla {{max}} hesap kullanılabilir.",
       "pidtverditShchoVamIe": "14 yaşında olduğunuzu onaylayın ve sözleşmeyi kabul edin!",
       "korystuvach": "Kullanıcı",
       "pomylkaGoogle": "Google hatası: {{v0}}",
@@ -1164,6 +1168,20 @@
       "uhodoiu": "Sözleşme",
       "vyityZAkauntaI": "Hesaptan çık ve bu cihazdaki tüm site verilerini sil",
       "skynutySait": "Siteyi sıfırla",
+      "limitsButton": "Sınırlar",
+      "limitsTitle": "Bugünkü sınırlar",
+      "limitsSettings": "Ayarlar, özel akışlar ve çerçeveler",
+      "limitsCards": "Hava kartları",
+      "limitsMute": "Sessize alınan haberler",
+      "limitsAdditions": "Kart ekleme",
+      "limitsReports": "Haber şikâyetleri",
+      "limitsReset": "UTC gece yarısı sıfırlanır.",
+      "limitsSavedTitle": "Kaydedilenler",
+      "limitsFeeds": "Özel akışlar",
+      "limitsFrames": "Özel çerçeveler",
+      "limitsNote": "Ticari olmayan bir projeyiz, bu yüzden sınırları artıramazsınız!",
+      "limitsAccounts": "Bu cihazdaki hesaplar",
+      "limitsSyncNote": "Eşitleme hakkınız mı bitti? Değiştirmeye devam edin: her şey bu cihazda kalır ve ertesi gün diğerlerine ulaşır. Kart ekleme ve şikâyet yarına kalır. Sınırlar Firebase kotalarından kaynaklanır.",
       "deleteConfirmWord": "SİL"
     },
     "WeatherBgModal": {

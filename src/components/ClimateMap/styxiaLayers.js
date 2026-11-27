@@ -14,6 +14,16 @@ const TEMPERATURE_STOPS = [
   [16, 200, 220, 80], [24, 250, 180, 50], [32, 235, 90, 40], [42, 140, 20, 40],
 ];
 
+// Висоти, крім приземної. Це ізобаричні рівні GFS: висота приблизна й рахується від рівня моря.
+// Файл h<метри> має ту саму будову, що field: u, v, температура
+export const ALTITUDES = [
+  { meters: 1500, mb: 850 },
+  { meters: 3000, mb: 700 },
+  { meters: 4000, mb: 600 },
+];
+// Шари, які мають значення на висоті
+export const ALTITUDE_LAYERS = new Set(["temperature", "windSpeed"]);
+
 export const LAYERS = [
   { id: "temperature", file: "field", channel: 2, range: [-70, 55], unit: "°C", stops: TEMPERATURE_STOPS },
   // Рахується під час збирання з температури, вологості й вітру (extra, канал 2)
