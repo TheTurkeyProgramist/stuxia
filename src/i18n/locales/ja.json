@@ -219,7 +219,7 @@
       "ventuskySubtitle": "天気予報",
       "windySubtitle": "風とレイヤー",
       "styxiaTitle": "Stuxia マップ",
-      "styxiaSubtitle": "10日間予報",
+      "styxiaSubtitle": "16日間予報",
       "cinemaTitle": "オンライン映画館",
       "cinemaSubtitle": "無料の映画（Internet Archive）",
       "alertsTitle": "警報",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "大気質",
       "airTrafficTitle": "フライトレーダー",
       "deepStateSubtitle": "ウクライナの出来事マップ",
-      "blitzortungSubtitle": "落雷マップ"
+      "blitzortungSubtitle": "落雷マップ",
+      "tvSubtitle": "ウクライナの映画とTV",
+      "tvNote": "要契約",
+      "blocklySubtitle": "プログラミングの基礎",
+      "mindTitle": "脳トレ",
+      "mindSubtitle": "計算と神経衰弱・オフライン"
     },
     "options": {
       "alerts": "ウクライナ警報マップ (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "2つ目のフレーム",
     "miniMapTitle": "ミニマップ • ダブルクリックで戻る",
     "collapse": "縮小",
-    "tickerHint": "クリックでヒントと豆知識を切り替え"
+    "tickerHint": "クリックでヒントと豆知識を切り替え",
+    "flags": {
+      "ads": "広告あり",
+      "money": "有料機能またはサブスクリプション",
+      "limit": "Styxiaの制限：全ゲーム合計で1日{{min}}分"
+    },
+    "games": {
+      "math": "計算",
+      "pairs": "神経衰弱",
+      "score": "スコア",
+      "moves": "手数",
+      "win": "すべてのペアが見つかりました！",
+      "again": "もう一度",
+      "left": "今日の残り：{{time}}",
+      "over": "今日のゲーム時間は終了です。また明日！",
+      "easy": "かんたん",
+      "hard": "むずかしい",
+      "madeWith": "尊大な愛を込めて制作"
+    },
+    "tv": {
+      "hint": "空白の場合は別画面で開いてください。",
+      "open": "サイトを開く"
+    },
+    "story": {
+      "record": "自己ベスト",
+      "praise1": "すばらしい！",
+      "praise2": "正解、その調子！",
+      "praise3": "お見事！",
+      "next": "次へ",
+      "restart": "最初から",
+      "dominoName": "ドミノ",
+      "domino": "ふむ、考えさせて。七面鳥は恐竜やドラゴンの時代に生きていた。でも君からも面白い何かを感じる。",
+      "kateName": "ケイト",
+      "kate": "私は「今ここ」が大好き。あなたの学びの成果も！でもこの先はもっと面白いよ :)",
+      "kornisName": "コルニス",
+      "kornis": "これが始まりだと思っているだろう、でも……君の勝ちだ、今のところは……また近いうちに会おう。",
+      "double": "ボーナス：得点×2",
+      "shield": "ボーナス：ミス1回の無効化",
+      "hasShield": "無効化あり",
+      "rescued": "無効化で連続記録を守りました！もう一度。"
+    }
   },
   "modals": {
     "AgeGateModal": {

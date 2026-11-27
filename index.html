@@ -1,18 +1,20 @@
 <!doctype html>
 <html lang="uk">
   <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="google-site-verification"
       content="92iFAmus4BEjzu8rcNhjJ7p-NX52VsRnAkdEJWmWXAw"
     />
-    <link rel="canonical" href="https://stuxia.com" />
+    <link rel="canonical" href="https://stuxia.com/" />
+    <link rel="preconnect" href="https://api.open-meteo.com" crossorigin />
     <link
       rel="preload"
       as="image"
       href="./src/media/backgrounds/scenes/foggy-forest-loader.webp"
       fetchpriority="high"
     />
-    <meta charset="utf-8" />
     <!-- Фон Hero до запуску JS (#boot-bg у body). Інакше найбільший елемент (LCP) на телефоні
          з'являвся лише після всього JS. z-index -20 — під шаром фону Hero (-2 / -10) -->
     <style>
@@ -27,7 +29,6 @@
     <noscript><style>.boot-bg { display: none; }</style></noscript>
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -43,9 +44,9 @@
     />
     <meta
       name="description"
-      content="Стихія — точний прогноз погоди в містах України та світу. Дізнавайтеся про температуру, опади та вітер у реальному часі. Ностальгуюча музика, і багато чого ще..."
+      content="Стихія — прогноз погоди в Україні та світі: погодинно й до 28 днів, карта з повітряними тривогами, новини та ностальгійна музика. Без реклами."
     />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
     <title>Стихія — точний прогноз погоди в Україні та світі, музика й новини</title>
     <meta property="og:type" content="website" />
@@ -55,17 +56,17 @@
     <meta property="og:title" content="Стихія — точний прогноз погоди в Україні та світі" />
     <meta
       property="og:description"
-      content="Погода в реальному часі, погодинний прогноз і графіки на 16 днів, кліматична мапа, новини та ностальгуюча музика."
+      content="Погода зараз, погодинно й до 28 днів, карта Стихії з повітряними тривогами, новини та ностальгійна музика. Без реклами."
     />
     <meta property="og:image" content="https://stuxia.com/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Стихія — точний прогноз погоди" />
+    <meta property="og:image:alt" content="Стихія — прогноз погоди, карта тривог, новини й музика" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Стихія — точний прогноз погоди в Україні та світі" />
     <meta
       name="twitter:description"
-      content="Погода в реальному часі, погодинний прогноз і графіки на 16 днів, кліматична мапа, новини та музика."
+      content="Погода зараз, погодинно й до 28 днів, карта з повітряними тривогами, новини та музика. Без реклами."
     />
     <meta name="twitter:image" content="https://stuxia.com/og-image.png" />
     <link
@@ -86,6 +87,20 @@
         "target": "https://stuxia.com/?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Стихія",
+      "url": "https://stuxia.com/",
+      "description": "Прогноз погоди до 28 днів, карта з повітряними тривогами, новини та ностальгійна музика.",
+      "applicationCategory": "WeatherApplication",
+      "operatingSystem": "Web, Android, Windows, Linux",
+      "inLanguage": "uk",
+      "image": "https://stuxia.com/og-image.png",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "UAH" }
     }
     </script>
   </head>

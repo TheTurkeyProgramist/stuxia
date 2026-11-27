@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Weersverwachting",
       "windySubtitle": "Wind en lagen",
       "styxiaTitle": "Stuxia-kaart",
-      "styxiaSubtitle": "10-daagse voorspelling",
+      "styxiaSubtitle": "16-daagse voorspelling",
       "cinemaTitle": "Online bioscoop",
       "cinemaSubtitle": "Gratis films (Internet Archive)",
       "alertsTitle": "Alarmen",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Luchtkwaliteit",
       "airTrafficTitle": "Vluchtradar",
       "deepStateSubtitle": "Kaart van gebeurtenissen in Oekraïne",
-      "blitzortungSubtitle": "Bliksemkaart"
+      "blitzortungSubtitle": "Bliksemkaart",
+      "tvSubtitle": "Oekraïense films en tv",
+      "tvNote": "Met abonnement",
+      "blocklySubtitle": "Basis van programmeren",
+      "mindTitle": "Breintrainer",
+      "mindSubtitle": "Rekenen en paren · offline"
     },
     "options": {
       "alerts": "Luchtalarmkaart van Oekraïne (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "tweede frame",
     "miniMapTitle": "Minikaart • dubbelklik — terug",
     "collapse": "Verkleinen",
-    "tickerHint": "Klik om de tips en feiten te wisselen"
+    "tickerHint": "Klik om de tips en feiten te wisselen",
+    "flags": {
+      "ads": "Bevat advertenties",
+      "money": "Betaalde functies of abonnement",
+      "limit": "Styxia-limiet: {{min}} min per dag voor alle spellen"
+    },
+    "games": {
+      "math": "Rekenen",
+      "pairs": "Paren",
+      "score": "Score",
+      "moves": "Zetten",
+      "win": "Alle paren gevonden!",
+      "again": "Opnieuw",
+      "left": "Vandaag nog: {{time}}",
+      "over": "De speeltijd van vandaag is op. Kom morgen terug!",
+      "easy": "Makkelijk",
+      "hard": "Moeilijk",
+      "madeWith": "Gemaakt met hoogdravende liefde"
+    },
+    "tv": {
+      "hint": "Leeg? Open apart.",
+      "open": "Site openen"
+    },
+    "story": {
+      "record": "Record",
+      "praise1": "Prachtig!",
+      "praise2": "Goed, ga zo door!",
+      "praise3": "Briljant!",
+      "next": "Verder",
+      "restart": "Opnieuw beginnen",
+      "dominoName": "Domino",
+      "domino": "Hm, laat me denken: kalkoenen leefden in de tijd van dinosauriërs en draken, maar ook van jou komt iets boeiends.",
+      "kateName": "Kate",
+      "kate": "Ik hou zo van het hier en nu, net als van je leerprestaties! Maar het wordt nog leuker :)",
+      "kornisName": "Kornis",
+      "kornis": "Je denkt dat dit het begin is, maar... je hebt gewonnen, voorlopig... We zien elkaar snel.",
+      "double": "Bonus: ×2 punten",
+      "shield": "Bonus: bescherming tegen één fout",
+      "hasShield": "Bescherming klaar",
+      "rescued": "De bescherming redde je reeks! Probeer opnieuw."
+    }
   },
   "modals": {
     "AgeGateModal": {

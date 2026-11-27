@@ -184,13 +184,14 @@ export const loadVisibleServerWeather = async (bounds, onUpdate, shouldStop) => 
 const PERCENT_LAYERS = new Set(["clouds", "humidity"]);
 
 /** Короткий підпис значення шару біля міста: «+3°», «45%», «1013», «0.4». Одиниці — у легенді. */
-export const compactValue = (value, layerId) => {
+export const compactValue = (value, layerId, digits = null) => {
   if (!Number.isFinite(value)) return "";
   if (layerId === "temperature" || layerId === "feelsLike") {
     const rounded = Math.round(value);
     return `${rounded > 0 ? "+" : ""}${rounded === 0 ? 0 : rounded}°`;
   }
   if (PERCENT_LAYERS.has(layerId)) return `${Math.round(value)}%`;
+  if (digits === 2) return value.toFixed(2);
   const text = Math.abs(value) < 10 ? (Math.round(value * 10) / 10).toFixed(1) : String(Math.round(value));
   return text === "-0.0" ? "0.0" : text;
 };
@@ -201,7 +202,7 @@ export const compactValue = (value, layerId) => {
  * «Відчувається як» міняє лише число, а решта шарів — ще й іконку (на іконку шару). Справжню погоду зберігаємо
  * у weatherIcon — для картки-тултіпа.
  */
-export const applyLayerValues = (features, layer, plane, meta) => {
+export const applyLayerValues = (features, layer, plane, meta, unit = null) => {
   if (!layer || !plane || layer.id === "temperature") return features;
   return features.map((feature) => {
     const [lon, lat] = feature.geometry.coordinates;
@@ -210,7 +211,7 @@ export const applyLayerValues = (features, layer, plane, meta) => {
       ...feature,
       properties: {
         ...feature.properties,
-        short: compactValue(value, layer.id),
+        short: compactValue(unit ? unit.convert(value) : value, layer.id, unit?.digits),
         weatherIcon: feature.properties.icon,
         icon: layer.id === "feelsLike" ? feature.properties.icon : `layer-${layer.id}`,
       },

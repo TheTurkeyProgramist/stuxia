@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect, lazy, Suspense } from "rea
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import styled, { keyframes, css } from "styled-components";
-import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaSatelliteDish, FaBolt, FaLock, FaFilm } from "react-icons/fa";
+import { FaKeyboard, FaCloudSun, FaWind, FaBell, FaPencilAlt, FaLeaf, FaPlane, FaGlobe, FaMapMarkedAlt, FaRocket, FaSatelliteDish, FaBolt, FaLock, FaFilm, FaTv, FaCode, FaBrain } from "react-icons/fa";
 import { FiCheck, FiEdit2, FiPlay, FiPlus, FiSearch, FiSettings, FiX } from "react-icons/fi";
 import { Tooltip } from "../Tooltip/Tooltip";
 import { MdDragIndicator, MdVolumeUp, MdMap, MdPlace, MdPushPin, MdDeleteOutline, MdFullscreen, MdPublic } from "react-icons/md";
@@ -25,8 +25,19 @@ import coverExcalidraw from "../../media/third-party/services/excalidraw.webp?w=
 import coverSaveEcoBot from "../../media/third-party/services/saveecobot.webp?w=360&format=webp&quality=62";
 import coverAirTraffic from "../../media/third-party/services/air-traffic.webp?w=360&format=webp&quality=62";
 import coverDeepState from "../../media/third-party/services/deepstate.webp?w=360&format=webp&quality=62";
+import coverStyxia from "../../media/covers/styxia-map.webp?w=360&format=webp&quality=62";
+import coverTrivogaOnline from "../../media/third-party/services/trivoga-online.webp?w=360&format=webp&quality=62";
+import coverBlitzortung from "../../media/third-party/services/blitzortung.webp?w=360&format=webp&quality=62";
+import coverCinema from "../../media/third-party/services/internet-archive.webp?w=360&format=webp&quality=62";
+import coverLifecellTv from "../../media/third-party/services/lifecell-tv.webp?w=360&format=webp&quality=62";
+import coverSweetTv from "../../media/third-party/services/sweet-tv.webp?w=360&format=webp&quality=62";
+import coverGameBlockly from "../../media/third-party/services/blockly-games.webp?w=360&format=webp&quality=62";
+import coverGameOffline from "../../media/covers/mind-trainer.webp?w=360&format=webp&quality=62";
 import { usePageActive } from "../../utils/pageActivity.js";
 import FunTicker from "./FunTicker";
+import OfflineGames from "./OfflineGames";
+import { SourceFlags, FlagsLegend } from "./SourceFlags";
+import { useGameLimit, formatGameTime } from "./gameLimit.js";
 import { START_MAP_PICK_EVENT, takePendingMapPick, reportMapPick } from "../Hero/heroEvents.js";
 // «Карта Стихії» — власна карта, окремим чанком (дані оновлює .github/workflows/cloudflare.yml)
 const StyxiaMap = lazy(() => import("./StyxiaMap"));
@@ -1612,22 +1623,75 @@ const FormCancelButton = styled(FormButton)`
   color: ${(p) => p.$isDarkMode ? "rgba(255,255,255,0.8)" : "rgba(30,10,0,0.75)"};
 `;
 
+// Рядок поверх фрейму: пояснення для ТБ і залишок часу в іграх
+const FrameBar = styled.div`
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 16px);
+  width: max-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+
+  a { color: #ffb36c; white-space: nowrap; }
+
+  button {
+    display: inline-flex;
+    flex-shrink: 0;
+    padding: 2px;
+    border: none;
+    background: none;
+    color: #ffffff;
+    font-size: 15px;
+    cursor: pointer;
+  }
+`;
+
+const LimitScreen = styled.div`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #1b1430;
+  color: #ffffff;
+  font-weight: 700;
+  text-align: center;
+`;
+
+// flags — значки на картці (див. SourceFlags.jsx); перевірені за кодом сторінок, 27.11.2026
 const BUILTIN_SOURCES = [
   // Карта Стихії — перша в списку
-  { id: "styxia", titleKey: "climateMap.sources.styxiaTitle", subtitleKey: "climateMap.sources.styxiaSubtitle", Icon: MdPublic, bg: "linear-gradient(135deg, #0b3d5c, #e07000)" },
-  { id: "ventusky", title: "Ventusky", subtitleKey: "climateMap.sources.ventuskySubtitle", Icon: FaCloudSun, bg: "linear-gradient(135deg, #1e3c72, #2a8bd8)", cover: coverVentusky },
-  { id: "windy", title: "Windy", subtitleKey: "climateMap.sources.windySubtitle", Icon: FaWind, bg: "linear-gradient(135deg, #3b1d8f, #1fa2b8)", cover: coverWindy },
+  { id: "styxia", titleKey: "climateMap.sources.styxiaTitle", subtitleKey: "climateMap.sources.styxiaSubtitle", Icon: MdPublic, bg: "linear-gradient(135deg, #0b3d5c, #e07000)", cover: coverStyxia },
+  { id: "ventusky", title: "Ventusky", subtitleKey: "climateMap.sources.ventuskySubtitle", Icon: FaCloudSun, bg: "linear-gradient(135deg, #1e3c72, #2a8bd8)", cover: coverVentusky, flags: ["money"] },
+  { id: "windy", title: "Windy", subtitleKey: "climateMap.sources.windySubtitle", Icon: FaWind, bg: "linear-gradient(135deg, #3b1d8f, #1fa2b8)", cover: coverWindy, flags: ["money"] },
   { id: "alerts-ua", titleKey: "climateMap.sources.alertsTitle", subtitleKey: "climateMap.sources.alertsSubtitle", Icon: FaBell, bg: "linear-gradient(135deg, #5c1010, #d63333)", cover: coverAlerts },
-  { id: "ukrainealarm", titleKey: "climateMap.sources.airTargetsTitle", subtitleKey: "climateMap.sources.airTargetsSubtitle", noteKey: "climateMap.sources.airTargetsNote", Icon: FaRocket, bg: "linear-gradient(135deg, #3a0d0d, #b8451f)", cover: coverAirTargets },
+  { id: "ukrainealarm", titleKey: "climateMap.sources.airTargetsTitle", subtitleKey: "climateMap.sources.airTargetsSubtitle", Icon: FaRocket, bg: "linear-gradient(135deg, #3a0d0d, #b8451f)", cover: coverAirTargets, flags: ["diia"] },
   // Неофіційна карта цілей: офіційна з листопада 2026 показує цілі лише після входу через Дію
-  { id: "trivoga-online", titleKey: "climateMap.sources.airTargetsAltTitle", subtitleKey: "climateMap.sources.airTargetsAltSubtitle", Icon: FaSatelliteDish, bg: "linear-gradient(135deg, #1a0f2e, #c2410c)" },
-  { id: "excalidraw", title: "Excalidraw", subtitleKey: "climateMap.sources.excalidrawSubtitle", Icon: FaPencilAlt, bg: "linear-gradient(135deg, #4b3fc4, #9d93f5)", cover: coverExcalidraw },
+  { id: "trivoga-online", titleKey: "climateMap.sources.airTargetsAltTitle", subtitleKey: "climateMap.sources.airTargetsAltSubtitle", Icon: FaSatelliteDish, bg: "linear-gradient(135deg, #1a0f2e, #c2410c)", cover: coverTrivogaOnline },
+  { id: "excalidraw", title: "Excalidraw", subtitleKey: "climateMap.sources.excalidrawSubtitle", Icon: FaPencilAlt, bg: "linear-gradient(135deg, #4b3fc4, #9d93f5)", cover: coverExcalidraw, flags: ["money"] },
   { id: "saveecobot", title: "SaveEcoBot", subtitleKey: "climateMap.sources.saveEcoBotSubtitle", Icon: FaLeaf, bg: "linear-gradient(135deg, #0f6b5f, #7cbf1e)", cover: coverSaveEcoBot },
   { id: "airtraffic", titleKey: "climateMap.sources.airTrafficTitle", subtitle: "TheAirTraffic (ADS-B)", Icon: FaPlane, bg: "linear-gradient(135deg, #0b2545, #d98a0b)", cover: coverAirTraffic },
   { id: "deepstate", title: "DeepState", subtitleKey: "climateMap.sources.deepStateSubtitle", Icon: FaMapMarkedAlt, bg: "linear-gradient(135deg, #1b2a3a, #3d6b4f)", cover: coverDeepState },
-  { id: "blitzortung", title: "Blitzortung", subtitleKey: "climateMap.sources.blitzortungSubtitle", Icon: FaBolt, bg: "linear-gradient(135deg, #1a1446, #e0b100)" },
+  { id: "blitzortung", title: "Blitzortung", subtitleKey: "climateMap.sources.blitzortungSubtitle", Icon: FaBolt, bg: "linear-gradient(135deg, #1a1446, #e0b100)", cover: coverBlitzortung, flags: ["ads"] },
   // Онлайн-кінотеатр: безкоштовні фільми з Internet Archive (вільні від авторських прав), сторінка дозволяє вбудовування
-  { id: "cinema", titleKey: "climateMap.sources.cinemaTitle", subtitleKey: "climateMap.sources.cinemaSubtitle", Icon: FaFilm, bg: "linear-gradient(135deg, #3b0d2e, #b8451f)" },
+  { id: "cinema", titleKey: "climateMap.sources.cinemaTitle", subtitleKey: "climateMap.sources.cinemaSubtitle", Icon: FaFilm, bg: "linear-gradient(135deg, #3b0d2e, #b8451f)", cover: coverCinema },
+  // Українське кіно і ТБ: здебільшого за підпискою
+  { id: "lifecell-tv", title: "lifecell TV", subtitleKey: "climateMap.sources.tvSubtitle", noteKey: "climateMap.sources.tvNote", Icon: FaTv, bg: "linear-gradient(135deg, #3a2a00, #d99b00)", cover: coverLifecellTv, flags: ["money"] },
+  { id: "sweet-tv", title: "SWEET.TV", subtitleKey: "climateMap.sources.tvSubtitle", noteKey: "climateMap.sources.tvNote", Icon: FaTv, bg: "linear-gradient(135deg, #3d0a45, #c2327a)", cover: coverSweetTv, flags: ["money"] },
+  // Розвиваючі ігри, усі з денним лімітом (gameLimit.js); остання працює без інтернету
+  { id: "game-blockly", title: "Blockly Games", subtitleKey: "climateMap.sources.blocklySubtitle", Icon: FaCode, bg: "linear-gradient(135deg, #0d3b2e, #2e9e5b)", cover: coverGameBlockly, flags: ["limit"] },
+  { id: "game-offline", titleKey: "climateMap.sources.mindTitle", subtitleKey: "climateMap.sources.mindSubtitle", Icon: FaBrain, bg: "linear-gradient(135deg, #14233d, #6a3fa8)", cover: coverGameOffline, flags: ["limit"] },
 ];
 
 const BUILTIN_PROVIDERS = BUILTIN_SOURCES.map((s) => s.id);
@@ -1636,8 +1700,17 @@ const BUILTIN_PROVIDERS = BUILTIN_SOURCES.map((s) => s.id);
 // (браузер не дає доступу до звуку іншого домену), тож лише попереджаємо
 const VOICE_SOURCES = new Set(["trivoga-online"]);
 
+const GAME_SOURCES = new Set(["game-blockly", "game-offline"]);
+// Міні-плеєр малює лише чужі фрейми й не рахує час ігор — там замість них Ventusky
+
+// Фрейми, що можуть лишитися порожніми (захист сайту чи вхід) — даємо пряме посилання
+const TV_SOURCE_URLS = {
+  "lifecell-tv": "https://tv.lifecell.ua/",
+  "sweet-tv": "https://sweet.tv/ua-uk",
+};
+
 // Джерела лише для України: на інших мовах сайту їх не показуємо
-const UKRAINE_ONLY_SOURCES = new Set(["alerts-ua", "ukrainealarm", "trivoga-online", "saveecobot", "deepstate"]);
+const UKRAINE_ONLY_SOURCES = new Set(["alerts-ua", "ukrainealarm", "trivoga-online", "saveecobot", "deepstate", "lifecell-tv", "sweet-tv"]);
 
 // Картка джерела; перетягується лише за ручку, щоб не заважати прокрутці на дотик
 // editForm — форма редагування власного фрейму, що показується замість картки
@@ -1648,7 +1721,7 @@ const UKRAINE_ONLY_SOURCES = new Set(["alerts-ua", "ukrainealarm", "trivoga-onli
 const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, splitAvailable, isSplitChecked, splitLocked, onToggleSplit, isDarkMode, reorderReady, onNeedReorder, takePendingDrag }) => {
   const { t } = useTranslation();
   const controls = useDragControls();
-  const { id, title, subtitle, note, Icon, bg, frame, cover, favicon } = item;
+  const { id, title, subtitle, note, flags, Icon, bg, frame, cover, favicon } = item;
   // Пам'ятаємо, яка саме іконка не завантажилась: після зміни адреси фрейму пробуємо нову
   const [failedFavicon, setFailedFavicon] = useState(null);
   const faviconFailed = failedFavicon === favicon;
@@ -1698,6 +1771,7 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, spli
         )}
         <CardText>
           {note && <CardNote>{note}</CardNote>}
+          <SourceFlags flags={flags} />
           <strong>{title}</strong>
           <small>{subtitle}</small>
         </CardText>
@@ -1755,7 +1829,7 @@ const SourceItem = ({ item, isActive, onSelect, onDelete, onEdit, editForm, spli
 
 // Картка джерела у мобільному слайдері налаштувань (без перетягування, поділу та видалення)
 const MobileSourceCard = ({ item, isActive, onSelect }) => {
-  const { id, title, subtitle, note, Icon, bg, frame, cover, favicon } = item;
+  const { id, title, subtitle, note, flags, Icon, bg, frame, cover, favicon } = item;
   const [faviconFailed, setFaviconFailed] = useState(false);
   const cardRef = useRef(null);
 
@@ -1799,6 +1873,7 @@ const MobileSourceCard = ({ item, isActive, onSelect }) => {
         )}
         <CardText>
           {note && <CardNote>{note}</CardNote>}
+          <SourceFlags flags={flags} />
           <strong>{title}</strong>
           <small>{subtitle}</small>
         </CardText>
@@ -2006,6 +2081,8 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
   }, []);
   const isSplitActive = canSplit && isSplitEnabled;
   const [isAddingFrame, setIsAddingFrame] = useState(false);
+  // Плашки-підказки ТБ, закриті хрестиком (до перезавантаження сторінки)
+  const [closedTvHints, setClosedTvHints] = useState([]);
   const [sourceOrder, setSourceOrder] = useState([]);
   const [sourceQuery, setSourceQuery] = useState("");
   // Перетягування карток у бічній панелі — лише після першої взаємодії з нею (див. SourceCardPlain)
@@ -2102,7 +2179,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
 
   const [videoError, setVideoError] = useState(false);
   const turkeyVideoRef = useRef(null);
-  const shouldShowLoader = !isMapActive || isLoading || !isOnline;
+  const isGameShown =
+    GAME_SOURCES.has(provider) || (isSplitActive && GAME_SOURCES.has(secondProvider));
+  const gameSecondsLeft = useGameLimit(isMapActive && !isMiniPlayerOpen && isGameShown, mapWrapperRef);
+  const isGameBlocked = (id) => GAME_SOURCES.has(id) && gameSecondsLeft === 0;
+  // Офлайн-ігри та екран «ліміт вичерпано» не чекають ні фрейму, ні інтернету
+  const isLocalPane = provider === "game-offline" || isGameBlocked(provider);
+  const shouldShowLoader = !isMapActive || (!isLocalPane && (isLoading || !isOnline));
   const hasVoiceSource = VOICE_SOURCES.has(provider) || (isSplitActive && VOICE_SOURCES.has(secondProvider));
   // Вкладка видима і вікно у фокусі: після повернення з іншої програми/вкладки
   // відео має само запуститися знову (main.jsx ставить усі відео на паузу при прихованні)
@@ -2567,8 +2650,10 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
     }
   };
 
+  // Вікно, яке закриваємо самі, не закриваючи міні-плеєр
+  const keepMiniForRef = useRef(null);
   const handleOpenMiniPlayer = async () => {
-    if (window.documentPictureInPicture) {
+    if (window.documentPictureInPicture && (isSplitActive && miniFrame === 1 ? secondProvider : provider) !== "styxia") {
       try {
         const pipWindow = await window.documentPictureInPicture.requestWindow({
           width: 400,
@@ -2581,7 +2666,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
 
         pipWindow.addEventListener("pagehide", () => {
           setPipWindow(null);
-          setIsMiniPlayerOpen(false);
+          if (keepMiniForRef.current !== pipWindow) setIsMiniPlayerOpen(false);
         });
 
         setPipWindow(pipWindow);
@@ -2784,6 +2869,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
       return "https://archive.org/details/feature_films";
     }
 
+    if (TV_SOURCE_URLS[provider]) return TV_SOURCE_URLS[provider];
+
+    if (provider === "game-blockly") {
+      return `https://blockly.games/?lang=${i18n.resolvedLanguage || i18n.language}`;
+    }
+
     const foundFrame = customFrames.find((f) => f.id === provider);
     if (foundFrame) {
       return foundFrame.url;
@@ -2798,11 +2889,11 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
 
   const embedUrl = useMemo(
     () => buildEmbedUrl(provider),
-    [provider, lat, lon, zoom, overlay, customFrames],
+    [provider, lat, lon, zoom, overlay, customFrames, i18n.resolvedLanguage],
   );
   const secondEmbedUrl = useMemo(
     () => buildEmbedUrl(secondProvider),
-    [secondProvider, lat, lon, zoom, overlay, customFrames],
+    [secondProvider, lat, lon, zoom, overlay, customFrames, i18n.resolvedLanguage],
   );
 
   // Після закриття міні-плеєра фрейми монтуються наново — знову показуємо завантаження
@@ -2816,7 +2907,12 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
 
   // Міні-плеєр показує один фрейм: перший або (коли їх два) обраний перемикачем «1 / 2»
   const miniShowsSecond = isSplitActive && miniFrame === 1;
-  const miniEmbedUrl = miniShowsSecond ? secondEmbedUrl : embedUrl;
+  const miniRawId = miniShowsSecond ? secondProvider : provider;
+  // Карта Стихії — не фрейм, а компонент, тому адреси в неї немає
+  const miniShowsStyxia = miniRawId === "styxia";
+  let miniEmbedUrl = miniShowsSecond ? secondEmbedUrl : embedUrl;
+  if (miniShowsStyxia) miniEmbedUrl = "";
+  else if (GAME_SOURCES.has(miniRawId)) miniEmbedUrl = buildEmbedUrl("ventusky");
   const miniFrameTitles = [provider, secondProvider].map(
     (id) => orderedSources.find((item) => item.id === id)?.title,
   );
@@ -2826,11 +2922,10 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
 
   // Перемикання джерела прямо в міні-плеєрі: змінює той фрейм, що в ньому показано.
   // У режимі двох фреймів джерело іншого фрейму зі списку прибираємо — щоб не стало два однакових
-  // Власна карта в міні-плеєрі поки не працює — там замість неї Ventusky
-  const miniRawId = miniShowsSecond ? secondProvider : provider;
-  const miniCurrentId = miniRawId === "styxia" ? "ventusky" : miniRawId;
+  // Ігри в міні-плеєрі не працюють — там замість них Ventusky
+  const miniCurrentId = GAME_SOURCES.has(miniRawId) ? "ventusky" : miniRawId;
   const miniOtherId = isSplitActive ? (miniShowsSecond ? provider : secondProvider) : null;
-  const miniSources = orderedSources.filter((item) => item.id !== miniOtherId && item.id !== "styxia");
+  const miniSources = orderedSources.filter((item) => item.id !== miniOtherId && !GAME_SOURCES.has(item.id));
   const handleMiniSelectSource = (id) => {
     if (id === miniCurrentId) return;
     if (miniShowsSecond) handleSetSecondProvider(id);
@@ -2867,15 +2962,60 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
     setIsMiniLoading(isOnline);
   }, [miniEmbedUrl, isOnline, isMiniPlayerOpen]);
 
+  useEffect(() => {
+    if (!pipWindow || !miniShowsStyxia) return;
+    keepMiniForRef.current = pipWindow;
+    pipWindow.close();
+    setPipWindow(null);
+  }, [pipWindow, miniShowsStyxia]);
+
   const showFullscreenStrip = isMapFullscreen && !isMiniPlayerOpen;
 
   // Власна карта малюється не у фреймі, а компонентом
-  const renderStyxiaMap = (onReady) =>
-    isMapActive && isOnline && (
+  const renderStyxiaMap = (onReady, isMini = false) =>
+    (isMini || isMapActive) && isOnline && (
       <Suspense fallback={null}>
-        <StyxiaMap key={`${lat},${lon},${zoom}`} lat={lat} lon={lon} zoom={zoom} onReady={onReady} weatherCards={weatherCards} gpsEnabled={gpsEnabled} isDarkMode={isDarkMode} pickSignal={pickSignal} onPick={reportMapPick} />
+        <StyxiaMap key={`${lat},${lon},${zoom}`} lat={lat} lon={lon} zoom={zoom} onReady={onReady} weatherCards={weatherCards} gpsEnabled={gpsEnabled} isDarkMode={isDarkMode} pickSignal={pickSignal} onPick={reportMapPick} compact={isMini} />
       </Suspense>
     );
+
+  const renderPane = (id, url, loading, onReady, label) => {
+    if (isGameBlocked(id)) {
+      return isMapActive && <LimitScreen role="status">{t("climateMap.games.over")}</LimitScreen>;
+    }
+    if (id === "styxia") return renderStyxiaMap(onReady);
+    const timeLeft = isMapActive && GAME_SOURCES.has(id) && (
+      <FrameBar>{t("climateMap.games.left", { time: formatGameTime(gameSecondsLeft) })}</FrameBar>
+    );
+    if (id === "game-offline") {
+      return isMapActive && <><OfflineGames />{timeLeft}</>;
+    }
+    return (
+      <>
+        <StyledIframe
+          aria-label={label}
+          src={isMapActive && isOnline ? url : undefined}
+          $isLoading={loading}
+          $isReady={isMapActive}
+          onLoad={onReady}
+          allowFullScreen
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+          referrerPolicy="strict-origin-when-cross-origin"
+          loading="lazy"
+        />
+        {timeLeft}
+        {isMapActive && TV_SOURCE_URLS[id] && !closedTvHints.includes(id) && (
+          <FrameBar>
+            <span>{t("climateMap.tv.hint")}</span>
+            <a href={TV_SOURCE_URLS[id]} target="_blank" rel="noopener noreferrer">{t("climateMap.tv.open")}</a>
+            <button type="button" aria-label={t("common.close")} title={t("common.close")} onClick={() => setClosedTvHints((list) => [...list, id])}>
+              <FiX aria-hidden="true" />
+            </button>
+          </FrameBar>
+        )}
+      </>
+    );
+  };
 
   return (
     <OuterContainer>
@@ -3066,6 +3206,7 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
                     />
                   ))}
                 </MobileSourceSlider>
+                <div style={{ padding: "0 12px 10px" }}><FlagsLegend isDarkMode={isDarkMode} /></div>
               </MobileSettingSelectGroup>
               </>)}
 
@@ -3199,39 +3340,11 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
               $bottomInset={showFullscreenStrip ? FULLSCREEN_STRIP_HEIGHT : 0}
             >
               <FramePane>
-                {provider === "styxia" ? (
-                  renderStyxiaMap(() => setIsLoading(false))
-                ) : (
-                  <StyledIframe
-                    aria-label="Weather Map"
-                    src={isMapActive && isOnline ? embedUrl : undefined}
-                    $isLoading={isLoading}
-                    $isReady={isMapActive}
-                    onLoad={() => setIsLoading(false)}
-                    allowFullScreen
-                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    loading="lazy"
-                  />
-                )}
+                {renderPane(provider, embedUrl, isLoading, () => setIsLoading(false), "Weather Map")}
               </FramePane>
               {isSplitActive && (
                 <FramePane>
-                  {secondProvider === "styxia" ? (
-                    renderStyxiaMap(() => setIsLoadingSecond(false))
-                  ) : (
-                    <StyledIframe
-                      aria-label={`Weather Map (${t("climateMap.secondFrame")})`}
-                      src={isMapActive && isOnline ? secondEmbedUrl : undefined}
-                      $isLoading={isLoadingSecond}
-                      $isReady={isMapActive}
-                      onLoad={() => setIsLoadingSecond(false)}
-                      allowFullScreen
-                      sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                      referrerPolicy="strict-origin-when-cross-origin"
-                      loading="lazy"
-                    />
-                  )}
+                  {renderPane(secondProvider, secondEmbedUrl, isLoadingSecond, () => setIsLoadingSecond(false), `Weather Map (${t("climateMap.secondFrame")})`)}
                 </FramePane>
               )}
             </FramesGrid>
@@ -3371,12 +3484,13 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
                 <span>{t("climateMap.addYourFrame")}</span>
               </AddSourceTile>
             )}
+            <FlagsLegend isDarkMode={isDarkMode} />
           </SourcesScroll>
         </SourcesSidebar>
       )}
       </MapLayout>
 
-      {pipWindow ? (
+      {pipWindow && !miniShowsStyxia ? (
         createPortal(
           <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
             {/* Панель міні-плеєра: перемикач карти ‹ [список] › і (якщо два фрейми) «1 / 2» */}
@@ -3441,18 +3555,25 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
                 <p>{t("climateMap.loading")}</p>
               </Loader>
             )}
-            <StyledIframe
-              aria-label="Weather Map Mini"
-              src={miniEmbedUrl}
-              $isLoading={isMiniLoading}
-              $isReady={true}
-              onLoad={() => setIsMiniLoading(false)}
-              allowFullScreen
-              sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-              referrerPolicy="strict-origin-when-cross-origin"
-              loading="lazy"
-            />
-            <ResizeHandle style={{ touchAction: "none" }} onPointerDown={handleMiniPlayerResizeStart} />
+            {miniShowsStyxia ? (
+              // Подвійний клік по карті — це масштаб, а не закриття міні-плеєра
+              <div style={{ position: "absolute", inset: 0, zIndex: 0 }} onDoubleClick={(e) => e.stopPropagation()}>
+                {renderStyxiaMap(() => setIsMiniLoading(false), true)}
+              </div>
+            ) : (
+              <StyledIframe
+                aria-label="Weather Map Mini"
+                src={miniEmbedUrl}
+                $isLoading={isMiniLoading}
+                $isReady={true}
+                onLoad={() => setIsMiniLoading(false)}
+                allowFullScreen
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                referrerPolicy="strict-origin-when-cross-origin"
+                loading="lazy"
+              />
+            )}
+            <ResizeHandle style={{ touchAction: "none", zIndex: 1 }} onPointerDown={handleMiniPlayerResizeStart} />
           </MiniPlayerBody>
         </MiniPlayerWindow>
       )}

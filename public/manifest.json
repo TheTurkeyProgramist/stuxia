@@ -1,22 +1,29 @@
 {
-  "short_name": "Стихія 1.0",
-  "name": "Стихія: Прогноз погоди, музика і... відсилки",
-  "icons": [
-    {
-      "src": "/icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any maskable"
-    }
-  ],
+  "id": "/",
+  "name": "Стихія",
+  "short_name": "Стихія",
+  "description": "Прогноз погоди до 28 днів, карта Стихії з повітряними тривогами, новини та ностальгійна музика. Без реклами, 26 мов, останній прогноз доступний і без інтернету.",
+  "lang": "uk",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#000000",
-  "background_color": "#000000"
+  "background_color": "#000000",
+  "categories": ["weather", "news", "music"],
+  "launch_handler": { "client_mode": "navigate-existing" },
+  "icons": [
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/icons/maskable-192.png", "type": "image/png", "sizes": "192x192", "purpose": "maskable" },
+    { "src": "/icons/maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Карта й тривоги",
+      "short_name": "Карта",
+      "url": "/#map",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
 }

@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Sääennuste",
       "windySubtitle": "Tuuli ja tasot",
       "styxiaTitle": "Stuxia-kartta",
-      "styxiaSubtitle": "10 päivän ennuste",
+      "styxiaSubtitle": "16 päivän ennuste",
       "cinemaTitle": "Verkkoelokuvateatteri",
       "cinemaSubtitle": "Ilmaisia elokuvia (Internet Archive)",
       "alertsTitle": "Hälytykset",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Ilmanlaatu",
       "airTrafficTitle": "Lentotutka",
       "deepStateSubtitle": "Ukrainan tapahtumakartta",
-      "blitzortungSubtitle": "Salamakartta"
+      "blitzortungSubtitle": "Salamakartta",
+      "tvSubtitle": "Ukrainalaiset elokuvat ja TV",
+      "tvNote": "Tilauksella",
+      "blocklySubtitle": "Ohjelmoinnin perusteet",
+      "mindTitle": "Aivotreeni",
+      "mindSubtitle": "Laskut ja parit · offline"
     },
     "options": {
       "alerts": "Ukrainan hälytyskartta (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "toinen kehys",
     "miniMapTitle": "Minikartta • kaksoisnapsautus — takaisin",
     "collapse": "Pienennä",
-    "tickerHint": "Napsauta vaihtaaksesi vinkit ja faktat"
+    "tickerHint": "Napsauta vaihtaaksesi vinkit ja faktat",
+    "flags": {
+      "ads": "Sisältää mainoksia",
+      "money": "Maksullisia toimintoja tai tilaus",
+      "limit": "Styxian raja: {{min}} min päivässä kaikille peleille"
+    },
+    "games": {
+      "math": "Laskut",
+      "pairs": "Parit",
+      "score": "Pisteet",
+      "moves": "Siirrot",
+      "win": "Kaikki parit löytyivät!",
+      "again": "Uudestaan",
+      "left": "Tänään jäljellä: {{time}}",
+      "over": "Tämän päivän peliaika on käytetty. Tule huomenna!",
+      "easy": "Helppo",
+      "hard": "Vaikea",
+      "madeWith": "Tehty pöyhkeällä rakkaudella"
+    },
+    "tv": {
+      "hint": "Tyhjä? Avaa erikseen.",
+      "open": "Avaa sivusto"
+    },
+    "story": {
+      "record": "Ennätys",
+      "praise1": "Hienoa!",
+      "praise2": "Oikein, jatka samaan malliin!",
+      "praise3": "Loistavaa!",
+      "next": "Jatka",
+      "restart": "Alusta",
+      "dominoName": "Domino",
+      "domino": "Hmm, annas kun mietin: kalkkunat elivät dinosaurusten ja lohikäärmeiden aikaan, mutta sinussakin on jotain kiehtovaa.",
+      "kateName": "Kate",
+      "kate": "Rakastan niin tätä hetkeä, samoin kuin edistymistäsi opiskelussa! Mutta jatko on vielä kiinnostavampi :)",
+      "kornisName": "Kornis",
+      "kornis": "Luulet tämän olevan alku, mutta... voitit, toistaiseksi... Tapaamme pian.",
+      "double": "Bonus: ×2 pistettä",
+      "shield": "Bonus: suoja yhdeltä virheeltä",
+      "hasShield": "Suoja valmiina",
+      "rescued": "Suoja pelasti putkesi! Yritä uudelleen."
+    }
   },
   "modals": {
     "AgeGateModal": {

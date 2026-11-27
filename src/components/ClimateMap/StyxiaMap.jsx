@@ -23,6 +23,9 @@ import { collectPlaces, buildGrids, createTaken, placeFeatures } from "./styxiaP
 import { uniquePoints, notDuplicate, atFrame } from "./styxiaDedupe.js";
 import { fadeUp, slideIn, pulse, revealed, pressable, themeTokens } from "./styxiaMotion.js";
 import StyxiaPanel from "./StyxiaPanel.jsx";
+import { layerUnit, shortTemp } from "./styxiaUnits.js";
+import { groupDays, dayKey } from "./styxiaDays.js";
+import { useMapUnits } from "./useMapUnits.js";
 import StyxiaTimeline from "./StyxiaTimeline.jsx";
 import StyxiaAttribution from "./StyxiaAttribution.jsx";
 
@@ -456,11 +459,11 @@ const DockIcon = styled(DockButton)`
   }
 `;
 
-// Над повзунком часу (він займає нижні 52 px) і над його підказкою з часом
+// Над повзунком часу (він займає нижні 64 px) і над його підказкою з часом
 const BottomLeft = styled.div`
   position: absolute;
   left: 8px;
-  bottom: 84px;
+  bottom: 94px;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -721,7 +724,7 @@ const PickBanner = styled.div`
 const Banner = styled.div`
   position: absolute;
   right: 8px;
-  bottom: 84px;
+  bottom: 94px;
   z-index: 3;
   display: flex;
   align-items: flex-start;
@@ -768,7 +771,7 @@ const Banner = styled.div`
 const Message = styled.p`
   position: absolute;
   left: 50%;
-  bottom: 70px;
+  bottom: 80px;
   z-index: 3;
   transform: translateX(-50%);
   width: max-content;
@@ -798,7 +801,7 @@ const AlertsDisclaimer = styled.p`
   line-height: 1.3;
 `;
 
-const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMode = true, pickSignal = 0, onPick }) => {
+const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMode = true, pickSignal = 0, onPick, compact = false }) => {
   const { t, i18n } = useTranslation();
   const lang = (i18n.resolvedLanguage || "en").split("-")[0];
   // Тривоги — лише для України, як і українські джерела карти
@@ -823,8 +826,8 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
       return false;
     }
   });
-  // «Приховати все» діє до перезавантаження
-  const [clean, setClean] = useState(false);
+  // «Приховати все» діє до перезавантаження. У маленькому вікні міні-плеєра кнопки типово сховані
+  const [clean, setClean] = useState(compact);
   const [showWind, setShowWind] = useState(true);
   // Режим створення: клік по карті передає точку «Додати місто». Вмикається кнопкою «+» або з кнопки «Вибрати на мапі»
   const [picking, setPicking] = useState(pickSignal > 0);
@@ -848,6 +851,10 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
   // Кадри прогнозу
   const [meta, setMeta] = useState(null);
   const [frame, setFrame] = useState(0);
+  // Одиниці — ті самі, що в картках погоди
+  const [units, changeUnit] = useMapUnits();
+  const unitsRef = useRef(units);
+  unitsRef.current = units;
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(() => readChoice("styxia_map_speed", 1, SPEEDS));
   const [fps, setFps] = useState(() => readChoice("styxia_map_fps", 30, FPS_OPTIONS));
@@ -1029,12 +1036,23 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
       });
   }, [meta, frame, ensureWind, fail]);
 
-  // Фонове завантаження решти кадрів: спершу від поточного вперед, щоб відтворення не зупинялося
+  const dayWindow = useMemo(() => {
+    if (!meta) return "";
+    const days = groupDays(meta.hours.map((hour) => new Date(Date.parse(meta.time) + hour * 3600000)));
+    const key = dayKey(new Date(Date.parse(meta.time) + meta.hours[frame] * 3600000));
+    const index = days.findIndex((day) => day.key === key);
+    const next = days[index + 1] || days[index];
+    return `${days[index].frames[0]}-${next.frames.at(-1)}`;
+  }, [meta, frame]);
+
+  // Фонове завантаження кадрів дня: спершу від поточного вперед, щоб відтворення не зупинялося
   useEffect(() => {
     if (!meta) return undefined;
     let cancelled = false;
-    const count = meta.hours.length;
-    const order = Array.from({ length: count }, (_, i) => (frameRef.current + i) % count);
+    const [first, last] = dayWindow.split("-").map(Number);
+    const count = last - first + 1;
+    const from = Math.max(0, frameRef.current - first);
+    const order = Array.from({ length: count }, (_, i) => first + ((from + i) % count));
     const isDone = (k) => (layer ? imageReady.current.has(`${layer.id}:${k}`) : windFrames.current.has(k));
     const queue = order.filter((k) => !isDone(k));
     let done = count - queue.length;
@@ -1076,7 +1094,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     return () => {
       cancelled = true;
     };
-  }, [meta, layer, showWind, ensureImage, ensureWind]);
+  }, [meta, dayWindow, layer, showWind, ensureImage, ensureWind]);
 
   // Відтворення: наступний кадр лише коли він уже завантажений, а не раніше
   useEffect(() => {
@@ -1272,7 +1290,10 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     }
     const lon = ((((pointer.lng + 180) % 360) + 360) % 360) - 180;
     const value = decodeValue(Math.round(sampleGrid(plane, info.width, info.height, lon + 180, pointer.lat)), current);
-    el.lastChild.textContent = formatLayerValue(value, current.id, unitRef.current);
+    const shown = layerUnit(current.id, unitsRef.current, unitRef.current);
+    el.lastChild.textContent = shown.digits === 2
+      ? `${shown.convert(value).toFixed(2)} ${shown.label}`
+      : formatLayerValue(shown.convert(value), current.id, shown.label);
     const box = containerRef.current;
     // Біля правого й нижнього країв плашка перекидається на інший бік курсора
     el.dataset.fx = pointer.x > box.clientWidth - 150 ? "1" : "0";
@@ -1307,7 +1328,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
   // Кадр, шар чи «сховати все» змінились, а курсор стоїть — оновлюємо значення на місці
   useEffect(() => {
     renderSensor();
-  }, [frame, layer, meta, clean, renderSensor]);
+  }, [frame, layer, meta, clean, units, renderSensor]);
 
   // ── Режим створення
   useEffect(() => {
@@ -1367,6 +1388,11 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     popupRef.current = popup;
     const color = ["match", ["get", "kind"], "own", OWN_COLOR, "world", WORLD_COLOR, "place", PLACE_COLOR, SERVER_COLOR];
 
+    const windText = (ms) => {
+      const shown = layerUnit("windSpeed", unitsRef.current, windUnitRef.current);
+      return `${tRef.current("climateMap.styxia.wind")}: ${Math.round(shown.convert(ms) * 10) / 10} ${shown.label}`;
+    };
+
     const open = (event) => {
       if (pickingRef.current) return;
       const { name, temp, wind, icon, weatherIcon, kind, gps } = event.features[0].properties;
@@ -1380,8 +1406,8 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
         kicker: kind === "own" ? tRef.current(isGps ? "climateMap.styxia.gpsCard" : "climateMap.styxia.ownCard") : "",
         name,
         subtitle: condition ? tRef.current(condition) : "",
-        big: hasTemp ? `${temp > 0 ? "+" : ""}${temp} °C` : "",
-        details: hasWind ? `${tRef.current("climateMap.styxia.wind")}: ${wind} ${windUnitRef.current}` : "",
+        big: hasTemp ? shortTemp(temp, unitsRef.current.temp).replace("°", ` ${layerUnit("temperature", unitsRef.current).label}`) : "",
+        details: hasWind ? windText(Number(wind)) : "",
       });
       popup.setLngLat(event.features[0].geometry.coordinates).setDOMContent(box).addTo(map);
     };
@@ -1579,7 +1605,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
   );
 
   useEffect(() => {
-    if (!meta || !(showPlaces || (showOwn && !liveNow))) return undefined;
+    if (!meta || !(showPlaces || ((showOwn || showServer) && !liveNow))) return undefined;
     let cancelled = false;
     // Затримка: під час відтворення кадри міняються швидко, а завантажувати на кожен три файли не варто
     const timer = setTimeout(() => {
@@ -1595,7 +1621,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [meta, frame, showPlaces, showOwn, liveNow, ensureGrids]);
+  }, [meta, frame, showPlaces, showOwn, showServer, liveNow, ensureGrids]);
 
   useEffect(() => {
     if (!pointsReady) return;
@@ -1604,7 +1630,10 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     if (!liveNow) own = atFrame(own, grids?.frame === frame ? grids.data : null, new Date(validTime));
     // Місто, на яке вже є власна картка, не дублюємо: лишається одна мітка кольору картки
     const free = notDuplicate(own);
-    const server = showServer ? serverFeatures(lang, liveNow ? null : forecast).filter(free) : [];
+    let server = showServer ? serverFeatures(lang, liveNow ? null : forecast) : [];
+    // У даних немає прогнозу міст — теж беремо з полів моделі, а не лишаємо «зараз» під іншим часом
+    if (!liveNow && !forecast?.size) server = atFrame(server, grids?.frame === frame ? grids.data : null, new Date(validTime));
+    server = server.filter(free);
     const world = showWorld && forecast ? worldFeatures(cityData, forecast, lang).filter(free) : [];
     const curated = [...server, ...world, ...own];
     // Решта міст і сіл із плиток — лише там, де ще нічого немає: не поруч із готовою точкою й не з тією ж назвою
@@ -1617,9 +1646,11 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     }
     // Біля міст значення вибраного шару (опади, тиск…), а не завжди температура
     const all = [...places, ...curated];
-    const decorated = valuePlane && layer && valuePlane.layerId === layer.id ? applyLayerValues(all, layer, valuePlane.plane, meta) : all;
+    const decorated = valuePlane && layer && valuePlane.layerId === layer.id && layer.id !== "temperature"
+      ? applyLayerValues(all, layer, valuePlane.plane, meta, layerUnit(layer.id, units))
+      : all.map((item) => ({ ...item, properties: { ...item.properties, short: shortTemp(item.properties.temp, units.temp) } }));
     mapRef.current.getSource("styxia-points").setData({ type: "FeatureCollection", features: decorated });
-  }, [pointsReady, showServer, showWorld, showOwn, showPlaces, placeList, grids, meta, weatherCards, serverVersion, lang, forecast, liveNow, cityData, gpsEnabled, layer, valuePlane, frame, validTime]);
+  }, [pointsReady, showServer, showWorld, showOwn, showPlaces, placeList, grids, meta, weatherCards, serverVersion, lang, forecast, liveNow, cityData, gpsEnabled, layer, valuePlane, frame, validTime, units]);
 
   // Коли малюємо власні назви міст і сіл (з погодою), підписи самої підкладки ховаємо: інакше кожне місто
   // підписане двічі. Підписи країн, областей, островів і околиць лишаються; хутори малюємо самі
@@ -1794,8 +1825,15 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     if (clean) popupRef.current?.remove();
   }, [pointsReady, alertsReady, alertsOn, clean, showMarks]);
 
-  const unit = layer ? (layer.unitKey ? t(`climateMap.styxia.${layer.unitKey}`) : layer.unit) : "";
-  unitRef.current = unit;
+  const baseUnit = layer ? (layer.unitKey ? t(`climateMap.styxia.${layer.unitKey}`) : layer.unit) : "";
+  const shownUnit = layerUnit(layer?.id, units, baseUnit);
+  const unit = shownUnit.label;
+  // Датчик сам перераховує значення, тож йому потрібен підпис за замовчуванням
+  unitRef.current = baseUnit;
+  const legendValue = (value) => {
+    const k = 10 ** (shownUnit.digits ?? (Math.abs(shownUnit.convert(value)) < 10 ? 1 : 0));
+    return Math.round(shownUnit.convert(value) * k) / k;
+  };
   const gradient = layer
     ? `linear-gradient(90deg, ${layer.stops
         .map(([, r, g, b, a = 1], i) => `rgba(${r},${g},${b},${a}) ${(i / (layer.stops.length - 1)) * 100}%`)
@@ -1918,7 +1956,8 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     : null;
   const LayerIcon = LAYER_ICONS[layerId] || LAYER_ICONS.none;
   const WindIcon = LAYER_ICONS.windSpeed;
-  const total = meta?.hours.length || 0;
+  const [windowFirst, windowLast] = dayWindow.split("-").map(Number);
+  const total = meta ? windowLast - windowFirst + 1 : 0;
 
   return (
     <Root data-clean={clean} data-picking={picking} $dark={isDarkMode}>
@@ -2012,6 +2051,8 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
         thumbSuffix={`?v=${meta?.time || ""}`}
         info={info}
         switches={switches}
+        units={units}
+        onUnit={changeUnit}
         alertsNote={alertsNote}
         animation={{
           speed,
@@ -2066,7 +2107,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
             <div className="ticks">
               {ticks.map((value, i) => (
                 <span key={value} className={i > 0 && i < ticks.length - 1 ? "mid" : undefined}>
-                  {value}
+                  {legendValue(value)}
                   {i === ticks.length - 1 ? ` ${unit}` : ""}
                 </span>
               ))}
@@ -2074,7 +2115,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
             {meta && (
               <div className="more" aria-hidden={!legendOpen}>
                 <span>
-                  {t("climateMap.styxia.dataTime")}: {new Date(meta.time).toLocaleString(lang, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                  {t("climateMap.styxia.dataTime")}: {new Date(meta.run || meta.time).toLocaleString(lang, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>
             )}

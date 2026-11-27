@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Weather forecast",
       "windySubtitle": "Wind and layers",
       "styxiaTitle": "Stuxia Map",
-      "styxiaSubtitle": "10-day forecast",
+      "styxiaSubtitle": "16-day forecast",
       "cinemaTitle": "Online cinema",
       "cinemaSubtitle": "Free films (Internet Archive)",
       "alertsTitle": "Alerts",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Air quality",
       "airTrafficTitle": "Flight radar",
       "deepStateSubtitle": "Map of events in Ukraine",
-      "blitzortungSubtitle": "Lightning map"
+      "blitzortungSubtitle": "Lightning map",
+      "tvSubtitle": "Ukrainian films and TV",
+      "tvNote": "Subscription",
+      "blocklySubtitle": "Programming basics",
+      "mindTitle": "Brain trainer",
+      "mindSubtitle": "Math and pairs · offline"
     },
     "options": {
       "alerts": "Ukraine air raid alert map (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "second frame",
     "miniMapTitle": "Mini map • double-click to return",
     "collapse": "Collapse",
-    "tickerHint": "Click to change the tips and facts"
+    "tickerHint": "Click to change the tips and facts",
+    "flags": {
+      "ads": "Contains ads",
+      "money": "Paid features or subscription",
+      "limit": "Styxia limit: {{min}} min a day for all games"
+    },
+    "games": {
+      "math": "Math",
+      "pairs": "Pairs",
+      "score": "Score",
+      "moves": "Moves",
+      "win": "All pairs found!",
+      "again": "Play again",
+      "left": "Left today: {{time}}",
+      "over": "Today's game limit is used up. Come back tomorrow!",
+      "easy": "Easy",
+      "hard": "Hard",
+      "madeWith": "Made with pompous love"
+    },
+    "tv": {
+      "hint": "Blank? Open it separately.",
+      "open": "Open site"
+    },
+    "story": {
+      "record": "Record",
+      "praise1": "Wonderful!",
+      "praise2": "Correct, keep it up!",
+      "praise3": "Brilliant!",
+      "next": "Next",
+      "restart": "Start over",
+      "dominoName": "Domino",
+      "domino": "Hmm, let me think: turkeys lived in the days of dinosaurs and dragons, yet there is something curious about you too.",
+      "kateName": "Kate",
+      "kate": "I love the here and now so much, just like your progress in learning! But it gets more interesting :)",
+      "kornisName": "Kornis",
+      "kornis": "You think this is the beginning, but... you have won, for now... We will meet again soon.",
+      "double": "Bonus: ×2 points",
+      "shield": "Bonus: immunity from one mistake",
+      "hasShield": "Immunity ready",
+      "rescued": "Immunity saved your streak! Try again."
+    }
   },
   "modals": {
     "AgeGateModal": {

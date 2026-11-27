@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { FiX, FiEyeOff } from "react-icons/fi";
 import { LAYER_ICONS } from "./styxiaIcons.jsx";
 import { fadeUp, pressable, revealed } from "./styxiaMotion.js";
+import { UNIT_GROUPS } from "../../utils/units.js";
 
 const Wrap = styled.div`
   position: absolute;
@@ -331,7 +332,7 @@ const HideAll = styled.button`
 
 // ranges: «від – до» рядки заздалегідь складає викликач; info — { id, levels, text(key) }
 const StyxiaPanel = ({
-  open, t, layers, layerId, onLayer, thumbBase, thumbSuffix, info, switches, alertsNote, animation, onClose, onHideAll,
+  open, t, layers, layerId, onLayer, thumbBase, thumbSuffix, info, switches, units, onUnit, alertsNote, animation, onClose, onHideAll,
 }) => (
   <Wrap role="dialog" aria-label={t("climateMap.styxia.panelTitle")} $open={open} inert={!open}>
     <Header>
@@ -396,6 +397,20 @@ const StyxiaPanel = ({
           </Switch>
         ))}
         {alertsNote && <Note>{alertsNote}</Note>}
+        <h4 style={{ marginTop: 10 }}>{t("newsWeather.Weather.odynytsiVymiru")}</h4>
+        {/* Дати на карті свої, тому лише одиниці виміру */}
+        {UNIT_GROUPS.filter((group) => group.key !== "date").map((group) => (
+          <Field key={group.key}>
+            {group.title}
+            <select value={units[group.key]} onChange={(e) => onUnit(group.key, e.target.value)}>
+              {group.options.map((option) => (
+                <option key={option.key} value={option.key}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+        ))}
         <h4 style={{ marginTop: 10 }}>{t("climateMap.styxia.animationTitle")}</h4>
         <Field>
           {t("climateMap.styxia.speed")}

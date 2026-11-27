@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Pronóstico del tiempo",
       "windySubtitle": "Viento y capas",
       "styxiaTitle": "Mapa Stuxia",
-      "styxiaSubtitle": "Pronóstico a 10 días",
+      "styxiaSubtitle": "Pronóstico a 16 días",
       "cinemaTitle": "Cine en línea",
       "cinemaSubtitle": "Películas gratis (Internet Archive)",
       "alertsTitle": "Alertas",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Calidad del aire",
       "airTrafficTitle": "Radar aéreo",
       "deepStateSubtitle": "Mapa de eventos en Ucrania",
-      "blitzortungSubtitle": "Mapa de rayos"
+      "blitzortungSubtitle": "Mapa de rayos",
+      "tvSubtitle": "Cine y TV de Ucrania",
+      "tvNote": "Con suscripción",
+      "blocklySubtitle": "Bases de programación",
+      "mindTitle": "Entrena la mente",
+      "mindSubtitle": "Cálculo y parejas · sin conexión"
     },
     "options": {
       "alerts": "Mapa de alertas de Ucrania (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "segundo marco",
     "miniMapTitle": "Minimapa • doble clic — volver",
     "collapse": "Contraer",
-    "tickerHint": "Pulsa para cambiar los consejos y datos"
+    "tickerHint": "Pulsa para cambiar los consejos y datos",
+    "flags": {
+      "ads": "Tiene anuncios",
+      "money": "Funciones de pago o suscripción",
+      "limit": "Límite de Styxia: {{min}} min al día para todos los juegos"
+    },
+    "games": {
+      "math": "Cálculo",
+      "pairs": "Parejas",
+      "score": "Puntos",
+      "moves": "Jugadas",
+      "win": "¡Todas las parejas encontradas!",
+      "again": "Otra vez",
+      "left": "Quedan hoy: {{time}}",
+      "over": "Se agotó el límite de juego de hoy. ¡Vuelve mañana!",
+      "easy": "Fácil",
+      "hard": "Difícil",
+      "madeWith": "Hecho con amor pretencioso"
+    },
+    "tv": {
+      "hint": "¿En blanco? Ábrelo aparte.",
+      "open": "Abrir sitio"
+    },
+    "story": {
+      "record": "Récord",
+      "praise1": "¡Estupendo!",
+      "praise2": "¡Correcto, sigue así!",
+      "praise3": "¡Brillante!",
+      "next": "Seguir",
+      "restart": "Desde el principio",
+      "dominoName": "Domino",
+      "domino": "Mmm, déjame pensar: los pavos vivieron en tiempos de dinosaurios y dragones, pero tú también desprendes algo curioso.",
+      "kateName": "Kate",
+      "kate": "¡Me encanta tanto el aquí y ahora, igual que tus logros aprendiendo! Pero lo que viene es más interesante :)",
+      "kornisName": "Kornis",
+      "kornis": "Crees que esto es el principio, pero... has ganado, por ahora... Pronto nos veremos.",
+      "double": "Bono: ×2 puntos",
+      "shield": "Bono: inmunidad ante un error",
+      "hasShield": "Inmunidad lista",
+      "rescued": "¡La inmunidad salvó tu racha! Inténtalo otra vez."
+    }
   },
   "modals": {
     "AgeGateModal": {

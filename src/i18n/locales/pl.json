@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Prognoza pogody",
       "windySubtitle": "Wiatr i warstwy",
       "styxiaTitle": "Mapa Stuxia",
-      "styxiaSubtitle": "Prognoza na 10 dni",
+      "styxiaSubtitle": "Prognoza na 16 dni",
       "cinemaTitle": "Kino online",
       "cinemaSubtitle": "Darmowe filmy (Internet Archive)",
       "alertsTitle": "Alarmy",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Jakość powietrza",
       "airTrafficTitle": "Radar lotniczy",
       "deepStateSubtitle": "Mapa wydarzeń w Ukrainie",
-      "blitzortungSubtitle": "Mapa wyładowań"
+      "blitzortungSubtitle": "Mapa wyładowań",
+      "tvSubtitle": "Ukraińskie filmy i TV",
+      "tvNote": "W abonamencie",
+      "blocklySubtitle": "Podstawy programowania",
+      "mindTitle": "Trening umysłu",
+      "mindSubtitle": "Rachunki i pary · offline"
     },
     "options": {
       "alerts": "Mapa alarmów w Ukrainie (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "druga ramka",
     "miniMapTitle": "Minimapa • dwuklik — powrót",
     "collapse": "Zwiń",
-    "tickerHint": "Kliknij, aby zmienić porady i ciekawostki"
+    "tickerHint": "Kliknij, aby zmienić porady i ciekawostki",
+    "flags": {
+      "ads": "Zawiera reklamy",
+      "money": "Płatne funkcje lub subskrypcja",
+      "limit": "Limit od Styxia: {{min}} min dziennie na wszystkie gry"
+    },
+    "games": {
+      "math": "Rachunki",
+      "pairs": "Pary",
+      "score": "Punkty",
+      "moves": "Ruchy",
+      "win": "Wszystkie pary znalezione!",
+      "again": "Jeszcze raz",
+      "left": "Na dziś zostało: {{time}}",
+      "over": "Dzisiejszy limit gier się skończył. Wróć jutro!",
+      "easy": "Łatwy",
+      "hard": "Trudny",
+      "madeWith": "Zrobione z nadętą miłością"
+    },
+    "tv": {
+      "hint": "Pusto? Otwórz osobno.",
+      "open": "Otwórz stronę"
+    },
+    "story": {
+      "record": "Rekord",
+      "praise1": "Wspaniale!",
+      "praise2": "Dobrze, tak trzymaj!",
+      "praise3": "Genialnie!",
+      "next": "Dalej",
+      "restart": "Od nowa",
+      "dominoName": "Domino",
+      "domino": "Hm, niech pomyślę: indyki żyły w czasach dinozaurów i smoków, ale i od ciebie wieje czymś ciekawym.",
+      "kateName": "Kate",
+      "kate": "Tak kocham to, co tu i teraz, jak i twoje postępy w nauce! Ale dalej będzie ciekawiej :)",
+      "kornisName": "Kornis",
+      "kornis": "Myślisz, że to początek, ale... wygrałeś, na razie... Wkrótce się spotkamy.",
+      "double": "Bonus: ×2 punkty",
+      "shield": "Bonus: ochrona przed jednym błędem",
+      "hasShield": "Ochrona gotowa",
+      "rescued": "Ochrona uratowała serię! Spróbuj jeszcze raz."
+    }
   },
   "modals": {
     "AgeGateModal": {

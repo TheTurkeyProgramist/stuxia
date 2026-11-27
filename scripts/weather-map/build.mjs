@@ -5,9 +5,12 @@
 //   regions.txt       — межі областей (для тривог)
 //   cities.txt        — міста (серверні й світу) і погода в них на кожну годину прогнозу
 //   meta.txt          — JSON: час запуску моделі, розмір сітки, список годин (.txt, щоб Vite не обгортав у модуль)
-// Запуск: bun run weather:build [-- --hours=240 --step=3]
-//   hours — на скільки годин уперед (до 384; типово 240 = 10 днів, 120 = 5), step — крок кадрів (кратний 3)
-/* global fetch, URL, AbortSignal, Buffer, console, process */
+// Кадри: від учорашньої півночі за Києвом; учора й найближчі години — щогодини (сітка 0.25°, проріджена
+// до 0.5°), далі — з кроком step. Минулі години беруться з попередніх запусків моделі.
+// Запуск: bun run weather:build [-- --hours=384 --step=3 --hourly=48 --past=1]
+//   hours — на скільки годин уперед від запуску (до 384 = 16 днів), step — крок далеких кадрів (кратний 3),
+//   hourly — скільки годин уперед іти щогодини (до 120), past — 0, щоб не брати вчорашній день
+/* global fetch, URL, AbortSignal, Buffer, console, process, setTimeout */
 import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { crc32, deflateSync } from "node:zlib";
@@ -24,12 +27,14 @@ const option = (name, fallback) => {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
   return hit ? Number(hit.split("=")[1]) : fallback;
 };
-const MAX_HOURS = option("hours", 240);
+const MAX_HOURS = option("hours", 384);
 const STEP = option("step", 3);
-if (!(STEP >= 3 && STEP % 3 === 0 && MAX_HOURS >= 0 && MAX_HOURS <= 384 && MAX_HOURS % STEP === 0)) {
-  throw new Error("--step кратний 3, --hours кратний кроку й не більше 384");
+const HOURLY = Math.min(option("hourly", 48), MAX_HOURS);
+const PAST = option("past", 1);
+if (!(STEP >= 3 && STEP % 3 === 0 && MAX_HOURS >= 0 && MAX_HOURS <= 384 && MAX_HOURS % STEP === 0 && HOURLY >= 0 && HOURLY <= 120 && HOURLY % STEP === 0)) {
+  throw new Error("--step кратний 3; --hours і --hourly кратні кроку (до 384 і 120)");
 }
-const HOURS = Array.from({ length: MAX_HOURS / STEP + 1 }, (_, i) => i * STEP);
+const HOUR_MS = 3600 * 1000;
 
 // Поле GFS (рядок з .idx) і переведення в одиниці шару
 const SOURCES = {
@@ -47,32 +52,39 @@ const SOURCES = {
   land: [":LAND:surface:", (x) => x], // маска суші для мініатюр (лише для 0-ї години): 1 — суша
 };
 
-const fetchOk = async (url, options, attempts = 3) => {
+// read — читання тіла відповіді: воно теж може обірватися за тайм-аутом, тож повторюється разом із запитом
+const fetchOk = async (url, read, options, attempts = 5) => {
   for (let attempt = 1; ; attempt += 1) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(60000), ...options });
-      if (!res.ok) throw new Error(`${res.status} ${url}`);
-      return res;
+      const res = await fetch(url, { signal: AbortSignal.timeout(120000), ...options });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return await read(res);
     } catch (error) {
-      if (attempt >= attempts) throw error;
+      if (attempt >= attempts) throw new Error(`${error.message} (${url})`, { cause: error });
+      // Пауза перед повтором: мережа чи сервер могли тимчасово захлинутися
+      await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
     }
   }
 };
 
-const fileUrl = ({ day, hour }, forecastHour) =>
-  `${BUCKET}/gfs.${day}/${hour}/atmos/gfs.t${hour}z.pgrb2.0p50.f${String(forecastHour).padStart(3, "0")}`;
+const fileUrl = ({ day, hour }, forecastHour, grid = "0p50") =>
+  `${BUCKET}/gfs.${day}/${hour}/atmos/gfs.t${hour}z.pgrb2.${grid}.f${String(forecastHour).padStart(3, "0")}`;
+
+const runAt = (time) => {
+  const date = new Date(time);
+  return {
+    date,
+    day: date.toISOString().slice(0, 10).replaceAll("-", ""),
+    hour: String(date.getUTCHours()).padStart(2, "0"),
+  };
+};
 
 // Найсвіжіший запуск (о 00, 06, 12, 18 UTC), у якому вже викладено й останню потрібну годину
 const findLatestRun = async () => {
   const step = 6 * 3600 * 1000;
   let time = Math.floor(Date.now() / step) * step;
   for (let i = 0; i < 12; i += 1, time -= step) {
-    const date = new Date(time);
-    const run = {
-      date,
-      day: date.toISOString().slice(0, 10).replaceAll("-", ""),
-      hour: String(date.getUTCHours()).padStart(2, "0"),
-    };
+    const run = runAt(time);
     const last = await fetch(`${fileUrl(run, MAX_HOURS)}.idx`, { method: "HEAD", signal: AbortSignal.timeout(30000) });
     if (last.ok) return run;
   }
@@ -85,8 +97,8 @@ const downloadField = async (url, index, pattern) => {
   if (line === -1) throw new Error(`Немає поля ${pattern} у ${url}`);
   const start = Number(index[line].split(":")[1]);
   const end = index[line + 1] ? Number(index[line + 1].split(":")[1]) - 1 : "";
-  const res = await fetchOk(url, { headers: { Range: `bytes=${start}-${end}` } });
-  return decodeGrib2(Buffer.from(await res.arrayBuffer()));
+  const bytes = await fetchOk(url, (res) => res.arrayBuffer(), { headers: { Range: `bytes=${start}-${end}` } });
+  return decodeGrib2(Buffer.from(bytes));
 };
 
 const pngChunk = (type, data) => {
@@ -138,13 +150,25 @@ for (const layer of LAYERS) {
   FILES[layer.file][layer.channel] = [layer.id, layer];
 }
 
-const loadHour = async (run, forecastHour) => {
-  const url = fileUrl(run, forecastHour);
-  const index = (await (await fetchOk(`${url}.idx`)).text()).trim().split("\n");
+// Сітку 0.25° проріджуємо вдвічі — вона збігається з 0.5°
+const halve = ({ width, height, values }) => {
+  const w = width / 2;
+  const h = (height + 1) / 2;
+  const out = new Float32Array(w * h);
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) out[y * w + x] = values[y * 2 * width + x * 2];
+  }
+  return { width: w, height: h, values: out };
+};
+
+const loadHour = async ({ run, forecastHour, fine }) => {
+  const url = fileUrl(run, forecastHour, fine ? "0p25" : "0p50");
+  const index = (await fetchOk(`${url}.idx`, (res) => res.text())).trim().split("\n");
   const fields = {};
   const wanted = Object.entries(SOURCES).filter(([id]) => id !== "land" || forecastHour === 0);
   await pool(wanted, 6, async ([id, [pattern, convert]]) => {
-    const { width, height, values } = await downloadField(url, index, pattern);
+    const field = await downloadField(url, index, pattern);
+    const { width, height, values } = fine ? halve(field) : field;
     fields[id] = { width, height, values: values.map(convert) };
   });
   // «Відчувається як»: рахуємо з температури, вологості й вітру — нових завантажень не потрібно
@@ -229,7 +253,22 @@ const sampleCities = (cities, fields) => {
 };
 
 const run = await findLatestRun();
-console.log(`GFS ${run.date.toISOString()}, годин: ${HOURS.length} (0…${MAX_HOURS}, крок ${STEP})`);
+const runTime = run.date.getTime();
+
+// Початок шкали: вчора 00:00 за Києвом (UTC+2/+3 — беремо 21:00 позавчора за UTC)
+const start = PAST ? Math.floor(Date.now() / (24 * HOUR_MS)) * 24 * HOUR_MS - 27 * HOUR_MS : runTime;
+const FRAMES = [];
+// Минуле: перші години відповідного запуску — це найточніше, що модель знає про той час
+for (let time = start; time < runTime; time += HOUR_MS) {
+  const past = runAt(Math.floor(time / (6 * HOUR_MS)) * 6 * HOUR_MS);
+  FRAMES.push({ time, run: past, forecastHour: (time - past.date.getTime()) / HOUR_MS, fine: true });
+}
+for (let h = 0; h <= MAX_HOURS; h += h < HOURLY ? 1 : STEP) {
+  FRAMES.push({ time: runTime + h * HOUR_MS, run, forecastHour: h, fine: h <= HOURLY });
+}
+// Години в meta та в назвах файлів — від початку шкали
+const HOURS = FRAMES.map((frame) => (frame.time - FRAMES[0].time) / HOUR_MS);
+console.log(`GFS ${run.date.toISOString()}, кадрів: ${HOURS.length}`);
 await mkdir(OUT_DIR, { recursive: true });
 
 // Без списку міст карта працює, лише без закордонних міст і прогнозу в серверних
@@ -244,17 +283,18 @@ const citySamples = new Array(HOURS.length);
 
 let grid = null;
 let done = 0;
-await pool(HOURS, 3, async (forecastHour) => {
-  const fields = await loadHour(run, forecastHour);
+await pool(FRAMES, 3, async (frame) => {
+  const offset = HOURS[FRAMES.indexOf(frame)];
+  const fields = await loadHour(frame);
   grid = { width: fields.temperature.width, height: fields.temperature.height };
-  await writeHour(forecastHour, fields);
-  citySamples[HOURS.indexOf(forecastHour)] = sampleCities(cities, fields);
-  if (forecastHour === 0) {
+  await writeHour(offset, fields);
+  citySamples[HOURS.indexOf(offset)] = sampleCities(cities, fields);
+  if (frame.time === runTime) {
     for (const layer of LAYERS) await writeFile(`${OUT_DIR}thumb-${layer.id}.png`, makeThumbnail(fields, layer));
     await writeFile(`${OUT_DIR}thumb-none.png`, makeThumbnail(fields, null));
   }
   done += 1;
-  console.log(`  ${done}/${HOURS.length}: +${forecastHour} год`);
+  console.log(`  ${done}/${HOURS.length}: ${new Date(frame.time).toISOString()}`);
 });
 
 try {
@@ -269,6 +309,6 @@ await writeFile(OUT_DIR + "cities.txt", JSON.stringify({ cities, frames: citySam
 // meta — останнім: поки його не оновлено, карта не вважає дані новими
 await writeFile(
   `${OUT_DIR}meta.txt`,
-  JSON.stringify({ version: DATA_VERSION, time: run.date.toISOString(), width: grid.width, height: grid.height, hours: HOURS, step: STEP }),
+  JSON.stringify({ version: DATA_VERSION, time: new Date(FRAMES[0].time).toISOString(), run: run.date.toISOString(), width: grid.width, height: grid.height, hours: HOURS, step: STEP }),
 );
 console.log(`Готово: weather-data/ (${HOURS.length} кадрів, ${grid.width}×${grid.height})`);

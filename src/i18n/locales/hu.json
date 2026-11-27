@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Időjárás-előrejelzés",
       "windySubtitle": "Szél és rétegek",
       "styxiaTitle": "Stuxia térkép",
-      "styxiaSubtitle": "10 napos előrejelzés",
+      "styxiaSubtitle": "16 napos előrejelzés",
       "cinemaTitle": "Online mozi",
       "cinemaSubtitle": "Ingyenes filmek (Internet Archive)",
       "alertsTitle": "Riasztások",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Levegőminőség",
       "airTrafficTitle": "Légiforgalmi radar",
       "deepStateSubtitle": "Ukrajnai események térképe",
-      "blitzortungSubtitle": "Villámtérkép"
+      "blitzortungSubtitle": "Villámtérkép",
+      "tvSubtitle": "Ukrán filmek és TV",
+      "tvNote": "Előfizetéssel",
+      "blocklySubtitle": "Programozási alapok",
+      "mindTitle": "Agytorna",
+      "mindSubtitle": "Számolás és párok · offline"
     },
     "options": {
       "alerts": "Ukrajna riasztási térképe (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "második keret",
     "miniMapTitle": "Minitérkép • dupla kattintás — vissza",
     "collapse": "Összecsukás",
-    "tickerHint": "Kattints a tippek és tények cseréjéhez"
+    "tickerHint": "Kattints a tippek és tények cseréjéhez",
+    "flags": {
+      "ads": "Reklámot tartalmaz",
+      "money": "Fizetős funkciók vagy előfizetés",
+      "limit": "Styxia-korlát: napi {{min}} perc az összes játékra"
+    },
+    "games": {
+      "math": "Számolás",
+      "pairs": "Párok",
+      "score": "Pontok",
+      "moves": "Lépések",
+      "win": "Minden pár megvan!",
+      "again": "Újra",
+      "left": "Mára maradt: {{time}}",
+      "over": "A mai játékidő elfogyott. Gyere holnap!",
+      "easy": "Könnyű",
+      "hard": "Nehéz",
+      "madeWith": "Dölyfös szeretettel készült"
+    },
+    "tv": {
+      "hint": "Üres? Nyisd meg külön.",
+      "open": "Oldal megnyitása"
+    },
+    "story": {
+      "record": "Rekord",
+      "praise1": "Remek!",
+      "praise2": "Helyes, csak így tovább!",
+      "praise3": "Zseniális!",
+      "next": "Tovább",
+      "restart": "Elölről",
+      "dominoName": "Domino",
+      "domino": "Hm, hadd gondolkodjam: a pulykák a dinoszauruszok és sárkányok idején éltek, de belőled is árad valami érdekes.",
+      "kateName": "Kate",
+      "kate": "Annyira szeretem az itt és mostot, ahogy a tanulásban elért eredményeidet is! De ami jön, még érdekesebb :)",
+      "kornisName": "Kornis",
+      "kornis": "Azt hiszed, ez a kezdet, de... nyertél, egyelőre... Hamarosan találkozunk.",
+      "double": "Bónusz: ×2 pont",
+      "shield": "Bónusz: védelem egy hiba ellen",
+      "hasShield": "Védelem kész",
+      "rescued": "A védelem megmentette a sorozatot! Próbáld újra."
+    }
   },
   "modals": {
     "AgeGateModal": {

@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Prévisions météo",
       "windySubtitle": "Vent et calques",
       "styxiaTitle": "Carte Stuxia",
-      "styxiaSubtitle": "Prévisions à 10 jours",
+      "styxiaSubtitle": "Prévisions à 16 jours",
       "cinemaTitle": "Cinéma en ligne",
       "cinemaSubtitle": "Films gratuits (Internet Archive)",
       "alertsTitle": "Alertes",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Qualité de l'air",
       "airTrafficTitle": "Radar aérien",
       "deepStateSubtitle": "Carte des événements en Ukraine",
-      "blitzortungSubtitle": "Carte des éclairs"
+      "blitzortungSubtitle": "Carte des éclairs",
+      "tvSubtitle": "Films et TV d'Ukraine",
+      "tvNote": "Sur abonnement",
+      "blocklySubtitle": "Bases de la programmation",
+      "mindTitle": "Entraînement cérébral",
+      "mindSubtitle": "Calcul et paires · hors ligne"
     },
     "options": {
       "alerts": "Carte des alertes en Ukraine (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "second cadre",
     "miniMapTitle": "Mini-carte • double-clic — retour",
     "collapse": "Réduire",
-    "tickerHint": "Cliquez pour changer les astuces et les faits"
+    "tickerHint": "Cliquez pour changer les astuces et les faits",
+    "flags": {
+      "ads": "Contient des publicités",
+      "money": "Fonctions payantes ou abonnement",
+      "limit": "Limite Styxia : {{min}} min par jour pour tous les jeux"
+    },
+    "games": {
+      "math": "Calcul",
+      "pairs": "Paires",
+      "score": "Points",
+      "moves": "Coups",
+      "win": "Toutes les paires trouvées !",
+      "again": "Rejouer",
+      "left": "Reste aujourd'hui : {{time}}",
+      "over": "La limite de jeu du jour est atteinte. Reviens demain !",
+      "easy": "Facile",
+      "hard": "Difficile",
+      "madeWith": "Fait avec un amour prétentieux"
+    },
+    "tv": {
+      "hint": "Vide ? Ouvrez-le à part.",
+      "open": "Ouvrir le site"
+    },
+    "story": {
+      "record": "Record",
+      "praise1": "Magnifique !",
+      "praise2": "Juste, continue !",
+      "praise3": "Brillant !",
+      "next": "Suite",
+      "restart": "Recommencer",
+      "dominoName": "Domino",
+      "domino": "Hum, laisse-moi réfléchir : les dindes vivaient au temps des dinosaures et des dragons, pourtant tu dégages toi aussi quelque chose de curieux.",
+      "kateName": "Kate",
+      "kate": "J'aime tellement l'ici et maintenant, comme tes progrès ! Mais la suite est plus intéressante :)",
+      "kornisName": "Kornis",
+      "kornis": "Tu crois que c'est le début, mais... tu as gagné, pour l'instant... Nous nous reverrons bientôt.",
+      "double": "Bonus : ×2 points",
+      "shield": "Bonus : immunité contre une erreur",
+      "hasShield": "Immunité prête",
+      "rescued": "L'immunité a sauvé ta série ! Réessaie."
+    }
   },
   "modals": {
     "AgeGateModal": {

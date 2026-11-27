@@ -20,7 +20,7 @@ const Wrap = styled.div`
   position: absolute;
   right: 8px;
   /* Над повзунком часу; коли його сховано («Приховати все») — опускається вниз, але не зникає */
-  bottom: ${(p) => (p.$lifted ? "52px" : "8px")};
+  bottom: ${(p) => (p.$lifted ? "70px" : "8px")};
   z-index: 2;
   transition: bottom 0.26s ease;
 

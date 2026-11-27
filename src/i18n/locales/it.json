@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Previsioni meteo",
       "windySubtitle": "Vento e livelli",
       "styxiaTitle": "Mappa Stuxia",
-      "styxiaSubtitle": "Previsioni a 10 giorni",
+      "styxiaSubtitle": "Previsioni a 16 giorni",
       "cinemaTitle": "Cinema online",
       "cinemaSubtitle": "Film gratuiti (Internet Archive)",
       "alertsTitle": "Allerte",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Qualità dell'aria",
       "airTrafficTitle": "Radar aereo",
       "deepStateSubtitle": "Mappa degli eventi in Ucraina",
-      "blitzortungSubtitle": "Mappa dei fulmini"
+      "blitzortungSubtitle": "Mappa dei fulmini",
+      "tvSubtitle": "Film e TV ucraini",
+      "tvNote": "In abbonamento",
+      "blocklySubtitle": "Basi di programmazione",
+      "mindTitle": "Allena la mente",
+      "mindSubtitle": "Calcoli e coppie · offline"
     },
     "options": {
       "alerts": "Mappa delle allerte in Ucraina (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "secondo riquadro",
     "miniMapTitle": "Mini mappa • doppio clic — indietro",
     "collapse": "Riduci",
-    "tickerHint": "Clicca per cambiare consigli e curiosità"
+    "tickerHint": "Clicca per cambiare consigli e curiosità",
+    "flags": {
+      "ads": "Contiene pubblicità",
+      "money": "Funzioni a pagamento o abbonamento",
+      "limit": "Limite di Styxia: {{min}} min al giorno per tutti i giochi"
+    },
+    "games": {
+      "math": "Calcoli",
+      "pairs": "Coppie",
+      "score": "Punti",
+      "moves": "Mosse",
+      "win": "Tutte le coppie trovate!",
+      "again": "Ancora",
+      "left": "Oggi restano: {{time}}",
+      "over": "Il limite di gioco di oggi è esaurito. Torna domani!",
+      "easy": "Facile",
+      "hard": "Difficile",
+      "madeWith": "Fatto con amore borioso"
+    },
+    "tv": {
+      "hint": "Vuoto? Aprilo a parte.",
+      "open": "Apri il sito"
+    },
+    "story": {
+      "record": "Record",
+      "praise1": "Magnifico!",
+      "praise2": "Giusto, continua così!",
+      "praise3": "Brillante!",
+      "next": "Avanti",
+      "restart": "Da capo",
+      "dominoName": "Domino",
+      "domino": "Mmm, fammi pensare: i tacchini vivevano al tempo dei dinosauri e dei draghi, eppure anche tu sprigioni qualcosa di curioso.",
+      "kateName": "Kate",
+      "kate": "Amo tanto il qui e ora, come i tuoi progressi nello studio! Ma il bello viene adesso :)",
+      "kornisName": "Kornis",
+      "kornis": "Pensi che sia l'inizio, ma... hai vinto, per ora... Ci rivedremo presto.",
+      "double": "Bonus: ×2 punti",
+      "shield": "Bonus: immunità da un errore",
+      "hasShield": "Immunità pronta",
+      "rescued": "L'immunità ha salvato la serie! Riprova."
+    }
   },
   "modals": {
     "AgeGateModal": {

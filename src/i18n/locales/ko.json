@@ -219,7 +219,7 @@
       "ventuskySubtitle": "일기 예보",
       "windySubtitle": "바람과 레이어",
       "styxiaTitle": "Stuxia 지도",
-      "styxiaSubtitle": "10일 예보",
+      "styxiaSubtitle": "16일 예보",
       "cinemaTitle": "온라인 영화관",
       "cinemaSubtitle": "무료 영화(Internet Archive)",
       "alertsTitle": "경보",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "대기질",
       "airTrafficTitle": "항공 레이더",
       "deepStateSubtitle": "우크라이나 사건 지도",
-      "blitzortungSubtitle": "낙뢰 지도"
+      "blitzortungSubtitle": "낙뢰 지도",
+      "tvSubtitle": "우크라이나 영화와 TV",
+      "tvNote": "구독 필요",
+      "blocklySubtitle": "프로그래밍 기초",
+      "mindTitle": "두뇌 훈련",
+      "mindSubtitle": "계산과 짝 맞추기 · 오프라인"
     },
     "options": {
       "alerts": "우크라이나 경보 지도 (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "두 번째 프레임",
     "miniMapTitle": "미니 지도 • 더블클릭 — 돌아가기",
     "collapse": "축소",
-    "tickerHint": "클릭하면 팁과 사실이 바뀝니다"
+    "tickerHint": "클릭하면 팁과 사실이 바뀝니다",
+    "flags": {
+      "ads": "광고 있음",
+      "money": "유료 기능 또는 구독",
+      "limit": "Styxia 제한: 모든 게임 합쳐 하루 {{min}}분"
+    },
+    "games": {
+      "math": "계산",
+      "pairs": "짝 맞추기",
+      "score": "점수",
+      "moves": "횟수",
+      "win": "모든 짝을 찾았어요!",
+      "again": "다시",
+      "left": "오늘 남은 시간: {{time}}",
+      "over": "오늘 게임 시간이 끝났어요. 내일 만나요!",
+      "easy": "쉬움",
+      "hard": "어려움",
+      "madeWith": "도도한 사랑으로 만들었습니다"
+    },
+    "tv": {
+      "hint": "빈 화면인가요? 따로 여세요.",
+      "open": "사이트 열기"
+    },
+    "story": {
+      "record": "최고 기록",
+      "praise1": "훌륭해요!",
+      "praise2": "정답, 계속 가요!",
+      "praise3": "대단해요!",
+      "next": "다음",
+      "restart": "처음부터",
+      "dominoName": "도미노",
+      "domino": "흠, 생각 좀 해볼게. 칠면조는 공룡과 용의 시대에 살았지만, 너에게서도 흥미로운 기운이 느껴져.",
+      "kateName": "케이트",
+      "kate": "난 지금 이 순간이 정말 좋아, 네가 배움에서 이룬 것도! 하지만 앞으로는 더 재미있어 :)",
+      "kornisName": "코르니스",
+      "kornis": "이게 시작이라고 생각하겠지만... 네가 이겼어, 아직은... 곧 다시 만나자.",
+      "double": "보너스: 점수 ×2",
+      "shield": "보너스: 실수 1회 면제",
+      "hasShield": "면제권 보유",
+      "rescued": "면제권이 연속 기록을 지켰어요! 다시 해보세요."
+    }
   },
   "modals": {
     "AgeGateModal": {

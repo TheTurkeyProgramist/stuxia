@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Previsão do tempo",
       "windySubtitle": "Vento e camadas",
       "styxiaTitle": "Mapa Stuxia",
-      "styxiaSubtitle": "Previsão a 10 dias",
+      "styxiaSubtitle": "Previsão a 16 dias",
       "cinemaTitle": "Cinema online",
       "cinemaSubtitle": "Filmes grátis (Internet Archive)",
       "alertsTitle": "Alertas",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Qualidade do ar",
       "airTrafficTitle": "Radar aéreo",
       "deepStateSubtitle": "Mapa de eventos na Ucrânia",
-      "blitzortungSubtitle": "Mapa de raios"
+      "blitzortungSubtitle": "Mapa de raios",
+      "tvSubtitle": "Filmes e TV da Ucrânia",
+      "tvNote": "Com assinatura",
+      "blocklySubtitle": "Noções de programação",
+      "mindTitle": "Treino mental",
+      "mindSubtitle": "Contas e pares · offline"
     },
     "options": {
       "alerts": "Mapa de alertas da Ucrânia (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "segundo quadro",
     "miniMapTitle": "Minimapa • clique duplo — voltar",
     "collapse": "Recolher",
-    "tickerHint": "Clique para trocar as dicas e os fatos"
+    "tickerHint": "Clique para trocar as dicas e os fatos",
+    "flags": {
+      "ads": "Contém anúncios",
+      "money": "Funções pagas ou subscrição",
+      "limit": "Limite da Styxia: {{min}} min por dia em todos os jogos"
+    },
+    "games": {
+      "math": "Contas",
+      "pairs": "Pares",
+      "score": "Pontos",
+      "moves": "Jogadas",
+      "win": "Todos os pares encontrados!",
+      "again": "Outra vez",
+      "left": "Resta hoje: {{time}}",
+      "over": "O limite de jogo de hoje acabou. Volta amanhã!",
+      "easy": "Fácil",
+      "hard": "Difícil",
+      "madeWith": "Feito com amor pomposo"
+    },
+    "tv": {
+      "hint": "Em branco? Abra à parte.",
+      "open": "Abrir site"
+    },
+    "story": {
+      "record": "Recorde",
+      "praise1": "Maravilha!",
+      "praise2": "Certo, continua assim!",
+      "praise3": "Brilhante!",
+      "next": "Seguinte",
+      "restart": "Do início",
+      "dominoName": "Domino",
+      "domino": "Hum, deixa-me pensar: os perus viveram no tempo dos dinossauros e dos dragões, mas de ti também emana algo curioso.",
+      "kateName": "Kate",
+      "kate": "Adoro tanto o aqui e agora, tal como os teus progressos a aprender! Mas o que vem é mais interessante :)",
+      "kornisName": "Kornis",
+      "kornis": "Pensas que isto é o começo, mas... venceste, por agora... Em breve vamos encontrar-nos.",
+      "double": "Bónus: ×2 pontos",
+      "shield": "Bónus: imunidade a um erro",
+      "hasShield": "Imunidade pronta",
+      "rescued": "A imunidade salvou a série! Tenta outra vez."
+    }
   },
   "modals": {
     "AgeGateModal": {

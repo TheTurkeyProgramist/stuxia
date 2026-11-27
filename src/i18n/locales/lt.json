@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Orų prognozė",
       "windySubtitle": "Vėjas ir sluoksniai",
       "styxiaTitle": "Stuxia žemėlapis",
-      "styxiaSubtitle": "10 dienų prognozė",
+      "styxiaSubtitle": "16 dienų prognozė",
       "cinemaTitle": "Internetinis kino teatras",
       "cinemaSubtitle": "Nemokami filmai (Internet Archive)",
       "alertsTitle": "Pavojai",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Oro kokybė",
       "airTrafficTitle": "Skrydžių radaras",
       "deepStateSubtitle": "Įvykių Ukrainoje žemėlapis",
-      "blitzortungSubtitle": "Žaibų žemėlapis"
+      "blitzortungSubtitle": "Žaibų žemėlapis",
+      "tvSubtitle": "Ukrainos filmai ir TV",
+      "tvNote": "Su prenumerata",
+      "blocklySubtitle": "Programavimo pagrindai",
+      "mindTitle": "Proto treniruoklis",
+      "mindSubtitle": "Skaičiavimas ir poros · neprisijungus"
     },
     "options": {
       "alerts": "Ukrainos pavojų žemėlapis (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "antras rėmelis",
     "miniMapTitle": "Mini žemėlapis • dukart spustelėkite — atgal",
     "collapse": "Sutraukti",
-    "tickerHint": "Spustelėkite, kad pakeistumėte patarimus ir faktus"
+    "tickerHint": "Spustelėkite, kad pakeistumėte patarimus ir faktus",
+    "flags": {
+      "ads": "Yra reklamų",
+      "money": "Mokamos funkcijos arba prenumerata",
+      "limit": "Styxia riba: {{min}} min. per dieną visiems žaidimams"
+    },
+    "games": {
+      "math": "Skaičiavimas",
+      "pairs": "Poros",
+      "score": "Taškai",
+      "moves": "Ėjimai",
+      "win": "Visos poros rastos!",
+      "again": "Dar kartą",
+      "left": "Šiandien liko: {{time}}",
+      "over": "Šiandienos žaidimų laikas baigėsi. Grįžk rytoj!",
+      "easy": "Lengvas",
+      "hard": "Sunkus",
+      "madeWith": "Sukurta su pasipūtusia meile"
+    },
+    "tv": {
+      "hint": "Tuščia? Atverkite atskirai.",
+      "open": "Atverti svetainę"
+    },
+    "story": {
+      "record": "Rekordas",
+      "praise1": "Puiku!",
+      "praise2": "Teisingai, taip ir toliau!",
+      "praise3": "Nuostabu!",
+      "next": "Toliau",
+      "restart": "Iš naujo",
+      "dominoName": "Domino",
+      "domino": "Hm, leisk pagalvoti: kalakutai gyveno dinozaurų ir drakonų laikais, tačiau ir iš tavęs dvelkia kažkas įdomaus.",
+      "kateName": "Kate",
+      "kate": "Taip myliu tai, kas čia ir dabar, kaip ir tavo pasiekimus mokantis! Bet toliau dar įdomiau :)",
+      "kornisName": "Kornis",
+      "kornis": "Manai, kad tai pradžia, bet... tu laimėjai, kol kas... Greitai susitiksime.",
+      "double": "Premija: ×2 taškai",
+      "shield": "Premija: apsauga nuo vienos klaidos",
+      "hasShield": "Apsauga paruošta",
+      "rescued": "Apsauga išgelbėjo seriją! Bandyk dar kartą."
+    }
   },
   "modals": {
     "AgeGateModal": {

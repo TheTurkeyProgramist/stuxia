@@ -1,6 +1,6 @@
 // Міста для карти: серверні (з бази сайту) і міста світу з Natural Earth (суспільне надбання).
 // Назви — мовами сайту, які є в Natural Earth; решта мов показує англійську.
-/* global fetch, AbortSignal */
+/* global fetch, AbortSignal, console */
 import { SERVER_CITIES } from "../../src/utils/serverCities.js";
 
 const NE_URL = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_populated_places.geojson";
@@ -12,7 +12,7 @@ const round = (value) => Math.round(value * 1000) / 1000;
  * [{ id, n (англ.), l?: { мова: назва }, lat, lon, tier }]; tier: "s" — серверне місто,
  * 0 — мегаполіс (8 млн+), 1 — столиця чи 4 млн+, 2 — решта від 2 млн.
  */
-export const loadCities = async () => {
+const loadWorld = async () => {
   const res = await fetch(NE_URL, { signal: AbortSignal.timeout(120000) });
   if (!res.ok) throw new Error("Natural Earth " + res.status);
   const { features } = await res.json();
@@ -47,11 +47,20 @@ export const loadCities = async () => {
     if (!kept.some((other) => Math.abs(other.lat - city.lat) < 0.2 && Math.abs(other.lon - city.lon) < 0.2)) kept.push(city);
   }
 
-  return [
-    ...SERVER_CITIES.map((c) => ({ id: c.slug, n: c.name, lat: c.lat, lon: c.lon, tier: "s" })),
-    ...kept.map((city) => {
-      delete city.pop; // населення потрібне лише для відбору
-      return city;
-    }),
-  ];
+  return kept.map((city) => {
+    delete city.pop; // населення потрібне лише для відбору
+    return city;
+  });
+};
+
+// Серверні міста потрібні завжди: без прогнозу їхні точки не мінялися б разом із повзунком.
+// Міста світу — необов'язкові: якщо Natural Earth не відповідає, збираємо без них
+export const loadCities = async () => {
+  const server = SERVER_CITIES.map((c) => ({ id: c.slug, n: c.name, lat: c.lat, lon: c.lon, tier: "s" }));
+  try {
+    return [...server, ...(await loadWorld())];
+  } catch (error) {
+    console.warn("Міста світу не завантажено: " + error.message);
+    return server;
+  }
 };

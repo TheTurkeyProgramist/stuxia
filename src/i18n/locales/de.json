@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Wettervorhersage",
       "windySubtitle": "Wind und Ebenen",
       "styxiaTitle": "Stuxia-Karte",
-      "styxiaSubtitle": "10-Tage-Vorhersage",
+      "styxiaSubtitle": "16-Tage-Vorhersage",
       "cinemaTitle": "Online-Kino",
       "cinemaSubtitle": "Kostenlose Filme (Internet Archive)",
       "alertsTitle": "Luftalarm",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Luftqualität",
       "airTrafficTitle": "Flugradar",
       "deepStateSubtitle": "Ereigniskarte der Ukraine",
-      "blitzortungSubtitle": "Blitzkarte"
+      "blitzortungSubtitle": "Blitzkarte",
+      "tvSubtitle": "Ukrainische Filme und TV",
+      "tvNote": "Mit Abo",
+      "blocklySubtitle": "Programmieren lernen",
+      "mindTitle": "Gehirntraining",
+      "mindSubtitle": "Rechnen und Paare · offline"
     },
     "options": {
       "alerts": "Luftalarmkarte der Ukraine (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "zweiter Frame",
     "miniMapTitle": "Minikarte • Doppelklick — zurück",
     "collapse": "Verkleinern",
-    "tickerHint": "Klicken, um Tipps und Fakten zu wechseln"
+    "tickerHint": "Klicken, um Tipps und Fakten zu wechseln",
+    "flags": {
+      "ads": "Enthält Werbung",
+      "money": "Kostenpflichtige Funktionen oder Abo",
+      "limit": "Styxia-Limit: {{min}} Min. pro Tag für alle Spiele"
+    },
+    "games": {
+      "math": "Rechnen",
+      "pairs": "Paare",
+      "score": "Punkte",
+      "moves": "Züge",
+      "win": "Alle Paare gefunden!",
+      "again": "Nochmal",
+      "left": "Heute noch: {{time}}",
+      "over": "Das Spielzeitlimit für heute ist erreicht. Komm morgen wieder!",
+      "easy": "Leicht",
+      "hard": "Schwer",
+      "madeWith": "Mit hochnäsiger Liebe gemacht"
+    },
+    "tv": {
+      "hint": "Leer? Separat öffnen.",
+      "open": "Seite öffnen"
+    },
+    "story": {
+      "record": "Rekord",
+      "praise1": "Wunderbar!",
+      "praise2": "Richtig, weiter so!",
+      "praise3": "Brillant!",
+      "next": "Weiter",
+      "restart": "Von vorn",
+      "dominoName": "Domino",
+      "domino": "Hm, lass mich nachdenken: Truthähne lebten zur Zeit der Dinosaurier und Drachen, doch auch dich umweht etwas Spannendes.",
+      "kateName": "Kate",
+      "kate": "Ich liebe das Hier und Jetzt so sehr, genau wie deine Lernerfolge! Aber es wird noch spannender :)",
+      "kornisName": "Kornis",
+      "kornis": "Du denkst, das ist der Anfang, aber... du hast gewonnen, vorerst... Wir sehen uns bald.",
+      "double": "Bonus: ×2 Punkte",
+      "shield": "Bonus: Schutz vor einem Fehler",
+      "hasShield": "Schutz bereit",
+      "rescued": "Der Schutz hat deine Serie gerettet! Versuch es nochmal."
+    }
   },
   "modals": {
     "AgeGateModal": {

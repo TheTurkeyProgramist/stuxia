@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Pacha willakuy",
       "windySubtitle": "Wayra, patakuna",
       "styxiaTitle": "Stuxia mapa",
-      "styxiaSubtitle": "10 p'unchaw willay",
+      "styxiaSubtitle": "16 p'unchaw willay",
       "cinemaTitle": "Internet sine",
       "cinemaSubtitle": "Mana qullqi pelikulakuna (Internet Archive)",
       "alertsTitle": "Alarmakuna",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Wayrap allin kaynin",
       "airTrafficTitle": "Phawaq radar",
       "deepStateSubtitle": "Ukraniapi ruwakuqkunap mapan",
-      "blitzortungSubtitle": "Illapa mapa"
+      "blitzortungSubtitle": "Illapa mapa",
+      "tvSubtitle": "Ucraniamanta peliculakuna, TV",
+      "tvNote": "Qullqiwan",
+      "blocklySubtitle": "Programacionpa qallariynin",
+      "mindTitle": "Yuyay kallpanchay",
+      "mindSubtitle": "Yupay, iskaymanta · mana internet"
     },
     "options": {
       "alerts": "Ukraniapa alarma mapan (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "iskay kaq marco",
     "miniMapTitle": "Huch'uy mapa • iskay kuti ñit'iy — kutiy",
     "collapse": "Huch'uyachiy",
-    "tickerHint": "Ñit'iy yuyaychaykunata chiqaqkunata tikranaykipaq"
+    "tickerHint": "Ñit'iy yuyaychaykunata chiqaqkunata tikranaykipaq",
+    "flags": {
+      "ads": "Willakuykuna kan",
+      "money": "Qullqiwan ruwaykuna utaq suscripción",
+      "limit": "Styxia sayay: sapa punchaw {{min}} min llapa pukllaykunapaq"
+    },
+    "games": {
+      "math": "Yupay",
+      "pairs": "Iskaymanta",
+      "score": "Puntukuna",
+      "moves": "Kuyuykuna",
+      "win": "Llapa iskaykuna tarisqa!",
+      "again": "Hukmanta",
+      "left": "Kunan punchaw puchun: {{time}}",
+      "over": "Kunan punchaw pukllay pacha tukukun. Paqarin kutimuy!",
+      "easy": "Mana sasa",
+      "hard": "Sasa",
+      "madeWith": "Hatunchakuq munakuywan ruwasqa"
+    },
+    "tv": {
+      "hint": "Chusaqchu? Sapaqpi kichay.",
+      "open": "Sitio kichay"
+    },
+    "story": {
+      "record": "Aswan hatun",
+      "praise1": "Ancha allin!",
+      "praise2": "Allinmi, qatiy!",
+      "praise3": "Sumaqmi!",
+      "next": "Qatiq",
+      "restart": "Qallariymanta",
+      "dominoName": "Domino",
+      "domino": "Hm, yuyaychakusaq: pavokunaqa dinosauriopa, amarupa pachanpi kawsarqanku, ichaqa qanmantapas imapas munay lluqsimun.",
+      "kateName": "Kate",
+      "kate": "Kay kunan pachata ancha munani, yachayniykitapas! Qhipaman aswan sumaq kanqa :)",
+      "kornisName": "Kornis",
+      "kornis": "Kayqa qallariymi ninki, ichaqa... atipanki, kunanpaq... Usqhaylla tupasunchik.",
+      "double": "Yapa: ×2 punto",
+      "shield": "Yapa: huk pantaymanta harkay",
+      "hasShield": "Harkay kan",
+      "rescued": "Harkay qatiyniykita qispichirqa! Hukmanta ruway."
+    }
   },
   "modals": {
     "AgeGateModal": {

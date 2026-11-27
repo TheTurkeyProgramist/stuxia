@@ -219,7 +219,7 @@
       "ventuskySubtitle": "天气预报",
       "windySubtitle": "风和图层",
       "styxiaTitle": "Stuxia 地图",
-      "styxiaSubtitle": "10 天预报",
+      "styxiaSubtitle": "16 天预报",
       "cinemaTitle": "在线影院",
       "cinemaSubtitle": "免费电影（Internet Archive）",
       "alertsTitle": "警报",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "空气质量",
       "airTrafficTitle": "航班雷达",
       "deepStateSubtitle": "乌克兰事件地图",
-      "blitzortungSubtitle": "闪电地图"
+      "blitzortungSubtitle": "闪电地图",
+      "tvSubtitle": "乌克兰影视",
+      "tvNote": "需订阅",
+      "blocklySubtitle": "编程基础",
+      "mindTitle": "脑力训练",
+      "mindSubtitle": "算术与配对 · 离线"
     },
     "options": {
       "alerts": "乌克兰警报地图 (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "第二个框架",
     "miniMapTitle": "迷你地图 • 双击返回",
     "collapse": "收起",
-    "tickerHint": "点击切换提示和趣闻"
+    "tickerHint": "点击切换提示和趣闻",
+    "flags": {
+      "ads": "含广告",
+      "money": "付费功能或订阅",
+      "limit": "Styxia 限时：所有游戏每天共 {{min}} 分钟"
+    },
+    "games": {
+      "math": "算术",
+      "pairs": "配对",
+      "score": "得分",
+      "moves": "步数",
+      "win": "已找出全部配对！",
+      "again": "再来一次",
+      "left": "今日剩余：{{time}}",
+      "over": "今天的游戏时间已用完，明天再来！",
+      "easy": "简单",
+      "hard": "困难",
+      "madeWith": "怀着傲娇的爱制作"
+    },
+    "tv": {
+      "hint": "空白？请单独打开。",
+      "open": "打开网站"
+    },
+    "story": {
+      "record": "最高纪录",
+      "praise1": "太棒了！",
+      "praise2": "答对了，继续！",
+      "praise3": "精彩！",
+      "next": "继续",
+      "restart": "从头开始",
+      "dominoName": "多米诺",
+      "domino": "嗯，让我想想：火鸡生活在恐龙和龙的时代，不过你身上也透着点有意思的东西。",
+      "kateName": "凯特",
+      "kate": "我太喜欢此时此地了，也喜欢你学习上的进步！不过后面更有意思 :)",
+      "kornisName": "科尔尼斯",
+      "kornis": "你以为这只是开始，但是……你赢了，暂时……我们很快会再见面。",
+      "double": "奖励：得分×2",
+      "shield": "奖励：免错一次",
+      "hasShield": "已有免错机会",
+      "rescued": "免错机会保住了连胜！再试一次。"
+    }
   },
   "modals": {
     "AgeGateModal": {

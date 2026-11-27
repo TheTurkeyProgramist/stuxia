@@ -4,11 +4,13 @@ import { hydratePrefs } from "./utils/prefsStore.js";
 import { captureReferralFromUrl } from "./utils/referral.js";
 import { startEagerChunks } from "./utils/eagerChunks.js";
 import { isBlockedEnvironment, renderBlockedScreen } from "./utils/blockedBrowser.js";
+import { startDynamicFavicon } from "./utils/dynamicFavicon.js";
 
 // Яндекс Браузер і проксі Яндекса: сайт навмисно недоступний — показуємо повідомлення й нічого не запускаємо
 if (isBlockedEnvironment()) {
   renderBlockedScreen();
 } else {
+  startDynamicFavicon();
   hydratePrefs()
     .then(() => captureReferralFromUrl()) // ?ref= з посилання «Запроси друга»
     .then(() => {

@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Saadaasha hawada",
       "windySubtitle": "Dabaysha iyo lakabyada",
       "styxiaTitle": "Khariidadda Stuxia",
-      "styxiaSubtitle": "Saadaasha 10 maalmood",
+      "styxiaSubtitle": "Saadaasha 16 maalmood",
       "cinemaTitle": "Fiimka onlayn",
       "cinemaSubtitle": "Filimo bilaash ah (Internet Archive)",
       "alertsTitle": "Digniinaha",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Tayada hawada",
       "airTrafficTitle": "Raadaarka duulimaadka",
       "deepStateSubtitle": "Khariidadda dhacdooyinka Ukraine",
-      "blitzortungSubtitle": "Khariidadda hillaacda"
+      "blitzortungSubtitle": "Khariidadda hillaacda",
+      "tvSubtitle": "Filimaan iyo TV Yukreeniyaan",
+      "tvNote": "Rukumo",
+      "blocklySubtitle": "Aasaaska barnaamij-samaynta",
+      "mindTitle": "Tababarka maskaxda",
+      "mindSubtitle": "Xisaab iyo lammaane · offline"
     },
     "options": {
       "alerts": "Khariidadda digniinaha Ukraine (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "qaabka labaad",
     "miniMapTitle": "Khariidad yar • laba-guji — dib u noqo",
     "collapse": "Yaree",
-    "tickerHint": "Guji si aad u beddesho talooyinka iyo xaqiiqooyinka"
+    "tickerHint": "Guji si aad u beddesho talooyinka iyo xaqiiqooyinka",
+    "flags": {
+      "ads": "Xayaysiis ayaa ku jira",
+      "money": "Adeegyo lacag leh ama rukun",
+      "limit": "Xadka Styxia: {{min}} daqiiqo maalintii dhammaan ciyaaraha"
+    },
+    "games": {
+      "math": "Xisaab",
+      "pairs": "Lammaane",
+      "score": "Dhibco",
+      "moves": "Dhaqaaqyo",
+      "win": "Dhammaan lammaanihii waa la helay!",
+      "again": "Mar kale",
+      "left": "Maanta hadhay: {{time}}",
+      "over": "Waqtigii ciyaarta maanta wuu dhammaaday. Berri soo noqo!",
+      "easy": "Fudud",
+      "hard": "Adag",
+      "madeWith": "Waxaa lagu sameeyay jacayl faan leh"
+    },
+    "tv": {
+      "hint": "Ma madhan yahay? Gooni u fur.",
+      "open": "Fur bogga"
+    },
+    "story": {
+      "record": "Rikoor",
+      "praise1": "Aad u fiican!",
+      "praise2": "Sax, sidaas ku wad!",
+      "praise3": "Cajiib!",
+      "next": "Xiga",
+      "restart": "Dib u bilow",
+      "dominoName": "Domino",
+      "domino": "Hm, aan fekero: digaaggii-rooga waxay noolaayeen xilligii dinosaurka iyo masduulaagii, haddana adigana wax xiiso leh baa kaa soo baxaya.",
+      "kateName": "Kate",
+      "kate": "Aad baan u jeclahay halkan iyo hadda, sidoo kale guulahaaga waxbarashada! Laakiin waxa soo socda baa ka xiiso badan :)",
+      "kornisName": "Kornis",
+      "kornis": "Waxaad u maleynaysaa inay tani bilow tahay, laakiin... waad guulaysatay, hadda... Dhawaan baan kulmi doonnaa.",
+      "double": "Gunno: ×2 dhibco",
+      "shield": "Gunno: difaac hal khalad",
+      "hasShield": "Difaac baa diyaar ah",
+      "rescued": "Difaacu wuu badbaadiyay taxanaha! Mar kale isku day."
+    }
   },
   "modals": {
     "AgeGateModal": {

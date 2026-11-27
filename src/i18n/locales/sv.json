@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Väderprognos",
       "windySubtitle": "Vind och lager",
       "styxiaTitle": "Stuxia-karta",
-      "styxiaSubtitle": "10-dygnsprognos",
+      "styxiaSubtitle": "16-dygnsprognos",
       "cinemaTitle": "Nätbio",
       "cinemaSubtitle": "Gratis filmer (Internet Archive)",
       "alertsTitle": "Larm",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Luftkvalitet",
       "airTrafficTitle": "Flygradar",
       "deepStateSubtitle": "Karta över händelser i Ukraina",
-      "blitzortungSubtitle": "Blixtkarta"
+      "blitzortungSubtitle": "Blixtkarta",
+      "tvSubtitle": "Ukrainsk film och TV",
+      "tvNote": "Med prenumeration",
+      "blocklySubtitle": "Programmeringens grunder",
+      "mindTitle": "Hjärnträning",
+      "mindSubtitle": "Räkning och par · offline"
     },
     "options": {
       "alerts": "Karta över larm i Ukraina (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "andra ramen",
     "miniMapTitle": "Minikarta • dubbelklick — tillbaka",
     "collapse": "Minimera",
-    "tickerHint": "Klicka för att byta tips och fakta"
+    "tickerHint": "Klicka för att byta tips och fakta",
+    "flags": {
+      "ads": "Innehåller reklam",
+      "money": "Betalfunktioner eller prenumeration",
+      "limit": "Styxias gräns: {{min}} min per dag för alla spel"
+    },
+    "games": {
+      "math": "Räkning",
+      "pairs": "Par",
+      "score": "Poäng",
+      "moves": "Drag",
+      "win": "Alla par hittade!",
+      "again": "Igen",
+      "left": "Kvar i dag: {{time}}",
+      "over": "Dagens speltid är slut. Kom tillbaka i morgon!",
+      "easy": "Lätt",
+      "hard": "Svår",
+      "madeWith": "Gjord med högdragen kärlek"
+    },
+    "tv": {
+      "hint": "Tomt? Öppna separat.",
+      "open": "Öppna sidan"
+    },
+    "story": {
+      "record": "Rekord",
+      "praise1": "Underbart!",
+      "praise2": "Rätt, fortsätt så!",
+      "praise3": "Lysande!",
+      "next": "Vidare",
+      "restart": "Börja om",
+      "dominoName": "Domino",
+      "domino": "Hm, låt mig tänka: kalkoner levde på dinosauriernas och drakarnas tid, men även från dig fläktar något spännande.",
+      "kateName": "Kate",
+      "kate": "Jag älskar här och nu så mycket, precis som dina framsteg i lärandet! Men fortsättningen är mer spännande :)",
+      "kornisName": "Kornis",
+      "kornis": "Du tror att det här är början, men... du har vunnit, för tillfället... Vi ses snart.",
+      "double": "Bonus: ×2 poäng",
+      "shield": "Bonus: skydd mot ett fel",
+      "hasShield": "Skydd redo",
+      "rescued": "Skyddet räddade din svit! Försök igen."
+    }
   },
   "modals": {
     "AgeGateModal": {

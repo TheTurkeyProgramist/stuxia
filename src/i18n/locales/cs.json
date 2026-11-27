@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Předpověď počasí",
       "windySubtitle": "Vítr a vrstvy",
       "styxiaTitle": "Mapa Stuxia",
-      "styxiaSubtitle": "Předpověď na 10 dní",
+      "styxiaSubtitle": "Předpověď na 16 dní",
       "cinemaTitle": "Online kino",
       "cinemaSubtitle": "Filmy zdarma (Internet Archive)",
       "alertsTitle": "Poplachy",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Kvalita ovzduší",
       "airTrafficTitle": "Letecký radar",
       "deepStateSubtitle": "Mapa událostí na Ukrajině",
-      "blitzortungSubtitle": "Mapa blesků"
+      "blitzortungSubtitle": "Mapa blesků",
+      "tvSubtitle": "Ukrajinské filmy a TV",
+      "tvNote": "Za předplatné",
+      "blocklySubtitle": "Základy programování",
+      "mindTitle": "Trénink mozku",
+      "mindSubtitle": "Počítání a pexeso · offline"
     },
     "options": {
       "alerts": "Mapa poplachů na Ukrajině (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "druhý rám",
     "miniMapTitle": "Minimapa • dvojklik — zpět",
     "collapse": "Sbalit",
-    "tickerHint": "Klikněte pro změnu tipů a zajímavostí"
+    "tickerHint": "Klikněte pro změnu tipů a zajímavostí",
+    "flags": {
+      "ads": "Obsahuje reklamy",
+      "money": "Placené funkce nebo předplatné",
+      "limit": "Limit od Styxia: {{min}} min denně na všechny hry"
+    },
+    "games": {
+      "math": "Počítání",
+      "pairs": "Pexeso",
+      "score": "Body",
+      "moves": "Tahy",
+      "win": "Všechny dvojice nalezeny!",
+      "again": "Znovu",
+      "left": "Dnes zbývá: {{time}}",
+      "over": "Dnešní limit her je vyčerpán. Přijď zítra!",
+      "easy": "Lehká",
+      "hard": "Těžká",
+      "madeWith": "Vyrobeno s nafoukanou láskou"
+    },
+    "tv": {
+      "hint": "Prázdné? Otevřete zvlášť.",
+      "open": "Otevřít web"
+    },
+    "story": {
+      "record": "Rekord",
+      "praise1": "Skvělé!",
+      "praise2": "Správně, jen tak dál!",
+      "praise3": "Bravurní!",
+      "next": "Dál",
+      "restart": "Od začátku",
+      "dominoName": "Domino",
+      "domino": "Hm, nech mě přemýšlet: krocani žili za časů dinosaurů a draků, ale i z tebe vane něco zajímavého.",
+      "kateName": "Kate",
+      "kate": "Mám tak ráda to, co je tady a teď, stejně jako tvé pokroky v učení! Ale dál je to zajímavější :)",
+      "kornisName": "Kornis",
+      "kornis": "Myslíš, že je to začátek, ale... vyhrál jsi, prozatím... Brzy se setkáme.",
+      "double": "Bonus: ×2 body",
+      "shield": "Bonus: imunita proti jedné chybě",
+      "hasShield": "Imunita připravena",
+      "rescued": "Imunita zachránila sérii! Zkus to znovu."
+    }
   },
   "modals": {
     "AgeGateModal": {

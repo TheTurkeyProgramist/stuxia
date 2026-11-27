@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Hava durumu tahmini",
       "windySubtitle": "Rüzgâr ve katmanlar",
       "styxiaTitle": "Stuxia Haritası",
-      "styxiaSubtitle": "10 günlük tahmin",
+      "styxiaSubtitle": "16 günlük tahmin",
       "cinemaTitle": "Çevrimiçi sinema",
       "cinemaSubtitle": "Ücretsiz filmler (Internet Archive)",
       "alertsTitle": "Alarmlar",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Hava kalitesi",
       "airTrafficTitle": "Uçuş radarı",
       "deepStateSubtitle": "Ukrayna'daki olaylar haritası",
-      "blitzortungSubtitle": "Yıldırım haritası"
+      "blitzortungSubtitle": "Yıldırım haritası",
+      "tvSubtitle": "Ukrayna filmleri ve TV",
+      "tvNote": "Abonelikle",
+      "blocklySubtitle": "Programlamanın temelleri",
+      "mindTitle": "Zihin antrenmanı",
+      "mindSubtitle": "Hesap ve eşleştirme · çevrimdışı"
     },
     "options": {
       "alerts": "Ukrayna alarm haritası (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "ikinci çerçeve",
     "miniMapTitle": "Mini harita • çift tıklama — geri",
     "collapse": "Küçült",
-    "tickerHint": "İpuçlarını ve bilgileri değiştirmek için tıklayın"
+    "tickerHint": "İpuçlarını ve bilgileri değiştirmek için tıklayın",
+    "flags": {
+      "ads": "Reklam içerir",
+      "money": "Ücretli özellikler veya abonelik",
+      "limit": "Styxia sınırı: tüm oyunlar için günde {{min}} dk"
+    },
+    "games": {
+      "math": "Hesap",
+      "pairs": "Eşleştirme",
+      "score": "Puan",
+      "moves": "Hamle",
+      "win": "Tüm çiftler bulundu!",
+      "again": "Tekrar",
+      "left": "Bugün kalan: {{time}}",
+      "over": "Bugünkü oyun süresi doldu. Yarın gel!",
+      "easy": "Kolay",
+      "hard": "Zor",
+      "madeWith": "Kibirli bir sevgiyle yapıldı"
+    },
+    "tv": {
+      "hint": "Boş mu? Ayrıca açın.",
+      "open": "Siteyi aç"
+    },
+    "story": {
+      "record": "Rekor",
+      "praise1": "Harika!",
+      "praise2": "Doğru, böyle devam!",
+      "praise3": "Muhteşem!",
+      "next": "İleri",
+      "restart": "Baştan",
+      "dominoName": "Domino",
+      "domino": "Hmm, bir düşüneyim: hindiler dinozorlar ve ejderhalar zamanında yaşadı, ama senden de ilginç bir hava esiyor.",
+      "kateName": "Kate",
+      "kate": "Şimdiyi ve burayı çok seviyorum, öğrenmedeki başarılarını da! Ama devamı daha ilginç :)",
+      "kornisName": "Kornis",
+      "kornis": "Bunun başlangıç olduğunu sanıyorsun, ama... kazandın, şimdilik... Yakında görüşeceğiz.",
+      "double": "Bonus: ×2 puan",
+      "shield": "Bonus: bir hataya karşı dokunulmazlık",
+      "hasShield": "Dokunulmazlık hazır",
+      "rescued": "Dokunulmazlık serini kurtardı! Tekrar dene."
+    }
   },
   "modals": {
     "AgeGateModal": {

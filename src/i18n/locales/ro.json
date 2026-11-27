@@ -219,7 +219,7 @@
       "ventuskySubtitle": "Prognoza meteo",
       "windySubtitle": "Vânt și straturi",
       "styxiaTitle": "Harta Stuxia",
-      "styxiaSubtitle": "Prognoză pe 10 zile",
+      "styxiaSubtitle": "Prognoză pe 16 zile",
       "cinemaTitle": "Cinema online",
       "cinemaSubtitle": "Filme gratuite (Internet Archive)",
       "alertsTitle": "Alerte",
@@ -233,7 +233,12 @@
       "saveEcoBotSubtitle": "Calitatea aerului",
       "airTrafficTitle": "Radar aerian",
       "deepStateSubtitle": "Harta evenimentelor din Ucraina",
-      "blitzortungSubtitle": "Harta fulgerelor"
+      "blitzortungSubtitle": "Harta fulgerelor",
+      "tvSubtitle": "Filme și TV din Ucraina",
+      "tvNote": "Cu abonament",
+      "blocklySubtitle": "Bazele programării",
+      "mindTitle": "Antrenament mental",
+      "mindSubtitle": "Calcule și perechi · offline"
     },
     "options": {
       "alerts": "Harta alertelor din Ucraina (alerts.in.ua)",
@@ -323,7 +328,47 @@
     "secondFrame": "al doilea cadru",
     "miniMapTitle": "Mini-hartă • dublu clic — înapoi",
     "collapse": "Restrânge",
-    "tickerHint": "Apasă pentru a schimba sfaturile și faptele"
+    "tickerHint": "Apasă pentru a schimba sfaturile și faptele",
+    "flags": {
+      "ads": "Conține reclame",
+      "money": "Funcții plătite sau abonament",
+      "limit": "Limita Styxia: {{min}} min pe zi pentru toate jocurile"
+    },
+    "games": {
+      "math": "Calcule",
+      "pairs": "Perechi",
+      "score": "Puncte",
+      "moves": "Mutări",
+      "win": "Toate perechile găsite!",
+      "again": "Din nou",
+      "left": "Rămas azi: {{time}}",
+      "over": "Limita de joc pentru azi s-a terminat. Revino mâine!",
+      "easy": "Ușor",
+      "hard": "Greu",
+      "madeWith": "Făcut cu dragoste îngâmfată"
+    },
+    "tv": {
+      "hint": "Gol? Deschide separat.",
+      "open": "Deschide site-ul"
+    },
+    "story": {
+      "record": "Record",
+      "praise1": "Minunat!",
+      "praise2": "Corect, ține-o tot așa!",
+      "praise3": "Strălucit!",
+      "next": "Mai departe",
+      "restart": "De la început",
+      "dominoName": "Domino",
+      "domino": "Hm, să mă gândesc: curcanii au trăit pe vremea dinozaurilor și a dragonilor, dar și dinspre tine adie ceva interesant.",
+      "kateName": "Kate",
+      "kate": "Iubesc atât de mult aici și acum, la fel ca reușitele tale la învățat! Dar ce urmează e mai interesant :)",
+      "kornisName": "Kornis",
+      "kornis": "Crezi că e începutul, dar... ai câștigat, deocamdată... Ne vedem curând.",
+      "double": "Bonus: ×2 puncte",
+      "shield": "Bonus: imunitate la o greșeală",
+      "hasShield": "Imunitate pregătită",
+      "rescued": "Imunitatea ți-a salvat seria! Încearcă din nou."
+    }
   },
   "modals": {
     "AgeGateModal": {
