@@ -693,6 +693,10 @@
       "previuZobrazhennia": "پیش‌نمایش تصویر"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "نام کوتاه شهرها",
+      "shortNamesDesc": "«پکن (CN)» به‌جای نام کامل همراه با منطقه.",
+      "shortNamesOn": "کوتاه",
+      "shortNamesOff": "کامل",
       "weatherViewTitle": "نمای کارت آب‌وهوا",
       "weatherViewSimple": "ساده",
       "weatherViewDetailed": "کامل",
@@ -1182,6 +1186,8 @@
       "limitsNote": "ما پروژه‌ای غیرتجاری هستیم، بنابراین نمی‌توانید سقف‌ها را افزایش دهید!",
       "limitsAccounts": "حساب‌های این دستگاه",
       "limitsSyncNote": "سقف همگام‌سازی تمام شد؟ تغییر دادن را ادامه دهید: تغییرها روی همین دستگاه می‌مانند و روز بعد به دستگاه‌های دیگر می‌رسند. افزودن کارت و گزارش تا فردا. این سقف‌ها به‌خاطر سهمیه‌های Firebase است.",
+      "menuCollapse": "جمع کردن منو",
+      "menuExpand": "باز کردن منو",
       "deleteConfirmWord": "حذف"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "گفت‌وگوی قبلی:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "وقت محلی {{time}}",
       "iasno": "صاف",
       "iasnaNich": "شب صاف",
       "perevazhnoIasno": "بیشتر صاف",

@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Bildvorschau"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Kurze Städtenamen",
+      "shortNamesDesc": "„Peking (CN)“ statt des vollen Namens mit Region.",
+      "shortNamesOn": "Kurz",
+      "shortNamesOff": "Vollständig",
       "weatherViewTitle": "Ansicht der Wetterkarte",
       "weatherViewSimple": "Einfach",
       "weatherViewDetailed": "Ausführlich",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Wir sind ein nicht-kommerzielles Projekt, deshalb kannst du die Limits nicht erhöhen!",
       "limitsAccounts": "Konten auf diesem Gerät",
       "limitsSyncNote": "Sync-Limit erreicht? Ändere ruhig weiter: Alles bleibt auf diesem Gerät und kommt am nächsten Tag auf den anderen an. Karten hinzufügen und Meldungen erst morgen. Die Limits kommen von den Firebase-Kontingenten.",
+      "menuCollapse": "Menü einklappen",
+      "menuExpand": "Menü ausklappen",
       "deleteConfirmWord": "LÖSCHEN"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Bisheriger Dialog:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "Ortszeit {{time}}",
       "iasno": "Klar",
       "iasnaNich": "Klare Nacht",
       "perevazhnoIasno": "Überwiegend klar",

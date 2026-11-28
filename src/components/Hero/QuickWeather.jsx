@@ -18,6 +18,7 @@ import { MdPlace } from "react-icons/md";
 import { TbUmbrella, TbUmbrellaOff, TbCloudOff } from "react-icons/tb";
 
 import i18n from "../../i18n/i18n.js";
+import { displayPlace, useShortPlaceNames } from "../../utils/placeName.js";
 // Коротка погода одразу під пошуком: «+6° · Хмарно · Дощу не буде · Вдягніть куртку і шарф».
 // Дані — з картки погоди, яку App уже завантажив (без окремого запиту до API).
 
@@ -72,6 +73,12 @@ const formatTemp = (value) => {
   if (!Number.isFinite(n)) return "—";
   return `${n > 0 ? "+" : ""}${n}°`;
 };
+
+// «HH:MM» зараз за часом міста
+const cityTime = (utcOffsetSeconds) =>
+  Number.isFinite(utcOffsetSeconds)
+    ? new Date(Date.now() + utcOffsetSeconds * 1000).toISOString().slice(11, 16)
+    : null;
 
 // «YYYY-MM-DDTHH» зараз у часовому поясі міста (fullTime погодинного ряду — місцевий час міста)
 const cityHourKey = (utcOffsetSeconds) => {
@@ -181,10 +188,18 @@ export const getOutfitAdvice = (card, precipitation) => {
 
 const QuickWeather = ({ card, cities = [], isDarkMode, onOpen, onSelectCity, onRetry }) => {
   const hasData = Boolean(card?.current);
+  const shortNames = useShortPlaceNames();
   // Прогноз не прийшов за LOAD_TIMEOUT_MS (або немає інтернету) — показуємо помилку замість вічного «Завантажуємо…»
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [offline, setOffline] = useState(isOffline);
+
+  // Раз на 15 с перемальовуємось, щоб місцевий час міста не відставав
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((n) => n + 1), 15000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (hasData) {
@@ -279,6 +294,8 @@ const QuickWeather = ({ card, cities = [], isDarkMode, onOpen, onSelectCity, onR
   const hours = getHourStrip(card);
   const place = card.locationName || i18n.t("newsWeather.QuickWeather.vashaLokatsiia");
   const selectedId = String(card.id);
+  const localTime = cityTime(card.utcOffsetSeconds);
+  const optionLabel = (label) => displayPlace(label, shortNames, cities.map((c) => c.label));
 
   const handleCityChange = (e) => {
     const value = e.target.value;
@@ -297,13 +314,18 @@ const QuickWeather = ({ card, cities = [], isDarkMode, onOpen, onSelectCity, onR
           <select value={selectedId} onChange={handleCityChange} aria-label={i18n.t("newsWeather.QuickWeather.mistoDliaKorotkoiPohody")}>
             {cities.map((city) => (
               <option key={city.id} value={city.id}>
-                {city.label}
+                {optionLabel(city.label)}
               </option>
             ))}
-            {!cities.some((city) => city.id === selectedId) && <option value={selectedId}>{place}</option>}
+            {!cities.some((city) => city.id === selectedId) && <option value={selectedId}>{displayPlace(place, shortNames)}</option>}
             <option value={ADD_CITY_OPTION}>{i18n.t("newsWeather.QuickWeather.dodatyInsheMisto")}</option>
           </select>
         </CityPicker>
+        {localTime && (
+          <LocalTime $isDarkMode={isDarkMode}>
+            {i18n.t("newsWeather.QuickWeather.mistsevyiChas", { time: localTime })}
+          </LocalTime>
+        )}
         <MoreButton type="button" $isDarkMode={isDarkMode} onClick={onOpen}>
           {i18n.t("newsWeather.QuickWeather.prohnoz")}
         </MoreButton>
@@ -403,12 +425,30 @@ const Head = styled.div`
   min-width: 0;
 `;
 
+const LocalTime = styled.span`
+  margin-right: auto;
+  font-size: 11px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: ${(p) => (p.$isDarkMode ? "rgba(244,247,251,0.7)" : "#5b6270")};
+
+  @media (min-width: 900px) {
+    font-size: 13px;
+  }
+`;
+
 const CityPicker = styled.label`
   display: inline-flex;
   align-items: center;
   gap: 1px;
   min-width: 0;
   font-size: 11px;
+
+  @media (min-width: 900px) {
+    select {
+      font-size: 14px;
+    }
+  }
 
   .pin {
     flex: 0 0 auto;
@@ -417,6 +457,8 @@ const CityPicker = styled.label`
   }
 
   select {
+    /* ширина за вибраним містом, а не за найдовшим — стрілка поруч із назвою */
+    field-sizing: content;
     min-width: 0;
     max-width: 100%;
     /* 24px — мінімальна область дотику (Lighthouse «Області дотику») */
@@ -466,6 +508,10 @@ const MoreButton = styled.button`
   font-family: inherit;
   font-size: 11px;
   cursor: pointer;
+
+  @media (min-width: 900px) {
+    font-size: 14px;
+  }
 
   &:hover {
     background: ${(p) => (p.$isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)")};
@@ -549,6 +595,10 @@ const Main = styled.span`
 const Line = styled.span`
   font-size: 12px;
   line-height: 1.3;
+
+  @media (min-width: 900px) {
+    font-size: 14px;
+  }
 
   svg {
     flex: 0 0 auto;
@@ -651,6 +701,20 @@ const HourItem = styled.span`
     font-size: 9px;
     font-weight: 700;
     color: ${(p) => (p.$isDarkMode ? "#7dd3fc" : "#0369a1")};
+  }
+
+  @media (min-width: 900px) {
+    width: 52px;
+
+    .time {
+      font-size: 12px;
+    }
+    .temp {
+      font-size: 14px;
+    }
+    .rain {
+      font-size: 10px;
+    }
   }
 `;
 

@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Преглед на изображението"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Кратки имена на градове",
+      "shortNamesDesc": "„Пекин (CN)“ вместо пълното име с региона.",
+      "shortNamesOn": "Кратки",
+      "shortNamesOff": "Пълни",
       "weatherViewTitle": "Изглед на картата за времето",
       "weatherViewSimple": "Опростен",
       "weatherViewDetailed": "Подробен",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Ние сме нетърговски проект, затова не можете да увеличите лимитите!",
       "limitsAccounts": "Профили на това устройство",
       "limitsSyncNote": "Изчерпахте лимита за синхронизация? Продължете да променяте: всичко остава на това устройство и стига до другите на следващия ден. Картите и сигналите чакат до утре. Лимитите са заради квотите на Firebase.",
+      "menuCollapse": "Свиване на менюто",
+      "menuExpand": "Разгъване на менюто",
       "deleteConfirmWord": "ИЗТРИЙ"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Предишен диалог:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "местно време {{time}}",
       "iasno": "Ясно",
       "iasnaNich": "Ясна нощ",
       "perevazhnoIasno": "Предимно ясно",

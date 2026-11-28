@@ -132,6 +132,7 @@ import {
 import { MotionConfig, Reorder, useDragControls } from "framer-motion";
 import { useAnimationsDisabled } from "./utils/animationsPref";
 import MapScrollButton from "./components/MapScrollButton";
+import { displayPlace, useShortPlaceNames } from "./utils/placeName.js";
 import {
   useBeta,
   setBetaOn,
@@ -1459,6 +1460,9 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
   // З 768px (планшет/ПК) пошук міст — бокова панель зліва, на телефоні — випадаючий список
   const isWideRow = useMediaQuery(WIDE_WEATHER_ROW_QUERY);
   const [isSidebarReorder, setIsSidebarReorder] = useState(false);
+  // Назви в списках міст: короткі чи повні (пошук іде за повною)
+  const shortNames = useShortPlaceNames();
+  const shownName = (label) => displayPlace(label, shortNames, labels);
   const sidebarListRef = useRef(null);
   const scrollRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -1758,7 +1762,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
                   reorderLabelById[id] ? (
                     <ReorderRow
                       key={id}
-                      item={reorderLabelById[id]}
+                      item={{ ...reorderLabelById[id], label: shownName(reorderLabelById[id].label) }}
                       index={index}
                       isDarkMode={isDarkMode}
                       onDragEnd={commitReorder}
@@ -1792,7 +1796,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
                     $isDarkMode={isDarkMode}
                   >
                     <button type="button" title={label} onClick={() => jumpTo(index)}>
-                      {index + 1}. {label}
+                      {index + 1}. {shownName(label)}
                       {items[index]?.isServer && <ServerBolt />}
                     </button>
                   </CityJumpItem>
@@ -1961,7 +1965,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
               reorderLabelById[id] ? (
                 <ReorderRow
                   key={id}
-                  item={reorderLabelById[id]}
+                  item={{ ...reorderLabelById[id], label: shownName(reorderLabelById[id].label) }}
                   index={index}
                   isDarkMode={isDarkMode}
                   onDragEnd={commitReorder}
@@ -1994,7 +1998,9 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
               const parenAll = label.match(/^(.*?)\s*\((.*)\)\s*$/);
               const paren = parenAll && /обл\.|Україна/.test(parenAll[2]) ? parenAll : null;
               const [cityName, ...rest] = paren ? [paren[1]] : label.split(",");
-              const cityRest = paren ? paren[2].trim() : rest.join(",").trim();
+              // Короткий режим: лише назва; область показуємо, тільки щоб розрізнити однакові
+              const isShort = shownName(label) !== label;
+              const cityRest = isShort ? "" : paren ? paren[2].trim() : rest.join(",").trim();
               const cardId = items[index]?.id;
               return (
                 <li key={`city-sidebar-${index}`} data-active={isActive ? "true" : undefined}>
@@ -2007,7 +2013,7 @@ const WeatherCarousel = ({ children, labels = [], items = [], onReorder, isDarkM
                     onClick={() => jumpTo(index)}
                   >
                     <CitySidebarTileName>
-                      <span className="city-name">{index + 1}. {cityName.trim()}</span>
+                      <span className="city-name">{index + 1}. {isShort ? shownName(label) : cityName.trim()}</span>
                       {items[index]?.isServer && <ServerBolt />}
                     </CitySidebarTileName>
                     {cityRest && <CitySidebarTileSub>{cityRest}</CitySidebarTileSub>}

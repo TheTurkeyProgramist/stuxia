@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Vista previa de la imagen"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Nombres cortos de ciudades",
+      "shortNamesDesc": "«Pekín (CN)» en lugar del nombre completo con la región.",
+      "shortNamesOn": "Cortos",
+      "shortNamesOff": "Completos",
       "weatherViewTitle": "Vista de la tarjeta del tiempo",
       "weatherViewSimple": "Simple",
       "weatherViewDetailed": "Detallada",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Somos un proyecto no comercial, así que no puedes ampliar los límites.",
       "limitsAccounts": "Cuentas en este dispositivo",
       "limitsSyncNote": "¿Agotaste las sincronizaciones? Sigue cambiando: todo queda en este dispositivo y llega a los demás al día siguiente. Añadir tarjetas y denunciar, mañana. Los límites se deben a las cuotas de Firebase.",
+      "menuCollapse": "Contraer menú",
+      "menuExpand": "Desplegar menú",
       "deleteConfirmWord": "ELIMINAR"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Diálogo anterior:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "hora local {{time}}",
       "iasno": "Despejado",
       "iasnaNich": "Noche despejada",
       "perevazhnoIasno": "Mayormente despejado",

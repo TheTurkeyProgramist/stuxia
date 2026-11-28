@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Aperçu de l'image"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Noms de villes courts",
+      "shortNamesDesc": "« Pékin (CN) » au lieu du nom complet avec la région.",
+      "shortNamesOn": "Courts",
+      "shortNamesOff": "Complets",
       "weatherViewTitle": "Affichage de la carte météo",
       "weatherViewSimple": "Simple",
       "weatherViewDetailed": "Détaillé",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Nous sommes un projet non commercial : vous ne pouvez donc pas augmenter les limites !",
       "limitsAccounts": "Comptes sur cet appareil",
       "limitsSyncNote": "Limite de synchronisation atteinte ? Continuez : tout reste sur cet appareil et arrive sur les autres le lendemain. Ajout de cartes et signalements : demain. Les limites viennent des quotas de Firebase.",
+      "menuCollapse": "Réduire le menu",
+      "menuExpand": "Déployer le menu",
       "deleteConfirmWord": "SUPPRIMER"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Dialogue précédent :"
     },
     "QuickWeather": {
+      "mistsevyiChas": "heure locale {{time}}",
       "iasno": "Dégagé",
       "iasnaNich": "Nuit claire",
       "perevazhnoIasno": "Plutôt dégagé",

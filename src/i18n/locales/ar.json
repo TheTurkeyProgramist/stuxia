@@ -693,6 +693,10 @@
       "previuZobrazhennia": "معاينة الصورة"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "أسماء مدن قصيرة",
+      "shortNamesDesc": "«بكين (CN)» بدل الاسم الكامل مع المنطقة.",
+      "shortNamesOn": "قصيرة",
+      "shortNamesOff": "كاملة",
       "weatherViewTitle": "عرض بطاقة الطقس",
       "weatherViewSimple": "بسيط",
       "weatherViewDetailed": "مفصّل",
@@ -1182,6 +1186,8 @@
       "limitsNote": "نحن مشروع غير تجاري، لذلك لا يمكنك زيادة هذه الحدود!",
       "limitsAccounts": "الحسابات على هذا الجهاز",
       "limitsSyncNote": "نفد حد المزامنة؟ واصل التعديل: تبقى التغييرات على هذا الجهاز وتصل إلى أجهزتك الأخرى في اليوم التالي. إضافة البطاقات والبلاغات تنتظر الغد. الحدود بسبب حصص Firebase.",
+      "menuCollapse": "طي القائمة",
+      "menuExpand": "توسيع القائمة",
       "deleteConfirmWord": "حذف"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "المحادثة السابقة:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "التوقيت المحلي {{time}}",
       "iasno": "صافٍ",
       "iasnaNich": "ليلة صافية",
       "perevazhnoIasno": "صافٍ غالبًا",

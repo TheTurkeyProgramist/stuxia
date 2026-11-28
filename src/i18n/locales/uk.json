@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Прев'ю зображення"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Короткі назви міст",
+      "shortNamesDesc": "«Пекін (CN)» замість повної назви з регіоном.",
+      "shortNamesOn": "Короткі",
+      "shortNamesOff": "Повні",
       "weatherViewTitle": "Вигляд картки погоди",
       "weatherViewSimple": "Простий",
       "weatherViewDetailed": "Докладний",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Ми некомерційний проєкт, тому збільшити ліміти ви не зможете!",
       "limitsAccounts": "Акаунти на цьому пристрої",
       "limitsSyncNote": "Вичерпали ліміт синхронізації? Змінюйте далі: все збережеться на цьому пристрої, а на інші дійде наступної доби. Картки й скарги — лише завтра. Ліміти є через квоти Firebase.",
+      "menuCollapse": "Згорнути меню",
+      "menuExpand": "Розгорнути меню",
       "deleteConfirmWord": "ВИДАЛИТИ"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Попередній діалог:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "місцевий час {{time}}",
       "iasno": "Ясно",
       "iasnaNich": "Ясна ніч",
       "perevazhnoIasno": "Переважно ясно",

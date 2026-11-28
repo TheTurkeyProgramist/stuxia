@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Kép előnézete"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Rövid városnevek",
+      "shortNamesDesc": "„Peking (CN)” a régiót is tartalmazó teljes név helyett.",
+      "shortNamesOn": "Rövid",
+      "shortNamesOff": "Teljes",
       "weatherViewTitle": "Időjáráskártya nézete",
       "weatherViewSimple": "Egyszerű",
       "weatherViewDetailed": "Részletes",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Nem kereskedelmi projekt vagyunk, ezért a korlátok nem növelhetők!",
       "limitsAccounts": "Fiókok ezen az eszközön",
       "limitsSyncNote": "Elfogyott a szinkronizálási keret? Módosítson tovább: minden megmarad ezen az eszközön, a többire másnap jut el. Kártyák és bejelentések csak holnap. A korlátok a Firebase kvótái miatt vannak.",
+      "menuCollapse": "Menü összecsukása",
+      "menuExpand": "Menü kinyitása",
       "deleteConfirmWord": "TÖRLÉS"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Korábbi párbeszéd:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "helyi idő {{time}}",
       "iasno": "Derült",
       "iasnaNich": "Derült éjszaka",
       "perevazhnoIasno": "Többnyire derült",

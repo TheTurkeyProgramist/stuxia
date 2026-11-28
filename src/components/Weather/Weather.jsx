@@ -146,6 +146,7 @@ import { Tooltip } from "../Tooltip/Tooltip";
 import { createChartWeatherIcon, getChartIconKey, createChartWindArrow, valueLabelsPlugin } from "../../utils/chartWeatherIcon";
 
 import i18n from "../../i18n/i18n.js";
+import { displayPlace, useShortPlaceNames } from "../../utils/placeName.js";
 import { useIsAiAttached, removeAiAttachmentById } from "../AiShared/aiAttachments.js";
 // Кеш canvas-іконок для точок графіків: картка рендериться щосекунди, і без кешу
 // десятки іконок (з емодзі) малювались заново, а графік бачив «нові» дані
@@ -1746,6 +1747,7 @@ const WeatherCardComponent = ({
   const customDays = useSelector((state) => state.calendar?.customDays || []);
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(card.locationName);
+  const shortNames = useShortPlaceNames();
 
   // Бета «Озвучення прогнозу»
   const isVoiceBeta = useBeta("voiceForecast");
@@ -5117,7 +5119,7 @@ const HOLIDAYS_2027 = {
                   <span style={{ color: isDarkMode ? "white" : "black", fontWeight: 900 }}>
                     #{index + 1}
                   </span>
-                  <span style={{ color: isDarkMode ? "white" : "black", fontWeight: 900 }}>{card.locationName}</span>
+                  <span style={{ color: isDarkMode ? "white" : "black", fontWeight: 900 }}>{displayPlace(card.locationName, shortNames)}</span>
                 </h3>
               </Tooltip>
             )}

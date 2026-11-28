@@ -693,6 +693,10 @@
       "previuZobrazhennia": "이미지 미리보기"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "짧은 도시 이름",
+      "shortNamesDesc": "지역이 포함된 전체 이름 대신 “베이징 (CN)”으로 표시합니다.",
+      "shortNamesOn": "짧게",
+      "shortNamesOff": "전체",
       "weatherViewTitle": "날씨 카드 보기",
       "weatherViewSimple": "간단히",
       "weatherViewDetailed": "자세히",
@@ -1182,6 +1186,8 @@
       "limitsNote": "비영리 프로젝트이므로 한도를 늘릴 수 없습니다!",
       "limitsAccounts": "이 기기의 계정",
       "limitsSyncNote": "동기화 한도를 다 썼나요? 계속 수정하세요. 변경 내용은 이 기기에 저장되고 다음 날 다른 기기에 반영됩니다. 카드 추가와 신고는 내일 가능합니다. 한도는 Firebase 할당량 때문입니다.",
+      "menuCollapse": "메뉴 접기",
+      "menuExpand": "메뉴 펼치기",
       "deleteConfirmWord": "삭제"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "이전 대화:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "현지 시각 {{time}}",
       "iasno": "맑음",
       "iasnaNich": "맑은 밤",
       "perevazhnoIasno": "대체로 맑음",

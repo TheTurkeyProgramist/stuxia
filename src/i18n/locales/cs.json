@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Náhled obrázku"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Krátké názvy měst",
+      "shortNamesDesc": "„Peking (CN)“ místo úplného názvu s regionem.",
+      "shortNamesOn": "Krátké",
+      "shortNamesOff": "Úplné",
       "weatherViewTitle": "Zobrazení karty počasí",
       "weatherViewSimple": "Jednoduché",
       "weatherViewDetailed": "Podrobné",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Jsme nekomerční projekt, proto limity zvýšit nelze!",
       "limitsAccounts": "Účty na tomto zařízení",
       "limitsSyncNote": "Došel limit synchronizací? Upravujte dál: změny zůstanou v tomto zařízení a na ostatní dorazí další den. Přidávání karet a hlášení počkají do zítřka. Limity jsou kvůli kvótám Firebase.",
+      "menuCollapse": "Sbalit nabídku",
+      "menuExpand": "Rozbalit nabídku",
       "deleteConfirmWord": "SMAZAT"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Předchozí dialog:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "místní čas {{time}}",
       "iasno": "Jasno",
       "iasnaNich": "Jasná noc",
       "perevazhnoIasno": "Převážně jasno",

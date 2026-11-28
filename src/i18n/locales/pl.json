@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Podgląd obrazu"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Krótkie nazwy miast",
+      "shortNamesDesc": "„Pekin (CN)” zamiast pełnej nazwy z regionem.",
+      "shortNamesOn": "Krótkie",
+      "shortNamesOff": "Pełne",
       "weatherViewTitle": "Widok karty pogody",
       "weatherViewSimple": "Prosty",
       "weatherViewDetailed": "Szczegółowy",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Jesteśmy projektem niekomercyjnym, dlatego nie można zwiększyć limitów!",
       "limitsAccounts": "Konta na tym urządzeniu",
       "limitsSyncNote": "Wyczerpany limit synchronizacji? Zmieniaj dalej: wszystko zostaje na tym urządzeniu, a na inne dotrze następnego dnia. Karty i zgłoszenia dopiero jutro. Limity wynikają z przydziałów Firebase.",
+      "menuCollapse": "Zwiń menu",
+      "menuExpand": "Rozwiń menu",
       "deleteConfirmWord": "USUŃ"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Poprzedni dialog:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "czas lokalny {{time}}",
       "iasno": "Bezchmurnie",
       "iasnaNich": "Bezchmurna noc",
       "perevazhnoIasno": "Przeważnie bezchmurnie",

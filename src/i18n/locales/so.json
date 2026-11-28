@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Muuqaalka sawirka"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Magacyada gaaban ee magaalooyinka",
+      "shortNamesDesc": "“Beijing (CN)” halkii magaca buuxa iyo gobolka.",
+      "shortNamesOn": "Gaaban",
+      "shortNamesOff": "Buuxa",
       "weatherViewTitle": "Muuqaalka kaarka cimilada",
       "weatherViewSimple": "Fudud",
       "weatherViewDetailed": "Faahfaahsan",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Waxaan nahay mashruuc aan ganacsi ahayn, sidaas darteed ma kordhin kartid xadadka!",
       "limitsAccounts": "Akoonnada qalabkan",
       "limitsSyncNote": "Ma dhammaatay xadka isku-dubaridku? Sii wad wax ka beddelka: wax walba qalabkan ayay ku kaydsanaanayaan, kuwa kalena waxay gaarayaan maalinta xigta. Kaadhadhka iyo warbixinnada berri. Xadadku waxay ka yimaadeen qoondada Firebase.",
+      "menuCollapse": "Laab menu-ga",
+      "menuExpand": "Fur menu-ga",
       "deleteConfirmWord": "TIRTIR"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Wadahadalkii hore:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "waqtiga deegaanka {{time}}",
       "iasno": "Cir saafi ah",
       "iasnaNich": "Habeen saafi ah",
       "perevazhnoIasno": "Inta badan saafi",

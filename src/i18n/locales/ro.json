@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Previzualizare imagine"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Nume scurte de orașe",
+      "shortNamesDesc": "„Beijing (CN)” în locul numelui complet cu regiunea.",
+      "shortNamesOn": "Scurte",
+      "shortNamesOff": "Complete",
       "weatherViewTitle": "Vizualizarea cardului meteo",
       "weatherViewSimple": "Simplă",
       "weatherViewDetailed": "Detaliată",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Suntem un proiect necomercial, așa că nu puteți mări limitele!",
       "limitsAccounts": "Conturi pe acest dispozitiv",
       "limitsSyncNote": "Ați epuizat sincronizările? Modificați în continuare: totul rămâne pe acest dispozitiv și ajunge pe celelalte a doua zi. Carduri noi și raportări abia mâine. Limitele vin din cotele Firebase.",
+      "menuCollapse": "Restrânge meniul",
+      "menuExpand": "Extinde meniul",
       "deleteConfirmWord": "ȘTERGE"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Dialogul anterior:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "ora locală {{time}}",
       "iasno": "Senin",
       "iasnaNich": "Noapte senină",
       "perevazhnoIasno": "Predominant senin",

@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Vaizdo peržiūra"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Trumpi miestų pavadinimai",
+      "shortNamesDesc": "„Pekinas (CN)“ vietoj viso pavadinimo su regionu.",
+      "shortNamesOn": "Trumpi",
+      "shortNamesOff": "Pilni",
       "weatherViewTitle": "Orų kortelės rodinys",
       "weatherViewSimple": "Paprastas",
       "weatherViewDetailed": "Išsamus",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Esame nekomercinis projektas, todėl limitų padidinti negalėsite!",
       "limitsAccounts": "Paskyros šiame įrenginyje",
       "limitsSyncNote": "Baigėsi sinchronizavimo limitas? Keiskite toliau: viskas liks šiame įrenginyje, o kitus pasieks kitą dieną. Kortelės ir pranešimai – tik rytoj. Limitai yra dėl „Firebase“ kvotų.",
+      "menuCollapse": "Suskleisti meniu",
+      "menuExpand": "Išskleisti meniu",
       "deleteConfirmWord": "IŠTRINTI"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Ankstesnis pokalbis:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "vietos laikas {{time}}",
       "iasno": "Giedra",
       "iasnaNich": "Giedra naktis",
       "perevazhnoIasno": "Daugiausia giedra",

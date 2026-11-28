@@ -693,6 +693,10 @@
       "previuZobrazhennia": "画像のプレビュー"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "短い都市名",
+      "shortNamesDesc": "地域を含む正式名の代わりに「北京 (CN)」と表示します。",
+      "shortNamesOn": "短い",
+      "shortNamesOff": "完全",
       "weatherViewTitle": "天気カードの表示",
       "weatherViewSimple": "シンプル",
       "weatherViewDetailed": "詳細",
@@ -1182,6 +1186,8 @@
       "limitsNote": "当サイトは非営利プロジェクトのため、上限を増やすことはできません！",
       "limitsAccounts": "この端末のアカウント",
       "limitsSyncNote": "同期の上限に達しても編集は続けられます。変更はこの端末に保存され、翌日以降ほかの端末に反映されます。カード追加と通報は翌日までできません。上限はFirebaseの利用枠によるものです。",
+      "menuCollapse": "メニューを折りたたむ",
+      "menuExpand": "メニューを開く",
       "deleteConfirmWord": "削除"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "これまでの会話："
     },
     "QuickWeather": {
+      "mistsevyiChas": "現地時刻 {{time}}",
       "iasno": "快晴",
       "iasnaNich": "晴れた夜",
       "perevazhnoIasno": "おおむね晴れ",

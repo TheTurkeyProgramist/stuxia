@@ -693,6 +693,10 @@
       "previuZobrazhennia": "图片预览"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "简短城市名称",
+      "shortNamesDesc": "显示“北京 (CN)”，而非包含地区的完整名称。",
+      "shortNamesOn": "简短",
+      "shortNamesOff": "完整",
       "weatherViewTitle": "天气卡片视图",
       "weatherViewSimple": "简洁",
       "weatherViewDetailed": "详细",
@@ -1182,6 +1186,8 @@
       "limitsNote": "我们是非商业项目，因此无法提高限额！",
       "limitsAccounts": "本设备上的账户",
       "limitsSyncNote": "同步次数用完了？可以继续修改：内容保存在本设备上，次日同步到其他设备。添加卡片和举报要等到明天。限额源于 Firebase 的配额。",
+      "menuCollapse": "收起菜单",
+      "menuExpand": "展开菜单",
       "deleteConfirmWord": "删除"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "之前的对话："
     },
     "QuickWeather": {
+      "mistsevyiChas": "当地时间 {{time}}",
       "iasno": "晴",
       "iasnaNich": "晴朗的夜晚",
       "perevazhnoIasno": "大致晴朗",

@@ -312,9 +312,11 @@ const BgLayerStyled = styled.div`
   transform: translateZ(0);
   filter: ${(props) => {
     const filters = [];
+    // Притемнення, щоб деталі фону не сперечалися з текстом
+    filters.push("brightness(0.65)");
     if (props.$blur > 0) filters.push(`blur(${props.$blur}px)`);
     if (props.$pixelation > 0.5) filters.push("url(#pixelate-hero)");
-    return filters.length ? filters.join(" ") : "none";
+    return filters.join(" ");
   }};
   z-index: ${(props) => (props.$isStickyBgMode ? "-10" : "-2")} !important;
   will-change: opacity;
@@ -948,6 +950,8 @@ const CoordinateSearchButton = styled.button`
     }
   }
 `;
+const SLOGAN_SEEN_KEY = "stykhiia:slogan-seen";
+
 // Слоган під пошуком: завжди один рядок; довга версія — з 760px, коротка — на вужчих екранах
 const HeroSlogan = styled.p`
   width: 100%;
@@ -1785,6 +1789,9 @@ const DateButton = styled.button`
 // ШІ-асистент ліворуч від дати
 const AiButton = styled(DateButton)`
   color: ${(props) => (props.$isDarkMode ? "#c4b5fd" : "#6d28d9")};
+  /* рамка й тло — щоб читалось як кнопка, а не як заголовок поля пошуку */
+  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(196,181,253,0.55)" : "rgba(109,40,217,0.4)")};
+  background: ${(props) => (props.$isDarkMode ? "rgba(139,92,246,0.18)" : "rgba(109,40,217,0.08)")};
 
   svg {
     opacity: 1;
@@ -1916,8 +1923,21 @@ const Hero = ({
       onRetry={onRetryQuickWeather}
     />
   );
+  // Слоган — лише під час першого відвідування
+  const [showSlogan] = useState(() => {
+    try {
+      return !localStorage.getItem(SLOGAN_SEEN_KEY);
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(SLOGAN_SEEN_KEY, "1");
+    } catch {}
+  }, []);
   // Слоган одним рядком під пошуком (на телефоні — коротша версія, щоб влізла в рядок)
-  const slogan = (
+  const slogan = showSlogan && (
     <HeroSlogan $isDarkMode={isDarkMode}>
       <span className="full">{t("hero.slogan.full")}</span>
       <span className="short">{t("hero.slogan.short")}</span>

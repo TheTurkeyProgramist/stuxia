@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Förhandsvisning av bild"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Korta ortnamn",
+      "shortNamesDesc": "”Peking (CN)” i stället för hela namnet med region.",
+      "shortNamesOn": "Korta",
+      "shortNamesOff": "Fullständiga",
       "weatherViewTitle": "Väderkortets vy",
       "weatherViewSimple": "Enkel",
       "weatherViewDetailed": "Detaljerad",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Vi är ett icke-kommersiellt projekt, så gränserna kan inte höjas!",
       "limitsAccounts": "Konton på den här enheten",
       "limitsSyncNote": "Slut på synkningar? Fortsätt ändra: allt sparas på den här enheten och når de andra nästa dag. Nya kort och anmälningar först i morgon. Gränserna beror på Firebases kvoter.",
+      "menuCollapse": "Fäll ihop menyn",
+      "menuExpand": "Fäll ut menyn",
       "deleteConfirmWord": "RADERA"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Tidigare dialog:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "lokal tid {{time}}",
       "iasno": "Klart",
       "iasnaNich": "Klar natt",
       "perevazhnoIasno": "Mestadels klart",

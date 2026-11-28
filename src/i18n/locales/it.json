@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Anteprima dell'immagine"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Nomi di città brevi",
+      "shortNamesDesc": "«Pechino (CN)» invece del nome completo con la regione.",
+      "shortNamesOn": "Brevi",
+      "shortNamesOff": "Completi",
       "weatherViewTitle": "Vista della scheda meteo",
       "weatherViewSimple": "Semplice",
       "weatherViewDetailed": "Dettagliata",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Siamo un progetto non commerciale, quindi non è possibile aumentare i limiti!",
       "limitsAccounts": "Account su questo dispositivo",
       "limitsSyncNote": "Sincronizzazioni finite? Continua a modificare: tutto resta su questo dispositivo e arriva sugli altri il giorno dopo. Nuove schede e segnalazioni domani. I limiti dipendono dalle quote di Firebase.",
+      "menuCollapse": "Comprimi menu",
+      "menuExpand": "Espandi menu",
       "deleteConfirmWord": "ELIMINA"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Dialogo precedente:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "ora locale {{time}}",
       "iasno": "Sereno",
       "iasnaNich": "Notte serena",
       "perevazhnoIasno": "Prevalentemente sereno",

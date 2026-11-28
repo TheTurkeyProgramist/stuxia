@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Siq'ipa ñawpaq rikuynin"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Pisi llaqta sutikuna",
+      "shortNamesDesc": "“Pekín (CN)” hunt'a suti suyuntin rantinpi.",
+      "shortNamesOn": "Pisi",
+      "shortNamesOff": "Hunt'a",
       "weatherViewTitle": "Pacha tarjetapa rikch’aynin",
       "weatherViewSimple": "Sasan mana",
       "weatherViewDetailed": "Hunt’asqa",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Mana qullqipaqchu ruwayku, chayrayku saywakunata mana yapayta atinkichu!",
       "limitsAccounts": "Kay antanapi cuentakuna",
       "limitsSyncNote": "Tinkuchiy tukukunchu? Tikraylla: kay antanapi waqaychakun, hukkunamanqa paqarin chayan. Tarjeta yapayqa paqarinmi. Saywakunaqa Firebase kamachinraykum.",
+      "menuCollapse": "Menuta pakiy",
+      "menuExpand": "Menuta kichay",
       "deleteConfirmWord": "QULLUCHIY"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Ñawpaq rimanakuy:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "chay llaqtapi hora {{time}}",
       "iasno": "Ch'uya",
       "iasnaNich": "Ch'uya tuta",
       "perevazhnoIasno": "Yaqa ch'uya",

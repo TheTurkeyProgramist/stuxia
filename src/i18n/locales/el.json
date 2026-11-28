@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Προεπισκόπηση εικόνας"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Σύντομα ονόματα πόλεων",
+      "shortNamesDesc": "«Πεκίνο (CN)» αντί για το πλήρες όνομα με την περιοχή.",
+      "shortNamesOn": "Σύντομα",
+      "shortNamesOff": "Πλήρη",
       "weatherViewTitle": "Προβολή κάρτας καιρού",
       "weatherViewSimple": "Απλή",
       "weatherViewDetailed": "Αναλυτική",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Είμαστε μη εμπορικό έργο, γι' αυτό δεν μπορείτε να αυξήσετε τα όρια!",
       "limitsAccounts": "Λογαριασμοί σε αυτή τη συσκευή",
       "limitsSyncNote": "Εξαντλήθηκε το όριο συγχρονισμού; Συνεχίστε τις αλλαγές: μένουν σε αυτή τη συσκευή και φτάνουν στις άλλες την επόμενη ημέρα. Νέες κάρτες και αναφορές από αύριο. Τα όρια οφείλονται στις ποσοστώσεις του Firebase.",
+      "menuCollapse": "Σύμπτυξη μενού",
+      "menuExpand": "Ανάπτυξη μενού",
       "deleteConfirmWord": "ΔΙΑΓΡΑΦΗ"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Προηγούμενος διάλογος:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "τοπική ώρα {{time}}",
       "iasno": "Αίθριος",
       "iasnaNich": "Καθαρή νύχτα",
       "perevazhnoIasno": "Κυρίως αίθριος",

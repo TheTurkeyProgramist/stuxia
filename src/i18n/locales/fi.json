@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Kuvan esikatselu"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Lyhyet kaupunkien nimet",
+      "shortNamesDesc": "”Peking (CN)” koko nimen ja alueen sijaan.",
+      "shortNamesOn": "Lyhyet",
+      "shortNamesOff": "Koko",
       "weatherViewTitle": "Sääkortin näkymä",
       "weatherViewSimple": "Yksinkertainen",
       "weatherViewDetailed": "Yksityiskohtainen",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Olemme epäkaupallinen hanke, joten rajoja ei voi nostaa!",
       "limitsAccounts": "Tilit tällä laitteella",
       "limitsSyncNote": "Synkronointiraja täynnä? Jatka muokkaamista: muutokset säilyvät tällä laitteella ja siirtyvät muille seuraavana päivänä. Korttien lisäys ja ilmiannot vasta huomenna. Rajat johtuvat Firebasen kiintiöistä.",
+      "menuCollapse": "Pienennä valikko",
+      "menuExpand": "Laajenna valikko",
       "deleteConfirmWord": "POISTA"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Aiempi keskustelu:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "paikallinen aika {{time}}",
       "iasno": "Selkeää",
       "iasnaNich": "Selkeä yö",
       "perevazhnoIasno": "Enimmäkseen selkeää",

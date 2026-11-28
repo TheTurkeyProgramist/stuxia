@@ -12,7 +12,7 @@ import { useAgeGate } from "./AgeGateModal";
 import { GAMBLING_MIN_AGE } from "../../utils/ageGate";
 import localforage from "localforage";
 import { useAnimationsDisabled, useAnimationsAutoDisabled, setAnimationsDisabled } from "../../utils/animationsPref";
-import { FiArrowDown } from "react-icons/fi";
+import { FiArrowDown, FiMapPin } from "react-icons/fi";
 import {
   MAP_AUTOSCROLL_MODES,
   useMapAutoscroll,
@@ -20,6 +20,7 @@ import {
   setMapAutoscroll,
   setMapScrollButtonHidden,
 } from "../../utils/mapScrollPref";
+import { useShortPlaceNames, setShortPlaceNames } from "../../utils/placeName";
 import { loadFirebase } from "../../firebaseLazy";
 
 // Firebase Auth (~200 КБ разом із SDK) вантажимо лише коли він справді потрібен —
@@ -474,7 +475,8 @@ const Sidebar = styled.div`
   @media (max-width: 768px) {
     width: 100%; gap: 8px; overflow: visible;
     border-right: none; border-bottom: 1px solid rgba(var(--s-ink),0.08);
-    padding: 8px 10px;
+    padding: 6px 10px;
+    gap: 5px;
   }
 `;
 
@@ -566,7 +568,7 @@ const NavItem = styled.div`
     `}
 
   @media (max-width: 768px) {
-    flex-shrink: 0; gap: 7px; padding: 7px 12px; border-radius: 999px;
+    flex-shrink: 0; gap: 7px; padding: 5px 11px; border-radius: 999px;
     background: ${(p) => (p.$active ? "rgba(var(--s-accent-rgb),0.16)" : "rgba(var(--s-ink),0.05)")};
     border: 1px solid ${(p) => (p.$active ? "rgba(var(--s-accent-rgb),0.45)" : "rgba(var(--s-ink),0.08)")};
     &::before { display: none; }
@@ -639,6 +641,42 @@ const SearchBox = styled.div`
   margin-bottom: 8px; flex-shrink: 0;
   & > svg { position: absolute; left: 10px; font-size: 14px; color: var(--s-muted); pointer-events: none; }
   @media (max-width: 768px) { margin: 0; }
+`;
+
+const MENU_COLLAPSED_KEY = "settings_menu_collapsed";
+// Пошук і кнопка згортання меню (кнопка — лише на телефоні)
+const SearchRow = styled.div`
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+  & > :first-child { flex: 1; min-width: 0; }
+  @media (min-width: 769px) { display: block; }
+`;
+const MenuToggle = styled.button`
+  display: none;
+  @media (max-width: 768px) {
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 34px; height: 34px; padding: 0; border-radius: 6px; cursor: pointer; font-size: 18px;
+    color: var(--s-text); background: rgba(var(--s-ink),0.05); border: 1px solid rgba(var(--s-ink),0.12);
+    & > svg { transition: transform 0.42s cubic-bezier(0.4, 0, 0.2, 1); transform: rotate(${(p) => (p.$collapsed ? "180deg" : "0deg")}); }
+    &:focus-visible { outline: 2px solid rgba(var(--s-accent-rgb),0.6); outline-offset: 2px; }
+  }
+`;
+// ПК: обгорток ніби немає (display: contents). Телефон: плавно складається до нуля
+const MenuFold = styled.div`
+  display: contents;
+  & > div { display: contents; }
+  @media (max-width: 768px) {
+    display: grid; flex-shrink: 0;
+    grid-template-rows: ${(p) => (p.$collapsed ? "0fr" : "1fr")};
+    visibility: ${(p) => (p.$collapsed ? "hidden" : "visible")};
+    margin: 0 -10px;
+    transition: grid-template-rows 0.42s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear ${(p) => (p.$collapsed ? "0.42s" : "0s")};
+    & > div {
+      display: flex; flex-direction: column; gap: 5px; min-height: 0; min-width: 0; overflow: hidden; padding: 0 10px;
+      opacity: ${(p) => (p.$collapsed ? 0 : 1)};
+      transform: translateY(${(p) => (p.$collapsed ? "-10px" : "0")});
+      transition: opacity 0.32s ease, transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
 `;
 
 const SearchClear = styled.button`
@@ -1349,7 +1387,7 @@ const TermsRow = styled.div`
   margin-top: 8px; padding: 0 4px; flex-shrink: 0;
   font-size: 12px; color: var(--s-text-2);
   @media (max-width: 768px) {
-    margin-top: 0; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px;
+    margin-top: -2px; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px;
   }
 `;
 const TermsLine = styled.div`
@@ -1509,7 +1547,7 @@ const LevelButton = styled.button`
   }
   &:focus-visible { outline: 2px solid rgba(var(--s-accent-rgb),0.6); outline-offset: 2px; }
   & > svg { margin-left: auto; flex-shrink: 0; color: var(--s-muted); font-size: 15px; }
-  @media (max-width: 768px) { margin-top: 0; padding: 7px 8px 7px 10px; }
+  @media (max-width: 768px) { margin-top: 0; padding: 3px 8px; }
 `;
 const LevelButtonText = styled.span`
   flex: 1; display: flex; flex-direction: column; min-width: 0; line-height: 1.3;
@@ -1517,6 +1555,11 @@ const LevelButtonText = styled.span`
   small { font-size: 11px; color: var(--s-muted); }
   small em { font-style: normal; color: var(--lvl); }
   b { font-size: 13px; font-weight: 600; }
+  /* Телефон: режим і версія в один рядок замість двох */
+  @media (max-width: 768px) {
+    flex-direction: row-reverse; justify-content: flex-end; align-items: baseline; gap: 8px;
+    b { flex-shrink: 0; }
+  }
 `;
 
 const LevelMenuBox = styled.div.attrs({ "data-decorator-ignore": "true" })`
@@ -1932,6 +1975,8 @@ const UserSettingsModal = ({
   const [activeTab, setActiveTab] = useState(initialTab || "personalization");
   // Загальний пошук: поки рядок не порожній, показуються всі вкладки, відфільтровані за запитом
   const [searchQuery, setSearchQuery] = useState("");
+  // Згорнуте меню (лише телефон) пам'ятаємо в цьому браузері
+  const [menuCollapsed, setMenuCollapsed] = useState(() => getPref(MENU_COLLAPSED_KEY) === "true");
 
   // Режим налаштувань (Простий / Середній / Професійний) — живе в prefsStore цього браузера.
   const settingsLevel = useSettingsLevel();
@@ -2027,6 +2072,7 @@ const UserSettingsModal = ({
   const animationsAutoDisabled = useAnimationsAutoDisabled();
   const mapAutoscroll = useMapAutoscroll();
   const mapButtonHidden = useMapScrollButtonHidden();
+  const shortNames = useShortPlaceNames();
 
   // Натяк «прокрутіть нижче»: показується, поки під видимою частиною є ще вміст.
   // label — назва наступного прихованого підрозділу (напр. «Застосунки Стихії»).
@@ -3303,128 +3349,148 @@ const UserSettingsModal = ({
           {/* ── Body ───────────────────────────────────────────────────── */}
           <WindowBody>
             <Sidebar>
-              <SearchBox>
-                <FiSearch aria-hidden="true" />
-                <WinInput
-                  ref={searchInputRef}
-                  type="text"
-                  role="searchbox"
-                  aria-label={i18n.t("modals.UserSettingsModal.poshukUParametrakh")}
-                  placeholder={i18n.t("modals.UserSettingsModal.poshukUParametrakh")}
-                  title={i18n.t("modals.UserSettingsModal.poshukPoVsikhRozdilakh")}
-                  autoComplete="off"
-                  spellCheck={false}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape" && searchQuery) {
-                      e.stopPropagation();
-                      setSearchQuery("");
-                    }
+              <SearchRow>
+                <SearchBox>
+                  <FiSearch aria-hidden="true" />
+                  <WinInput
+                    ref={searchInputRef}
+                    type="text"
+                    role="searchbox"
+                    aria-label={i18n.t("modals.UserSettingsModal.poshukUParametrakh")}
+                    placeholder={i18n.t("modals.UserSettingsModal.poshukUParametrakh")}
+                    title={i18n.t("modals.UserSettingsModal.poshukPoVsikhRozdilakh")}
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape" && searchQuery) {
+                        e.stopPropagation();
+                        setSearchQuery("");
+                      }
+                    }}
+                    style={{ height: "34px", paddingLeft: "32px", paddingRight: searchQuery ? "32px" : "12px" }}
+                  />
+                  {searchQuery && (
+                    <SearchClear
+                      type="button"
+                      aria-label={i18n.t("modals.UserSettingsModal.ochystytyPoshuk")}
+                      onClick={() => {
+                        setSearchQuery("");
+                        searchInputRef.current?.focus();
+                      }}
+                    >
+                      <FiX />
+                    </SearchClear>
+                  )}
+                </SearchBox>
+                <MenuToggle
+                  type="button"
+                  $collapsed={menuCollapsed}
+                  aria-expanded={!menuCollapsed}
+                  aria-label={i18n.t(menuCollapsed ? "modals.UserSettingsModal.menuExpand" : "modals.UserSettingsModal.menuCollapse")}
+                  title={i18n.t(menuCollapsed ? "modals.UserSettingsModal.menuExpand" : "modals.UserSettingsModal.menuCollapse")}
+                  onClick={() => {
+                    setLevelMenuOpen(false);
+                    setPref(MENU_COLLAPSED_KEY, String(!menuCollapsed));
+                  setMenuCollapsed(!menuCollapsed);
                   }}
-                  style={{ height: "34px", paddingLeft: "32px", paddingRight: searchQuery ? "32px" : "12px" }}
-                />
-                {searchQuery && (
-                  <SearchClear
-                    type="button"
-                    aria-label={i18n.t("modals.UserSettingsModal.ochystytyPoshuk")}
-                    onClick={() => {
-                      setSearchQuery("");
-                      searchInputRef.current?.focus();
-                    }}
-                  >
-                    <FiX />
-                  </SearchClear>
-                )}
-              </SearchBox>
-              <NavList ref={navListRef}>
-              {visibleNavItems.map(({ key, icon, label, locked }) => {
-                const isActive = !isSearching && activeTab === key;
-                const count = searchStats.counts[key] || 0;
-                const item = (
-                  <NavItem
-                    key={key}
-                    data-nav-key={key}
-                    $active={isActive}
-                    $locked={!!locked}
-                    aria-disabled={locked ? true : undefined}
-                    onClick={() => {
-                      if (locked) return;
-                      setSearchQuery("");
-                      if (key !== activeTab) setPeekLevel(null);
-                      setActiveTab(key);
-                    }}
-                  >
-                    <NavIconBox $active={isActive} $locked={!!locked} $anim={getIconAnim(icon)}>
-                      {icon}
-                    </NavIconBox>
-                    {label}
-                    {locked && <LockBadge><FiLock /></LockBadge>}
-                    {isSearching && !locked && <NavCount $zero={!count}>{count}</NavCount>}
-                  </NavItem>
-                );
-                return locked ? (
-                  <Tooltip
-                    key={key}
-                    content={i18n.t("modals.UserSettingsModal.neobkhidnaReiestratsiia")}
-                    placement="right"
-                    wrapperStyle={{ display: "block", flexShrink: 0 }}
-                  >
-                    {item}
-                  </Tooltip>
-                ) : item;
-              })}
-              </NavList>
-
-              <LevelButton
-                ref={levelButtonRef}
-                type="button"
-                $color={getLevelInfo(settingsLevel).color}
-                aria-haspopup="menu"
-                aria-expanded={levelMenuOpen}
-                title={i18n.t("modals.UserSettingsModal.stykhiia2", { STYKHIIA_VERSION: STYKHIIA_VERSION, v1: levelFullName(settingsLevel), about: getLevelInfo(settingsLevel).about })}
-                aria-label={i18n.t("modals.UserSettingsModal.rezhymNalashtuvan3", { v0: levelFullName(settingsLevel) })}
-                onClick={() => setLevelMenuOpen((open) => !open)}
-              >
-                <LevelIcon level={settingsLevel} />
-                <LevelButtonText>
-                  <small>{i18n.t("modals.UserSettingsModal.stykhiia")} {STYKHIIA_VERSION} · <em>{getLevelInfo(settingsLevel).star}</em></small>
-                  <b>{getLevelInfo(settingsLevel).label}</b>
-                </LevelButtonText>
-                <FiChevronDown aria-hidden="true" />
-              </LevelButton>
-              {levelMenuOpen && (
-                <LevelMenu
-                  anchorRef={levelButtonRef}
-                  level={settingsLevel}
-                  isGuest={isGuest}
-                  onSelect={chooseLevelFromMenu}
-                  onClose={closeLevelMenu}
-                />
-              )}
-              <TermsRow>
-                <TermsLine>
-                  <FiInfo style={{ color: "var(--s-accent)" }} aria-hidden="true" />
-                  <span>
-                    {i18n.t("modals.UserSettingsModal.vyPohodylysZ")}{" "}
-                    <TermsLink onClick={() => setShowTerms(true)}>{i18n.t("modals.UserSettingsModal.uhodoiu")}</TermsLink>
-                  </span>
-                </TermsLine>
-                <Tooltip
-                  content={i18n.t("modals.UserSettingsModal.vyityZAkauntaI")}
-                  placement="top"
-                  isDarkMode={isDarkMode}
                 >
-                  <ResetLink
+                  <FiChevronUp aria-hidden="true" />
+                </MenuToggle>
+              </SearchRow>
+              <MenuFold $collapsed={menuCollapsed}>
+                <div>
+                  <NavList ref={navListRef}>
+                  {visibleNavItems.map(({ key, icon, label, locked }) => {
+                    const isActive = !isSearching && activeTab === key;
+                    const count = searchStats.counts[key] || 0;
+                    const item = (
+                      <NavItem
+                        key={key}
+                        data-nav-key={key}
+                        $active={isActive}
+                        $locked={!!locked}
+                        aria-disabled={locked ? true : undefined}
+                        onClick={() => {
+                          if (locked) return;
+                          setSearchQuery("");
+                          if (key !== activeTab) setPeekLevel(null);
+                          setActiveTab(key);
+                        }}
+                      >
+                        <NavIconBox $active={isActive} $locked={!!locked} $anim={getIconAnim(icon)}>
+                          {icon}
+                        </NavIconBox>
+                        {label}
+                        {locked && <LockBadge><FiLock /></LockBadge>}
+                        {isSearching && !locked && <NavCount $zero={!count}>{count}</NavCount>}
+                      </NavItem>
+                    );
+                    return locked ? (
+                      <Tooltip
+                        key={key}
+                        content={i18n.t("modals.UserSettingsModal.neobkhidnaReiestratsiia")}
+                        placement="right"
+                        wrapperStyle={{ display: "block", flexShrink: 0 }}
+                      >
+                        {item}
+                      </Tooltip>
+                    ) : item;
+                  })}
+                  </NavList>
+
+                  <LevelButton
+                    ref={levelButtonRef}
                     type="button"
-                    onClick={() => setShowResetDialog(true)}
-                    disabled={resetLoading}
+                    $color={getLevelInfo(settingsLevel).color}
+                    aria-haspopup="menu"
+                    aria-expanded={levelMenuOpen}
+                    title={i18n.t("modals.UserSettingsModal.stykhiia2", { STYKHIIA_VERSION: STYKHIIA_VERSION, v1: levelFullName(settingsLevel), about: getLevelInfo(settingsLevel).about })}
+                    aria-label={i18n.t("modals.UserSettingsModal.rezhymNalashtuvan3", { v0: levelFullName(settingsLevel) })}
+                    onClick={() => setLevelMenuOpen((open) => !open)}
                   >
-                    <FiRotateCcw aria-hidden="true" />
-                    {resetLoading ? i18n.t("modals.UserSettingsModal.skydaiemo") : i18n.t("modals.UserSettingsModal.skynutySait")}
-                  </ResetLink>
-                </Tooltip>
-              </TermsRow>
+                    <LevelIcon level={settingsLevel} />
+                    <LevelButtonText>
+                      <small>{i18n.t("modals.UserSettingsModal.stykhiia")} {STYKHIIA_VERSION} · <em>{getLevelInfo(settingsLevel).star}</em></small>
+                      <b>{getLevelInfo(settingsLevel).label}</b>
+                    </LevelButtonText>
+                    <FiChevronDown aria-hidden="true" />
+                  </LevelButton>
+                  {levelMenuOpen && (
+                    <LevelMenu
+                      anchorRef={levelButtonRef}
+                      level={settingsLevel}
+                      isGuest={isGuest}
+                      onSelect={chooseLevelFromMenu}
+                      onClose={closeLevelMenu}
+                    />
+                  )}
+                  <TermsRow>
+                    <TermsLine>
+                      <FiInfo style={{ color: "var(--s-accent)" }} aria-hidden="true" />
+                      <span>
+                        {i18n.t("modals.UserSettingsModal.vyPohodylysZ")}{" "}
+                        <TermsLink onClick={() => setShowTerms(true)}>{i18n.t("modals.UserSettingsModal.uhodoiu")}</TermsLink>
+                      </span>
+                    </TermsLine>
+                    <Tooltip
+                      content={i18n.t("modals.UserSettingsModal.vyityZAkauntaI")}
+                      placement="top"
+                      isDarkMode={isDarkMode}
+                    >
+                      <ResetLink
+                        type="button"
+                        onClick={() => setShowResetDialog(true)}
+                        disabled={resetLoading}
+                      >
+                        <FiRotateCcw aria-hidden="true" />
+                        {resetLoading ? i18n.t("modals.UserSettingsModal.skydaiemo") : i18n.t("modals.UserSettingsModal.skynutySait")}
+                      </ResetLink>
+                    </Tooltip>
+                  </TermsRow>
+                </div>
+              </MenuFold>
             </Sidebar>
 
             <MainContentWrap>
@@ -3741,6 +3807,25 @@ const UserSettingsModal = ({
                           {mapButtonHidden ? i18n.t("ui.mapScroll.buttonHidden") : i18n.t("ui.mapScroll.buttonShown")}
                         </ToggleStatusLabel>
                         <SwitchPill $checked={!mapButtonHidden} />
+                      </ToggleWrapper>
+                    </CardControl>
+                  </Card>
+
+                  {/* Назви міст: короткі чи повні */}
+                  <Card>
+                    <CardLeft>
+                      <CardIconBox $color="#f43f5e"><FiMapPin /></CardIconBox>
+                      <CardInfo>
+                        <CardTitle>{i18n.t("modals.UserSettingsModal.shortNamesTitle")}</CardTitle>
+                        <CardDescription>{i18n.t("modals.UserSettingsModal.shortNamesDesc")}</CardDescription>
+                      </CardInfo>
+                    </CardLeft>
+                    <CardControl>
+                      <ToggleWrapper onClick={() => setShortPlaceNames(!shortNames)}>
+                        <ToggleStatusLabel $checked={shortNames}>
+                          {i18n.t(shortNames ? "modals.UserSettingsModal.shortNamesOn" : "modals.UserSettingsModal.shortNamesOff")}
+                        </ToggleStatusLabel>
+                        <SwitchPill $checked={shortNames} />
                       </ToggleWrapper>
                     </CardControl>
                   </Card>

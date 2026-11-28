@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Görsel önizleme"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Kısa şehir adları",
+      "shortNamesDesc": "Bölgeli tam ad yerine “Pekin (CN)”.",
+      "shortNamesOn": "Kısa",
+      "shortNamesOff": "Tam",
       "weatherViewTitle": "Hava durumu kartı görünümü",
       "weatherViewSimple": "Basit",
       "weatherViewDetailed": "Ayrıntılı",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Ticari olmayan bir projeyiz, bu yüzden sınırları artıramazsınız!",
       "limitsAccounts": "Bu cihazdaki hesaplar",
       "limitsSyncNote": "Eşitleme hakkınız mı bitti? Değiştirmeye devam edin: her şey bu cihazda kalır ve ertesi gün diğerlerine ulaşır. Kart ekleme ve şikâyet yarına kalır. Sınırlar Firebase kotalarından kaynaklanır.",
+      "menuCollapse": "Menüyü daralt",
+      "menuExpand": "Menüyü genişlet",
       "deleteConfirmWord": "SİL"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Önceki konuşma:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "yerel saat {{time}}",
       "iasno": "Açık",
       "iasnaNich": "Açık gece",
       "perevazhnoIasno": "Çoğunlukla açık",

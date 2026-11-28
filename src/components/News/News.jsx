@@ -108,6 +108,16 @@ const Decoder = styled.div`
   box-sizing: border-box;
   background: ${themed("rgba(0, 0, 0, 0.81)", "rgba(255, 255, 255, 0.82)")};
   color: ${themed("#ffffff", "#1a1a1a")};
+
+  /* Поки налаштування згорнуті — лише компактна плашка під заголовком, а не смуга на всю ширину */
+  ${(p) =>
+    p.$compact &&
+    `
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 12px;
+  `}
 `;
 
 // Вбудовані стрічки — спільний список із сервером і Cloudflare (firebase-functions/newsSources.js)
@@ -4068,7 +4078,7 @@ const News = ({ isDarkMode, isStickyBgMode, user }) => {
 
   return (
     <NewsDiv ref={newsSectionRef}>
-      <Decoder $isStickyBgMode={isStickyBgMode} $isDarkMode={$isDarkMode}>
+      <Decoder $compact={!isSettingsOpen} $isStickyBgMode={isStickyBgMode} $isDarkMode={$isDarkMode}>
         <AihelpTitle $isDarkMode={$isDarkMode}>
           <span
             ref={(el) => registerRef('newsHeader', el)}

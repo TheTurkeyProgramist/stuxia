@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Prévia da imagem"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Nomes curtos de cidades",
+      "shortNamesDesc": "“Pequim (CN)” em vez do nome completo com a região.",
+      "shortNamesOn": "Curtos",
+      "shortNamesOff": "Completos",
       "weatherViewTitle": "Vista do cartão do tempo",
       "weatherViewSimple": "Simples",
       "weatherViewDetailed": "Detalhada",
@@ -1182,6 +1186,8 @@
       "limitsNote": "Somos um projeto não comercial, por isso não é possível aumentar os limites!",
       "limitsAccounts": "Contas neste dispositivo",
       "limitsSyncNote": "Esgotou as sincronizações? Continue a alterar: tudo fica neste dispositivo e chega aos outros no dia seguinte. Novos cartões e denúncias só amanhã. Os limites devem-se às quotas do Firebase.",
+      "menuCollapse": "Recolher menu",
+      "menuExpand": "Expandir menu",
       "deleteConfirmWord": "EXCLUIR"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Diálogo anterior:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "hora local {{time}}",
       "iasno": "Limpo",
       "iasnaNich": "Noite limpa",
       "perevazhnoIasno": "Maioritariamente limpo",

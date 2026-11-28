@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Image preview"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Short city names",
+      "shortNamesDesc": "“Beijing (CN)” instead of the full name with region.",
+      "shortNamesOn": "Short",
+      "shortNamesOff": "Full",
       "weatherViewTitle": "Weather card view",
       "weatherViewSimple": "Simple",
       "weatherViewDetailed": "Detailed",
@@ -1182,6 +1186,8 @@
       "limitsNote": "We are a non-commercial project, so you cannot increase these limits!",
       "limitsAccounts": "Accounts on this device",
       "limitsSyncNote": "Out of syncs? Keep editing: changes stay on this device and reach your other devices the next day. Adding cards and reports wait until tomorrow. The limits come from Firebase quotas.",
+      "menuCollapse": "Collapse menu",
+      "menuExpand": "Expand menu",
       "deleteConfirmWord": "DELETE"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Previous dialog:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "local time {{time}}",
       "iasno": "Clear",
       "iasnaNich": "Clear night",
       "perevazhnoIasno": "Mostly clear",

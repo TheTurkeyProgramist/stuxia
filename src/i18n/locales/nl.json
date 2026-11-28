@@ -693,6 +693,10 @@
       "previuZobrazhennia": "Voorbeeld van de afbeelding"
     },
     "UserSettingsModal": {
+      "shortNamesTitle": "Korte plaatsnamen",
+      "shortNamesDesc": "“Peking (CN)” in plaats van de volledige naam met regio.",
+      "shortNamesOn": "Kort",
+      "shortNamesOff": "Volledig",
       "weatherViewTitle": "Weergave van de weerkaart",
       "weatherViewSimple": "Eenvoudig",
       "weatherViewDetailed": "Uitgebreid",
@@ -1182,6 +1186,8 @@
       "limitsNote": "We zijn een niet-commercieel project, dus je kunt de limieten niet verhogen!",
       "limitsAccounts": "Accounts op dit apparaat",
       "limitsSyncNote": "Synclimiet op? Blijf gerust wijzigen: alles blijft op dit apparaat en komt de volgende dag op de andere. Kaarten toevoegen en melden kan morgen weer. De limieten komen door de quota van Firebase.",
+      "menuCollapse": "Menu inklappen",
+      "menuExpand": "Menu uitklappen",
       "deleteConfirmWord": "VERWIJDEREN"
     },
     "WeatherBgModal": {
@@ -2045,6 +2051,7 @@
       "previousDialog": "Vorig gesprek:"
     },
     "QuickWeather": {
+      "mistsevyiChas": "lokale tijd {{time}}",
       "iasno": "Helder",
       "iasnaNich": "Heldere nacht",
       "perevazhnoIasno": "Overwegend helder",
