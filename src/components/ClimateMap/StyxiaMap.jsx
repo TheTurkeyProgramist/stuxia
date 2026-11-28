@@ -362,10 +362,22 @@ const Dock = styled.div`
   align-items: center;
   gap: 6px;
   ${(p) => revealed(p.$show)}
+
+  /* телефон: назва шару окремим рядком, під нею круглі кнопки — не налазять на масштаб праворуч */
+  @media (max-width: 480px) {
+    right: 48px;
+    flex-wrap: wrap;
+    gap: 4px;
+
+    > [data-layer] {
+      margin-right: 100%;
+    }
+  }
 `;
 
 const DockButton = styled.button`
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   gap: 6px;
@@ -852,7 +864,13 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
   const [serverVersion, setServerVersion] = useState(0);
 
   // Кадри прогнозу
-  const [meta, setMeta] = useState(null);
+  const [fullMeta, setFullMeta] = useState(null);
+  // Довгий прогноз (GEFS, CFS) показуємо лише на прохання; його картинки вантажаться, коли дійде до дня
+  const [longRange, setLongRange] = useState(false);
+  const meta = useMemo(
+    () => (fullMeta?.longFrom && !longRange ? { ...fullMeta, hours: fullMeta.hours.slice(0, fullMeta.longFrom) } : fullMeta),
+    [fullMeta, longRange],
+  );
   const [frame, setFrame] = useState(0);
   // Одиниці — ті самі, що в картках погоди
   const [units, changeUnit] = useMapUnits();
@@ -927,8 +945,9 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     const pendingImages = imagePending.current;
     loadMeta(controller.signal)
       .then((loadedMeta) => {
-        setMeta(loadedMeta);
-        setFrame(nearestFrame(loadedMeta));
+        setFullMeta(loadedMeta);
+        // Поточний кадр завжди в короткій шкалі
+        setFrame(nearestFrame({ ...loadedMeta, hours: loadedMeta.hours.slice(0, loadedMeta.longFrom || undefined) }));
       })
       .catch((error) => {
         if (!controller.signal.aborted) fail(error);
@@ -1148,13 +1167,26 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
     }
     map.touchZoomRotate.disableRotation();
     map.addControl(new NavigationControl({ showCompass: false }), "top-right");
-    map.on("load", () => setMapLoaded(true));
     mapRef.current = map;
+    map.on("load", () => setMapLoaded(true));
     return () => {
       map.remove();
       mapRef.current = null;
     };
   }, []);
+
+  // Кнопки й полотно MapLibre — мовою сайту (бібліотека має лише англійську), і після зміни мови теж
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const name = (element, key) => {
+      element?.setAttribute("aria-label", t(key));
+      if (element?.tagName === "BUTTON") element.setAttribute("title", t(key));
+    };
+    name(map.getContainer().querySelector(".maplibregl-ctrl-zoom-in"), "climateMap.styxia.zoomIn");
+    name(map.getContainer().querySelector(".maplibregl-ctrl-zoom-out"), "climateMap.styxia.zoomOut");
+    name(map.getCanvas(), "climateMap.styxia.mapLabel");
+  }, [t]);
 
   // Підписи мовою сайту
   useEffect(() => {
@@ -1984,7 +2016,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
 
       {/* Швидкі кнопки: відкрити панель, тривоги, вітер, сховати все */}
       <Dock $show={!clean && !panelOpen} inert={clean || panelOpen}>
-        <DockButton type="button" aria-label={t("climateMap.styxia.openPanel")} title={t("climateMap.styxia.openPanel")} onClick={() => setPanel(true)}>
+        <DockButton data-layer type="button" aria-label={t("climateMap.styxia.openPanel")} title={t("climateMap.styxia.openPanel")} onClick={() => setPanel(true)}>
           <FiLayers aria-hidden="true" />
           <LayerIcon aria-hidden="true" />
           {t(`climateMap.styxia.${layerId}`)}
@@ -2103,6 +2135,7 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
           onChange={setAltitude}
           lang={lang}
           distance={units.distance}
+          pressureUnit={t("climateMap.styxia.unitPressure")}
           label={t("climateMap.styxia.altitude")}
         />
       )}
@@ -2180,6 +2213,9 @@ const StyxiaMap = ({ lat, lon, zoom, onReady, weatherCards, gpsEnabled, isDarkMo
           lang={lang}
           runTime={Date.parse(meta.time)}
           hours={meta.hours}
+          onMore={meta.longFrom && !longRange ? () => setLongRange(true) : null}
+          longSource={meta.longFrom && frame >= meta.longFrom ? (meta.cfsFrom !== null && meta.hours[frame] >= meta.cfsFrom ? "CFS" : "GEFS") : null}
+          isLong={longRange}
           frame={frame}
           onFrame={(k) => setFrame(k)}
           playing={playing}

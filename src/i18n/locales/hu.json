@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Keresés szélesség és hosszúság szerint",
       "cityTooltip": "Keresés város vagy falu neve szerint",
+      "cityShort": "Város",
+      "coordsShort": "Koord",
       "toCoordsAria": "Váltás koordináták szerinti keresésre",
       "toCityAria": "Váltás városnév szerinti keresésre",
       "coords": "Koordináta mód",
@@ -20,7 +22,7 @@
     },
     "timezone": "Időzóna módosítása",
     "search": {
-      "placeholder": "Írj be egy várost vagy falut. Például: Kijev...",
+      "placeholder": "Város vagy falu…",
       "aria": "Városkeresés",
       "cardExists": "A(z) „{{name}}” kártya már létezik — kattints, hogy odaugorj",
       "loadMore": "További találatok betöltése",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Nem találja a városát vagy falvát? Írjon be egy közeli várost, vagy hozzon létre pontot koordináta módban — elég a térképre kattintani.",
+      "short": "Térkép",
       "pickOnMap": "Választás térképen",
       "title": "Válasszon pontot a térképen",
       "hint": "Kattintson a térképre — a koordináták maguktól kitöltődnek. Az egérgörgő vagy a +/− a nagyítást állítja.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Szélesség: {{lat}}°, Hosszúság: {{lon}}°",
-      "latPlaceholder": "Szélesség: -90°-tól +90°-ig",
-      "lonPlaceholder": "Hosszúság: -180°-tól +180°-ig",
+      "latPlaceholder": "Szé ±90°",
+      "lonPlaceholder": "Hos ±180°",
       "find": "Keresés",
       "invalid": "Adj meg érvényes koordinátákat",
       "latRange": "A szélességnek -90 és 90 között kell lennie",
@@ -115,6 +118,9 @@
     "open": "Stykhiia megnyitása"
   },
   "common": {
+    "otherDeviceTitle": "A Styxia egy másik eszközön van megnyitva",
+    "otherDeviceText": "Egy fiók csak egy eszközön lehet online. Ha itt szeretné használni, nyomja meg a gombot – a másik eszköz leáll.",
+    "otherDeviceContinue": "Folytatás itt",
     "close": "Bezárás"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Rétegek",
+      "moreDays": "Több nap",
+      "longPending": "A hosszú előrejelzés még nem készült el — frissíts később.",
+      "longNote": "16 nap után GEFS a 35. napig, majd CFS. Csak tendenciák; széllökés és látótávolság nélkül.",
       "settingsTitle": "Megjelenítés",
       "openPanel": "Rétegek és beállítások",
       "closePanel": "Panel bezárása",
+      "zoomIn": "Nagyítás",
+      "zoomOut": "Kicsinyítés",
+      "mapLabel": "Térkép",
+      "mapMarker": "Jelölő a térképen",
       "info": {
         "storm": {
           "title": "Mi a zivatarenergia?",

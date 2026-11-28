@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "按纬度和经度搜索",
       "cityTooltip": "按城市或村庄名称搜索",
+      "cityShort": "城市",
+      "coordsShort": "坐标",
       "toCoordsAria": "切换到按坐标搜索",
       "toCityAria": "切换到按城市名称搜索",
       "coords": "坐标模式",
@@ -20,7 +22,7 @@
     },
     "timezone": "更改时区",
     "search": {
-      "placeholder": "输入城市或村庄。例如：基辅...",
+      "placeholder": "城市或村庄…",
       "aria": "城市搜索",
       "cardExists": "「{{name}}」卡片已存在——点击前往",
       "loadMore": "加载更多结果",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "找不到您的城市或村庄？请输入附近的城市，或在坐标模式下创建一个点——直接点击地图即可。",
+      "short": "地图",
       "pickOnMap": "在地图上选择",
       "title": "在地图上选择一个点",
       "hint": "点击地图，坐标会自动填入。鼠标滚轮或 +/− 可缩放。",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "纬度：{{lat}}°，经度：{{lon}}°",
-      "latPlaceholder": "纬度：-90° 至 +90°",
-      "lonPlaceholder": "经度：-180° 至 +180°",
+      "latPlaceholder": "纬度 ±90°",
+      "lonPlaceholder": "经度 ±180°",
       "find": "查找",
       "invalid": "请输入有效的坐标",
       "latRange": "纬度必须在 -90 到 90 之间",
@@ -115,6 +118,9 @@
     "open": "打开 Stykhiia"
   },
   "common": {
+    "otherDeviceTitle": "Styxia 已在另一台设备上打开",
+    "otherDeviceText": "一个账号只能在一台设备上在线。如需在此使用，请点击按钮，另一台设备将暂停。",
+    "otherDeviceContinue": "在此继续",
     "close": "关闭"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "图层",
+      "moreDays": "更多天数",
+      "longPending": "长期预报尚未生成，请稍后刷新页面。",
+      "longNote": "16天后：GEFS至第35天，之后为CFS。仅供参考趋势；无阵风和能见度。",
       "settingsTitle": "显示",
       "openPanel": "图层与设置",
       "closePanel": "关闭面板",
+      "zoomIn": "放大",
+      "zoomOut": "缩小",
+      "mapLabel": "地图",
+      "mapMarker": "地图标记",
       "info": {
         "storm": {
           "title": "什么是雷暴能量？",

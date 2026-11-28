@@ -17,7 +17,7 @@ import {
 } from "@floating-ui/react";
 import { MirrorFloatingPortal, MirrorText } from "./MirrorSafe";
 
-const TooltipBox = styled.div`
+export const TooltipBox = styled.div`
   background-color: ${(props) => (props.$isDarkMode ? "#0c0c0ceb" : "#fdff98e7")};
   color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#1a1a1a")};
   border: 2px solid #00afce;

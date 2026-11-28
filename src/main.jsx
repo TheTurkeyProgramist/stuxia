@@ -12,6 +12,7 @@ import { eagerChunksReady } from "./utils/eagerChunks.js";
 import { removeBootBg } from "./utils/bootBg.js";
 import { Toaster } from "react-hot-toast";
 import { reloadOnceForStaleBuild } from "./utils/staleBuildReload.js";
+import TitleTooltips from "./components/Tooltip/TitleTooltips.jsx";
 
 // Будь-який лінивий чанк зі старої збірки не завантажився (Vite кидає цю подію) —
 // перезавантажуємо сторінку на нову збірку (staleBuildReload.js)
@@ -67,6 +68,7 @@ Promise.all([eagerChunksReady(), i18nReady.catch(() => {})]).then(() => root.ren
   ) : (
     <Provider store={store}>
       <App />
+      <TitleTooltips />
       <Toaster position="bottom-right" reverseOrder={false} />
     </Provider>
   ),

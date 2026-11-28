@@ -2,7 +2,7 @@
 // помаранчева підказка з часом над бігунком і перехід на наступний день.
 import React, { useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { FiChevronDown, FiPause, FiPlay, FiSkipForward, FiX } from "react-icons/fi";
+import { FiChevronDown, FiChevronLeft, FiChevronRight, FiPause, FiPlay, FiSkipForward, FiX } from "react-icons/fi";
 import { revealed } from "./styxiaMotion.js";
 import { dayKey, groupDays, closestFrame, calendarWeeks } from "./styxiaDays.js";
 
@@ -155,7 +155,7 @@ const Calendar = styled.div`
   position: absolute;
   left: 0;
   bottom: calc(100% + 12px);
-  padding: 34px 10px 10px;
+  padding: 8px 10px 10px;
   border: 1px solid rgba(255, 214, 130, 0.4);
   border-radius: 18px;
   background: linear-gradient(170deg, rgba(28, 32, 50, 0.97), rgba(12, 15, 27, 0.98));
@@ -223,6 +223,12 @@ const Calendar = styled.div`
     box-shadow: 0 4px 12px rgba(255, 150, 30, 0.45);
   }
 
+  td button small {
+    margin-right: 1px;
+    font-size: 10px;
+    opacity: 0.75;
+  }
+
   td button:focus-visible {
     outline: 2px solid #ffd166;
   }
@@ -234,6 +240,76 @@ const Calendar = styled.div`
       transition: none;
     }
   }
+`;
+
+// Шапка календаря: «‹ листопад 2026 ›»; праворуч лишається місце під хрестик
+const MonthNav = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 0 30px 8px 0;
+
+  strong {
+    font-size: 13px;
+    text-align: center;
+
+    &::first-letter {
+      text-transform: uppercase;
+    }
+    white-space: nowrap;
+  }
+
+  button {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffd88a;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+`;
+
+const MoreDays = styled.button`
+  width: 100%;
+  margin-top: 6px;
+  padding: 7px 8px;
+  border: 1px solid rgba(255, 214, 130, 0.5);
+  border-radius: 8px;
+  background: transparent;
+  color: #ffd88a;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 176, 46, 0.18);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+`;
+
+const LongNote = styled.p`
+  max-width: 250px;
+  margin: 6px auto 0;
+  font-size: 10.5px;
+  line-height: 1.35;
+  text-align: center;
+  opacity: 0.75;
 `;
 
 const CloseButton = styled.button`
@@ -428,7 +504,8 @@ const Tooltip = styled.div`
 const Loading = styled.span`
   position: absolute;
   right: 0;
-  bottom: calc(100% + 4px);
+  /* Над помаранчевою підказкою з часом: біля правого краю вони інакше накладаються */
+  bottom: calc(100% + 32px);
   padding: 2px 10px;
   border: 1px solid rgba(255, 214, 130, 0.3);
   border-radius: 999px;
@@ -450,10 +527,19 @@ const LABELLED_HOURS = [2, 5, 8, 11, 14, 17, 20, 23];
 // Позиція години на шкалі з поправкою на ширину бігунка
 const position = (hour) => `calc(${(hour / 23) * 100}% + ${(0.5 - hour / 23) * THUMB}px)`;
 
+// Скільки календарних днів від сьогодні до дати
+const daysAhead = (date) => {
+  const midnight = (value) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+  return Math.round((midnight(date) - midnight(new Date())) / 86400000);
+};
+
+// Далі ніж на 10 днів прогноз лише орієнтовний — позначаємо знаком «≈»
+const APPROX_AFTER_DAYS = 10;
+const approx = (date) => (daysAhead(date) > APPROX_AFTER_DAYS ? "≈" : "");
+
 /** «Сьогодні», «Завтра», «Вчора» мовою сайту, інакше короткий день тижня. */
 const dayWord = (date, lang) => {
-  const midnight = (value) => new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
-  const offset = Math.round((midnight(date) - midnight(new Date())) / 86400000);
+  const offset = daysAhead(date);
   return capitalize(
     Math.abs(offset) <= 1
       ? new Intl.RelativeTimeFormat(lang, { numeric: "auto" }).format(offset, "day")
@@ -461,7 +547,7 @@ const dayWord = (date, lang) => {
   );
 };
 
-const StyxiaTimeline = ({ t, lang, runTime, hours, frame, onFrame, playing, onPlay, loaded, total, hidden = false }) => {
+const StyxiaTimeline = ({ t, lang, runTime, hours, frame, onFrame, playing, onPlay, loaded, total, hidden = false, onMore, longSource, isLong }) => {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const barRef = useRef(null);
   const dates = hours.map((offset) => new Date(runTime + offset * 3600000));
@@ -500,7 +586,16 @@ const StyxiaTimeline = ({ t, lang, runTime, hours, frame, onFrame, playing, onPl
   }, [calendarOpen]);
 
   const byKey = new Map(days.map((item) => [item.key, item]));
-  const weeks = calendarWeeks(dates[0], dates[dates.length - 1]);
+  // Календар по місяцях: за замовчуванням — місяць вибраної дати; номер місяця = рік × 12 + місяць
+  const monthOf = (value) => value.getFullYear() * 12 + value.getMonth();
+  const [viewMonth, setViewMonth] = useState(null);
+  const firstMonth = monthOf(dates[0]);
+  const lastMonth = monthOf(dates[dates.length - 1]);
+  const month = Math.min(lastMonth, Math.max(firstMonth, viewMonth ?? monthOf(date)));
+  const monthStart = new Date(Math.floor(month / 12), month % 12, 1);
+  const weeks = calendarWeeks(monthStart, new Date(Math.floor(month / 12), (month % 12) + 1, 0));
+  const monthName = new Intl.DateTimeFormat(lang, { month: "long", year: "numeric" });
+  const monthLabel = (offset) => monthName.format(new Date(monthStart.getFullYear(), monthStart.getMonth() + offset, 1));
 
   return (
     <Bar ref={barRef} role="group" aria-label={t("climateMap.styxia.timeline")} $hidden={hidden} $open={calendarOpen} inert={hidden}>
@@ -513,11 +608,15 @@ const StyxiaTimeline = ({ t, lang, runTime, hours, frame, onFrame, playing, onPl
       >
         {playing ? <FiPause aria-hidden="true" /> : <FiPlay aria-hidden="true" style={{ marginLeft: 2 }} />}
       </RoundButton>
-      <DateButton type="button" aria-expanded={calendarOpen} onClick={() => setCalendarOpen((open) => !open)}>
+      <DateButton type="button" aria-expanded={calendarOpen} onClick={() => {
+        setViewMonth(null);
+        setCalendarOpen((open) => !open);
+      }}>
         {/* key: новий день — текст плавно змінюється */}
         <span className="date" key={key}>
           <span className="word">{dayWord(date, lang)},</span>
-          {full}
+          {approx(date)}{full}
+          {longSource && ` · ${longSource}`}
         </span>
         <FiChevronDown aria-hidden="true" />
       </DateButton>
@@ -525,6 +624,15 @@ const StyxiaTimeline = ({ t, lang, runTime, hours, frame, onFrame, playing, onPl
           <CloseButton type="button" aria-label={t("common.close")} onClick={() => setCalendarOpen(false)}>
             <FiX aria-hidden="true" />
           </CloseButton>
+          <MonthNav>
+            <button type="button" disabled={month <= firstMonth} aria-label={monthLabel(-1)} onClick={() => setViewMonth(month - 1)}>
+              <FiChevronLeft aria-hidden="true" />
+            </button>
+            <strong aria-live="polite">{monthLabel(0)}</strong>
+            <button type="button" disabled={month >= lastMonth} aria-label={monthLabel(1)} onClick={() => setViewMonth(month + 1)}>
+              <FiChevronRight aria-hidden="true" />
+            </button>
+          </MonthNav>
           <table>
             <thead>
               <tr>
@@ -538,6 +646,8 @@ const StyxiaTimeline = ({ t, lang, runTime, hours, frame, onFrame, playing, onPl
                 <tr key={dayKey(week[0])}>
                   {week.map((cell) => {
                     const available = byKey.get(dayKey(cell));
+                    // Дні сусідніх місяців лишаємо порожніми — вони є на своїй сторінці
+                    if (cell.getMonth() !== monthStart.getMonth()) return <td key={dayKey(cell)} />;
                     const number = String(cell.getDate()).padStart(2, "0");
                     return (
                       <td key={dayKey(cell)}>
@@ -545,12 +655,13 @@ const StyxiaTimeline = ({ t, lang, runTime, hours, frame, onFrame, playing, onPl
                           <button
                             type="button"
                             aria-pressed={available.key === key}
-                            aria-label={longDate.format(cell)}
+                            aria-label={`${approx(cell)}${longDate.format(cell)}`}
                             onClick={() => {
                               goToDay(available);
                               setCalendarOpen(false);
                             }}
                           >
+                            {approx(cell) && <small aria-hidden="true">{approx(cell)}</small>}
                             {number}
                           </button>
                         ) : number}
@@ -561,6 +672,14 @@ const StyxiaTimeline = ({ t, lang, runTime, hours, frame, onFrame, playing, onPl
               ))}
             </tbody>
           </table>
+          {isLong ? (
+            <LongNote>{t("climateMap.styxia.longNote")}</LongNote>
+          ) : (
+            <>
+              <MoreDays type="button" disabled={!onMore} onClick={() => onMore()}>{t("climateMap.styxia.moreDays")}</MoreDays>
+              {!onMore && <LongNote>{t("climateMap.styxia.longPending")}</LongNote>}
+            </>
+          )}
       </Calendar>
       <TrackBox>
         <Tooltip style={{ left: position(hour) }}>{time}</Tooltip>

@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Hledat podle zeměpisné šířky a délky",
       "cityTooltip": "Hledat podle názvu města nebo vesnice",
+      "cityShort": "Město",
+      "coordsShort": "Souř",
       "toCoordsAria": "Přepnout na hledání podle souřadnic",
       "toCityAria": "Přepnout na hledání podle názvu města",
       "coords": "Režim souřadnic",
@@ -20,7 +22,7 @@
     },
     "timezone": "Změnit časové pásmo",
     "search": {
-      "placeholder": "Zadejte město nebo vesnici. Například: Kyjev...",
+      "placeholder": "Město nebo vesnice…",
       "aria": "Hledání města",
       "cardExists": "Karta „{{name}}“ už existuje — klikněte pro přechod na ni",
       "loadMore": "Načíst další výsledky",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Chybí vaše město nebo vesnice? Zadejte blízké město nebo vytvořte bod v režimu souřadnic — stačí kliknout na mapu.",
+      "short": "Mapa",
       "pickOnMap": "Vybrat na mapě",
       "title": "Vyberte bod na mapě",
       "hint": "Klikněte na mapu — souřadnice se doplní samy. Kolečko myši nebo +/− mění měřítko.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Šířka: {{lat}}°, Délka: {{lon}}°",
-      "latPlaceholder": "Šířka: od -90° do +90°",
-      "lonPlaceholder": "Délka: od -180° do +180°",
+      "latPlaceholder": "Šíř ±90°",
+      "lonPlaceholder": "Dél ±180°",
       "find": "Najít",
       "invalid": "Zadejte platné souřadnice",
       "latRange": "Šířka musí být od -90 do 90",
@@ -115,6 +118,9 @@
     "open": "Otevřít Stykhiia"
   },
   "common": {
+    "otherDeviceTitle": "Styxia je otevřená na jiném zařízení",
+    "otherDeviceText": "Jeden účet může být online jen na jednom zařízení. Chcete-li ji používat zde, stiskněte tlačítko — druhé zařízení se pozastaví.",
+    "otherDeviceContinue": "Pokračovat zde",
     "close": "Zavřít"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Vrstvy",
+      "moreDays": "Více dní",
+      "longPending": "Dlouhá předpověď ještě není hotová — obnovte stránku později.",
+      "longNote": "Po 16 dnech: GEFS do 35. dne, pak CFS. Jen trendy; bez nárazů a dohlednosti.",
       "settingsTitle": "Zobrazení",
       "openPanel": "Vrstvy a nastavení",
       "closePanel": "Zavřít panel",
+      "zoomIn": "Přiblížit",
+      "zoomOut": "Oddálit",
+      "mapLabel": "Mapa",
+      "mapMarker": "Značka na mapě",
       "info": {
         "storm": {
           "title": "Co je bouřková energie?",

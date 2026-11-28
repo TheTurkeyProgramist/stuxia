@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Nach Breiten- und Längengrad suchen",
       "cityTooltip": "Nach Stadt- oder Dorfnamen suchen",
+      "cityShort": "Stadt",
+      "coordsShort": "Koord",
       "toCoordsAria": "Zur Suche nach Koordinaten wechseln",
       "toCityAria": "Zur Suche nach Stadtnamen wechseln",
       "coords": "Koordinatenmodus",
@@ -20,7 +22,7 @@
     },
     "timezone": "Zeitzone ändern",
     "search": {
-      "placeholder": "Stadt oder Dorf eingeben. Zum Beispiel: Kyjiw...",
+      "placeholder": "Stadt oder Dorf…",
       "aria": "Stadtsuche",
       "cardExists": "Die Karte „{{name}}“ gibt es schon — klicken, um zu ihr zu springen",
       "loadMore": "Weitere Ergebnisse laden",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Ihr Ort fehlt? Geben Sie eine Stadt in der Nähe ein oder erstellen Sie einen Punkt im Koordinatenmodus — einfach auf die Karte klicken.",
+      "short": "Karte",
       "pickOnMap": "Auf Karte wählen",
       "title": "Punkt auf der Karte wählen",
       "hint": "Auf die Karte klicken — die Koordinaten werden automatisch eingetragen. Mausrad oder +/− ändern den Maßstab.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Breite: {{lat}}°, Länge: {{lon}}°",
-      "latPlaceholder": "Breite: von -90° bis +90°",
-      "lonPlaceholder": "Länge: von -180° bis +180°",
+      "latPlaceholder": "Bre ±90°",
+      "lonPlaceholder": "Län ±180°",
       "find": "Finden",
       "invalid": "Bitte gib gültige Koordinaten ein",
       "latRange": "Die Breite muss zwischen -90 und 90 liegen",
@@ -115,6 +118,9 @@
     "open": "Stykhiia öffnen"
   },
   "common": {
+    "otherDeviceTitle": "Styxia ist auf einem anderen Gerät geöffnet",
+    "otherDeviceText": "Ein Konto kann nur auf einem Gerät online sein. Um hier weiterzumachen, drücken Sie die Taste – das andere Gerät wird angehalten.",
+    "otherDeviceContinue": "Hier fortfahren",
     "close": "Schließen"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Ebenen",
+      "moreDays": "Mehr Tage",
+      "longPending": "Die Langfristprognose ist noch nicht fertig — später neu laden.",
+      "longNote": "Ab Tag 16: GEFS bis Tag 35, dann CFS. Nur Trends; ohne Böen und Sichtweite.",
       "settingsTitle": "Anzeige",
       "openPanel": "Ebenen und Einstellungen",
       "closePanel": "Panel schließen",
+      "zoomIn": "Vergrößern",
+      "zoomOut": "Verkleinern",
+      "mapLabel": "Karte",
+      "mapMarker": "Kartenmarkierung",
       "info": {
         "storm": {
           "title": "Was ist Gewitterenergie?",

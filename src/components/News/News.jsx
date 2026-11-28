@@ -199,7 +199,10 @@ const NewsLoadingBox = styled.div`
 `;
 
 const AihelpTitle = styled.div`
-  font-size: 25px;
+  font-size: 15px;
+  line-height: 1.4;
+  padding: 6px 0;
+  text-wrap: balance;
   text-align: center;
   font-family: var(--font-family);
   font-weight: 600;

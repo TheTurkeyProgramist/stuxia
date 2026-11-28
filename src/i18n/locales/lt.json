@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Ieškoti pagal platumą ir ilgumą",
       "cityTooltip": "Ieškoti pagal miesto ar kaimo pavadinimą",
+      "cityShort": "Miestas",
+      "coordsShort": "Koord",
       "toCoordsAria": "Pereiti prie paieškos pagal koordinates",
       "toCityAria": "Pereiti prie paieškos pagal miesto pavadinimą",
       "coords": "Koordinačių režimas",
@@ -20,7 +22,7 @@
     },
     "timezone": "Keisti laiko juostą",
     "search": {
-      "placeholder": "Įveskite miestą ar kaimą. Pavyzdžiui: Kyjivas...",
+      "placeholder": "Miestas ar kaimas…",
       "aria": "Miesto paieška",
       "cardExists": "Kortelė „{{name}}“ jau yra — spustelėkite, kad pereitumėte prie jos",
       "loadMore": "Įkelti daugiau rezultatų",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Nerandate savo miesto ar kaimo? Įveskite netoliese esantį miestą arba sukurkite tašką koordinačių režimu — tiesiog spustelėkite žemėlapį.",
+      "short": "Žemėl",
       "pickOnMap": "Pasirinkti žemėlapyje",
       "title": "Pasirinkite tašką žemėlapyje",
       "hint": "Spustelėkite žemėlapį — koordinatės įsirašys savaime. Pelės ratukas arba +/− keičia mastelį.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Platuma: {{lat}}°, Ilguma: {{lon}}°",
-      "latPlaceholder": "Platuma: nuo -90° iki +90°",
-      "lonPlaceholder": "Ilguma: nuo -180° iki +180°",
+      "latPlaceholder": "Plat ±90°",
+      "lonPlaceholder": "Ilg ±180°",
       "find": "Rasti",
       "invalid": "Įveskite teisingas koordinates",
       "latRange": "Platuma turi būti nuo -90 iki 90",
@@ -115,6 +118,9 @@
     "open": "Atidaryti Stykhiia"
   },
   "common": {
+    "otherDeviceTitle": "Styxia atidaryta kitame įrenginyje",
+    "otherDeviceText": "Viena paskyra gali būti prisijungusi tik viename įrenginyje. Norėdami naudotis čia, paspauskite mygtuką – kitas įrenginys bus sustabdytas.",
+    "otherDeviceContinue": "Tęsti čia",
     "close": "Uždaryti"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Sluoksniai",
+      "moreDays": "Daugiau dienų",
+      "longPending": "Ilga prognozė dar neparuošta — atnaujinkite vėliau.",
+      "longNote": "Po 16 dienų: GEFS iki 35-os, tada CFS. Tik tendencijos; be gūsių ir matomumo.",
       "settingsTitle": "Rodymas",
       "openPanel": "Sluoksniai ir nustatymai",
       "closePanel": "Uždaryti skydelį",
+      "zoomIn": "Priartinti",
+      "zoomOut": "Nutolinti",
+      "mapLabel": "Žemėlapis",
+      "mapMarker": "Žymeklis žemėlapyje",
       "info": {
         "storm": {
           "title": "Kas yra perkūnijos energija?",

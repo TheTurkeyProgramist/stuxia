@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "위도와 경도로 검색",
       "cityTooltip": "도시나 마을 이름으로 검색",
+      "cityShort": "도시",
+      "coordsShort": "좌표",
       "toCoordsAria": "좌표 검색으로 전환",
       "toCityAria": "도시 이름 검색으로 전환",
       "coords": "좌표 모드",
@@ -20,7 +22,7 @@
     },
     "timezone": "시간대 변경",
     "search": {
-      "placeholder": "도시나 마을을 입력하세요. 예: 키이우...",
+      "placeholder": "도시 또는 마을…",
       "aria": "도시 검색",
       "cardExists": "「{{name}}」 카드가 이미 있습니다 — 클릭하면 이동합니다",
       "loadMore": "결과 더 불러오기",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "도시나 마을이 없나요? 가까운 도시를 입력하거나 좌표 모드에서 지점을 만드세요. 지도를 클릭하기만 해도 됩니다.",
+      "short": "지도",
       "pickOnMap": "지도에서 선택",
       "title": "지도에서 지점 선택",
       "hint": "지도를 클릭하면 좌표가 자동으로 채워집니다. 마우스 휠 또는 +/−로 확대/축소할 수 있습니다.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "위도: {{lat}}°, 경도: {{lon}}°",
-      "latPlaceholder": "위도: -90° ~ +90°",
-      "lonPlaceholder": "경도: -180° ~ +180°",
+      "latPlaceholder": "위도 ±90°",
+      "lonPlaceholder": "경도 ±180°",
       "find": "찾기",
       "invalid": "올바른 좌표를 입력하세요",
       "latRange": "위도는 -90에서 90 사이여야 합니다",
@@ -115,6 +118,9 @@
     "open": "Stykhiia 열기"
   },
   "common": {
+    "otherDeviceTitle": "다른 기기에서 Styxia가 열려 있습니다",
+    "otherDeviceText": "하나의 계정은 한 기기에서만 온라인 상태가 될 수 있습니다. 여기에서 사용하려면 버튼을 누르세요. 다른 기기는 중지됩니다.",
+    "otherDeviceContinue": "여기에서 계속",
     "close": "닫기"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "레이어",
+      "moreDays": "더 많은 날짜",
+      "longPending": "장기 예보를 아직 준비 중입니다. 나중에 새로고침하세요.",
+      "longNote": "16일 이후는 GEFS(35일까지), 그다음 CFS. 경향만 제공하며 돌풍·가시거리는 없습니다.",
       "settingsTitle": "표시",
       "openPanel": "레이어 및 설정",
       "closePanel": "패널 닫기",
+      "zoomIn": "확대",
+      "zoomOut": "축소",
+      "mapLabel": "지도",
+      "mapMarker": "지도 마커",
       "info": {
         "storm": {
           "title": "뇌우 에너지란?",

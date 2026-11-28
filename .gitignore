@@ -48,3 +48,4 @@ pb_data/
 
 # Дані Карти Стихії (bun run weather:build)
 weather-data/
+weather-data.next/

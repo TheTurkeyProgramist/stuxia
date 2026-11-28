@@ -181,6 +181,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Який пристрій акаунта зараз онлайн (один акаунт — один пристрій, SingleDeviceGuard.jsx)
+    match /sessions/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && realAccount()
+        && request.resource.data.keys().hasOnly(['deviceId', 'at'])
+        && request.resource.data.deviceId is string
+        && request.resource.data.deviceId.size() <= 64
+        && request.resource.data.at == request.time;
+    }
+
     // Колишнє місце заглушених новин — тепер вони в config/{uid}.
     // Писати не можна, видалити свій документ — можна (видалення акаунта)
     match /users/{uid} {

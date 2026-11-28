@@ -57,8 +57,6 @@ import {
   MdExpandMore,
   MdSearchOff,
   MdMap,
-  MdSwapVert,
-  MdSwapHoriz,
   MdWifiOff,
 } from "react-icons/md";
 import { useTranslation, Trans } from "react-i18next";
@@ -711,20 +709,6 @@ const BrowserSearchPanel = styled.div`
   backdrop-filter: blur(12px);
 `;
 
-const ModePicker = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  margin-top: auto;
-  padding-top: 4px;
-
-  & > * {
-    display: block;
-    width: 100%;
-  }
-`;
-
 const modeIconEnter = keyframes`
   from { opacity: 0; transform: scale(0.75); }
   to { opacity: 1; transform: scale(1); }
@@ -737,11 +721,6 @@ const ModePreviewIcon = styled.span`
   font-size: 16px;
   flex: 0 0 18px;
   place-items: center;
-  animation: ${modeIconEnter} 300ms ease both;
-`;
-
-const ModePreviewText = styled.span`
-  white-space: nowrap;
   animation: ${modeIconEnter} 300ms ease both;
 `;
 
@@ -769,39 +748,49 @@ const ModeIconBtn = styled.button`
   }
 `;
 
-// Ряд: «Змінити режим пошуку?» + «Language (Мова)» поруч
-const ModeRow = styled.div`
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  width: 100%;
-  margin-top: auto;
+// Кнопки режиму пошуку й мови — праворуч від поля вводу, однакові в обох режимах
+// Іконка з підписом під нею, як у шапці сайту
+const captionedButton = css`
+  flex-direction: column;
+  gap: 2px;
+  width: 52px;
+  padding: 0 1px;
 
-  & > ${ModePicker} {
-    flex: 1 1 0;
-    min-width: 0;
+  small {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.2;
   }
 
-  ${ModePreviewText} {
-    overflow: hidden;
-    text-overflow: ellipsis;
+  @media (max-width: 759px) {
+    width: 40px;
   }
 `;
 
-// Кнопка «Language (Мова)» праворуч від кнопки вибору режиму пошуку
-const LanguageBtn = styled(ModeIconBtn)`
-  flex: 1 1 0;
-  width: auto;
-  min-width: 0;
-  margin-top: 4px;
+const ModeRow = styled.div`
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
 
-  /* на вузьких екранах лише іконка, щоб режим пошуку мав місце */
-  @media (max-width: 559px) {
-    flex: 0 0 48px;
-    ${ModePreviewText} {
-      display: none;
-    }
+  button {
+    height: 46px;
+    border-radius: 4px;
+    font-size: 18px;
+    ${captionedButton}
   }
+`;
+
+// Поле пошуку з кнопками в один ряд; список підказок розтягується на всю ширину ряду
+const CitySearchRow = styled.div`
+  position: relative;
+  z-index: 3;
+  display: flex;
+  gap: 4px;
+  width: 100%;
 `;
 
 const CoordinatesContainer = styled.div`
@@ -810,12 +799,15 @@ const CoordinatesContainer = styled.div`
   width: 100%;
   box-sizing: border-box;
   align-items: stretch;
-  gap: 8px;
-  /* вузько: два поля в ряд, під ними дві кнопки; широко — усе в один рядок */
-  grid-template-columns: 1fr 1fr;
-  @media (min-width: 760px) {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
-  }
+  gap: 4px;
+  /* завжди один ряд: поля, лінза, мапа, режим і мова */
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+`;
+
+const CoordinateFields = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
 `;
 
 // Поля координат + випадний список під ними (список позиціонується відносно цього блоку)
@@ -825,45 +817,28 @@ const CoordSearchArea = styled.div`
   width: 100%;
 `;
 
-// Поле координати: скляна «таблетка» зі значком осі, м'яким світінням у фокусі й без стрілочок number
+// Поле координати: той самий вигляд, що й у поля пошуку за назвою
 const CoordinateInput = styled.div`
-  position: relative;
   display: flex;
   min-width: 0;
 
-  > svg {
-    position: absolute;
-    left: 13px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 20px;
-    color: ${(p) => (p.$isDarkMode ? "#7dd3fc" : "#0369a1")};
-    opacity: 0.9;
-    pointer-events: none;
-    transition: color 0.2s ease, opacity 0.2s ease;
-  }
-  &:focus-within > svg {
-    color: ${(p) => (p.$isDarkMode ? "#00ffe5" : "#0891b2")};
-    opacity: 1;
-  }
-
   input {
     width: 100%;
-    height: 50px;
+    height: 46px;
     box-sizing: border-box;
-    padding: 0 14px 0 42px;
+    padding: 0 10px;
+    text-align: left !important;
+    text-overflow: ellipsis;
     font-family: var(--font-family);
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 500;
     font-variant-numeric: tabular-nums;
-    border-radius: 14px;
+    border-radius: 4px;
     border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.16)" : "rgba(0, 0, 0, 0.14)")};
-    background: ${(p) => (p.$isDarkMode ? "rgba(16, 21, 28, 0.82)" : "rgba(255, 255, 255, 0.92)")};
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    color: ${(p) => (p.$isDarkMode ? "#f4f7fb" : "#20242b")};
+    background: ${(p) => (p.$isDarkMode ? "#10151c" : "#ffffff")};
+    color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#040404")};
     outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     -moz-appearance: textfield;
     appearance: textfield;
 
@@ -875,21 +850,29 @@ const CoordinateInput = styled.div`
 
     &::placeholder {
       font-size: 13px;
-      font-weight: 400;
-      color: ${(p) => (p.$isDarkMode ? "#9aa6b4" : "#68717d")};
+      text-align: left;
+      color: ${(p) => (p.$isDarkMode ? "#f3efef" : "#000000")};
     }
 
-    &:hover {
-      border-color: ${(p) => (p.$isDarkMode ? "rgba(0, 255, 229, 0.5)" : "rgba(8, 145, 178, 0.55)")};
+    &:hover,
+    &:focus {
+      border-color: #a855f7;
     }
 
     &:focus {
-      border-color: ${(p) => (p.$isDarkMode ? "#00ffe5" : "#0891b2")};
-      box-shadow: 0 0 0 4px ${(p) => (p.$isDarkMode ? "rgba(0, 255, 229, 0.16)" : "rgba(8, 145, 178, 0.18)")};
+      box-shadow: 0 0 8px rgba(168, 85, 247, 0.45);
     }
 
     &:disabled {
       opacity: 0.6;
+    }
+
+    @media (max-width: 759px) {
+      padding: 0 3px;
+      font-size: 11px;
+      &::placeholder {
+        font-size: 11px;
+      }
     }
   }
 `;
@@ -901,10 +884,10 @@ const CoordinateSearchButton = styled.button`
   justify-content: center;
   gap: 8px;
   min-width: 0;
-  height: 50px;
+  height: 46px;
   padding: 0 18px;
   border: 1px solid transparent;
-  border-radius: 14px;
+  border-radius: 4px;
   background: linear-gradient(135deg, #00d1c1, #2f81f7);
   color: #fff;
   font-family: var(--font-family);
@@ -936,6 +919,11 @@ const CoordinateSearchButton = styled.button`
     box-shadow: none;
   }
 
+  &[data-find],
+  &[data-secondary] {
+    ${captionedButton}
+  }
+
   &[data-secondary] {
     background: ${(p) => (p.$isDarkMode === false ? "rgba(255, 255, 255, 0.92)" : "rgba(16, 21, 28, 0.82)")};
     color: ${(p) => (p.$isDarkMode === false ? "#075985" : "#7dd3fc")};
@@ -949,6 +937,7 @@ const CoordinateSearchButton = styled.button`
       box-shadow: 0 0 0 4px rgba(0, 255, 229, 0.12);
     }
   }
+
 `;
 const SLOGAN_SEEN_KEY = "stykhiia:slogan-seen";
 
@@ -985,12 +974,6 @@ const HeroFormater = styled.div`
   width: 100%;
   gap: 6px;
 
-  /* на вузьких екранах поля координат переносяться у 2 рядки (46+8+46),
-     тому обидва режими мають однакову мінімальну висоту (+ кнопка режиму 32+4) */
-  @media (max-width: 503px) {
-    min-height: 142px;
-  }
-
 `;
 
 const SearchBorder = styled.svg`
@@ -1020,10 +1003,11 @@ const SearchContainer = styled.div`
   ${modeSwapAnimation}
   position: relative;
   display: flex;
-  width: 100%;
+  flex: 1 1 0;
+  min-width: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 4px;
   background: ${(props) =>
     props.$isDarkMode ? "#10151c" : "#ffffff"};
 
@@ -1042,7 +1026,7 @@ const HeroInput = styled.input`
   color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#040404")};
   padding: 0px 12px;
   background: ${(p) => (p.$isDarkMode ? "#10151c" : "#ffffff")};
-  border-radius: 8px;
+  border-radius: 4px;
   border: 1px solid transparent;
   outline: none;
   box-sizing: border-box;
@@ -2032,7 +2016,6 @@ const Hero = ({
 
   const searchModePicker = (
     <ModeRow>
-    <ModePicker>
       <Tooltip
         content={nextModeIsCoordinates ? t("hero.mode.coordsTooltip") : t("hero.mode.cityTooltip")}
         isDarkMode={isDarkMode}
@@ -2046,13 +2029,10 @@ const Hero = ({
           <ModePreviewIcon key={`icon-${searchMode}`}>
             {nextModeIsCoordinates ? <FaMapLocationDot /> : <FaMountainCity />}
           </ModePreviewIcon>
-          <ModePreviewText key={`text-${searchMode}`}>
-            {nextModeIsCoordinates ? t("hero.mode.coords") : t("hero.mode.city")}
-          </ModePreviewText>
+          <small>{nextModeIsCoordinates ? t("hero.mode.coordsShort") : t("hero.mode.cityShort")}</small>
         </ModeIconBtn>
       </Tooltip>
-    </ModePicker>
-    <LanguageBtn
+    <ModeIconBtn
       type="button"
       onClick={() => setIsLanguageModalOpen(true)}
       aria-label={languageButtonText}
@@ -2062,8 +2042,8 @@ const Hero = ({
       <ModePreviewIcon>
         <MdTranslate />
       </ModePreviewIcon>
-      <ModePreviewText>{languageButtonText}</ModePreviewText>
-    </LanguageBtn>
+      <small>{t("hero.language")}</small>
+    </ModeIconBtn>
     </ModeRow>
   );
 
@@ -2921,6 +2901,7 @@ const Hero = ({
           <SearchWrapper ref={searchRef}>
           {searchMode === "city" ? (
             <HeroFormater>
+              <CitySearchRow>
               <SearchContainer $isDarkMode={isDarkMode}>
                 <HeroInput
                   ref={(el) => registerRef('heroInput', el)}
@@ -2997,10 +2978,12 @@ const Hero = ({
                     y="2"
                     width="calc(100% - 4px)"
                     height="calc(100% - 4px)"
-                    rx="8"
+                    rx="4"
                     pathLength="1000"
                   />
                 </SearchBorder>
+              </SearchContainer>
+              {searchModePicker}
                 <AnimatePresence>
                 {showList && suggestions.length > 0 && (
                   <MotionSuggestionsList key="suggestions" $isDarkMode={isDarkMode} {...LIST_MOTION}>
@@ -3092,18 +3075,17 @@ const Hero = ({
                   </MotionSuggestionsList>
                 )}
                 </AnimatePresence>
-              </SearchContainer>
+              </CitySearchRow>
               {slogan}
               {quickWeather}
-              {searchModePicker}
             </HeroFormater>
           ) : (
             <HeroFormater>
               {/* Список результатів — одразу під полями, поверх короткої погоди (як у пошуку за назвою) */}
               <CoordSearchArea>
               <CoordinatesContainer>
+                <CoordinateFields>
                 <CoordinateInput $isDarkMode={isDarkMode}>
-                  <MdSwapVert aria-hidden="true" />
                   <input
                     type="number"
                     value={latitude}
@@ -3119,7 +3101,6 @@ const Hero = ({
                   />
                 </CoordinateInput>
                 <CoordinateInput $isDarkMode={isDarkMode}>
-                  <MdSwapHoriz aria-hidden="true" />
                   <input
                     type="number"
                     value={longitude}
@@ -3134,18 +3115,23 @@ const Hero = ({
                     step="0.01"
                   />
                 </CoordinateInput>
+                </CoordinateFields>
                 <CoordinateSearchButton
                   type="button"
+                  data-find
+                  title={t("hero.coords.find")}
+                  aria-label={t("hero.coords.find")}
                   onClick={handleSelectByCoordinates}
                   disabled={isSearchingNearby}
                 >
                   <MdSearch />
-                  {t("hero.coords.find")}
+                  <small>{t("hero.coords.find")}</small>
                 </CoordinateSearchButton>
-                <CoordinateSearchButton type="button" data-secondary $isDarkMode={isDarkMode} onClick={openMapPicker} disabled={isSearchingNearby}>
+                <CoordinateSearchButton type="button" data-secondary $isDarkMode={isDarkMode} onClick={openMapPicker} disabled={isSearchingNearby} title={t("hero.mapPicker.pickOnMap")} aria-label={t("hero.mapPicker.pickOnMap")}>
                   <MdMap />
-                  {t("hero.mapPicker.pickOnMap")}
+                  <small>{t("hero.mapPicker.short")}</small>
                 </CoordinateSearchButton>
+                {searchModePicker}
               </CoordinatesContainer>
               <AnimatePresence>
               {showCoordinateSuggestions && (
@@ -3240,7 +3226,6 @@ const Hero = ({
               </CoordSearchArea>
               {slogan}
               {quickWeather}
-              {searchModePicker}
             </HeroFormater>
           )}
           </SearchWrapper>

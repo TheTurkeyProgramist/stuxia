@@ -51,53 +51,36 @@ const StyxiaMap = lazy(() => import("./StyxiaMap"));
 // Ctrl + Alt + O: Закріпити/відкріпити локацію
 // Ctrl + Alt + K: Відкрити/закрити налаштування
 // (Ctrl + Shift + ... не використовуємо: Ctrl+Shift+W закриває вікно браузера, M/P/K зайняті Chrome/Firefox)
-const AihelpTitle = styled.div`
-  font-size: 15px;
-  text-align: center;
-  font-family: var(--font-family);
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#111111")};
-  display: inline-flex;
-    margin-bottom: -41px;
-    width: 150px;
-  padding:6px 7px;
-  transition: all 0.3s ease;
-  border-right: 1px solid rgb(255, 179, 108);
-    border-left: 1px solid rgb(255, 179, 108);
-  margin-right: 4px;
-  z-index: 300;
-  white-space: nowrap;
-  justify-content: center;
-  @media (max-width: 480px) {
-    font-size: 13px;
-    letter-spacing: 0;
-    padding: 6px 4px;
-  }
-  ${(props) =>
-    props.$isStickyBgMode
-      ? css`
-          background: ${props.$isDarkMode
-          ? "rgba(15, 15, 25, 0.75)"
-          : "rgba(255, 255, 255, 0.75)"
-        };
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        `
-      : css`
-          background: ${props.$isDarkMode
-          ? "rgba(255, 255, 255, 0.05)"
-          : "rgba(0, 0, 0, 0.05)"
-        };
-          border: 1px solid
-            ${props.$isDarkMode
-          ? "rgba(255, 255, 255, 0.1)"
-          : "rgba(0, 0, 0, 0.1)"
-        };
-        `}
+// Шапка карти на телефоні: назва й кнопка налаштувань — дві рівні половини одного ряду
+const MobileHeader = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 6px;
 `;
 
+const AihelpTitle = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border-radius: 10px;
+  text-align: center;
+  line-height: 1.25;
+  font-size: 14px;
+  font-family: var(--font-family);
+  font-weight: 700;
+  color: ${(props) => (props.$isDarkMode ? "#ffffff" : "#111111")};
+  border: 1px solid ${(props) => (props.$isDarkMode ? "rgba(255, 255, 255, 0.16)" : "rgba(0, 0, 0, 0.12)")};
+  background: ${(props) =>
+    props.$isStickyBgMode
+      ? props.$isDarkMode ? "rgba(15, 15, 25, 0.75)" : "rgba(255, 255, 255, 0.75)"
+      : props.$isDarkMode ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)"};
+  ${(props) => props.$isStickyBgMode && "backdrop-filter: blur(12px);"}
+`;
 const OuterContainer = styled.div`
   width: 100%;
   display: flex;
@@ -156,10 +139,13 @@ const KeyboardShortcut = styled.kbd`
 const MobileSettingsButton = styled.button`
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  align-self: stretch;
-  text-align: right;
-  padding: 10px 14px;
+  justify-content: center;
+  min-width: 0;
+  min-height: 44px;
+  text-align: center;
+  line-height: 1.25;
+  font-family: var(--font-family);
+  padding: 6px 8px;
   border: 1px solid ${(p) => p.$isDarkMode ? "rgba(255, 179, 108, 0.55)" : "rgba(200, 100, 0, 0.5)"};
   border-radius: 10px;
   background: ${(p) => p.$isDarkMode
@@ -3085,9 +3071,19 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
     <OuterContainer>
       {/* На планшетах і ПК заголовок і кнопка налаштувань — у шапці бічної панелі */}
       {!isWideLayout && (
-        <AihelpTitle $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
-          {t("climateMap.title")}
-        </AihelpTitle>
+        <MobileHeader>
+          <AihelpTitle $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
+            {t("climateMap.title")}
+          </AihelpTitle>
+          <MobileSettingsButton
+            $isDarkMode={isDarkMode}
+            type="button"
+            onClick={() => setIsControlsOpen(true)}
+            aria-label={settingsTitle}
+          >
+            {settingsButtonContent}
+          </MobileSettingsButton>
+        </MobileHeader>
       )}
 
       <Toaster
@@ -3114,17 +3110,6 @@ const ClimateMap = ({ isDarkMode, isStickyBgMode, weatherCards, gpsEnabled }) =>
           },
         }}
       />
-
-      {!isWideLayout && (
-        <MobileSettingsButton
-          $isDarkMode={isDarkMode}
-          type="button"
-          onClick={() => setIsControlsOpen(true)}
-          aria-label={settingsTitle}
-        >
-          {settingsButtonContent}
-        </MobileSettingsButton>
-      )}
 
       <MapLayout>
       <MapWrapper

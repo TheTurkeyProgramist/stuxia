@@ -17,11 +17,13 @@ import { crc32, deflateSync } from "node:zlib";
 import { decodeGrib2 } from "./grib2.mjs";
 import { buildRegions } from "./regions.mjs";
 import { loadCities } from "./cities.mjs";
+import { longFrames } from "./long.mjs";
 import { KINDS, apparentTemperature, sampleGrid, weatherKind } from "../../src/components/ClimateMap/styxiaWeather.js";
 import { ALTITUDES, DATA_VERSION, LAYERS, WIND_RANGE, colorFor, encodeValue } from "../../src/components/ClimateMap/styxiaLayers.js";
 
 const BUCKET = "https://noaa-gfs-bdp-pds.s3.amazonaws.com";
-const OUT_DIR = fileURLToPath(new URL("../../weather-data/", import.meta.url));
+// WEATHER_OUT — інша тека (dev-сервер збирає вбік, щоб карта тим часом показувала старі дані)
+const OUT_DIR = fileURLToPath(new URL(`../../${process.env.WEATHER_OUT || "weather-data"}/`, import.meta.url));
 
 const option = (name, fallback) => {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
@@ -100,10 +102,13 @@ const findLatestRun = async () => {
 const downloadField = async (url, index, pattern) => {
   const line = index.findIndex((row) => row.includes(pattern));
   if (line === -1) throw new Error(`Немає поля ${pattern} у ${url}`);
-  const start = Number(index[line].split(":")[1]);
-  const end = index[line + 1] ? Number(index[line + 1].split(":")[1]) - 1 : "";
+  const [number, offset] = index[line].split(":");
+  const start = Number(offset);
+  // Кілька полів в одному повідомленні мають спільний початок і номери «36.1», «36.2»
+  const following = index.slice(line + 1).find((row) => Number(row.split(":")[1]) > start);
+  const end = following ? Number(following.split(":")[1]) - 1 : "";
   const bytes = await fetchOk(url, (res) => res.arrayBuffer(), { headers: { Range: `bytes=${start}-${end}` } });
-  return decodeGrib2(Buffer.from(bytes));
+  return decodeGrib2(Buffer.from(bytes), Number(number.split(".")[1] || 1));
 };
 
 const pngChunk = (type, data) => {
@@ -264,8 +269,15 @@ const sampleCities = (cities, fields) => {
 const run = await findLatestRun();
 const runTime = run.date.getTime();
 
-// Початок шкали: вчора 00:00 за Києвом (UTC+2/+3 — беремо 21:00 позавчора за UTC)
-const start = PAST ? Math.floor(Date.now() / (24 * HOUR_MS)) * 24 * HOUR_MS - 27 * HOUR_MS : runTime;
+// Початок шкали: вчора 00:00 за Києвом — влітку це UTC+3, взимку UTC+2
+const kyivYesterdayMidnight = () => {
+  const zone = { timeZone: "Europe/Kyiv" };
+  const day = new Intl.DateTimeFormat("en-CA", zone).format(Date.now() - 24 * HOUR_MS);
+  const utc = Date.parse(`${day}T00:00:00Z`);
+  const hourInKyiv = new Intl.DateTimeFormat("en-GB", { ...zone, hour: "2-digit", hourCycle: "h23" });
+  return [3, 2].map((offset) => utc - offset * HOUR_MS).find((time) => hourInKyiv.format(time) === "00");
+};
+const start = PAST ? kyivYesterdayMidnight() : runTime;
 const FRAMES = [];
 // Минуле: перші години відповідного запуску — це найточніше, що модель знає про той час
 for (let time = start; time < runTime; time += HOUR_MS) {
@@ -306,6 +318,35 @@ await pool(FRAMES, 3, async (frame) => {
   console.log(`  ${done}/${HOURS.length}: ${new Date(frame.time).toISOString()}`);
 });
 
+// Довгий прогноз (GEFS, потім CFS) — необовʼязковий: перший збій обриває його, коротка шкала лишається.
+// --long=0 — не збирати
+const shortCount = HOURS.length;
+let cfsFrom = null;
+if (option("long", 1)) {
+  try {
+    const extra = await longFrames({ after: FRAMES.at(-1).time, fetchOk, downloadField, pool, sources: SOURCES });
+    const ready = new Array(extra.length);
+    try {
+      await pool(extra.map((frame, i) => ({ ...frame, i })), 2, async ({ time, source, load, i }) => {
+        const offset = (time - FRAMES[0].time) / HOUR_MS;
+        const fields = await load(time);
+        await writeHour(offset, fields);
+        ready[i] = { offset, source, cities: sampleCities(cities, fields) };
+        console.log(`  ${source} ${new Date(time).toISOString()}`);
+      });
+    } finally {
+      // Лише суцільний початок: без дірок посеред шкали
+      for (let i = 0; i < ready.length && ready[i]; i += 1) {
+        if (ready[i].source === "cfs") cfsFrom ??= ready[i].offset;
+        HOURS.push(ready[i].offset);
+        citySamples.push(ready[i].cities);
+      }
+    }
+  } catch (error) {
+    console.warn(`Довгий прогноз неповний: ${error.message}`);
+  }
+}
+
 try {
   await buildRegions(OUT_DIR);
 } catch (error) {
@@ -318,6 +359,6 @@ await writeFile(OUT_DIR + "cities.txt", JSON.stringify({ cities, frames: citySam
 // meta — останнім: поки його не оновлено, карта не вважає дані новими
 await writeFile(
   `${OUT_DIR}meta.txt`,
-  JSON.stringify({ version: DATA_VERSION, time: new Date(FRAMES[0].time).toISOString(), run: run.date.toISOString(), width: grid.width, height: grid.height, hours: HOURS, step: STEP, levels: ALTITUDES.map((a) => a.meters) }),
+  JSON.stringify({ version: DATA_VERSION, time: new Date(FRAMES[0].time).toISOString(), run: run.date.toISOString(), width: grid.width, height: grid.height, hours: HOURS, longFrom: HOURS.length > shortCount ? shortCount : null, cfsFrom, step: STEP, levels: ALTITUDES.map((a) => a.meters) }),
 );
 console.log(`Готово: weather-data/ (${HOURS.length} кадрів, ${grid.width}×${grid.height})`);

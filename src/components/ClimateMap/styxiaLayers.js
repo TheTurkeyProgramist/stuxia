@@ -2,9 +2,9 @@
 // тож без імпортів. Значення кодуються в один байт каналу PNG.
 
 // Підняти, якщо змінюється склад файлів чи кодування: карта попросить перезібрати дані
-export const DATA_VERSION = 6;
+export const DATA_VERSION = 7;
 
-export const WIND_RANGE = [-60, 60]; // м/с, складові u та v
+export const WIND_RANGE = [-102.4, 101.6]; // м/с, складові u та v; крок 0.8, тож нуль точний
 
 // file + channel — де лежить шар; sqrt — більша точність для малих значень;
 // stops: [значення, R, G, B, непрозорість 0–1]
@@ -17,9 +17,12 @@ const TEMPERATURE_STOPS = [
 // Висоти, крім приземної. Це ізобаричні рівні GFS: висота приблизна й рахується від рівня моря.
 // Файл h<метри> має ту саму будову, що field: u, v, температура
 export const ALTITUDES = [
+  { meters: 750, mb: 925 },
   { meters: 1500, mb: 850 },
   { meters: 3000, mb: 700 },
   { meters: 4000, mb: 600 },
+  { meters: 5500, mb: 500 },
+  { meters: 9000, mb: 300 },
 ];
 // Шари, які мають значення на висоті
 export const ALTITUDE_LAYERS = new Set(["temperature", "windSpeed"]);
@@ -54,7 +57,7 @@ export const LAYERS = [
   },
   {
     // Швидкість рахується з u та v, окремого каналу не має
-    id: "windSpeed", file: "field", fromWind: true, range: [0, 60], unitKey: "windUnit",
+    id: "windSpeed", file: "field", fromWind: true, range: [0, 100], unitKey: "windUnit",
     stops: [
       [0, 80, 100, 190], [3, 70, 160, 210], [6, 80, 190, 120], [10, 220, 210, 60], [15, 240, 140, 40],
       [22, 220, 50, 60], [35, 140, 30, 150],

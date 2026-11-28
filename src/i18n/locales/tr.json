@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Enlem ve boylama göre ara",
       "cityTooltip": "Şehir veya köy adına göre ara",
+      "cityShort": "Şehir",
+      "coordsShort": "Koord",
       "toCoordsAria": "Koordinatla aramaya geç",
       "toCityAria": "Şehir adıyla aramaya geç",
       "coords": "Koordinat modu",
@@ -20,7 +22,7 @@
     },
     "timezone": "Saat dilimini değiştir",
     "search": {
-      "placeholder": "Şehir veya köy girin. Örneğin: Kyiv...",
+      "placeholder": "Şehir veya köy…",
       "aria": "Şehir arama",
       "cardExists": "«{{name}}» kartı zaten var — gitmek için tıklayın",
       "loadMore": "Daha fazla sonuç yükle",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Şehriniz veya köyünüz yok mu? Yakındaki bir şehri yazın ya da koordinat modunda bir nokta oluşturun — haritaya tıklamanız yeterli.",
+      "short": "Harita",
       "pickOnMap": "Haritada seç",
       "title": "Haritada bir nokta seçin",
       "hint": "Haritaya tıklayın — koordinatlar kendiliğinden dolar. Fare tekerleği veya +/− yakınlaştırmayı değiştirir.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Enlem: {{lat}}°, Boylam: {{lon}}°",
-      "latPlaceholder": "Enlem: -90° ile +90° arası",
-      "lonPlaceholder": "Boylam: -180° ile +180° arası",
+      "latPlaceholder": "Enl ±90°",
+      "lonPlaceholder": "Boy ±180°",
       "find": "Bul",
       "invalid": "Lütfen geçerli koordinatlar girin",
       "latRange": "Enlem -90 ile 90 arasında olmalı",
@@ -115,6 +118,9 @@
     "open": "Stykhiia'yı aç"
   },
   "common": {
+    "otherDeviceTitle": "Styxia başka bir cihazda açık",
+    "otherDeviceText": "Bir hesap yalnızca tek cihazda çevrim içi olabilir. Burada kullanmak için düğmeye basın; diğer cihaz duraklatılır.",
+    "otherDeviceContinue": "Burada devam et",
     "close": "Kapat"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Katmanlar",
+      "moreDays": "Daha fazla gün",
+      "longPending": "Uzun tahmin henüz hazır değil — sayfayı sonra yenileyin.",
+      "longNote": "16 günden sonra 35. güne kadar GEFS, ardından CFS. Yalnızca eğilimler; hamle ve görüş yok.",
       "settingsTitle": "Görünüm",
       "openPanel": "Katmanlar ve ayarlar",
       "closePanel": "Paneli kapat",
+      "zoomIn": "Yakınlaştır",
+      "zoomOut": "Uzaklaştır",
+      "mapLabel": "Harita",
+      "mapMarker": "Harita işareti",
       "info": {
         "storm": {
           "title": "Fırtına enerjisi nedir?",

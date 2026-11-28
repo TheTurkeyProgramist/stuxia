@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Search by latitude and longitude",
       "cityTooltip": "Search by city or village name",
+      "cityShort": "City",
+      "coordsShort": "Coords",
       "toCoordsAria": "Switch to search by coordinates",
       "toCityAria": "Switch to search by city name",
       "coords": "Coordinates mode",
@@ -20,7 +22,7 @@
     },
     "timezone": "Change time zone",
     "search": {
-      "placeholder": "Enter a city or village. For example: Kyiv...",
+      "placeholder": "City or village…",
       "aria": "City search",
       "cardExists": "The «{{name}}» card already exists — click to go to it",
       "loadMore": "Load more results",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Can't find your town or village? Enter a nearby city or create a point in coordinates mode — you can simply click on the map.",
+      "short": "Map",
       "pickOnMap": "Pick on map",
       "title": "Choose a point on the map",
       "hint": "Click the map and the coordinates fill in automatically. Mouse wheel or +/− buttons change the zoom.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Latitude: {{lat}}°, Longitude: {{lon}}°",
-      "latPlaceholder": "Latitude: from -90° to +90°",
-      "lonPlaceholder": "Longitude: from -180° to +180°",
+      "latPlaceholder": "Lat ±90°",
+      "lonPlaceholder": "Lon ±180°",
       "find": "Find",
       "invalid": "Please enter valid coordinates",
       "latRange": "Latitude must be between -90 and 90",
@@ -115,6 +118,9 @@
     "open": "Open Stykhiia"
   },
   "common": {
+    "otherDeviceTitle": "Styxia is open on another device",
+    "otherDeviceText": "One account can be online on only one device. To use it here, press the button — the other device will be paused.",
+    "otherDeviceContinue": "Continue here",
     "close": "Close"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Layers",
+      "moreDays": "More days",
+      "longPending": "The long forecast isn't ready yet — reload the page later.",
+      "longNote": "After day 16: GEFS (ensemble mean) up to day 35, then CFS (seasonal model). Trends only; no gusts or visibility.",
       "settingsTitle": "Display",
       "openPanel": "Layers and settings",
       "closePanel": "Close panel",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "mapLabel": "Map",
+      "mapMarker": "Map marker",
       "info": {
         "storm": {
           "title": "What is storm energy?",

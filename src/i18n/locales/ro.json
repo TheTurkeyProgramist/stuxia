@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Caută după latitudine și longitudine",
       "cityTooltip": "Caută după numele orașului sau satului",
+      "cityShort": "Oraș",
+      "coordsShort": "Coord",
       "toCoordsAria": "Treci la căutarea după coordonate",
       "toCityAria": "Treci la căutarea după numele orașului",
       "coords": "Mod coordonate",
@@ -20,7 +22,7 @@
     },
     "timezone": "Schimbă fusul orar",
     "search": {
-      "placeholder": "Introdu un oraș sau un sat. De exemplu: Kiev...",
+      "placeholder": "Oraș sau sat…",
       "aria": "Căutare oraș",
       "cardExists": "Cardul „{{name}}” există deja — apasă pentru a merge la el",
       "loadMore": "Încarcă mai multe rezultate",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Nu vă găsiți orașul sau satul? Introduceți un oraș din apropiere sau creați un punct în modul coordonate — puteți doar să apăsați pe hartă.",
+      "short": "Hartă",
       "pickOnMap": "Alege pe hartă",
       "title": "Alegeți un punct pe hartă",
       "hint": "Apăsați pe hartă — coordonatele se completează singure. Rotița mouse-ului sau +/− schimbă zoom-ul.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Latitudine: {{lat}}°, Longitudine: {{lon}}°",
-      "latPlaceholder": "Latitudine: de la -90° la +90°",
-      "lonPlaceholder": "Longitudine: de la -180° la +180°",
+      "latPlaceholder": "Lat ±90°",
+      "lonPlaceholder": "Lon ±180°",
       "find": "Caută",
       "invalid": "Introdu coordonate valide",
       "latRange": "Latitudinea trebuie să fie între -90 și 90",
@@ -115,6 +118,9 @@
     "open": "Deschide Stykhiia"
   },
   "common": {
+    "otherDeviceTitle": "Styxia este deschisă pe alt dispozitiv",
+    "otherDeviceText": "Un cont poate fi online doar pe un singur dispozitiv. Pentru a o folosi aici, apăsați butonul — celălalt dispozitiv va fi oprit.",
+    "otherDeviceContinue": "Continuă aici",
     "close": "Închide"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Straturi",
+      "moreDays": "Mai multe zile",
+      "longPending": "Prognoza lungă nu e gata încă — reîncarcă mai târziu.",
+      "longNote": "După 16 zile: GEFS până la 35, apoi CFS. Doar tendințe; fără rafale și vizibilitate.",
       "settingsTitle": "Afișare",
       "openPanel": "Straturi și setări",
       "closePanel": "Închide panoul",
+      "zoomIn": "Mărește",
+      "zoomOut": "Micșorează",
+      "mapLabel": "Hartă",
+      "mapMarker": "Marcaj pe hartă",
       "info": {
         "storm": {
           "title": "Ce este energia de furtună?",

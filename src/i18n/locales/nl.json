@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Zoeken op breedte- en lengtegraad",
       "cityTooltip": "Zoeken op naam van stad of dorp",
+      "cityShort": "Stad",
+      "coordsShort": "Coörd",
       "toCoordsAria": "Overschakelen naar zoeken op coördinaten",
       "toCityAria": "Overschakelen naar zoeken op stadsnaam",
       "coords": "Coördinatenmodus",
@@ -20,7 +22,7 @@
     },
     "timezone": "Tijdzone wijzigen",
     "search": {
-      "placeholder": "Voer een stad of dorp in. Bijvoorbeeld: Kyiv...",
+      "placeholder": "Stad of dorp…",
       "aria": "Stad zoeken",
       "cardExists": "De kaart ‘{{name}}’ bestaat al — klik om ernaartoe te gaan",
       "loadMore": "Meer resultaten laden",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Mist uw stad of dorp? Voer een stad in de buurt in of maak een punt in de coördinatenmodus — klik gewoon op de kaart.",
+      "short": "Kaart",
       "pickOnMap": "Kies op kaart",
       "title": "Kies een punt op de kaart",
       "hint": "Klik op de kaart: de coördinaten worden automatisch ingevuld. Muiswiel of +/− verandert de zoom.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Breedte: {{lat}}°, Lengte: {{lon}}°",
-      "latPlaceholder": "Breedte: van -90° tot +90°",
-      "lonPlaceholder": "Lengte: van -180° tot +180°",
+      "latPlaceholder": "Bre ±90°",
+      "lonPlaceholder": "Len ±180°",
       "find": "Zoeken",
       "invalid": "Voer geldige coördinaten in",
       "latRange": "De breedte moet tussen -90 en 90 liggen",
@@ -115,6 +118,9 @@
     "open": "Stykhiia openen"
   },
   "common": {
+    "otherDeviceTitle": "Styxia is geopend op een ander apparaat",
+    "otherDeviceText": "Een account kan maar op één apparaat online zijn. Druk op de knop om hier verder te gaan; het andere apparaat wordt gepauzeerd.",
+    "otherDeviceContinue": "Hier doorgaan",
     "close": "Sluiten"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Lagen",
+      "moreDays": "Meer dagen",
+      "longPending": "De lange verwachting is nog niet klaar — herlaad later.",
+      "longNote": "Na 16 dagen: GEFS tot dag 35, daarna CFS. Alleen trends; geen windstoten of zicht.",
       "settingsTitle": "Weergave",
       "openPanel": "Lagen en instellingen",
       "closePanel": "Paneel sluiten",
+      "zoomIn": "Inzoomen",
+      "zoomOut": "Uitzoomen",
+      "mapLabel": "Kaart",
+      "mapMarker": "Kaartmarkering",
       "info": {
         "storm": {
           "title": "Wat is onweersenergie?",

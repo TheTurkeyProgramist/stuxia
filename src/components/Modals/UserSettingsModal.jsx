@@ -2677,6 +2677,7 @@ const UserSettingsModal = ({
       }
       // Старий документ із заглушеними новинами (є не в усіх)
       await deleteDoc(doc(db, "users", cu.uid)).catch(() => {});
+      await deleteDoc(doc(db, "sessions", cu.uid)).catch(() => {});
 
       // 3. Видаляємо сам акаунт
       await deleteUser(cu);

@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Cerca per latitudine e longitudine",
       "cityTooltip": "Cerca per nome di città o paese",
+      "cityShort": "Città",
+      "coordsShort": "Coord",
       "toCoordsAria": "Passa alla ricerca per coordinate",
       "toCityAria": "Passa alla ricerca per nome della città",
       "coords": "Modalità coordinate",
@@ -20,7 +22,7 @@
     },
     "timezone": "Cambia fuso orario",
     "search": {
-      "placeholder": "Inserisci una città o un paese. Ad esempio: Kiev...",
+      "placeholder": "Città o paese…",
       "aria": "Ricerca città",
       "cardExists": "La scheda «{{name}}» esiste già — clicca per andarci",
       "loadMore": "Carica altri risultati",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Non trovi la tua città o il tuo paese? Inserisci una città vicina o crea un punto in modalità coordinate: basta cliccare sulla mappa.",
+      "short": "Mappa",
       "pickOnMap": "Scegli sulla mappa",
       "title": "Scegli un punto sulla mappa",
       "hint": "Clicca sulla mappa: le coordinate si compilano da sole. La rotellina o +/− cambiano lo zoom.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Latitudine: {{lat}}°, Longitudine: {{lon}}°",
-      "latPlaceholder": "Latitudine: da -90° a +90°",
-      "lonPlaceholder": "Longitudine: da -180° a +180°",
+      "latPlaceholder": "Lat ±90°",
+      "lonPlaceholder": "Lon ±180°",
       "find": "Trova",
       "invalid": "Inserisci coordinate valide",
       "latRange": "La latitudine deve essere tra -90 e 90",
@@ -115,6 +118,9 @@
     "open": "Apri Stykhiia"
   },
   "common": {
+    "otherDeviceTitle": "Styxia è aperta su un altro dispositivo",
+    "otherDeviceText": "Un account può essere online su un solo dispositivo. Per usarlo qui, premi il pulsante: l’altro dispositivo verrà messo in pausa.",
+    "otherDeviceContinue": "Continua qui",
     "close": "Chiudi"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Livelli",
+      "moreDays": "Più giorni",
+      "longPending": "La previsione lunga non è ancora pronta: ricarica più tardi.",
+      "longNote": "Dopo 16 giorni: GEFS fino al 35º, poi CFS. Solo tendenze; senza raffiche e visibilità.",
       "settingsTitle": "Visualizzazione",
       "openPanel": "Livelli e impostazioni",
       "closePanel": "Chiudi pannello",
+      "zoomIn": "Ingrandisci",
+      "zoomOut": "Rimpicciolisci",
+      "mapLabel": "Mappa",
+      "mapMarker": "Indicatore sulla mappa",
       "info": {
         "storm": {
           "title": "Che cos’è l’energia temporalesca?",

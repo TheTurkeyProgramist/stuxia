@@ -53,12 +53,21 @@ const Tabs = styled.div`
   display: flex;
   gap: 4px;
   padding: 4px;
-  border-radius: 999px;
+  border-radius: 14px;
   background: rgba(0, 0, 0, 0.28);
 
-  button { border-color: transparent; border-radius: 999px; background: transparent; }
+  /* іконка, під нею назва — щоб обидва перемикачі вмістилися в один ряд */
+  button { flex-direction: column; gap: 4px; min-width: 62px; padding: 7px 6px; font-size: 11px; border-color: transparent; border-radius: 10px; background: transparent; }
+  button svg { font-size: 18px; }
   button:hover { transform: none; background: rgba(255, 255, 255, 0.1); }
   button[aria-pressed="true"] { background: #ffb36c; }
+`;
+
+const TabsRow = styled.div`
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
 `;
 
 const Panel = styled.div`
@@ -205,7 +214,7 @@ const Speaker = styled.div`
   p { margin: 0; line-height: 1.5; }
 `;
 
-const MathGame = () => {
+const MathGame = ({ gameTabs }) => {
   const { t, i18n } = useTranslation();
   const sep = (1.5).toLocaleString(i18n.resolvedLanguage || i18n.language).includes(",") ? "," : ".";
   const [streaks, setStreaks] = useState(() => readLevels(STREAK_KEY));
@@ -290,6 +299,8 @@ const MathGame = () => {
 
   return (
     <>
+      <TabsRow>
+      {gameTabs}
       <Tabs>
         {[["easy", FaSeedling], ["hard", FaFire]].map(([id, Icon]) => (
           <Button key={id} type="button" aria-pressed={level === id} onClick={() => changeLevel(id)}>
@@ -298,6 +309,7 @@ const MathGame = () => {
           </Button>
         ))}
       </Tabs>
+      </TabsRow>
       <Panel>
         {story ? (
           <>
@@ -414,8 +426,7 @@ const PairsGame = () => {
 const OfflineGames = () => {
   const { t } = useTranslation();
   const [game, setGame] = useState("math");
-  return (
-    <Board>
+  const gameTabs = (
       <Tabs>
         {[["math", FaCalculator], ["pairs", FaClone]].map(([id, Icon]) => (
           <Button key={id} type="button" aria-pressed={game === id} onClick={() => setGame(id)}>
@@ -424,7 +435,10 @@ const OfflineGames = () => {
           </Button>
         ))}
       </Tabs>
-      {game === "math" ? <MathGame /> : <PairsGame />}
+  );
+  return (
+    <Board>
+      {game === "math" ? <MathGame gameTabs={gameTabs} /> : <><TabsRow>{gameTabs}</TabsRow><PairsGame /></>}
       <Signature>{t("climateMap.games.madeWith")}<FaHeart aria-hidden="true" /></Signature>
     </Board>
   );

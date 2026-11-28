@@ -23,6 +23,8 @@ import reactIconsSplit from './vite-plugins/reactIconsSplit.mjs';
 import { visualizer } from 'rollup-plugin-visualizer';
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { DATA_VERSION } from './src/components/ClimateMap/styxiaLayers.js';
 
 const SIZE_GROUPS = [
   ['JS', /\.m?js$/i],
@@ -150,6 +152,56 @@ function airAlertsPlugin() {
           res.statusCode = 502;
           res.end(JSON.stringify({ error: String(err.message || err) }));
         }
+      });
+    },
+  };
+}
+
+// Дані «Карти Стихії» на localhost: dev-сервер сам запускає weather:build у тлі, коли їх немає,
+// вони старші за 6 годин або іншої версії. Збирає в weather-data.next і копіює вже готове, тож
+// карта під час оновлення працює на старих даних. У проді це робить cloudflare.yml за розкладом
+function weatherDataPlugin() {
+  const meta = path.resolve('weather-data/meta.txt');
+  const isStale = () => {
+    try {
+      if (Date.now() - fs.statSync(meta).mtimeMs > 6 * 3600_000) return true;
+      return JSON.parse(fs.readFileSync(meta, 'utf8')).version !== DATA_VERSION;
+    } catch {
+      return true;
+    }
+  };
+  return {
+    name: 'vite-plugin-weather-data',
+    apply: 'serve',
+    configureServer(server) {
+      if (!server.httpServer || process.env.CI || process.env.VITEST) return;
+      let child = null;
+      const refresh = () => {
+        if (child || !isStale()) return;
+        server.config.logger.info('Карта Стихії: збираю свіжі дані GFS у тлі (кілька хвилин)…');
+        child = spawn('bun', ['scripts/weather-map/build.mjs'], { stdio: ['ignore', 'ignore', 'inherit'], env: { ...process.env, WEATHER_OUT: 'weather-data.next' } });
+        child.on('error', (error) => {
+          child = null;
+          server.config.logger.warn(`Карта Стихії: не вдалося запустити збірку — ${error.message}`);
+        });
+        child.on('exit', (code) => {
+          child = null;
+          if (code === 0) {
+            // meta.txt — останнім: за ним карта дізнається про нові дані
+            fs.cpSync('weather-data.next', 'weather-data', { recursive: true, filter: (file) => !file.endsWith('meta.txt') });
+            fs.copyFileSync('weather-data.next/meta.txt', meta);
+          }
+          server.config.logger.info(code === 0 ? 'Карта Стихії: дані оновлено, перезавантажте сторінку' : `Карта Стихії: збірка даних не вдалася (код ${code})`);
+        });
+      };
+      let timer = null;
+      server.httpServer.once('listening', () => {
+        refresh();
+        timer = setInterval(refresh, 15 * 60_000);
+      });
+      server.httpServer.once('close', () => {
+        clearInterval(timer);
+        child?.kill();
       });
     },
   };
@@ -337,6 +389,7 @@ export default defineConfig(({ mode }) => {
   plugins: [
     newsFeedPlugin(),
     airAlertsPlugin(),
+    weatherDataPlugin(),
     // Кожна іконка react-icons — окремий модуль, щоб іконки модалок не вантажились на старті
     reactIconsSplit(),
     react(),

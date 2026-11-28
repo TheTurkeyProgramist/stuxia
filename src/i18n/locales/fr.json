@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Rechercher par latitude et longitude",
       "cityTooltip": "Rechercher par nom de ville ou de village",
+      "cityShort": "Ville",
+      "coordsShort": "Coord",
       "toCoordsAria": "Passer à la recherche par coordonnées",
       "toCityAria": "Passer à la recherche par nom de ville",
       "coords": "Mode coordonnées",
@@ -20,7 +22,7 @@
     },
     "timezone": "Changer de fuseau horaire",
     "search": {
-      "placeholder": "Saisissez une ville, un village. Par exemple : Kyiv...",
+      "placeholder": "Ville ou village…",
       "aria": "Recherche de ville",
       "cardExists": "La carte « {{name}} » existe déjà — cliquez pour y aller",
       "loadMore": "Charger plus de résultats",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Votre ville ou village est introuvable ? Saisissez une ville proche ou créez un point en mode coordonnées — il suffit de cliquer sur la carte.",
+      "short": "Carte",
       "pickOnMap": "Choisir sur la carte",
       "title": "Choisissez un point sur la carte",
       "hint": "Cliquez sur la carte : les coordonnées se remplissent toutes seules. La molette ou +/− changent l'échelle.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Latitude : {{lat}}°, Longitude : {{lon}}°",
-      "latPlaceholder": "Latitude : de -90° à +90°",
-      "lonPlaceholder": "Longitude : de -180° à +180°",
+      "latPlaceholder": "Lat ±90°",
+      "lonPlaceholder": "Lon ±180°",
       "find": "Trouver",
       "invalid": "Veuillez saisir des coordonnées valides",
       "latRange": "La latitude doit être entre -90 et 90",
@@ -115,6 +118,9 @@
     "open": "Ouvrir Stykhiia"
   },
   "common": {
+    "otherDeviceTitle": "Styxia est ouverte sur un autre appareil",
+    "otherDeviceText": "Un compte ne peut être en ligne que sur un seul appareil. Pour l’utiliser ici, appuyez sur le bouton : l’autre appareil sera mis en pause.",
+    "otherDeviceContinue": "Continuer ici",
     "close": "Fermer"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Calques",
+      "moreDays": "Plus de jours",
+      "longPending": "La prévision longue n’est pas encore prête — rechargez plus tard.",
+      "longNote": "Après 16 jours : GEFS jusqu’au 35e, puis CFS. Tendances seulement ; sans rafales ni visibilité.",
       "settingsTitle": "Affichage",
       "openPanel": "Calques et réglages",
       "closePanel": "Fermer le panneau",
+      "zoomIn": "Zoom avant",
+      "zoomOut": "Zoom arrière",
+      "mapLabel": "Carte",
+      "mapMarker": "Repère sur la carte",
       "info": {
         "storm": {
           "title": "Qu’est-ce que l’énergie orageuse ?",

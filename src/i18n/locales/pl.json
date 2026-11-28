@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Szukaj według szerokości i długości geograficznej",
       "cityTooltip": "Szukaj według nazwy miasta lub wsi",
+      "cityShort": "Miasto",
+      "coordsShort": "Współ",
       "toCoordsAria": "Przejdź do wyszukiwania według współrzędnych",
       "toCityAria": "Przejdź do wyszukiwania według nazwy miasta",
       "coords": "Tryb współrzędnych",
@@ -20,7 +22,7 @@
     },
     "timezone": "Zmień strefę czasową",
     "search": {
-      "placeholder": "Wpisz miasto, wieś. Na przykład: Kijów...",
+      "placeholder": "Miasto lub wieś…",
       "aria": "Wyszukiwanie miasta",
       "cardExists": "Karta „{{name}}” już istnieje — kliknij, aby do niej przejść",
       "loadMore": "Wczytaj więcej wyników",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Nie ma Twojej miejscowości? Wpisz pobliskie miasto lub utwórz punkt w trybie współrzędnych — wystarczy kliknąć na mapie.",
+      "short": "Mapa",
       "pickOnMap": "Wybierz na mapie",
       "title": "Wybierz punkt na mapie",
       "hint": "Kliknij mapę — współrzędne uzupełnią się same. Kółko myszy lub przyciski +/− zmieniają skalę.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Szerokość: {{lat}}°, Długość: {{lon}}°",
-      "latPlaceholder": "Szerokość: od -90° do +90°",
-      "lonPlaceholder": "Długość: od -180° do +180°",
+      "latPlaceholder": "Szer ±90°",
+      "lonPlaceholder": "Dł ±180°",
       "find": "Znajdź",
       "invalid": "Wpisz poprawne współrzędne",
       "latRange": "Szerokość musi być od -90 do 90",
@@ -115,6 +118,9 @@
     "open": "Otwórz Stykhiia"
   },
   "common": {
+    "otherDeviceTitle": "Styxia jest otwarta na innym urządzeniu",
+    "otherDeviceText": "Jedno konto może być online tylko na jednym urządzeniu. Aby korzystać tutaj, naciśnij przycisk — drugie urządzenie zostanie wstrzymane.",
+    "otherDeviceContinue": "Kontynuuj tutaj",
     "close": "Zamknij"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Warstwy",
+      "moreDays": "Więcej dni",
+      "longPending": "Długa prognoza nie jest jeszcze gotowa — odśwież później.",
+      "longNote": "Po 16 dniach GEFS do 35., potem CFS. Tylko tendencje; bez porywów i widzialności.",
       "settingsTitle": "Wyświetlanie",
       "openPanel": "Warstwy i ustawienia",
       "closePanel": "Zamknij panel",
+      "zoomIn": "Przybliż",
+      "zoomOut": "Oddal",
+      "mapLabel": "Mapa",
+      "mapMarker": "Znacznik na mapie",
       "info": {
         "storm": {
           "title": "Czym jest energia burzowa?",

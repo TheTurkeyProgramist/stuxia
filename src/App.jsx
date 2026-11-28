@@ -525,9 +525,10 @@ const CarouselNav = styled.div`
   display: flex;
   justify-content: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   @media (max-width: 480px) {
-    gap: 4px;
+    gap: 3px;
+    padding: 0 4px;
   }
   z-index: 9000;
   margin-top: 8px;
@@ -725,9 +726,9 @@ const CarouselSideButton = styled.button`
   }
 `;
 const CarouselPageButton = styled.button`
-  /* flex-shrink + min-width: 10 кнопок вміщаються в один ряд навіть на вузькому телефоні */
+  /* стискаються, щоб усі номери вміщалися в один ряд навіть на вузькому телефоні */
   flex: 0 1 30px;
-  min-width: 22px;
+  min-width: 0;
   height: 30px;
   padding: 0;
   @media (max-width: 480px) {
@@ -4999,6 +5000,7 @@ const App = () => {
     <DecoratorProvider isDarkMode={isDarkMode}>
       <SiteContextMenu isDarkMode={isDarkMode} onToggleTheme={toggleTheme}>
       <DominoTutorial user={user} />
+      <SingleDeviceGuard signedIn={Boolean(user)} />
       <WeatherViewOffer open={isViewOfferOpen} onClose={() => setIsViewOfferOpen(false)} />
       <GlobalFilterLock $locked={isFsActive && lockFiltersInFs} />
       <ThemeWrapper $isDarkMode={isDarkMode} $isStickyBgMode={isStickyBgMode}>
@@ -5167,6 +5169,7 @@ const App = () => {
   );
 };
 import DominoTutorial from "./components/DominoTutorial/DominoTutorial";
+import SingleDeviceGuard from "./components/SingleDeviceGuard";
 import { TutorialProvider } from "./components/DominoTutorial/TutorialContext.jsx";
 
 export default function AppWrapper() {

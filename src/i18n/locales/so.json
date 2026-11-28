@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Ku raadi loolka iyo dhererka",
       "cityTooltip": "Ku raadi magaca magaalada ama tuulada",
+      "cityShort": "Magaalo",
+      "coordsShort": "Isku-du",
       "toCoordsAria": "U wareeg raadinta isku-duwayaasha",
       "toCityAria": "U wareeg raadinta magaca magaalada",
       "coords": "Habka isku-duwayaasha",
@@ -20,7 +22,7 @@
     },
     "timezone": "Beddel aagga waqtiga",
     "search": {
-      "placeholder": "Geli magaalo ama tuulo. Tusaale: Kyiv...",
+      "placeholder": "Magaalo ama tuulo…",
       "aria": "Raadinta magaalada",
       "cardExists": "Kaarka «{{name}}» horay ayuu u jiraa — guji si aad ugu gudubto",
       "loadMore": "Soo rar natiijooyin dheeraad ah",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Ma helin magaaladaada ama tuuladaada? Geli magaalo u dhow ama samee dhibic qaabka isku-xirayaasha — kaliya guji khariidadda.",
+      "short": "Khariid",
       "pickOnMap": "Ka dooro khariidadda",
       "title": "Dooro dhibic khariidadda ah",
       "hint": "Guji khariidadda — isku-xirayaashu naftood ayay buuxsamayaan. Giraanta jiirka ama +/− waxay beddelaan weynaynta.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Loolka: {{lat}}°, Dhererka: {{lon}}°",
-      "latPlaceholder": "Loolka: -90° ilaa +90°",
-      "lonPlaceholder": "Dhererka: -180° ilaa +180°",
+      "latPlaceholder": "Lool ±90°",
+      "lonPlaceholder": "Dher ±180°",
       "find": "Hel",
       "invalid": "Fadlan geli isku-duwayaal sax ah",
       "latRange": "Loolku waa inuu u dhexeeyaa -90 iyo 90",
@@ -115,6 +118,9 @@
     "open": "Fur Stykhiia"
   },
   "common": {
+    "otherDeviceTitle": "Styxia waxay ka furan tahay qalab kale",
+    "otherDeviceText": "Hal akoon wuxuu online ka noqon karaa hal qalab oo keliya. Si aad halkan uga isticmaasho, riix badhanka — qalabka kale waa la joojinayaa.",
+    "otherDeviceContinue": "Halkan ka sii wad",
     "close": "Xir"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Lakabyada",
+      "moreDays": "Maalmo dheeraad ah",
+      "longPending": "Saadaasha dheer wali diyaar ma aha — mar dambe dib u cusbooneysii.",
+      "longNote": "16 maalmood kadib: GEFS ilaa 35, kadibna CFS. Waa jiho guud oo keliya.",
       "settingsTitle": "Muuqaalka",
       "openPanel": "Lakabyada iyo dejinta",
       "closePanel": "Xidh guddiga",
+      "zoomIn": "Soo dhawee",
+      "zoomOut": "Ka fogee",
+      "mapLabel": "Khariidad",
+      "mapMarker": "Calaamadda khariidadda",
       "info": {
         "storm": {
           "title": "Waa maxay tamarta duufaanta?",

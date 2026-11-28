@@ -8,6 +8,8 @@
     "mode": {
       "coordsTooltip": "Sök efter latitud och longitud",
       "cityTooltip": "Sök efter stads- eller bynamn",
+      "cityShort": "Stad",
+      "coordsShort": "Koord",
       "toCoordsAria": "Byt till sökning efter koordinater",
       "toCityAria": "Byt till sökning efter stadsnamn",
       "coords": "Koordinatläge",
@@ -20,7 +22,7 @@
     },
     "timezone": "Byt tidszon",
     "search": {
-      "placeholder": "Ange en stad eller by. Till exempel: Kyiv...",
+      "placeholder": "Stad eller by…",
       "aria": "Stadssökning",
       "cardExists": "Kortet ”{{name}}” finns redan — klicka för att gå till det",
       "loadMore": "Läs in fler resultat",
@@ -36,6 +38,7 @@
     },
     "mapPicker": {
       "missingHint": "Hittar du inte din stad eller by? Ange en stad i närheten eller skapa en punkt i koordinatläget — klicka bara på kartan.",
+      "short": "Karta",
       "pickOnMap": "Välj på kartan",
       "title": "Välj en punkt på kartan",
       "hint": "Klicka på kartan — koordinaterna fylls i automatiskt. Mushjulet eller +/− ändrar zoomen.",
@@ -48,8 +51,8 @@
     },
     "coords": {
       "line": "Latitud: {{lat}}°, Longitud: {{lon}}°",
-      "latPlaceholder": "Latitud: från -90° till +90°",
-      "lonPlaceholder": "Longitud: från -180° till +180°",
+      "latPlaceholder": "Lat ±90°",
+      "lonPlaceholder": "Lon ±180°",
       "find": "Sök",
       "invalid": "Ange giltiga koordinater",
       "latRange": "Latituden måste vara mellan -90 och 90",
@@ -115,6 +118,9 @@
     "open": "Öppna Stykhiia"
   },
   "common": {
+    "otherDeviceTitle": "Styxia är öppen på en annan enhet",
+    "otherDeviceText": "Ett konto kan bara vara online på en enhet. Tryck på knappen för att använda den här – den andra enheten pausas.",
+    "otherDeviceContinue": "Fortsätt här",
     "close": "Stäng"
   },
   "settings": {
@@ -174,9 +180,16 @@
       "alertOff": "No alert",
       "alertNoData": "No data",
       "panelTitle": "Lager",
+      "moreDays": "Fler dagar",
+      "longPending": "Den långa prognosen är inte klar än — ladda om senare.",
+      "longNote": "Efter 16 dagar: GEFS till dag 35, sedan CFS. Endast trender; inga vindbyar eller sikt.",
       "settingsTitle": "Visning",
       "openPanel": "Lager och inställningar",
       "closePanel": "Stäng panelen",
+      "zoomIn": "Zooma in",
+      "zoomOut": "Zooma ut",
+      "mapLabel": "Karta",
+      "mapMarker": "Kartmarkör",
       "info": {
         "storm": {
           "title": "Vad är åskenergi?",

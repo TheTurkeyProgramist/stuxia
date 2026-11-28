@@ -1,6 +1,8 @@
-// Мінімальний декодер GRIB2 під файли GFS: сітка lat/lon, пакування 5.0, 5.2 і 5.3
-// (complex packing + spatial differencing), власний бітмап (поза ним значення = NaN).
+// Мінімальний декодер GRIB2 під файли GFS: сітка lat/lon, пакування 5.0, 5.2, 5.3
+// (complex packing + spatial differencing) і 5.40 (JPEG2000, файли CFS), власний бітмап (поза ним значення = NaN).
 // Пропущені значення всередині complex packing не підтримуються — буде явна помилка.
+
+import { decodeJpeg2000 } from "./jpeg2000.mjs";
 
 // GRIB2 зберігає від’ємні числа як «знак + модуль», а не доповняльним кодом
 const signMagnitude = (buf, offset, bytes) => {
@@ -31,15 +33,23 @@ const bitReader = (buf) => {
   };
 };
 
-const readSections = (message) => {
+// field — номер поля в повідомленні: CFS кладе U і V разом (секції 4–7 повторюються)
+const readSections = (message, field) => {
   if (message.toString("latin1", 0, 4) !== "GRIB" || message[7] !== 2) {
     throw new Error("Це не GRIB2");
   }
   const sections = {};
   let offset = 16;
+  let seen = 0;
   while (offset < message.length - 4) {
     const length = message.readUInt32BE(offset);
-    sections[message[offset + 4]] = message.subarray(offset, offset + length);
+    const number = message[offset + 4];
+    // Бітмап 254 — «той самий, що в попереднього поля»
+    if (!(number === 6 && message[offset + 5] === 254)) sections[number] = message.subarray(offset, offset + length);
+    if (number === 7) {
+      seen += 1;
+      if (seen === field) break;
+    }
     offset += length;
   }
   return sections;
@@ -102,8 +112,8 @@ const unpackComplex = (s5, data, count, template) => {
   return values;
 };
 
-export const decodeGrib2 = (message) => {
-  const sections = readSections(message);
+export const decodeGrib2 = (message, field = 1) => {
+  const sections = readSections(message, field);
   const { 3: s3, 5: s5, 6: s6, 7: s7 } = sections;
   if (s6[5] !== 255 && s6[5] !== 0) throw new Error("Такий бітмап GRIB2 не підтримується");
 
@@ -124,6 +134,9 @@ export const decodeGrib2 = (message) => {
     for (let i = 0; i < count; i += 1) packed[i] = nbits ? reader.read(nbits) : 0;
   } else if (template === 2 || template === 3) {
     packed = unpackComplex(s5, data, count, template);
+  } else if (template === 40) {
+    // 0 біт — стале поле, потоку немає
+    packed = s5[19] ? decodeJpeg2000(data, count) : new Float64Array(count);
   } else {
     throw new Error(`Пакування GRIB2 5.${template} не підтримується`);
   }

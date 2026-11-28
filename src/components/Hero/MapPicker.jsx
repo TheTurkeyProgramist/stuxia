@@ -447,6 +447,12 @@ export default function MapPicker({ initial, isDarkMode, onPick, onClose }) {
         dragRotate: false,
         pitchWithRotate: false,
         touchPitch: false,
+        // Підписи бібліотеки мовою сайту
+        locale: {
+          "AttributionControl.ToggleAttribution": i18n.t("climateMap.styxia.attribution"),
+          "Map.Title": i18n.t("climateMap.styxia.mapLabel"),
+          "Marker.Title": i18n.t("climateMap.styxia.mapMarker"),
+        },
       });
     } catch {
       // без WebGL (вимкнено апаратне прискорення) мапа не запуститься
