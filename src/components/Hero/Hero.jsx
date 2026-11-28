@@ -15,7 +15,7 @@ import { BsMoonStarsFill, BsLightningChargeFill } from "react-icons/bs";
 import { createPortal } from "react-dom";
 // Мапа вибору точки вантажиться лише коли її відкрили
 const MapPicker = lazy(() => import("./MapPicker.jsx"));
-import { FaMountainCity, FaTemperatureArrowUp } from "react-icons/fa6";
+import { FaTemperatureArrowUp } from "react-icons/fa6";
 import { FaSnowflake, FaWind } from "react-icons/fa";
 import { FaMapLocationDot } from "react-icons/fa6";
 import planes from "../../media/third-party/services/planes.webp";
@@ -47,6 +47,7 @@ import {
   MdWallpaper,
   MdAutoAwesome,
   MdTranslate,
+  MdLocationCity,
   MdExplore,
   MdCheck,
   MdCheckCircle,
@@ -834,8 +835,11 @@ const CoordinateInput = styled.div`
     font-weight: 500;
     font-variant-numeric: tabular-nums;
     border-radius: 4px;
-    border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.16)" : "rgba(0, 0, 0, 0.14)")};
-    background: ${(p) => (p.$isDarkMode ? "#10151c" : "#ffffff")};
+    border: 1px solid ${(p) => (p.$isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.12)")};
+    border-bottom: 2px solid ${(p) => (p.$isDarkMode ? "#7dd3fc" : "#0369a1")};
+    background: ${(p) => (p.$isDarkMode ? "#05080c" : "#ffffff")};
+    box-shadow: inset 0 2px 6px ${(p) => (p.$isDarkMode ? "rgba(0, 0, 0, 0.7)" : "rgba(0, 0, 0, 0.12)")};
+    cursor: text;
     color: ${(p) => (p.$isDarkMode ? "#ffffff" : "#040404")};
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -851,7 +855,7 @@ const CoordinateInput = styled.div`
     &::placeholder {
       font-size: 13px;
       text-align: left;
-      color: ${(p) => (p.$isDarkMode ? "#f3efef" : "#000000")};
+      color: ${(p) => (p.$isDarkMode ? "#9aa6b4" : "#68717d")};
     }
 
     &:hover,
@@ -895,7 +899,7 @@ const CoordinateSearchButton = styled.button`
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(47, 129, 247, 0.28);
+  box-shadow: 0 2px 6px rgba(47, 129, 247, 0.18);
   transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 
   svg {
@@ -904,7 +908,7 @@ const CoordinateSearchButton = styled.button`
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 10px 24px rgba(47, 129, 247, 0.4);
+    box-shadow: 0 4px 10px rgba(47, 129, 247, 0.28);
   }
   &:active:not(:disabled) {
     transform: scale(0.97);
@@ -2027,7 +2031,7 @@ const Hero = ({
           $isDarkMode={isDarkMode}
         >
           <ModePreviewIcon key={`icon-${searchMode}`}>
-            {nextModeIsCoordinates ? <FaMapLocationDot /> : <FaMountainCity />}
+            {nextModeIsCoordinates ? <FaMapLocationDot /> : <MdLocationCity />}
           </ModePreviewIcon>
           <small>{nextModeIsCoordinates ? t("hero.mode.coordsShort") : t("hero.mode.cityShort")}</small>
         </ModeIconBtn>

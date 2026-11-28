@@ -628,8 +628,8 @@ const Precip = styled.span`
   font-weight: 600;
 
   span {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    min-width: 0;
+    white-space: normal;
   }
   color: ${(p) =>
     p.$wet ? (p.$isDarkMode ? "#7dd3fc" : "#0369a1") : p.$isDarkMode ? "#86efac" : "#15803d"};
